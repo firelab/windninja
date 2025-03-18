@@ -48,7 +48,7 @@ namespace po = boost::program_options;
 
 #include <iostream>
 #include <iterator>
-#include <fstream>
+//#include <fstream>
 
 //#include <QDateTime>
 
@@ -60,7 +60,13 @@ void option_dependency(const po::variables_map& vm, const char* for_what, const 
 
 void verify_option_set(const po::variables_map& vm, const char* optn);
 
-std::vector<std::string> split(const std::string &s, const std::string &delimiter); 
+//bool checkArgs(string arg1, string arg2, string arg3);
+
+pair<string, string> at_option_parser(string const&s);
+
+const std::string* get_checked_elevation_file(po::variables_map& vm);
+
+std::vector<std::string> split(const std::string &s, const std::string &delimiter);
 
 // this should be used instead of direct 'variables_map["key"].as<T>()' calls since otherwise a single typo
 // in the key literal results in undefined behavior that can corrupt memory miles away. 
@@ -74,7 +80,5 @@ inline T option_val (const po::variables_map& vm, const char* key) {
         return vv.as<T>();
     }
 }
-
-//bool checkArgs(string arg1, string arg2, string arg3);
 
 #endif /* CLI_H */

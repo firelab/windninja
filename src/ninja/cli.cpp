@@ -96,7 +96,7 @@ pair<string, string> at_option_parser(string const&s)
 // if we have an 'elevation_file' program option check if file exists and has a non-geographic srs.
 // if the srs is geographic, try to convert to a UTM file in the configured 'output_path' (or current dir if not set)
 // return address of a string that points to a valid non-geographic file or NULL if none was found or could be constructed
-const std::string* get_checked_elevation_file (po::variables_map& vm)
+const std::string* get_checked_elevation_file(po::variables_map& vm)
 {
     if (vm.count("elevation_file")) {
         const string* filename = &vm["elevation_file"].as<string>();
@@ -136,9 +136,8 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
     }
 }
 
-
-//split for point initialization in casefile 
-
+// string splitter, splits an input string into pieces separated by an input delimiter
+// used for point initialization in casefile
 std::vector<std::string> split(const std::string &s, const std::string &delimiter) {
     std::vector<std::string> tokens;
     size_t start = 0;
@@ -151,7 +150,6 @@ std::vector<std::string> split(const std::string &s, const std::string &delimite
     tokens.push_back(s.substr(start, end));
     return tokens;
 }
-
 
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
@@ -182,7 +180,6 @@ int windNinjaCLI(int argc, char* argv[])
     
     // Moved to initializeOptions()
     try {
-
 
         // Declare a group of options that will be
         // allowed only on command line
@@ -392,10 +389,9 @@ int windNinjaCLI(int argc, char* argv[])
         po::parsed_options opts_command = po::command_line_parser(argc, argv).
                         options(cmdline_options).extra_parser(at_option_parser).positional(p).run();
 
-        
+        //write out parsed options for debugging
         if(writeParsed)
         {
-
             typedef std::vector< po::basic_option<char> > vec_opt;
             cout << "\n\nParsed command line options:" << endl;
             for(vec_opt::iterator l_itrOpt = opts_command.options.begin();
@@ -414,7 +410,6 @@ int windNinjaCLI(int argc, char* argv[])
                 cout << endl;
             }
         }
-
 
         store(opts_command, vm);
         //notify(vm);
@@ -456,27 +451,29 @@ int windNinjaCLI(int argc, char* argv[])
                         cout << endl;
                     }
                 }
-
                 store(opts_config, vm);
                 //store(parse_config_file(ifs, config_file_options), vm);
                 //notify(vm);
             }
         }
-        //helper for casefile output of CLI
 
-        if (vm["write_casefile"].as<bool>() == true) {
-            CaseFile casefile;  
+        //helper for casefile output of CLI
+        if (vm["write_casefile"].as<bool>() == true)
+        {
+            CaseFile casefile;
+
             std::string getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
-        
             std::string inputpath = getdir + "/config.cfg";
-            
+
             std::ofstream outFile(inputpath);
-            if (!outFile) {
+            if (!outFile)
+            {
                 cerr << "Error: Could not open the file for writing!" << endl;
                 return;
             }
-        
-            for (const auto& pair : vm) {
+
+            for (const auto& pair : vm)
+            {
                 const std::string& option_name = pair.first;
                 const po::variable_value& option_value = pair.second;
 
@@ -505,41 +502,45 @@ int windNinjaCLI(int argc, char* argv[])
                 }
             }
 
-            // This flush is actually optional because close() will flush automatically
-
             std::string getfileName = casefile.parse("file", vm["elevation_file"].as<std::string>());
 
             std::string getconfigname = casefile.parse("file", vm["config_file"].as<std::string>());
 
-            std::string zipFilePath = getdir + "/" + getfileName + "-" + casefile.getTime() + ".ninja";
-            casefile.setZipOpen(true); 
-            casefile.setdir(getdir); 
-            casefile.setzip(zipFilePath); 
+            std::string zipFilePath = getdir + "/tmp.ninja";
+
+            casefile.setZipOpen(true);
+            casefile.setdir(getdir);
+            casefile.setzip(zipFilePath);
+
+            // This flush is actually optional because close() will flush automatically
             outFile.flush();
             outFile.close();
-            casefile.addFileToZip(zipFilePath, getdir,  getconfigname, vm["config_file"].as<std::string>());
-            casefile.addFileToZip(zipFilePath, getdir, getfileName, vm["elevation_file"].as<std::string>()); 
-            casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
-            casefile.deleteFileFromPath(getdir, "config.cfg"); 
-            if (vm.count("forecast_filename")) {
-                std::string getweatherFileName = "weatherfile/" + casefile.parse("file", vm["forecast_filename"].as<std::string>());
-                casefile.addFileToZip(zipFilePath, getdir, getweatherFileName, vm["forecast_filename"].as<std::string>()); 
-            }
-            if (vm.count("wx_station_filename")) {
-                    std::vector<std::string> tokens = split(vm["wx_station_filename"].as<std::string>(), "/");
-                    std::string getpointFileName = casefile.parse("file", vm["wx_station_filename"].as<std::string>()); 
 
-                    if (tokens.size() >= 2) {
-                        std::string secondToLastToken =  tokens[tokens.size()-2]; 
-                        if (secondToLastToken.find("WXSTATIONS-") != std::string::npos) {
-                            getpointFileName = secondToLastToken + "/" + tokens[tokens.size() - 1]; 
-                        }
-                
-                    }
-                
-                casefile.addFileToZip(zipFilePath, getdir, getpointFileName, vm["wx_station_filename"].as<std::string>()); 
+            casefile.addFileToZip(zipFilePath, getdir,  getconfigname, vm["config_file"].as<std::string>());
+            casefile.addFileToZip(zipFilePath, getdir, getfileName, vm["elevation_file"].as<std::string>());
+            casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath);
+            casefile.deleteFileFromPath(getdir, "config.cfg");
+            if (vm.count("forecast_filename"))
+            {
+                std::string getweatherFileName = "weatherfile/" + casefile.parse("file", vm["forecast_filename"].as<std::string>());
+                casefile.addFileToZip(zipFilePath, getdir, getweatherFileName, vm["forecast_filename"].as<std::string>());
             }
-        } 
+            if (vm.count("wx_station_filename"))
+            {
+                std::vector<std::string> tokens = split(vm["wx_station_filename"].as<std::string>(), "/");
+                std::string getpointFileName = casefile.parse("file", vm["wx_station_filename"].as<std::string>());
+
+                if (tokens.size() >= 2) {
+                    std::string secondToLastToken =  tokens[tokens.size()-2];
+                    if (secondToLastToken.find("WXSTATIONS-") != std::string::npos) {
+                        getpointFileName = secondToLastToken + "/" + tokens[tokens.size() - 1];
+                    }
+                }
+
+                casefile.addFileToZip(zipFilePath, getdir, getpointFileName, vm["wx_station_filename"].as<std::string>());
+            }
+        }
+
         if (vm.count("help")) {
             cout << visible << "\n";
             return 0;
@@ -806,7 +807,6 @@ int windNinjaCLI(int argc, char* argv[])
             
             elevation_file = new string(new_elev);
         }
-        
         #endif //EMISSIONS
 
         if(vm.count("north") || vm.count("south") ||
@@ -1159,9 +1159,8 @@ int windNinjaCLI(int argc, char* argv[])
         {
             //Check to be sure that the user specifies right info
             conflicting_options(vm, "fetch_station", "wx_station_filename");
-        
+
             std::vector<boost::posix_time::ptime> timeList;
-        
             if(vm["fetch_station"].as<bool>() == true) //download station and make appropriate size ninjaArmy
             {
                 const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY","FALSE");
@@ -1225,7 +1224,6 @@ int windNinjaCLI(int argc, char* argv[])
                                                                                 vm["fetch_current_station_data"].as<bool>());
 //                stationPathName="blank";
                 pointInitialization::SetRawStationFilename(stationPathName); //Set this for fetching
-                std::cout << stationPathName << std::endl; 
                 //so that the fetchStationData function knows where to save the data
                 option_dependency(vm,"fetch_station","fetch_type");
                 if (vm["fetch_type"].as<std::string>()=="bbox") //Get data from Bounding Box
@@ -1246,11 +1244,10 @@ int windNinjaCLI(int argc, char* argv[])
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
                     option_dependency(vm,"fetch_type","fetch_station_name");
-                    
+
                     bool fetchSuccess = pointInitialization::fetchStationByName(vm["fetch_station_name"].as<std::string>(),
                                                             timeList, osTimeZone,
                                                             vm["fetch_current_station_data"].as<bool>());
-
                     if(fetchSuccess==false) //Fail to download data
                     {
                         pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
@@ -1260,7 +1257,6 @@ int windNinjaCLI(int argc, char* argv[])
                     pointInitialization::writeStationLocationFile(stationPathName,*elevation_file,vm["fetch_current_station_data"].as<bool>());
                     
                 }
-
                 else //If something else bad happens
                 {
                     pointInitialization::removeBadDirectory(stationPathName); //Get rid of generated dir
@@ -1960,7 +1956,8 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
                 std::string pbm = vm["pdf_basemap"].as<std::string>();
                 int pbs = 0;
-                if( pbm == "" )
+                //if( pbm == "" )
+                if( pbm == "hillshade" )
                 {
                     pbs = 0;
                 }

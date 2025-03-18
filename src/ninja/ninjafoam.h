@@ -59,9 +59,6 @@
                            "  </OGRVRTLayer>" \
                            "</OGRVRTDataSource>"
 
-
-extern std::string casefilenamefoam;  
-
 /**
  * \brief Main interface to OpenFOAM solver runs.
  *
@@ -83,9 +80,6 @@ public:
     virtual double get_meshResolution();
     static int GenerateFoamDirectory(std::string demName);
     static void SetFoamPath(const char *pszPath);
-    const std::string get_outputPath() const;
-    std::string converttimetostdfoam(const boost::local_time::local_date_time& ninjaTime) ; 
-
 
     AsciiGrid<double> TurbulenceGrid;
 private:
@@ -109,7 +103,7 @@ private:
     void ComputeDirection(); //converts direction from degrees to unit vector notation
     void SetInlets();
     void SetBcs();
-
+    
     std::vector<double> direction; //input.inputDirection converted to unit vector notation
     std::vector<std::string> inlets; // e.g., north_face
     std::vector<std::string> bcs;

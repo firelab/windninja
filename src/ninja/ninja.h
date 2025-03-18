@@ -364,7 +364,9 @@ public:
     void checkInputs();
     void dumpMemory();
 
-    WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
+    std::string converttimetostd(const boost::local_time::local_date_time& ninjaTime);
+
+    WindNinjaInputs input;	//The place where all inputs (except mesh) are stored.
 
 protected:
     void checkCancel();
@@ -483,7 +485,6 @@ private:
     void computeUVWField();
     void prepareOutput();
     bool matched(int iter);
-    std::string converttimetostd(const boost::local_time::local_date_time& ninjaTime) ; 
 
     void writeOutputFiles(); 
     void deleteDynamicMemory();

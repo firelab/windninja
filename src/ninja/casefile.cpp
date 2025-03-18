@@ -3,7 +3,7 @@
 std::string CaseFile::zipfilename = "";
 std::string CaseFile::directory = "";
 bool CaseFile::zipalreadyopened = false;
-std::mutex zipMutex;
+//std::mutex zipMutex;
 std::vector<boost::local_time::local_date_time> CaseFile::timesforWX; 
 std::vector<double> CaseFile::boundingboxarr; 
 bool CaseFile::downloadedfromdem; 
@@ -82,8 +82,8 @@ std::string CaseFile::parse(const std::string& type, const std::string& path) {
 
 void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath) {
     // CPL logging enabled here 
-    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
-    CPLSetConfigOption("CPL_DEBUG", "ON");
+    //std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
+    //CPLSetConfigOption("CPL_DEBUG", "ON");
 
     try {
         bool foundzip = lookforzip(zipFilePath, dirPath);
@@ -180,17 +180,20 @@ std::string CaseFile::getTime() {
             return oss.str();
 }
 
+// to avoid renaming the casefile except for the first run/ninja, checking for a specific starting zip file name
 void CaseFile::rename(std::string newname) {
 
-    std::string directory = getdir();  
-    std::string oldFilePath = zipfilename;
-    std::string newFilePath = newname ;
+    if (parse("file", zipfilename) == "tmp.ninja")
+    {
+        std::string oldFilePath = zipfilename;
+        std::string newFilePath = newname;
 
-    if (VSIRename(oldFilePath.c_str(), newFilePath.c_str()) == 0) {
-        CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", oldFilePath.c_str(), newFilePath.c_str());
-        zipfilename = newname;  
-    } else {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", oldFilePath.c_str(), newFilePath.c_str());
+        if (VSIRename(oldFilePath.c_str(), newFilePath.c_str()) == 0) {
+            CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", oldFilePath.c_str(), newFilePath.c_str());
+            zipfilename = newname;
+        } else {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", oldFilePath.c_str(), newFilePath.c_str());
+        }
     }
 }
 

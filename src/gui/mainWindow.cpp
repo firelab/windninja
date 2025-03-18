@@ -1653,68 +1653,51 @@ void mainWindow::openOutputPath()
     }
 }
 
-
-
-std::vector<std::string> mainWindow::split(const std::string &s, const std::string &delimiter) {
-    std::vector<std::string> tokens;
-    size_t start = 0;
-    size_t end = s.find(delimiter);
-    while (end != std::string::npos) {
-        tokens.push_back(s.substr(start, end - start));
-        start = end + delimiter.length();
-        end = s.find(delimiter, start);
-    }
-    tokens.push_back(s.substr(start, end));
-    return tokens;
-}
-
-
 int mainWindow::solve()
 {
-    bool writeCF = tree->solve->CaseFIBOX->isChecked(); 
+    bool writeCF = tree->solve->CaseFIBOX->isChecked();
 
-    CaseFile casefile;  
+    CaseFile casefile;
+
     std::string getdir = tree->solve->outputDirectory().toStdString();
-    
     std::string inputpath = getdir + "/config.cfg";
-    std::string stationCSVFILEPATH = getdir + "/selectedstations.csv";
-    std::string getfileName = casefile.parse("file", inputFileName.toStdString()); 
-    std::string zipFilePath = getdir + "/" + getfileName + "-" + casefile.getTime() + ".ninja";
 
-    casefile.setdir(getdir); 
-    casefile.setzip(zipFilePath); 
+    std::string getfileName = casefile.parse("file", inputFileName.toStdString());
+
+    std::string stationCSVFILEPATH = getdir + "/selectedstations.csv";
+
+    std::string zipFilePath = getdir + "/tmp.ninja";
+
+    casefile.setZipOpen(true);
+    casefile.setdir(getdir);
+    casefile.setzip(zipFilePath);
 
     std::ofstream outFile(inputpath);
 
     std::ofstream stationCSVFILE(stationCSVFILEPATH);
 
-
     if (!outFile) {
         std::cerr << "Error: Could not open the file for writing!" << std::endl;
         return 1;
     }
-    
+
     if (!stationCSVFILE) {
         std::cerr << "Error: Could not open the file for writing!" << std::endl;
         return 1;
     }
 
-    if (!writeCF) { 
+    if (!writeCF) {
         outFile.close();
-        stationCSVFILE.close(); 
+        stationCSVFILE.close();
 
         casefile.setZipOpen(false);
-        casefile.deleteFileFromPath(getdir, "config.cfg"); 
-
-        casefile.deleteFileFromPath(getdir, "selectedstations.csv"); 
-    }
-    else {
-        casefile.setZipOpen(true);
+        casefile.deleteFileFromPath(getdir, "config.cfg");
+        casefile.deleteFileFromPath(getdir, "selectedstations.csv");
     }
 
 #ifdef NINJAFOAM
     bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
-    if (useNinjaFoam && writeCF) {
+    if (writeCF && useNinjaFoam) {
       outFile << "--momentum_flag true\n";
     }
 #endif
@@ -1725,108 +1708,103 @@ int mainWindow::solve()
     std::string demFile = inputFileName.toStdString();
     
     if (writeCF) {
-      if (casefile.getDownloadedFromDEM() == true) {
-        std::vector<double> vec = casefile.getBoundingBox(); 
-
-        outFile << "--fetch_elevation true" << "\n";
-        outFile << "--north " << vec[0] << "\n"; 
-
-        outFile << "--south " << vec[1] << "\n"; 
-
-        outFile << "--west " << vec[2] << "\n"; 
-        outFile << "--east " << vec[3] << "\n"; 
-
-        outFile << "--elevation_source " << casefile.getElevSource() << "\n";
-
-      } 
-      else {
-        outFile << "--fetch_elevation false" << "\n";
+      if (casefile.getDownloadedFromDEM() == true)
+      {
+          std::vector<double> vec = casefile.getBoundingBox();
+          outFile << "--fetch_elevation true" << "\n";
+          outFile << "--north " << vec[0] << "\n";
+          outFile << "--south " << vec[1] << "\n";
+          outFile << "--west " << vec[2] << "\n";
+          outFile << "--east " << vec[3] << "\n";
+          outFile << "--elevation_source " << casefile.getElevSource() << "\n";
+      } else
+      {
+          outFile << "--fetch_elevation false" << "\n";
       }
       outFile << "--elevation_file " << demFile << "\n";
     }
-    
+
 #ifdef NINJAFOAM
     std::string caseFile = existingCaseDir.toStdString();
-    if (useNinjaFoam && writeCF) {
-      outFile << "--existing_case_directory" << caseFile<< "\n"; 
+    if (writeCF && useNinjaFoam) {
+      outFile << "--existing_case_directory" << caseFile << "\n";
     }
-  
 #endif
 
     //vegetation/roughness
     int vegIndex = tree->surface->roughnessComboBox->currentIndex();
     WindNinjaInputs::eVegetation vegetation;
-    if( inputFileType != LCP ) {
-    //get choice from combo
-    if(vegIndex == 0) {
-        vegetation = WindNinjaInputs::grass;
-        if (writeCF) {
-          outFile << "--vegetation grass\n";
+    if( inputFileType != LCP )
+    {
+        //get choice from combo
+        if(vegIndex == 0)
+        {
+            vegetation = WindNinjaInputs::grass;
+            if (writeCF) {
+              outFile << "--vegetation grass\n";
+            }
+        } else if( vegIndex == 1 )
+        {
+            vegetation = WindNinjaInputs::brush;
+            if (writeCF) {
+              outFile << "--vegetation brush\n";
+            }
+        } else if( vegIndex == 2 )
+        {
+            vegetation = WindNinjaInputs::trees;
+            if (writeCF) {
+              outFile << "--vegetation trees\n";
+            }
         }
     }
-    else if( vegIndex == 1 ) {
-        vegetation = WindNinjaInputs::brush;
-        if (writeCF) {
-          outFile << "--vegetation brush\n";
-        }
-    }
-    else if( vegIndex == 2 ) {
-        vegetation = WindNinjaInputs::trees;
-        if (writeCF) {
-          outFile << "--vegetation trees\n";
-        }
-    }
-    }
-    //mesh do resolution later 
+
+    //mesh
     int meshIndex = tree->surface->meshResComboBox->currentIndex();
     Mesh::eMeshChoice meshChoice;
     double meshRes;
     lengthUnits::eLengthUnits meshUnits;
     bool customMesh = false;
-    if( meshIndex == 0 ) {
+    if( meshIndex == 0 )
+    {
         meshChoice = Mesh::coarse;
         if (writeCF) {
           outFile << "--mesh_choice coarse\n";
         }
-    }
-    else if( meshIndex == 1 ) {
+    } else if( meshIndex == 1 )
+    {
         meshChoice = Mesh::medium;
-
         if (writeCF) {
           outFile << "--mesh_choice medium\n";
         }
-    }
-    else if( meshIndex == 2 ) {
+    } else if( meshIndex == 2 )
+    {
         meshChoice = Mesh::fine;
-
         if (writeCF) {
           outFile << "--mesh_choice fine\n";
         }
-    }
-    else {
-      meshRes = tree->surface->meshResDoubleSpinBox->value();
-      customMesh = true;
+    } else
+    {
+        meshRes = tree->surface->meshResDoubleSpinBox->value();
+        customMesh = true;
     }
 
-    if( tree->surface->meshFeetRadioButton->isChecked() ) {
+    if( tree->surface->meshFeetRadioButton->isChecked() )
+    {
         meshUnits = lengthUnits::feet;
         if (writeCF) {
           outFile << "--units_mesh_resolution ft\n";
         }
-
-    }
-    else {
+    } else
+    {
         meshUnits = lengthUnits::meters;
         if (writeCF) {
           outFile << "--units_mesh_resolution m\n";
         }
     }
 
-    if (customMesh && writeCF) {
-         outFile << "--mesh_resolution " << std::to_string(meshRes) << "\n";
+    if (writeCF && customMesh) {
+        outFile << "--mesh_resolution " << std::to_string(meshRes) << "\n";
     }
-
-        
 
 #ifdef NINJAFOAM
     WindNinjaInputs::eNinjafoamMeshChoice ninjafoamMeshChoice;
@@ -1868,251 +1846,244 @@ int mainWindow::solve()
 
     QVariant temp = tree->surface->timeZone->tzComboBox->itemData( tzIndex );
     std::string timeZone = temp.toString().toStdString();
-
     if (writeCF) {
-       outFile << "--time_zone " << timeZone <<"\n";
+       outFile << "--time_zone " << timeZone << "\n";
     }
 
     //diurnal
     bool useDiurnal = tree->diurnal->diurnalGroupBox->isChecked();
-    
 
     //stability
     bool useStability = tree->stability->stabilityGroupBox->isChecked();
-   
+
     if (writeCF) {
-      if (useDiurnal == 0) {
+      if (useDiurnal == 0)
+      {
          outFile << "--diurnal_winds false\n";
-      }
-      else {
+      } else
+      {
          outFile << "--diurnal_winds true\n";
       }
-      if (useStability == 0) {
+      if (useStability == 0)
+      {
          outFile << "--non_neutral_stability false\n";   
-      }
-      else {
-      
+      } else
+      {
          outFile << "--non_neutral_stability true\n"; 
       }
     }
+
     //initialization method
     WindNinjaInputs::eInitializationMethod initMethod;
-    if( tree->wind->windGroupBox->isChecked() ) {
+    if( tree->wind->windGroupBox->isChecked() )
+    {
         initMethod = WindNinjaInputs::domainAverageInitializationFlag;
-      
         if (writeCF) {
-          outFile << "--initialization_method  domainAverageInitialization\n"; 
+          outFile << "--initialization_method domainAverageInitialization\n";
         }
-    }
-    else if( tree->point->pointGroupBox->isChecked() ) {
+    } else if( tree->point->pointGroupBox->isChecked() )
+    {
         initMethod = WindNinjaInputs::pointInitializationFlag;
-
         if (writeCF) {
-          outFile << "--initialization_method  pointInitialization\n"; 
+          outFile << "--initialization_method pointInitialization\n";
         }
-    }
-    else if( tree->weather->weatherGroupBox->isChecked() ) {
+    } else if( tree->weather->weatherGroupBox->isChecked() )
+    {
         initMethod = WindNinjaInputs::wxModelInitializationFlag;
-
         if (writeCF) {
-          outFile << "--initialization_method  wxModelInitialization\n" ; 
+          outFile << "--initialization_method wxModelInitialization\n";
         }
     }
-    
-    
-    
+
     //input wind height
     double inHeight = tree->wind->metaWind->inputHeightDoubleSpinBox->value();
-    lengthUnits::eLengthUnits inHeightUnits;
-    
     if (writeCF) {
-      outFile << "--input_wind_height " << std::to_string(inHeight)  << "\n" ; 
+        outFile << "--input_wind_height " << std::to_string(inHeight) << "\n";
     }
-    if(tree->wind->metaWind->feetRadioButton->isChecked()) {
-      inHeightUnits = lengthUnits::feet;
-
-      if (writeCF) {
-        outFile << "--units_input_wind_height ft\n"; 
-      }
+    lengthUnits::eLengthUnits inHeightUnits;
+    if(tree->wind->metaWind->feetRadioButton->isChecked())
+    {
+        inHeightUnits = lengthUnits::feet;
+        if (writeCF) {
+          outFile << "--units_input_wind_height ft\n";
+        }
+    } else
+    {
+        inHeightUnits = lengthUnits::meters;
+        if (writeCF) {
+          outFile << "--units_input_wind_height m\n";
+        }
     }
-    else {
-      inHeightUnits = lengthUnits::meters;
 
-      if (writeCF) {
-        outFile << "--units_input_wind_height m\n"; 
-      }
-    } 
-     
     // handle widget download DEM in widgetdownloadDEM.cpp
 
     //speed units and air temp units
     velocityUnits::eVelocityUnits inputSpeedUnits;
-    if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 0) {
-      inputSpeedUnits = velocityUnits::milesPerHour;
-
-      if (writeCF) {
-          outFile << "--input_speed_units mph\n" ; 
-      }
-    }
-    else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 1) {
-      inputSpeedUnits = velocityUnits::metersPerSecond;
-
-      if (writeCF) {
-        outFile << "--input_speed_units mps\n"; 
-      }
-    }
-    else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 3) {
-      inputSpeedUnits = velocityUnits::knots;
-
-      if (writeCF) {
-        outFile << "--input_speed_units kts\n"; 
-      }
-    }
-    else {
-      inputSpeedUnits = velocityUnits::kilometersPerHour;
-
-      if (writeCF) {
-        outFile << "--input_speed_units kph\n" ; 
-      }
-    }
-
-    temperatureUnits::eTempUnits tempUnits;  
-    if(tree->wind->windTable->airTempUnits->currentIndex() == 0) 
+    if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 0)
     {
-      tempUnits = temperatureUnits::F;
-
-      if (writeCF) {
-        outFile <<  "--air_temp_units F\n" ;  
-      }
+        inputSpeedUnits = velocityUnits::milesPerHour;
+        if (writeCF) {
+          outFile << "--input_speed_units mph\n";
+        }
+    } else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 1)
+    {
+        inputSpeedUnits = velocityUnits::metersPerSecond;
+        if (writeCF) {
+          outFile << "--input_speed_units mps\n";
+        }
+    } else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 3)
+    {
+        inputSpeedUnits = velocityUnits::knots;
+        if (writeCF) {
+          outFile << "--input_speed_units kts\n";
+        }
+    } else
+    {
+        inputSpeedUnits = velocityUnits::kilometersPerHour;
+        if (writeCF) {
+          outFile << "--input_speed_units kph\n" ;
+        }
     }
-    else if(tree->wind->windTable->airTempUnits->currentIndex() == 1){
-      tempUnits = temperatureUnits::C;
 
-      if (writeCF) {
-        outFile << "--air_temp_units C\n"; 
-      }
+    temperatureUnits::eTempUnits tempUnits;
+    if(tree->wind->windTable->airTempUnits->currentIndex() == 0)
+    {
+        tempUnits = temperatureUnits::F;
+        if (writeCF) {
+          outFile <<  "--air_temp_units F\n" ;
+        }
+    } else if(tree->wind->windTable->airTempUnits->currentIndex() == 1)
+    {
+        tempUnits = temperatureUnits::C;
+        if (writeCF) {
+          outFile << "--air_temp_units C\n";
+        }
     }
+
     //model init
     std::string weatherFile;
     QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
-    if( mi.isValid() ) {
-    QFileInfo fi( tree->weather->model->fileInfo( mi ) );
-    weatherFile = fi.absoluteFilePath().toStdString();
-    
-      if (writeCF) {
-        outFile << "--wx_model_type ";
-        outFile << "--forecast_duration "<< tree->weather->hourSpinBox->value() <<"\n"; 
-      } 
+    if( mi.isValid() )
+    {
+        QFileInfo fi( tree->weather->model->fileInfo( mi ) );
+        weatherFile = fi.absoluteFilePath().toStdString();
+        if (writeCF) {
+          outFile << "--wx_model_type ";
+          outFile << "--forecast_duration " << tree->weather->hourSpinBox->value() << "\n";
+        }
+    } else
+    {
+        weatherFile = "";
     }
-    else
-    weatherFile = "";
 
     //output height
     double outHeight = tree->output->outputHeight->outputHeightDoubleSpinBox->value();
-    lengthUnits::eLengthUnits outHeightUnits;
-
     if (writeCF) {
-      outFile << "--output_wind_height "  <<std::to_string(outHeight) <<"\n"; 
+        outFile << "--output_wind_height " << std::to_string(outHeight) << "\n";
     }
-    if(tree->output->outputHeight->feetRadioButton->isChecked()) {
-      
-      if (writeCF) {
-        outFile << "--units_output_wind_height ft\n";
-
-      }
-      outHeightUnits = lengthUnits::feet; 
-    } 
-    else {
-      outHeightUnits = lengthUnits::meters;
-
-      if (writeCF) {
-        outFile << "--units_output_wind_height m\n";}
+    lengthUnits::eLengthUnits outHeightUnits;
+    if(tree->output->outputHeight->feetRadioButton->isChecked())
+    {
+        outHeightUnits = lengthUnits::feet;
+        if (writeCF) {
+          outFile << "--units_output_wind_height ft\n";
+        }
+    } else
+    {
+        outHeightUnits = lengthUnits::meters;
+        if (writeCF) {
+          outFile << "--units_output_wind_height m\n";
+        }
     }
 
     velocityUnits::eVelocityUnits outputSpeedUnits;
-    if(tree->output->outputSpeedUnitsCombo->currentIndex() == 0) {
+    if(tree->output->outputSpeedUnitsCombo->currentIndex() == 0)
+    {
         outputSpeedUnits = velocityUnits::milesPerHour;
-        
-    if (writeCF) {
-        outFile << "--output_speed_units mph\n"; }
-    }
-    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 1) {
-        outputSpeedUnits = velocityUnits::metersPerSecond;
-
-    if (writeCF) {
-        outFile << "--output_speed_units mps\n" ; }
-    }
-    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 2) {
-        outputSpeedUnits = velocityUnits::kilometersPerHour;
-
-      if (writeCF) {
-        outFile << "--output_speed_units kph\n"; }
-    }
-    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 3) {
-        outputSpeedUnits = velocityUnits::knots;
-
         if (writeCF) {
-        outFile << "--output_speed_units kts\n"; }
+          outFile << "--output_speed_units mph\n";
+        }
+    } else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 1)
+    {
+        outputSpeedUnits = velocityUnits::metersPerSecond;
+        if (writeCF) {
+          outFile << "--output_speed_units mps\n" ;
+        }
+    } else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 2)
+    {
+        outputSpeedUnits = velocityUnits::kilometersPerHour;
+        if (writeCF) {
+          outFile << "--output_speed_units kph\n";
+        }
+    } else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 3)
+    {
+        outputSpeedUnits = velocityUnits::knots;
+        if (writeCF) {
+          outFile << "--output_speed_units kts\n";
+        }
     }
 
     //clip buffer?
     int clip = tree->output->bufferSpinBox->value();
-  
+    if (writeCF) {
+      //if (clip > 0)
+      //{
+          outFile << "--output_buffer_clipping " << std::to_string(clip) << "\n";
+      //}
+    }
+
     bool writeWxOutput;
     if( tree->output->wxModelOutputCheckBox->isEnabled() )
         writeWxOutput = tree->output->wxModelOutputCheckBox->isChecked();
 
     //google
     bool writeGoogle = tree->google->googleGroupBox->isChecked();
-
-    if (writeCF) {
-      if (writeGoogle) {
-        outFile << "--write_goog_output true\n";    
-      if( initMethod == WindNinjaInputs::wxModelInitializationFlag) {
-
-        outFile << "--write_wx_model_goog_output true\n";  
-      }  
-      }
-    if (clip) {
-      outFile << "output_buffer_clipping true\n"; 
-    }
-    }
-  
-    
     double googleRes = tree->google->googleResSpinBox->value();
     if (writeCF) {
-      outFile << "--goog_out_resolution " <<  std::to_string(googleRes)<< "\n"; }
+      if (writeGoogle)
+      {
+          outFile << "--write_goog_output true\n";
+          if( initMethod == WindNinjaInputs::wxModelInitializationFlag)
+          {
+              outFile << "--write_wx_model_goog_output true\n";
+          }
+          outFile << "--goog_out_resolution " << std::to_string(googleRes) << "\n";
+      }
+    }
     double vectorWidth = tree->google->vectorWidthDoubleSpinBox->value();
     lengthUnits::eLengthUnits googleUnits;
     KmlVector::egoogSpeedScaling googleScale;
     //bool writeLegend = tree->google->legendGroupBox->isChecked();
-    if(tree->google->googleMetersRadioButton->isChecked()) {
-      googleUnits = lengthUnits::meters;
-
-      if (writeCF) {
-        outFile << "--units_goog_out_resolution m\n";    }
+    if(tree->google->googleMetersRadioButton->isChecked())
+    {
+        googleUnits = lengthUnits::meters;
+        if (writeCF) {
+          outFile << "--units_goog_out_resolution m\n";
+        }
+    } else
+    {
+        googleUnits = lengthUnits::feet;
+        if (writeCF) {
+          outFile << "--units_goog_out_resolution ft\n";
+        }
     }
-    else {
-      googleUnits = lengthUnits::feet;
-      if (writeCF) {
-        outFile << "--units_goog_out_resolution ft\n";    }
+    if(tree->google->uniformRangeRadioButton->isChecked())
+    {
+        googleScale = KmlVector::equal_interval;
+    } else
+    {
+        googleScale = KmlVector::equal_color;
     }
-    if(tree->google->uniformRangeRadioButton->isChecked()) 
-    googleScale = KmlVector::equal_interval;
-    else
-    googleScale = KmlVector::equal_color;
 
     std::string googleScheme;
     bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
-
     if (writeCF) {
-      if (googVectorScaling) {
-    
-        outFile << "--goog_out_vector_scaling true\n";  
-      }  
-      else {
-
-        outFile << "--goog_out_vector_scaling false\n";  
+      if (googVectorScaling)
+      {
+          outFile << "--goog_out_vector_scaling true\n";
+      } else
+      {
+          outFile << "--goog_out_vector_scaling false\n";
       }
     }
     if(tree->google->colorblindBox->isChecked())
@@ -2124,100 +2095,104 @@ int mainWindow::solve()
         if (googCheckScheme=="Default")
         {
             googleScheme="default";
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme ROYGB\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme ROYGB\n";
+            }
         }
         if (googCheckScheme=="ROPGW (Red Orange Pink Green White)")
         {
             googleScheme="ROPGW";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme ROPGW\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme ROPGW\n";
+            }
         }
         if (googCheckScheme=="Oranges")
         {
             googleScheme="oranges";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme oranges\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme oranges\n";
+            }
         }
         if (googCheckScheme=="Blues")
         {
             googleScheme="blues";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme blues\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme blues\n";
+            }
         }
         if (googCheckScheme=="Pinks")
         {
             googleScheme="pinks";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme pinks\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme pinks\n";
+            }
         }
         if (googCheckScheme=="Greens")
         {
             googleScheme="greens";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme greens\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme greens\n";
+            }
         }
         if (googCheckScheme=="Magic Beans")
         {
             googleScheme="magic_beans";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme magic_beans\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme magic_beans\n";
+            }
         }
         if (googCheckScheme=="Pink to Green")
         {
             googleScheme="pink_to_green";
-
-          if (writeCF) {
-            outFile << "--goog_out_color_scheme pink_to_green\n"; }
+            if (writeCF) {
+              outFile << "--goog_out_color_scheme pink_to_green\n";
+            }
         }
-    }
-    else
+    } else
     {
         googleScheme="default";
-
         if (writeCF) {
-          outFile << "--goog_out_color_scheme ROYGB\n"; }
+          outFile << "--goog_out_color_scheme ROYGB\n";
+        }
     }
+
     //ascii raster fb files
     bool writeFb = tree->fb->fbGroupBox->isChecked();
     double fbRes = tree->fb->fbResSpinBox->value();
-    
     if (writeCF) {
- 
-      if (writeFb) {
-        outFile << "--write_ascii_output true\n";
+      if (writeFb)
+      {
+          outFile << "--write_ascii_output true\n";
+          if (initMethod == WindNinjaInputs::wxModelInitializationFlag )
+          {
+              outFile << "--write_wx_model_ascii_output true\n";
+          }
+          outFile << "--ascii_out_resolution " << std::to_string(fbRes) << "\n";
       }
-    
-      if (writeFb &&  initMethod == WindNinjaInputs::wxModelInitializationFlag ) {
-
-        outFile << "--write_wx_model_ascii_output true\n";
-          
-
-      }        
-      outFile << "--ascii_out_resolution " << std::to_string(fbRes) << "\n"; 
-
     }
-
     lengthUnits::eLengthUnits fbUnits;
-    if(tree->fb->fbMetersRadioButton->isChecked()) {
-      fbUnits = lengthUnits::meters;
-      if (writeCF) {
-      outFile << "--units_ascii_out_resolution m\n"; }
+    if(tree->fb->fbMetersRadioButton->isChecked())
+    {
+        fbUnits = lengthUnits::meters;
+        if (writeCF) {
+          outFile << "--units_ascii_out_resolution m\n";
+        }
+    } else
+    {
+        fbUnits = lengthUnits::feet;
+        if (writeCF) {
+          outFile << "--units_ascii_out_resolution ft\n";
+        }
     }
-    else {
-      fbUnits = lengthUnits::feet;
-      if (writeCF) {
-        outFile << "--units_ascii_out_resolution ft\n"; }
-    }
+
     //write atmosphere file?
     bool writeAtm = tree->fb->atmFileCheckBox->isChecked();
-  
+    if (writeCF) {
+      if (writeAtm)
+      {
+          outFile << "--write_farsite_atm true\n";
+      }
+    }
     if(writeAtm && writeFb)
     {
         if((outHeight == 20 && outHeightUnits == lengthUnits::feet &&
@@ -2241,87 +2216,73 @@ int mainWindow::solve()
             return false;
         }
     }
-    
 
     //shape
     bool writeShape = tree->shape->shapeGroupBox->isChecked();
-    // do for wx  
-    
-
+    // do for wx
     double shapeRes = tree->shape->shapeResSpinBox->value();
-    
-   if (writeCF) {
-    if (writeAtm) {
-       outFile << "--write_farsite_atm true\n"; 
-    }
-    if( initMethod == WindNinjaInputs::wxModelInitializationFlag ) {
-
-      if (writeShape) {
-        outFile << "--write_wx_model_shapefile_output true\n";
-      }
-      else {
-        outFile << "--write_wx_model_shapefile_output  false\n";
-      }
-    }
-    else {
-      if (writeShape) {
-        outFile << "--write_shapefile_output true\n";
-      }
-      else {
-        outFile << "--write_shapefile_output false\n";
-      }
-    }
-
-    outFile << "--shape_out_resolution " <<std::to_string(shapeRes) <<"\n"; 
-   }
-   lengthUnits::eLengthUnits shapeUnits;
-   if(tree->shape->shapeMetersRadioButton->isChecked()) {
-    shapeUnits = lengthUnits::meters;
     if (writeCF) {
-      outFile << "--units_shape_out_resolution m\n"; }
-   }
-   else{
-    shapeUnits = lengthUnits::feet;
-    if (writeCF) {
-      outFile << "--units_shape_out_resolution ft\n"; }
-   }
+      if (writeShape)
+      {
+          outFile << "--write_shapefile_output true\n";
+          if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
+          {
+              outFile << "--write_wx_model_shapefile_output true\n";
+          }
+          outFile << "--shape_out_resolution " << std::to_string(shapeRes) << "\n";
+      }
+    }
+    lengthUnits::eLengthUnits shapeUnits;
+    if(tree->shape->shapeMetersRadioButton->isChecked())
+    {
+        shapeUnits = lengthUnits::meters;
+        if (writeCF) {
+          outFile << "--units_shape_out_resolution m\n";
+        }
+    } else
+    {
+        shapeUnits = lengthUnits::feet;
+        if (writeCF) {
+          outFile << "--units_shape_out_resolution ft\n";
+        }
+    }
+
     //pdf
     bool writePdf = tree->pdf->pdfGroupBox->isChecked();
-    
     double pdfRes = tree->pdf->pdfResSpinBox->value();
     double pdfLineWidth = tree->pdf->vectorWidthDoubleSpinBox->value();
-
-    lengthUnits::eLengthUnits pdfUnits;
-    if(tree->pdf->pdfMetersRadioButton->isChecked()) {
-      if (writeCF) {
-        outFile << "--units_pdf_out_resolution m\n"; }
-        pdfUnits = lengthUnits::meters;
+    if (writeCF) {
+      if (writePdf)
+      {
+          outFile << "--write_pdf_output true\n";
+          outFile << "--pdf_out_resolution "<< std::to_string(pdfRes) << "\n";
+          outFile << "--pdf_linewidth "<< std::to_string(pdfLineWidth) << "\n";
+      }
     }
-    else {
-
-      if (writeCF) {
-        outFile << "--units_pdf_out_resolution ft\n"; }
-      pdfUnits = lengthUnits::feet;
+    lengthUnits::eLengthUnits pdfUnits;
+    if(tree->pdf->pdfMetersRadioButton->isChecked())
+    {
+        pdfUnits = lengthUnits::meters;
+        if (writeCF) {
+          outFile << "--units_pdf_out_resolution m\n";
+        }
+    } else
+    {
+        pdfUnits = lengthUnits::feet;
+        if (writeCF) {
+          outFile << "--units_pdf_out_resolution ft\n";
+        }
     }
     int pdfBase = tree->pdf->backgroundComboBox->currentIndex();
-
     if (writeCF) {
-      if (writePdf) {
-        outFile << "--write_pdf_output true\n"; 
-      }
-      else {
-        outFile << "--write_pdf_output false\n"; 
-      }
-      outFile << "--pdf_out_resolution "<< std::to_string(pdfRes) <<"\n"; 
-      outFile << "--pdf_linewidth "<<std::to_string(pdfLineWidth)<<"\n"; 
-      if (pdfBase == 0) {
-        outFile << "--pdf_basemap topofire\n"; 
-      }
-      else  {
-        outFile << "--pdf_basemap hillshade\n"; 
+      if (pdfBase == 0)
+      {
+          outFile << "--pdf_basemap topofire\n";
+      } else
+      {
+          outFile << "--pdf_basemap hillshade\n";
       }
     }
-    
     double pdfHeight, pdfWidth;
     int pdfSize = tree->pdf->sizeComboBox->currentIndex();
     // Letter
@@ -2329,26 +2290,27 @@ int mainWindow::solve()
     {
         pdfHeight = 11.0;
         pdfWidth = 8.5;
-      if (writeCF) {
-        outFile << "--pdf_size letter\n" ;}
+        if (writeCF) {
+          outFile << "--pdf_size letter\n";
+        }
     }
     // Legal
     else if( pdfSize == 1 )
     {
         pdfHeight = 14.0;
         pdfWidth = 8.5;
-
-      if (writeCF) {
-        outFile << "--pdf_size legal\n";}
+        if (writeCF) {
+          outFile << "--pdf_size legal\n";
+        }
     }
     // Tabloid
     else if( pdfSize == 2 )
     {
         pdfHeight = 17.0;
         pdfWidth = 11.0;
-
-      if (writeCF) {
-        outFile << "--pdf_size tabloid\n";}
+        if (writeCF) {
+          outFile << "--pdf_size tabloid\n";
+        }
     }
     if( tree->pdf->landscapeRadioButton->isChecked() )
     {
@@ -2359,26 +2321,25 @@ int mainWindow::solve()
     }
 
     bool writeVTK = tree->vtk->vtkGroupBox->isChecked();
-    
-   
+    if (writeCF) {
+      if (writeVTK)
+      {
+          outFile << "--write_vtk_output true\n";
+      }
+    }
+
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
-
-if (writeCF) {
-    outFile << "--num_threads " <<std::to_string(nThreads) <<"\n" ; 
-    if (writeVTK) {
-    outFile << "--write_vtk_output true\n"; 
+    if (writeCF) {
+      outFile << "--num_threads " << std::to_string(nThreads) << "\n";
     }
-    else {
 
-    outFile << "--write_vtk_output false\n"; 
-    }
-}
 #ifdef NINJAFOAM    
     army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
 #else
     army = new ninjaArmy(1); // native ninja solver
 #endif
+
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
@@ -2391,141 +2352,110 @@ if (writeCF) {
         bool useTimeList = tree->point->enableTimeseries; //Find out if its a timeseries run or not
         bool writeStationKML = tree->point->writeStationKmlButton->isChecked(); //Write a kml file
         bool writeStationCSV = tree->point->writeStationFileButton->isChecked(); //hidden for now
-        std::vector<std::string> fullFileListPoint = tree->point->fullFileList; 
-        if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true && writeCF) {
-         
-        // for each file append it to csv
-        // if any point file is under a wx station folder just copy the entire folder over - otherwise no 
-        
-          outFile << "--fetch_station true\n"; 
-          outFile << "--fetch_type "<< tree->point->xWidget->getType()<< "\n"; 
-          if (tree->point->xWidget->getType() == "bbox") {
-            outFile << "--station_buffer " <<tree->point->xWidget->getBuffer()<< "\n" ; 
-            outFile << "--station_buffer_units " << tree->point->xWidget->getBufferUnits()<< "\n"; 
-          }
-          if (tree->point->xWidget->getType() == "stid") {
-              outFile << "--fetch_station_name " << tree->point->xWidget->getStationIDS() << "\n"; 
-          }
-          if (tree->point->xWidget->getTimeseries() == false) {
-            outFile << "--fetch_current_station_data false\n"; 
-            outFile << "--number_time_steps " << std::to_string(numTimeSteps) <<"\n"; 
-          }
-          else {
-            outFile << "--fetch_current_station_data true\n"; 
-          }
 
-          if (writeStationKML) {
+        if (writeCF)
+        {
+            if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true)
+            {
+                outFile << "--fetch_station true\n";
+                outFile << "--fetch_type " << tree->point->xWidget->getType() << "\n";
+                if (tree->point->xWidget->getType() == "bbox")
+                {
+                    outFile << "--station_buffer " << tree->point->xWidget->getBuffer() << "\n";
+                    outFile << "--station_buffer_units " << tree->point->xWidget->getBufferUnits() << "\n";
+                }
+                if (tree->point->xWidget->getType() == "stid")
+                {
+                    outFile << "--fetch_station_name " << tree->point->xWidget->getStationIDS() << "\n";
+                }
+                if (tree->point->xWidget->getTimeseries() == false)
+                {
+                    outFile << "--fetch_current_station_data false\n";
+                    outFile << "--number_time_steps " << std::to_string(numTimeSteps) << "\n";
+                } else
+                {
+                    outFile << "--fetch_current_station_data true\n";
+                }
+            } else // if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true)
+            {
+                outFile << "--fetch_station false\n";
+                if (useTimeList)
+                {
+                    outFile << "--fetch_current_station_data false\n";
+                    outFile <<  "--start_year " << xStartTime[0] << "\n";
+                    outFile <<  "--start_month " << xStartTime[1] << "\n";
+                    outFile <<  "--start_day " << xStartTime[2] << "\n";
+                    outFile <<  "--start_hour " << xStartTime[3] << "\n";
+                    outFile <<  "--start_minute " << xStartTime[4] << "\n";
+                    outFile <<  "--stop_year " << xEndTime[0] << "\n";
+                    outFile <<  "--stop_month " << xEndTime[1] << "\n";
+                    outFile <<  "--stop_day " << xEndTime[2] << "\n";
+                    outFile <<  "--stop_hour " << xEndTime[3] << "\n";
+                    outFile <<  "--stop_minute " << xEndTime[4] << "\n";
+                    outFile << "--number_time_steps " << std::to_string(numTimeSteps) << "\n";
+                } else
+                {
+                    outFile << "--fetch_current_station_data true\n";
+                }
+            } // if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true)
 
-            outFile <<  "--write_wx_station_kml true\n"; 
-          }
-          else {
-            outFile <<  "--write_wx_station_kml false\n"; 
-
-          }
-          if (writeStationCSV) {
-          outFile <<  "--write_wx_station_csv true\n"; 
-          }
-          else {
-            outFile <<  "--write_wx_station_csv false\n"; 
-
-          }
-          
-      
-        }
-        
-      else if (writeCF) {
-
-        outFile << "--fetch_station false\n"; 
-        if (useTimeList) {
-
-          outFile << "--fetch_current_station_data false\n";
-        
-          outFile <<  "--start_year " << xStartTime[0] << "\n"; 
-          outFile <<  "--start_month " <<xStartTime[1]<<"\n" ; 
-         
-          outFile <<  "--start_day " <<xStartTime[2] << "\n";
-         
-          outFile <<  "--start_hour " << xStartTime[3]<< "\n";
-         
-          outFile <<  "--start_minute " << xStartTime[4]<<"\n" ;
-          
-          outFile <<  "--stop_year " <<xEndTime[0]<< "\n" ; 
-          outFile <<  "--stop_month " <<xEndTime[1] << "\n"; 
-          
-          outFile <<  "--stop_day " <<xEndTime[2] << "\n";
-          
-          outFile <<  "--stop_hour " << xEndTime[3]<<"\n" ;
-          
-          outFile <<  "--stop_minute " << xEndTime[4]<<"\n";
-
-          outFile << "--number_time_steps " << std::to_string(numTimeSteps) <<"\n"; 
-        }
-
-        else {
-
-          outFile << "--fetch_current_station_data true\n";
-
-        }
-
-        if (writeStationKML) {
-
-          outFile <<  "--write_wx_station_kml true\n"; 
-        }
-        else {
-          outFile <<  "--write_wx_station_kml false\n"; 
-
-        }
-        if (writeStationCSV) {
-
-          outFile <<  "--write_wx_station_csv true\n"; 
-        }
-        else {
-          outFile <<  "--write_wx_station_csv false\n"; 
-
-        }
-}
-
-    if  ((writeCF) ) {
-
-        for (std::string & pfile : fullFileListPoint) {
-            std::vector<std::string> tokens = split(pfile, "/");
-            
-            if (tokens.size() >= 2) {
-              std::string secondToLastToken =  tokens[tokens.size()-2]; 
-
-                std::string pointpath1 = "pointinitialization/" + tokens[tokens.size()-2] + "/" + tokens[tokens.size()-1] ;
-                std::string pointpath2 = "pointinitialization/" + tokens[tokens.size()-1] ;
-              if (secondToLastToken.find("WXSTATIONS-") != std::string::npos) {
-                    casefile.addFileToZip(zipFilePath, getdir, pointpath1, pfile);
-              }
-              else {
-                  casefile.addFileToZip(zipFilePath , getdir, pointpath2, pfile); 
-              }
+            if (writeStationKML)
+            {
+                outFile <<  "--write_wx_station_kml true\n";
+            } else
+            {
+                outFile <<  "--write_wx_station_kml false\n";
             }
-       }     
-        
-        for (std::string & pfile : pointFileList) {
-            std::vector<std::string> tokens = split(pfile, "/");
-            std::string updatedpath = casefile.parse("file", pfile); 
-            if (tokens.size() >= 2) {
-
-              std::string secondToLastToken =  tokens[tokens.size()-2]; 
-              if (secondToLastToken.find("WXSTATIONS-") != std::string::npos) {
-                updatedpath = secondToLastToken + "/" + tokens[tokens.size() - 1]; 
-              }
-          
+            if (writeStationCSV)
+            {
+                outFile <<  "--write_wx_station_csv true\n";
+            } else
+            {
+                outFile <<  "--write_wx_station_csv false\n";
             }
 
-            stationCSVFILE << updatedpath << "\n"; 
-        }
+            // for each file append it to csv
+            // if any point file is under a wx station folder just copy the entire folder over - otherwise no
+            std::vector<std::string> fullFileListPoint = tree->point->fullFileList;
+            for (std::string & pfile : fullFileListPoint)
+            {
+                std::vector<std::string> tokens = split(pfile, "/");
+                if (tokens.size() >= 2)
+                {
+                    std::string secondToLastToken = tokens[tokens.size()-2];
+                    std::string pointpath1 = "pointinitialization/" + tokens[tokens.size()-2] + "/" + tokens[tokens.size()-1];
+                    std::string pointpath2 = "pointinitialization/" + tokens[tokens.size()-1];
+                    if (secondToLastToken.find("WXSTATIONS-") != std::string::npos)
+                    {
+                        casefile.addFileToZip(zipFilePath, getdir, pointpath1, pfile);
+                    } else
+                    {
+                        casefile.addFileToZip(zipFilePath, getdir, pointpath2, pfile);
+                    }
+                }
+            }
+            // setup list of actually used/selected stations
+            for (std::string & pfile : pointFileList)
+            {
+                std::vector<std::string> tokens = split(pfile, "/");
+                std::string updatedpath = casefile.parse("file", pfile);
+                if (tokens.size() >= 2)
+                {
+                    std::string secondToLastToken = tokens[tokens.size()-2];
+                    if (secondToLastToken.find("WXSTATIONS-") != std::string::npos)
+                    {
+                        updatedpath = secondToLastToken + "/" + tokens[tokens.size() - 1];
+                    }
+                }
+                stationCSVFILE << updatedpath << "\n";
+            }
+            stationCSVFILE.close();
+            std::string pointpathusual = "pointinitialization/selectedstations.csv";
+            casefile.addFileToZip(zipFilePath, getdir, pointpathusual, stationCSVFILEPATH);
 
-        stationCSVFILE.close(); 
-        std::string pointpathusual = "pointinitialization/selectedstations.csv"; 
-        casefile.addFileToZip(zipFilePath , getdir, pointpathusual , stationCSVFILEPATH); 
-        
-    }
+        } // if (writeCF)
+
         /*
-    }
          * Note that pointFormat is not the same as stationFormat!
          *
          * point Format is based on pointInput::directStationTraffic
@@ -2569,10 +2499,10 @@ if (writeCF) {
                 boost::posix_time::ptime noTime;
                 timeList.push_back(noTime);
             }
-            try{
-              //Try to run windninja
-              if (writeCF) {
-                outFile << "--match_points true\n";}
+            try{ //Try to run windninja
+                if (writeCF) {
+                    outFile << "--match_points true\n";
+                }
                 army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
             }
             catch(...){ //catch all exceptions and tell the user, prevent segfaults
@@ -2629,9 +2559,9 @@ if (writeCF) {
                     CPLDebug("STATION_FETCH","FILES STORED...");
 
                     try{ //try running with timelist
-                       
-                      if (writeCF) {
-                        outFile << "--match_points true\n";}
+                        if (writeCF) {
+                            outFile << "--match_points true\n";
+                        }
                         army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
                     }
                     catch(...){ //catch any and all exceptions and tell the user
@@ -2665,9 +2595,9 @@ if (writeCF) {
                         timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
                     try{ //try making the army with current data
-
-                      if (writeCF) {
-                        outFile << "--match_points true\n";}
+                        if (writeCF) {
+                            outFile << "--match_points true\n";
+                        }
                         army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
                     }
                     catch(...){ //catch any and all exceptions and tell the user
@@ -2743,10 +2673,10 @@ if (writeCF) {
             std::string baseMeta = baseDem+"-metadata";
             std::string metaPath = std::string(CPLFormFilename(pathDem.c_str(),baseMeta.c_str(),".csv"));
             CPLDebug("STATION_FETCH","Saving Metadata to: %s",metaPath.c_str());
-
             if (writeCF) {
-              outFile << "--fetch_metadata true\n"; 
-              outFile << "--metadata_filename" << metaPath<< "\n";  }
+                outFile << "--fetch_metadata true\n";
+                outFile << "--metadata_filename" << metaPath << "\n";
+            }
             pointInitialization::fetchMetaData(metaPath,demFile,true);
         }
     }
@@ -2780,41 +2710,39 @@ if (writeCF) {
         }
 
         std::vector<blt::local_date_time> times = tree->weather->timeList();
-      
-        
-        if ( times.size() > 0 )  {
+        /* This can throw a badForecastFile */
 
-          if (writeCF) {
+        if (writeCF && times.size() > 0)
+        {
             std::vector<std::string> stringTimes;
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
-            for (const auto& time : times) {
-            // Convert local_date_time to ptime using the UTC time zone
-            // Get the local time in the UTC time zone
+            for (const auto& time : times)
+            {
+                // Convert local_date_time to ptime using the UTC time zone
+                // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
 
-               // Convert ptime to ISO 8601 string
+                // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);
                 stringTimes.push_back(isoString);
             }
 
-            std::string outstr; 
-            for (size_t i = 0; i < stringTimes.size(); ++i)
-            { 
-              outstr += stringTimes[i]; 
-              if (i != stringTimes.size() - 1) {
-                outstr += "||"; 
-             }
+            std::string outstr;
+            for (size_t i = 0; i < stringTimes.size(); i++)
+            {
+                outstr += stringTimes[i];
+                if (i != stringTimes.size() - 1)
+                {
+                    outstr += "||";
+                }
             }
 
-            outFile << "--forecast_times " << outstr <<"\n"; 
-      
-            outFile << "--forecast_filename " << weatherFile << "\n"; 
-            std::string weatherFileName = "weatherfile/" + casefile.parse("file", weatherFile); 
-            casefile.addFileToZip(zipFilePath, getdir, weatherFileName,  weatherFile); 
-          }
-        }
-
+            outFile << "--forecast_times " << outstr << "\n";
+            outFile << "--forecast_filename " << weatherFile << "\n";
+            std::string weatherFileName = "weatherfile/" + casefile.parse("file", weatherFile);
+            casefile.addFileToZip(zipFilePath, getdir, weatherFileName, weatherFile);
+        } // if (writeCF && times.size() > 0)
 
         try
         {
@@ -2851,44 +2779,43 @@ if (writeCF) {
             delete army;
             return false;
         }
-        
-        //get times for casefile if no times are clicked by user 
 
-        if (times.size() == 0 && writeCF) {
+        //get times for casefile if no times are clicked by user
+        if (writeCF && times.size() == 0)
+        {
+            std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWXTIME();
+            std::vector<std::string> stringTimes;
+            blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
-        
-          std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWXTIME();
-          std::vector<std::string> stringTimes;
-          blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
+            for (const auto& time : wxtimesfromcasefile)
+            {
+                // Convert local_date_time to ptime using the UTC time zone
+                // Get the local time in the UTC time zone
+                bpt::ptime pt = time.local_time_in(utc).local_time();
 
-          for (const auto& time : wxtimesfromcasefile) {
-            // Convert local_date_time to ptime using the UTC time zone
-            // Get the local time in the UTC time zone
-            bpt::ptime pt = time.local_time_in(utc).local_time();
+                // Convert ptime to ISO 8601 string
+                std::string isoString = bpt::to_iso_string(pt);
+                stringTimes.push_back(isoString);
+            }
 
-            // Convert ptime to ISO 8601 string
-            std::string isoString = bpt::to_iso_string(pt);
-            stringTimes.push_back(isoString);
-          }
+            std::string outstr;
+            for (size_t i = 0; i < stringTimes.size(); i++)
+            {
+                outstr += stringTimes[i];
+                if (i != stringTimes.size() - 1)
+                {
+                    outstr += "||";
+                }
+            }
 
-          std::string outstr; 
-          for (size_t i = 0; i < stringTimes.size(); ++i)
-          { 
-              outstr += stringTimes[i]; 
-              if (i != stringTimes.size() - 1) {
-                outstr += "||"; 
-             }
-          }
-
-          outFile << "--forecast_times " << outstr <<"\n"; 
-      
-          outFile << "--forecast_filename " << weatherFile << "\n"; 
-          std::string weatherFileName = "weatherfile/" + casefile.parse("file", weatherFile); 
-          casefile.addFileToZip(zipFilePath, getdir, weatherFileName,  weatherFile); 
-        }
+            outFile << "--forecast_times " << outstr << "\n";
+            outFile << "--forecast_filename " << weatherFile << "\n";
+            std::string weatherFileName = "weatherfile/" + casefile.parse("file", weatherFile);
+            casefile.addFileToZip(zipFilePath, getdir, weatherFileName, weatherFile);
+        } // if (writeCF && times.size() == 0)
 
         nRuns = army->getSize();
-    }
+    } // if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
 
     progressDialog->setValue( 0 );
     //set progress dialog and initial value
@@ -2897,50 +2824,36 @@ if (writeCF) {
 
     std::string outputDir = tree->solve->outputDirectory().toStdString();
     if (writeCF) {
-        outFile << "--output_path " << outputDir<< "\n" ;  
+        outFile << "--output_path " << outputDir << "\n";
     }
     if( outputDir == "" ) {
       // This should never happen, so if it does, fix it.
       throw( "no output directory specified in solve page" );
     }
 
-    for(int i = 0;i < army->getSize(); i++) 
+    //fill in the values
+    for(int i = 0;i < army->getSize(); i++)
     {
-          CPLSetConfigOption("CPL_DEBUG", "ON");
 
-          std::string domaininputpath = getdir + "/domainrun" + std::to_string(i) + ".cfg";
-
-                
-          std::ofstream domainRUNS(domaininputpath);
-
+        std::string domaininputpath = getdir + "/domainrun" + std::to_string(i) + ".cfg";
+        std::ofstream domainRUNS(domaininputpath);
         // add runs to files
-        if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
+        if (writeCF)
         {
-              if (writeCF) {
-                
-                domainRUNS << "--input_speed " << tree->wind->windTable->speed[i]->value() << "\n";   
-                
-                domainRUNS << "--input_direction  " <<  tree->wind->windTable->dir[i]->value() << "\n"; 
-
-                domainRUNS << "--year " << tree->wind->windTable->date[i]->date().year() << "\n"; 
-
-
-                domainRUNS << "--month " <<tree->wind->windTable->date[i]->date().month() << "\n"; 
-            
-                domainRUNS << "--day " << tree->wind->windTable->date[i]->date().day() << "\n"; 
-            
-                domainRUNS << "--hour " <<tree->wind->windTable->time[i]->time().hour() << "\n"; 
-    
-                domainRUNS << "--minute " << tree->wind->windTable->time[i]->time().minute() << "\n"; 
-              
-                domainRUNS << "--uni_air_temp " << tree->wind->windTable->airTemp[i]->value() << "\n"; 
-                domainRUNS << "--uni_cloud_cover " <<tree->wind->windTable->cloudCover[i]->value()<< "\n" ;  
-            
-                domainRUNS << "--cloud_cover_units percent" << "\n" ;   
-            }  
-
+            if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
+            {
+                domainRUNS << "--input_speed " << tree->wind->windTable->speed[i]->value() << "\n";
+                domainRUNS << "--input_direction " << tree->wind->windTable->dir[i]->value() << "\n";
+                domainRUNS << "--year " << tree->wind->windTable->date[i]->date().year() << "\n";
+                domainRUNS << "--month " << tree->wind->windTable->date[i]->date().month() << "\n";
+                domainRUNS << "--day " << tree->wind->windTable->date[i]->date().day() << "\n";
+                domainRUNS << "--hour " << tree->wind->windTable->time[i]->time().hour() << "\n";
+                domainRUNS << "--minute " << tree->wind->windTable->time[i]->time().minute() << "\n";
+                domainRUNS << "--uni_air_temp " << tree->wind->windTable->airTemp[i]->value() << "\n";
+                domainRUNS << "--uni_cloud_cover " << tree->wind->windTable->cloudCover[i]->value() << "\n";
+                domainRUNS << "--cloud_cover_units percent" << "\n" ;
+            }
         }
-
 
         army->setDEM( i, demFile );
 #ifdef NINJAFOAM
@@ -2970,16 +2883,16 @@ if (writeCF) {
         else if( initMethod ==  WindNinjaInputs::domainAverageInitializationFlag )
         {
             //get speed
-        if (writeCF) {
-            outFile << "--input_speed " <<std::to_string(tree->wind->windTable->speed[i]->value()) << "\n"; }
+            if (writeCF) {
+                outFile << "--input_speed " << std::to_string(tree->wind->windTable->speed[i]->value()) << "\n";
+            }
             army->setInputSpeed( i,
                                 tree->wind->windTable->speed[i]->value(),
                                 inputSpeedUnits);
             //get direction
-
-        if (writeCF) {
-            outFile << "--input_direction " <<std::to_string(tree->wind->windTable->dir[i]->value()) <<"\n";  }
-            
+            if (writeCF) {
+                outFile << "--input_direction " << std::to_string(tree->wind->windTable->dir[i]->value()) << "\n";
+            }
             army->setInputDirection( i, tree->wind->windTable->dir[i]->value() );
 
             army->setInputWindHeight ( i, inHeight, inHeightUnits );
@@ -2997,17 +2910,11 @@ if (writeCF) {
         army->setOutputPath( i, outputDir.c_str() );
 
         //diurnal, if needed
-        army->setDiurnalWinds( i, useDiurnal );  
-
-
-
-
-
-        if( useDiurnal == true ) 
+        army->setDiurnalWinds( i, useDiurnal );
+        if( useDiurnal == true )
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
-
             army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
                                  tree->wind->windTable->date[i]->date().month(),
                                  tree->wind->windTable->date[i]->date().day(),
@@ -3017,7 +2924,6 @@ if (writeCF) {
             army->setUniAirTemp( i,
                                 tree->wind->windTable->airTemp[i]->value(),
                                 tempUnits );
-            
             army->setUniCloudCover( i,
                                    tree->wind->windTable->cloudCover[i]->value(),
                                    coverUnits::percent );
@@ -3042,7 +2948,6 @@ if (writeCF) {
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
-          
             army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
                                  tree->wind->windTable->date[i]->date().month(),
                                  tree->wind->windTable->date[i]->date().day(),
@@ -3052,8 +2957,6 @@ if (writeCF) {
             army->setUniAirTemp( i,
                                 tree->wind->windTable->airTemp[i]->value(),
                                 tempUnits );
-            
-         
             army->setUniCloudCover( i,
                                    tree->wind->windTable->cloudCover[i]->value(),
                                    coverUnits::percent );
@@ -3073,24 +2976,26 @@ if (writeCF) {
         else
         {
 #ifdef NINJAFOAM
-            if(useNinjaFoam){
-
-              if (writeCF) {
-                if(ninjafoamMeshChoice == WindNinjaInputs::coarse){
-                 outFile << "--mesh_count 25000\n";
+            if(useNinjaFoam)
+            {
+                army->setMeshCount( i, ninjafoamMeshChoice );
+                if (writeCF)
+                {
+                    if(ninjafoamMeshChoice == WindNinjaInputs::coarse)
+                    {
+                        outFile << "--mesh_count 25000\n";
+                    } else if(meshChoice == WindNinjaInputs::medium)
+                    {
+                        outFile << "--mesh_count 50000\n";
+                    } else if(meshChoice == WindNinjaInputs::fine)
+                    {
+                        outFile << "--mesh_count 100000\n";
+                    }
                 }
-              else if(meshChoice == WindNinjaInputs::medium){
-                outFile << "--mesh_count 50000\n";
-                }
-              else if(meshChoice == WindNinjaInputs::fine){
-                outFile << "--mesh_count 100000\n";
-              }
-              }
-                 
-                army->setMeshCount( i, ninjafoamMeshChoice ); 
-                if (writeCF) {
-                  outFile << "--number_of_iterations 300\n";}
                 army->setNumberOfIterations( i, 300);
+                if (writeCF) {
+                    outFile << "--number_of_iterations 300\n";
+                }
             }
             else
                 army->setMeshResolutionChoice( i, meshChoice );
@@ -3138,31 +3043,30 @@ if (writeCF) {
         //army.setOutputFilenames();
         army->setNinjaComNumRuns( i, nRuns );
 
-        //add different input to config 
-        domainRUNS.close(); 
-        
-        std::string domainaveragepath = "DomainAverage/run " +  std::to_string(i) + ".cfg"; 
-        std::string domainaveragedeletion = "domainrun" + std::to_string(i) + ".cfg"; 
-        std::cout << domainaveragepath << std::endl; 
-        std::cout << domainaveragedeletion << std::endl; 
-        if (writeCF) {
-          if (initMethod == WindNinjaInputs::domainAverageInitializationFlag) {
-              casefile.addFileToZip(zipFilePath, getdir, domainaveragepath,  domaininputpath ); 
-          }
+        //add different input to config
+        domainRUNS.close();
+        std::string domainaveragepath = "DomainAverage/run" + std::to_string(i) + ".cfg";
+        std::string domainaveragedeletion = "domainrun" + std::to_string(i) + ".cfg";
+        if (writeCF)
+        {
+            if (initMethod == WindNinjaInputs::domainAverageInitializationFlag)
+            {
+                casefile.addFileToZip(zipFilePath, getdir, domainaveragepath, domaininputpath );
+            }
         }
-        casefile.deleteFileFromPath(getdir, domainaveragedeletion ); 
+        casefile.deleteFileFromPath(getdir, domainaveragedeletion );
 
-    }
+    } // for(int i = 0;i < army->getSize(); i++)
 
     //set Casefile Directory and Input
-
-    if (writeCF) {
-      outFile.close(); 
-      casefile.addFileToZip(zipFilePath, getdir, getfileName, inputFileName.toStdString()); 
-      casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath); 
-
+    if (writeCF)
+    {
+        outFile.close();
+        casefile.addFileToZip(zipFilePath, getdir, getfileName, inputFileName.toStdString());
+        casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath);
+        casefile.deleteFileFromPath(getdir, "config.cfg");
+        casefile.deleteFileFromPath(getdir, "selectedstations.csv");
     }
-
 
     army->set_writeFarsiteAtmFile( writeAtm && writeFb );
 
@@ -4226,6 +4130,21 @@ QString mainWindow::checkForNoData( QString inputFile )
     else
         GDALClose( (GDALDatasetH)poDS );
     return newFile;
+}
+
+// string splitter, splits an input string into pieces separated by an input delimiter
+// used for point initialization in casefile
+std::vector<std::string> mainWindow::split(const std::string &s, const std::string &delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = s.find(delimiter);
+    while (end != std::string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delimiter.length();
+        end = s.find(delimiter, start);
+    }
+    tokens.push_back(s.substr(start, end));
+    return tokens;
 }
 
 void mainWindow::enablePointDate(bool enable)
