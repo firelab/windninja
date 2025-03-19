@@ -72,7 +72,7 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
-
+    
     writeMassMeshVtk = false;
 }
 
@@ -2205,7 +2205,7 @@ void NinjaFoam::SetOutputFilenames()
     input.outputPath = pathName;
 
     timeAppend = timestream.str();
-    
+
 
     ostringstream wxModelTimestream;
     boost::local_time::local_time_facet* wxModelOutputFacet;
@@ -2644,23 +2644,24 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
-	
-	
-	try{
+
+
+    try{
         CaseFile casefile;
         // write mass mesh if casefile is turned on - casefile always needs a vtk
-        if (writeMassMeshVtk == true || casefile.getZipOpen()) {
+        if (writeMassMeshVtk == true || casefile.getZipOpen())
+        {
             CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
             writeMassMeshVtkOutput();
         }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
-	}
-	
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
+    }
+
 }
 
 void NinjaFoam::writeMassMeshVtkOutput()
@@ -2693,7 +2694,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
     try {
         CPLDebug("NINJAFOAM", "writing vtk file");
         bool vtk_out_as_utm = false;
-	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+        if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
         {
             vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
         }
@@ -2733,15 +2734,15 @@ void NinjaFoam::writeMassMeshVtkOutput()
             casefile.deleteFileFromPath(directoryofVTK, surfFile);
         }
 
-	} catch (exception& e) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-	} catch (...) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-	}
+    } catch (exception& e) {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
+    } catch (...) {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+    }
 
-	u.deallocate();
-	v.deallocate();
-	w.deallocate();
+    u.deallocate();
+    v.deallocate();
+    w.deallocate();
 }
 
 void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 

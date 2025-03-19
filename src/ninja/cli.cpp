@@ -180,7 +180,6 @@ int windNinjaCLI(int argc, char* argv[])
     
     // Moved to initializeOptions()
     try {
-
         // Declare a group of options that will be
         // allowed only on command line
         po::options_description generic("Generic options");
@@ -413,6 +412,7 @@ int windNinjaCLI(int argc, char* argv[])
 
         store(opts_command, vm);
         //notify(vm);
+
         if( argc == 1 )
         {
             cout << visible << "\n";
@@ -451,6 +451,7 @@ int windNinjaCLI(int argc, char* argv[])
                         cout << endl;
                     }
                 }
+
                 store(opts_config, vm);
                 //store(parse_config_file(ifs, config_file_options), vm);
                 //notify(vm);
@@ -1956,7 +1957,6 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setPDFLineWidth( i_, vm["pdf_linewidth"].as<double>() );
                 std::string pbm = vm["pdf_basemap"].as<std::string>();
                 int pbs = 0;
-                //if( pbm == "" )
                 if( pbm == "hillshade" )
                 {
                     pbs = 0;
@@ -1967,7 +1967,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 else
                 {
-                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'";
+                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'" << endl;
                 }
                 windsim.setPDFBaseMap( i_, pbs );
                 conflicting_options(vm, "pdf_size", "pdf_height");

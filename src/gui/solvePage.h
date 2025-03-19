@@ -59,7 +59,8 @@ class solvePage : public QWidget
   QString availProcString;
   QLabel *availProcLabel;
   QSpinBox *numProcSpinBox;
-  QCheckBox *CaseFIBOX;
+  QCheckBox *CaseFileBox;
+
   QLabel *outputDirLabel;
   QLineEdit *outputDirLineEdit;
   QToolButton *outputDirToolButton;
@@ -78,7 +79,6 @@ public slots:
 
 private slots:
   void chooseOutputDir();
-  void onCasefileCheckBoxToggled(bool checked);
 };
 
 #endif /* SOLVEPAGE_H */

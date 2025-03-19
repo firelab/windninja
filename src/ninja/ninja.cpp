@@ -2801,25 +2801,24 @@ void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, 
 /**Writes output files.
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
-
 void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
     CaseFile casefile;
-	//Write volume data to VTK format (always in m/s?)
-	//write to casefile regardless of if VTK is checked
-	if(input.volVTKOutFlag == true || casefile.getZipOpen())
-	{
-		try{
+    //Write volume data to VTK format (always in m/s?)
+    //write to casefile regardless of if VTK is checked
+    if(input.volVTKOutFlag == true || casefile.getZipOpen())
+    {
+        try{
             bool vtk_out_as_utm = false;
-		    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+            if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
             {
                 vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
             }
             // can pick between "ascii" and "binary" format for the vtk write format
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
+            volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
             std::string directoryPath = get_outputPath();
             std::string normfile = casefile.parse("file", input.volVTKFile);
@@ -2852,18 +2851,18 @@ void ninja::writeOutputFiles()
                 casefile.deleteFileFromPath(directoryofVTK, surfFile);
             }
 
-		}catch (exception& e)
-		{
-			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-		}catch (...)
-		{
-			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-		}
-	}
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+        }
+    }
 
-	u.deallocate();
-	v.deallocate();
-	w.deallocate();
+    u.deallocate();
+    v.deallocate();
+    w.deallocate();
 
 	#pragma omp parallel sections
 	{

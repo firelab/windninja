@@ -485,7 +485,6 @@ private:
     void computeUVWField();
     void prepareOutput();
     bool matched(int iter);
-
     void writeOutputFiles(); 
     void deleteDynamicMemory();
 

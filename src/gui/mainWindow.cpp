@@ -67,6 +67,8 @@ mainWindow::mainWindow(QWidget *parent)
     GDALCenterLat = GDALCenterLon = 0;
     hasGDALCenter = false;
 
+    demWidget = NULL;
+
     tree = new WindNinjaTree;
 
     createConsole();
@@ -1655,7 +1657,7 @@ void mainWindow::openOutputPath()
 
 int mainWindow::solve()
 {
-    bool writeCF = tree->solve->CaseFIBOX->isChecked();
+    bool writeCF = tree->solve->CaseFileBox->isChecked();
 
     CaseFile casefile;
 
@@ -1708,15 +1710,14 @@ int mainWindow::solve()
     std::string demFile = inputFileName.toStdString();
     
     if (writeCF) {
-      if (casefile.getDownloadedFromDEM() == true)
+      if (demWidget != NULL && demWidget->get_wasDemFetched() == true)
       {
-          std::vector<double> vec = casefile.getBoundingBox();
           outFile << "--fetch_elevation true" << "\n";
-          outFile << "--north " << vec[0] << "\n";
-          outFile << "--south " << vec[1] << "\n";
-          outFile << "--west " << vec[2] << "\n";
-          outFile << "--east " << vec[3] << "\n";
-          outFile << "--elevation_source " << casefile.getElevSource() << "\n";
+          outFile << "--north " << demWidget->get_northBound() << "\n";
+          outFile << "--south " << demWidget->get_southBound() << "\n";
+          outFile << "--west " << demWidget->get_westBound() << "\n";
+          outFile << "--east " << demWidget->get_eastBound() << "\n";
+          outFile << "--elevation_source " << demWidget->get_elevSource() << "\n";
       } else
       {
           outFile << "--fetch_elevation false" << "\n";
@@ -1914,8 +1915,6 @@ int mainWindow::solve()
           outFile << "--units_input_wind_height m\n";
         }
     }
-
-    // handle widget download DEM in widgetdownloadDEM.cpp
 
     //speed units and air temp units
     velocityUnits::eVelocityUnits inputSpeedUnits;
@@ -2355,7 +2354,7 @@ int mainWindow::solve()
 
         if (writeCF)
         {
-            if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true)
+            if (tree->point->xWidget != NULL && tree->point->xWidget->get_wasStationFetched() == true)
             {
                 outFile << "--fetch_station true\n";
                 outFile << "--fetch_type " << tree->point->xWidget->getType() << "\n";
@@ -2368,15 +2367,15 @@ int mainWindow::solve()
                 {
                     outFile << "--fetch_station_name " << tree->point->xWidget->getStationIDS() << "\n";
                 }
-                if (tree->point->xWidget->getTimeseries() == false)
+                if (tree->point->xWidget->get_isTimeSeries() == false)
+                {
+                    outFile << "--fetch_current_station_data true\n";
+                } else
                 {
                     outFile << "--fetch_current_station_data false\n";
                     outFile << "--number_time_steps " << std::to_string(numTimeSteps) << "\n";
-                } else
-                {
-                    outFile << "--fetch_current_station_data true\n";
                 }
-            } else // if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true)
+            } else // if (tree->point->xWidget != NULL && tree->point->xWidget->get_wasStationFetched() == true)
             {
                 outFile << "--fetch_station false\n";
                 if (useTimeList)
@@ -2397,7 +2396,7 @@ int mainWindow::solve()
                 {
                     outFile << "--fetch_current_station_data true\n";
                 }
-            } // if (tree->point->xWidget != NULL && tree->point->xWidget->getActuallyPressed() == true)
+            } // if (tree->point->xWidget != NULL && tree->point->xWidget->get_wasStationFetched() == true)
 
             if (writeStationKML)
             {
@@ -2783,7 +2782,7 @@ int mainWindow::solve()
         //get times for casefile if no times are clicked by user
         if (writeCF && times.size() == 0)
         {
-            std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWXTIME();
+            std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWXTIME(); // is this even used??? I do not see even one setTimeWX() instance in the code before this spot
             std::vector<std::string> stringTimes;
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 

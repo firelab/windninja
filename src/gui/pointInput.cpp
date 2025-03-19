@@ -91,7 +91,7 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
     sfModel = new QDirModel(this); //Creates the directory model
     sfModel->setReadOnly(true); //probably can be true, but i don't know
     sfModel->setSorting(QDir::Time); //Sort by time created
-    
+
     treeView = new QTreeView(this); //Creates the box where the sfModel goes
     treeView->setVisible(true);
     treeView->setModel(sfModel); //Sets the model to the thing above
@@ -272,38 +272,41 @@ pointInput::~pointInput()
 
 }
 
-
-
-
-void pointInput::collectAllIndexes(const QModelIndex &parent, std::vector<QModelIndex> &allIndexes) const {
-    for (int row = 0; row < sfModel->rowCount(parent); ++row) {
+void pointInput::collectAllIndexes(const QModelIndex &parent, std::vector<QModelIndex> &allIndexes) const
+{
+    for (int row = 0; row < sfModel->rowCount(parent); row++)
+    {
         QModelIndex index = sfModel->index(row, 0, parent);
         allIndexes.push_back(index);
-        if (sfModel->isDir(index)) {
+        if (sfModel->isDir(index))
+        {
             collectAllIndexes(index, allIndexes); // Recursively collect child indexes
         }
     }
 }
 
-void pointInput::generateFullFileList() {
+void pointInput::generateFullFileList()
+{
     std::vector<QModelIndex> allIndexes;
     std::vector<std::string> fileList;
 
     // Collect all indexes starting from the root index
-    QModelIndex rootIndex = treeView->rootIndex(); 
+    QModelIndex rootIndex = treeView->rootIndex();
 
     collectAllIndexes(rootIndex, allIndexes);
 
-    for (const QModelIndex &index : allIndexes) {
-        if (!sfModel->isDir(index)) { // Check if it is a file
+    for (const QModelIndex &index : allIndexes)
+    {
+        // Check if it is a file
+        if (!sfModel->isDir(index))
+        {
             QString filePath = sfModel->filePath(index);
             fileList.push_back(filePath.toStdString());
         }
     }
 
-    fullFileList = fileList;  
+    fullFileList = fileList;
 }
-
 
 /**
  * @brief pointInput::readStationFiles
@@ -1032,7 +1035,6 @@ void pointInput::setDiurnalParam(bool diurnalCheck)
     isDiurnalChecked = diurnalCheck;//Note that this works for stability too
     CPLDebug("STATION_FETCH","DIURNAL/STABILITY STATUS: %i",isDiurnalChecked);
 }
-
 
 /**
  * *@brief pointInput::checkForModelData

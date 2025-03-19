@@ -76,9 +76,8 @@ solvePage::solvePage(QWidget *parent) : QWidget(parent)
   openOutputPathButton->setIcon( QIcon( ":folder.png" ) );
   openOutputPathButton->setDisabled( true );
 
-  CaseFIBOX = new QCheckBox(tr("Generate a Casefile for this run"), this);
-  CaseFIBOX->setChecked(true);
-  connect(CaseFIBOX, SIGNAL(toggled(bool)), this, SLOT(onCasefileCheckBoxToggled(bool)));
+  CaseFileBox = new QCheckBox(tr("Generate Casefile"), this);
+  CaseFileBox->setChecked(true);
 
   layout = new QVBoxLayout;
   layout->addWidget(availProcLabel);
@@ -86,8 +85,8 @@ solvePage::solvePage(QWidget *parent) : QWidget(parent)
   pageLayout = new QHBoxLayout;
   pageLayout->addWidget(numProcLabel);
   pageLayout->addWidget(numProcSpinBox);
-  pageLayout->addWidget(CaseFIBOX);
   pageLayout->addWidget(solveToolButton);
+  pageLayout->addWidget(CaseFileBox);
   pageLayout->addStretch();
 
   outputPathLayout = new QHBoxLayout;
@@ -115,10 +114,6 @@ void solvePage::chooseOutputDir() {
     tr("Open Output Directory"), start, QFileDialog::ShowDirsOnly );
   outputDirLineEdit->setText( dir );
 }
-
-void solvePage::onCasefileCheckBoxToggled(bool checked) {
-}
-
 
 QString solvePage::outputDirectory() {
   return outputDirLineEdit->text();

@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja
- * Purpose:  Input/Output Handling of Casefile for VTK
+ * Purpose:  Input/Output Handling of Casefile
  * Author:   Rui Zhang <ruizhangslc2017@gmail.com>
  *
  ******************************************************************************
@@ -34,7 +34,7 @@
 #include "gdal.h"
 #include <cpl_conv.h>
 #include <cpl_string.h>
-#include <cpl_error.h> 
+#include <cpl_error.h>
 #include <ctime>
 #include "cpl_minizip_zip.h"
 #include <boost/date_time/local_time/local_time.hpp>
@@ -43,55 +43,56 @@
 //#include <mutex>
 #include <vector>
 
-class CaseFile {
+class CaseFile
+{
 
 private:
     static std::string zipfilename;
 
     static std::string directory;
-    static bool zipalreadyopened; 
+    static bool zipalreadyopened;
 
-    static std::vector<boost::local_time::local_date_time> timesforWX; 
-    static std::vector<double> boundingboxarr; 
-    static bool downloadedfromdem; 
-    static std::string elevsource; 
+    std::vector<boost::local_time::local_date_time> timesforWX;
+    std::vector<double> boundingboxarr;
+    bool downloadedfromdem;
+    std::string elevsource;
 
 public:
-    CaseFile(); 
+    CaseFile();
 
     void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath);
 
     void deleteFileFromPath(std::string directoryPath, std::string filenameToDelete);
-    bool lookforzip(const std::string& zipFilePath, const std::string& directory); 
-    bool isCfgFile(const std::string& filePath); 
-    bool isVTKFile(const std::string& filePath); 
+    bool lookforzip(const std::string& zipFilePath, const std::string& directory);
+    bool isCfgFile(const std::string& filePath);
+    bool isVTKFile(const std::string& filePath);
 
-    std::string parse(const std::string& type, const std::string& path) ;
-    std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime); 
-    bool lookfordate(const std::string& date) ;
+    std::string parse(const std::string& type, const std::string& path);
+    std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime);
+    bool lookfordate(const std::string& date);
 
-    std::string getTime(); 
-    void rename(std::string newname); 
-    std::string getdir() ; 
-    void setdir(std::string dir); 
+    std::string getTime();
+    void rename(std::string newname);
+    std::string getdir();
+    void setdir(std::string dir);
 
-    std::string getzip () ; 
-    void setzip(std::string zip); 
+    std::string getzip();
+    void setzip(std::string zip);
 
-    void setZipOpen(bool zipopen); 
-    bool getZipOpen(); 
-    void setTimeWX(std::vector<boost::local_time::local_date_time> timeList) ; 
-   
-    std::vector<boost::local_time::local_date_time> getWXTIME() ; 
+    void setZipOpen(bool zipopen);
+    bool getZipOpen();
+    void setTimeWX(std::vector<boost::local_time::local_date_time> timeList);
 
-    void setBoundingBox ( std::vector<double> boundingboxarrr); 
+    std::vector<boost::local_time::local_date_time> getWXTIME();
 
-    static void setElevSource (std::string elevsourcee ); 
+    void setBoundingBox(std::vector<double> boundingboxarrr);
 
-    void setDownloadedFromDEM (bool downloadedfromdemm) ; 
+    void setElevSource(std::string elevsourcee);
 
-    std::string getElevSource () ; 
-    bool getDownloadedFromDEM () ; 
+    void setDownloadedFromDEM(bool downloadedfromdemm);
 
-    std::vector<double> CaseFile::getBoundingBox (); 
+    std::string getElevSource();
+    bool getDownloadedFromDEM();
+
+    std::vector<double> CaseFile::getBoundingBox();
 };

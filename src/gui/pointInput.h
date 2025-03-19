@@ -160,8 +160,8 @@ class pointInput : public QWidget
     void setOneStepTimeseries();
     
   private slots:
-    
-    void generateFullFileList() ; 
+
+    void generateFullFileList();
     void collectAllIndexes(const QModelIndex &parent, std::vector<QModelIndex> &allIndexes) const;
 
     void readStationFiles(const QItemSelection &x ,const QItemSelection &y);

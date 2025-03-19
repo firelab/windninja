@@ -28,19 +28,21 @@
  *****************************************************************************/
  
 #include "WidgetDownloadDEM.h"
-#include "casefile.h"
 //#include <vld.h>
 
 WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     : QWidget(parent)
 {
+    wasDemFetched = false;
+    elevSource = "";
+
     demSelected = false;
     
     setupUi(this);
     setupGM();
     initializeGoogleMapsInterface();
     connectInputs();
-    this->readSettings();
+    this->readSettings(); // sets northBounds, southBound, eastBound, westBound initial values
 
     progressBar = new QProgressDialog(this);
     progressBar->setWindowModality(Qt::ApplicationModal);
@@ -197,6 +199,8 @@ void WidgetDownloadDEM::setupGM()
  */
 void WidgetDownloadDEM::saveDEM()
 {
+    wasDemFetched = true;
+
     QVariant mbr = wvGoogleMaps->page()->mainFrame()->evaluateJavaScript("mbr()");
     if(mbr.isNull()) {
         qDebug()<<"no mbr";
@@ -222,13 +226,6 @@ void WidgetDownloadDEM::saveDEM()
     westBound = mbrl[0].toDouble();
     demSelected = true;
 
-    std::vector<double> boundsarr = {northBound, southBound, eastBound, westBound};
-
-    CaseFile casefile; 
-
-    casefile.setDownloadedFromDEM(true);
-    casefile.setBoundingBox(boundsarr);
-    
     QString fileName;
     double boundArray[] = {this->northBound, this->eastBound, this->southBound, this->westBound};
     double *boundBox;
@@ -365,7 +362,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
 {
     switch(index){
     case 0: //SRTM
-        CaseFile::setElevSource("srtm"); 
+        elevSource = "srtm";
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM, FindDataPath("/data"));
         northDEMBound = srtm_northBound;
         southDEMBound = srtm_southBound;
@@ -375,7 +372,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         break;
 #ifdef HAVE_GMTED
     case 1: //GMTED
-        CaseFile::setElevSource("gmted"); 
+        elevSource = "gmted";
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED, FindDataPath("/data"));
         northDEMBound = world_gmted_northBound;
         southDEMBound = world_gmted_southBound;
@@ -386,7 +383,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
 #endif
 #ifdef WITH_LCP_CLIENT
     case 2: //LCP
-        CaseFile::setElevSource("lcp"); 
+        elevSource = "lcp";
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP, FindDataPath("/data"));
         northDEMBound = lcp_northBound;
         southDEMBound = lcp_southBound;
@@ -561,6 +558,36 @@ void WidgetDownloadDEM::readSettings()
     }
     else
         longitude = 43.911944;
+}
+
+bool WidgetDownloadDEM::get_wasDemFetched()
+{
+    return wasDemFetched;
+}
+
+std::string WidgetDownloadDEM::get_elevSource()
+{
+    return elevSource;
+}
+
+double WidgetDownloadDEM::get_northBound()
+{
+    return northBound;
+}
+
+double WidgetDownloadDEM::get_southBound()
+{
+    return southBound;
+}
+
+double WidgetDownloadDEM::get_eastBound()
+{
+    return eastBound;
+}
+
+double WidgetDownloadDEM::get_westBound()
+{
+    return westBound;
 }
 
 /**
