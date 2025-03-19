@@ -1,13 +1,13 @@
 #include "casefile.h"
 
-std::string CaseFile::zipfilename = "";
-std::string CaseFile::directory = "";
-bool CaseFile::zipalreadyopened = false;
-
 //std::mutex zipMutex;
 
 CaseFile::CaseFile()
 {
+    zipfilename = "";
+    directory = "";
+    zipalreadyopened = false;
+
     downloadedfromdem = false;
     elevsource = "";
 }

@@ -2834,6 +2834,8 @@ int mainWindow::solve()
     for(int i = 0;i < army->getSize(); i++)
     {
 
+        army->setCaseFilePtr( i, casefile );
+
         std::string domaininputpath = getdir + "/domainrun" + std::to_string(i) + ".cfg";
         std::ofstream domainRUNS(domaininputpath);
         // add runs to files

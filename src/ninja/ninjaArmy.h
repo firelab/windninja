@@ -48,6 +48,7 @@
 #include "boost/typeof/typeof.hpp"
 #endif
 #include "WindNinjaInputs.h"
+#include "casefile.h"
 #include "fetch_factory.h"
 
 namespace blt = boost::local_time;
@@ -503,6 +504,16 @@ public:
                      const double lon_degrees,
                      char ** papszOptions=NULL );
     int setPosition( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the pointer to the shared casefile of a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param a casefile class passed in as a reference
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setCaseFilePtr( const int nIndex, CaseFile &casefile,
+                        char ** papszOptions=NULL );
 
     /**
     * \brief Set the input speed grid filename from a NinjaFOAM run for use with diurnal

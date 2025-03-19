@@ -459,10 +459,9 @@ int windNinjaCLI(int argc, char* argv[])
         }
 
         //helper for casefile output of CLI
+        CaseFile casefile;
         if (vm["write_casefile"].as<bool>() == true)
         {
-            CaseFile casefile;
-
             std::string getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
             std::string inputpath = getdir + "/config.cfg";
 
@@ -1443,7 +1442,9 @@ int windNinjaCLI(int argc, char* argv[])
             
             windsim.setDEM( i_, *elevation_file );
             windsim.setPosition( i_ );    //get position from DEM file
-            
+
+            windsim.setCaseFilePtr( i_, casefile );
+
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");

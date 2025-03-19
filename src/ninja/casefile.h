@@ -27,6 +27,9 @@
  *
  *****************************************************************************/
 
+#ifndef CASEFILE_H
+#define CASEFILE_H
+
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -47,10 +50,10 @@ class CaseFile
 {
 
 private:
-    static std::string zipfilename;
 
-    static std::string directory;
-    static bool zipalreadyopened;
+    bool zipalreadyopened;
+    std::string directory;
+    std::string zipfilename;
 
     std::vector<boost::local_time::local_date_time> timesforWX;
     std::vector<double> boundingboxarr;
@@ -96,3 +99,6 @@ public:
 
     std::vector<double> CaseFile::getBoundingBox();
 };
+
+#endif	/* CASEFILE_H */
+

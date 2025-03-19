@@ -60,12 +60,12 @@
 
 #include "ninja_conv.h"
 
-#include "casefile.h"
 #include "constants.h"
 #include "ascii_grid.h"
 #include "SurfProperties.h"
 #include "surfaceVectorField.h"
 #include "WindNinjaInputs.h"
+#include "casefile.h"
 #include "KmlVector.h"
 #include "ShapeVector.h"
 #include "preconditioner.h"
@@ -134,6 +134,7 @@ public:
     Mesh mesh;
 
     std::string casefilename;
+    CaseFile* casefile;
 
     //output grids to access the final wind grids (typically used by other programs running the windninja API such as WFDSS, FlamMap, etc.
     AsciiGrid<double>AngleGrid;
@@ -309,6 +310,7 @@ public:
 
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
+    void set_casefilePtr( CaseFile &theCaseFile );
     void set_numberCPUs(int CPUs);
     double *get_outputSpeedGrid();
     double *get_outputDirectionGrid();

@@ -84,6 +84,7 @@ ninja::ninja()
     input.Com = new ninjaDefaultComHandler();
 
     casefilename = "";
+    casefile = NULL;
 }
 
 /**Ninja destructor
@@ -171,6 +172,8 @@ ninja::ninja(const ninja &rhs)
     solar=NULL;
 
     casefilename = rhs.casefilename;
+    //casefile = NULL;  // ONLY DO THIS IF WANTING THE MEMORY TO BE RESET TO A DEFAULT VALUE EVEN DURING COPY/OPERATOR=. Not wanted for this case, using this for diurnal sims loses the pointer
+    casefile = rhs.casefile;
 }
 
 /**
@@ -249,6 +252,8 @@ ninja &ninja::operator=(const ninja &rhs)
         solar=NULL;
 
         casefilename = rhs.casefilename;
+        //casefile = NULL;  // ONLY DO THIS IF WANTING THE MEMORY TO BE RESET TO A DEFAULT VALUE EVEN DURING COPY/OPERATOR=. Not wanted for this case, using this for diurnal sims loses the pointer
+        casefile = rhs.casefile;
     }
     return *this;
 }
@@ -2805,10 +2810,9 @@ void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
-    CaseFile casefile;
     //Write volume data to VTK format (always in m/s?)
     //write to casefile regardless of if VTK is checked
-    if(input.volVTKOutFlag == true || casefile.getZipOpen())
+    if(input.volVTKOutFlag == true || casefile->getZipOpen())
     {
         try{
             bool vtk_out_as_utm = false;
@@ -2821,34 +2825,34 @@ void ninja::writeOutputFiles()
             volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
             std::string directoryPath = get_outputPath();
-            std::string normfile = casefile.parse("file", input.volVTKFile);
-            std::string directoryofVTK = casefile.parse("directory", input.volVTKFile);
-            std::string surfFile = casefile.parse("file", input.volVTKFile).substr(0, casefile.parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile.parse("file", input.volVTKFile).substr(casefile.parse("file", input.volVTKFile).length() - 4, casefile.parse("file", input.volVTKFile).length());
-            if( casefile.getZipOpen() )
+            std::string normfile = casefile->parse("file", input.volVTKFile);
+            std::string directoryofVTK = casefile->parse("directory", input.volVTKFile);
+            std::string surfFile = casefile->parse("file", input.volVTKFile).substr(0, casefile->parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile->parse("file", input.volVTKFile).substr(casefile->parse("file", input.volVTKFile).length() - 4, casefile->parse("file", input.volVTKFile).length());
+            if( casefile->getZipOpen() )
             {
-                casefile.rename(casefilename);
+                casefile->rename(casefilename);
 
                 std::string timestr = "";
                 if( input.ninjaTime.is_not_a_date_time() )
                 {
-                    std::string getlocaltime = casefile.getTime();
+                    std::string getlocaltime = casefile->getTime();
                     timestr = getlocaltime;
                 } else
                 {
                     timestr = converttimetostd(input.ninjaTime);
                 }
 
-                std::string zipFilePath = casefile.getzip();
-                casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile, input.volVTKFile);
-                casefile.addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
+                std::string zipFilePath = casefile->getzip();
+                casefile->addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile, input.volVTKFile);
+                casefile->addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
             }
 
             if( input.volVTKOutFlag == false )
             {
-                //casefile.deleteFileFromPath(directoryPath, normfile);
-                //casefile.deleteFileFromPath(directoryPath, surfFile);
-                casefile.deleteFileFromPath(directoryofVTK, normfile);
-                casefile.deleteFileFromPath(directoryofVTK, surfFile);
+                //casefile->deleteFileFromPath(directoryPath, normfile);
+                //casefile->deleteFileFromPath(directoryPath, surfFile);
+                casefile->deleteFileFromPath(directoryofVTK, normfile);
+                casefile->deleteFileFromPath(directoryofVTK, surfFile);
             }
 
         }catch (exception& e)
@@ -3305,6 +3309,13 @@ void ninja::deleteDynamicMemory()
 	if(outputDirectionArray)
 	{	delete[] outputDirectionArray;
 		outputDirectionArray = NULL;
+	}
+
+	if(casefile)
+	{
+	    //delete[] casefile;  // used if it is an array, created with "new"
+	    //delete casefile;  // used if it is not an array, created with "new"
+	    casefile = NULL;  // needed after "delete" for objects pointed to by pointers that are created with "new" // technically it is not needed if it is a pointer created without calls to "new"
 	}
 
 	u0.deallocate();
@@ -4514,6 +4525,16 @@ void ninja::set_position(double lat_degrees, double lat_minutes, double lat_seco
     if( input.longitude < -180.0 || input.longitude > 180.0 )
         throw std::range_error("Longitude greater than 180 degrees or "
                                "less than -180 degrees in ninja::set_position().");
+}
+
+/**
+ * Set the pointer to the shared casefile.
+ *
+ * @param a casefile class passed in as a reference
+ */
+void ninja::set_casefilePtr( CaseFile &theCaseFile )
+{
+    casefile = &theCaseFile;
 }
 
 void ninja::set_numberCPUs(int CPUs)
