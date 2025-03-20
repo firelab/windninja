@@ -1,44 +1,57 @@
 #include "casefile.h"
 
-//std::mutex zipMutex;
+std::mutex zipMutex;
+
 
 CaseFile::CaseFile()
 {
-    zipfilename = "";
-    directory = "";
     zipalreadyopened = false;
+    directory = "";
+    zipfilename = "";
 
     downloadedfromdem = false;
     elevsource = "";
 }
 
-bool CaseFile::isCfgFile(const std::string& filePath)
+
+void CaseFile::setZipOpen(bool zipopen)
 {
-    const std::string extension = ".cfg";
-    if (filePath.length() >= extension.length())
+    if (zipopen)
     {
-        std::string fileExtension = filePath.substr(filePath.length() - extension.length());
-        return fileExtension == extension;
+        zipalreadyopened = true;
     } else
     {
-        return false;
+        zipalreadyopened = false;
     }
 }
 
-bool CaseFile::isVTKFile(const std::string& filePath)
+bool CaseFile::getZipOpen()
 {
-    const std::string extension = ".vtk";
-    if (filePath.length() >= extension.length())
-    {
-        std::string fileExtension = filePath.substr(filePath.length() - extension.length());
-        return fileExtension == extension;
-    } else
-    {
-        return false;
-    }
+    return zipalreadyopened;
 }
 
-bool CaseFile::lookforzip(const std::string& zipFilePath, const std::string& directory)
+void CaseFile::setdir(std::string dir)
+{
+    directory = dir;
+}
+
+std::string CaseFile::getdir()
+{
+    return directory;
+}
+
+void CaseFile::setzip(std::string zip)
+{
+    zipfilename = zip;
+}
+
+std::string CaseFile::getzip()
+{
+    return zipfilename;
+}
+
+
+bool CaseFile::lookForZip(const std::string& zipFilePath, const std::string& directory)
 {
     char** papszDir = VSIReadDir(directory.c_str());
     if (papszDir != nullptr)
@@ -62,42 +75,12 @@ bool CaseFile::lookforzip(const std::string& zipFilePath, const std::string& dir
     return false;
 }
 
-bool CaseFile::lookfordate(const std::string& date)
+void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrLocalPath)
 {
-    return false;
-}
-
-std::string CaseFile::parse(const std::string& type, const std::string& path)
-{
-    size_t found = path.find_last_of("/");
-    if (found != std::string::npos)
-    {
-        if (strcmp(type.c_str(), "directory") == 0)
-        {
-            return path.substr(0, found);
-        } else
-        {
-            if (strcmp(type.c_str(), "file") == 0)
-            {
-                return path.substr(found + 1); // Extract substring after the last '/'
-            }
-        }
-    } else
-    {
-        //std::cout << "couldn't parse" << std::endl;
-        //return "";
-        return path;
-    }
-}
-
-void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath)
-{
-    // CPL logging enabled here 
-    //std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
-    //CPLSetConfigOption("CPL_DEBUG", "ON");
+    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
 
     try {
-        bool foundzip = lookforzip(zipFilePath, dirPath);
+        bool foundzip = lookForZip(zipFilePath, dirPath);
 
         if (foundzip)
         {
@@ -132,10 +115,10 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& d
             return;
         }
 
-        VSILFILE *file = VSIFOpenL(usrlocalpath.c_str(), "rb");
+        VSILFILE *file = VSIFOpenL(usrLocalPath.c_str(), "rb");
         if (file == nullptr)
         {
-            CPLDebug("VSIL", "Could not open file for reading with VSIL: %s", usrlocalpath.c_str());
+            CPLDebug("VSIL", "Could not open file for reading with VSIL: %s", usrLocalPath.c_str());
             cpl_zipCloseFileInZip(zip);
             cpl_zipClose(zip, nullptr);
             return;
@@ -190,18 +173,6 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& d
     }
 }
 
-std::string CaseFile::getTime()
-{
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
-
-    std::tm* local_tm = std::localtime(&now_time_t);
-
-    std::ostringstream oss;
-    oss << std::put_time(local_tm, "%Y-%m-%d %H:%M:%S");
-    return oss.str();
-}
-
 // to avoid renaming the casefile except for the first run/ninja, checking for a specific starting zip file name
 void CaseFile::rename(std::string newname)
 {
@@ -246,55 +217,87 @@ void CaseFile::deleteFileFromPath(std::string directoryPath, std::string filenam
     }
 }
 
-void CaseFile::setdir(std::string dir)
-{
-    directory = dir;
-}
 
-std::string CaseFile::getzip()
+std::string CaseFile::parse(const std::string& type, const std::string& path)
 {
-    return zipfilename;
-}
-
-void CaseFile::setzip(std::string zip)
-{
-    zipfilename = zip;
-}
-
-std::string CaseFile::getdir()
-{
-    return directory;
-}
-
-void CaseFile::setZipOpen(bool zipopen)
-{
-    if (zipopen)
+    size_t found = path.find_last_of("/");
+    if (found != std::string::npos)
     {
-        zipalreadyopened = true;
+        if (strcmp(type.c_str(), "directory") == 0)
+        {
+            return path.substr(0, found);
+        } else
+        {
+            if (strcmp(type.c_str(), "file") == 0)
+            {
+                return path.substr(found + 1); // Extract substring after the last '/'
+            }
+        }
     } else
     {
-        zipalreadyopened = false;
+        //std::cout << "couldn't parse" << std::endl;
+        //return "";
+        return path;
     }
 }
 
-bool CaseFile::getZipOpen()
+std::string CaseFile::convertDateTime(const boost::local_time::local_date_time& ninjaTime)
 {
-    return zipalreadyopened;
+    return "";
 }
 
-void CaseFile::setTimeWX(std::vector<boost::local_time::local_date_time> timeList)
+bool CaseFile::lookForDate(const std::string& date)
 {
-    timesforWX = timeList;
+    return false;
 }
 
-std::vector<boost::local_time::local_date_time> CaseFile::getWXTIME()
+std::string CaseFile::getTime()
 {
-    return timesforWX;
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+    std::tm* local_tm = std::localtime(&now_time_t);
+
+    std::ostringstream oss;
+    oss << std::put_time(local_tm, "%Y-%m-%d %H:%M:%S");
+    return oss.str();
 }
 
-void CaseFile::setBoundingBox(std::vector<double> boundingboxarrr)
+bool CaseFile::isCfgFile(const std::string& filePath)
 {
-    boundingboxarr = boundingboxarrr;
+    const std::string extension = ".cfg";
+    if (filePath.length() >= extension.length())
+    {
+        std::string fileExtension = filePath.substr(filePath.length() - extension.length());
+        return fileExtension == extension;
+    } else
+    {
+        return false;
+    }
+}
+
+bool CaseFile::isVTKFile(const std::string& filePath)
+{
+    const std::string extension = ".vtk";
+    if (filePath.length() >= extension.length())
+    {
+        std::string fileExtension = filePath.substr(filePath.length() - extension.length());
+        return fileExtension == extension;
+    } else
+    {
+        return false;
+    }
+}
+
+
+void CaseFile::setDownloadedFromDem(bool downloadedfromdemm)
+{
+    downloadedfromdem = downloadedfromdemm;
+}
+
+bool CaseFile::getDownloadedFromDem()
+{
+    return downloadedfromdem;
 }
 
 void CaseFile::setElevSource(std::string elevsourcee)
@@ -302,22 +305,27 @@ void CaseFile::setElevSource(std::string elevsourcee)
     elevsource = elevsourcee;
 }
 
-void CaseFile::setDownloadedFromDEM(bool downloadedfromdemm)
-{
-    downloadedfromdem = downloadedfromdemm;
-}
-
 std::string CaseFile::getElevSource()
 {
     return elevsource;
 }
 
-bool CaseFile::getDownloadedFromDEM()
+void CaseFile::setBoundingBox(std::vector<double> boundingboxarrr)
 {
-    return downloadedfromdem;
+    boundingboxarr = boundingboxarrr;
 }
 
 std::vector<double> CaseFile::getBoundingBox()
 {
     return boundingboxarr;
+}
+
+void CaseFile::setWxTimes(std::vector<boost::local_time::local_date_time> timeList)
+{
+    timesForWx = timeList;
+}
+
+std::vector<boost::local_time::local_date_time> CaseFile::getWxTimes()
+{
+    return timesForWx;
 }

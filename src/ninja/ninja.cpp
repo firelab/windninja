@@ -172,7 +172,6 @@ ninja::ninja(const ninja &rhs)
     solar=NULL;
 
     casefilename = rhs.casefilename;
-    //casefile = NULL;  // ONLY DO THIS IF WANTING THE MEMORY TO BE RESET TO A DEFAULT VALUE EVEN DURING COPY/OPERATOR=. Not wanted for this case, using this for diurnal sims loses the pointer
     casefile = rhs.casefile;
 }
 
@@ -252,7 +251,6 @@ ninja &ninja::operator=(const ninja &rhs)
         solar=NULL;
 
         casefilename = rhs.casefilename;
-        //casefile = NULL;  // ONLY DO THIS IF WANTING THE MEMORY TO BE RESET TO A DEFAULT VALUE EVEN DURING COPY/OPERATOR=. Not wanted for this case, using this for diurnal sims loses the pointer
         casefile = rhs.casefile;
     }
     return *this;
@@ -3309,13 +3307,6 @@ void ninja::deleteDynamicMemory()
 	if(outputDirectionArray)
 	{	delete[] outputDirectionArray;
 		outputDirectionArray = NULL;
-	}
-
-	if(casefile)
-	{
-	    //delete[] casefile;  // used if it is an array, created with "new"
-	    //delete casefile;  // used if it is not an array, created with "new"
-	    casefile = NULL;  // needed after "delete" for objects pointed to by pointers that are created with "new" // technically it is not needed if it is a pointer created without calls to "new"
 	}
 
 	u0.deallocate();

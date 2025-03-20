@@ -43,7 +43,7 @@
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/local_time/local_time_io.hpp>
 #include <chrono>
-//#include <mutex>
+#include <mutex>
 #include <vector>
 
 class CaseFile
@@ -55,49 +55,53 @@ private:
     std::string directory;
     std::string zipfilename;
 
-    std::vector<boost::local_time::local_date_time> timesforWX;
-    std::vector<double> boundingboxarr;
     bool downloadedfromdem;
     std::string elevsource;
+    std::vector<double> boundingboxarr;
+
+    std::vector<boost::local_time::local_date_time> timesForWx;
 
 public:
+
     CaseFile();
 
-    void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrlocalpath);
-
-    void deleteFileFromPath(std::string directoryPath, std::string filenameToDelete);
-    bool lookforzip(const std::string& zipFilePath, const std::string& directory);
-    bool isCfgFile(const std::string& filePath);
-    bool isVTKFile(const std::string& filePath);
-
-    std::string parse(const std::string& type, const std::string& path);
-    std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime);
-    bool lookfordate(const std::string& date);
-
-    std::string getTime();
-    void rename(std::string newname);
-    std::string getdir();
-    void setdir(std::string dir);
-
-    std::string getzip();
-    void setzip(std::string zip);
 
     void setZipOpen(bool zipopen);
     bool getZipOpen();
-    void setTimeWX(std::vector<boost::local_time::local_date_time> timeList);
 
-    std::vector<boost::local_time::local_date_time> getWXTIME();
+    void setdir(std::string dir);
+    std::string getdir();
 
-    void setBoundingBox(std::vector<double> boundingboxarrr);
+    void setzip(std::string zip);
+    std::string getzip();
+
+
+    bool lookForZip(const std::string& zipFilePath, const std::string& directory);
+    void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrLocalPath);
+    void rename(std::string newname);
+    void deleteFileFromPath(std::string directoryPath, std::string filenameToDelete);
+
+
+    std::string parse(const std::string& type, const std::string& path);
+    std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime);
+    bool lookForDate(const std::string& date);
+    std::string getTime();
+    bool isCfgFile(const std::string& filePath);
+    bool isVTKFile(const std::string& filePath);
+
+
+    void setDownloadedFromDem(bool downloadedfromdemm);
+    bool getDownloadedFromDem();
 
     void setElevSource(std::string elevsourcee);
-
-    void setDownloadedFromDEM(bool downloadedfromdemm);
-
     std::string getElevSource();
-    bool getDownloadedFromDEM();
 
+    void setBoundingBox(std::vector<double> boundingboxarrr);
     std::vector<double> CaseFile::getBoundingBox();
+
+    void setWxTimes(std::vector<boost::local_time::local_date_time> timeList);
+    std::vector<boost::local_time::local_date_time> getWxTimes();
+
 };
 
 #endif	/* CASEFILE_H */

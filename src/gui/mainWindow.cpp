@@ -2711,6 +2711,7 @@ int mainWindow::solve()
         std::vector<blt::local_date_time> times = tree->weather->timeList();
         /* This can throw a badForecastFile */
 
+        std::cout << "weather times.size() = " << times.size() << std::endl;
         if (writeCF && times.size() > 0)
         {
             std::vector<std::string> stringTimes;
@@ -2782,7 +2783,14 @@ int mainWindow::solve()
         //get times for casefile if no times are clicked by user
         if (writeCF && times.size() == 0)
         {
-            std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWXTIME(); // is this even used??? I do not see even one setTimeWX() instance in the code before this spot
+            // TODO: casefile.setWxTime() for this instance needs to be called somewhere, currently casefile.getWxTime() just returns an empty list,
+            // yet, if the user purposefully unselects all times to select no input time, the code runs ALL the times in the forecast
+            // even better, replace casefile.setWxTime() and casefile.getWxTime() with a call to get the full weather forecast time list from some gui file somewhere
+            // started this, found that the list of times is already set and grabbable, but need to convert it from a QStringList into boost local_date_time objects
+            QStringList QString_wxTimesList = tree->weather->timeModel->stringList();
+            std::cout << "QString_wxTimesList.size() = " << QString_wxTimesList.size() << std::endl;
+
+            std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWxTimes();
             std::vector<std::string> stringTimes;
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
