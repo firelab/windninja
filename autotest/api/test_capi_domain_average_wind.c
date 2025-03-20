@@ -61,12 +61,12 @@ int main()
     const double height = 10.0;
     const char * heightUnits = "m";
     bool momentumFlag = 0; //we're using the conservation of mass solver
-    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
+    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - must be equal to array sizes
 
     /* inputs that can vary among ninjas in an army */
-    const double speedList[2] = {5.5, 5.5};
+    const double speedList[] = {5.5, 5.5}; // matches the size of numNinjas
     const char * speedUnits = "mps";
-    const double directionList[2] = {220, 300};
+    const double directionList[] = {220, 300}; // matches the size of numNinjas
 
     /* inputs specific to output 
      * Note: Outputs have default values if inputs are not specified (like resolution)

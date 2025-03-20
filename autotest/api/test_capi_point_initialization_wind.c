@@ -61,18 +61,19 @@ int main()
     const char * speedUnits = "mps";
     bool momentumFlag = 0; //we're using the conservation of mass solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
-        
-    int year[2] = {2024, 2024};
+    
+    /* Size must match the number of ninjas */
+    int size = numNinjas;
+    int year[2] = {2024, 2024}; 
     int month[2] = {2, 2};
     int day[2] = {2, 2};
     int hour[2] = {2, 2};
     int minute[2] = {2, 2};
-    char* station_path = "data/WXSTATION"; // Will need to be changed with proper path
+    char* station_path = "data/WXSTATION"; // will need to run fetch test to get wxstation data
     char* demFile = "data/missoula_valley.tif";
     char* osTimeZone = "UTC";
     bool matchPointFlag = 1;
-    int size = 2;
-        
+
     /* 
      * Create the army
      */

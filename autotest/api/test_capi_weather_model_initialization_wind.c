@@ -51,7 +51,7 @@ int main()
     /* 
      * Set up Weather Model Initialization run 
      */
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/output.tif"; 
+    const char * demFile = "/data/missoula_valley.tif"; 
     //double outputResolution = 100; 
     const char * initializationMethod = "wxmodel";
     const char * meshChoice = "coarse";
@@ -61,7 +61,7 @@ int main()
     const double height = 10.0;
     const char * heightUnits = "m";
     bool momentumFlag = 0; //we're using the conservation of mass solver
-    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
+    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - this will eventually be equal to the number of weather stations files
     
     /* inputs that can vary among ninjas in an army */
     const char * speedUnits = "mps";
@@ -69,7 +69,7 @@ int main()
     /* 
      * Create the army
      */
-    const char * forecast = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/NOMADS-HRRR-CONUS-3-KM-output.tif/20250310T1400/20250310T1400.zip";
+    const char * forecast = "/data/NOMADS-HRRR-CONUS-3-KM-missoula_valley.tif/20250310T1400/20250310T1400.zip"; // should run fetch test to get data
     const char * osTimeZone = "UTC";
     ninjaArmy = NinjaMakeWeatherModelArmy(forecast, osTimeZone, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
