@@ -652,10 +652,6 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     vector<preInterpolate> diskData;
     vector<vector<preInterpolate> > wxVector;
 
-    vector<string>wxLoc; //list of station locations
-    wxLoc.push_back(rawStationFilename); //add the one file to the list
-    storeFileNames(wxLoc); //store the file for later
-
     /*
      * Generate a vector of weather data stored in a struct called "preInterpolate"
      * which is like the old wxStation class.

@@ -199,6 +199,16 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
         for(size_t i=0; i<size; i++){
             timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
         }
+
+        pointInitialization::SetRawStationFilename(stationFileName);
+
+        std::vector<std::string> sFiles;
+        sFiles.push_back(stationFileName);
+        pointInitialization::storeFileNames(sFiles);
+
+        // TODO: Include check for using multiple .csv files
+        //sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
+        //pointInitialization::storeFileNames(sFiles);
         
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makePointArmy
