@@ -2,9 +2,9 @@
  *
  * Project:  WindNinja
  * Purpose:  C API testing
- * Author:   Nicholas Kim <kim.n.j@wustl.edu>
+ * Author:   Mason Willman <mason.willman
  *
- * g++ -g -Wall -o api_capi_point test_capi_point_initialization_wind.c -lninja
+ * gcc -g -Wall -o test_capi_point_initialization_wind.c test_capi_point_initialization_wind.c -lninja
  *
  ******************************************************************************
  *
@@ -30,8 +30,6 @@
 #include <stdio.h> //for printf
 #include <stdbool.h>
 
-
-
 int main()
 {
     /* 
@@ -49,11 +47,10 @@ int main()
     }
 
     /* 
-     * Set up domain average run 
+     * Set up point initialization run 
      */
-
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/data/big_butte_small.tif"; 
-    double outputResolution = 100; 
+    /* inputs that can vary among ninjas in an army */
+    //double outputResolution = 100; 
     const char * initializationMethod = "point";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
@@ -61,38 +58,29 @@ int main()
     const int diurnalFlag = 0; //diurnal slope wind parameterization not used
     const double height = 10.0;
     const char * heightUnits = "m";
+    const char * speedUnits = "mps";
     bool momentumFlag = 0; //we're using the conservation of mass solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
     
-    /* inputs that can vary among ninjas in an army */
-    const double speedList[2] = {5.5, 5.5};
-    const char * speedUnits = "mps";
-    const double directionList[2] = {220, 300};
+    /* Size must match the number of ninjas */
+    int size = numNinjas;
+    int year[2] = {2024, 2024}; 
+    int month[2] = {2, 2};
+    int day[2] = {2, 2};
+    int hour[2] = {2, 2};
+    int minute[2] = {2, 2};
+    char* station_path = "data/WXSTATION"; // will need to run fetch test to get wxstation data
+    char* demFile = "data/missoula_valley.tif";
+    char* osTimeZone = "UTC";
+    bool matchPointFlag = 1;
 
     /* 
      * Create the army
      */
-    int year[1] = {2023};
-    int month[1] = {10};
-    int day[1] = {10};
-    int hour[1] = {12};
-    int minute[1] = {60};
-    char* station_path = "./station";
-    char* elevation_file = "output.tif";
-    char* osTimeZone = "UTC";
-    bool matchPointFlag = 1;
-    bool momemtumFlag = 0;
-    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
-    
+    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, size, osTimeZone, station_path, demFile, matchPointFlag, momentumFlag, papszOptions);
     if( NULL == ninjaArmy )
     {
         printf("NinjaCreateArmy: ninjaArmy = NULL\n");
-    }
-
-    err = NinjaInit(papszOptions); //must be called for any simulation
-    if(err != NINJA_SUCCESS)
-    {
-      printf("NinjaInit: err = %d\n", err);
     }
     
     /* 
@@ -181,6 +169,15 @@ int main()
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
-
+    
+    /* 
+     * Clean up
+     */
+    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaDestroyRuns: err = %d\n", err);
+    }
+ 
     return NINJA_SUCCESS;
 }
