@@ -5,54 +5,55 @@ std::mutex zipMutex;
 
 CaseFile::CaseFile()
 {
-    zipalreadyopened = false;
-    directory = "";
-    zipfilename = "";
+    isZipOpen = false;
+    caseZipFile = "";
 
     downloadedfromdem = false;
     elevsource = "";
 }
 
 
-void CaseFile::setZipOpen(bool zipopen)
+void CaseFile::setIsZipOpen(bool isZippOpen)
 {
-    if (zipopen)
+    isZipOpen = isZippOpen;
+}
+
+bool CaseFile::getIsZipOpen()
+{
+    return isZipOpen;
+}
+
+void CaseFile::setCaseZipFile(std::string caseZippFile)
+{
+    caseZipFile = caseZippFile;
+}
+
+std::string CaseFile::getCaseZipFile()
+{
+    return caseZipFile;
+}
+
+// to avoid renaming the casefile except for the first run/ninja, checking for a specific starting zip file name
+void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
+{
+    if (parse("file", caseZipFile) == "tmp.ninja")
     {
-        zipalreadyopened = true;
-    } else
-    {
-        zipalreadyopened = false;
+        if (VSIRename(caseZipFile.c_str(), newCaseZipFile.c_str()) == 0)
+        {
+            CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", caseZipFile.c_str(), newCaseZipFile.c_str());
+            caseZipFile = newCaseZipFile;
+        } else
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", caseZipFile.c_str(), newCaseZipFile.c_str());
+        }
     }
 }
 
-bool CaseFile::getZipOpen()
-{
-    return zipalreadyopened;
-}
 
-void CaseFile::setdir(std::string dir)
+// not as redundant as deleteFile(), but close, seems to be more like a, doesZipFileExist() type function
+bool CaseFile::lookForZip(const std::string& zipFilePath)
 {
-    directory = dir;
-}
-
-std::string CaseFile::getdir()
-{
-    return directory;
-}
-
-void CaseFile::setzip(std::string zip)
-{
-    zipfilename = zip;
-}
-
-std::string CaseFile::getzip()
-{
-    return zipfilename;
-}
-
-
-bool CaseFile::lookForZip(const std::string& zipFilePath, const std::string& directory)
-{
+    std::string directory = parse("directory", zipFilePath);
     char** papszDir = VSIReadDir(directory.c_str());
     if (papszDir != nullptr)
     {
@@ -65,7 +66,7 @@ bool CaseFile::lookForZip(const std::string& zipFilePath, const std::string& dir
                 continue;
             }
 
-            if (entry == parse("file", getzip()))
+            if (entry == parse("file", getCaseZipFile()))
             {
                 return true;
             }
@@ -75,12 +76,12 @@ bool CaseFile::lookForZip(const std::string& zipFilePath, const std::string& dir
     return false;
 }
 
-void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrLocalPath)
+void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& withinZipPathedFilename, const std::string& fileToAdd)
 {
     std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
 
     try {
-        bool foundzip = lookForZip(zipFilePath, dirPath);
+        bool foundzip = lookForZip(zipFilePath);
 
         if (foundzip)
         {
@@ -108,17 +109,17 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& d
         }
 
         zip_fileinfo zi = {0};
-        if (cpl_zipOpenNewFileInZip(zip, fileToAdd.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
+        if (cpl_zipOpenNewFileInZip(zip, withinZipPathedFilename.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
         {
-            CPLDebug("ZIP", "Could not open new file in ZIP: %s", fileToAdd.c_str());
+            CPLDebug("ZIP", "Could not open new file in ZIP: %s", withinZipPathedFilename.c_str());
             cpl_zipClose(zip, nullptr);
             return;
         }
 
-        VSILFILE *file = VSIFOpenL(usrLocalPath.c_str(), "rb");
+        VSILFILE *file = VSIFOpenL(fileToAdd.c_str(), "rb");
         if (file == nullptr)
         {
-            CPLDebug("VSIL", "Could not open file for reading with VSIL: %s", usrLocalPath.c_str());
+            CPLDebug("VSIL", "Could not open file for reading with VSIL: %s", fileToAdd.c_str());
             cpl_zipCloseFileInZip(zip);
             cpl_zipClose(zip, nullptr);
             return;
@@ -140,7 +141,7 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& d
 
         if (VSIFReadL(data, 1, fileSize, file) != fileSize)
         {
-            CPLDebug("FileRead", "Failed to read file contents: %s", fileToAdd.c_str());
+            CPLDebug("FileRead", "Failed to read file contents: %s", withinZipPathedFilename.c_str());
             CPLFree(data);
             VSIFCloseL(file);
             cpl_zipCloseFileInZip(zip);
@@ -150,7 +151,7 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& d
 
         if (cpl_zipWriteInFileInZip(zip, data, static_cast<unsigned int>(fileSize)) != ZIP_OK)
         {
-            CPLDebug("ZIP", "Error writing data to ZIP file: %s", fileToAdd.c_str());
+            CPLDebug("ZIP", "Error writing data to ZIP file: %s", withinZipPathedFilename.c_str());
         }
 
         CPLFree(data);
@@ -173,27 +174,10 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& d
     }
 }
 
-// to avoid renaming the casefile except for the first run/ninja, checking for a specific starting zip file name
-void CaseFile::rename(std::string newname)
+// becomes redundant, probs should just call VSIUnlink on the file itself
+void CaseFile::deleteFile(std::string file)
 {
-    if (parse("file", zipfilename) == "tmp.ninja")
-    {
-        std::string oldFilePath = zipfilename;
-        std::string newFilePath = newname;
-
-        if (VSIRename(oldFilePath.c_str(), newFilePath.c_str()) == 0)
-        {
-            CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", oldFilePath.c_str(), newFilePath.c_str());
-            zipfilename = newname;
-        } else
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", oldFilePath.c_str(), newFilePath.c_str());
-        }
-    }
-}
-
-void CaseFile::deleteFileFromPath(std::string directoryPath, std::string filename)
-{
+    std::string directoryPath = parse("directory", file);
     char** papszDir = VSIReadDir(directoryPath.c_str());
     if (papszDir != nullptr)
     {
@@ -208,7 +192,7 @@ void CaseFile::deleteFileFromPath(std::string directoryPath, std::string filenam
 
             std::string fullPath = directoryPath + "/" + entry;
 
-            if (entry == filename)
+            if (fullPath == file)
             {
                 VSIUnlink(fullPath.c_str());
             }

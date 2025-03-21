@@ -1662,6 +1662,7 @@ int mainWindow::solve()
     CaseFile casefile;
 
     std::string getdir = tree->solve->outputDirectory().toStdString();
+    std::cout << "getdir = \"" << getdir << "\"" << std::endl;
     std::string inputpath = getdir + "/config.cfg";
 
     std::string getfileName = casefile.parse("file", inputFileName.toStdString());
@@ -1670,9 +1671,8 @@ int mainWindow::solve()
 
     std::string zipFilePath = getdir + "/tmp.ninja";
 
-    casefile.setZipOpen(true);
-    casefile.setdir(getdir);
-    casefile.setzip(zipFilePath);
+    casefile.setIsZipOpen(true);
+    casefile.setCaseZipFile(zipFilePath);
 
     std::ofstream outFile(inputpath);
 
@@ -1692,9 +1692,9 @@ int mainWindow::solve()
         outFile.close();
         stationCSVFILE.close();
 
-        casefile.setZipOpen(false);
-        casefile.deleteFileFromPath(getdir, "config.cfg");
-        casefile.deleteFileFromPath(getdir, "selectedstations.csv");
+        casefile.setIsZipOpen(false);
+        casefile.deleteFile( getdir + "/config.cfg" );
+        casefile.deleteFile( getdir + "/selectedstations.csv" );
     }
 
 #ifdef NINJAFOAM
@@ -2426,10 +2426,10 @@ int mainWindow::solve()
                     std::string pointpath2 = "pointinitialization/" + tokens[tokens.size()-1];
                     if (secondToLastToken.find("WXSTATIONS-") != std::string::npos)
                     {
-                        casefile.addFileToZip(zipFilePath, getdir, pointpath1, pfile);
+                        casefile.addFileToZip(zipFilePath, pointpath1, pfile);
                     } else
                     {
-                        casefile.addFileToZip(zipFilePath, getdir, pointpath2, pfile);
+                        casefile.addFileToZip(zipFilePath, pointpath2, pfile);
                     }
                 }
             }
@@ -2450,7 +2450,7 @@ int mainWindow::solve()
             }
             stationCSVFILE.close();
             std::string pointpathusual = "pointinitialization/selectedstations.csv";
-            casefile.addFileToZip(zipFilePath, getdir, pointpathusual, stationCSVFILEPATH);
+            casefile.addFileToZip(zipFilePath, pointpathusual, stationCSVFILEPATH);
 
         } // if (writeCF)
 
@@ -2741,7 +2741,7 @@ int mainWindow::solve()
             outFile << "--forecast_times " << outstr << "\n";
             outFile << "--forecast_filename " << weatherFile << "\n";
             std::string weatherFileName = "weatherfile/" + casefile.parse("file", weatherFile);
-            casefile.addFileToZip(zipFilePath, getdir, weatherFileName, weatherFile);
+            casefile.addFileToZip(zipFilePath, weatherFileName, weatherFile);
         } // if (writeCF && times.size() > 0)
 
         try
@@ -2818,7 +2818,7 @@ int mainWindow::solve()
             outFile << "--forecast_times " << outstr << "\n";
             outFile << "--forecast_filename " << weatherFile << "\n";
             std::string weatherFileName = "weatherfile/" + casefile.parse("file", weatherFile);
-            casefile.addFileToZip(zipFilePath, getdir, weatherFileName, weatherFile);
+            casefile.addFileToZip(zipFilePath, weatherFileName, weatherFile);
         } // if (writeCF && times.size() == 0)
 
         nRuns = army->getSize();
@@ -3060,10 +3060,10 @@ int mainWindow::solve()
         {
             if (initMethod == WindNinjaInputs::domainAverageInitializationFlag)
             {
-                casefile.addFileToZip(zipFilePath, getdir, domainaveragepath, domaininputpath );
+                casefile.addFileToZip(zipFilePath, domainaveragepath, domaininputpath );
             }
         }
-        casefile.deleteFileFromPath(getdir, domainaveragedeletion );
+        casefile.deleteFile( getdir + "/" + domainaveragedeletion );
 
     } // for(int i = 0;i < army->getSize(); i++)
 
@@ -3071,10 +3071,10 @@ int mainWindow::solve()
     if (writeCF)
     {
         outFile.close();
-        casefile.addFileToZip(zipFilePath, getdir, getfileName, inputFileName.toStdString());
-        casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath);
-        casefile.deleteFileFromPath(getdir, "config.cfg");
-        casefile.deleteFileFromPath(getdir, "selectedstations.csv");
+        casefile.addFileToZip(zipFilePath, getfileName, inputFileName.toStdString());
+        casefile.addFileToZip(zipFilePath, "config.cfg", inputpath);
+        casefile.deleteFile( getdir + "/config.cfg" );
+        casefile.deleteFile( getdir + "/selectedstations.csv" );
     }
 
     army->set_writeFarsiteAtmFile( writeAtm && writeFb );

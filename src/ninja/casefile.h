@@ -51,9 +51,8 @@ class CaseFile
 
 private:
 
-    bool zipalreadyopened;
-    std::string directory;
-    std::string zipfilename;
+    bool isZipOpen;
+    std::string caseZipFile;
 
     bool downloadedfromdem;
     std::string elevsource;
@@ -66,20 +65,17 @@ public:
     CaseFile();
 
 
-    void setZipOpen(bool zipopen);
-    bool getZipOpen();
+    void setIsZipOpen(bool isZippOpen);
+    bool getIsZipOpen();
 
-    void setdir(std::string dir);
-    std::string getdir();
-
-    void setzip(std::string zip);
-    std::string getzip();
+    void setCaseZipFile(std::string caseZippFile);
+    std::string getCaseZipFile();
+    void renameCaseZipFile(std::string newCaseZipFile);
 
 
-    bool lookForZip(const std::string& zipFilePath, const std::string& directory);
-    void addFileToZip(const std::string& zipFilePath, const std::string& dirPath, const std::string& fileToAdd, const std::string& usrLocalPath);
-    void rename(std::string newname);
-    void deleteFileFromPath(std::string directoryPath, std::string filenameToDelete);
+    bool lookForZip(const std::string& zipFilePath);
+    void addFileToZip(const std::string& zipFilePath, const std::string& withinZipPathedFilename, const std::string& fileToAdd);
+    void deleteFile(std::string file);
 
 
     std::string parse(const std::string& type, const std::string& path);

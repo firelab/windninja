@@ -2810,7 +2810,7 @@ void ninja::writeOutputFiles()
 
     //Write volume data to VTK format (always in m/s?)
     //write to casefile regardless of if VTK is checked
-    if(input.volVTKOutFlag == true || casefile->getZipOpen())
+    if(input.volVTKOutFlag == true || casefile->getIsZipOpen())
     {
         try{
             bool vtk_out_as_utm = false;
@@ -2826,9 +2826,9 @@ void ninja::writeOutputFiles()
             std::string normfile = casefile->parse("file", input.volVTKFile);
             std::string directoryofVTK = casefile->parse("directory", input.volVTKFile);
             std::string surfFile = casefile->parse("file", input.volVTKFile).substr(0, casefile->parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile->parse("file", input.volVTKFile).substr(casefile->parse("file", input.volVTKFile).length() - 4, casefile->parse("file", input.volVTKFile).length());
-            if( casefile->getZipOpen() )
+            if( casefile->getIsZipOpen() )
             {
-                casefile->rename(casefilename);
+                casefile->renameCaseZipFile(casefilename);
 
                 std::string timestr = "";
                 if( input.ninjaTime.is_not_a_date_time() )
@@ -2840,17 +2840,17 @@ void ninja::writeOutputFiles()
                     timestr = converttimetostd(input.ninjaTime);
                 }
 
-                std::string zipFilePath = casefile->getzip();
-                casefile->addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile, input.volVTKFile);
-                casefile->addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
+                std::string zipFilePath = casefile->getCaseZipFile();
+                casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + normfile, input.volVTKFile);
+                casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
             }
 
             if( input.volVTKOutFlag == false )
             {
-                //casefile->deleteFileFromPath(directoryPath, normfile);
-                //casefile->deleteFileFromPath(directoryPath, surfFile);
-                casefile->deleteFileFromPath(directoryofVTK, normfile);
-                casefile->deleteFileFromPath(directoryofVTK, surfFile);
+                //casefile->deleteFile( directoryPath + "/" + normfile );
+                //casefile->deleteFile( directoryPath + "/" + surfFile );
+                casefile->deleteFile( directoryofVTK + "/" + normfile );
+                casefile->deleteFile( directoryofVTK + "/" + surfFile );
             }
 
         }catch (exception& e)

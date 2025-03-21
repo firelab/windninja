@@ -462,7 +462,20 @@ int windNinjaCLI(int argc, char* argv[])
         CaseFile casefile;
         if (vm["write_casefile"].as<bool>() == true)
         {
-            std::string getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
+            std::string getdir = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
+            std::cout << "getdir = \"" << getdir << "\"" << std::endl;
+            if( vm.count("output_path") )
+            {
+                getdir = vm["output_path"].as<std::string>();
+            } else // if (getdir == "")
+            {
+                // hrm, should work, but it isn't ideal. searches for "customOutputPath" in ninjafoam.cpp and ninja.cpp show
+                // that this is correct to keep paths all the same EXCEPT for with weather model initialization, which uses
+                // input.forecastFilename instead unless it is not set as an input, THEN it uses the dem file
+                // it is not an easy thing to make sure we have forecastFilename here in the code the same way as later in the code
+                getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
+            }
+            std::cout << "getdir = \"" << getdir << "\"" << std::endl;
             std::string inputpath = getdir + "/config.cfg";
 
             std::ofstream outFile(inputpath);
@@ -508,22 +521,21 @@ int windNinjaCLI(int argc, char* argv[])
 
             std::string zipFilePath = getdir + "/tmp.ninja";
 
-            casefile.setZipOpen(true);
-            casefile.setdir(getdir);
-            casefile.setzip(zipFilePath);
+            casefile.setIsZipOpen(true);
+            casefile.setCaseZipFile(zipFilePath);
 
             // This flush is actually optional because close() will flush automatically
             outFile.flush();
             outFile.close();
 
-            casefile.addFileToZip(zipFilePath, getdir,  getconfigname, vm["config_file"].as<std::string>());
-            casefile.addFileToZip(zipFilePath, getdir, getfileName, vm["elevation_file"].as<std::string>());
-            casefile.addFileToZip(zipFilePath, getdir, "config.cfg", inputpath);
-            casefile.deleteFileFromPath(getdir, "config.cfg");
+            casefile.addFileToZip(zipFilePath, getconfigname, vm["config_file"].as<std::string>());
+            casefile.addFileToZip(zipFilePath, getfileName, vm["elevation_file"].as<std::string>());
+            casefile.addFileToZip(zipFilePath, "config.cfg", inputpath);
+            casefile.deleteFile( getdir + "/config.cfg" );
             if (vm.count("forecast_filename"))
             {
                 std::string getweatherFileName = "weatherfile/" + casefile.parse("file", vm["forecast_filename"].as<std::string>());
-                casefile.addFileToZip(zipFilePath, getdir, getweatherFileName, vm["forecast_filename"].as<std::string>());
+                casefile.addFileToZip(zipFilePath, getweatherFileName, vm["forecast_filename"].as<std::string>());
             }
             if (vm.count("wx_station_filename"))
             {
@@ -537,7 +549,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                 }
 
-                casefile.addFileToZip(zipFilePath, getdir, getpointFileName, vm["wx_station_filename"].as<std::string>());
+                casefile.addFileToZip(zipFilePath, getpointFileName, vm["wx_station_filename"].as<std::string>());
             }
         }
 

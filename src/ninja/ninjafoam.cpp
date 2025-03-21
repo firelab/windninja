@@ -2648,7 +2648,7 @@ void NinjaFoam::WriteOutputFiles()
 
     try{
         // write mass mesh if casefile is turned on - casefile always needs a vtk
-        if (writeMassMeshVtk == true || casefile->getZipOpen())
+        if (writeMassMeshVtk == true || casefile->getIsZipOpen())
         {
             CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
             writeMassMeshVtkOutput();
@@ -2705,9 +2705,9 @@ void NinjaFoam::writeMassMeshVtkOutput()
         std::string normfile = casefile->parse("file", massMeshVtkFilename);
         std::string directoryofVTK = casefile->parse("directory", massMeshVtkFilename);
         std::string surfFile = casefile->parse("file", massMeshVtkFilename).substr(0, casefile->parse("file", massMeshVtkFilename).length() - 4) + "_surf" + casefile->parse("file", massMeshVtkFilename).substr(casefile->parse("file", massMeshVtkFilename).length() - 4, casefile->parse("file", massMeshVtkFilename).length());
-        if( casefile->getZipOpen() )
+        if( casefile->getIsZipOpen() )
         {
-            casefile->rename(casefilename);
+            casefile->renameCaseZipFile(casefilename);
 
             std::string timestr = "";
             if( input.ninjaTime.is_not_a_date_time() )
@@ -2719,17 +2719,17 @@ void NinjaFoam::writeMassMeshVtkOutput()
                 timestr = converttimetostd(input.ninjaTime);
             }
 
-            std::string zipFilePath = casefile->getzip();
-            casefile->addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + normfile, massMeshVtkFilename);
-            casefile->addFileToZip(zipFilePath, directoryPath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
+            std::string zipFilePath = casefile->getCaseZipFile();
+            casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + normfile, massMeshVtkFilename);
+            casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
         }
 
         if( writeMassMeshVtk == false )
         {
-            ////casefile->deleteFileFromPath(directoryPath, normfile);
-            ////casefile->deleteFileFromPath(directoryPath, surfFile);
-            casefile->deleteFileFromPath(directoryofVTK, normfile);
-            casefile->deleteFileFromPath(directoryofVTK, surfFile);
+            ////casefile->deleteFile( directoryPath + "/" + normfile );
+            ////casefile->deleteFile( directoryPath + "/" + surfFile );
+            casefile->deleteFile( directoryofVTK + "/" + normfile );
+            casefile->deleteFile( directoryofVTK + "/" + surfFile );
         }
 
     } catch (exception& e) {
@@ -3782,7 +3782,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     
     
     // write mass mesh if casefile is turned on - casefile always needs a vtk
-    if (writeMassMeshVtk == true || casefile->getZipOpen()) {
+    if (writeMassMeshVtk == true || casefile->getIsZipOpen()) {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
         CPLDebug("NINJAFOAM", "mass mesh vtk output set by mesh resolution, %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
