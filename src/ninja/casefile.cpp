@@ -50,40 +50,14 @@ void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
 }
 
 
-// not as redundant as deleteFile(), but close, seems to be more like a, doesZipFileExist() type function
-bool CaseFile::lookForZip(const std::string& zipFilePath)
-{
-    std::string directory = parse("directory", zipFilePath);
-    char** papszDir = VSIReadDir(directory.c_str());
-    if (papszDir != nullptr)
-    {
-        for (int i = 0; papszDir[i] != nullptr; i++)
-        {
-            std::string entry = papszDir[i];
-
-            if (entry == "." || entry == "..")
-            {
-                continue;
-            }
-
-            if (entry == parse("file", getCaseZipFile()))
-            {
-                return true;
-            }
-        }
-        CSLDestroy(papszDir);
-    }
-    return false;
-}
-
 void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& withinZipPathedFilename, const std::string& fileToAdd)
 {
     std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
 
     try {
-        bool foundzip = lookForZip(zipFilePath);
+        bool doesZipExist = CPLCheckForFile(zipFilePath.c_str(), NULL);
 
-        if (foundzip)
+        if (doesZipExist)
         {
             std::ifstream infile(zipFilePath);
             if (!infile.good())
@@ -94,7 +68,7 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& w
         }
 
         zipFile zip;
-        if (!foundzip)
+        if (!doesZipExist)
         {
             zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
         } else
@@ -171,33 +145,6 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& w
     {
         CPLDebug("Exception", "Caught unknown exception.");
         CPLError(CE_Failure, CPLE_AppDefined, "Caught unknown exception.");
-    }
-}
-
-// becomes redundant, probs should just call VSIUnlink on the file itself
-void CaseFile::deleteFile(std::string file)
-{
-    std::string directoryPath = parse("directory", file);
-    char** papszDir = VSIReadDir(directoryPath.c_str());
-    if (papszDir != nullptr)
-    {
-        for (int i = 0; papszDir[i] != nullptr; i++)
-        {
-            std::string entry = papszDir[i];
-
-            if (entry == "." || entry == "..")
-            {
-                continue;
-            }
-
-            std::string fullPath = directoryPath + "/" + entry;
-
-            if (fullPath == file)
-            {
-                VSIUnlink(fullPath.c_str());
-            }
-        }
-        CSLDestroy(papszDir);
     }
 }
 

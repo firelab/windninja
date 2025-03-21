@@ -2822,10 +2822,10 @@ void ninja::writeOutputFiles()
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
             volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
-            std::string directoryPath = get_outputPath();
             std::string normfile = casefile->parse("file", input.volVTKFile);
             std::string directoryofVTK = casefile->parse("directory", input.volVTKFile);
-            std::string surfFile = casefile->parse("file", input.volVTKFile).substr(0, casefile->parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile->parse("file", input.volVTKFile).substr(casefile->parse("file", input.volVTKFile).length() - 4, casefile->parse("file", input.volVTKFile).length());
+            std::string volVtkSurfFilename = casefile->parse("file", input.volVTKFile).substr(0, casefile->parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile->parse("file", input.volVTKFile).substr(casefile->parse("file", input.volVTKFile).length() - 4, casefile->parse("file", input.volVTKFile).length());
+            std::string volVtkSurfFile = directoryofVTK + "/" + volVtkSurfFilename;
             if( casefile->getIsZipOpen() )
             {
                 casefile->renameCaseZipFile(casefilename);
@@ -2842,15 +2842,13 @@ void ninja::writeOutputFiles()
 
                 std::string zipFilePath = casefile->getCaseZipFile();
                 casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + normfile, input.volVTKFile);
-                casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
+                casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + volVtkSurfFilename, volVtkSurfFile);
             }
 
             if( input.volVTKOutFlag == false )
             {
-                //casefile->deleteFile( directoryPath + "/" + normfile );
-                //casefile->deleteFile( directoryPath + "/" + surfFile );
-                casefile->deleteFile( directoryofVTK + "/" + normfile );
-                casefile->deleteFile( directoryofVTK + "/" + surfFile );
+                VSIUnlink( input.volVTKFile.c_str() );
+                VSIUnlink( volVtkSurfFile.c_str() );
             }
 
         }catch (exception& e)

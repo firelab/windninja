@@ -531,7 +531,7 @@ int windNinjaCLI(int argc, char* argv[])
             casefile.addFileToZip(zipFilePath, getconfigname, vm["config_file"].as<std::string>());
             casefile.addFileToZip(zipFilePath, getfileName, vm["elevation_file"].as<std::string>());
             casefile.addFileToZip(zipFilePath, "config.cfg", inputpath);
-            casefile.deleteFile( getdir + "/config.cfg" );
+            VSIUnlink( inputpath.c_str() );
             if (vm.count("forecast_filename"))
             {
                 std::string getweatherFileName = "weatherfile/" + casefile.parse("file", vm["forecast_filename"].as<std::string>());

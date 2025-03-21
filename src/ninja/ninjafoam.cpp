@@ -2701,10 +2701,10 @@ void NinjaFoam::writeMassMeshVtkOutput()
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
         volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
 
-        std::string directoryPath = get_outputPath();
         std::string normfile = casefile->parse("file", massMeshVtkFilename);
         std::string directoryofVTK = casefile->parse("directory", massMeshVtkFilename);
-        std::string surfFile = casefile->parse("file", massMeshVtkFilename).substr(0, casefile->parse("file", massMeshVtkFilename).length() - 4) + "_surf" + casefile->parse("file", massMeshVtkFilename).substr(casefile->parse("file", massMeshVtkFilename).length() - 4, casefile->parse("file", massMeshVtkFilename).length());
+        std::string massMeshVtkSurfFilename = casefile->parse("file", massMeshVtkFilename).substr(0, casefile->parse("file", massMeshVtkFilename).length() - 4) + "_surf" + casefile->parse("file", massMeshVtkFilename).substr(casefile->parse("file", massMeshVtkFilename).length() - 4, casefile->parse("file", massMeshVtkFilename).length());
+        std::string massMeshVtkSurfFile = directoryofVTK + "/" + massMeshVtkSurfFilename;
         if( casefile->getIsZipOpen() )
         {
             casefile->renameCaseZipFile(casefilename);
@@ -2721,15 +2721,13 @@ void NinjaFoam::writeMassMeshVtkOutput()
 
             std::string zipFilePath = casefile->getCaseZipFile();
             casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + normfile, massMeshVtkFilename);
-            casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + surfFile, directoryofVTK + "/" + surfFile);
+            casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + massMeshVtkSurfFilename, massMeshVtkSurfFile);
         }
 
         if( writeMassMeshVtk == false )
         {
-            ////casefile->deleteFile( directoryPath + "/" + normfile );
-            ////casefile->deleteFile( directoryPath + "/" + surfFile );
-            casefile->deleteFile( directoryofVTK + "/" + normfile );
-            casefile->deleteFile( directoryofVTK + "/" + surfFile );
+            VSIUnlink( massMeshVtkFilename.c_str() );
+            VSIUnlink( massMeshVtkSurfFile.c_str() );
         }
 
     } catch (exception& e) {

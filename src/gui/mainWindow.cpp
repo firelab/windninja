@@ -1693,8 +1693,8 @@ int mainWindow::solve()
         stationCSVFILE.close();
 
         casefile.setIsZipOpen(false);
-        casefile.deleteFile( getdir + "/config.cfg" );
-        casefile.deleteFile( getdir + "/selectedstations.csv" );
+        VSIUnlink( inputpath.c_str() );
+        VSIUnlink( stationCSVFILEPATH.c_str() );
     }
 
 #ifdef NINJAFOAM
@@ -3055,7 +3055,6 @@ int mainWindow::solve()
         //add different input to config
         domainRUNS.close();
         std::string domainaveragepath = "DomainAverage/run" + std::to_string(i) + ".cfg";
-        std::string domainaveragedeletion = "domainrun" + std::to_string(i) + ".cfg";
         if (writeCF)
         {
             if (initMethod == WindNinjaInputs::domainAverageInitializationFlag)
@@ -3063,7 +3062,7 @@ int mainWindow::solve()
                 casefile.addFileToZip(zipFilePath, domainaveragepath, domaininputpath );
             }
         }
-        casefile.deleteFile( getdir + "/" + domainaveragedeletion );
+        VSIUnlink( domaininputpath.c_str() );
 
     } // for(int i = 0;i < army->getSize(); i++)
 
@@ -3073,8 +3072,8 @@ int mainWindow::solve()
         outFile.close();
         casefile.addFileToZip(zipFilePath, getfileName, inputFileName.toStdString());
         casefile.addFileToZip(zipFilePath, "config.cfg", inputpath);
-        casefile.deleteFile( getdir + "/config.cfg" );
-        casefile.deleteFile( getdir + "/selectedstations.csv" );
+        VSIUnlink( inputpath.c_str() );
+        VSIUnlink( stationCSVFILEPATH.c_str() );
     }
 
     army->set_writeFarsiteAtmFile( writeAtm && writeFb );

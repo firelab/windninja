@@ -73,9 +73,7 @@ public:
     void renameCaseZipFile(std::string newCaseZipFile);
 
 
-    bool lookForZip(const std::string& zipFilePath);
     void addFileToZip(const std::string& zipFilePath, const std::string& withinZipPathedFilename, const std::string& fileToAdd);
-    void deleteFile(std::string file);
 
 
     std::string parse(const std::string& type, const std::string& path);
