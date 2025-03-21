@@ -2689,7 +2689,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
     
     fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, u, v, w );
     
-    std::string massMeshVtkFilename = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
+    std::string massMeshVtkFile = CPLFormFilename(pszFoamPath, "massMesh", "vtk");
     try {
         CPLDebug("NINJAFOAM", "writing vtk file");
         bool vtk_out_as_utm = false;
@@ -2699,11 +2699,11 @@ void NinjaFoam::writeMassMeshVtkOutput()
         }
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
-        volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFilename, vtkWriteFormat, vtk_out_as_utm);
+        volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFile, vtkWriteFormat, vtk_out_as_utm);
 
-        std::string normfile = casefile->parse("file", massMeshVtkFilename);
-        std::string directoryofVTK = casefile->parse("directory", massMeshVtkFilename);
-        std::string massMeshVtkSurfFilename = casefile->parse("file", massMeshVtkFilename).substr(0, casefile->parse("file", massMeshVtkFilename).length() - 4) + "_surf" + casefile->parse("file", massMeshVtkFilename).substr(casefile->parse("file", massMeshVtkFilename).length() - 4, casefile->parse("file", massMeshVtkFilename).length());
+        std::string massMeshVtkFilename = casefile->parse("file", massMeshVtkFile);
+        std::string directoryofVTK = casefile->parse("directory", massMeshVtkFile);
+        std::string massMeshVtkSurfFilename = massMeshVtkFilename.substr(0, massMeshVtkFilename.length() - 4) + "_surf.vtk";
         std::string massMeshVtkSurfFile = directoryofVTK + "/" + massMeshVtkSurfFilename;
         if( casefile->getIsZipOpen() )
         {
@@ -2719,14 +2719,16 @@ void NinjaFoam::writeMassMeshVtkOutput()
                 timestr = converttimetostd(input.ninjaTime);
             }
 
-            std::string zipFilePath = casefile->getCaseZipFile();
-            casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + normfile, massMeshVtkFilename);
-            casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + massMeshVtkSurfFilename, massMeshVtkSurfFile);
+            std::string zipFile = casefile->getCaseZipFile();
+            std::string massMeshVtkZipPathFile = "/" + timestr + "/" + massMeshVtkFilename;
+            casefile->addFileToZip(zipFile, massMeshVtkZipPathFile, massMeshVtkFile);
+            std::string massMeshVtkSurfZipPathFile = "/" + timestr + "/" + massMeshVtkSurfFilename;
+            casefile->addFileToZip(zipFile, massMeshVtkSurfZipPathFile, massMeshVtkSurfFile);
         }
 
         if( writeMassMeshVtk == false )
         {
-            VSIUnlink( massMeshVtkFilename.c_str() );
+            VSIUnlink( massMeshVtkFile.c_str() );
             VSIUnlink( massMeshVtkSurfFile.c_str() );
         }
 

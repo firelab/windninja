@@ -2822,9 +2822,9 @@ void ninja::writeOutputFiles()
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
             volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
-            std::string normfile = casefile->parse("file", input.volVTKFile);
+            std::string volVtkFilename = casefile->parse("file", input.volVTKFile);
             std::string directoryofVTK = casefile->parse("directory", input.volVTKFile);
-            std::string volVtkSurfFilename = casefile->parse("file", input.volVTKFile).substr(0, casefile->parse("file", input.volVTKFile).length() - 4) + "_surf" + casefile->parse("file", input.volVTKFile).substr(casefile->parse("file", input.volVTKFile).length() - 4, casefile->parse("file", input.volVTKFile).length());
+            std::string volVtkSurfFilename = volVtkFilename.substr(0, volVtkFilename.length() - 4) + "_surf.vtk";
             std::string volVtkSurfFile = directoryofVTK + "/" + volVtkSurfFilename;
             if( casefile->getIsZipOpen() )
             {
@@ -2840,9 +2840,11 @@ void ninja::writeOutputFiles()
                     timestr = converttimetostd(input.ninjaTime);
                 }
 
-                std::string zipFilePath = casefile->getCaseZipFile();
-                casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + normfile, input.volVTKFile);
-                casefile->addFileToZip(zipFilePath, "/" + timestr + "/" + volVtkSurfFilename, volVtkSurfFile);
+                std::string zipFile = casefile->getCaseZipFile();
+                std::string volVtkZipPathFile = "/" + timestr + "/" + volVtkFilename;
+                casefile->addFileToZip(zipFile, volVtkZipPathFile, input.volVTKFile);
+                std::string volVtkSurfZipPathFile = "/" + timestr + "/" + volVtkSurfFilename;
+                casefile->addFileToZip(zipFile, volVtkSurfZipPathFile, volVtkSurfFile);
             }
 
             if( input.volVTKOutFlag == false )

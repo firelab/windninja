@@ -50,19 +50,19 @@ void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
 }
 
 
-void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& withinZipPathedFilename, const std::string& fileToAdd)
+void CaseFile::addFileToZip(const std::string& caseZippFile, const std::string& withinZipPathedFilename, const std::string& fileToAdd)
 {
     std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
 
     try {
-        bool doesZipExist = CPLCheckForFile(zipFilePath.c_str(), NULL);
+        bool doesZipExist = CPLCheckForFile(caseZippFile.c_str(), NULL);
 
         if (doesZipExist)
         {
-            std::ifstream infile(zipFilePath);
+            std::ifstream infile(caseZippFile);
             if (!infile.good())
             {
-                CPLDebug("ZIP", "ZIP file does not exist: %s", zipFilePath.c_str());
+                CPLDebug("ZIP", "ZIP file does not exist: %s", caseZippFile.c_str());
                 return;
             }
         }
@@ -70,15 +70,15 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& w
         zipFile zip;
         if (!doesZipExist)
         {
-            zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
+            zip = cpl_zipOpen(caseZippFile.c_str(), APPEND_STATUS_CREATE);
         } else
         {
-            zip = cpl_zipOpen(zipFilePath.c_str(), APPEND_STATUS_ADDINZIP);
+            zip = cpl_zipOpen(caseZippFile.c_str(), APPEND_STATUS_ADDINZIP);
         }
 
         if (zip == NULL)
         {
-            CPLDebug("ZIP", "Could not open ZIP: %s", zipFilePath.c_str());
+            CPLDebug("ZIP", "Could not open ZIP: %s", caseZippFile.c_str());
             return;
         }
 
@@ -134,7 +134,7 @@ void CaseFile::addFileToZip(const std::string& zipFilePath, const std::string& w
 
         if (cpl_zipClose(zip, nullptr) != ZIP_OK)
         {
-            CPLDebug("ZIP", "Error closing ZIP file: %s", zipFilePath.c_str());
+            CPLDebug("ZIP", "Error closing ZIP file: %s", caseZippFile.c_str());
         }
 
     } catch (const std::exception& e)

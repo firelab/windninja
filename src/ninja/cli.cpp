@@ -462,24 +462,25 @@ int windNinjaCLI(int argc, char* argv[])
         CaseFile casefile;
         if (vm["write_casefile"].as<bool>() == true)
         {
-            std::string getdir = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
-            std::cout << "getdir = \"" << getdir << "\"" << std::endl;
+            std::string outputDir = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
+            std::cout << "outputDir = \"" << outputDir << "\"" << std::endl;
             if( vm.count("output_path") )
             {
-                getdir = vm["output_path"].as<std::string>();
-            } else // if (getdir == "")
+                outputDir = vm["output_path"].as<std::string>();
+            } else // if (outputDir == "")
             {
                 // hrm, should work, but it isn't ideal. searches for "customOutputPath" in ninjafoam.cpp and ninja.cpp show
                 // that this is correct to keep paths all the same EXCEPT for with weather model initialization, which uses
                 // input.forecastFilename instead unless it is not set as an input, THEN it uses the dem file
                 // it is not an easy thing to make sure we have forecastFilename here in the code the same way as later in the code
-                getdir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
+                outputDir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
             }
-            std::cout << "getdir = \"" << getdir << "\"" << std::endl;
-            std::string inputpath = getdir + "/config.cfg";
+            std::cout << "outputDir = \"" << outputDir << "\"" << std::endl;
+            std::string mainCaseCfgFilename = "config.cfg";
+            std::string mainCaseCfgFile = outputDir + "/" + mainCaseCfgFilename;
 
-            std::ofstream outFile(inputpath);
-            if (!outFile)
+            std::ofstream mainCaseCfgFILE(mainCaseCfgFile);
+            if (!mainCaseCfgFILE)
             {
                 cerr << "Error: Could not open the file for writing!" << endl;
                 return;
@@ -490,66 +491,82 @@ int windNinjaCLI(int argc, char* argv[])
                 const std::string& option_name = pair.first;
                 const po::variable_value& option_value = pair.second;
 
-                outFile << "--" << option_name << " ";
+                mainCaseCfgFILE << "--" << option_name << " ";
 
                 try {
-                    if (option_value.value().type() == typeid(int)) {
-                        outFile << option_value.as<int>() << std::endl;
-                    } else if (option_value.value().type() == typeid(bool)) {
-                        outFile << std::boolalpha << option_value.as<bool>() << std::endl;
-                    } else if (option_value.value().type() == typeid(std::string)) {
-                        outFile << option_value.as<std::string>() << std::endl;
-                    } else if (option_value.value().type() == typeid(double)) {
-                        outFile << option_value.as<double>() << std::endl;
-                    } else if (option_value.value().type() == typeid(std::vector<std::string>)) {
+                    if (option_value.value().type() == typeid(int))
+                    {
+                        mainCaseCfgFILE << option_value.as<int>() << std::endl;
+                    } else if (option_value.value().type() == typeid(bool))
+                    {
+                        mainCaseCfgFILE << std::boolalpha << option_value.as<bool>() << std::endl;
+                    } else if (option_value.value().type() == typeid(std::string))
+                    {
+                        mainCaseCfgFILE << option_value.as<std::string>() << std::endl;
+                    } else if (option_value.value().type() == typeid(double))
+                    {
+                        mainCaseCfgFILE << option_value.as<double>() << std::endl;
+                    } else if (option_value.value().type() == typeid(std::vector<std::string>))
+                    {
                         const auto& vec = option_value.as<std::vector<std::string>>();
-                        for (const auto& str : vec) {
-                            outFile << str << " ";
+                        for (const auto& str : vec)
+                        {
+                            mainCaseCfgFILE << str << " ";
                         }
-                        outFile << std::endl;
-                    } else {
-                        outFile << "Unknown type" << std::endl;
+                        mainCaseCfgFILE << std::endl;
+                    } else
+                    {
+                        mainCaseCfgFILE << "Unknown type" << std::endl;
                     }
-                } catch (const boost::bad_any_cast& e) {
-                    outFile << "Bad cast: " << e.what() << std::endl;
+                } catch (const boost::bad_any_cast& e)
+                {
+                    mainCaseCfgFILE << "Bad cast: " << e.what() << std::endl;
                 }
             }
 
-            std::string getfileName = casefile.parse("file", vm["elevation_file"].as<std::string>());
+            std::string demFile = vm["elevation_file"].as<std::string>();
+            std::string demFilename = casefile.parse("file", demFile);
 
-            std::string getconfigname = casefile.parse("file", vm["config_file"].as<std::string>());
+            std::string inputCfgFile = vm["config_file"].as<std::string>();
+            std::string inputCfgFilename = casefile.parse("file", inputCfgFile);
 
-            std::string zipFilePath = getdir + "/tmp.ninja";
+            std::string zipFile = outputDir + "/tmp.ninja";
 
             casefile.setIsZipOpen(true);
-            casefile.setCaseZipFile(zipFilePath);
+            casefile.setCaseZipFile(zipFile);
 
             // This flush is actually optional because close() will flush automatically
-            outFile.flush();
-            outFile.close();
+            mainCaseCfgFILE.flush();
+            mainCaseCfgFILE.close();
 
-            casefile.addFileToZip(zipFilePath, getconfigname, vm["config_file"].as<std::string>());
-            casefile.addFileToZip(zipFilePath, getfileName, vm["elevation_file"].as<std::string>());
-            casefile.addFileToZip(zipFilePath, "config.cfg", inputpath);
-            VSIUnlink( inputpath.c_str() );
+
+            std::string inputCfgZipPathFile = "/" + inputCfgFilename;
+            casefile.addFileToZip(zipFile, inputCfgZipPathFile, inputCfgFile);
+            std::string demZipPathFile = "/" + demFilename;
+            casefile.addFileToZip(zipFile, demZipPathFile, demFile);
+            std::string mainCaseCfgZipPathFile = "/" + mainCaseCfgFilename;
+            casefile.addFileToZip(zipFile, mainCaseCfgZipPathFile, mainCaseCfgFile);
+            VSIUnlink( mainCaseCfgFile.c_str() );
             if (vm.count("forecast_filename"))
             {
-                std::string getweatherFileName = "weatherfile/" + casefile.parse("file", vm["forecast_filename"].as<std::string>());
-                casefile.addFileToZip(zipFilePath, getweatherFileName, vm["forecast_filename"].as<std::string>());
+                std::string weatherFile = vm["forecast_filename"].as<std::string>();
+                std::string weatherFilename = casefile.parse("file", weatherFile);
+                std::string weatherZipPathFile = "WxModelInitialization/" + weatherFilename;
+                casefile.addFileToZip(zipFile, weatherZipPathFile, weatherFile);
             }
             if (vm.count("wx_station_filename"))
             {
-                std::vector<std::string> tokens = split(vm["wx_station_filename"].as<std::string>(), "/");
-                std::string getpointFileName = casefile.parse("file", vm["wx_station_filename"].as<std::string>());
-
+                std::string pointFile = vm["wx_station_filename"].as<std::string>();
+                std::vector<std::string> tokens = split(pointFile, "/");
+                std::string pointFilename = casefile.parse("file", pointFile);
                 if (tokens.size() >= 2) {
                     std::string secondToLastToken =  tokens[tokens.size()-2];
                     if (secondToLastToken.find("WXSTATIONS-") != std::string::npos) {
-                        getpointFileName = secondToLastToken + "/" + tokens[tokens.size() - 1];
+                        pointFilename = secondToLastToken + "/" + tokens[tokens.size() - 1];
                     }
                 }
-
-                casefile.addFileToZip(zipFilePath, getpointFileName, vm["wx_station_filename"].as<std::string>());
+                std::string pointZipPathFile = "PointInitialization/" + pointFilename;
+                casefile.addFileToZip(zipFile, pointZipPathFile, pointFile);
             }
         }
 
