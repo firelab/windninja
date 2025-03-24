@@ -2701,10 +2701,10 @@ void NinjaFoam::writeMassMeshVtkOutput()
         std::string vtkWriteFormat = "ascii";//"binary";//"ascii";
         volVTK VTK(u, v, w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMeshVtkFile, vtkWriteFormat, vtk_out_as_utm);
 
-        std::string massMeshVtkFilename = casefile->parse("file", massMeshVtkFile);
-        std::string directoryofVTK = casefile->parse("directory", massMeshVtkFile);
+        std::string massMeshVtkFilename = CPLGetFilename( massMeshVtkFile.c_str() );
+        std::string directoryofVTK = CPLGetPath( massMeshVtkFile.c_str() );
         std::string massMeshVtkSurfFilename = massMeshVtkFilename.substr(0, massMeshVtkFilename.length() - 4) + "_surf.vtk";
-        std::string massMeshVtkSurfFile = directoryofVTK + "/" + massMeshVtkSurfFilename;
+        std::string massMeshVtkSurfFile = CPLFormFilename(directoryofVTK.c_str(), massMeshVtkSurfFilename.c_str(), "");
         if( casefile->getIsZipOpen() )
         {
             casefile->renameCaseZipFile(casefilename);
@@ -2716,13 +2716,13 @@ void NinjaFoam::writeMassMeshVtkOutput()
                 timestr = getlocaltime;
             } else
             {
-                timestr = converttimetostd(input.ninjaTime);
+                timestr = casefile->convertDateTimeToStd(input.ninjaTime);
             }
 
             std::string zipFile = casefile->getCaseZipFile();
-            std::string massMeshVtkZipPathFile = "/" + timestr + "/" + massMeshVtkFilename;
+            std::string massMeshVtkZipPathFile = CPLFormFilename(timestr.c_str(), massMeshVtkFilename.c_str(), "");
             casefile->addFileToZip(zipFile, massMeshVtkZipPathFile, massMeshVtkFile);
-            std::string massMeshVtkSurfZipPathFile = "/" + timestr + "/" + massMeshVtkSurfFilename;
+            std::string massMeshVtkSurfZipPathFile = CPLFormFilename(timestr.c_str(), massMeshVtkSurfFilename.c_str(), "");
             casefile->addFileToZip(zipFile, massMeshVtkSurfZipPathFile, massMeshVtkSurfFile);
         }
 

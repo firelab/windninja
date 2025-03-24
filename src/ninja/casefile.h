@@ -62,12 +62,9 @@ public:
     void addFileToZip(const std::string& caseZippFile, const std::string& withinZipPathedFilename, const std::string& fileToAdd);
 
 
-    std::string parse(const std::string& type, const std::string& path);
-    std::string convertDateTime(const boost::local_time::local_date_time& ninjaTime);
-    bool lookForDate(const std::string& date);
+    std::vector<std::string> split(const std::string &s, const std::string &delimiter);
     std::string getTime();
-    bool isCfgFile(const std::string& filePath);
-    bool isVTKFile(const std::string& filePath);
+    std::string convertDateTimeToStd(const boost::local_time::local_date_time& ninjaTime);
 
 };
 

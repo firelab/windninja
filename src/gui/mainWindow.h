@@ -291,8 +291,6 @@ class mainWindow : public QMainWindow
   void writeSettings();
   QString checkForNoData( QString fileName );
 
-  std::vector<std::string> split(const std::string &s, const std::string &delimiter);
-
   QVBoxLayout *mainLayout;
 
   QFileSystemWatcher fileWatcher;

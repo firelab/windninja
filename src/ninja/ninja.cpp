@@ -2822,10 +2822,10 @@ void ninja::writeOutputFiles()
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
             volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
-            std::string volVtkFilename = casefile->parse("file", input.volVTKFile);
-            std::string directoryofVTK = casefile->parse("directory", input.volVTKFile);
+            std::string volVtkFilename = CPLGetFilename( input.volVTKFile.c_str() );
+            std::string directoryofVTK = CPLGetPath( input.volVTKFile.c_str() );
             std::string volVtkSurfFilename = volVtkFilename.substr(0, volVtkFilename.length() - 4) + "_surf.vtk";
-            std::string volVtkSurfFile = directoryofVTK + "/" + volVtkSurfFilename;
+            std::string volVtkSurfFile = CPLFormFilename(directoryofVTK.c_str(), volVtkSurfFilename.c_str(), "");
             if( casefile->getIsZipOpen() )
             {
                 casefile->renameCaseZipFile(casefilename);
@@ -2837,13 +2837,13 @@ void ninja::writeOutputFiles()
                     timestr = getlocaltime;
                 } else
                 {
-                    timestr = converttimetostd(input.ninjaTime);
+                    timestr = casefile->convertDateTimeToStd(input.ninjaTime);
                 }
 
                 std::string zipFile = casefile->getCaseZipFile();
-                std::string volVtkZipPathFile = "/" + timestr + "/" + volVtkFilename;
+                std::string volVtkZipPathFile = CPLFormFilename(timestr.c_str(), volVtkFilename.c_str(), "");
                 casefile->addFileToZip(zipFile, volVtkZipPathFile, input.volVTKFile);
-                std::string volVtkSurfZipPathFile = "/" + timestr + "/" + volVtkSurfFilename;
+                std::string volVtkSurfZipPathFile = CPLFormFilename(timestr.c_str(), volVtkSurfFilename.c_str(), "");
                 casefile->addFileToZip(zipFile, volVtkSurfZipPathFile, volVtkSurfFile);
             }
 
@@ -5314,14 +5314,6 @@ void ninja::dumpMemory()
 {
     input.dem.deallocate();
     input.surface.deallocate();
-}
-
-std::string ninja::converttimetostd(const boost::local_time::local_date_time& ninjaTime) {
-    std::ostringstream ss;
-    ss.imbue(std::locale(std::cout.getloc(), new boost::local_time::local_time_facet("%Y%m%d%H%M%S")));
-    ss << ninjaTime;
-    std::string result = ss.str().substr(0, 4) + "-" +  ss.str().substr(4, 2) + "-" + ss.str().substr(6, 2) + " " + ss.str().substr(8,2) + ":" + ss.str().substr(10, 2) + ":" + ss.str().substr(12, 2);
-    return result;
 }
 
 

@@ -33,7 +33,7 @@ std::string CaseFile::getCaseZipFile()
 // to avoid renaming the casefile except for the first run/ninja, checking for a specific starting zip file name
 void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
 {
-    if (parse("file", caseZipFile) == "tmp.ninja")
+    if (strcmp( CPLGetFilename( caseZipFile.c_str() ), "tmp.ninja" ) == 0)
     {
         if (VSIRename(caseZipFile.c_str(), newCaseZipFile.c_str()) == 0)
         {
@@ -146,37 +146,21 @@ void CaseFile::addFileToZip(const std::string& caseZippFile, const std::string& 
 }
 
 
-std::string CaseFile::parse(const std::string& type, const std::string& path)
+// string splitter, splits an input string into pieces separated by an input delimiter
+// used for point initialization in casefile
+std::vector<std::string> CaseFile::split(const std::string &s, const std::string &delimiter)
 {
-    size_t found = path.find_last_of("/");
-    if (found != std::string::npos)
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = s.find(delimiter);
+    while (end != std::string::npos)
     {
-        if (strcmp(type.c_str(), "directory") == 0)
-        {
-            return path.substr(0, found);
-        } else
-        {
-            if (strcmp(type.c_str(), "file") == 0)
-            {
-                return path.substr(found + 1); // Extract substring after the last '/'
-            }
-        }
-    } else
-    {
-        //std::cout << "couldn't parse" << std::endl;
-        //return "";
-        return path;
+        tokens.push_back(s.substr(start, end - start));
+        start = end + delimiter.length();
+        end = s.find(delimiter, start);
     }
-}
-
-std::string CaseFile::convertDateTime(const boost::local_time::local_date_time& ninjaTime)
-{
-    return "";
-}
-
-bool CaseFile::lookForDate(const std::string& date)
-{
-    return false;
+    tokens.push_back(s.substr(start, end));
+    return tokens;
 }
 
 std::string CaseFile::getTime()
@@ -191,28 +175,11 @@ std::string CaseFile::getTime()
     return oss.str();
 }
 
-bool CaseFile::isCfgFile(const std::string& filePath)
+std::string CaseFile::convertDateTimeToStd(const boost::local_time::local_date_time& ninjaTime)
 {
-    const std::string extension = ".cfg";
-    if (filePath.length() >= extension.length())
-    {
-        std::string fileExtension = filePath.substr(filePath.length() - extension.length());
-        return fileExtension == extension;
-    } else
-    {
-        return false;
-    }
-}
-
-bool CaseFile::isVTKFile(const std::string& filePath)
-{
-    const std::string extension = ".vtk";
-    if (filePath.length() >= extension.length())
-    {
-        std::string fileExtension = filePath.substr(filePath.length() - extension.length());
-        return fileExtension == extension;
-    } else
-    {
-        return false;
-    }
+    std::ostringstream ss;
+    ss.imbue(std::locale(std::cout.getloc(), new boost::local_time::local_time_facet("%Y%m%d%H%M%S")));
+    ss << ninjaTime;
+    std::string result = ss.str().substr(0, 4) + "-" +  ss.str().substr(4, 2) + "-" + ss.str().substr(6, 2) + " " + ss.str().substr(8,2) + ":" + ss.str().substr(10, 2) + ":" + ss.str().substr(12, 2);
+    return result;
 }

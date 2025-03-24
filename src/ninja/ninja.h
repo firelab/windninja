@@ -366,8 +366,6 @@ public:
     void checkInputs();
     void dumpMemory();
 
-    std::string converttimetostd(const boost::local_time::local_date_time& ninjaTime);
-
     WindNinjaInputs input;	//The place where all inputs (except mesh) are stored.
 
 protected:

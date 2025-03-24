@@ -65,8 +65,6 @@ pair<string, string> at_option_parser(string const&s);
 
 const std::string* get_checked_elevation_file(po::variables_map& vm);
 
-std::vector<std::string> split(const std::string &s, const std::string &delimiter);
-
 // this should be used instead of direct 'variables_map["key"].as<T>()' calls since otherwise a single typo
 // in the key literal results in undefined behavior that can corrupt memory miles away. 
 // Alternatively keys could be defined/used as constants to catch this at compile time

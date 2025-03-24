@@ -1679,10 +1679,10 @@ int mainWindow::solve()
 
     CaseFile casefile;
 
-    std::string zipFile = outputDir + "/tmp.ninja";
+    std::string zipFile = CPLFormFilename(outputDir.c_str(), "tmp", "ninja");
 
     std::string mainCaseCfgFilename = "config.cfg";
-    std::string mainCaseCfgFile = outputDir + "/" + mainCaseCfgFilename;
+    std::string mainCaseCfgFile = CPLFormFilename(outputDir.c_str(), mainCaseCfgFilename.c_str(), "");
 
     std::ofstream mainCaseCfgFILE;
 
@@ -2432,14 +2432,14 @@ int mainWindow::solve()
             std::vector<std::string> fullFileListPoint = tree->point->fullFileList;
             for (std::string & pointFile : fullFileListPoint)
             {
-                std::vector<std::string> tokens = split(pointFile, "/");
+                std::vector<std::string> tokens = casefile.split(pointFile, "/");
                 if (tokens.size() >= 2)
                 {
                     std::string secondToLastToken = tokens[tokens.size()-2];
                     std::string pointFilename1 = tokens[tokens.size()-2] + "/" + tokens[tokens.size()-1];
                     std::string pointFilename2 = tokens[tokens.size()-1];
-                    std::string pointZipPathFile1 = "PointInitialization/" + pointFilename1;
-                    std::string pointZipPathFile2 = "PointInitialization/" + pointFilename2;
+                    std::string pointZipPathFile1 = CPLFormFilename("PointInitialization", pointFilename1.c_str(), "");
+                    std::string pointZipPathFile2 = CPLFormFilename("PointInitialization", pointFilename2.c_str(), "");
                     if (secondToLastToken.find("WXSTATIONS-") != std::string::npos)
                     {
                         casefile.addFileToZip(zipFile, pointZipPathFile1, pointFile);
@@ -2451,7 +2451,7 @@ int mainWindow::solve()
             }
             // setup list of actually used/selected stations
             std::string selectedStationsFilename = "selected_stations.csv";
-            std::string selectedStationsFile = outputDir + "/" + selectedStationsFilename;
+            std::string selectedStationsFile = CPLFormFilename(outputDir.c_str(), selectedStationsFilename.c_str(), "");
             std::ofstream selectedStationsFILE(selectedStationsFile);
             if (!selectedStationsFILE)
             {
@@ -2469,8 +2469,8 @@ int mainWindow::solve()
             }
             for (std::string & pointFile : pointFileList)
             {
-                std::vector<std::string> tokens = split(pointFile, "/");
-                std::string pointFilename = casefile.parse("file", pointFile);
+                std::vector<std::string> tokens = casefile.split(pointFile, "/");
+                std::string pointFilename = CPLGetFilename( pointFile.c_str() );
                 if (tokens.size() >= 2)
                 {
                     std::string secondToLastToken = tokens[tokens.size()-2];
@@ -2482,7 +2482,7 @@ int mainWindow::solve()
                 selectedStationsFILE << pointFilename << "\n";
             }
             selectedStationsFILE.close();
-            std::string selectedStationsZipPathFile = "PointInitialization/" + selectedStationsFilename;
+            std::string selectedStationsZipPathFile = CPLFormFilename("PointInitialization", selectedStationsFilename.c_str(), "");
             casefile.addFileToZip(zipFile, selectedStationsZipPathFile, selectedStationsFile);
             VSIUnlink( selectedStationsFile.c_str() );
 
@@ -2773,8 +2773,8 @@ int mainWindow::solve()
 
             mainCaseCfgFILE << "--forecast_times " << outstr << "\n";
             mainCaseCfgFILE << "--forecast_filename " << weatherFile << "\n";
-            std::string weatherFilename = casefile.parse("file", weatherFile);
-            std::string weatherZipPathFile = "WxModelInitialization/" + weatherFilename;
+            std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
+            std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
             casefile.addFileToZip(zipFile, weatherZipPathFile, weatherFile);
         } // if (writeCF && times.size() > 0)
 
@@ -2881,8 +2881,8 @@ int mainWindow::solve()
 
             mainCaseCfgFILE << "--forecast_times " << outstr << "\n";
             mainCaseCfgFILE << "--forecast_filename " << weatherFile << "\n";
-            std::string weatherFilename = casefile.parse("file", weatherFile);
-            std::string weatherZipPathFile = "WxModelInitialization/" + weatherFilename;
+            std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
+            std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
             casefile.addFileToZip(zipFile, weatherZipPathFile, weatherFile);
         } // if (writeCF && times.size() == 0)
 
@@ -2902,7 +2902,7 @@ int mainWindow::solve()
 
         // add runs to files
         std::string domainRunCfgFilename = "run" + std::to_string(i) + "-DomainAverage.cfg";
-        std::string domainRunCfgFile = outputDir + "/" + domainRunCfgFilename;
+        std::string domainRunCfgFile = CPLFormFilename(outputDir.c_str(), domainRunCfgFilename.c_str(), "");
         std::ofstream domainRunFILE;
         if (writeCF)
         {
@@ -3116,7 +3116,7 @@ int mainWindow::solve()
             if (initMethod == WindNinjaInputs::domainAverageInitializationFlag)
             {
                 domainRunFILE.close();
-                std::string domainRunZipPathFile = "DomainAverageInitialization/" + domainRunCfgFilename;
+                std::string domainRunZipPathFile = CPLFormFilename("DomainAverageInitialization", domainRunCfgFilename.c_str(), "");
                 casefile.addFileToZip(zipFile, domainRunZipPathFile, domainRunCfgFile );
                 VSIUnlink( domainRunCfgFile.c_str() );
             }
@@ -3128,11 +3128,9 @@ int mainWindow::solve()
     if (writeCF)
     {
         mainCaseCfgFILE.close();
-        std::string demFilename = casefile.parse("file", demFile);
-        std::string demZipPathFile = "/" + demFilename;
-        casefile.addFileToZip(zipFile, demZipPathFile, demFile);
-        std::string mainCaseCfgZipPathFile = "/" + mainCaseCfgFilename;
-        casefile.addFileToZip(zipFile, mainCaseCfgZipPathFile, mainCaseCfgFile);
+        std::string demFilename = CPLGetFilename( demFile.c_str() );
+        casefile.addFileToZip(zipFile, demFilename, demFile);
+        casefile.addFileToZip(zipFile, mainCaseCfgFilename, mainCaseCfgFile);
         VSIUnlink( mainCaseCfgFile.c_str() );
     }
 
@@ -4198,21 +4196,6 @@ QString mainWindow::checkForNoData( QString inputFile )
     else
         GDALClose( (GDALDatasetH)poDS );
     return newFile;
-}
-
-// string splitter, splits an input string into pieces separated by an input delimiter
-// used for point initialization in casefile
-std::vector<std::string> mainWindow::split(const std::string &s, const std::string &delimiter) {
-    std::vector<std::string> tokens;
-    size_t start = 0;
-    size_t end = s.find(delimiter);
-    while (end != std::string::npos) {
-        tokens.push_back(s.substr(start, end - start));
-        start = end + delimiter.length();
-        end = s.find(delimiter, start);
-    }
-    tokens.push_back(s.substr(start, end));
-    return tokens;
 }
 
 void mainWindow::enablePointDate(bool enable)
