@@ -463,7 +463,6 @@ int windNinjaCLI(int argc, char* argv[])
         if (vm["write_casefile"].as<bool>() == true)
         {
             std::string outputDir = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
-            std::cout << "outputDir = \"" << outputDir << "\"" << std::endl;
             if( vm.count("output_path") )
             {
                 outputDir = vm["output_path"].as<std::string>();
@@ -475,15 +474,20 @@ int windNinjaCLI(int argc, char* argv[])
                 // it is not an easy thing to make sure we have forecastFilename here in the code the same way as later in the code
                 outputDir = casefile.parse( "directory", vm["elevation_file"].as<std::string>());
             }
-            std::cout << "outputDir = \"" << outputDir << "\"" << std::endl;
+
+            std::string zipFile = outputDir + "/tmp.ninja";
+
             std::string mainCaseCfgFilename = "config.cfg";
             std::string mainCaseCfgFile = outputDir + "/" + mainCaseCfgFilename;
+
+            casefile.setIsZipOpen(true);
+            casefile.setCaseZipFile(zipFile);
 
             std::ofstream mainCaseCfgFILE(mainCaseCfgFile);
             if (!mainCaseCfgFILE)
             {
-                cerr << "Error: Could not open the file for writing!" << endl;
-                return;
+                std::cerr << "Error: Could not open the casefile " << mainCaseCfgFile << " file for writing!" << std::endl;
+                return 1;
             }
 
             for (const auto& pair : vm)
@@ -523,25 +527,16 @@ int windNinjaCLI(int argc, char* argv[])
                     mainCaseCfgFILE << "Bad cast: " << e.what() << std::endl;
                 }
             }
-
-            std::string demFile = vm["elevation_file"].as<std::string>();
-            std::string demFilename = casefile.parse("file", demFile);
-
-            std::string inputCfgFile = vm["config_file"].as<std::string>();
-            std::string inputCfgFilename = casefile.parse("file", inputCfgFile);
-
-            std::string zipFile = outputDir + "/tmp.ninja";
-
-            casefile.setIsZipOpen(true);
-            casefile.setCaseZipFile(zipFile);
-
             // This flush is actually optional because close() will flush automatically
             mainCaseCfgFILE.flush();
             mainCaseCfgFILE.close();
 
-
+            std::string inputCfgFile = vm["config_file"].as<std::string>();
+            std::string inputCfgFilename = casefile.parse("file", inputCfgFile);
             std::string inputCfgZipPathFile = "/" + inputCfgFilename;
             casefile.addFileToZip(zipFile, inputCfgZipPathFile, inputCfgFile);
+            std::string demFile = vm["elevation_file"].as<std::string>();
+            std::string demFilename = casefile.parse("file", demFile);
             std::string demZipPathFile = "/" + demFilename;
             casefile.addFileToZip(zipFile, demZipPathFile, demFile);
             std::string mainCaseCfgZipPathFile = "/" + mainCaseCfgFilename;

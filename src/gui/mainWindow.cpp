@@ -1659,51 +1659,51 @@ int mainWindow::solve()
 {
 
     std::string outputDir = tree->solve->outputDirectory().toStdString();
-    if( outputDir == "" ) {
-      // This should never happen, so if it does, fix it.
-      throw( "no output directory specified in solve page" );
+    if( outputDir == "" )
+    {
+        // This should never happen, so if it does, fix it.
+        QMessageBox::critical(this,tr("Failure."),
+                            "no output directory specified in solve page",
+                            QMessageBox::Ok | QMessageBox::Default);
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+        progressDialog->setValue( 0 );
+        progressDialog->cancel();
+        progressDialog->hide();
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+        setCursor(Qt::ArrowCursor); //Restart everything
+        return false;
     }
-    std::cout << "output_path = \"" << outputDir << "\"" << std::endl;
 
 
     bool writeCF = tree->solve->CaseFileBox->isChecked();
 
     CaseFile casefile;
 
+    std::string zipFile = outputDir + "/tmp.ninja";
+
     std::string mainCaseCfgFilename = "config.cfg";
     std::string mainCaseCfgFile = outputDir + "/" + mainCaseCfgFilename;
 
-    std::string demFilename = casefile.parse("file", demFile);
+    std::ofstream mainCaseCfgFILE;
 
-    std::string selectedStationsFilename = "selected_stations.csv";
-    std::string selectedStationsFile = outputDir + "/" + selectedStationsFilename;
-
-    std::string zipFile = outputDir + "/tmp.ninja";
-
-    casefile.setIsZipOpen(true);
-    casefile.setCaseZipFile(zipFile);
-
-    std::ofstream mainCaseCfgFILE(mainCaseCfgFile);
-
-    std::ofstream selectedStationsFILE(selectedStationsFile);
-
-    if (!mainCaseCfgFILE) {
-        std::cerr << "Error: Could not open the file for writing!" << std::endl;
-        return 1;
-    }
-
-    if (!selectedStationsFILE) {
-        std::cerr << "Error: Could not open the file for writing!" << std::endl;
-        return 1;
-    }
-
-    if (!writeCF) {
-        mainCaseCfgFILE.close();
-        selectedStationsFILE.close();
-
-        casefile.setIsZipOpen(false);
-        VSIUnlink( mainCaseCfgFile.c_str() );
-        VSIUnlink( selectedStationsFile.c_str() );
+    if (writeCF) {
+        casefile.setIsZipOpen(true);
+        casefile.setCaseZipFile(zipFile);
+        mainCaseCfgFILE.open(mainCaseCfgFile);
+        //if (!mainCaseCfgFILE.is_open())  // useful for debugging
+        if (!mainCaseCfgFILE)
+        {
+            QMessageBox::critical(this,tr("Failure."),
+                                "Could not open the casefile " + QString(mainCaseCfgFile.c_str()) + " file for writing!",
+                                QMessageBox::Ok | QMessageBox::Default);
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            progressDialog->setValue( 0 );
+            progressDialog->cancel();
+            progressDialog->hide();
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            setCursor(Qt::ArrowCursor); //Restart everything
+            return false;
+        }
     }
 
 
@@ -2450,6 +2450,23 @@ int mainWindow::solve()
                 }
             }
             // setup list of actually used/selected stations
+            std::string selectedStationsFilename = "selected_stations.csv";
+            std::string selectedStationsFile = outputDir + "/" + selectedStationsFilename;
+            std::ofstream selectedStationsFILE(selectedStationsFile);
+            if (!selectedStationsFILE)
+            {
+                QMessageBox::critical(this,tr("Failure."),
+                                    "Could not open the casefile " + QString(selectedStationsFile.c_str()) + " file for writing!",
+                                    QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+                progressDialog->setValue( 0 );
+                progressDialog->cancel();
+                progressDialog->hide();
+                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor); //Restart everything
+                delete army;
+                return false;
+            }
             for (std::string & pointFile : pointFileList)
             {
                 std::vector<std::string> tokens = split(pointFile, "/");
@@ -2467,6 +2484,7 @@ int mainWindow::solve()
             selectedStationsFILE.close();
             std::string selectedStationsZipPathFile = "PointInitialization/" + selectedStationsFilename;
             casefile.addFileToZip(zipFile, selectedStationsZipPathFile, selectedStationsFile);
+            VSIUnlink( selectedStationsFile.c_str() );
 
         } // if (writeCF)
 
@@ -2727,7 +2745,6 @@ int mainWindow::solve()
         std::vector<blt::local_date_time> times = tree->weather->timeList();
         /* This can throw a badForecastFile */
 
-        std::cout << "weather times.size() = " << times.size() << std::endl;
         if (writeCF && times.size() > 0)
         {
             std::vector<std::string> stringTimes;
@@ -2800,26 +2817,56 @@ int mainWindow::solve()
         //get times for casefile if no times are clicked by user
         if (writeCF && times.size() == 0)
         {
-            // TODO: casefile.setWxTime() for this instance needs to be called somewhere, currently casefile.getWxTime() just returns an empty list,
-            // yet, if the user purposefully unselects all times to select no input time, the code runs ALL the times in the forecast
-            // even better, replace casefile.setWxTime() and casefile.getWxTime() with a call to get the full weather forecast time list from some gui file somewhere
-            // started this, found that the list of times is already set and grabbable, but need to convert it from a QStringList into boost local_date_time objects
+            // this occurs if the user purposefully unselects all times to select no input time, while tree->weather->timeList() returns a list of 0 times,
+            // ninjaArmy replaces the empty times list with ALL the times in the forecast, the code runs ALL the weather forecast file times.
+            // Fortunately, it looks like tree->weather->timeModel->stringList() returns this list of times
+            // however, the list needs processed into boost local_date_time objects
+            // TODO: nvm, looks like the times returned from tree->weather->timeModel->stringList() are missing the year and date information required for conversions
+            // probably need to just setup a separate data list to get from weatherModel.h, or just replicate how ninjaArmy does it directly from the weatherFile.
             QStringList QString_wxTimesList = tree->weather->timeModel->stringList();
-            std::cout << "QString_wxTimesList.size() = " << QString_wxTimesList.size() << std::endl;
 
-            std::vector<boost::local_time::local_date_time> wxtimesfromcasefile = casefile.getWxTimes();
             std::vector<std::string> stringTimes;
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
-            for (const auto& time : wxtimesfromcasefile)
+            for (const auto& QStringTime : QString_wxTimesList)
             {
-                // Convert local_date_time to ptime using the UTC time zone
+                // convert the QStringTime into a std::string
+                std::string sTime = QStringTime.toStdString();
+                stringTimes.push_back(sTime);
+
+                /*// convert the QStringTime into QDateTime
+                QString qTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
+                QDateTime qDateTime = QDateTime::fromString(QStringTime,qTimeFormat);
+                qDateTime.setTimeSpec(Qt::UTC); //Set the Time to UTC
+
+                blt::time_zone_ptr tz; // Initialize time zone
+                tz = globalTimeZoneDB.time_zone_from_region(timeZone.c_str()); // Get time zone from database
+
+                // parse the QDateTime into date and time parts
+                int year = qDateTime.date().year();
+                int month = qDateTime.date().month();
+                int day = qDateTime.date().day();
+                int hour = qDateTime.time().hour();
+                int minute = qDateTime.time().minute();
+                int sec = qDateTime.time().second();
+
+                // make intermediate start and stop dates for generating ptime objects
+                bg::date date(year,month,day);
+                bpt::time_duration duration(hour,minute,sec,0);
+
+                // this time is UTC time
+                bpt::ptime ptime(date,duration);
+
+                // this constructor generates local times from UTC times
+                blt::local_date_time time( ptime, tz );*/
+
+                /*// Convert local_date_time to ptime using the UTC time zone
                 // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
 
                 // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);
-                stringTimes.push_back(isoString);
+                stringTimes.push_back(isoString);*/
             }
 
             std::string outstr;
@@ -2853,14 +2900,15 @@ int mainWindow::solve()
 
         army->setCaseFilePtr( i, casefile );
 
+        // add runs to files
         std::string domainRunCfgFilename = "run" + std::to_string(i) + "-DomainAverage.cfg";
         std::string domainRunCfgFile = outputDir + "/" + domainRunCfgFilename;
-        std::ofstream domainRunFILE(domainRunCfgFile);
-        // add runs to files
+        std::ofstream domainRunFILE;
         if (writeCF)
         {
             if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
             {
+                domainRunFILE.open(domainRunCfgFile);
                 domainRunFILE << "--input_speed " << tree->wind->windTable->speed[i]->value() << "\n";
                 domainRunFILE << "--input_direction " << tree->wind->windTable->dir[i]->value() << "\n";
                 domainRunFILE << "--year " << tree->wind->windTable->date[i]->date().year() << "\n";
@@ -3063,16 +3111,16 @@ int mainWindow::solve()
         army->setNinjaComNumRuns( i, nRuns );
 
         //add different input to config
-        domainRunFILE.close();
         if (writeCF)
         {
             if (initMethod == WindNinjaInputs::domainAverageInitializationFlag)
             {
+                domainRunFILE.close();
                 std::string domainRunZipPathFile = "DomainAverageInitialization/" + domainRunCfgFilename;
                 casefile.addFileToZip(zipFile, domainRunZipPathFile, domainRunCfgFile );
+                VSIUnlink( domainRunCfgFile.c_str() );
             }
         }
-        VSIUnlink( domainRunCfgFile.c_str() );
 
     } // for(int i = 0;i < army->getSize(); i++)
 
@@ -3080,12 +3128,12 @@ int mainWindow::solve()
     if (writeCF)
     {
         mainCaseCfgFILE.close();
+        std::string demFilename = casefile.parse("file", demFile);
         std::string demZipPathFile = "/" + demFilename;
         casefile.addFileToZip(zipFile, demZipPathFile, demFile);
         std::string mainCaseCfgZipPathFile = "/" + mainCaseCfgFilename;
         casefile.addFileToZip(zipFile, mainCaseCfgZipPathFile, mainCaseCfgFile);
         VSIUnlink( mainCaseCfgFile.c_str() );
-        VSIUnlink( selectedStationsFile.c_str() );
     }
 
     army->set_writeFarsiteAtmFile( writeAtm && writeFb );

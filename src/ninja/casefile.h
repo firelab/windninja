@@ -30,21 +30,13 @@
 #ifndef CASEFILE_H
 #define CASEFILE_H
 
-#include <iostream>
 #include <fstream>
-#include <filesystem>
-#include "cpl_vsi.h"
-#include "gdal.h"
-#include <cpl_conv.h>
+#include <sstream>
 #include <cpl_string.h>
-#include <cpl_error.h>
-#include <ctime>
 #include "cpl_minizip_zip.h"
+#include <mutex>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/local_time/local_time_io.hpp>
-#include <chrono>
-#include <mutex>
-#include <vector>
 
 class CaseFile
 {
@@ -53,12 +45,6 @@ private:
 
     bool isZipOpen;
     std::string caseZipFile;
-
-    bool downloadedfromdem;
-    std::string elevsource;
-    std::vector<double> boundingboxarr;
-
-    std::vector<boost::local_time::local_date_time> timesForWx;
 
 public:
 
@@ -82,19 +68,6 @@ public:
     std::string getTime();
     bool isCfgFile(const std::string& filePath);
     bool isVTKFile(const std::string& filePath);
-
-
-    void setDownloadedFromDem(bool downloadedfromdemm);
-    bool getDownloadedFromDem();
-
-    void setElevSource(std::string elevsourcee);
-    std::string getElevSource();
-
-    void setBoundingBox(std::vector<double> boundingboxarrr);
-    std::vector<double> CaseFile::getBoundingBox();
-
-    void setWxTimes(std::vector<boost::local_time::local_date_time> timeList);
-    std::vector<boost::local_time::local_date_time> getWxTimes();
 
 };
 

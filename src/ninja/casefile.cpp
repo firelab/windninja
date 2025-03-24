@@ -7,9 +7,6 @@ CaseFile::CaseFile()
 {
     isZipOpen = false;
     caseZipFile = "";
-
-    downloadedfromdem = false;
-    elevsource = "";
 }
 
 
@@ -218,45 +215,4 @@ bool CaseFile::isVTKFile(const std::string& filePath)
     {
         return false;
     }
-}
-
-
-void CaseFile::setDownloadedFromDem(bool downloadedfromdemm)
-{
-    downloadedfromdem = downloadedfromdemm;
-}
-
-bool CaseFile::getDownloadedFromDem()
-{
-    return downloadedfromdem;
-}
-
-void CaseFile::setElevSource(std::string elevsourcee)
-{
-    elevsource = elevsourcee;
-}
-
-std::string CaseFile::getElevSource()
-{
-    return elevsource;
-}
-
-void CaseFile::setBoundingBox(std::vector<double> boundingboxarrr)
-{
-    boundingboxarr = boundingboxarrr;
-}
-
-std::vector<double> CaseFile::getBoundingBox()
-{
-    return boundingboxarr;
-}
-
-void CaseFile::setWxTimes(std::vector<boost::local_time::local_date_time> timeList)
-{
-    timesForWx = timeList;
-}
-
-std::vector<boost::local_time::local_date_time> CaseFile::getWxTimes()
-{
-    return timesForWx;
 }
