@@ -31,6 +31,7 @@
 #define NCEP_RAP_SURFACE_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
+#include <cmath>
 
 /**
  * Class to initialize a WindNinja run from an NCEP RUC Surface forecast file.

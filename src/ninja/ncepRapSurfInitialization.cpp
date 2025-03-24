@@ -246,9 +246,9 @@ void ncepRapSurfInitialization::checkForValidData()
                     }
                     else if( varList[i] == "Geopotential_height_cloud_tops" )  //units are meters
                     {
-                        if(padfScanline[k] != -99999.0) //means there are clouds
+                        if(padfScanline[k] != dfNoData) //means there are clouds
                         {
-                            if(padfScanline[k] < -500.0 || padfScanline[k] > 30000.0)
+                            if(padfScanline[k] < -500.0)
                                 throw badForecastFile("Geopotential_height_cloud_tops is out of range in forecast file.");
                         }
                     }
@@ -458,14 +458,17 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
 
         for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-            psWarpOptions->panSrcBands[b] = b + 1;
-            psWarpOptions->panDstBands[b] = b + 1;
+          psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+          psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+          psWarpOptions->panSrcBands[b] = b + 1;
+          psWarpOptions->panDstBands[b] = b + 1;
         }
 
-        if( pbSuccess == false )
-            dfNoData = -9999.0;
+        if( pbSuccess == false)
+          dfNoData = -9999.0;
+
+        if( dfNoData > 1e10)
+          dfNoData = std::numeric_limits<double>::quiet_NaN();
 
         psWarpOptions->papszWarpOptions =
         CSLSetNameValue( psWarpOptions->papszWarpOptions,
@@ -482,32 +485,32 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         }
 
         if( varList[i] == "Temperature_height_above_ground" ) {
-        GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            airGrid.set_noDataValue(-9999.0);
-            airGrid.replaceNan( -9999.0 );
+          GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
+          if( CPLIsNan( dfNoData ) ) {
+              airGrid.set_noDataValue(-9999.0);
+              airGrid.replaceNan( -9999.0 );
+          }
         }
+        else if( varList[i] == "v-component_of_wind_height_above_ground" ) {
+          GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
+          if( CPLIsNan( dfNoData ) ) {
+              vGrid.set_noDataValue(-9999.0);
+              vGrid.replaceNan( -9999.0 );
+          }
         }
-            else if( varList[i] == "v-component_of_wind_height_above_ground" ) {
-        GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            vGrid.set_noDataValue(-9999.0);
-            vGrid.replaceNan( -9999.0 );
+        else if( varList[i] == "u-component_of_wind_height_above_ground" ) {
+          GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
+          if( CPLIsNan( dfNoData ) ) {
+              uGrid.set_noDataValue(-9999.0);
+              uGrid.replaceNan( -9999.0 );
+          }
         }
-        }
-            else if( varList[i] == "u-component_of_wind_height_above_ground" ) {
-                GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            uGrid.set_noDataValue(-9999.0);
-            uGrid.replaceNan( -9999.0 );
-        }
-        }
-            else if( varList[i] == "Geopotential_height_cloud_tops" ) {
-                GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-        if( CPLIsNan( dfNoData ) ) {
-            cloudGrid.set_noDataValue(-9999.0);
-            cloudGrid.replaceNan( -99999.0 );
-        }
+        else if( varList[i] == "Geopotential_height_cloud_tops" ) {
+          GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
+          if( CPLIsNan( dfNoData ) ) {
+              cloudGrid.set_noDataValue(-9999.0);
+              cloudGrid.replaceNan( -99999.0 );
+          }
         }
 
         GDALDestroyWarpOptions( psWarpOptions );
