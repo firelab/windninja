@@ -322,10 +322,10 @@ void mainWindow::createActions()
       SLOT(windNinjaHelp()));
 
   //arcMap action
-  displayShapeFileMapAction = new QAction(tr("How to Display Shapefiles in ArcMap"), this);
-  displayShapeFileMapAction->setIcon(QIcon(":page_white_acrobat.png"));
-  connect(displayShapeFileMapAction, SIGNAL(triggered()), this,
-      SLOT(displayArcMap()));
+  displayShapeFileProAction = new QAction(tr("How to Display Shapefiles in ArcGIS Pro"), this);
+  displayShapeFileProAction->setIcon(QIcon(":page_white_acrobat.png"));
+  connect(displayShapeFileProAction, SIGNAL(triggered()), this,
+      SLOT(displayArcGISPro()));
 
   //open wind ninja tutorial 1 action
   tutorial1Action = new QAction(tr("Tutorial &1:The Basics"), this);
@@ -440,7 +440,7 @@ void mainWindow::createMenus()
   //help/tutorial menus
   helpMenu = menuBar()->addMenu(tr("&Help"));
   shapeSubMenu = helpMenu->addMenu(tr("Displaying Shapefiles"));
-  shapeSubMenu->addAction(displayShapeFileMapAction);
+  shapeSubMenu->addAction(displayShapeFileProAction);
   QMenu *shapeSubMenu;
   tutorialSubMenu = helpMenu->addMenu(tr("Tutorials"));
   tutorialSubMenu->addAction(tutorial1Action);
@@ -1177,11 +1177,11 @@ void mainWindow::fetchDem()
 }
 
 
-void mainWindow::displayArcMap()
+void mainWindow::displayArcGISPro()
 {
   pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"));
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"))))
+  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcGIS_Pro.pdf"));
+  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcGIS_Pro.pdf"))))
     {
 
       QMessageBox::warning(this, tr("Broken Link."),

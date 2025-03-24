@@ -479,7 +479,7 @@ else(WIN32 AND FIRELAB_PACKAGE)
 endif(WIN32 AND FIRELAB_PACKAGE)
 
 set(doc_files CLI_instructions.pdf
-              displaying_wind_vectors_in_ArcMap.pdf
+              displaying_wind_vectors_in_ArcGIS_Pro.pdf
               download_elevation_file.pdf
               fetch_dem_instructions.pdf)
 foreach(f ${doc_files})
