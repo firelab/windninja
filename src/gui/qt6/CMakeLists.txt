@@ -45,7 +45,7 @@ endif()
 
 add_dependencies(qt6_application ninja)
 
-target_link_libraries(qt6_application PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets)
+target_link_libraries(qt6_application PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
