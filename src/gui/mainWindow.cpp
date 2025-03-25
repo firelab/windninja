@@ -2432,22 +2432,14 @@ int mainWindow::solve()
             std::vector<std::string> fullFileListPoint = tree->point->fullFileList;
             for (std::string & pointFile : fullFileListPoint)
             {
-                std::vector<std::string> tokens = casefile.split(pointFile, "/");
-                if (tokens.size() >= 2)
+                std::string pointFilename = CPLGetFilename( pointFile.c_str() );
+                std::string pointPath = CPLGetPath( pointFile.c_str() );
+                if (pointPath.find("WXSTATIONS-") != std::string::npos)
                 {
-                    std::string secondToLastToken = tokens[tokens.size()-2];
-                    std::string pointFilename1 = tokens[tokens.size()-2] + "/" + tokens[tokens.size()-1];
-                    std::string pointFilename2 = tokens[tokens.size()-1];
-                    std::string pointZipPathFile1 = CPLFormFilename("PointInitialization", pointFilename1.c_str(), "");
-                    std::string pointZipPathFile2 = CPLFormFilename("PointInitialization", pointFilename2.c_str(), "");
-                    if (secondToLastToken.find("WXSTATIONS-") != std::string::npos)
-                    {
-                        casefile.addFileToZip(zipFile, pointZipPathFile1, pointFile);
-                    } else
-                    {
-                        casefile.addFileToZip(zipFile, pointZipPathFile2, pointFile);
-                    }
+                    pointFilename = CPLFormFilename(CPLGetFilename(pointPath.c_str()), pointFilename.c_str(), "");
                 }
+                std::string pointZipPathFile = CPLFormFilename("PointInitialization", pointFilename.c_str(), "");
+                casefile.addFileToZip(pointZipPathFile, pointFile);
             }
             // setup list of actually used/selected stations
             std::string selectedStationsFilename = "selected_stations.csv";
@@ -2469,21 +2461,17 @@ int mainWindow::solve()
             }
             for (std::string & pointFile : pointFileList)
             {
-                std::vector<std::string> tokens = casefile.split(pointFile, "/");
                 std::string pointFilename = CPLGetFilename( pointFile.c_str() );
-                if (tokens.size() >= 2)
+                std::string pointPath = CPLGetPath( pointFile.c_str() );
+                if (pointPath.find("WXSTATIONS-") != std::string::npos)
                 {
-                    std::string secondToLastToken = tokens[tokens.size()-2];
-                    if (secondToLastToken.find("WXSTATIONS-") != std::string::npos)
-                    {
-                        pointFilename = secondToLastToken + "/" + tokens[tokens.size() - 1];
-                    }
+                    pointFilename = CPLFormFilename(CPLGetFilename(pointPath.c_str()), pointFilename.c_str(), "");
                 }
                 selectedStationsFILE << pointFilename << "\n";
             }
             selectedStationsFILE.close();
             std::string selectedStationsZipPathFile = CPLFormFilename("PointInitialization", selectedStationsFilename.c_str(), "");
-            casefile.addFileToZip(zipFile, selectedStationsZipPathFile, selectedStationsFile);
+            casefile.addFileToZip(selectedStationsZipPathFile, selectedStationsFile);
             VSIUnlink( selectedStationsFile.c_str() );
 
         } // if (writeCF)
@@ -2775,7 +2763,7 @@ int mainWindow::solve()
             mainCaseCfgFILE << "--forecast_filename " << weatherFile << "\n";
             std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
             std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
-            casefile.addFileToZip(zipFile, weatherZipPathFile, weatherFile);
+            casefile.addFileToZip(weatherZipPathFile, weatherFile);
         } // if (writeCF && times.size() > 0)
 
         try
@@ -2819,54 +2807,20 @@ int mainWindow::solve()
         {
             // this occurs if the user purposefully unselects all times to select no input time, while tree->weather->timeList() returns a list of 0 times,
             // ninjaArmy replaces the empty times list with ALL the times in the forecast, the code runs ALL the weather forecast file times.
-            // Fortunately, it looks like tree->weather->timeModel->stringList() returns this list of times
-            // however, the list needs processed into boost local_date_time objects
-            // TODO: nvm, looks like the times returned from tree->weather->timeModel->stringList() are missing the year and date information required for conversions
-            // probably need to just setup a separate data list to get from weatherModel.h, or just replicate how ninjaArmy does it directly from the weatherFile.
-            QStringList QString_wxTimesList = tree->weather->timeModel->stringList();
+            std::vector<blt::local_date_time> fullTimesList = tree->weather->getFullTimeList();
 
             std::vector<std::string> stringTimes;
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
-            for (const auto& QStringTime : QString_wxTimesList)
+            for (const auto& time : fullTimesList)
             {
-                // convert the QStringTime into a std::string
-                std::string sTime = QStringTime.toStdString();
-                stringTimes.push_back(sTime);
-
-                /*// convert the QStringTime into QDateTime
-                QString qTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
-                QDateTime qDateTime = QDateTime::fromString(QStringTime,qTimeFormat);
-                qDateTime.setTimeSpec(Qt::UTC); //Set the Time to UTC
-
-                blt::time_zone_ptr tz; // Initialize time zone
-                tz = globalTimeZoneDB.time_zone_from_region(timeZone.c_str()); // Get time zone from database
-
-                // parse the QDateTime into date and time parts
-                int year = qDateTime.date().year();
-                int month = qDateTime.date().month();
-                int day = qDateTime.date().day();
-                int hour = qDateTime.time().hour();
-                int minute = qDateTime.time().minute();
-                int sec = qDateTime.time().second();
-
-                // make intermediate start and stop dates for generating ptime objects
-                bg::date date(year,month,day);
-                bpt::time_duration duration(hour,minute,sec,0);
-
-                // this time is UTC time
-                bpt::ptime ptime(date,duration);
-
-                // this constructor generates local times from UTC times
-                blt::local_date_time time( ptime, tz );*/
-
-                /*// Convert local_date_time to ptime using the UTC time zone
+                // Convert local_date_time to ptime using the UTC time zone
                 // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
 
                 // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);
-                stringTimes.push_back(isoString);*/
+                stringTimes.push_back(isoString);
             }
 
             std::string outstr;
@@ -2883,7 +2837,7 @@ int mainWindow::solve()
             mainCaseCfgFILE << "--forecast_filename " << weatherFile << "\n";
             std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
             std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
-            casefile.addFileToZip(zipFile, weatherZipPathFile, weatherFile);
+            casefile.addFileToZip(weatherZipPathFile, weatherFile);
         } // if (writeCF && times.size() == 0)
 
         nRuns = army->getSize();
@@ -3117,7 +3071,7 @@ int mainWindow::solve()
             {
                 domainRunFILE.close();
                 std::string domainRunZipPathFile = CPLFormFilename("DomainAverageInitialization", domainRunCfgFilename.c_str(), "");
-                casefile.addFileToZip(zipFile, domainRunZipPathFile, domainRunCfgFile );
+                casefile.addFileToZip(domainRunZipPathFile, domainRunCfgFile );
                 VSIUnlink( domainRunCfgFile.c_str() );
             }
         }
@@ -3129,8 +3083,8 @@ int mainWindow::solve()
     {
         mainCaseCfgFILE.close();
         std::string demFilename = CPLGetFilename( demFile.c_str() );
-        casefile.addFileToZip(zipFile, demFilename, demFile);
-        casefile.addFileToZip(zipFile, mainCaseCfgFilename, mainCaseCfgFile);
+        casefile.addFileToZip(demFilename, demFile);
+        casefile.addFileToZip(mainCaseCfgFilename, mainCaseCfgFile);
         VSIUnlink( mainCaseCfgFile.c_str() );
     }
 

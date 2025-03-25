@@ -2712,18 +2712,16 @@ void NinjaFoam::writeMassMeshVtkOutput()
             std::string timestr = "";
             if( input.ninjaTime.is_not_a_date_time() )
             {
-                std::string getlocaltime = casefile->getTime();
-                timestr = getlocaltime;
+                timestr = casefile->getCurrentTime();
             } else
             {
                 timestr = casefile->convertDateTimeToStd(input.ninjaTime);
             }
 
-            std::string zipFile = casefile->getCaseZipFile();
             std::string massMeshVtkZipPathFile = CPLFormFilename(timestr.c_str(), massMeshVtkFilename.c_str(), "");
-            casefile->addFileToZip(zipFile, massMeshVtkZipPathFile, massMeshVtkFile);
+            casefile->addFileToZip(massMeshVtkZipPathFile, massMeshVtkFile);
             std::string massMeshVtkSurfZipPathFile = CPLFormFilename(timestr.c_str(), massMeshVtkSurfFilename.c_str(), "");
-            casefile->addFileToZip(zipFile, massMeshVtkSurfZipPathFile, massMeshVtkSurfFile);
+            casefile->addFileToZip(massMeshVtkSurfZipPathFile, massMeshVtkSurfFile);
         }
 
         if( writeMassMeshVtk == false )

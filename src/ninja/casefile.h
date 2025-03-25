@@ -50,7 +50,6 @@ public:
 
     CaseFile();
 
-
     void setIsZipOpen(bool isZippOpen);
     bool getIsZipOpen();
 
@@ -58,12 +57,9 @@ public:
     std::string getCaseZipFile();
     void renameCaseZipFile(std::string newCaseZipFile);
 
+    void addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd);
 
-    void addFileToZip(const std::string& caseZippFile, const std::string& withinZipPathedFilename, const std::string& fileToAdd);
-
-
-    std::vector<std::string> split(const std::string &s, const std::string &delimiter);
-    std::string getTime();
+    std::string getCurrentTime();
     std::string convertDateTimeToStd(const boost::local_time::local_date_time& ninjaTime);
 
 };

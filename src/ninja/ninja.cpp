@@ -2833,18 +2833,16 @@ void ninja::writeOutputFiles()
                 std::string timestr = "";
                 if( input.ninjaTime.is_not_a_date_time() )
                 {
-                    std::string getlocaltime = casefile->getTime();
-                    timestr = getlocaltime;
+                    timestr = casefile->getCurrentTime();
                 } else
                 {
                     timestr = casefile->convertDateTimeToStd(input.ninjaTime);
                 }
 
-                std::string zipFile = casefile->getCaseZipFile();
                 std::string volVtkZipPathFile = CPLFormFilename(timestr.c_str(), volVtkFilename.c_str(), "");
-                casefile->addFileToZip(zipFile, volVtkZipPathFile, input.volVTKFile);
+                casefile->addFileToZip(volVtkZipPathFile, input.volVTKFile);
                 std::string volVtkSurfZipPathFile = CPLFormFilename(timestr.c_str(), volVtkSurfFilename.c_str(), "");
-                casefile->addFileToZip(zipFile, volVtkSurfZipPathFile, volVtkSurfFile);
+                casefile->addFileToZip(volVtkSurfZipPathFile, volVtkSurfFile);
             }
 
             if( input.volVTKOutFlag == false )

@@ -65,9 +65,6 @@
 #include "ninjaArmy.h"
 #include "ninja_conv.h"
 
-#include <boost/date_time/local_time/local_time.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "setconfigdialog.h"
 
 class mainWindow : public QMainWindow
