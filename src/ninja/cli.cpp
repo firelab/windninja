@@ -29,7 +29,6 @@
 *****************************************************************************/
 
 #include "cli.h"
-#include <string>
 
 /**
  * Function used to check that 'opt1' and 'opt2' are not specified
@@ -97,7 +96,7 @@ pair<string, string> at_option_parser(string const&s)
 // if we have an 'elevation_file' program option check if file exists and has a non-geographic srs.
 // if the srs is geographic, try to convert to a UTM file in the configured 'output_path' (or current dir if not set)
 // return address of a string that points to a valid non-geographic file or NULL if none was found or could be constructed
-const std::string* get_checked_elevation_file (po::variables_map& vm)
+const std::string* get_checked_elevation_file(po::variables_map& vm)
 {
     if (vm.count("elevation_file")) {
         const string* filename = &vm["elevation_file"].as<string>();
@@ -217,6 +216,7 @@ int windNinjaCLI(int argc, char* argv[])
         // config file
         po::options_description config("Simulation options");
         config.add_options()
+                ("write_casefile", po::value<bool>()->default_value(true), "generate a casefile of the run which will allow a history of your input and output")
                 ("num_threads", po::value<int>()->default_value(1), "number of threads to use during simulation")
                 ("elevation_file", po::value<std::string>(), "input elevation path/filename (*.asc, *.lcp, *.tif, *.img)")
                 ("fetch_elevation", po::value<std::string>(), "download an elevation file from an internet server and save to path/filename")
@@ -394,6 +394,7 @@ int windNinjaCLI(int argc, char* argv[])
                 cout << endl;
             }
         }
+
         store(opts_command, vm);
         //notify(vm);
 
@@ -439,6 +440,108 @@ int windNinjaCLI(int argc, char* argv[])
                 store(opts_config, vm);
                 //store(parse_config_file(ifs, config_file_options), vm);
                 //notify(vm);
+            }
+        }
+
+        //helper for casefile output of CLI
+        CaseFile casefile;
+        if (vm["write_casefile"].as<bool>() == true)
+        {
+            std::string outputDir = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
+            if( vm.count("output_path") )
+            {
+                outputDir = vm["output_path"].as<std::string>();
+            } else // if (outputDir == "")
+            {
+                // hrm, should work, but it isn't ideal. searches for "customOutputPath" in ninjafoam.cpp and ninja.cpp show
+                // that this is correct to keep paths all the same EXCEPT for with weather model initialization, which uses
+                // input.forecastFilename instead unless it is not set as an input, THEN it uses the dem file
+                // it is not an easy thing to make sure we have forecastFilename here in the code the same way as later in the code
+                outputDir = CPLGetPath( vm["elevation_file"].as<std::string>().c_str() );
+            }
+
+            std::string zipFile = CPLFormFilename(outputDir.c_str(), "tmp", "ninja");
+
+            std::string mainCaseCfgFilename = "config.cfg";
+            std::string mainCaseCfgFile = CPLFormFilename(outputDir.c_str(), mainCaseCfgFilename.c_str(), "");
+
+            casefile.setIsZipOpen(true);
+            casefile.setCaseZipFile(zipFile);
+
+            std::ofstream mainCaseCfgFILE(mainCaseCfgFile);
+            if (!mainCaseCfgFILE)
+            {
+                std::cerr << "Error: Could not open the casefile " << mainCaseCfgFile << " file for writing!" << std::endl;
+                return 1;
+            }
+
+            for (const auto& pair : vm)
+            {
+                const std::string& option_name = pair.first;
+                const po::variable_value& option_value = pair.second;
+
+                mainCaseCfgFILE << "--" << option_name << " ";
+
+                try {
+                    if (option_value.value().type() == typeid(int))
+                    {
+                        mainCaseCfgFILE << option_value.as<int>() << std::endl;
+                    } else if (option_value.value().type() == typeid(bool))
+                    {
+                        mainCaseCfgFILE << std::boolalpha << option_value.as<bool>() << std::endl;
+                    } else if (option_value.value().type() == typeid(std::string))
+                    {
+                        mainCaseCfgFILE << option_value.as<std::string>() << std::endl;
+                    } else if (option_value.value().type() == typeid(double))
+                    {
+                        mainCaseCfgFILE << option_value.as<double>() << std::endl;
+                    } else if (option_value.value().type() == typeid(std::vector<std::string>))
+                    {
+                        const auto& vec = option_value.as<std::vector<std::string>>();
+                        for (const auto& str : vec)
+                        {
+                            mainCaseCfgFILE << str << " ";
+                        }
+                        mainCaseCfgFILE << std::endl;
+                    } else
+                    {
+                        mainCaseCfgFILE << "Unknown type" << std::endl;
+                    }
+                } catch (const boost::bad_any_cast& e)
+                {
+                    mainCaseCfgFILE << "Bad cast: " << e.what() << std::endl;
+                }
+            }
+            // This flush is actually optional because close() will flush automatically
+            mainCaseCfgFILE.flush();
+            mainCaseCfgFILE.close();
+
+            std::string inputCfgFile = vm["config_file"].as<std::string>();
+            std::string inputCfgFilename = CPLGetFilename( inputCfgFile.c_str() );
+            casefile.addFileToZip(inputCfgFilename, inputCfgFile);
+            std::string demFile = vm["elevation_file"].as<std::string>();
+            std::string demFilename = CPLGetFilename( demFile.c_str() );
+            casefile.addFileToZip(demFilename, demFile);
+            casefile.addFileToZip(mainCaseCfgFilename, mainCaseCfgFile);
+            VSIUnlink( mainCaseCfgFile.c_str() );
+            if (vm.count("forecast_filename"))
+            {
+                std::string weatherFile = vm["forecast_filename"].as<std::string>();
+                std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
+                std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
+                casefile.addFileToZip(weatherZipPathFile, weatherFile);
+            }
+            if (vm.count("wx_station_filename"))
+            {
+                std::string pointFile = vm["wx_station_filename"].as<std::string>();
+                std::string pointFilename = CPLGetFilename( pointFile.c_str() );
+                std::string pointPath = CPLGetPath( pointFile.c_str() );
+                if (pointPath.find("WXSTATIONS-") != std::string::npos)
+                {
+                    pointFilename = CPLFormFilename(CPLGetFilename(pointPath.c_str()), pointFilename.c_str(), "");
+                }
+                std::string pointZipPathFile = CPLFormFilename("PointInitialization", pointFilename.c_str(), "");
+                casefile.addFileToZip(pointZipPathFile, pointFile);
             }
         }
 
@@ -1271,9 +1374,9 @@ int windNinjaCLI(int argc, char* argv[])
                     option_dependency(vm, "wx_station_filename", "start_day");
                     option_dependency(vm, "wx_station_filename", "start_hour");
                     option_dependency(vm, "wx_station_filename", "start_minute");
-                    option_dependency(vm, "wx_station_filename", "stop_year");
                     option_dependency(vm, "wx_station_filename", "stop_month");
                     option_dependency(vm, "wx_station_filename", "stop_day");
+                    option_dependency(vm, "wx_station_filename", "stop_year");
                     option_dependency(vm, "wx_station_filename", "stop_hour");
                     option_dependency(vm, "wx_station_filename", "stop_minute");
                     option_dependency(vm, "wx_station_filename", "number_time_steps");
@@ -1356,7 +1459,9 @@ int windNinjaCLI(int argc, char* argv[])
             
             windsim.setDEM( i_, *elevation_file );
             windsim.setPosition( i_ );    //get position from DEM file
-            
+
+            windsim.setCaseFilePtr( i_, casefile );
+
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
@@ -1881,7 +1986,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 else
                 {
-                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'";
+                    cout << "Invalid pdf base map: " << pbm << ". Should be 'topofire' or 'hillshade'" << endl;
                 }
                 windsim.setPDFBaseMap( i_, pbs );
                 conflicting_options(vm, "pdf_size", "pdf_height");

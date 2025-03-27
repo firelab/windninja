@@ -78,6 +78,7 @@ class pointInput : public QWidget
     QString demFileName;
     QString stationFileName;
     std::vector<std::string> stationFileList;
+    std::vector<std::string> fullFileList;
     std::vector<int> stationFileTypes;
     int simType;
     bool pointGo;
@@ -159,6 +160,10 @@ class pointInput : public QWidget
     void setOneStepTimeseries();
     
   private slots:
+
+    void generateFullFileList();
+    void collectAllIndexes(const QModelIndex &parent, std::vector<QModelIndex> &allIndexes) const;
+
     void readStationFiles(const QItemSelection &x ,const QItemSelection &y);
     void selChanged(const QItemSelection &x ,const QItemSelection &y); //Test Function
     void setInputFile( QString file );
