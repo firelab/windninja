@@ -38,6 +38,7 @@ set(STL_SOURCES convert_output.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Font.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninjaMathUtility.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/ninjaUnits.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/LineStyle.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
