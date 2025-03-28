@@ -70,10 +70,14 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
 	spd = s;
 }
 
-void KmlVector::setDirGrid(AsciiGrid<double> &d, const double angFromNorth)
+void KmlVector::setAngleFromNorth(const double angFromNorth)
+{
+	angleFromNorth = angFromNorth;
+}
+
+void KmlVector::setDirGrid(AsciiGrid<double> &d)
 {
 	dir = d;
-	angleFromNorth = angFromNorth;
 }
 
 void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units)

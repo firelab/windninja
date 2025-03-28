@@ -142,7 +142,8 @@ public:
 
 	void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
 	double angleFromNorth;
-	void setDirGrid(AsciiGrid<double> &d, const double angFromNorth);
+	void setAngleFromNorth(const double angFromNorth);
+	void setDirGrid(AsciiGrid<double> &d);
 	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
 	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
 	double colMax_colHeightAGL;

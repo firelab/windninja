@@ -1589,7 +1589,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
-            wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel, input.dem.getAngleFromNorth());
+            wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
             wxModelKmlFiles.setLineWidth(input.wxModelGoogLineWidth);
             wxModelKmlFiles.setTime(input.ninjaTime);
             std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));

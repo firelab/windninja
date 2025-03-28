@@ -3425,7 +3425,8 @@ void NinjaFoam::WriteOutputFiles()
 			ninjaKmlFiles.setLegendFile(input.legFile);
 			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
 			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-			ninjaKmlFiles.setDirGrid(*angTempGrid, input.dem.getAngleFromNorth());
+			ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
+			ninjaKmlFiles.setDirGrid(*angTempGrid);
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
 			ninjaKmlFiles.setTime(input.ninjaTime);
