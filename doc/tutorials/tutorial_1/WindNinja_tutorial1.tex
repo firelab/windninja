@@ -46,7 +46,7 @@
     \includegraphics[scale=0.35]							{title_fig.jpg}
     \vfill
   	{\Huge
-	  3/25/2020 %Date Last Edited
+	  11/07/2024 %Date Last Edited
   	}
     \vfill
 \end{titlepage}
@@ -127,21 +127,21 @@ WindNinja uses an elevation file to obtain the necessary elevation information t
 
 \begin{itemize}
 \item[]ASCII Raster (*.asc)
-\item[]FARSITE landscape file (*.lcp)
+\item[]FARSITE landscape file (*.tif or *.lcp)
 \item[]GeoTiff (*.tif)
 \item[]ERDAS IMAGINE (*.img)
 \end{itemize}
 
-If you already have one of these files for your area, then you can load it, but be sure it meets WindNinja's requirements (described below).  If you don't have an elevation file for your area, you can use the built in file fetching ability of WindNinja to download a file from a USGS server.  This feature is very easy to use, and the files conform to WindNinja's requirements.  The document called \href{https://weather.firelab.org/windninja/tutorials/download_elevation_file.pdf}{\texttt{download\_elevation\_file.pdf} } explains this.
+If you already have one of these files for your area, then you can load it, but be sure it meets WindNinja's requirements (described below).  If you don't have an elevation file for your area, you can use the built in file fetching ability of WindNinja to download a file from a USGS or the OpenTopography server.  This feature is very easy to use, and the files conform to WindNinja's requirements.  The document called \href{https://weather.firelab.org/windninja/tutorials/download_elevation_file.pdf}{\texttt{download\_elevation\_file.pdf} } explains this.
 
 If you are just practicing right now, you can also use an elevation file provided by the WindNinja installation.They can be found by going to Start$\Rightarrow$Programs$\Rightarrow$WindNinja-3.0-Example Files.  
 In the file browser that opens, you will see the elevation files called \texttt{missoula\_valley.tif}, and \texttt{example\_lcp.lcp} Either of these can be used.
 
-Although all of the elevation file formats mentioned above work in WindNinja, there are some slight differences that deserve explanation.  The ASCII Raster (*.asc) file type is the most common one used in wildland fire, since it is used in the popular fire behavior programs.  So if you will need the elevation file for fire behavior programs in addition to WindNinja, this would probably be the preferred format.  There are two slight disadvantages of this file format: it is a much larger file than the others (ascii and uncompressed), and it's projection/datum information is specified in a separate file (*.prj) that must be in the same folder.  Both the GeoTiff (*.tif) and ERDAS IMAGINE (*.img) file formats are compressed formats that take much less disk space and download time than the ASCII Raster file format.  Also, they contain their projection/datum information in the file rather than a separate file.  If you are only using WindNinja, and not a fire behavior program like FARSITE or FlamMap, either of these would be a good format.  Last, if you already have a FARSITE landscape file (*.lcp) because you are doing fire behavior calculations, you should use it because WindNinja will use the canopy and fuels information to infer gridded surface roughness values (surface drag due to vegetation) and heat flux parameters (for a diurnal flow or non-neutral stability simulation).  For the other file formats, you must enter a single, spatially constant vegetation value (described later).
+Although all of the elevation file formats mentioned above work in WindNinja, there are some slight differences that deserve explanation.  The ASCII Raster (*.asc) file type is the most common one used in wildland fire, since it is used in the popular fire behavior programs.  So if you will need the elevation file for fire behavior programs in addition to WindNinja, this would probably be the preferred format.  There are two slight disadvantages of this file format: it is a much larger file than the others (ascii and uncompressed), and it's projection/datum information is specified in a separate file (*.prj) that must be in the same folder.  Both the GeoTiff (*.tif) and ERDAS IMAGINE (*.img) file formats are compressed formats that take much less disk space and download time than the ASCII Raster file format.  Also, they contain their projection/datum information in the file rather than a separate file.  If you are only using WindNinja, and not a fire behavior program like FARSITE or FlamMap, either of these would be a good format.  Last, if you already have a FARSITE landscape file (*.tif or *.lcp) because you are doing fire behavior calculations, you should use it because WindNinja will use the canopy and fuels information to infer gridded surface roughness values (surface drag due to vegetation) and heat flux parameters (for a diurnal flow or non-neutral stability simulation).  For the other file formats, you must enter a single, spatially constant vegetation value (described later).
 
 To be able to do a wind simulation, WindNinja has certain requirements that elevation files must meet:
 \begin{enumerate}
-\item There must be projection/datum information associated with the file.
+\item There must be projection/datum information associated with the file and the projection must be defined with that north as ``up.'' This is because we use the standard meteorological convention for wind direction where north is assumed as ``up.''
 \item The units of your elevation data must be in meters, that is both the vertical (elevation data) and the horizontal (cell resolution/cell size).
 \item Your elevation file should not contain NODATA values (more about this below).
 \item It should not be too large in its extent.  A good rule of thumb is to keep your domain less than 30 by 30 miles (50 by 50 km).  Larger sizes are possible, but you may run the risk of your computer running out of memory or you may not be resolving the terrain well enough (if the cell size is large).

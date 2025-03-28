@@ -61,3 +61,5 @@ doxy.tag
 # VScode
 .vscode/
 
+/out/build/x64-Release
+/out/install/x64-Release

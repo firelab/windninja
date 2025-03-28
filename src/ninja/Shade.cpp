@@ -87,9 +87,9 @@ bool Shade::compute_gridShade()
 		flagMap = new AsciiGrid<double>(elevation->get_nCols(), elevation->get_nRows(),
 		elevation->get_xllCorner(), elevation->get_yllCorner(),
 		elevation->get_cellSize(), elevation->get_noDataValue(), 1.0);
-		flagMap->set_cellSize(1);
-		flagMap->set_xllCorner(0);
-		flagMap->set_yllCorner(0);
+		flagMap->set_cellSize(1.);
+		flagMap->set_xllCorner(0.);
+		flagMap->set_yllCorner(0.);
 		// make new elevation grid that is "normalized" to cellsize so that horizontal and vertical units are in "cellsize", this helps indexing computations later
 		elevation_norm = new AsciiGrid<double> (*elevation);
 		for(int i = 0; i < (elevation_norm->get_nRows()); i++)
@@ -97,12 +97,11 @@ bool Shade::compute_gridShade()
 			for(int j = 0; j < (elevation_norm->get_nCols()); j++)
 			{
 				(*elevation_norm)(i,j) = (*elevation_norm)(i,j) / elevation_norm->get_cellSize();
-				//elevation_norm->get_cellSize();
 			}
 		}
-		elevation_norm->set_cellSize(1);
-		elevation_norm->set_xllCorner(0);
-		elevation_norm->set_yllCorner(0);
+		elevation_norm->set_cellSize(1.);
+		elevation_norm->set_xllCorner(0.);
+		elevation_norm->set_yllCorner(0.);
 
 		double thetaXY;
 		//convert theta to an "xy" math type angle to do trig math on
@@ -123,8 +122,8 @@ bool Shade::compute_gridShade()
 		// calculate absolute values for light direction lightDir
 		lightDirXMagnitude = x_light;
 		lightDirYMagnitude = y_light;
-		if(lightDirXMagnitude < 0) lightDirXMagnitude *= -1;
-		if(lightDirYMagnitude < 0) lightDirYMagnitude *= -1;
+		if(lightDirXMagnitude < 0.) lightDirXMagnitude *= -1.;
+		if(lightDirYMagnitude < 0.) lightDirYMagnitude *= -1.;
 
 		// decide which loop will come first, the y loop or x loop
 		// based on direction of light, makes calculations faster
@@ -137,7 +136,7 @@ bool Shade::compute_gridShade()
             sizeiY = elevation->get_nCols();      //set inner loop indexing size, ie ncols or nrows
             sizeiX = elevation->get_nRows();      //set outer loop indexing size, ie ncols or nrows
 
-            if(x_light < 0)
+            if(x_light < 0.)
             {
                 iY = sizeiY-1;
                 diriY = -1;
@@ -148,7 +147,7 @@ bool Shade::compute_gridShade()
                 diriY = 1;
             }
 
-            if(y_light < 0)
+            if(y_light < 0.)
             {
                 iX = sizeiX-1;
                 diriX = -1;
@@ -170,7 +169,7 @@ bool Shade::compute_gridShade()
             sizeiY = elevation->get_nRows();      //set inner loop indexing size
             sizeiX = elevation->get_nCols();      //set outer loop indexing size
 
-            if(x_light < 0)
+            if(x_light < 0.)
             {
                 iX = sizeiX-1;
                 diriX = -1;
@@ -183,7 +182,7 @@ bool Shade::compute_gridShade()
                 sideClosestToSun = 0;   // 0=>west  1=>east  2=>south  3=>north
             }
 
-            if(y_light < 0)
+            if(y_light < 0.)
             {
                 iY = sizeiY-1;
                 diriY = -1;
@@ -293,9 +292,9 @@ bool Shade::track_along_ray(double px, double py, int *X, int *Y) //function mov
         py -= y_light;  //negative because "y_light" is vector FROM the sun, but we track TOWARD the sun
 
         // check if we've reached the boundary, if so, mark as unshaded
-        if(px < (0 - smalll) || px >= (elevation_norm->get_nCols() - 1 + smalll) || py < (0 - smalll) || py >= (elevation_norm->get_nRows() -1 + smalll))
+        if(px < (0. - smalll) || px >= (elevation_norm->get_nCols() - 1. + smalll) || py < (0. - smalll) || py >= (elevation_norm->get_nRows() -1. + smalll))
         {
-            (*flagMap)(*Y,*X) = -1;
+            (*flagMap)(*Y,*X) = -1.;
             data(*Y,*X) = false; //mark as unshaded
             break;
         }
@@ -412,10 +411,10 @@ bool Shade::track_along_ray(double px, double py, int *X, int *Y) //function mov
                 val2 = 0.0;
             if(val3 <= 0.0f)
                 val3 = 0.0;
-            interpolatedFlagMap = (1 - t) * (1 - u) * val0
-                    + t * (1 - u) * val1
+            interpolatedFlagMap = (1. - t) * (1. - u) * val0
+                    + t * (1. - u) * val1
                     + t * u * val2
-                    + (1 - t) * u * val3;
+                    + (1. - t) * u * val3;
         }
 
         //if a 0 order interpolation gave us -1, set to 0

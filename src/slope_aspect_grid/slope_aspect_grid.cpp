@@ -4,7 +4,7 @@
  *
  * Project:  WindNinja
  * Purpose:  Application for creating a slope and aspect grid
- * Author:   Loren Atwoodr <loren.atwood@usda.gov>
+ * Author:   Loren Atwood <loren.atwood@usda.gov>
  *
  ******************************************************************************
  *

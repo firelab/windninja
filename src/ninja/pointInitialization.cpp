@@ -1,4 +1,4 @@
-﻿/******************************************************************************
+/******************************************************************************
  *
  * $Id$
  *
@@ -66,8 +66,7 @@ pointInitialization::~pointInitialization()
 
 void pointInitialization::SetRawStationFilename(std::string filename)
 {
-    std::string a="wxStation";
-    rawStationFilename =filename;
+    rawStationFilename = filename;
 }
 
 /**
@@ -442,9 +441,6 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
     std::string xDem;
     std::string fullPath;
    
-//    xDem = demFile.substr(0,demFile.find(".",0));
-//    std::size_t found = xDem.find_last_of("/");
-//    subDem=xDem.substr(found+1);
     subDem = std::string(CPLGetBasename(demFile.c_str())); //Use cross platform stuff to avoid weird errors
 
     //NEW WAY
@@ -466,19 +462,25 @@ std::string pointInitialization::generatePointDirectory(string demFile, string o
         timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
         timeStream2<<start_and_stop_times[1].local_time();
 
-//        cout<<start_and_stop_times[0].local_time()<<endl;
-//        cout<<start_and_stop_times[1].local_time()<<endl;
-
         timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
 
     }
     
     std::string newDirPart = "WXSTATIONS-"+timeComponent+"-"+subDem;
-    fullPath = std::string(CPLFormFilename(outPath.c_str(),newDirPart.c_str(),NULL));
+    if(outPath.c_str() != NULL && outPath != "")
+    {
+        fullPath = std::string(CPLFormFilename(outPath.c_str(),newDirPart.c_str(),NULL));
+    }
+    else
+    {
+        fullPath = std::string(newDirPart.c_str());
+    }
     CPLDebug("STATION_FETCH","Generating Directory: %s",fullPath.c_str());    
     VSIMkdir(fullPath.c_str(),0777);
     return fullPath;
-}/**
+}
+
+/**
  * @brief pointInitialization::removeBadDirectory
  * FOR CLI runs, remove the directory because the downloader failed to download the stations
  * probably because there are not stations available for the user specified reqs
@@ -677,7 +679,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     vector<vector<preInterpolate> > interpolatedDataSet;
     vector<wxStation> readyToGo;   
        
-    if (wxVector[0][0].datetime==noTime) //If its a "WindNinja NOW" style run, new format, 1 step
+    if (wxVector[0][0].datetime == noTime) //If its a "WindNinja NOW" style run, new format, 1 step
     {        
         CPLDebug("STATION_FETCH", "noTime");
         readyToGo=interpolateNull(demFile,wxVector,timeZone); //Does a "Fake Interpolation", Converst the 1 step into a wxStation Object, ready to be used in simulation
@@ -746,7 +748,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
     OGR_L_ResetReading(hLayer);
     int fCount=OGR_L_GetFeatureCount(hLayer,1);
 
-    CPLDebug("STATION_FETCH", "Reading csvName: %s", stationLoc.c_str());
+    CPLDebug("STATION_FETCH", "Reading csv file: %s", stationLoc.c_str());
 
     poLayer->ResetReading();
 
@@ -765,9 +767,11 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         oStation.stationName=oStationName;
         pszKey = poFeature->GetFieldAsString( 1 );
 
-        //LAT LON COORDINATES
+        //COORDINATES STUFF
         if( EQUAL( pszKey, "geogcs" ) )
         {
+            CPLDebug("STATION_FETCH","GEOGCS FOUND!");
+
             //check for valid latitude in degrees
             dfTempValue = poFeature->GetFieldAsDouble( 3 );
 
@@ -798,18 +802,38 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             }
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
-            oStation.lat=poFeature->GetFieldAsDouble(3);
-            oStation.lon=poFeature->GetFieldAsDouble(4);
-            oStation.datumType=pszDatum;
-            oStation.coordType=pszKey;
+            if( !EQUAL( pszDatum, "WGS84" ) && !EQUAL( pszDatum, "NAD83" ) && !EQUAL( pszDatum, "NAD27" ) )
+            {
+                oErrorString = "Invalid datum: ";
+                oErrorString += poFeature->GetFieldAsString( 2 );
+                oErrorString += " at station: ";
+                oErrorString += oStationName;
+                error_msg = oErrorString;
+                throw( std::domain_error( oErrorString ) );
+            }
 
+            oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are Lat/Lon
+            oStation.coord_x=poFeature->GetFieldAsDouble(4);
+            oStation.datumType=pszDatum; //Set the datum type
+            oStation.coordType=pszKey; //set the coord type
         }
         else if( EQUAL( pszKey, "projcs" ) )
         {
             CPLDebug("STATION_FETCH","PROJCS FOUND!");
+
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
-            oStation.lat=poFeature->GetFieldAsDouble(3); //set the projected coordinates
-            oStation.lon=poFeature->GetFieldAsDouble(4);
+            if( !EQUAL( pszDatum, "WGS84" ) )
+            {
+                std::string oWarnString = "ignoring datum: ";
+                oWarnString += poFeature->GetFieldAsString( 2 );
+                oWarnString += " for PROJCS at station: ";
+                oWarnString += oStationName;
+                oWarnString += " and using datum WGS84";
+                std::cout << oWarnString << std::endl;
+            }
+
+            oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are XCoord/YCoord, in the projection of the dem
+            oStation.coord_x=poFeature->GetFieldAsDouble(4);
             oStation.datumType=pszDatum; //Set the datum type
             oStation.coordType=pszKey; //set the coord type
         }
@@ -904,7 +928,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         //WIND DIRECTION
         dfTempValue = poFeature->GetFieldAsDouble( 9 );
 
-        if( dfTempValue > 360.1 || dfTempValue < 0.0 )
+        if( dfTempValue > 360.0 || dfTempValue < 0.0 )
         {
             oErrorString = "Invalid value for direction: ";
             oErrorString += poFeature->GetFieldAsString( 9 );
@@ -917,20 +941,21 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         //TEMPERATURE
         pszKey = poFeature->GetFieldAsString( 11 );
+        dfTempValue = poFeature->GetFieldAsDouble( 10 );
 
         if( EQUAL(pszKey, "f" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::F;
         }
         else if( EQUAL( pszKey, "c" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::C;
         }
         else if( EQUAL( pszKey, "k" ) )
         {
-            oStation.temperature=poFeature->GetFieldAsDouble(10);
+            oStation.temperature=dfTempValue;
             oStation.tempUnits=temperatureUnits::K;
         }
         else
@@ -1033,6 +1058,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 vector<std::string> pointInitialization::fetchWxStationID()
 {
     vector<std::string> stationNames;
+    
     for (int k=0;k<stationFiles.size();k++)
     {
         OGRDataSourceH hDS;
@@ -1221,13 +1247,13 @@ vector<wxStation> pointInitialization::makeWxStation(vector<vector<preInterpolat
         {
             //This has not been tested, I have no idea if this works or not
             CPLDebug("STATION_FETCH","USING PROJCS!");
-            subDat.set_location_projected(stationDataList[i][0].lon,stationDataList[i][0].lat,demFile);
-//            subDat.set_location_projected(stationDataList[i][0].lat,stationDataList[i][0].lon,demFile);
+            subDat.set_location_projected(stationDataList[i][0].coord_x,stationDataList[i][0].coord_y,demFile);
+//            subDat.set_location_projected(stationDataList[i][0].coord_y,stationDataList[i][0].coord_x,demFile);
         }
         else //GEOGCS!
         {
             CPLDebug("STATION_FETCH","USING GEOGCS!");
-            subDat.set_location_LatLong(stationDataList[i][0].lat,stationDataList[i][0].lon,
+            subDat.set_location_LatLong(stationDataList[i][0].coord_y,stationDataList[i][0].coord_x,
                     demFile,Datum.c_str());
         }
 
@@ -1353,8 +1379,8 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             interpol.cloudCover = cloudCover;
             interpol.direction = angle;
 			
-            interpol.lat = sts[k][0].lat;
-            interpol.lon = sts[k][0].lon;
+            interpol.coord_x = sts[k][0].coord_x;
+            interpol.coord_y = sts[k][0].coord_y;
             interpol.datumType = sts[k][0].datumType;
             interpol.coordType = sts[k][0].coordType;
             interpol.height = sts[k][0].height;
@@ -2758,7 +2784,6 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     pathName = CPLGetPath(demFile.c_str());
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);    
 
-//    cName=stationPath+baseName+ "_" + "stations_" + statLen.str() + ".csv";
     std::string nameComponent = baseName+ "_" + "stations_" + statLen.str() + ".csv";
     cName = std::string(CPLFormFilename(stationPath.c_str(),nameComponent.c_str(),".csv"));
 
@@ -2772,11 +2797,11 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     {
         outFile<<"Station_File_List,"<<endl;
     }
-//    outFile<<"Station_File_List,"<<endl;
     for(int i=0;i<stationFiles.size();i++){
-//        outFile<<stationFiles[i]<<endl;
         outFile<<CPLGetFilename(stationFiles[i].c_str())<<endl;
     }
+
+    outFile.close();
 }
 /**
  * @brief pointInitialization::parseStationHeight

@@ -223,8 +223,8 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
         CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
                   pszGribFile );
         NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
-        /* Special case for gfs */
-        if( EQUALN( pszKey, "gfs_global", 10 ) )
+        /* Special case for urls with subdirectories */
+        if(strstr(ppszKey[NOMADS_DIR_FRMT], "%02d") != NULL)
         {
             pszGribDir = CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s, nFcstHour );
         }

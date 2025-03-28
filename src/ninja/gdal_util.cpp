@@ -94,6 +94,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
     OSRSetAxisMappingStrategy(hTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
@@ -592,7 +593,7 @@ int GDALFillBandNoData(GDALDataset *poDS, int nBand, int nSearchPixels)
 
     poBand = poDS->GetRasterBand(1);
 
-    GDALFillNodata(poBand, NULL, 100, 0, 0, NULL, NULL, NULL);
+    GDALFillNodata(poBand, NULL, 120, 0, 0, NULL, NULL, NULL);
 
     double dfNoData = poBand->GetNoDataValue(NULL);
 
@@ -896,10 +897,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
 
     OGRSpatialReference oDstSRS;
 
-    double lat, lon;
-    GDALGetCenter( (GDALDataset*)hSrcDS, &lon, &lat);
-    int utmZone = gdalGetUtmZone(lat, lon);
-    int nUtmZone = GetUTMZoneInEPSG(lat, lon);
+    int nUtmZone = GDALGetUtmZone( (GDALDataset*)hSrcDS );
 
     oDstSRS.importFromEPSG(nUtmZone);
     oDstSRS.exportToWkt((char**)&pszDstWKT);
@@ -922,6 +920,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "GDALSuggestedWarpOutput failed." );
         return false;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
@@ -931,6 +930,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
 
     if(hDstDS == NULL)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to create gdal dataset." );
         return false;
     }
 
@@ -1020,6 +1020,7 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
     }
     if(nNoDataCount > 0)
     {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to fill all no data values." );
         return false;
     }
 

@@ -509,6 +509,10 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     double dfNoData;
     int nBandCount;
     int bNeedNextCloud = FALSE;
+    AsciiGrid<double> speedGrid;
+    AsciiGrid<double> directionGrid;
+    bool blendCheck;
+
     /*
     ** We need to find the correct file in the directory.  It may not be the
     ** filename.
@@ -576,6 +580,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 #endif
 
     const char *pszElement;
+    const char *pszComment;
     const char *pszShortName;
     int bHaveTemp, bHaveCloud;
     bHaveTemp = FALSE;
@@ -594,7 +599,8 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             !EQUAL( "2-HTGL", pszShortName ) &&
             !EQUAL( "0-EATM", pszShortName ) &&
             !EQUAL( "0-CCY", pszShortName ) &&
-            !EQUAL( "0-RESERVED(10)", pszShortName ) )
+            !EQUAL( "0-RESERVED(10)", pszShortName ) &&
+            !EQUAL( "0-HCY", pszShortName ))
         {
             continue;
         }
@@ -602,45 +608,87 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
         if( !pszElement )
         {
-            throw badForecastFile( "Could not fetch proper band" );
+          throw badForecastFile( "Could not fetch proper band" );
         }
         if( EQUAL( pszElement, "TMP" ) )
         {
-            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
-            if( CPLIsNan( dfNoData ) )
-            {
-                airGrid.set_noDataValue( -9999.0 );
-                airGrid.replaceNan( -9999.0 );
-            }
-            bHaveTemp = TRUE;
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            airGrid.set_noDataValue( -9999.0 );
+            airGrid.replaceNan( -9999.0 );
+          }
+          bHaveTemp = TRUE;
         }
         else if( EQUAL( pszElement, "UGRD" ) )
         {
-            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, uGrid );
-            if( CPLIsNan( dfNoData ) )
-            {
-                uGrid.set_noDataValue( -9999.0 );
-                uGrid.replaceNan( -9999.0 );
-            }
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, uGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            uGrid.set_noDataValue( -9999.0 );
+            uGrid.replaceNan( -9999.0 );
+          }
         }
         else if( EQUAL( pszElement, "VGRD" ) )
         {
-            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, vGrid );
-            if( CPLIsNan( dfNoData ) )
-            {
-                vGrid.set_noDataValue( -9999.0 );
-                vGrid.replaceNan( -9999.0 );
-            }
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, vGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            vGrid.set_noDataValue( -9999.0 );
+            vGrid.replaceNan( -9999.0 );
+          }
         }
         else if( EQUAL( pszElement, "TCDC" ) )
         {
-            GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, cloudGrid );
-            if( CPLIsNan( dfNoData ) )
-            {
-                cloudGrid.set_noDataValue( -9999.0 );
-                cloudGrid.replaceNan( -9999.0 );
-            }
-            bHaveCloud = TRUE;
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, cloudGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            cloudGrid.set_noDataValue( -9999.0 );
+            cloudGrid.replaceNan( -9999.0 );
+          }
+          bHaveCloud = TRUE;
+        }
+        else if( EQUAL( pszElement, "T" ) )
+        {
+          pszComment = GDALGetMetadataItem( hBand, "GRIB_COMMENT", NULL );
+
+          if( EQUAL( pszComment, "Temperature [stddev]")) {
+            continue;
+          }
+
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            airGrid.set_noDataValue( -9999.0 );
+            airGrid.replaceNan( -9999.0 );
+          }
+          bHaveTemp = TRUE;
+        }
+        else if( EQUAL( pszElement, "WindSpd" ) )
+        {
+          blendCheck = true;
+          pszComment = GDALGetMetadataItem( hBand, "GRIB_COMMENT", NULL );
+
+          if( EQUAL( pszComment, "Wind speed [stddev]")) {
+            continue;
+          }
+
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, speedGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            speedGrid.set_noDataValue( -9999.0 );
+            speedGrid.replaceNan( -9999.0 );
+          }
+        }
+        else if( EQUAL( pszElement, "WindDir" ) )
+        {
+          blendCheck = true;
+          GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, directionGrid );
+          if( CPLIsNan( dfNoData ) )
+          {
+            directionGrid.set_noDataValue( -9999.0 );
+            directionGrid.replaceNan( -9999.0 );
+          }
         }
     }
     GDALClose( hSrcDS );
@@ -739,9 +787,29 @@ noCloudOK:
     cloudGrid /= 100.0;
     airGrid += 273.15;
 
-    wGrid.set_headerData( uGrid );
+    if(EQUAL(pszKey, "nbm_conus")) {
+      uGrid.set_headerData(speedGrid);
+      vGrid.set_headerData(speedGrid);
+      wGrid.set_headerData(speedGrid);
+
+      for(int i=0; i<speedGrid.get_nRows(); i++)
+      {
+        for(int j=0; j<speedGrid.get_nCols(); j++)
+        {
+          if( speedGrid(i,j) == speedGrid.get_NoDataValue() || directionGrid(i,j) == directionGrid.get_NoDataValue() ) {
+            uGrid(i,j) = uGrid.get_NoDataValue();
+            vGrid(i,j) = vGrid.get_NoDataValue();
+          }
+          else
+            wind_sd_to_uv(speedGrid(i,j), directionGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+        }
+      }
+    }
+
     wGrid = 0.0;
 
+    speedGrid.deallocate();
+    directionGrid.deallocate();
     GDALDestroyWarpOptions( psWarpOptions );
 }
 

@@ -86,6 +86,7 @@ public:
 
 	AsciiGrid<double> spd, dir;
 	AsciiGrid<double> turbulence;
+	AsciiGrid<double> colMax;
 	#ifdef FRICTION_VELOCITY
 	AsciiGrid<double> ustar;
 	#endif
@@ -123,6 +124,7 @@ public:
 
 	bool writeVectors(VSILFILE *fileOut);
 	bool writeTurbulence(VSILFILE *fileOut);
+	bool writeColMax(VSILFILE *fileOut);
 	#ifdef FRICTION_VELOCITY
 	bool writeUstar(FILE *fileOut);
 	#endif
@@ -142,6 +144,10 @@ public:
 	void setDirGrid(AsciiGrid<double> &d);
 	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
 	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
+	double colMax_colHeightAGL;
+	lengthUnits::eLengthUnits colMax_colHeightAGL_units;
+	void setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units);
+	void setColMaxFlag(bool inputColMaxFlag){colMaxFlag = inputColMaxFlag;}
 	#ifdef FRICTION_VELOCITY
 	void setUstarGrid(AsciiGrid<double> &ust);
 	void setUstarFlag(bool inputUstarFlag){ustarFlag = inputUstarFlag;}
@@ -178,8 +184,11 @@ private:
 	bool turbulenceFlag;
 	std::string turbulence_tiff;
 	std::string turbulence_png;
-        std::string turbulence_legend;
-        std::string ustar_legend;
+    std::string turbulence_legend;
+    bool colMaxFlag;
+	std::string colMax_tiff;
+	std::string colMax_png;
+    std::string colMax_legend;
 	#ifdef FRICTION_VELOCITY
 	bool ustarFlag;
 	std::string ustar_tiff;

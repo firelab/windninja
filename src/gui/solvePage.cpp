@@ -105,9 +105,12 @@ void solvePage::setOutputDir(QString dir) {
 }
 
 void solvePage::chooseOutputDir() {
-  QString start = QFileInfo( outputDirLineEdit->text() ).absolutePath();
   QString dir = QFileDialog::getExistingDirectory( this,
-    tr("Open Output Directory"), start, QFileDialog::ShowDirsOnly );
+    tr("Open Output Directory"), outputDirLineEdit->text(), QFileDialog::ShowDirsOnly );
+  if( dir == "" )
+  {
+    dir = outputDirLineEdit->text();
+  }
   outputDirLineEdit->setText( dir );
 }
 

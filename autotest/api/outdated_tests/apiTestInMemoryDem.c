@@ -5,7 +5,7 @@
  * Purpose:  C API testing
  * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
  *
- * g++ -g -Wall -o test_dem apiTestInMemoryDem.c -lninja -lgdal
+ * gcc -g -Wall -o test_dem apiTestInMemoryDem.c -lninja -lgdal
  *
  ******************************************************************************
  *

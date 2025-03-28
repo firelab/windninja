@@ -35,6 +35,7 @@
 #include <QDesktopServices>
 #include <QtGui>
 #include <QtWebKit>
+#include <QSslSocket>
 #include <QMessageBox>
 #include <QCloseEvent>
 #include <math.h>
