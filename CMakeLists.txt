@@ -521,7 +521,7 @@ if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
         message(STATUS "Copying boost date time file into build/src/gui and build/src/cli")
     endif(PACKAGE_DEBUG)
-    file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/gui")
+    file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/gui/qt6")
     file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/cli")
 endif(BUILD_TYPE MATCHES "debug")
 
