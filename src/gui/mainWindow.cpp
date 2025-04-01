@@ -2789,6 +2789,7 @@ int mainWindow::solve()
         if (writeCF && times.size() > 0)
         {
             std::vector<std::string> stringTimes;
+            //blt::time_zone_ptr zone = globalTimeZoneDB.time_zone_from_region(timeZone.c_str());
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
             for( size_t tIdx = 0; tIdx < times.size(); tIdx++ )
@@ -2796,12 +2797,9 @@ int mainWindow::solve()
                 blt::local_date_time time = times[tIdx];
 
                 // Convert local_date_time to ptime using the UTC time zone
-                // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
-                //bpt::ptime pt = bpt::from_iso_string(time);
-                //blt::local_date_time ldt = blt::local_date_time(pt, utc);
-                //ldt = ldt.local_time_in(zone);
-                //pt = bpt::from_iso_string(time);
+                // Convert local_date_time to ptime using the data time zone
+                //bpt::ptime pt = time.local_time_in(zone).local_time();
 
                 // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);
@@ -2874,15 +2872,12 @@ int mainWindow::solve()
 
             for( size_t tIdx = 0; tIdx < fullTimesList.size(); tIdx++ )
             {
-                blt::local_date_time time = times[tIdx];
+                blt::local_date_time time = fullTimesList[tIdx];
 
                 // Convert local_date_time to ptime using the UTC time zone
-                // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
-                //bpt::ptime pt = bpt::from_iso_string(time);
-                //blt::local_date_time ldt = blt::local_date_time(pt, utc);
-                //ldt = ldt.local_time_in(zone);
-                //pt = bpt::from_iso_string(time);
+                // Convert local_date_time to ptime using the data time zone
+                //bpt::ptime pt = time.local_time_in(zone).local_time();
 
                 // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);

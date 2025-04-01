@@ -146,8 +146,8 @@ std::string CaseFile::getCurrentTime()
 {
     const boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
 
-    boost::local_time::local_time_facet* facet;
-    facet = new boost::local_time::local_time_facet();
+    boost::posix_time::time_facet* facet;
+    facet = new boost::posix_time::time_facet();
     facet->format("%Y-%m-%d_%H-%M-%S");
 
     std::ostringstream oss;
