@@ -1831,7 +1831,7 @@ int mainWindow::solve()
     }
 
     if (writeCF && customMesh) {
-        mainCaseCfgFILE << "--mesh_resolution " << std::to_string(meshRes) << "\n";
+        mainCaseCfgFILE << "--mesh_resolution " << std::to_string(static_cast<long double>(meshRes)) << "\n";
     }
 
 #ifdef NINJAFOAM
@@ -1926,7 +1926,7 @@ int mainWindow::solve()
     //input wind height
     double inHeight = tree->wind->metaWind->inputHeightDoubleSpinBox->value();
     if (writeCF) {
-        mainCaseCfgFILE << "--input_wind_height " << std::to_string(inHeight) << "\n";
+        mainCaseCfgFILE << "--input_wind_height " << std::to_string(static_cast<long double>(inHeight)) << "\n";
     }
     lengthUnits::eLengthUnits inHeightUnits;
     if(tree->wind->metaWind->feetRadioButton->isChecked())
@@ -2005,7 +2005,7 @@ int mainWindow::solve()
     //output height
     double outHeight = tree->output->outputHeight->outputHeightDoubleSpinBox->value();
     if (writeCF) {
-        mainCaseCfgFILE << "--output_wind_height " << std::to_string(outHeight) << "\n";
+        mainCaseCfgFILE << "--output_wind_height " << std::to_string(static_cast<long double>(outHeight)) << "\n";
     }
     lengthUnits::eLengthUnits outHeightUnits;
     if(tree->output->outputHeight->feetRadioButton->isChecked())
@@ -2054,7 +2054,7 @@ int mainWindow::solve()
     if (writeCF) {
       //if (clip > 0)
       //{
-          mainCaseCfgFILE << "--output_buffer_clipping " << std::to_string(clip) << "\n";
+          mainCaseCfgFILE << "--output_buffer_clipping " << std::to_string(static_cast<long long>(clip)) << "\n";
       //}
     }
 
@@ -2073,7 +2073,7 @@ int mainWindow::solve()
           {
               mainCaseCfgFILE << "--write_wx_model_goog_output true\n";
           }
-          mainCaseCfgFILE << "--goog_out_resolution " << std::to_string(googleRes) << "\n";
+          mainCaseCfgFILE << "--goog_out_resolution " << std::to_string(static_cast<long double>(googleRes)) << "\n";
       }
     }
     double vectorWidth = tree->google->vectorWidthDoubleSpinBox->value();
@@ -2193,7 +2193,7 @@ int mainWindow::solve()
           {
               mainCaseCfgFILE << "--write_wx_model_ascii_output true\n";
           }
-          mainCaseCfgFILE << "--ascii_out_resolution " << std::to_string(fbRes) << "\n";
+          mainCaseCfgFILE << "--ascii_out_resolution " << std::to_string(static_cast<long double>(fbRes)) << "\n";
       }
     }
     lengthUnits::eLengthUnits fbUnits;
@@ -2255,7 +2255,7 @@ int mainWindow::solve()
           {
               mainCaseCfgFILE << "--write_wx_model_shapefile_output true\n";
           }
-          mainCaseCfgFILE << "--shape_out_resolution " << std::to_string(shapeRes) << "\n";
+          mainCaseCfgFILE << "--shape_out_resolution " << std::to_string(static_cast<long double>(shapeRes)) << "\n";
       }
     }
     lengthUnits::eLengthUnits shapeUnits;
@@ -2281,8 +2281,8 @@ int mainWindow::solve()
       if (writePdf)
       {
           mainCaseCfgFILE << "--write_pdf_output true\n";
-          mainCaseCfgFILE << "--pdf_out_resolution "<< std::to_string(pdfRes) << "\n";
-          mainCaseCfgFILE << "--pdf_linewidth "<< std::to_string(pdfLineWidth) << "\n";
+          mainCaseCfgFILE << "--pdf_out_resolution "<< std::to_string(static_cast<long double>(pdfRes)) << "\n";
+          mainCaseCfgFILE << "--pdf_linewidth "<< std::to_string(static_cast<long double>(pdfLineWidth)) << "\n";
       }
     }
     lengthUnits::eLengthUnits pdfUnits;
@@ -2357,7 +2357,7 @@ int mainWindow::solve()
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
     if (writeCF) {
-      mainCaseCfgFILE << "--num_threads " << std::to_string(nThreads) << "\n";
+      mainCaseCfgFILE << "--num_threads " << std::to_string(static_cast<long long>(nThreads)) << "\n";
     }
 
     army = new ninjaArmy();
@@ -2396,7 +2396,7 @@ int mainWindow::solve()
                 } else
                 {
                     mainCaseCfgFILE << "--fetch_current_station_data false\n";
-                    mainCaseCfgFILE << "--number_time_steps " << std::to_string(numTimeSteps) << "\n";
+                    mainCaseCfgFILE << "--number_time_steps " << std::to_string(static_cast<long long>(numTimeSteps)) << "\n";
                 }
             } else // if (tree->point->xWidget != NULL && tree->point->xWidget->get_wasStationFetched() == true)
             {
@@ -2414,7 +2414,7 @@ int mainWindow::solve()
                     mainCaseCfgFILE <<  "--stop_day " << xEndTime[2] << "\n";
                     mainCaseCfgFILE <<  "--stop_hour " << xEndTime[3] << "\n";
                     mainCaseCfgFILE <<  "--stop_minute " << xEndTime[4] << "\n";
-                    mainCaseCfgFILE << "--number_time_steps " << std::to_string(numTimeSteps) << "\n";
+                    mainCaseCfgFILE << "--number_time_steps " << std::to_string(static_cast<long long>(numTimeSteps)) << "\n";
                 } else
                 {
                     mainCaseCfgFILE << "--fetch_current_station_data true\n";
@@ -2439,8 +2439,9 @@ int mainWindow::solve()
             // for each file append it to csv
             // if any point file is under a wx station folder just copy the entire folder over - otherwise no
             std::vector<std::string> fullFileListPoint = tree->point->fullFileList;
-            for (std::string & pointFile : fullFileListPoint)
+            for( size_t pIdx = 0; pIdx < fullFileListPoint.size(); pIdx++ )
             {
+                std::string pointFile = fullFileListPoint[pIdx];
                 std::string pointFilename = CPLGetFilename( pointFile.c_str() );
                 std::string pointPath = CPLGetPath( pointFile.c_str() );
                 if (pointPath.find("WXSTATIONS-") != std::string::npos)
@@ -2468,8 +2469,9 @@ int mainWindow::solve()
                 delete army;
                 return false;
             }
-            for (std::string & pointFile : pointFileList)
+            for( size_t pIdx = 0; pIdx < pointFileList.size(); pIdx++ )
             {
+                std::string pointFile = pointFileList[pIdx];
                 std::string pointFilename = CPLGetFilename( pointFile.c_str() );
                 std::string pointPath = CPLGetPath( pointFile.c_str() );
                 if (pointPath.find("WXSTATIONS-") != std::string::npos)
@@ -2789,11 +2791,17 @@ int mainWindow::solve()
             std::vector<std::string> stringTimes;
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
-            for (const auto& time : times)
+            for( size_t tIdx = 0; tIdx < times.size(); tIdx++ )
             {
+                blt::local_date_time time = times[tIdx];
+
                 // Convert local_date_time to ptime using the UTC time zone
                 // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
+                //bpt::ptime pt = bpt::from_iso_string(time);
+                //blt::local_date_time ldt = blt::local_date_time(pt, utc);
+                //ldt = ldt.local_time_in(zone);
+                //pt = bpt::from_iso_string(time);
 
                 // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);
@@ -2861,13 +2869,20 @@ int mainWindow::solve()
             std::vector<blt::local_date_time> fullTimesList = tree->weather->getFullTimeList();
 
             std::vector<std::string> stringTimes;
+            //blt::time_zone_ptr zone = globalTimeZoneDB.time_zone_from_region(timeZone.c_str());
             blt::time_zone_ptr utc = globalTimeZoneDB.time_zone_from_region("UTC");
 
-            for (const auto& time : fullTimesList)
+            for( size_t tIdx = 0; tIdx < fullTimesList.size(); tIdx++ )
             {
+                blt::local_date_time time = times[tIdx];
+
                 // Convert local_date_time to ptime using the UTC time zone
                 // Get the local time in the UTC time zone
                 bpt::ptime pt = time.local_time_in(utc).local_time();
+                //bpt::ptime pt = bpt::from_iso_string(time);
+                //blt::local_date_time ldt = blt::local_date_time(pt, utc);
+                //ldt = ldt.local_time_in(zone);
+                //pt = bpt::from_iso_string(time);
 
                 // Convert ptime to ISO 8601 string
                 std::string isoString = bpt::to_iso_string(pt);
@@ -2906,7 +2921,7 @@ int mainWindow::solve()
         army->setCaseFilePtr( i, casefile );
 
         // add runs to files
-        std::string domainRunCfgFilename = "run" + std::to_string(i) + "-DomainAverage.cfg";
+        std::string domainRunCfgFilename = "run" + std::to_string(static_cast<long long>(i)) + "-DomainAverage.cfg";
         std::string domainRunCfgFile = CPLFormFilename(outputDir.c_str(), domainRunCfgFilename.c_str(), "");
         std::ofstream domainRunFILE;
         if (writeCF)
@@ -2956,14 +2971,14 @@ int mainWindow::solve()
         {
             //get speed
             if (writeCF) {
-                mainCaseCfgFILE << "--input_speed " << std::to_string(tree->wind->windTable->speed[i]->value()) << "\n";
+                mainCaseCfgFILE << "--input_speed " << std::to_string(static_cast<long double>(tree->wind->windTable->speed[i]->value())) << "\n";
             }
             army->setInputSpeed( i,
                                 tree->wind->windTable->speed[i]->value(),
                                 inputSpeedUnits);
             //get direction
             if (writeCF) {
-                mainCaseCfgFILE << "--input_direction " << std::to_string(tree->wind->windTable->dir[i]->value()) << "\n";
+                mainCaseCfgFILE << "--input_direction " << std::to_string(static_cast<long double>(tree->wind->windTable->dir[i]->value())) << "\n";
             }
             army->setInputDirection( i, tree->wind->windTable->dir[i]->value() );
 

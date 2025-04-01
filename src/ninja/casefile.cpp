@@ -1,6 +1,6 @@
 #include "casefile.h"
 
-std::mutex zipMutex;
+//std::mutex zipMutex;
 
 CaseFile::CaseFile()
 {
@@ -46,10 +46,10 @@ void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
 
 void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd)
 {
-    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
+    //std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
 
     try {
-        bool doesZipExist = CPLCheckForFile(caseZipFile.c_str(), NULL);
+        bool doesZipExist = CPLCheckForFile((char*)caseZipFile.c_str(), NULL);
 
         if (doesZipExist)
         {
@@ -64,10 +64,10 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
         zipFile zip;
         if (!doesZipExist)
         {
-            zip = cpl_zipOpen(caseZipFile.c_str(), APPEND_STATUS_CREATE);
+            //zip = cpl_zipOpen(caseZipFile.c_str(), APPEND_STATUS_CREATE);
         } else
         {
-            zip = cpl_zipOpen(caseZipFile.c_str(), APPEND_STATUS_ADDINZIP);
+            //zip = cpl_zipOpen(caseZipFile.c_str(), APPEND_STATUS_ADDINZIP);
         }
 
         if (zip == NULL)
@@ -77,19 +77,19 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
         }
 
         zip_fileinfo zi = {0};
-        if (cpl_zipOpenNewFileInZip(zip, withinZipPathedFilename.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Could not open new file in ZIP: %s", withinZipPathedFilename.c_str());
-            cpl_zipClose(zip, nullptr);
-            return;
-        }
+        //if (cpl_zipOpenNewFileInZip(zip, withinZipPathedFilename.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
+        //{
+        //    CPLError(CE_Failure, CPLE_FileIO, "Could not open new file in ZIP: %s", withinZipPathedFilename.c_str());
+        //    cpl_zipClose(zip, nullptr);
+        //    return;
+        //}
 
         VSILFILE *file = VSIFOpenL(fileToAdd.c_str(), "rb");
         if (file == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Could not open file for reading with VSIL: %s", fileToAdd.c_str());
-            cpl_zipCloseFileInZip(zip);
-            cpl_zipClose(zip, nullptr);
+            //cpl_zipCloseFileInZip(zip);
+            //cpl_zipClose(zip, nullptr);
             return;
         }
 
@@ -102,8 +102,8 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to allocate memory for file data.");
             VSIFCloseL(file);
-            cpl_zipCloseFileInZip(zip);
-            cpl_zipClose(zip, nullptr);
+            //cpl_zipCloseFileInZip(zip);
+            //cpl_zipClose(zip, nullptr);
             return;
         }
 
@@ -112,24 +112,24 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
             CPLError(CE_Failure, CPLE_FileIO, "Failed to read file contents: %s", withinZipPathedFilename.c_str());
             CPLFree(data);
             VSIFCloseL(file);
-            cpl_zipCloseFileInZip(zip);
-            cpl_zipClose(zip, nullptr);
+            //cpl_zipCloseFileInZip(zip);
+            //cpl_zipClose(zip, nullptr);
             return;
         }
 
-        if (cpl_zipWriteInFileInZip(zip, data, static_cast<unsigned int>(fileSize)) != ZIP_OK)
-        {
-            CPLDebug("ZIP", "Error writing data to ZIP file: %s", withinZipPathedFilename.c_str());
-        }
+        //if (cpl_zipWriteInFileInZip(zip, data, static_cast<unsigned int>(fileSize)) != ZIP_OK)
+        //{
+        //    CPLDebug("ZIP", "Error writing data to ZIP file: %s", withinZipPathedFilename.c_str());
+        //}
 
         CPLFree(data);
         VSIFCloseL(file);
-        cpl_zipCloseFileInZip(zip);
+        //cpl_zipCloseFileInZip(zip);
 
-        if (cpl_zipClose(zip, nullptr) != ZIP_OK)
-        {
-            CPLDebug("ZIP", "Error closing ZIP file: %s", caseZipFile.c_str());
-        }
+        //if (cpl_zipClose(zip, nullptr) != ZIP_OK)
+        //{
+        //    CPLDebug("ZIP", "Error closing ZIP file: %s", caseZipFile.c_str());
+        //}
 
     } catch (const std::exception& e)
     {
@@ -144,13 +144,15 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
 
 std::string CaseFile::getCurrentTime()
 {
-    auto now = std::chrono::system_clock::now();
-    std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+    const boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
 
-    std::tm* local_tm = std::localtime(&now_time_t);
+    boost::local_time::local_time_facet* facet;
+    facet = new boost::local_time::local_time_facet();
+    facet->format("%Y-%m-%d_%H-%M-%S");
 
     std::ostringstream oss;
-    oss << std::put_time(local_tm, "%Y-%m-%d_%H-%M-%S");
+    oss.imbue( std::locale(std::locale::classic(), facet) );
+    oss << now;
 
     return oss.str();
 }

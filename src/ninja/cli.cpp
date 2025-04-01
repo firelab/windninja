@@ -475,10 +475,10 @@ int windNinjaCLI(int argc, char* argv[])
                 return 1;
             }
 
-            for (const auto& pair : vm)
+            for( po::variables_map::iterator pair = vm.begin(); pair != vm.end(); pair++ )
             {
-                const std::string& option_name = pair.first;
-                const po::variable_value& option_value = pair.second;
+                const std::string& option_name = pair->first;
+                const po::variable_value& option_value = pair->second;
 
                 mainCaseCfgFILE << "--" << option_name << " ";
 
@@ -497,9 +497,10 @@ int windNinjaCLI(int argc, char* argv[])
                         mainCaseCfgFILE << option_value.as<double>() << std::endl;
                     } else if (option_value.value().type() == typeid(std::vector<std::string>))
                     {
-                        const auto& vec = option_value.as<std::vector<std::string>>();
-                        for (const auto& str : vec)
+                        std::vector<std::string> vec = option_value.as<std::vector<std::string>>();
+                        for( size_t vIdx = 0; vIdx < vec.size(); vIdx++ )
                         {
+                            std::string str = vec[vIdx];
                             mainCaseCfgFILE << str << " ";
                         }
                         mainCaseCfgFILE << std::endl;

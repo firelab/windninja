@@ -295,8 +295,10 @@ void pointInput::generateFullFileList()
 
     collectAllIndexes(rootIndex, allIndexes);
 
-    for (const QModelIndex &index : allIndexes)
+    for( size_t qIdx = 0; qIdx < allIndexes.size(); qIdx++ )
     {
+        const QModelIndex &index = allIndexes[qIdx];
+
         // Check if it is a file
         if (!sfModel->isDir(index))
         {
