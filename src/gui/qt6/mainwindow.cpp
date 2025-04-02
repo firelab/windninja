@@ -132,7 +132,7 @@ MainWindow::MainWindow(QWidget *parent)
    */
 
   // Resolve the map file path
-  QString filePath = projectRoot.filePath("data/map.html");
+  QString filePath = projectRoot.filePath("/home/Documents/windninja/data/map.html");
 
   // Enable remote content
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
