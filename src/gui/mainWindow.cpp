@@ -1686,6 +1686,7 @@ int mainWindow::solve()
         setCursor(Qt::ArrowCursor); //Restart everything
         return false;
     }
+    //std::replace(outputDir.begin(),outputDir.end(), '/', '\\');
 
 
     bool writeCF = tree->solve->CaseFileBox->isChecked();
@@ -1702,6 +1703,7 @@ int mainWindow::solve()
     if (writeCF) {
         casefile.setIsZipOpen(true);
         casefile.setCaseZipFile(zipFile);
+        casefile.openCaseZipFile();
         mainCaseCfgFILE.open(mainCaseCfgFile);
         //if (!mainCaseCfgFILE.is_open())  // useful for debugging
         if (!mainCaseCfgFILE)
@@ -3201,6 +3203,7 @@ int mainWindow::solve()
     //start the army
     try {
         ninjaSuccess = army->startRuns( nThreads );
+        casefile.closeCaseZipFile();
     }
     catch (bad_alloc& e)
     {

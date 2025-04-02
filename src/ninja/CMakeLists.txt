@@ -127,8 +127,6 @@ endif(WITH_NOMADS_SUPPORT)
 
 set(LINK_LIBS ${NETCDF_LIBRARIES_C} 
               ${GDAL_LIBRARY} 
-              ${ZLIB_LIBRARY}
-              ${MINIZIP_LIBRARY}
               ${CURL_LIBRARIES}
               ${Boost_LIBRARIES})
 

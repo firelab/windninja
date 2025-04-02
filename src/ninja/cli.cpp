@@ -467,6 +467,7 @@ int windNinjaCLI(int argc, char* argv[])
 
             casefile.setIsZipOpen(true);
             casefile.setCaseZipFile(zipFile);
+            casefile.openCaseZipFile();
 
             std::ofstream mainCaseCfgFILE(mainCaseCfgFile);
             if (!mainCaseCfgFILE)
@@ -2059,6 +2060,7 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "ERROR: The simulations returned a bad value.\n";
             return -1;
         }
+        casefile.closeCaseZipFile();
     }
     catch (badForecastFile& e
             ) {   //catch a badForecastFile

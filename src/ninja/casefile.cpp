@@ -1,11 +1,12 @@
 #include "casefile.h"
 
-//std::mutex zipMutex;
+std::mutex zipMutex;
 
 CaseFile::CaseFile()
 {
     isZipOpen = false;
     caseZipFile = "";
+    zipHandle = NULL;
 }
 
 void CaseFile::setIsZipOpen(bool isZippOpen)
@@ -33,20 +34,43 @@ void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
 {
     if (strcmp( CPLGetFilename( caseZipFile.c_str() ), "tmp.ninja" ) == 0)
     {
+        //closeCaseZipFile();
+        //std::replace(caseZipFile.begin(),caseZipFile.end(), '\\', '/');
+        //std::replace(newCaseZipFile.begin(),newCaseZipFile.end(), '\\', '/');
         if (VSIRename(caseZipFile.c_str(), newCaseZipFile.c_str()) == 0)
         {
             CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", caseZipFile.c_str(), newCaseZipFile.c_str());
+            //printf("ZIP_RENAME: Successfully renamed %s to %s\n", caseZipFile.c_str(), newCaseZipFile.c_str());
             caseZipFile = newCaseZipFile;
         } else
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", caseZipFile.c_str(), newCaseZipFile.c_str());
         }
+        //openCaseZipFile();
     }
+}
+
+void CaseFile::openCaseZipFile()
+{
+    //bool doesZipExist = CPLCheckForFile((char*)caseZipFile.c_str(), NULL);
+std::cout << "openingCaseZipFile" << std::endl;
+    zipHandle = CPLCreateZip(caseZipFile.c_str(), NULL);
+    if (zipHandle == NULL)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Failed to create or open zip file: %s", caseZipFile.c_str());
+    }
+}
+
+void CaseFile::closeCaseZipFile()
+{
+std::cout << "closingCaseZipFile" << std::endl;
+    CPLCloseZip(zipHandle);
+    zipHandle = NULL;
 }
 
 void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd)
 {
-    //std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
+    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
 
     try {
         bool doesZipExist = CPLCheckForFile((char*)caseZipFile.c_str(), NULL);
@@ -56,80 +80,75 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
             std::ifstream infile(caseZipFile);
             if (!infile.good())
             {
-                CPLError(CE_Failure, CPLE_FileIO, "ZIP file does not exist: %s", caseZipFile.c_str());
+                CPLError(CE_Failure, CPLE_FileIO, "ZIP file REALLY does not exist: %s", caseZipFile.c_str());
                 return;
             }
-        }
-
-        zipFile zip;
-        if (!doesZipExist)
-        {
-            //zip = cpl_zipOpen(caseZipFile.c_str(), APPEND_STATUS_CREATE);
         } else
         {
-            //zip = cpl_zipOpen(caseZipFile.c_str(), APPEND_STATUS_ADDINZIP);
-        }
-
-        if (zip == NULL)
-        {
-            CPLError(CE_Failure, CPLE_FileIO, "Could not open ZIP: %s", caseZipFile.c_str());
+            CPLError(CE_Failure, CPLE_FileIO, "ZIP file does not exist: %s", caseZipFile.c_str());
             return;
         }
 
-        zip_fileinfo zi = {0};
-        //if (cpl_zipOpenNewFileInZip(zip, withinZipPathedFilename.c_str(), &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
-        //{
-        //    CPLError(CE_Failure, CPLE_FileIO, "Could not open new file in ZIP: %s", withinZipPathedFilename.c_str());
-        //    cpl_zipClose(zip, nullptr);
-        //    return;
-        //}
+        if (zipHandle == NULL)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "tried to add file to unopened ZIP: %s", caseZipFile.c_str());
+            return;
+        }
 
+        // read in the file data to be copied to the zip
         VSILFILE *file = VSIFOpenL(fileToAdd.c_str(), "rb");
         if (file == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Could not open file for reading with VSIL: %s", fileToAdd.c_str());
-            //cpl_zipCloseFileInZip(zip);
-            //cpl_zipClose(zip, nullptr);
+            closeCaseZipFile();
             return;
         }
 
         VSIFSeekL(file, 0, SEEK_END);
         vsi_l_offset fileSize = VSIFTellL(file);
-        VSIFSeekL(file, 0, SEEK_SET);
+        VSIFSeekL(file, 0, SEEK_SET);  // rather than VSIRewindL(file);?
 
         char *data = (char*)CPLMalloc(fileSize);
         if (data == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to allocate memory for file data.");
             VSIFCloseL(file);
-            //cpl_zipCloseFileInZip(zip);
-            //cpl_zipClose(zip, nullptr);
+            closeCaseZipFile();
             return;
         }
 
         if (VSIFReadL(data, 1, fileSize, file) != fileSize)
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to read file contents: %s", withinZipPathedFilename.c_str());
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to read file contents: %s", fileToAdd.c_str());
             CPLFree(data);
             VSIFCloseL(file);
-            //cpl_zipCloseFileInZip(zip);
-            //cpl_zipClose(zip, nullptr);
+            closeCaseZipFile();
             return;
         }
 
-        //if (cpl_zipWriteInFileInZip(zip, data, static_cast<unsigned int>(fileSize)) != ZIP_OK)
-        //{
-        //    CPLDebug("ZIP", "Error writing data to ZIP file: %s", withinZipPathedFilename.c_str());
-        //}
+        VSIFCloseL(file);
+
+        // add the file data to the zip
+        if (CPLCreateFileInZip(zipHandle, withinZipPathedFilename.c_str(), NULL) != CE_None) {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to create file in zip: %s", withinZipPathedFilename.c_str());
+            CPLFree(data);
+            CPLCloseZip(zipHandle);
+            return;
+        }
+
+        if (CPLWriteFileInZip(zipHandle, data, static_cast<int>(fileSize)) != CE_None) {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to write data to file in zip: %s", withinZipPathedFilename.c_str());
+            CPLFree(data);
+            CPLCloseZip(zipHandle);
+        }
+
+        if (CPLCloseFileInZip(zipHandle) != CE_None) {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to close file in zip: %s", withinZipPathedFilename.c_str());
+            CPLFree(data);
+            CPLCloseZip(zipHandle);
+        }
 
         CPLFree(data);
-        VSIFCloseL(file);
-        //cpl_zipCloseFileInZip(zip);
-
-        //if (cpl_zipClose(zip, nullptr) != ZIP_OK)
-        //{
-        //    CPLDebug("ZIP", "Error closing ZIP file: %s", caseZipFile.c_str());
-        //}
 
     } catch (const std::exception& e)
     {

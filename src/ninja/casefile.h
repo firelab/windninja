@@ -33,8 +33,7 @@
 #include <fstream>
 #include <sstream>
 #include <cpl_string.h>
-#include "cpl_minizip_zip.h"
-//#include <mutex>
+#include <mutex>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/local_time/local_time_io.hpp>
 
@@ -45,6 +44,7 @@ private:
 
     bool isZipOpen;
     std::string caseZipFile;
+    void* zipHandle;
 
 public:
 
@@ -56,6 +56,9 @@ public:
     void setCaseZipFile(std::string caseZippFile);
     std::string getCaseZipFile();
     void renameCaseZipFile(std::string newCaseZipFile);
+
+    void openCaseZipFile();
+    void closeCaseZipFile();
 
     void addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd);
 
