@@ -4220,7 +4220,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
-        massMesh.set_meshResolution(meshResolution, meshResolutionUnits);
+        massMesh.set_meshResolution(meshResolution, lengthUnits::meters);
         massMesh.compute_domain_height(input);
     }
     
