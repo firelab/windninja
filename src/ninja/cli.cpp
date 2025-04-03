@@ -465,7 +465,6 @@ int windNinjaCLI(int argc, char* argv[])
             std::string mainCaseCfgFilename = "config.cfg";
             std::string mainCaseCfgFile = CPLFormFilename(outputDir.c_str(), mainCaseCfgFilename.c_str(), "");
 
-            casefile.setIsZipOpen(true);
             casefile.setCaseZipFile(zipFile);
             casefile.openCaseZipFile();
 
@@ -2061,6 +2060,7 @@ int windNinjaCLI(int argc, char* argv[])
             return -1;
         }
         casefile.closeCaseZipFile();
+        casefile.renameCaseZipFile();
     }
     catch (badForecastFile& e
             ) {   //catch a badForecastFile

@@ -2858,7 +2858,7 @@ void ninja::writeOutputFiles()
             std::string volVtkSurfFile = CPLFormFilename(directoryofVTK.c_str(), volVtkSurfFilename.c_str(), "");
             if( casefile->getIsZipOpen() )
             {
-                casefile->renameCaseZipFile(casefilename);
+                casefile->updateCaseZipFile(casefilename);
 
                 std::string timestr = "";
                 if( input.ninjaTime.is_not_a_date_time() )

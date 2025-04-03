@@ -4,68 +4,98 @@ std::mutex zipMutex;
 
 CaseFile::CaseFile()
 {
-    isZipOpen = false;
     caseZipFile = "";
+    finalCaseZipFile = "";
+    isZipOpen = false;
     zipHandle = NULL;
-}
 
-void CaseFile::setIsZipOpen(bool isZippOpen)
-{
-    isZipOpen = isZippOpen;
-}
-
-bool CaseFile::getIsZipOpen()
-{
-    return isZipOpen;
+    setCaseZipFileCount = 0;
 }
 
 void CaseFile::setCaseZipFile(std::string caseZippFile)
 {
-    caseZipFile = caseZippFile;
-}
-
-std::string CaseFile::getCaseZipFile()
-{
-    return caseZipFile;
-}
-
-// to avoid renaming the casefile except for the first run/ninja, checking for a specific starting zip file name
-void CaseFile::renameCaseZipFile(std::string newCaseZipFile)
-{
-    if (strcmp( CPLGetFilename( caseZipFile.c_str() ), "tmp.ninja" ) == 0)
+    if (setCaseZipFileCount > 0)
     {
-        //closeCaseZipFile();
-        //std::replace(caseZipFile.begin(),caseZipFile.end(), '\\', '/');
-        //std::replace(newCaseZipFile.begin(),newCaseZipFile.end(), '\\', '/');
-        if (VSIRename(caseZipFile.c_str(), newCaseZipFile.c_str()) == 0)
+        CPLError(CE_Failure, CPLE_FileIO, "not allowed to run setCaseZipFile() twice on the same CaseFile instance!!!");
+    }
+
+    caseZipFile = caseZippFile;
+    finalCaseZipFile = caseZippFile;
+    setCaseZipFileCount++;
+}
+
+void CaseFile::updateCaseZipFile(std::string newCaseZipFile)
+{
+    if (setCaseZipFileCount == 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "updateCaseZipFile() called before setCaseZipFile()!!!");
+    }
+
+    // only updates the first time that there is a difference, use the first input newCaseZipFile instance for the final caseZipFile name
+    // this should only occur for the first run/ninja
+    if (strcmp( caseZipFile.c_str(), finalCaseZipFile.c_str() ) == 0)
+    {
+        finalCaseZipFile = newCaseZipFile;
+    }
+}
+
+void CaseFile::renameCaseZipFile()
+{
+    if (isZipOpen == true)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "renameCaseZipFile() called on a still open zip file: %s", caseZipFile.c_str());
+    }
+
+    if (strcmp( caseZipFile.c_str(), finalCaseZipFile.c_str() ) != 0)
+    {
+        if (VSIRename(caseZipFile.c_str(), finalCaseZipFile.c_str()) == 0)
         {
-            CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", caseZipFile.c_str(), newCaseZipFile.c_str());
-            //printf("ZIP_RENAME: Successfully renamed %s to %s\n", caseZipFile.c_str(), newCaseZipFile.c_str());
-            caseZipFile = newCaseZipFile;
+            //CPLDebug("ZIP_RENAME", "Successfully renamed %s to %s", caseZipFile.c_str(), finalCaseZipFile.c_str());
+            printf("ZIP_RENAME: Successfully renamed %s to %s\n", caseZipFile.c_str(), finalCaseZipFile.c_str());
+            caseZipFile = finalCaseZipFile;
         } else
         {
-            CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", caseZipFile.c_str(), newCaseZipFile.c_str());
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to rename %s to %s", caseZipFile.c_str(), finalCaseZipFile.c_str());
         }
-        //openCaseZipFile();
     }
 }
 
 void CaseFile::openCaseZipFile()
 {
-    //bool doesZipExist = CPLCheckForFile((char*)caseZipFile.c_str(), NULL);
-std::cout << "openingCaseZipFile" << std::endl;
+    std::cout << "openingCaseZipFile" << std::endl;
+
+    if (isZipOpen == true)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Running openCaseZipFile() on already open zip file: %s", caseZipFile.c_str());
+    }
+
+    bool doesZipExist = CPLCheckForFile((char*)caseZipFile.c_str(), NULL);
+    if (doesZipExist == true)
+    {
+        printf("warning: zip file %s already exists, replacing zip", caseZipFile.c_str());
+        VSIUnlink( caseZipFile.c_str() );
+    }
+
     zipHandle = CPLCreateZip(caseZipFile.c_str(), NULL);
     if (zipHandle == NULL)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create or open zip file: %s", caseZipFile.c_str());
     }
+    isZipOpen = true;
 }
 
 void CaseFile::closeCaseZipFile()
 {
-std::cout << "closingCaseZipFile" << std::endl;
+    std::cout << "closingCaseZipFile" << std::endl;
+
+    if (isZipOpen == false)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "Running closeCaseZipFile() on an unopened zip file: %s", caseZipFile.c_str());
+    }
+
     CPLCloseZip(zipHandle);
     zipHandle = NULL;
+    isZipOpen = false;
 }
 
 void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd)
@@ -159,6 +189,16 @@ void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const st
         CPLDebug("Exception", "Caught unknown exception.");
         CPLError(CE_Failure, CPLE_AppDefined, "Caught unknown exception.");
     }
+}
+
+bool CaseFile::getIsZipOpen()
+{
+    return isZipOpen;
+}
+
+std::string CaseFile::getCaseZipFile()
+{
+    return caseZipFile;
 }
 
 std::string CaseFile::getCurrentTime()

@@ -1701,7 +1701,6 @@ int mainWindow::solve()
     std::ofstream mainCaseCfgFILE;
 
     if (writeCF) {
-        casefile.setIsZipOpen(true);
         casefile.setCaseZipFile(zipFile);
         casefile.openCaseZipFile();
         mainCaseCfgFILE.open(mainCaseCfgFile);
@@ -3204,6 +3203,7 @@ int mainWindow::solve()
     try {
         ninjaSuccess = army->startRuns( nThreads );
         casefile.closeCaseZipFile();
+        casefile.renameCaseZipFile();
     }
     catch (bad_alloc& e)
     {

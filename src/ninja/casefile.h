@@ -42,25 +42,28 @@ class CaseFile
 
 private:
 
-    bool isZipOpen;
     std::string caseZipFile;
+    std::string finalCaseZipFile;
+    bool isZipOpen;
     void* zipHandle;
+
+    int setCaseZipFileCount;
 
 public:
 
     CaseFile();
 
-    void setIsZipOpen(bool isZippOpen);
-    bool getIsZipOpen();
-
     void setCaseZipFile(std::string caseZippFile);
-    std::string getCaseZipFile();
-    void renameCaseZipFile(std::string newCaseZipFile);
+    void updateCaseZipFile(std::string newCaseZipFile);
+    void renameCaseZipFile();
 
     void openCaseZipFile();
     void closeCaseZipFile();
 
     void addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd);
+
+    bool getIsZipOpen();
+    std::string getCaseZipFile();
 
     std::string getCurrentTime();
     std::string convertDateTimeToStd(const boost::local_time::local_date_time& ninjaTime);
