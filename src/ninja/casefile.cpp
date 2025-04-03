@@ -1,7 +1,5 @@
 #include "casefile.h"
 
-std::mutex zipMutex;
-
 CaseFile::CaseFile()
 {
     caseZipFile = "";
@@ -100,7 +98,10 @@ void CaseFile::closeCaseZipFile()
 
 void CaseFile::addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd)
 {
-    std::lock_guard<std::mutex> lock(zipMutex); // for multithreading issue
+    // Acquire a lock for the multithreading issue, to protect the non-thread safe zip read and write process
+#ifdef _OPENMP
+    omp_guard netCDF_guard(netCDF_lock);
+#endif
 
     try {
         bool doesZipExist = CPLCheckForFile((char*)caseZipFile.c_str(), NULL);

@@ -33,9 +33,17 @@
 #include <fstream>
 #include <sstream>
 #include <cpl_string.h>
-#include <mutex>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/local_time/local_time_io.hpp>
+
+#ifdef _OPENMP
+#include <omp.h>
+#include "omp_guard.h"
+#endif  // #ifdef _OPENMP
+
+#ifdef _OPENMP
+extern omp_lock_t netCDF_lock;
+#endif  // #ifdef _OPENMP
 
 class CaseFile
 {
