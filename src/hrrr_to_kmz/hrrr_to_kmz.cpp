@@ -536,8 +536,34 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
     ////ninjaKmlFiles.setDemFile(dem_filename);  // turns out to be redundant and doesn't do anything, which is good because don't want this dependency
 
+    //compute angle between N-S grid lines in the dataset and true north
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
+        if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+        {
+            printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+        }
+        GDALClose(hDS);
+    }
+
+    // add the angleFromNorth to each spd,dir, u,v dataset for kmz output, kmlVector requires the dirGrid to be in projected form, not lat/lon form
+    for(int i=0; i<dirInitializationGrid_wxModel.get_nRows(); i++)
+    {
+        for(int j=0; j<dirInitializationGrid_wxModel.get_nCols(); j++)
+        {
+            dirInitializationGrid_wxModel(i,j) = wrap0to360( dirInitializationGrid_wxModel(i,j) + angleFromNorth ); //account for projection rotation from north
+            // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+            // however, these u and v grids are not actually being used past this point
+            //wind_sd_to_uv(speedInitializationGrid_wxModel(i,j), dirInitializationGrid_wxModel(i,j),
+            //        &(uGrid_wxModel)(i,j), &(vGrid_wxModel)(i,j));
+        }
+    }
+
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
+	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     //ninjaKmlFiles.setLineWidth(1.0);  // input.googLineWidth value
