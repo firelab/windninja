@@ -1,8 +1,17 @@
 #include "mainwindow.h"
 #include "../../ninja/windninja.h"
 #include <QApplication>
+#include "modeldata.h"
+
 
 int main(int argc, char *argv[]) {
+
+  std::vector<double> windSpeeds = {5.0, 10.0, 15.0};
+  std::vector<double> windDirections = {0.0, 90.0, 180.0};
+  char* windUnits = "m/s";
+
+  DomainAverageWind windModel("demFilePath", 0.5, "method1", "mesh1", "vegetationType", 3, 1, 100.0, true, 3, windSpeeds, windUnits, windDirections);
+
 
 
   /*
@@ -39,6 +48,9 @@ int main(int argc, char *argv[]) {
   const double speedList[2] = {5.5, 5.5};
   const char * speedUnits = "mps";
   const double directionList[2] = {220, 300};
+
+
+
 
   /*
    * Create the army
