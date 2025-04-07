@@ -18,9 +18,31 @@
 #                --security-opt label=type:container_runtime_t \
 #                windninja:3.11.1 
 #
+
+
+
+### Update environment variables for OpenMPI
+## If running docker / singulairty container on mulitple cores make sure to use these environmental varibale before trying to run Windninja 
+# OPENMPI_VERSION=4.0.4
+# export MPI_DIR=/opt/openmpi-${OPENMPI_VERSION}
+# export MPI_BIN=$MPI_DIR/bin
+# export MPI_LIB=$MPI_DIR/lib
+# export MPI_INC=$MPI_DIR/include
+# export PATH=$MPI_BIN:$PATH
+# export LD_LIBRARY_PATH=$MPI_LIB:$LD_LIBRARY_PATH
+
+
+# export CPL_DEBUG=NINJAFOAM
+# source /opt/openfoam8/etc/bashrc
+# export OMPI_ALLOW_RUN_AS_ROOT=1
+# export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+# export FOAM_USER_LIBBIN=/usr/local/lib/
+
+
 FROM ubuntu:20.04
 USER root
 ADD . /opt/src/windninja/
+ADD ../../scripts/ /opt/src/scripts/
 SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
 ENV WM_PROJECT_INST_DIR /opt
@@ -31,33 +53,54 @@ RUN dpkg-reconfigure debconf --frontend=noninteractive && \
                        pkg-config g++ libboost-program-options-dev \
                        libboost-date-time-dev libboost-test-dev python3-pip && \
     cd /opt/src && \
-    sed -i -e 's/\r$//' ./windninja/scripts/build_deps_ubuntu_2004.sh && \
-    DEBIAN_FRONTEND=noninteractive ./windninja/scripts/build_deps_ubuntu_2004.sh && \
+    DEBIAN_FRONTEND=noninteractive ./windninja/scripts/build_deps_docker.sh && \
     rm -rf /var/lib/apt/lists
 
 RUN cd  /opt/src/windninja && \
     mkdir build && \
     mkdir /data && \
     cd  /opt/src/windninja/build && \
-    cmake -D SUPRESS_WARNINGS=ON -DNINJAFOAM=ON -DBUILD_FETCH_DEM=ON  .. && \
-    make -j4 && \
+
+    # Building the windninja with different funationalites
+    cmake \
+    # Just a flag to ignore some of the common warnings (required)
+    -D SUPRESS_WARNINGS=ON \
+    # This flag  is responsible for Momentum solver (required)
+    -D NINJAFOAM=ON \
+    # This Flag is required to allow the WindNinja to download DEM Files (optional)
+    -D BUILD_FETCH_DEM=ON \
+    #This Flag is required to build the slope aspect grid (optional)
+    -D BUILD_SLOPE_ASPECT_GRID=ON \
+    # This Flag is required to build the flow seperation grid utility (optional)
+    -D BUILD_FLOW_SEPARATION_GRID=ON \
+    # User can add their specific flag from the cmake here similarly from the above example
+    .. && \
+    make -j12 && \
     make install && \
     ldconfig && \
-    cd /opt/src/windninja && \
-    sed -i -e 's/\r$//' scripts/build_libs.sh && \
-    /usr/bin/bash -c scripts/build_libs.sh
+    cd /opt/src/windninja 
 
-RUN mkdir -p $FOAM_RUN/../applications && \
-cp -r /opt/src/windninja/src/ninjafoam/* $FOAM_RUN/../applications && \
-cd $FOAM_RUN/../applications/8 && \
+
+# This segment is responsible for 
+RUN source /opt/openfoam8/etc/bashrc &&\
+mkdir -p $FOAM_RUN/../applications && \
+cp -r /opt/src/windninja/src/ninjafoam/8/* $FOAM_RUN/../applications && \
+cd $FOAM_RUN/../applications/ && \
 sed -i "s|export WM_PROJECT_INST_DIR=|export WM_PROJECT_INST_DIR=/opt|g" /opt/openfoam8/etc/bashrc && \
 sed -i "s|export WM_PROJECT_DIR=\$WM_PROJECT_INST_DIR/openfoam8|export WM_PROJECT_DIR=/opt/openfoam8|g" /opt/openfoam8/etc/bashrc && \
 . /opt/openfoam8/etc/bashrc && \
 wmake libso && \
 cd utility/applyInit && \
-wmake 
-# pip3 install numpy
- 
-CMD /usr/bin/bash -c /usr/local/bin/WindNinja
-VOLUME /data
-WORKDIR /data
+wmake  &&\
+
+
+cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/lib/libWindNinja.so /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/ &&\
+cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/bin/applyInit /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/ &&\
+chmod 644 /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/libWindNinja.so &&\
+chmod 755 /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/applyInit 
+
+# To create a Singularity image from this Dockerfile, run the following commands:
+# 1. Build the Docker image
+#    docker build -t windninja:latest .
+# 2. Convert the Docker image to a Singularity image
+#    singularity build windninja_latest.sif docker-daemon://windninja:latest

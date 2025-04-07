@@ -38,6 +38,7 @@
 #include "ninjafoam.h"
 #endif
 
+#include "ninjaUnits.h"
 #include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
@@ -49,6 +50,7 @@
 #endif
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
+#include <memory>
 
 namespace blt = boost::local_time;
 namespace bpt = boost::posix_time;
@@ -114,11 +116,6 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
-#ifdef NINJAFOAM
-    ninjaArmy(int numNinjas, bool momentumFlag);
-#else
-    ninjaArmy(int numNinjas);
-#endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
@@ -134,12 +131,18 @@ public:
         ncepGfsSurf
     };
 
-    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
+    void makeDomainAverageArmy( int nRuns, bool momentumFlag );
+
+    void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
-                          std::string demFile,bool matchPoints,bool override );
-    static std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
-    void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
+                          std::string demFile,bool matchPoints, bool momentumFlag );
+    
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
+    std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
+    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions);
+    int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
+    const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
@@ -154,14 +157,6 @@ public:
     //int getSize() const { return ninjas.size(); }
 
     int getSize();
-
-    /**
-    * \brief Set the number of ninja in the army
-    *
-    * \param nRuns number of ninjas to create
-    * \return
-    */
-    void setSize( int nRuns, bool momentumFlag);
 
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
@@ -907,6 +902,32 @@ public:
     int setOutputPath( const int nIndex, std::string path,
                                  char ** papszOptions=NULL );
 
+    /**
+     * \brief Set the output speed grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      const lengthUnits::eLengthUnits units,
+                                      char ** papszOptions=NULL );
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      std::string units, char ** papszOptions=NULL );
+    /**
+     * \brief Set the output direction grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          const lengthUnits::eLengthUnits units,
+                                          char ** papszOptions=NULL );
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          std::string units, char ** papszOptions=NULL );
     /**
     * \brief Get the output speed grid for a ninja
     *

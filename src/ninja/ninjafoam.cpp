@@ -72,7 +72,7 @@ NinjaFoam::NinjaFoam() : ninja()
     endOutputSampling = 0.0;
     startStlConversion = 0.0;
     endStlConversion = 0.0;
-    
+
     writeMassMesh = false;
 }
 
@@ -225,10 +225,6 @@ bool NinjaFoam::simulate_wind()
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
 
-    /*------------------------------------------*/
-    /*  write OpenFOAM files                    */
-    /*------------------------------------------*/
-
     CPLDebug("NINJAFOAM", "meshCount = %d", input.meshCount);
     CPLDebug("NINJAFOAM", "Rd = %lf", input.surface.Rough_d(0,0));
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
@@ -242,160 +238,254 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "Rough_h = %f", input.surface.Rough_h.get_meanValue());
     CPLDebug("NINJAFOAM", "input.nIterations = %d", input.nIterations);
 
-    //if pszFoamPath is not valid, create a new case 
-    if(!CheckForValidCaseDir(pszFoamPath)){
-        GenerateNewCase();
-    }
-    else{ //otherwise, we're just updating an existing case
-        UpdateExistingCase();
+    // start the foam file writing, run, and sample processes, where if it fails at any point, then restart and try smoothing the dem
+    // Don't smooth existing cases, just throw an error, as we don't want to edit the existing case mesh files.
 
-        //the mesh is re-used so just re-set the meshing timers
-        #ifdef _OPENMP
-        startMesh = omp_get_wtime();
-        endMesh = omp_get_wtime();
-        #endif
-    }
+    bool solutionStatus = false;
 
-    /*-------------------------------------------------------------------*/
-    /* Apply initial conditions                                          */
-    /*-------------------------------------------------------------------*/
-    
-    #ifdef _OPENMP
-    startInit = omp_get_wtime();
-    #endif
-
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
-    ApplyInit();
-
-    checkCancel();
-
-    /*-------------------------------------------------------------------*/
-    /* Solve for the flow field                                          */
-    /*-------------------------------------------------------------------*/
-
-    #ifdef _OPENMP
-    endInit = omp_get_wtime();
-    startSolve = omp_get_wtime();
-    #endif
-
-    if(input.numberCPUs > 1){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
-        DecomposePar();
-    }
-
-    checkCancel();
-
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
-    int status = 0;
-    // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
-    if( input.inputSpeed != 0.0 )
+    int nTries = 3;
+    std::string found_nTries_str = CPLGetConfigOption("SIMPLEFOAM_NTRIES", "");
+    if( found_nTries_str != "" )
     {
-        if(!SimpleFoam()){
-            if(input.existingCaseDirectory == "!set"){
-                //no coarsening if this is an existing case
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't coarsen "
-                        "mesh for existing case directory. Try again without using an existing case.");
-                return false;
-            }
-            //try solving with previous mesh iterations (less refinement)
-            while(latestTime > 50){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Coarsening mesh...");
-                CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s/%d", pszFoamPath, latestTime ));
-                NinjaUnlinkTree( CPLSPrintf( "%s/%d", pszFoamPath, latestTime  ) );
-                if(input.numberCPUs > 1){
-                    for(int n=0; n<input.numberCPUs; n++){
-                        NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
-                    }
+        nTries = atof(found_nTries_str.c_str());
+    }
+    CPLDebug("NINJAFOAM", "simpleFoam nTries = %d",nTries);
+
+    double startRestartVal;
+    double endRestartVal;
+
+    // try 0 is the initial try, 1 to nTries are dem smoothing attempts
+    int tryIdx = 0;
+    while( solutionStatus == false && tryIdx <= nTries )
+    {
+        #ifdef _OPENMP
+        startRestartVal = omp_get_wtime();
+        startRestart.push_back( startRestartVal );
+        #endif
+
+        /*------------------------------------------*/
+        /*  write OpenFOAM files                    */
+        /*------------------------------------------*/
+
+        // if pszFoamPath is not valid, create a new case
+        if(!CheckForValidCaseDir(pszFoamPath)){
+            GenerateNewCase();
+        }
+        else{ // otherwise, we're just updating an existing case
+            UpdateExistingCase();
+
+            // the mesh is re-used so just re-set the meshing timers
+            #ifdef _OPENMP
+            startMesh = omp_get_wtime();
+            endMesh = omp_get_wtime();
+            #endif
+        }
+
+        /*-------------------------------------------------------------------*/
+        /* Apply initial conditions                                          */
+        /*-------------------------------------------------------------------*/
+
+        #ifdef _OPENMP
+        startInit = omp_get_wtime();
+        #endif
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
+        ApplyInit();
+
+        checkCancel();
+
+        /*-------------------------------------------------------------------*/
+        /* Solve for the flow field                                          */
+        /*-------------------------------------------------------------------*/
+
+        #ifdef _OPENMP
+        endInit = omp_get_wtime();
+        startSolve = omp_get_wtime();
+        #endif
+
+        if(input.numberCPUs > 1){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
+            DecomposePar();
+        }
+
+        checkCancel();
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Solving for the flow field...");
+        // skip and go directly to sampling from the initial conditions case directory if a zero input wind speed case
+        if( input.inputSpeed != 0.0 )
+        {
+            solutionStatus = SimpleFoam();
+            if( solutionStatus == false )
+            {
+                if(input.existingCaseDirectory != "!set"){
+                    // no smoothing of the dem if this is an existing case
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Can't generate new mesh from smoothed elevation file "
+                            "for existing case directory. Try again without using an existing case.");
+                    return false;
                 }
-                latestTime -= 1;
-                meshResolution *= 2.0;
-                CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
-
-                /* update simpleFoam controlDict writeInterval */
-                UpdateSimpleFoamControlDict();
-
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Applying initial conditions...");
-
-                ApplyInit();
-
-                if(input.numberCPUs > 1){
-                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Decomposing domain for parallel flow calculations...");
-                    DecomposePar();
-                }
-                status = SimpleFoam();
-                if(status == true){
+                // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
+                tryIdx++;
+                if( tryIdx <= nTries )
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). Smoothing elevation file and starting over with new mesh...");
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "simpleFoam tryIdx = %d",tryIdx);
+                } else
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam()...");
                     break;
                 }
+
+                input.dem.smooth_elevation(1);
+
+                CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
+                NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
+                CPLDebug("NINJAFOAM", "generating new NINJAFOAM directory");
+                // force temp dir to DEM location
+                CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+                CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+                CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
+                int retval = GenerateFoamDirectory(input.dem.fileName);
+                if(retval != 0){
+                    throw std::runtime_error("Error generating the NINJAFOAM directory.");
+                }
+
+                // reset to original values
+                latestTime = 0;
+                CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+                // very important, without this the simulations go on past 300 iterations for simpleFoam
+                simpleFoamEndTime = 1000;
+                // thankfully, the meshResolution remains unchanged as just firstCellHeight was altered at each previous step
+                CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
+
+                #ifdef _OPENMP
+                endRestartVal = omp_get_wtime();
+                endRestart.push_back( endRestartVal );
+                #endif
+
+                continue;
+
+            }  // if(!SimpleFoam())
+        }  // if( input.inputSpeed != 0 )
+        CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
+
+        if(input.numberCPUs > 1){
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
+                ReconstructPar();
+        }
+
+        checkCancel();
+
+        /*-------------------------------------------------------------------*/
+        /* Sample at requested output height                                 */
+        /*-------------------------------------------------------------------*/
+
+        #ifdef _OPENMP
+        endSolve = omp_get_wtime();
+        startOutputSampling = omp_get_wtime();
+        #endif
+
+        //Update the sampleDict interpolation scheme. If the the output wind height is not
+        //resolved (if we are sampling in the lowest cell), then we will use a log
+        //interpolation from the cell-center value in the lowest cell in the mesh. Otherwise,
+        //we use cellPoint for a linear interpolation.
+        std::string scheme;
+        if(CheckIfOutputWindHeightIsResolved()){
+            scheme = "cellPoint";
+        }
+        else{
+            scheme = "cell";
+        }
+        const char *pszInput;
+        const char *pszOutput;
+        if ( foamVersion == "2.2.0" ) {
+            pszInput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+            pszOutput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
+        } else {
+            pszInput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
+            pszOutput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
+        }
+        CopyFile(pszInput, pszOutput, "$interpolationScheme$", scheme);
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
+        //suppress libXML warnings
+        CPLPushErrorHandler(CPLQuietErrorHandler);
+        Sample();
+        solutionStatus = SampleRawOutput();
+        if( solutionStatus == false )
+        {
+            if(input.existingCaseDirectory != "!set"){
+                // no smoothing of the dem if this is an existing case
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Can't generate new mesh from smoothed elevation file "
+                        "for existing case directory. Try again without using an existing case.");
             }
-            //if the solver fails with latestTime = 50 (moveDynamicMesh mesh), we're done
-            if( status == false & latestTime == 50 ){
-                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam(). The flow solution failed.");
-                return false;
+            // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
+            tryIdx++;
+            if( tryIdx <= nTries )
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Smoothing elevation file and starting over with new mesh...");
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "simpleFoam tryIdx = %d",tryIdx);
+            } else
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput()...");
+                break;
             }
-        }  // if(!SimpleFoam())
-    }  // if( input.inputSpeed != 0 )
-    CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
-    if(input.numberCPUs > 1){
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
-            ReconstructPar();
-    }
+            input.dem.smooth_elevation(1);
 
-    checkCancel();
+            CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
+            NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
+            CPLDebug("NINJAFOAM", "generating new NINJAFOAM directory");
+            // force temp dir to DEM location
+            CPLSetConfigOption("CPL_TMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+            CPLSetConfigOption("CPLTMPDIR", CPLGetDirname(input.dem.fileName.c_str()));
+            CPLSetConfigOption("TEMP", CPLGetDirname(input.dem.fileName.c_str()));
+            int retval = GenerateFoamDirectory(input.dem.fileName);
+            if(retval != 0){
+                throw std::runtime_error("Error generating the NINJAFOAM directory.");
+            }
 
-    /*-------------------------------------------------------------------*/
-    /* Sample at requested output height                                 */
-    /*-------------------------------------------------------------------*/
+            // reset to original values
+            latestTime = 0;
+            CPLDebug("NINJAFOAM", "stepping back to time = %d", latestTime);
+            // very important, without this the simulations go on past 300 iterations for simpleFoam
+            simpleFoamEndTime = 1000;
+            // thankfully, the meshResolution remains unchanged as just firstCellHeight was altered at each previous step
+            CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
 
-    #ifdef _OPENMP
-    endSolve = omp_get_wtime();
-    startOutputSampling = omp_get_wtime();
-    #endif
+            #ifdef _OPENMP
+            endRestartVal = omp_get_wtime();
+            endRestart.push_back( endRestartVal );
+            #endif
 
-    //Update the sampleDict interpolation scheme. If the the output wind height is not
-    //resolved (if we are sampling in the lowest cell), then we will use a log
-    //interpolation from the cell-center value in the lowest cell in the mesh. Otherwise,
-    //we use cellPoint for a linear interpolation.
-    std::string scheme;
-    if(CheckIfOutputWindHeightIsResolved()){
-        scheme = "cellPoint";
-    }
-    else{
-        scheme = "cell";
-    }
-    const char *pszInput;
-    const char *pszOutput;
-    if ( foamVersion == "2.2.0" ) {
-        pszInput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
-        pszOutput = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
-    } else {
-        pszInput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
-        pszOutput = CPLFormFilename(pszFoamPath, "system/surfaces", "");
-    }
-    CopyFile(pszInput, pszOutput, "$interpolationScheme$", scheme);
+            continue;
 
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Sampling at requested output height...");
-    //suppress libXML warnings
-    CPLPushErrorHandler(CPLQuietErrorHandler);
-    Sample();
-    SampleRawOutput();
-    CPLPopErrorHandler();
+        }  // if(!SampleRawOutput())
+        CPLPopErrorHandler();
 
-    #ifdef _OPENMP
-    endOutputSampling = omp_get_wtime();
-    #endif
+        #ifdef _OPENMP
+        endOutputSampling = omp_get_wtime();
+        #endif
+
+        /*-------------------------------------------------------------------*/
+        /* Generate and Sample mass mesh                                     */
+        /*-------------------------------------------------------------------*/
+        #ifdef _OPENMP
+        startGenerateAndSampleMassMesh = omp_get_wtime();
+        #endif
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating and sampling mass mesh...");
+        GenerateAndSampleMassMesh();
+        #ifdef _OPENMP
+        endGenerateAndSampleMassMesh = omp_get_wtime();
+        #endif
     
-    /*-------------------------------------------------------------------*/
-    /* Generate and Sample mass mesh                                     */
-    /*-------------------------------------------------------------------*/
-    #ifdef _OPENMP
-    startGenerateAndSampleMassMesh = omp_get_wtime();
-    #endif
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Generating and sampling mass mesh...");
-    GenerateAndSampleMassMesh();
-    #ifdef _OPENMP
-    endGenerateAndSampleMassMesh = omp_get_wtime();
-    #endif
+        // update the tryIdx for the next loop
+        tryIdx++;
+
+    } // while( solutionStatus == false && tryIdx <= nTries )
+    if( solutionStatus == false ){
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during simpleFoam() or other foam processes (sampling foam files). The flow solution failed.");
+        return false;
+    }
 
     /*----------------------------------------*/
     /*  write output files                    */
@@ -420,6 +510,15 @@ bool NinjaFoam::simulate_wind()
     /*----------------------------------------*/
 
     #ifdef _OPENMP
+    for( int t = 0; t < endRestart.size(); t++ )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "try %d time was %lf seconds.", t, endRestart[t]-startRestart[t]);
+    }
+    if( endRestart.size() > 0 )
+    {
+        int t = endRestart.size();
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "try %d time was %lf seconds.", t, endTotal-startRestart[t]);
+    }
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "File writing time was %lf seconds.", endFoamFileWriting-startFoamFileWriting);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "STL conversion time was %lf seconds.", endStlConversion-startStlConversion);
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Meshing time was %lf seconds.",endMesh-startMesh);
@@ -1277,6 +1376,7 @@ void NinjaFoam::MoveDynamicMesh()
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",  // will need to comment this out for foam 2.2.0 runs
                                       "moveDynamicMesh",
                                       "-case",
                                       pszFoamPath,
@@ -1314,7 +1414,9 @@ void NinjaFoam::MoveDynamicMesh()
         
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
-            //do something
+            // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+            // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+            throw std::runtime_error("Error during moveDynamicMesh().");
         }
 
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reconstructing domain...");
@@ -1360,7 +1462,9 @@ void NinjaFoam::MoveDynamicMesh()
         
         nRet = CPLSpawnAsyncFinish(sp, TRUE, FALSE);
         if(nRet != 0){
-            //do something
+            // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+            // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+            throw std::runtime_error("Error during moveDynamicMesh().");
         }
     }
     
@@ -1664,6 +1768,7 @@ bool NinjaFoam::SimpleFoam()
         const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",  // will need to comment this out for foam 2.2.0 runs
                                       "simpleFoam",
                                       "-case",
                                       pszFoamPath,
@@ -1696,7 +1801,9 @@ bool NinjaFoam::SimpleFoam()
                 return false;
         } else {
             if(nRet != 0){
-                //do something
+                // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+                // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+                return false;
             }
         }
     }
@@ -1730,7 +1837,9 @@ bool NinjaFoam::SimpleFoam()
                 return false;
         } else {
             if(nRet != 0){
-                //do something
+                // will need to comment this out for foam 8 runs on ubuntu 16.04, 
+                // where simpleFoam and moveDynamicMesh still run but return code 127 at the command line, and code 32512 here
+                return false;
             }
         }
     }
@@ -2191,7 +2300,7 @@ const char * NinjaFoam::GetGridFilename()
     return pszGridFilename;
 }
 
-void NinjaFoam::SampleRawOutput()
+bool NinjaFoam::SampleRawOutput()
 {
     /*-------------------------------------------------------------------*/
     /* convert output from xyz to speed and direction                    */
@@ -2208,7 +2317,8 @@ void NinjaFoam::SampleRawOutput()
     hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )
     {
-        throw std::runtime_error("Invalid output written in NinjaFoam::SampleRawOutput");
+        CPLError( CE_Failure, CPLE_AppDefined, "Invalid output written in NinjaFoam::SampleRawOutput");
+        return false;
     }
 
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
@@ -2256,12 +2366,14 @@ void NinjaFoam::SampleRawOutput()
     // If we failed to fill in the data for the entire grid, we've failed.
     // Report a better message.
     if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
-        throw std::runtime_error("The openfoam output could not be interpolated to a proper surface.");
+        CPLError( CE_Failure, CPLE_AppDefined, "The openfoam output could not be interpolated to a proper surface.");
+        return false;
     }
     if(VelocityGrid.get_maxValue() > 220.0){
-        throw std::runtime_error("The flow solution did not converge. This may occasionally " 
+        CPLError( CE_Failure, CPLE_AppDefined, "The flow solution did not converge. This may occasionally "
                 "happen in very complex terrain when the mesh resolution is high. Try the simulation "
                 "again with a coarser mesh.");
+        return false;
     }
 
     /*-------------------------------------------------------------------*/
@@ -2282,6 +2394,7 @@ void NinjaFoam::SampleRawOutput()
     }
     GDALClose( hDS );
 
+    return true;
 }
 
 
@@ -2427,7 +2540,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
         fprintf(fout, "        type    points;\n");
     }
     fprintf(fout, "        axis    xyz;\n");
-    fprintf(fout, "        ordered yes;\n");
+    fprintf(fout, "        ordered no;\n");
     fprintf(fout, "        points  $points;\n");
     fprintf(fout, "    }\n");
     fprintf(fout, ");\n");
@@ -3986,6 +4099,10 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
         const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
         VSILFILE *fin;
         fin = VSIFOpenL(pszInput, "r");
+        if(fin == NULL)
+        {
+            throw std::runtime_error("Can't open log.ninja to set the mesh resolution!");
+        }
 
         char *data;
 
@@ -4083,6 +4200,20 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
                 Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution,
                 AsciiGrid<double>::order0); //coarsen the grids
+    }
+
+    // if troubles, try smoothing the dem before the whole process, AFTER resampling to mesh resolution
+    if( CSLTestBoolean(CPLGetConfigOption("SMOOTH_DEM", "FALSE")) )
+    {
+        int smoothDist = 1;
+        std::string found_smoothDist_str = CPLGetConfigOption("DEM_SMOOTH_DIST", "");
+        if( found_smoothDist_str != "" )
+        {
+            smoothDist = atof(found_smoothDist_str.c_str());
+        }
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, smoothDist = %d ...",smoothDist);
+        input.dem.smooth_elevation(smoothDist);
     }
 }
 

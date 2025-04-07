@@ -4562,30 +4562,40 @@ void ninja::set_numberCPUs(int CPUs)
     //	}
     //ninjaCom(ninjaComClass::ninjaDebug, "In parallel = %d", omp_in_parallel());
 }
+void ninja::set_outputSpeedGridResolution(double resolution, lengthUnits::eLengthUnits units) {
+    lengthUnits::toBaseUnits(resolution, units);
+    outputSpeedArrayResolution = resolution;
+}
 
-double* ninja::get_outputSpeedGrid()
-{
-    outputSpeedArray = new double[VelocityGrid.get_arraySize()];
+void ninja::set_outputDirectionGridResolution(double resolution, lengthUnits::eLengthUnits units) {
+    lengthUnits::toBaseUnits(resolution, units);
+    outputDirectionArrayResolution = resolution;
+}
 
-    for(int i=0; i<VelocityGrid.get_nRows(); i++){
-        for(int j=0; j<VelocityGrid.get_nCols(); j++){
-            outputSpeedArray[i * VelocityGrid.get_nCols() + j] = VelocityGrid(i,j);
+double* ninja::get_outputSpeedGrid() {
+    AsciiGrid<double> * velTempGrid;
+    velTempGrid = new AsciiGrid<double>(VelocityGrid.resample_Grid(outputSpeedArrayResolution, AsciiGrid<double>::order0));
+    outputSpeedArray = new double[velTempGrid->get_arraySize()];
+    for (int i = 0; i < velTempGrid->get_nRows(); ++i) {
+        for (int j = 0; j < velTempGrid->get_nCols(); ++j) {
+            outputSpeedArray[i * velTempGrid->get_nCols() + j] = velTempGrid->get_cellValue(i, j);
         }
     }
-
-    return outputSpeedArray;
+    delete velTempGrid;
+    return outputSpeedArray; // Caller is responsible for deleting this memory
 }
 
 double* ninja::get_outputDirectionGrid()
 {
-    outputDirectionArray = new double[AngleGrid.get_arraySize()];
-
-    for(int i=0; i<AngleGrid.get_nRows(); i++){
-        for(int j=0; j<AngleGrid.get_nCols(); j++){
-            outputDirectionArray[i * AngleGrid.get_nCols() + j] = AngleGrid(i,j);
+    AsciiGrid<double> *dirTempGrid;
+    dirTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(outputDirectionArrayResolution, AsciiGrid<double>::order0));
+    outputDirectionArray = new double[dirTempGrid->get_arraySize()];
+    for(int i=0; i<dirTempGrid->get_nRows(); i++){
+        for(int j=0; j<dirTempGrid->get_nCols(); j++){
+            outputDirectionArray[i * dirTempGrid->get_nCols() + j] = dirTempGrid->get_cellValue(i,j);
         }
     }
-
+    delete dirTempGrid;
     return outputDirectionArray;
 }
 

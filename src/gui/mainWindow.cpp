@@ -1976,11 +1976,8 @@ int mainWindow::solve()
     //number of processors
     int nThreads = tree->solve->numProcSpinBox->value();
 
-#ifdef NINJAFOAM    
-    army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
-#else
-    army = new ninjaArmy(1); // native ninja solver
-#endif
+    army = new ninjaArmy();
+
     //count the runs in the wind table
     if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
     {
@@ -2039,12 +2036,26 @@ int mainWindow::solve()
                 timeList.push_back(noTime);
             }
             try{ //Try to run windninja
-                army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
-            }
-            catch(...){ //catch all exceptions and tell the user, prevent segfaults
+                army->makePointArmy(timeList,timeZone, pointFile, demFile, true,false);
+            }catch (exception& e)
+            {
+                QMessageBox::critical(this,tr("Failure."),
+                                      "An error occured in makePointArmy() - OldFormat! This is "
+                                        "usually due to a failure in reading a "
+                                         "weather station file. Check your files and "
+                                         "try again - Error Info: "+QString(e.what()),
+                                         QMessageBox::Ok | QMessageBox::Default);
+                disconnect(progressDialog, SIGNAL(canceled()), this,
+                           SLOT(cancelSolve()));
+                setCursor(Qt::ArrowCursor); //Restart everything
+                progressDialog->cancel();
+                progressDialog->hide();
+                delete army;
+                return false;
+            }catch(...){ //catch all exceptions and tell the user, prevent segfaults
 
                 QMessageBox::critical(this,tr("Failure."),
-                                      "An error occured in makeStationArmy() - OldFormat! This is "
+                                      "An error occured in makePointArmy() - OldFormat! This is "
                                         "usually due to a failure in reading a "
                                          "weather station file. Check your files and "
                                          "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
@@ -2095,12 +2106,26 @@ int mainWindow::solve()
                     CPLDebug("STATION_FETCH","FILES STORED...");
 
                     try{ //try running with timelist
-                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
-                    }
-                    catch(...){ //catch any and all exceptions and tell the user
+                        army->makePointArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
+                    }catch (exception& e)
+                    {
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makePointArmy() - timeSeries! This is "
+                                                "usually due to a failure in reading a "
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(e.what()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }catch(...){ //catch any and all exceptions and tell the user
 
                         QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makeStationArmy() - timeSeries! This is "
+                                              "An error occured in makePointArmy() - timeSeries! This is "
                                                 "usually due to a failure in reading a "
                                                  "weather station file. Check your files and "
                                                  "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
@@ -2128,12 +2153,26 @@ int mainWindow::solve()
                         timeList.push_back(singleTime);
                     pointInitialization::storeFileNames(pointFileList);
                     try{ //try making the army with current data
-                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
-                    }
-                    catch(...){ //catch any and all exceptions and tell the user
+                        army->makePointArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
+                    }catch (exception& e)
+                    {
+                        QMessageBox::critical(this,tr("Failure."),
+                                              "An error occured in makePointArmy() - currentwxdata! This is "
+                                                "usually due to a failure in reading a "
+                                                 "weather station file. Check your files and "
+                                                 "try again - Error Info: "+QString(e.what()),
+                                                 QMessageBox::Ok | QMessageBox::Default);
+                        disconnect(progressDialog, SIGNAL(canceled()), this,
+                                   SLOT(cancelSolve()));
+                        setCursor(Qt::ArrowCursor);
+                        progressDialog->cancel();
+                        progressDialog->hide();
+                        delete army;
+                        return false;
+                    }catch(...){ //catch any and all exceptions and tell the user
 
                         QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makeStationArmy() - currentwxdata! This is "
+                                              "An error occured in makePointArmy() - currentwxdata! This is "
                                                 "usually due to a failure in reading a "
                                                  "weather station file. Check your files and "
                                                  "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
@@ -2215,9 +2254,9 @@ int mainWindow::solve()
             nRuns++;
         }
 #ifdef NINJAFOAM
-        army->setSize( nRuns, useNinjaFoam);
+        army->makeDomainAverageArmy( nRuns, useNinjaFoam);
 #else
-        army->setSize( nRuns, false);
+        army->makeDomainAverageArmy( nRuns, false);
 #endif
     }
     else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
@@ -2240,9 +2279,9 @@ int mainWindow::solve()
         try
         {
 #ifdef NINJAFOAM
-            army->makeArmy( weatherFile, timeZone, times, useNinjaFoam );
+            army->makeWeatherModelArmy( weatherFile, timeZone, times, useNinjaFoam );
 #else
-            army->makeArmy( weatherFile, timeZone, times, false );
+            army->makeWeatherModelArmy( weatherFile, timeZone, times, false );
 #endif
         }
         catch( badForecastFile &e )
@@ -2260,7 +2299,7 @@ int mainWindow::solve()
         } catch (...) {
             QMessageBox::critical(
                 this, tr("Failure."),
-                tr("An unknown error occurred in makeArmy().  This is usually "
+                tr("An unknown error occurred in makeWeatherModelArmy().  This is usually "
                    "due to a failure in reading the weather model file"),
                 QMessageBox::Ok | QMessageBox::Default);
             disconnect(progressDialog, SIGNAL(canceled()), this,
@@ -2282,8 +2321,19 @@ int mainWindow::solve()
 
     std::string outputDir = tree->solve->outputDirectory().toStdString();
     if( outputDir == "" ) {
-      // This should never happen, so if it does, fix it.
-      throw( "no output directory specified in solve page" );
+        // This should never happen, so if it does, fix it.
+        progressDialog->cancel();
+        progressDialog->hide();
+        QMessageBox::critical(
+            this, tr("Failure."),
+            tr("no output directory specified in solve page"),
+            QMessageBox::Ok | QMessageBox::Default);
+        disconnect(progressDialog, SIGNAL(canceled()), this,
+                SLOT(cancelSolve()));
+        setCursor(Qt::ArrowCursor);
+        tree->weather->checkForModelData();
+        delete army;
+        return false;
     }
 
     //fill in the values
@@ -2311,7 +2361,7 @@ int mainWindow::solve()
         {
             army->setUniVegetation( i, vegetation );
         }
-        if( initMethod ==  WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
+        if( initMethod ==  WindNinjaInputs::pointInitializationFlag ) //Moved to makePointArmy
         {
 
         }
@@ -2391,7 +2441,7 @@ int mainWindow::solve()
                                    coverUnits::percent );
             army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }
-            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
+            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makePointArmy
             {
                 army->setPosition( i, GDALCenterLat, GDALCenterLon );
             }

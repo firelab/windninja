@@ -43,6 +43,7 @@ set(NINJA_SOURCES air.cpp
                   Elevation.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
+                  flowSeparation.cpp
                   fluid.cpp
                   frictionVelocity.cpp
                   gdal_fetch.cpp
@@ -144,17 +145,19 @@ if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
     add_library(WindNinjadll SHARED ${NINJA_SOURCES})
     target_link_libraries(WindNinjadll ${LINK_LIBS})
-else(WIN32)
+else()
     if(APPLE)
         add_library(ninja STATIC ${NINJA_SOURCES})
-    else(APPLE)
-       add_library(ninja STATIC SHARED ${NINJA_SOURCES})
-    endif(APPLE)    
-endif(WIN32)
-
+    else()
+        add_library(ninja SHARED ${NINJA_SOURCES})  # Linux
+    endif()
+endif()
 
 target_link_libraries(ninja ${LINK_LIBS})
 
 install(TARGETS ninja DESTINATION lib COMPONENT libs)
+if(WIN32)
+    install(TARGETS WindNinjadll DESTINATION ${lib_dest})
+endif(WIN32)
 install(FILES WindNinjaInputs.h ninja.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 
