@@ -27,7 +27,7 @@
 *
 *****************************************************************************/
 
-#include "ArchivedHRRRInitialization.h"
+#include "ArchivedHRRRinitialization.h"
 
 /**
 * Constructor for the class initializes the variable names
@@ -109,7 +109,7 @@ std::vector<std::string> ArchivedHRRRInitialization::getVariableList()
 */
 std::string ArchivedHRRRInitialization::getForecastIdentifier()
 {
-    return std::string( "NCEP-HRRR-3km-SURFACE" );
+    return std::string( "Archived-HRRR" );
 }
 
 /**
@@ -199,7 +199,7 @@ void ArchivedHRRRInitialization::setSurfaceGrids( WindNinjaInputs &input,
 {
 
     gcpHandler gcp; 
-    std::string forecastFilename = gcp.generateTIFFfromGCP(); 
+    std::string forecastFilename = "Test";
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpenShared( forecastFilename.c_str(), GA_ReadOnly );
 

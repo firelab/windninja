@@ -41,6 +41,8 @@
 #include "genericSurfInitialization.h"
 #include "wrfSurfInitialization.h"
 #include "wrf3dInitialization.h"
+#include "ArchivedHRRRinitialization.h"
+
 #ifdef WITH_NOMADS_SUPPORT
 #include "nomads_wx_init.h"
 #endif
@@ -59,6 +61,7 @@ class wxModelInitializationFactory
 
         static wxModelInitialization* makeWxInitialization( std::string fileName );
         static wxModelInitialization* makeWxInitializationFromId( std::string identifier );
+
 
 }; 
 /* -----  end of class WxModelInitializationFactory  ----- */

@@ -27,11 +27,12 @@
  *
  *****************************************************************************/
 
-#ifndef NCEP_HRRR_SURFACE_INITIALIZATION_H
-#define NCEP_HRRR_SURFACE_INITIALIZATION_H
+#ifndef ARCHIVED_HRRR_INITIALIZATION_H
+#define ARCHIVED_HRRR_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
 #include "gcpHandler.h"
+
 /**
  * Class to initialize a WindNinja run from an NCEP HRRR Surface forecast file
  * in GRIB2 format.

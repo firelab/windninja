@@ -146,6 +146,9 @@ class weatherModel : public QWidget
     ncepRapSurfInitialization rap;
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
+    ArchivedHRRRInitialization archhrr;
+
+
 
 #ifdef WITH_NOMADS_SUPPORT
     int nNomadsCount;

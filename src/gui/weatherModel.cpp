@@ -227,6 +227,7 @@ void weatherModel::loadModelComboBox()
     modelComboBox->addItem( QString::fromStdString(rap.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(namAk.getForecastIdentifier() ) );
     modelComboBox->addItem( QString::fromStdString(gfs.getForecastIdentifier() ) );
+    modelComboBox->addItem( QString::fromStdString(archhrr.getForecastIdentifier() ) );
 #ifdef WITH_NOMADS_SUPPORT
     /* Nomads */
     QString s;
