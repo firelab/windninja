@@ -1686,14 +1686,16 @@ int mainWindow::solve()
         setCursor(Qt::ArrowCursor); //Restart everything
         return false;
     }
-    //std::replace(outputDir.begin(),outputDir.end(), '/', '\\');
+    #ifdef WIN32
+    std::replace(outputDir.begin(),outputDir.end(), '/', '\\');
+    #endif
 
 
     bool writeCF = tree->solve->CaseFileBox->isChecked();
 
     CaseFile casefile;
 
-    std::string zipFile = CPLFormFilename(outputDir.c_str(), "tmp", "ninja");
+    std::string zipFile = CPLFormFilename(outputDir.c_str(), "tmp_ninja", "zip");
 
     std::string mainCaseCfgFilename = "config.cfg";
     std::string mainCaseCfgFile = CPLFormFilename(outputDir.c_str(), mainCaseCfgFilename.c_str(), "");
@@ -2449,8 +2451,8 @@ int mainWindow::solve()
                 {
                     pointFilename = CPLFormFilename(CPLGetFilename(pointPath.c_str()), pointFilename.c_str(), "");
                 }
-                std::string pointZipPathFile = CPLFormFilename("PointInitialization", pointFilename.c_str(), "");
-                casefile.addFileToZip(pointZipPathFile, pointFile);
+                std::string pointZipEntry = CPLFormFilename("PointInitialization", pointFilename.c_str(), "");
+                casefile.addFileToZip(pointZipEntry, pointFile);
             }
             // setup list of actually used/selected stations
             std::string selectedStationsFilename = "selected_stations.csv";
@@ -2482,8 +2484,8 @@ int mainWindow::solve()
                 selectedStationsFILE << pointFilename << "\n";
             }
             selectedStationsFILE.close();
-            std::string selectedStationsZipPathFile = CPLFormFilename("PointInitialization", selectedStationsFilename.c_str(), "");
-            casefile.addFileToZip(selectedStationsZipPathFile, selectedStationsFile);
+            std::string selectedStationsZipEntry = CPLFormFilename("PointInitialization", selectedStationsFilename.c_str(), "");
+            casefile.addFileToZip(selectedStationsZipEntry, selectedStationsFile);
             VSIUnlink( selectedStationsFile.c_str() );
 
         } // if (writeCF)
@@ -2820,8 +2822,8 @@ int mainWindow::solve()
             mainCaseCfgFILE << "--forecast_times " << outstr << "\n";
             mainCaseCfgFILE << "--forecast_filename " << weatherFile << "\n";
             std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
-            std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
-            casefile.addFileToZip(weatherZipPathFile, weatherFile);
+            std::string weatherZipEntry = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
+            casefile.addFileToZip(weatherZipEntry, weatherFile);
         } // if (writeCF && times.size() > 0)
 
         try
@@ -2898,8 +2900,8 @@ int mainWindow::solve()
             mainCaseCfgFILE << "--forecast_times " << outstr << "\n";
             mainCaseCfgFILE << "--forecast_filename " << weatherFile << "\n";
             std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
-            std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
-            casefile.addFileToZip(weatherZipPathFile, weatherFile);
+            std::string weatherZipEntry = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
+            casefile.addFileToZip(weatherZipEntry, weatherFile);
         } // if (writeCF && times.size() == 0)
 
         nRuns = army->getSize();
@@ -3132,8 +3134,8 @@ int mainWindow::solve()
             if (initMethod == WindNinjaInputs::domainAverageInitializationFlag)
             {
                 domainRunFILE.close();
-                std::string domainRunZipPathFile = CPLFormFilename("DomainAverageInitialization", domainRunCfgFilename.c_str(), "");
-                casefile.addFileToZip(domainRunZipPathFile, domainRunCfgFile );
+                std::string domainRunZipEntry = CPLFormFilename("DomainAverageInitialization", domainRunCfgFilename.c_str(), "");
+                casefile.addFileToZip(domainRunZipEntry, domainRunCfgFile );
                 VSIUnlink( domainRunCfgFile.c_str() );
             }
         }
@@ -3202,8 +3204,11 @@ int mainWindow::solve()
     //start the army
     try {
         ninjaSuccess = army->startRuns( nThreads );
-        casefile.closeCaseZipFile();
-        casefile.renameCaseZipFile();
+        if( casefile.getIsZipOpen() )
+        {
+            casefile.closeCaseZipFile();
+            casefile.renameCaseZipFile();
+        }
     }
     catch (bad_alloc& e)
     {

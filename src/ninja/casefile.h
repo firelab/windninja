@@ -39,11 +39,11 @@
 #ifdef _OPENMP
 #include <omp.h>
 #include "omp_guard.h"
-#endif  // #ifdef _OPENMP
+#endif
 
 #ifdef _OPENMP
 extern omp_lock_t netCDF_lock;
-#endif  // #ifdef _OPENMP
+#endif
 
 class CaseFile
 {
@@ -54,8 +54,6 @@ private:
     std::string finalCaseZipFile;
     bool isZipOpen;
     void* zipHandle;
-
-    int setCaseZipFileCount;
 
 public:
 
@@ -68,7 +66,7 @@ public:
     void openCaseZipFile();
     void closeCaseZipFile();
 
-    void addFileToZip(const std::string& withinZipPathedFilename, const std::string& fileToAdd);
+    void addFileToZip(const std::string& zipEntry, const std::string& fileToAdd);
 
     bool getIsZipOpen();
     std::string getCaseZipFile();

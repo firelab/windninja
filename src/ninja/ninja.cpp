@@ -2852,10 +2852,9 @@ void ninja::writeOutputFiles()
             }
             volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
-            std::string volVtkFilename = CPLGetFilename( input.volVTKFile.c_str() );
-            std::string directoryofVTK = CPLGetPath( input.volVTKFile.c_str() );
-            std::string volVtkSurfFilename = volVtkFilename.substr(0, volVtkFilename.length() - 4) + "_surf.vtk";
-            std::string volVtkSurfFile = CPLFormFilename(directoryofVTK.c_str(), volVtkSurfFilename.c_str(), "");
+            std::string volVtkFilename = CPLGetFilename(input.volVTKFile.c_str());
+            std::string volVtkSurfFilename = CPLSPrintf("%s_surf.vtk",CPLGetBasename(input.volVTKFile.c_str()));
+            std::string volVtkSurfFile = CPLFormFilename(CPLGetPath(input.volVTKFile.c_str()), volVtkSurfFilename.c_str(), "");
             if( casefile->getIsZipOpen() )
             {
                 casefile->updateCaseZipFile(casefilename);
@@ -2869,10 +2868,10 @@ void ninja::writeOutputFiles()
                     timestr = casefile->convertDateTimeToStd(input.ninjaTime);
                 }
 
-                std::string volVtkZipPathFile = CPLFormFilename(timestr.c_str(), volVtkFilename.c_str(), "");
-                casefile->addFileToZip(volVtkZipPathFile, input.volVTKFile);
-                std::string volVtkSurfZipPathFile = CPLFormFilename(timestr.c_str(), volVtkSurfFilename.c_str(), "");
-                casefile->addFileToZip(volVtkSurfZipPathFile, volVtkSurfFile);
+                std::string volVtkZipEntry = CPLFormFilename(timestr.c_str(), volVtkFilename.c_str(), "");
+                casefile->addFileToZip(volVtkZipEntry, input.volVTKFile);
+                std::string volVtkSurfZipEntry = CPLFormFilename(timestr.c_str(), volVtkSurfFilename.c_str(), "");
+                casefile->addFileToZip(volVtkSurfZipEntry, volVtkSurfFile);
             }
 
             if( input.volVTKOutFlag == false )
@@ -5078,7 +5077,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     pdf_fileAppend   = os_pdf.str();
 
 
-    casefilename = rootFile + case_fileAppend + ".ninja";
+    casefilename = rootFile + case_fileAppend + "_ninja.zip";
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";

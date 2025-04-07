@@ -460,7 +460,7 @@ int windNinjaCLI(int argc, char* argv[])
                 outputDir = CPLGetPath( vm["elevation_file"].as<std::string>().c_str() );
             }
 
-            std::string zipFile = CPLFormFilename(outputDir.c_str(), "tmp", "ninja");
+            std::string zipFile = CPLFormFilename(outputDir.c_str(), "tmp_ninja", "zip");
 
             std::string mainCaseCfgFilename = "config.cfg";
             std::string mainCaseCfgFile = CPLFormFilename(outputDir.c_str(), mainCaseCfgFilename.c_str(), "");
@@ -529,8 +529,8 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 std::string weatherFile = vm["forecast_filename"].as<std::string>();
                 std::string weatherFilename = CPLGetFilename( weatherFile.c_str() );
-                std::string weatherZipPathFile = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
-                casefile.addFileToZip(weatherZipPathFile, weatherFile);
+                std::string weatherZipEntry = CPLFormFilename("WxModelInitialization", weatherFilename.c_str(), "");
+                casefile.addFileToZip(weatherZipEntry, weatherFile);
             }
             if (vm.count("wx_station_filename"))
             {
@@ -541,8 +541,8 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                     pointFilename = CPLFormFilename(CPLGetFilename(pointPath.c_str()), pointFilename.c_str(), "");
                 }
-                std::string pointZipPathFile = CPLFormFilename("PointInitialization", pointFilename.c_str(), "");
-                casefile.addFileToZip(pointZipPathFile, pointFile);
+                std::string pointZipEntry = CPLFormFilename("PointInitialization", pointFilename.c_str(), "");
+                casefile.addFileToZip(pointZipEntry, pointFile);
             }
         }
 
@@ -2059,8 +2059,11 @@ int windNinjaCLI(int argc, char* argv[])
             cout << "ERROR: The simulations returned a bad value.\n";
             return -1;
         }
-        casefile.closeCaseZipFile();
-        casefile.renameCaseZipFile();
+        if( casefile.getIsZipOpen() )
+        {
+            casefile.closeCaseZipFile();
+            casefile.renameCaseZipFile();
+        }
     }
     catch (badForecastFile& e
             ) {   //catch a badForecastFile
