@@ -1872,6 +1872,7 @@ int mainWindow::solve()
         progressDialog->cancel();
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
+        casefile.closeCaseZipFile();
         return false;
     }
 
@@ -2242,6 +2243,7 @@ int mainWindow::solve()
             progressDialog->cancel();
             disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
             setCursor(Qt::ArrowCursor);
+            casefile.closeCaseZipFile();
             return false;
         }
     }
@@ -2470,6 +2472,7 @@ int mainWindow::solve()
                 disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
                 setCursor(Qt::ArrowCursor); //Restart everything
                 delete army;
+                casefile.closeCaseZipFile();
                 return false;
             }
             for( size_t pIdx = 0; pIdx < pointFileList.size(); pIdx++ )
@@ -2553,6 +2556,7 @@ int mainWindow::solve()
                 progressDialog->cancel();
                 progressDialog->hide();
                 delete army;
+                casefile.closeCaseZipFile();
                 return false;
             }catch(...)
             { //catch all exceptions and tell the user, prevent segfaults
@@ -2568,6 +2572,7 @@ int mainWindow::solve()
                 progressDialog->cancel();
                 progressDialog->hide();
                 delete army;
+                casefile.closeCaseZipFile();
                 return false;
             }
             nRuns = army->getSize();
@@ -2626,6 +2631,7 @@ int mainWindow::solve()
                         progressDialog->cancel();
                         progressDialog->hide();
                         delete army;
+                        casefile.closeCaseZipFile();
                         return false;
                     }catch(...)
                     { //catch any and all exceptions and tell the user
@@ -2641,6 +2647,7 @@ int mainWindow::solve()
                         progressDialog->cancel();
                         progressDialog->hide();
                         delete army;
+                        casefile.closeCaseZipFile();
                         return false;
                     }
                     nRuns = army->getSize();
@@ -2676,6 +2683,7 @@ int mainWindow::solve()
                         progressDialog->cancel();
                         progressDialog->hide();
                         delete army;
+                        casefile.closeCaseZipFile();
                         return false;
                     }catch(...)
                     { //catch any and all exceptions and tell the user
@@ -2691,6 +2699,7 @@ int mainWindow::solve()
                         progressDialog->cancel();
                         progressDialog->hide();
                         delete army;
+                        casefile.closeCaseZipFile();
                         return false;
                     }
                     nRuns = army->getSize();
@@ -2713,6 +2722,7 @@ int mainWindow::solve()
                 progressDialog->cancel();
                 progressDialog->hide();
                 delete army;
+                casefile.closeCaseZipFile();
                 return false;
             }
             
@@ -2783,6 +2793,7 @@ int mainWindow::solve()
             setCursor(Qt::ArrowCursor);
             tree->weather->checkForModelData();
             progressDialog->cancel();
+            casefile.closeCaseZipFile();
             return false;
         }
 
@@ -2845,6 +2856,7 @@ int mainWindow::solve()
             progressDialog->cancel();
             progressDialog->hide();
             delete army;
+            casefile.closeCaseZipFile();
             return false;
         } catch (...) {
             QMessageBox::critical(
@@ -2859,6 +2871,7 @@ int mainWindow::solve()
             progressDialog->cancel();
             progressDialog->hide();
             delete army;
+            casefile.closeCaseZipFile();
             return false;
         }
 
@@ -3204,11 +3217,8 @@ int mainWindow::solve()
     //start the army
     try {
         ninjaSuccess = army->startRuns( nThreads );
-        if( casefile.getIsZipOpen() )
-        {
-            casefile.closeCaseZipFile();
-            casefile.renameCaseZipFile();
-        }
+        casefile.closeCaseZipFile();
+        casefile.renameCaseZipFile();
     }
     catch (bad_alloc& e)
     {
@@ -3220,6 +3230,7 @@ int mainWindow::solve()
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
         delete army;
+        casefile.closeCaseZipFile();
         return false;
     }
     catch (cancelledByUser& e)
@@ -3231,6 +3242,7 @@ int mainWindow::solve()
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
         delete army;
+        casefile.closeCaseZipFile();
         return false;
     }
     catch (exception& e)
@@ -3242,6 +3254,7 @@ int mainWindow::solve()
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
         delete army;
+        casefile.closeCaseZipFile();
         return false;
     }
     catch (...)
@@ -3253,6 +3266,7 @@ int mainWindow::solve()
         disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
         setCursor(Qt::ArrowCursor);
         delete army;
+        casefile.closeCaseZipFile();
         return false;
     }
 

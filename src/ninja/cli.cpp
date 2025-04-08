@@ -161,8 +161,10 @@ int windNinjaCLI(int argc, char* argv[])
     bool writeParsed = false;
     bool writeValues = false;
 
+    CaseFile casefile;
+
     //initializeOptions();
-    
+
     // Moved to initializeOptions()
     try {
         // Declare a group of options that will be
@@ -443,8 +445,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
-        //helper for casefile output of CLI
-        CaseFile casefile;
+        // helper for casefile output of CLI
         if (vm["write_casefile"].as<bool>() == true)
         {
             std::string outputDir = vm.count("output_path") ? vm["output_path"].as<string>().c_str() : "";
@@ -2057,31 +2058,33 @@ int windNinjaCLI(int argc, char* argv[])
         if(!windsim.startRuns(vm["num_threads"].as<int>()))
         {
             cout << "ERROR: The simulations returned a bad value.\n";
+            casefile.closeCaseZipFile();
             return -1;
         }
-        if( casefile.getIsZipOpen() )
-        {
-            casefile.closeCaseZipFile();
-            casefile.renameCaseZipFile();
-        }
+        casefile.closeCaseZipFile();
+        casefile.renameCaseZipFile();
     }
-    catch (badForecastFile& e
-            ) {   //catch a badForecastFile
+    catch (badForecastFile& e)
+    {   //catch a badForecastFile
         cout << "Exception badForecastFile caught: " << e.what() << "\n";
         cout << "There was a problem downloading the forecast file or it had bad data.\n";
+        casefile.closeCaseZipFile();
         return -1;
     }catch (bad_alloc& e)
     {
         cout << "Exception bad_alloc caught: " << e.what() << endl;
         cout << "WindNinja appears to have run out of memory." << endl;
+        casefile.closeCaseZipFile();
         return -1;
     }catch (exception& e)
     {
         cout << "Exception caught: " << e.what() << endl;
+        casefile.closeCaseZipFile();
         return -1;
     }catch (...)
     {
         cout << "Exception caught: Cannot determine exception type." << endl;
+        casefile.closeCaseZipFile();
         return -1;
     }
 

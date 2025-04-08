@@ -80,16 +80,14 @@ void CaseFile::openCaseZipFile()
 
 void CaseFile::closeCaseZipFile()
 {
-    CPLDebug("NINJA", "closing case zip file %s", caseZipFile.c_str());
-
-    if (isZipOpen == false)
+    // just skip if called on an unopened zip file, makes shutting WindNinja down unexpectedly easier to do
+    if (isZipOpen == true)
     {
-        throw std::runtime_error("closeCaseZipFile() called on an unopened zip file!!! " + caseZipFile);
+        CPLDebug("NINJA", "closing case zip file %s", caseZipFile.c_str());
+        CPLCloseZip(zipHandle);
+        zipHandle = NULL;
+        isZipOpen = false;
     }
-
-    CPLCloseZip(zipHandle);
-    zipHandle = NULL;
-    isZipOpen = false;
 }
 
 void CaseFile::addFileToZip(const std::string& zipEntry, const std::string& fileToAdd)
