@@ -37,6 +37,7 @@
 #include <QSpinBox>
 #include <QToolButton>
 
+#include <QCheckBox>
 #include <QVBoxLayout>
 
 #ifdef _OPENMP
@@ -58,6 +59,7 @@ class solvePage : public QWidget
   QString availProcString;
   QLabel *availProcLabel;
   QSpinBox *numProcSpinBox;
+  QCheckBox *CaseFileBox;
 
   QLabel *outputDirLabel;
   QLineEdit *outputDirLineEdit;

@@ -67,7 +67,14 @@ public:
     void writeSettings();
     void readSettings();
     int fetchBoundBox(double *boundsBox, const char *fileName, double resolution);
-    
+
+    bool get_wasDemFetched();
+    std::string get_elevSource();
+    double get_northBound();
+    double get_southBound();
+    double get_eastBound();
+    double get_westBound();
+
 protected:
     void closeEvent(QCloseEvent *event);
    
@@ -88,6 +95,9 @@ protected:
 
 private:
     QDialog dlg;
+
+    bool wasDemFetched;
+    std::string elevSource;
 
     double latitude;
     double longitude;

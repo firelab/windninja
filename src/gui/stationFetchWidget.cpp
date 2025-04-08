@@ -48,6 +48,8 @@ stationFetchWidget::stationFetchWidget(QWidget *parent)
     currentBox->setVisible(false);
     fetchMetaButton->setVisible(false); //Hide the metadata button from the gui
 
+    wasStationFetched = false;
+
     stationFetchProgress = new QProgressDialog(this); //Sets up a mediocre progress bar that kind of works
     stationFetchProgress->setWindowModality(Qt::ApplicationModal);
     stationFetchProgress->setAutoReset(false); //Displays how far along the download process is
@@ -196,6 +198,7 @@ void stationFetchWidget::updateFetchProgress()
  */
 void stationFetchWidget::executeFetchStation()
 {
+    set_wasStationFetched(true);
     stationFetchProgress->setLabelText("Downloading Station Data!");
     stationFetchProgress->setRange(0,0); //make it bounce back and forth
     stationFetchProgress->setCancelButtonText("Cancel");
@@ -256,6 +259,56 @@ std::string stationFetchWidget::demButcher()//Cleans up the DEM for use in the d
 //    std::string demBetter=demRaw.substr(0,lastDot)+"/";
     return demPath;
 }
+
+void stationFetchWidget::set_wasStationFetched(bool stationFetched)
+{
+    wasStationFetched = stationFetched;
+}
+
+bool stationFetchWidget::get_wasStationFetched()
+{
+    return wasStationFetched;
+}
+
+std::string stationFetchWidget::getType()
+{
+     if (geoLoc->currentIndex() == 0)
+     {
+        return "bbox";
+     } else
+     {
+        return "stid";
+     }
+}
+
+double stationFetchWidget::getBuffer()
+{
+    return bufferSpin->text().toDouble();
+}
+
+std::string stationFetchWidget::getBufferUnits()
+{
+    return buffUnits->currentText().toStdString();
+}
+
+std::string stationFetchWidget::getStationIDS()
+{
+    return removeWhiteSpace(idLine->text().toStdString());
+}
+
+bool stationFetchWidget::get_isTimeSeries()
+{
+     if (timeLoc->currentIndex() == 1)
+     {
+        // is a time series
+        return true;
+     } else
+     {
+        // is a single time
+        return false;
+     }
+}
+
 /**
  * @brief stationFetchWidget::fetchStation
  * Fetches data from the Mesowest API based on GUI request
@@ -420,7 +473,7 @@ int stationFetchWidget::fetchStation()
         int sY,sMo,sD,sH,sMi;
         int eY,eMo,eD,eH,eMi;
         int numSteps=10; //make up a number for now.... It really doesn't matter at this point
-        
+
         std::string StartTime=startEdit->text().toStdString();
         std::string EndTime=endEdit->text().toStdString();
                 

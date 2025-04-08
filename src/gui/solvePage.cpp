@@ -76,6 +76,9 @@ solvePage::solvePage(QWidget *parent) : QWidget(parent)
   openOutputPathButton->setIcon( QIcon( ":folder.png" ) );
   openOutputPathButton->setDisabled( true );
 
+  CaseFileBox = new QCheckBox(tr("Generate Casefile"), this);
+  CaseFileBox->setChecked(true);
+
   layout = new QVBoxLayout;
   layout->addWidget(availProcLabel);
 
@@ -83,6 +86,7 @@ solvePage::solvePage(QWidget *parent) : QWidget(parent)
   pageLayout->addWidget(numProcLabel);
   pageLayout->addWidget(numProcSpinBox);
   pageLayout->addWidget(solveToolButton);
+  pageLayout->addWidget(CaseFileBox);
   pageLayout->addStretch();
 
   outputPathLayout = new QHBoxLayout;

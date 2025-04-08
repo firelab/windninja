@@ -561,6 +561,10 @@ std::vector<blt::local_date_time> weatherModel::timeList() {
   return tl;
 }
 
+std::vector<blt::local_date_time> weatherModel::getFullTimeList() {
+  return timelist;
+}
+
 void weatherModel::clearTimes() {
   timelist.clear();
   timeModel->setStringList(QStringList());

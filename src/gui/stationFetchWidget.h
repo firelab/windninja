@@ -68,7 +68,14 @@ public:
     void updatetz(QString tz);
     void fixTime();
     std::string removeWhiteSpace(std::string str);
-    
+    void set_wasStationFetched(bool stationFetched);
+    bool get_wasStationFetched();
+    std::string getType();
+    double getBuffer();
+    std::string getBufferUnits();
+    std::string getStationIDS();
+    bool get_isTimeSeries();
+
 protected:
     void closeEvent(QCloseEvent *event);
    
@@ -93,7 +100,7 @@ private:
         //Progress Bar Stuff
         QProgressDialog *stationFetchProgress;
         QFutureWatcher<int> stationFutureWatcher;
-        
+        bool wasStationFetched;
 friend class pointInput;
 };
 

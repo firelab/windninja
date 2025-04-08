@@ -59,6 +59,12 @@ void option_dependency(const po::variables_map& vm, const char* for_what, const 
 
 void verify_option_set(const po::variables_map& vm, const char* optn);
 
+//bool checkArgs(string arg1, string arg2, string arg3);
+
+pair<string, string> at_option_parser(string const&s);
+
+const std::string* get_checked_elevation_file(po::variables_map& vm);
+
 // this should be used instead of direct 'variables_map["key"].as<T>()' calls since otherwise a single typo
 // in the key literal results in undefined behavior that can corrupt memory miles away. 
 // Alternatively keys could be defined/used as constants to catch this at compile time
@@ -71,7 +77,5 @@ inline T option_val (const po::variables_map& vm, const char* key) {
         return vv.as<T>();
     }
 }
-
-//bool checkArgs(string arg1, string arg2, string arg3);
 
 #endif /* CLI_H */

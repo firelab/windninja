@@ -63,7 +63,12 @@ WN_C_START
 
 #include <stdlib.h>
 //#include <stdint.h>
+#ifdef WIN32
+#define false 0
+#define true 1
+#else
 #include <stdbool.h>
+#endif
 
 //Use structs instead of void * for type checking by C compilier
 struct NinjaArmyH;

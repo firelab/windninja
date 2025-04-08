@@ -65,6 +65,7 @@
 #include "SurfProperties.h"
 #include "surfaceVectorField.h"
 #include "WindNinjaInputs.h"
+#include "casefile.h"
 #include "KmlVector.h"
 #include "ShapeVector.h"
 #include "preconditioner.h"
@@ -131,6 +132,9 @@ public:
     inline virtual std::string identify() {return std::string("ninja");}
     bool cancel;	//if set to "false" during a simulation (ie when "simulate_wind()" is running), the simulation will attempt to end
     Mesh mesh;
+
+    std::string casefilename;
+    CaseFile* casefile;
 
     //output grids to access the final wind grids (typically used by other programs running the windninja API such as WFDSS, FlamMap, etc.
     AsciiGrid<double>AngleGrid;
@@ -308,6 +312,7 @@ public:
 
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
+    void set_casefilePtr( CaseFile &theCaseFile );
     void set_numberCPUs(int CPUs);
     void set_outputSpeedGridResolution(double resolution, lengthUnits::eLengthUnits units);
     void set_outputDirectionGridResolution(double resolution, lengthUnits::eLengthUnits units);
@@ -368,7 +373,7 @@ public:
     void checkInputs();
     void dumpMemory();
 
-    WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
+    WindNinjaInputs input;	//The place where all inputs (except mesh) are stored.
 
 protected:
     void checkCancel();

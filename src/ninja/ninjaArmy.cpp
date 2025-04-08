@@ -1362,6 +1362,13 @@ int ninjaArmy::setPosition( const int nIndex, char ** papszOptions )
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_position() );
 }
 
+int ninjaArmy::setCaseFilePtr( const int nIndex, CaseFile &casefile,
+                 char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_casefilePtr( casefile ) );
+}
+
 int ninjaArmy::setNumberCPUs( const int nIndex, const int nCPUs, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_numberCPUs( nCPUs ) );
