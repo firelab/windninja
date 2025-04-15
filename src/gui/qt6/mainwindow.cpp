@@ -597,22 +597,16 @@ MainWindow::MainWindow(QWidget *parent)
   // Force model to reload children
   ui->treeFileExplorer->expandAll();  // Force expand all to check visibility
 
-  // Get project root directory
-  QDir projectRoot(QCoreApplication::applicationDirPath());
-  while (!projectRoot.exists("data")) {
-    if (!projectRoot.cdUp()) break;
-  }
-
   /*
    * Functionality for the map widget
    */
 
-  // Resolve the map file path
-  QString filePath = projectRoot.filePath("data/map.html");
-
   // Enable remote content
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
+
+  // Resolve the map file path
+  QString filePath = QString(MAP_PATH);
 
   //Load HTML file with Leaflet
   webView = new QWebEngineView(ui->mapPanelWidget);

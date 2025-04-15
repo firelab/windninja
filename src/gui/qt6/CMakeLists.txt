@@ -26,6 +26,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
         appstate.h
+        provider.cpp
+        modeldata.h provider.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET qt6_application APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -46,6 +48,8 @@ else()
 endif()
 
 add_dependencies(qt6_application ninja)
+
+add_definitions(-DMAP_PATH="${CMAKE_SOURCE_DIR}/data/map.html")
 
 target_link_libraries(qt6_application PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
 
