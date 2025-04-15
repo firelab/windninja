@@ -323,7 +323,8 @@ bool NinjaFoam::simulate_wind()
                             "for existing case directory. Try again without using an existing case.");
                     return false;
                 }
-                // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
+                // try smoothing the dem, starting at a smoothDist of 1, incrementing the smoothDist by 1 every 2 tries,
+                // regardless of the value set during smoothing if the dem was manually smoothed from the start
                 tryIdx++;
                 if( tryIdx <= nTries )
                 {
@@ -335,7 +336,9 @@ bool NinjaFoam::simulate_wind()
                     break;
                 }
 
-                input.dem.smooth_elevation(1);
+                int smoothDist = int((tryIdx+1)/2);  // increments every other tryIdx
+                input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, smoothDist = %d",smoothDist);
+                input.dem.smooth_elevation(smoothDist);
 
                 CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
                 NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
@@ -418,7 +421,8 @@ bool NinjaFoam::simulate_wind()
                 input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error during SampleRawOutput(). Can't generate new mesh from smoothed elevation file "
                         "for existing case directory. Try again without using an existing case.");
             }
-            // try smoothing the dem, always with a smoothDist of 1, which is the equivalent of smoothing by an incrementing smoothDist on a fresh copy of the resampled dem
+            // try smoothing the dem, starting at a smoothDist of 1, incrementing the smoothDist by 1 every 2 tries,
+            // regardless of the value set during smoothing if the dem was manually smoothed from the start
             tryIdx++;
             if( tryIdx <= nTries )
             {
@@ -430,7 +434,9 @@ bool NinjaFoam::simulate_wind()
                 break;
             }
 
-            input.dem.smooth_elevation(1);
+            int smoothDist = int((tryIdx+1)/2);  // increments every other tryIdx
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Smoothing elevation file, smoothDist = %d",smoothDist);
+            input.dem.smooth_elevation(smoothDist);
 
             CPLDebug("NINJAFOAM", "unlinking %s", CPLSPrintf( "%s", pszFoamPath ));
             NinjaUnlinkTree( CPLSPrintf( "%s", pszFoamPath ) );
