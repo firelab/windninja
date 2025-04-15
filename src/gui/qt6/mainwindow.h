@@ -21,11 +21,48 @@ public:
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
+private slots:
+  void on_useCOM_clicked();
+  void on_useCOMM_clicked();
+
+  void on_getFromMapButton_clicked();
+
+  void on_openFileButton_clicked();
+
+
+  void on_elevFilePath_textChanged(const QString &arg1);
+
+  void on_meshResType_currentIndexChanged(int index);
+
+  void on_useDiurnalWind_clicked();
+
+  void on_useStability_clicked();
+
+  void on_domainAvgPicklist_currentIndexChanged(int index);
+
+  void on_useDomainAvgWind_clicked();
+
+  void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
+
+  void on_usePointInit_clicked();
+
+  void on_useWeatherModelInit_clicked();
+
+  void on_clearDAWtable_clicked();
+
 private:
   void onTreeItemClicked(QTreeWidgetItem *item, int column);
 
+  // DEM inputs
+  double northLat;
+  double southLat;
+  double eastLon;
+  double westLon;
+  double centerLat;
+  double centerLon;
+  double radius;
 
-Ui::MainWindow *ui;
-QWebEngineView *webView;
+  Ui::MainWindow *ui;
+  QWebEngineView *webView;
 };
 #endif // MAINWINDOW_H

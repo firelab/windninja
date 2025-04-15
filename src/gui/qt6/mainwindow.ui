@@ -360,14 +360,23 @@
            <property name="text">
             <string>Solver Methodology</string>
            </property>
+           <property name="flags">
+            <set>ItemIsSelectable|ItemIsEnabled</set>
+           </property>
            <item>
             <property name="text">
              <string>Conservation of Mass</string>
+            </property>
+            <property name="flags">
+             <set>ItemIsSelectable|ItemIsEnabled</set>
             </property>
            </item>
            <item>
             <property name="text">
              <string>Conservation of Mass and Momentum</string>
+            </property>
+            <property name="flags">
+             <set>ItemIsSelectable|ItemIsEnabled</set>
             </property>
            </item>
           </item>
@@ -375,38 +384,62 @@
            <property name="text">
             <string>Inputs</string>
            </property>
+           <property name="flags">
+            <set>ItemIsSelectable|ItemIsEnabled</set>
+           </property>
            <item>
             <property name="text">
              <string>Surface Input</string>
+            </property>
+            <property name="flags">
+             <set>ItemIsSelectable|ItemIsEnabled</set>
             </property>
            </item>
            <item>
             <property name="text">
              <string>Diurnal Input</string>
             </property>
+            <property name="flags">
+             <set>ItemIsSelectable|ItemIsEnabled</set>
+            </property>
            </item>
            <item>
             <property name="text">
              <string>Stability Input</string>
+            </property>
+            <property name="flags">
+             <set>ItemIsSelectable|ItemIsEnabled</set>
             </property>
            </item>
            <item>
             <property name="text">
              <string>Wind Input</string>
             </property>
+            <property name="flags">
+             <set>ItemIsSelectable|ItemIsEnabled</set>
+            </property>
             <item>
              <property name="text">
               <string>Domain Average Wind</string>
+             </property>
+             <property name="flags">
+              <set>ItemIsSelectable|ItemIsEnabled</set>
              </property>
             </item>
             <item>
              <property name="text">
               <string>Point Initialization</string>
              </property>
+             <property name="flags">
+              <set>ItemIsSelectable|ItemIsEnabled</set>
+             </property>
             </item>
             <item>
              <property name="text">
               <string>Weather Model</string>
+             </property>
+             <property name="flags">
+              <set>ItemIsSelectable|ItemIsEnabled</set>
              </property>
             </item>
            </item>
@@ -462,7 +495,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>8</number>
+           <number>9</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverPage">
@@ -559,6 +592,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <property name="text">
                   <string>Use Conservation of Mass</string>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
                  </property>
                 </widget>
                </item>
@@ -791,6 +827,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                 <property name="placeholderText">
+                  <string>*.tif</string>
+                 </property>
                 </widget>
                </item>
                <item>
@@ -811,6 +853,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <property name="text">
                   <string>Import From Map</string>
                  </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="comboBox">
+                 <item>
+                  <property name="text">
+                   <string>WORLD SRTM (30m)</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>WORLD GMTED (250m)</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Landscape File</string>
+                  </property>
+                 </item>
                 </widget>
                </item>
                <item>
@@ -944,6 +1005,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </item>
                <item>
                 <widget class="QDoubleSpinBox" name="customMeshResValue">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -952,6 +1016,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="readOnly">
+                  <bool>false</bool>
+                 </property>
+                 <property name="minimum">
+                  <double>0.010000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>999.990000000000009</double>
+                 </property>
+                 <property name="value">
+                  <double>256.339999999999975</double>
                  </property>
                 </widget>
                </item>
@@ -1374,14 +1450,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QDoubleSpinBox" name="customWindHeight">
+                  <widget class="QDoubleSpinBox" name="windHeightValue">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="minimum">
+                    <double>0.010000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>20.000000000000000</double>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QRadioButton" name="customWindFeet">
+                  <widget class="QRadioButton" name="windHeightFeet">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -1394,7 +1482,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QRadioButton" name="customWindMeters">
+                  <widget class="QRadioButton" name="windHeightMeters">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -2322,7 +2413,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="usePointInit_2">
+             <widget class="QCheckBox" name="useWeatherModelInit">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -2345,7 +2436,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <cursorShape>PointingHandCursor</cursorShape>
               </property>
               <property name="text">
-               <string>Point Initialization</string>
+               <string>Weather Model Initialization</string>
               </property>
              </widget>
             </item>
@@ -2469,11 +2560,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <property name="spacing">
            <number>0</number>
           </property>
+          <property name="topMargin">
+           <number>3</number>
+          </property>
           <property name="bottomMargin">
-           <number>5</number>
+           <number>3</number>
           </property>
           <item>
            <widget class="QPushButton" name="solveButton">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
