@@ -578,8 +578,6 @@ int GetUTMZoneInEPSG( double lon, double lat )
 
 int GDALFillBandNoData(GDALDataset *poDS, int nBand, int nSearchPixels)
 {
-    (void)nBand;
-    (void)nSearchPixels;
     if(poDS == NULL)
     {
         fprintf(stderr, "Invalid GDAL Dataset Handle, cannot fill no data\n");
@@ -591,9 +589,9 @@ int GDALFillBandNoData(GDALDataset *poDS, int nBand, int nSearchPixels)
 
     GDALRasterBand *poBand;
 
-    poBand = poDS->GetRasterBand(1);
+    poBand = poDS->GetRasterBand(nBand);
 
-    GDALFillNodata(poBand, NULL, 120, 0, 0, NULL, NULL, NULL);
+    GDALFillNodata(poBand, NULL, nSearchPixels, 0, 0, NULL, NULL, NULL);
 
     double dfNoData = poBand->GetNoDataValue(NULL);
 

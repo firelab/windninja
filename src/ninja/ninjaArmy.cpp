@@ -116,6 +116,7 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
+
     int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
     
     if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
@@ -640,7 +641,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             //start the run
             if(!ninjas[0]->simulate_wind())
-               printf("Return of false from simulate_wind()");
+               printf("Return of false from simulate_wind()\n");
 #ifdef NINJAFOAM
             //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
             //a ninja run to add diurnal flow after the cfd solution is computed
@@ -669,7 +670,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                 diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
                 if(!diurnal_ninja->simulate_wind()){
-                    printf("Return of false from simulate_wind()");
+                    printf("Return of false from simulate_wind()\n");
                 }
                 //set output path on original ninja for the GUI
                 ninjas[0]->input.outputPath = diurnal_ninja->input.outputPath;
@@ -1023,7 +1024,7 @@ bool ninjaArmy::startFirstRun()
     {
         //start the run
         if(!ninjas[0]->simulate_wind())
-            printf("Return of false from simulate_wind()");
+            printf("Return of false from simulate_wind()\n");
 
         //write farsite atmosphere file
         writeFarsiteAtmosphereFile();

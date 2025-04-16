@@ -49,24 +49,53 @@ int main()
     {
       printf("NinjaInit: err = %d\n", err);
     }
+
     /*
      * Testing fetching from a DEM bounding box  
      */
-    const char * demFile = "data/output.tif"; // output file name
-    char * fetch_type = "gmted";
+    const char * demFileBBox = "data/fetch/DEMBBox.tif"; // output file name
+    char * fetch_type = "gmted"; // can be srtm, gmted, relief
     double resolution = 30; // 30 m resolution
     double boundsBox [] = {40.07, -104.0, 40.0, -104.07}; // Bounding box (north, east, south, west)
-    err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFile, resolution, fetch_type, papszOptions);
+    err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFileBBox, resolution, fetch_type, papszOptions);
     if (err != NINJA_SUCCESS){
         printf("NinjaFetchDEMBBox: err = %d\n", err);
     }
     
     /*
-     * Testing fetching for a Forecast file (wx_model_type are the names listed in the weather station download in WindNinja)
+     * Testing fetching for a Forecast file 
      */
-    const char*wx_model_type = "NOMADS-HRRR-CONUS-3-KM";
-    int numNinjas = 2;
-    const char* forecastFilename = NinjaFetchForecast(ninjaArmy, wx_model_type, numNinjas, demFile, papszOptions);
+    const char*wx_model_type = "NOMADS-HRRR-CONUS-3-KM"; //  follow the cli argument output UCAR-NAM-CONUS-12-KM, 
+    /* All Possible inputs for wx_model_type
+     * UCAR-NAM-ALASKA-11-KM, 
+     * UCAR-NDFD-CONUS-2.5-KM, 
+     * UCAR-RAP-CONUS-13-KM, 
+     * UCAR-GFS-GLOBAL-0.5-DEG, 
+     * NOMADS-GFS-GLOBAL-0.25-DEG, 
+     * NOMADS-HIRES-ARW-ALASKA-5-KM, 
+     * NOMADS-HIRES-FV3-ALASKA-5-KM, 
+     * NOMADS-HIRES-ARW-CONUS-5-KM, 
+     * NOMADS-HIRES-FV3-CONUS-5-KM, 
+     * NOMADS-HIRES-GUAM-5-KM, 
+     * NOMADS-HIRES-HAWAII-5-KM, 
+     * NOMADS-HIRES-PUERTO-RICO-5-KM, 
+     * NOMADS-NAM-ALASKA-11.25-KM, 
+     * NOMADS-NAM-CONUS-12-KM, 
+     * NOMADS-NAM-NORTH-AMERICA-32-KM, 
+     * NOMADS-NAM-NEST-ALASKA-3-KM, 
+     * NOMADS-NAM-NEST-CONUS-3-KM, 
+     * NOMADS-NAM-NEST-HAWAII-3-KM, 
+     * NOMADS-NAM-NEST-PUERTO-RICO-3-KM, 
+     * NOMADS-HRRR-ALASKA-3-KM, 
+     * NOMADS-HRRR-CONUS-3-KM, 
+     * NOMADS-HRRR-CONUS-SUBHOURLY-3-KM, 
+     * NOMADS-HRRR-ALASKA-SUBHOURLY-3-KM, 
+     * NOMADS-RAP-CONUS-13-KM, 
+     * NOMADS-RAP-NORTH-AMERICA-32-KM
+    */
+    const char * demFileForecast = demFileBBox; // input DEM file
+    int numNinjas = 1;
+    const char* forecastFilename = NinjaFetchForecast(ninjaArmy, wx_model_type, numNinjas, demFileForecast, papszOptions);
     if (strcmp(forecastFilename, "exception") == 0){
         printf("NinjaFetchForecast: err = %s\n", forecastFilename);
     }
@@ -77,17 +106,18 @@ int main()
     /*
      * Testing fetching station data from a geotiff file.  
      */
-    int year[1] = {2023};
-    int month[1] = {10};
-    int day[1] = {10};
-    int hour[1] = {12};
-    int minute[1] = {60};
-    const char* output_path = "";
+    int year[2] = {2024, 2024};
+    int month[2] = {2, 2};
+    int day[2] = {2, 2};
+    int hour[2] = {2, 2};
+    int minute[2] = {2, 2};
+    int size = 2;
+    const char* output_path = "data/fetch/";
     const char* elevation_file = "data/missoula_valley.tif";
     const char* osTimeZone = "UTC";
     bool fetchLatestFlag = 1;
 
-    err = NinjaFetchStation(year, month, day, hour, minute, elevation_file, osTimeZone, fetchLatestFlag, output_path, papszOptions);
+    err = NinjaFetchStation(year, month, day, hour, minute, size, elevation_file, osTimeZone, fetchLatestFlag, output_path, papszOptions);
     if (err != NINJA_SUCCESS) {
         printf("NinjaFetchStation: err = %d\n", err);
     } else {
@@ -101,7 +131,7 @@ int main()
     double adfBuff[] = {30, 30}; // Buffer to store the elevation value
     const char* units = "mi";
     double dfCellSize = 30.0; // Cell size in meters
-    char* pszDstFile = "data/dem_point_output.tif";
+    char* pszDstFile = "data/fetch/DEMpoint.tif";
     char* fetchType = "gmted";
     err = NinjaFetchDEMPoint(ninjaArmy, adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
     if (err != NINJA_SUCCESS) {
