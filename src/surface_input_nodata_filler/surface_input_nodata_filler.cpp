@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        std::cout << "filling NO_DATA values" << std::endl;
+        std::cout << "filling NO_DATA values..." << std::endl;
         #ifdef _OPENMP
         double startTime = omp_get_wtime();
         #endif
