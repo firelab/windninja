@@ -18,9 +18,10 @@ int main()
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
 
+    err = NinjaInit(); //must be called for any simulation
     if(err != NINJA_SUCCESS)
     {
-      printf("NinjaInit: err = %d\n", err);
+    printf("NinjaInit: err = %d\n", err);
     }
 
 
@@ -61,12 +62,6 @@ This step allocates the army and performs some generic initialization steps.
   if( NULL == ninjaArmy )
   {
     printf("NinjaCreateArmy: ninjaArmy = NULL\n");
-  }
-
-  err = NinjaInit(); //must be called for any simulation
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
   }
 
 ```
