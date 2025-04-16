@@ -34,6 +34,7 @@ int NinjaSim::domain_average_exec(DomainAverageWind& input) {
   const char* speedUnits = input.getSpeedUnits().c_str();
   bool momentumFlag = input.getMomentumFlag();
   unsigned int numNinjas = input.getNumNinjas();
+  const char* outputPath = input.getOutputPath().c_str();
 
 
   /*
@@ -70,6 +71,12 @@ int NinjaSim::domain_average_exec(DomainAverageWind& input) {
     if(err != NINJA_SUCCESS)
     {
       printf("NinjaSetCommunication: err = %d\n", err);
+    }
+
+    err = NinjaSetOutputPath(ninjaArmy, i, outputPath, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetNumberCPUs: err = %d\n", err);
     }
 
     err = NinjaSetNumberCPUs(ninjaArmy, i, nCPUs, papszOptions);
@@ -140,6 +147,13 @@ int NinjaSim::domain_average_exec(DomainAverageWind& input) {
     {
       printf("NinjaSetNumVertLayers: err = %d\n", err);
     }
+
+
+    err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetGoogOutFlag err = %d\n", err);
+    }
   }
 
   /*
@@ -159,6 +173,8 @@ int NinjaSim::domain_average_exec(DomainAverageWind& input) {
   const char* outputGridProjection = NULL;
   const int nIndex = 0;
   const char* units = "m";
+
+  //Google Maps Output
   outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
   if( NULL == outputSpeedGrid )
   {
