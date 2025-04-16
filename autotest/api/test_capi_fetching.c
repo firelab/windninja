@@ -116,8 +116,10 @@ int main()
     const char* elevation_file = "data/missoula_valley.tif";
     const char* osTimeZone = "UTC";
     bool fetchLatestFlag = 1;
+    double buffer = 10;
+    const char* units = "mi";
 
-    err = NinjaFetchStation(year, month, day, hour, minute, size, elevation_file, osTimeZone, fetchLatestFlag, output_path, papszOptions);
+    err = NinjaFetchStation(year, month, day, hour, minute, size, elevation_file, buffer, units, osTimeZone, fetchLatestFlag, output_path, papszOptions);
     if (err != NINJA_SUCCESS) {
         printf("NinjaFetchStation: err = %d\n", err);
     } else {
@@ -129,7 +131,6 @@ int main()
      */
     double adfPoint[] = {104.0, 40.07}; // Point coordinates (longitude, latitude)
     double adfBuff[] = {30, 30}; // Buffer to store the elevation value
-    const char* units = "mi";
     double dfCellSize = 30.0; // Cell size in meters
     char* pszDstFile = "data/fetch/DEMpoint.tif";
     char* fetchType = "gmted";

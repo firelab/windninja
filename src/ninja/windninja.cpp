@@ -383,7 +383,7 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *             
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
-                                               const char* elevationFile, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
+                                               const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
 {
     std::vector <boost::posix_time::ptime> timeList;
     for(size_t i=0; i<size; i++){
@@ -395,6 +395,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * 
     //Generate a directory to store downloaded station data
     std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
     pointInitialization::SetRawStationFilename(stationPathName);
+    pointInitialization::setStationBuffer(buffer, units);
     bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
     if(!success){
         return NINJA_E_INVALID;
