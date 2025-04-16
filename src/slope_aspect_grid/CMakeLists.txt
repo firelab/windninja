@@ -24,6 +24,7 @@ set(LINK_LIBS ${GDAL_LIBRARY})
 
 set(SLOPE_ASPECT_GRID_SRC slope_aspect_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninjaMathUtility.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp

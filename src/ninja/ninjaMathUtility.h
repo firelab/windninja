@@ -212,6 +212,8 @@ void wind_uv_to_sd(T u, T v, T *s, T *d)
  */
 bool areEqual(double a, double b, double epsilonMultiplier = 100.0);
 
+int computeMode(std::vector<int> &numbers);
+
 
 //Jason took below from http://www.working-software.com/node/35
 
