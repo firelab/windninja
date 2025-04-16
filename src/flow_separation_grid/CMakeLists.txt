@@ -24,6 +24,7 @@ set(LINK_LIBS ${GDAL_LIBRARY})
 
 set(FLOW_SEPARATION_GRID_SRC flow_separation_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninjaMathUtility.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
