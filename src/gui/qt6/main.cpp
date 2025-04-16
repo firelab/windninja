@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "../../ninja/windninja.h"
+//#include "../../ninja/windninja.h"
 #include <QApplication>
 #include "modeldata.h"
 #include "provider.h"

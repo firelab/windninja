@@ -242,7 +242,7 @@ int NinjaSim::point_exec(PointInitialization& input) {
   bool momentumFlag = input.getMomentumFlag();
   unsigned int numNinjas = input.getNumNinjas();
 
-  ninjaArmy = NinjaMakePointArmy(&year, &month, &day, &hour, &minute, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
+  ninjaArmy = NinjaMakePointArmy(&year, &month, &day, &hour, &minute, numNinjas, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
 
   if( NULL == ninjaArmy )
   {
