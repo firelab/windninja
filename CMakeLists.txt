@@ -348,6 +348,8 @@ option(BUILD_FLOW_SEPARATION_GRID "Build an application for building flow separa
 mark_as_advanced(BUILD_FLOW_SEPARATION_GRID)
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
+option(BUILD_SURFACE_INPUT_NODATA_FILLER "Build an application for filling input surface no data values" OFF)
+mark_as_advanced(BUILD_SURFACE_INPUT_NODATA_FILLER)
 
 option(NINJA_GDAL_OUTPUT "allow experimental output formats from GDAL" OFF)
 mark_as_advanced(NINJA_GDAL_OUTPUT)
