@@ -1,7 +1,7 @@
 #ifndef DATAFETCHER_H
 #define DATAFETCHER_H
 
-#include "windninja.h"
+#include "../../ninja/windninja.h"
 #include <string>
 
 using namespace std;
@@ -74,7 +74,7 @@ int fetchForecast(const string wx_model_type, int numNinjas, const string demFil
   return NINJA_SUCCESS;
 }
 
-int fetchStationData(int year, int month, int day, int hour, int minute, const string output_path, const string demFile, const string osTimeZone, int fetchLatestFlag){
+int fetchStationData(int year, int month, int day, int hour, int minute, int numNinjas, const string output_path, int bufferZone, const string bufferUnits, const string demFile, const string osTimeZone, int fetchLatestFlag){
   /*
    * int year[1] = {2023};
    * int month[1] = {10};
@@ -103,7 +103,7 @@ int fetchStationData(int year, int month, int day, int hour, int minute, const s
    * Testing fetching station data from a geotiff file.
    */
 
-  err = NinjaFetchStation(&year, &month, &day, &hour, &minute, demFile.c_str(), osTimeZone.c_str(), fetchLatestFlag, output_path.c_str(), papszOptions);
+  err = NinjaFetchStation(&year, &month, &day, &hour, &minute, numNinjas, demFile.c_str(), bufferZone, bufferUnits.c_str(), osTimeZone.c_str(), fetchLatestFlag, output_path.c_str(), papszOptions);
   if (err != NINJA_SUCCESS) {
     printf("NinjaFetchStation: err = %d\n", err);
   } else {
