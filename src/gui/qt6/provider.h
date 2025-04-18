@@ -1,14 +1,13 @@
-//
-// Created by Codsl on 4/8/2025.
-//
-
 #ifndef PROVIDER_H
 #define PROVIDER_H
 
+#include "appstate.h"
 #include "modeldata.h"
+#include <QString>
+#include <QTableWidget>
 #include <vector>
 
-class NinjaSim {
+class Provider {
   private:
     class NinjaArmyH* ninjaArmy = nullptr;
     const char* comType = "cli";
@@ -16,12 +15,15 @@ class NinjaSim {
     char** papszOptions = nullptr;
     int err = 0;
 
-    int domain_average_exec(class DomainAverageWind& input);
     int point_exec(class PointInitialization& input);
     int wxmodel_exec(class WeatherModel& input);
 
   public:
-    explicit NinjaSim(class BaseInput& input);
+    Provider();
+    QVector<QVector<QString>> getTimeZoneData();
+    QString getTimeZoneDetails(const QString& currentTimeZone);
+    QVector<QVector<QString>> parseDomainAvgTable(QTableWidget* table);
+    int domain_average_exec(class DomainAverageWind& input);
 };
 
 #endif //PROVIDER_H
