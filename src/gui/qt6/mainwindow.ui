@@ -497,7 +497,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>9</number>
+           <number>12</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyPage">

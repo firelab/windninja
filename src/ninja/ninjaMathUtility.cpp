@@ -42,3 +42,28 @@ bool areEqual(double a, double b, double epsilonMultiplier)
 {
     return std::fabs(a - b) < epsilonMultiplier*std::numeric_limits<double>::epsilon();
 }
+
+int computeMode(std::vector<int> &numbers)
+{
+    int mode = numbers[0];
+    int maxCount = 0;
+
+    for (size_t i = 0; i < numbers.size(); ++i)
+    {
+        int count = 0;
+        for (size_t j = 0; j < numbers.size(); ++j)
+        {
+            if (numbers[j] == numbers[i]) 
+            {
+                count++;
+            }
+        }
+        if (count > maxCount) 
+        {
+            maxCount = count;
+            mode = numbers[i];
+        }
+    }
+
+    return mode;
+}

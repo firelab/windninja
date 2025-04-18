@@ -85,8 +85,9 @@ BaseInput Controller::setBaseInput() {
       numNinjas = domainAvgTable.size();
     }
   }
+  QString outputPath = view->getUi()->outputDirectory->toPlainText();
 
-  return BaseInput(
+  return BaseInput (
     demPath.toStdString(),
     outputResolution,
     initMethod.toStdString(),
@@ -97,7 +98,8 @@ BaseInput Controller::setBaseInput() {
     height,
     heightUnits.toStdString(),
     useMomentum,
-    numNinjas
+    numNinjas,
+    outputPath.toStdString()
   );
 }
 

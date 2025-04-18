@@ -2,8 +2,8 @@
 #include "../../ninja/windninja.h"
 #include <QApplication>
 #include <QTimer>
-#include "modeldata.h"
-#include "provider.h"
+// #include "modeldata.h"
+// #include "provider.h"
 #include "controller.h"
 
 
@@ -19,5 +19,4 @@ int main(int argc, char *argv[]) {
 
   w.show();
   return a.exec();
-
 }

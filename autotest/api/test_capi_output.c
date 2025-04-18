@@ -4,7 +4,7 @@
  * Purpose:  C API testing
  * Author:   Nicholas Kim <kim.n.j@wustl.edu>
  *
- * gcc -g -Wall -o test_capi_domain_average_wind test_capi_domain_average_wind.c -lninja
+ * gcc -g -Wall -o test_capi_output test_capi_output.c -lninja
  *
  ******************************************************************************
  *
@@ -30,7 +30,18 @@
 #include <stdio.h> //for printf
 #include <stdbool.h>
 
+void printArray(const double* array, int size, const char* label) {
+    if (array == NULL) {
+        printf("Error: %s array is NULL\n", label);
+        return;
+    }
 
+    printf("%s:\n", label);
+    for (int i = 0; i < size; i++) {
+        printf("%6.2f ", array[i]);
+    }
+    printf("\n");
+}
 
 int main()
 {
@@ -61,15 +72,15 @@ int main()
     const double height = 10.0;
     const char * heightUnits = "m";
     bool momentumFlag = 0; //we're using the conservation of mass solver
-    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - must be equal to array sizes
+    unsigned int numNinjas = 3; //two ninjas in the ninjaArmy
 
     /* inputs that can vary among ninjas in an army */
-    const double speedList[] = {5.5, 5.5}; // matches the size of numNinjas
+    const double speedList[] = {5.5, 5.5};
     const char * speedUnits = "mps";
-    const double directionList[] = {220, 300}; // matches the size of numNinjas
+    const double directionList[] = {220, 300};
 
     /* inputs specific to output 
-     * Note: Outputs have default values if inputs are not specified (like resolution)
+     * Note: Outputs have default values if inputs are not specified (For example, resolution will default to the mesh resolution)
      */
     const double outputResolution = 100.0;
     const char * units = "m";
@@ -77,7 +88,6 @@ int main()
     const char * scaling = "equal_color";
     const char * outputPath  = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/output";
     const bool outputFlag = 1;
-
     /* 
      * Create the army
      */
@@ -166,6 +176,74 @@ int main()
       {
           printf("NinjaSetNumVertLayers: err = %d\n", err);
       }
+
+      /* 
+       * Sets Output Variables
+       */
+      err = NinjaSetOutputPath(ninjaArmy, i, outputPath, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetOutputPath: err = %d\n", err);
+      }
+
+      /* Google output (.kmz) */
+      err = NinjaSetGoogOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGoogOutFlag: err = %d\n", err);
+      }
+
+      err = NinjaSetGoogResolution (ninjaArmy, i, outputResolution, units, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGoogResolution: err = %d\n", err);
+      }
+
+      err = NinjaSetGoogSpeedScaling (ninjaArmy, i, scaling, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGoogSpeedScaling: err = %d\n", err);
+      }
+
+      err = NinjaSetGoogLineWidth (ninjaArmy, i, width, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGoogLineWidth: err = %d\n", err);
+      }
+
+      /* Shapefile output (.shp) */
+      err = NinjaSetShpOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetShpOutFlag: err = %d\n", err);
+      }
+
+      err = NinjaSetShpResolution(ninjaArmy, i, outputResolution, units, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetShpResolution: err = %d\n", err);
+      }
+
+      /* Fire Behavior Output (.asc) */
+      err = NinjaSetAsciiOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetAsciiOutFlag: err = %d\n", err);
+      }
+
+      err = NinjaSetAsciiResolution(ninjaArmy, i, outputResolution, units, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetAsciiResolution: err = %d\n", err);
+      }
+      
+      /* VKT output (.vkt) */
+      err = NinjaSetVtkOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetVtkOutFlag: err = %d\n", err);
+      }
+
     }
 
     /* 
@@ -176,7 +254,54 @@ int main()
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
+
+    /* 
+     * Get the outputs
+     */
+    const double* outputSpeedGrid = NULL;
+    const double* outputDirectionGrid = NULL;
+    const char* outputGridProjection = NULL;
+    int outputGridnCols;
+    int outputGridnRows;
+    double outputGridCellSize;
+    double outputGridxllCorner;
+    double outputGridyllCorner;
+    const int nIndex = 0;
+    int gridSize = 10; // arbitrary value 
+
+    outputSpeedGrid = NinjaGetOutputSpeedGrid(ninjaArmy, nIndex, papszOptions);
+    if( NULL == outputSpeedGrid )
+    {
+        printf("Error in NinjaGetOutputSpeedGrid");
+    }
     
+    outputDirectionGrid = NinjaGetOutputDirectionGrid(ninjaArmy, nIndex, papszOptions);
+    if( NULL == outputDirectionGrid )
+    {
+        printf("Error in NinjaGetOutputDirectionGrid");
+    }
+    
+    outputGridProjection = NinjaGetOutputGridProjection(ninjaArmy, nIndex, papszOptions);
+    if( NULL == outputGridProjection )
+    {
+        printf("Error in NinjaGetOutputGridProjection");
+    }
+
+    outputGridCellSize = NinjaGetOutputGridCellSize(ninjaArmy, nIndex, papszOptions);
+    outputGridxllCorner = NinjaGetOutputGridxllCorner(ninjaArmy, nIndex, papszOptions);
+    outputGridyllCorner = NinjaGetOutputGridyllCorner(ninjaArmy, nIndex, papszOptions);
+    outputGridnCols = NinjaGetOutputGridnCols(ninjaArmy, nIndex, papszOptions);
+    outputGridnRows = NinjaGetOutputGridnRows(ninjaArmy, nIndex, papszOptions);
+
+    printArray(outputSpeedGrid, gridSize, "Output Speed Grid");
+    printArray(outputDirectionGrid, gridSize, "Output Direction Grid");
+    printf("Grid Cell Size: %f\n", outputGridCellSize);
+    printf("Grid xllCorner: %f\n", outputGridxllCorner);
+    printf("Grid yllCorner: %f\n", outputGridyllCorner);
+    printf("Grid Columns: %d\n", outputGridnCols);
+    printf("Grid Rows: %d\n", outputGridnRows);
+    printf("Grid Projection: %s\n", outputGridProjection);
+
     /* 
      * Clean up
      */

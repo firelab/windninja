@@ -679,7 +679,7 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
     vector<vector<preInterpolate> > interpolatedDataSet;
     vector<wxStation> readyToGo;   
        
-    if (wxVector[0][0].datetime==noTime) //If its a "WindNinja NOW" style run, new format, 1 step
+    if (wxVector[0][0].datetime == noTime) //If its a "WindNinja NOW" style run, new format, 1 step
     {        
         CPLDebug("STATION_FETCH", "noTime");
         readyToGo=interpolateNull(demFile,wxVector,timeZone); //Does a "Fake Interpolation", Converst the 1 step into a wxStation Object, ready to be used in simulation
@@ -1058,6 +1058,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 vector<std::string> pointInitialization::fetchWxStationID()
 {
     vector<std::string> stationNames;
+    
     for (int k=0;k<stationFiles.size();k++)
     {
         OGRDataSourceH hDS;

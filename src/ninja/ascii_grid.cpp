@@ -943,6 +943,8 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     double sum;
     int nValues;
     int numPasses = 0;
+    double noDataValue = get_noDataValue();
+
     if(percentNoData > maxPercentNoData)
     {
         return false;
@@ -954,7 +956,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
             {
                 for(int j = 0;j < data.get_numCols();j++)
                 {
-                    if(get_cellValue(i, j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
+                    if(get_cellValue(i, j) == noDataValue || cplIsNan(get_cellValue(i,j)))
                     {
                         sum = 0.0;
                         nValues = 0;
@@ -966,7 +968,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
                                     jj < 0 || jj >= get_nCols())
                                     continue;
 
-                                if(get_cellValue(ii, jj) == get_noDataValue() || cplIsNan(get_cellValue(ii, jj)))
+                                if(get_cellValue(ii, jj) == noDataValue || cplIsNan(get_cellValue(ii, jj)))
                                     continue;
 
                                 sum = sum + get_cellValue(ii, jj);
@@ -984,6 +986,81 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     }
     return true;
 }
+
+template<class T>
+bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
+{
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            if(get_cellValue(i,j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
+                numNoDataValues++;
+        }
+    }
+    if(numNoDataValues == 0)
+        return true;
+    else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
+        throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
+    
+    double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
+    double sum;
+    int nValues;
+    int numPasses = 0;
+    double noDataValue = get_noDataValue();
+    std::vector<int> values;
+
+    if(percentNoData > maxPercentNoData)
+    {
+        return false;
+    }else{
+        do{
+            numNoDataValues = 0;
+            numPasses++;
+            for(int i = 0;i < data.get_numRows();i++)
+            {
+                for(int j = 0;j < data.get_numCols();j++)
+                {
+                    if(get_cellValue(i, j) == noDataValue || cplIsNan(get_cellValue(i,j)))
+                    {
+                        sum = 0.0;
+                        nValues = 0;
+                        for(int ii = i-1; ii <= i+1; ii++)
+                        {
+                            for(int jj = j-1; jj <= j+1; jj++)
+                            {
+                                if(ii < 0 || ii >= get_nRows() ||
+                                    jj < 0 || jj >= get_nCols())
+                                {
+                                    continue;
+                                }
+
+                                if(get_cellValue(ii, jj) == noDataValue || cplIsNan(get_cellValue(ii, jj)))
+                                {
+                                    continue;
+                                }
+
+                                values.push_back( int(get_cellValue(ii, jj)) ); 
+                                nValues++;
+                            }
+                        }
+                        if(nValues > 0)
+                        {
+                            set_cellValue(i, j, computeMode(values)); //set to mode of valid values from neighboring cells
+                        }
+                        else
+                            numNoDataValues++;
+
+                        values.clear();
+                    }
+                }
+            }
+        }while(numNoDataValues > 0 && numPasses <= maxNumPasses);
+    }
+    return true;
+}
+
 
 /**
  * \brief Add cells to all edges of an ascii grid

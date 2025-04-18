@@ -19,15 +19,16 @@ class BaseInput {
     string heightUnits;
     bool momentumFlag;
     int numNinjas;
+    string outputPath;
 
   public:
     BaseInput() {}
 
     // Constructor
     BaseInput(string demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
-              int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas)
+              int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas, string outputPath)
       : demFile(demFile), outputResolution(outputResolution), initializationMethod(initializationMethod), meshChoice(meshChoice),
-          vegetation(vegetation), nLayers(nLayers), diurnalFlag(diurnalFlag), height(height), heightUnits(heightUnits), momentumFlag(momentumFlag), numNinjas(numNinjas) {}
+          vegetation(vegetation), nLayers(nLayers), diurnalFlag(diurnalFlag), height(height), heightUnits(heightUnits), momentumFlag(momentumFlag), numNinjas(numNinjas), outputPath(outputPath) {}
 
     // Getter methods
     const string& getDemFile() const { return demFile; }
@@ -41,6 +42,7 @@ class BaseInput {
     const string& getHeightUnits() const { return heightUnits; }
     bool getMomentumFlag() { return momentumFlag; }
     int getNumNinjas() { return numNinjas; }
+    const string& getOutputPath() const { return outputPath; }
 };
 
 class DomainAverageWind : public BaseInput {
@@ -76,9 +78,9 @@ class PointInitialization : public BaseInput {
   public:
     // Constructor
     PointInitialization(char* demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
-                        int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas,
+                        int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas, string outputPath,
                         int year, int month, int day, int hour, int minute, char* station_path, char* elevation_file, char* osTimeZone, bool matchPointFlag)
-      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas),
+      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas, outputPath),
         year(year), month(month), day(day), hour(hour), minute(minute), station_path(station_path), elevation_file(elevation_file), osTimeZone(osTimeZone), matchPointFlag(matchPointFlag) {}
 
     // Getter methods
@@ -101,9 +103,9 @@ class WeatherModel : public BaseInput {
   public:
     // Constructor
     WeatherModel(char* demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
-                 int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas,
+                 int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas, string outputPath,
                  char* forecast, char* osTimeZone)
-      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas),
+      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas, outputPath),
         forecast(forecast), osTimeZone(osTimeZone) {}
 
     // Getter methods
