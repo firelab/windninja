@@ -33,5 +33,6 @@
         <file alias="weather_sun.png">images/icons/weather_sun.png</file>
         <file alias="wn-desktop.ico">images/icons/wn-desktop.ico</file>
         <file alias="wn-icon.png">images/icons/wn-icon.png</file>
+        <file alias="date_time_zonespec.csv">data/date_time_zonespec.csv</file>
     </qresource>
 </RCC>

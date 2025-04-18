@@ -16,6 +16,7 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
 public:
+  Ui::MainWindow* getUi() const { return ui; }
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
   MainWindow(QWidget *parent = nullptr);
@@ -28,7 +29,6 @@ private slots:
   void on_getFromMapButton_clicked();
 
   void on_openFileButton_clicked();
-
 
   void on_elevFilePath_textChanged(const QString &arg1);
 
@@ -50,8 +50,28 @@ private slots:
 
   void on_clearDAWtable_clicked();
 
+  void on_solveButton_clicked();
+
+  void on_outputSaveLocationBtn_clicked();
+
+  void on_solverPageSolveBtn_clicked();
+
+  void on_showAllTimeZones_clicked();
+
+  void on_displayTimeZoneDetails_clicked();
+
+  void on_timeZoneSelector_currentIndexChanged(int index);
+
+  void on_windTableData_cellChanged(int row, int column);
+
+signals:
+  void solveRequest();
+  void timeZoneDataRequest();
+  void timeZoneDetailsRequest();
+
 private:
   void onTreeItemClicked(QTreeWidgetItem *item, int column);
+  QSet<QPair<int, int>> invalidDAWCells;
 
   // DEM inputs
   double northLat;

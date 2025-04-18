@@ -21,7 +21,7 @@ class BaseInput {
     int numNinjas;
 
   public:
-    virtual ~BaseInput() {}
+    BaseInput() {}
 
     // Constructor
     BaseInput(string demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
@@ -51,11 +51,9 @@ class DomainAverageWind : public BaseInput {
 
   public:
     // Constructor
-    DomainAverageWind(char* demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
-                      int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas,
+    DomainAverageWind(const BaseInput& baseInput,
                       vector<double> speedList, string speedUnits, vector<double> directionList)
-      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas),
-          speedList(speedList), speedUnits(speedUnits), directionList(directionList) {}
+      : BaseInput(baseInput), speedList(speedList), speedUnits(speedUnits), directionList(directionList) {}
 
     // Getter methods
     vector<double> getSpeedList() { return speedList; }

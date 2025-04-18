@@ -12,9 +12,11 @@
 #include <QSplitter>
 #include <QStandardItemModel>
 #include <QStandardPaths>
-#include <QTreeWidget>
 #include <QTextEdit>
 #include <QTextStream>
+#include <QThread>
+#include <QTimer>
+#include <QTreeWidget>
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
@@ -176,9 +178,11 @@ static void refreshUI(const Ui::MainWindow* ui)
   if (ui->elevFilePath->text() != "") {
     state.surfaceInputOk = true;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, tickIcon);
+    ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "");
   } else {
     state.surfaceInputOk = false;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, xIcon);
+    ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "No DEM file detected.");
   }
 
   // Update diurnal input state
@@ -196,14 +200,17 @@ static void refreshUI(const Ui::MainWindow* ui)
   }
 
   // Update domain average wind state
-  if (state.domainAverageWindToggled && state.diurnalInputToggled) {
+  if (state.domainAverageWindToggled && state.domainAverageWindInputTableOk) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
+    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
     state.domainAverageWindOk = true;
-  } else if (state.domainAverageWindToggled && !state.diurnalInputToggled) {
+  } else if (state.domainAverageWindToggled && !state.domainAverageWindInputTableOk){
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, xIcon);
+    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs; hover over red cells for explanation.");
     state.domainAverageWindOk = false;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
+    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
     state.domainAverageWindOk = false;
   }
 
@@ -253,11 +260,17 @@ static void refreshUI(const Ui::MainWindow* ui)
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
   }
 
-  // Track solver
+  // Update solve state
   if (state.solverMethodologyOk && state.inputsOk) {
     ui->solveButton->setEnabled(true);
+    ui->solverPageSolveBtn->setEnabled(true);
+    ui->solveButton->setToolTip("");
+    ui->solverPageSolveBtn->setToolTip("");
   } else {
     ui->solveButton->setEnabled(false);
+    ui->solverPageSolveBtn->setEnabled(false);
+    ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+    ui->solverPageSolveBtn->setToolTip("Solver Methodology and Inputs must be passing to solve.");
   }
 }
 
@@ -374,25 +387,55 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
 {
   switch(index) {
   case 0:
-    ui->customMeshResValue->setValue(256.34);
-    ui->customMeshResValue->setEnabled(false);
+    ui->meshResValue->setValue(256.34);
+    ui->meshResValue->setEnabled(false);
     break;
 
   case 1:
-    ui->customMeshResValue->setValue(162.12);
-    ui->customMeshResValue->setEnabled(false);
+    ui->meshResValue->setValue(162.12);
+    ui->meshResValue->setEnabled(false);
     break;
 
   case 2:
-    ui->customMeshResValue->setValue(114.64);
-    ui->customMeshResValue->setEnabled(false);
+    ui->meshResValue->setValue(114.64);
+    ui->meshResValue->setEnabled(false);
     break;
 
   case 3:
-    ui->customMeshResValue->setEnabled(true);
+    ui->meshResValue->setEnabled(true);
     break;
 
   }
+}
+
+// User selects a new time zone
+void MainWindow::on_timeZoneSelector_currentIndexChanged(int index)
+{
+  emit timeZoneDetailsRequest();
+}
+
+// User toggles show all time zones
+void MainWindow::on_showAllTimeZones_clicked()
+{
+  AppState& state = AppState::instance();
+
+  // Update show all zones state
+  state.showAllZones = ui->showAllTimeZones->isChecked();
+
+  emit timeZoneDataRequest();
+}
+
+// User toggles show time zone details
+void MainWindow::on_displayTimeZoneDetails_clicked()
+{
+  AppState& state = AppState::instance();
+
+  // Update time zone details state
+  state.displayTimeZoneDetails = ui->displayTimeZoneDetails->isChecked();
+
+  // Update visibility of details pane
+  ui->timeZoneDetails->setVisible(state.displayTimeZoneDetails);
+
 }
 
 // User selects Diurnal Input
@@ -402,6 +445,23 @@ void MainWindow::on_useDiurnalWind_clicked()
 
   // Update UI state
   state.diurnalInputToggled = ui->useDiurnalWind->isChecked();
+
+  // Change the domain average input table based on diurnal wind
+  QTableWidget* table = ui->windTableData;
+  if (!ui->useDiurnalWind->isChecked()) {
+    table->hideColumn(2);
+    table->hideColumn(3);
+    table->hideColumn(4);
+    table->hideColumn(5);
+    ui->windTableData->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  } else {
+    table->showColumn(2);
+    table->showColumn(3);
+    table->showColumn(4);
+    table->showColumn(5);
+    ui->windTableData->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  }
+
   refreshUI(ui);
 }
 
@@ -473,6 +533,84 @@ void MainWindow::on_domainAvgPicklist_currentIndexChanged(int index)
 void MainWindow::on_clearDAWtable_clicked()
 {
   ui->windTableData->clearContents();
+  invalidDAWCells.clear();
+  AppState::instance().domainAverageWindInputTableOk = true;
+  refreshUI(ui);
+}
+
+// User changes a value in the domain average wind input table
+void MainWindow::on_windTableData_cellChanged(int row, int column)
+{
+  QTableWidget* table = ui->windTableData;
+  QTableWidgetItem* item = table->item(row, column);
+  if (!item) return;
+
+  QString value = item->text().trimmed();
+  bool valid = false;
+  QString errorMessage;
+
+  // Allow empty input
+  if (value.isEmpty()) {
+    valid = true;
+  } else {
+    switch (column) {
+    case 0: {
+      double d = value.toDouble(&valid);
+      if (!valid || d <= 0)
+        errorMessage = "Must be a positive number";
+      break;
+    }
+    case 1: {
+      int i = value.toDouble(&valid);
+      if (!valid || i < 0 || i > 359.9) {
+        valid = false;
+        errorMessage = "Must be a number between 0 and 359";
+      }
+      break;
+    }
+    case 2: {
+      QTime t = QTime::fromString(value, "hh:mm");
+      valid = t.isValid();
+      if (!valid) errorMessage = "Must be a valid 24h time (hh:mm)";
+      break;
+    }
+    case 3: {
+      QDate d = QDate::fromString(value, "mm/dd/yyyy");
+      valid = d.isValid();
+      if (!valid) errorMessage = "Must be a valid date (MM/DD/YYYY)";
+      break;
+    }
+    case 4: {
+      int i = value.toDouble(&valid);
+      if (!valid || i < 0 || i > 100) {
+        valid = false;
+        errorMessage = "Must be a number between 0 and 100";
+      }
+      break;
+    }
+    case 5: {
+      value.toInt(&valid);
+      if (!valid) errorMessage = "Must be an integer";
+      break;
+    }
+    default:
+      valid = true;
+    }
+  }
+
+  QPair<int, int> cell(row, column);
+  if (!valid) {
+    invalidDAWCells.insert(cell);
+    item->setBackground(Qt::red);
+    item->setToolTip(errorMessage);
+  } else {
+    invalidDAWCells.remove(cell);
+    item->setBackground(QBrush());  // Reset to default
+    item->setToolTip("");
+  }
+
+  AppState::instance().domainAverageWindInputTableOk = invalidDAWCells.isEmpty();
+  refreshUI(ui);
 }
 
 // User selects Point Initialization wind model
@@ -513,6 +651,34 @@ void MainWindow::on_useWeatherModelInit_clicked()
 
   // Update app state
   refreshUI(ui);
+}
+
+// User selects a new output location
+void MainWindow::on_outputSaveLocationBtn_clicked()
+{
+  QString currentPath = ui->outputDirectory->toPlainText();
+  QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+  QString dirPath = QFileDialog::getExistingDirectory(this,
+                                                      "Select a directory",  // Window title
+                                                      currentPath,         // Starting location
+                                                      QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+  if (!dirPath.isEmpty()) {
+    ui->outputDirectory->setText(dirPath);
+    ui->outputDirectory->setToolTip(dirPath);
+  }
+}
+
+// User selects the solve button on the solver page
+void MainWindow::on_solverPageSolveBtn_clicked()
+{
+  ui->solveButton->click();
+}
+
+// User selects the primary solve button
+void MainWindow::on_solveButton_clicked()
+{
+  emit solveRequest();
 }
 
 // Enable double clicking on tree menu items
@@ -628,17 +794,18 @@ MainWindow::MainWindow(QWidget *parent)
   // Top-level items
   ui->stackedInputPage->setCurrentIndex(0);
   ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
-  ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 4)
+  ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
+  ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
 
   // Sub-items for Solver Methodology
   ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
   ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);  // Conservation of Mass and Momentum (Page 2)
 
   // Sub-items for Inputs
-  ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 5)
-  ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 6)
-  ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 7)
-  ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 8)
+  ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 6)
+  ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 7)
+  ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 8)
+  ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 9)
 
   // Sub-sub-items for Wind Input
   QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
@@ -649,11 +816,43 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::onTreeItemClicked);
 
   /*
-   *
    * Downloaded Forecast explorer
-   *
    */
 
   populateForecastDownloads();
+
+  /*
+   * Basic initial setup steps
+   */
+
+  // Surface Input window
+  // Set icons
+  ui->openFileButton->setIcon(QIcon(":/folder.png"));
+  ui->getFromMapButton->setIcon(QIcon(":/swoop_final.png"));
+
+  // Solver window
+  // Update processor count and set user input default value & upper bound
+  int cpuCount = QThread::idealThreadCount();
+  ui->availableProcessors->setPlainText("Available Processors:  " + QString::number(cpuCount));
+  ui->numProcessorsSpinbox->setMaximum(cpuCount);
+  ui->numProcessorsSpinbox->setValue(cpuCount);
+
+  // Wind Input -> Point Init window
+  ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
+
+  // Populate default location for output location
+  ui->outputDirectory->setText(downloadsPath);
+  ui->outputSaveLocationBtn->setIcon(QIcon(":/folder.png"));
+
+  // Set initial visibility of time zone details
+  ui->timeZoneDetails->setVisible(false);
+
+  // Set initial formatting of domain average input table
+    ui->windTableData->hideColumn(2);
+    ui->windTableData->hideColumn(3);
+    ui->windTableData->hideColumn(4);
+    ui->windTableData->hideColumn(5);
+    ui->windTableData->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
 }
 

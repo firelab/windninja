@@ -28,6 +28,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         appstate.h
         provider.cpp
         modeldata.h provider.h
+        controller.h
+        controller.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET qt6_application APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

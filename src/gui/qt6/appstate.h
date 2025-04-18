@@ -23,11 +23,14 @@ public:
     // Wind Input States
     bool windInputOk = false;
     bool domainAverageWindToggled = false;
+    bool domainAverageWindInputTableOk = true;
     bool domainAverageWindOk = false;
     bool pointInitializationToggled = false;
     bool pointInitializationOk = false;
     bool weatherModelToggled = false;
     bool weatherModelOk = false;
+    bool showAllZones = false;
+    bool displayTimeZoneDetails = false;
 
     // All Inputs Ok
     bool solverReady = false;
