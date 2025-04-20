@@ -243,6 +243,8 @@ int Provider::point_exec(PointInitialization& input) {
   const char* heightUnits = input.getHeightUnits().c_str();
   bool momentumFlag = input.getMomentumFlag();
   unsigned int numNinjas = input.getNumNinjas();
+  const char * outputPath =  input.getOutputPath().c_str();
+
 
   ninjaArmy = NinjaMakePointArmy(&year, &month, &day, &hour, &minute, numNinjas, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
 
@@ -262,6 +264,25 @@ int Provider::point_exec(PointInitialization& input) {
    */
   for(unsigned int i=0; i<numNinjas; i++)
   {
+
+    err = NinjaSetOutputPath(ninjaArmy, i, outputPath, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetOutputPath: err = %d\n", err);
+    }
+
+    err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetGoogleOutPut: err = %d\n", err);
+    }
+
+    err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetCommunication: err = %d\n", err);
+    }
+
     err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
     if(err != NINJA_SUCCESS)
     {
@@ -373,6 +394,8 @@ int Provider::wxmodel_exec(WeatherModel& input) {
   const char* heightUnits = input.getHeightUnits().c_str();
   bool momentumFlag = input.getMomentumFlag();
   unsigned int numNinjas = input.getNumNinjas();
+  const char* outputPath = input.getOutputPath().c_str();
+
 
   /* inputs that can vary among ninjas in an army */
   //const char * speedUnits = input.get;
@@ -400,6 +423,19 @@ int Provider::wxmodel_exec(WeatherModel& input) {
    */
   for(unsigned int i=0; i<numNinjas; i++)
   {
+    err = NinjaSetOutputPath(ninjaArmy, i, outputPath, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetOutputPath: err = %d\n", err);
+    }
+
+    err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+      printf("NinjaSetGoogleOutPut: err = %d\n", err);
+    }
+
+
     err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
     if(err != NINJA_SUCCESS)
     {

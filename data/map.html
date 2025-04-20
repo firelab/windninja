@@ -62,8 +62,13 @@
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
     <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+
     <!-- TODO(kyle): prune dependencies -->
     <script src="./leaflet/leaflet-src.js"></script>
+    <script src='./leaflet/L.KML.js'></script>
+    <script src="./leaflet/jszip.min.js"></script>
 
     <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
     <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
@@ -183,6 +188,13 @@
           console.log(bounds);
     });
 
+
+    const baseMaps = {};
+    const overlayMaps = {};
+    const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+    loadKmzFromUrl(map, "big_butte_5_5_307m.kmz", layerControl);
+    loadKmzFromUrl(map, "big_butte_10_10_307m.kmz", layerControl);
     L.control.scale().addTo(map);
 
 
@@ -316,6 +328,46 @@
         document.getElementById("center_lon").removeEventListener("input", update_center);
         document.getElementById("radius").removeEventListener("input", update_center);
     }
+
+    async function loadKmzFromUrl(map, kmzUrl, layerControl) {
+      try {
+        const response = await fetch(kmzUrl);
+        const arrayBuffer = await response.arrayBuffer();
+
+        const zip = await JSZip.loadAsync(arrayBuffer);
+        const kmlFiles = Object.values(zip.files).filter(entry =>
+          entry.name.toLowerCase().endsWith('.kml')
+        );
+
+        if (kmlFiles.length === 0) {
+          alert('No KML files found in this KMZ.');
+          return;
+        }
+
+        const kmlGroup = L.featureGroup().addTo(map);
+
+        for (const entry of kmlFiles) {
+          const kmlText = await entry.async('string');
+          const parser = new DOMParser();
+          const kml = parser.parseFromString(kmlText, 'text/xml');
+          const track = new L.KML(kml);
+          kmlGroup.addLayer(track);
+
+          const layerName = entry.name || 'Unnamed Layer';
+          layerControl.addOverlay(track, layerName);
+        }
+
+        setTimeout(() => {
+          if (kmlGroup.getLayers().length > 0) {
+            map.fitBounds(kmlGroup.getBounds());
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.error('Failed to load KMZ from URL:', err);
+      }
+    }
+  
 </script>
 
 <div id="data_entry" style="border: 1px solid #ccc">
