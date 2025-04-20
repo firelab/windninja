@@ -3,8 +3,12 @@
 #include "../../ninja/windninja.h"
 
 #include <iostream>
-#include <vector>
 #include <list>
+#include <QDebug>
+#include <QFile>
+#include <QStringList>
+#include <QTextStream>
+#include <vector>
 
 using namespace std;
 
@@ -15,13 +19,11 @@ const int nCPUs = 1;
 char ** papszOptions = NULL;
 NinjaErr err = 0;
 
-int NinjaSim::domain_average_exec(DomainAverageWind& input) {
+int Provider::domain_average_exec(DomainAverageWind& input) {
   std::vector<double> speedVector = input.getSpeedList();
   const double* speedList = speedVector.data();
-
   std::vector<double> directionVector = input.getDirectionList();
   const double* directionList = speedVector.data();
-
   const char * demFile = input.getDemFile().c_str();
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
@@ -205,7 +207,7 @@ int NinjaSim::domain_average_exec(DomainAverageWind& input) {
   return NINJA_SUCCESS;
 }
 
-int NinjaSim::point_exec(PointInitialization& input) {
+int Provider::point_exec(PointInitialization& input) {
   /*
    * Setting up the simulation
    */
@@ -345,7 +347,7 @@ int NinjaSim::point_exec(PointInitialization& input) {
   return NINJA_SUCCESS;
 }
 
-int NinjaSim::wxmodel_exec(WeatherModel& input) {
+int Provider::wxmodel_exec(WeatherModel& input) {
   /*
    * Setting up the simulation
    */
@@ -518,25 +520,182 @@ int NinjaSim::wxmodel_exec(WeatherModel& input) {
   return NINJA_SUCCESS;
 }
 
-NinjaSim::NinjaSim(BaseInput& input) {
-  if (input.getInitializationMethod() == "domain_average") {
-    if (auto* domainWind = dynamic_cast<DomainAverageWind*>(&input)) {
-      domain_average_exec(*domainWind);
-    }
-  }else if (input.getInitializationMethod() == "point") {
-    if (auto* pointWind = dynamic_cast<PointInitialization*>(&input)) {
-      point_exec(*pointWind);
-    }
-  }else if (input.getInitializationMethod() == "wxmodel") {
-    if (auto* weatherWind = dynamic_cast<WeatherModel*>(&input)) {
-      wxmodel_exec(*weatherWind);
-    }
-  }else{
-    //error state
-  }
+Provider::Provider() {
+
 }
 
+// Time zone data provider
+QVector<QVector<QString>> Provider::getTimeZoneData() {
+  AppState& state = AppState::instance();
+  QVector<QVector<QString>> fullData;
+  QVector<QVector<QString>> americaData;
 
+  QFile file(":/date_time_zonespec.csv");
 
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    qDebug() << "Failed to open CSV file.";
+    return fullData;
+  }
 
+  QTextStream in(&file);
+  bool firstLine = true;
 
+  while (!in.atEnd()) {
+    QString line = in.readLine();
+
+    if (firstLine) {
+      firstLine = false;
+      continue;
+    }
+
+    QStringList tokens = line.split(",", Qt::KeepEmptyParts);
+    QVector<QString> row;
+    for (const QString& token : tokens)
+      row.append(token.trimmed().remove('"'));
+
+    if (!row.isEmpty())
+      fullData.append(row);
+
+    if (!row.isEmpty()) {
+      QStringList parts = row[0].split("/", Qt::KeepEmptyParts);
+      if (!parts.isEmpty() && parts[0] == "America" || row[0] == "Pacific/Honolulu") {
+        americaData.append(row);
+      }
+    }
+  }
+
+  file.close();
+
+  if (state.showAllZones) {
+    return fullData;
+  } else {
+    return americaData;
+  }
+
+}
+
+// Provider for getting time zone details
+QString Provider::getTimeZoneDetails(const QString& currentTimeZone) {
+  QVector<QString> matchedRow;
+  QFile file(":/date_time_zonespec.csv");
+
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    qWarning() << "Failed to open date_time_zonespec.csv";
+    return "No data found";
+  }
+
+  QTextStream in(&file);
+  bool firstLine = true;
+
+  while (!in.atEnd()) {
+    QString line = in.readLine();
+
+    if (firstLine) {
+      firstLine = false;
+      continue;  // skip header
+    }
+
+    QStringList tokens = line.split(",", Qt::KeepEmptyParts);
+    QVector<QString> row;
+
+    for (const QString& token : tokens)
+      row.append(token.trimmed().remove("\""));
+
+    QString fullZone = row.mid(0, 1).join("/");
+
+    if (fullZone == currentTimeZone) {
+      matchedRow = row;
+      break;
+    }
+  }
+
+  file.close();
+
+  if (matchedRow.isEmpty()) {
+    return "No matching time zone found.";
+  }
+
+  QString standardName = matchedRow.value(2);
+  QString daylightName = matchedRow.value(4);
+  QString stdOffsetStr = matchedRow.value(5);  // Already in HH:MM:SS
+  QString dstAdjustStr = matchedRow.value(6);  // Already in HH:MM:SS
+
+  // Function to convert signed HH:MM:SS to total seconds
+  auto timeToSeconds = [](const QString& t) -> int {
+    QString s = t.trimmed();
+    bool negative = s.startsWith('-');
+    s = s.remove(QChar('+')).remove(QChar('-'));
+
+    QStringList parts = s.split(':');
+    if (parts.size() != 3) return 0;
+
+    int h = parts[0].toInt();
+    int m = parts[1].toInt();
+    int sec = parts[2].toInt();
+
+    int total = h * 3600 + m * 60 + sec;
+    return negative ? -total : total;
+  };
+
+  // Convert total seconds back to HH:MM:SS with sign
+  auto secondsToTime = [](int totalSec) -> QString {
+    QChar sign = totalSec < 0 ? '-' : '+';
+    totalSec = std::abs(totalSec);
+
+    int h = totalSec / 3600;
+    int m = (totalSec % 3600) / 60;
+    int s = totalSec % 60;
+
+    return QString("%1%2:%3:%4")
+      .arg(sign)
+      .arg(h, 2, 10, QChar('0'))
+      .arg(m, 2, 10, QChar('0'))
+      .arg(s, 2, 10, QChar('0'));
+  };
+
+  int stdSecs = timeToSeconds(stdOffsetStr);
+  int dstSecs = timeToSeconds(dstAdjustStr);
+  QString combinedOffsetStr = secondsToTime(stdSecs + dstSecs);
+
+  return QString("Standard Name:\t\t%1\n"
+                 "Daylight Name:\t\t%2\n"
+                 "Standard Offset from UTC:\t%3\n"
+                 "Daylight Offset from UTC:\t%4")
+      .arg(standardName)
+      .arg(daylightName)
+      .arg(stdOffsetStr)
+      .arg(combinedOffsetStr);
+}
+
+// Provider for parsing the domain average wind table
+QVector<QVector<QString>> Provider::parseDomainAvgTable(QTableWidget* table) {
+  QVector<QVector<QString>> result;
+
+  int rowCount = table->rowCount();
+  int colCount = table->columnCount();
+
+  for (int row = 0; row < rowCount; ++row) {
+    bool rowComplete = true;
+    QVector<QString> rowData;
+
+    for (int col = 0; col < colCount; ++col) {
+      if (table->isColumnHidden(col)) {
+        continue;  // skip this column entirely
+      }
+
+      QTableWidgetItem* item = table->item(row, col);
+
+      if (!item || item->text().trimmed().isEmpty()) {
+        rowComplete = false;
+        break;
+      }
+
+      rowData.append(item->text().trimmed());
+    }
+
+    if (rowComplete) {
+      result.append(rowData);
+    }
+  }
+  return result;
+}
