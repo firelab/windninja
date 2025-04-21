@@ -104,6 +104,105 @@ void importElevationData(GDALDataset* poDS, Elevation* dem)
     delete[] padfScanline;
 }
 
+void importVegationData(GDALDataset* poDS, AsciiGrid<int>* fuelModel, AsciiGrid<double>* canopyCover, AsciiGrid<double>* canopyHeight, Elevation& dem)
+{
+    int nC, nR;
+    double cS;
+    double xL, yL;
+    std::string prjStr;
+    double nDV_fuelM, nDV_canopyC, nDV_canopyH;
+    int hasNdv;
+
+    // get global header info
+    // all these have the same value between poDS, dem, and all the other bands
+    nC = poDS->GetRasterXSize();
+    nR = poDS->GetRasterYSize();
+    cS = dem.get_cellSize();
+    xL = dem.get_xllCorner();
+    yL = dem.get_yllCorner();
+    prjStr = dem.prjString;
+
+    // assume if 8 or greater bands then is a landscape GeoTIFF!
+    int nBands = poDS->GetRasterCount();
+    if( nBands < 8)
+    {
+        throw std::runtime_error("Not enough bands in dataset for vegetation!\nexpected at least 8 bands for vegetation, but dataset only has " + std::to_string(nBands) + " bands");
+    }
+
+    GDALRasterBand* poBand;
+
+    // get band specific header info (no data)
+    poBand = poDS->GetRasterBand(4);
+    hasNdv = FALSE;
+    nDV_fuelM = poBand->GetNoDataValue(&hasNdv);
+    if( hasNdv == FALSE )
+    {
+        nDV_fuelM = -9999.0;
+    }
+
+    poBand = poDS->GetRasterBand(5);
+    hasNdv = FALSE;
+    nDV_canopyC = poBand->GetNoDataValue(&hasNdv);
+    if( hasNdv == FALSE )
+    {
+        nDV_canopyC = -9999.0;
+    }
+
+    poBand = poDS->GetRasterBand(6);
+    hasNdv = FALSE;
+    nDV_canopyH = poBand->GetNoDataValue(&hasNdv);
+    if( hasNdv == FALSE )
+    {
+        nDV_canopyH = -9999.0;
+    }
+
+    // set ascii grid info and sizes
+    fuelModel->set_headerData(nC, nR, xL, yL, cS, nDV_fuelM, nDV_fuelM, prjStr);
+    canopyCover->set_headerData(nC, nR, xL, yL, cS, nDV_canopyC, nDV_canopyC, prjStr);
+    canopyHeight->set_headerData(nC, nR, xL, yL, cS, nDV_canopyH, nDV_canopyH, prjStr);
+
+    // read in the data for each specific bands into the ascii grids, one scanline at a time
+    // overriding NO_DATA values with specific values
+    int* panScanline_fuelM = new int[nC];
+    int* panScanline_canopyC = new int[nC];
+    int* panScanline_canopyH = new int[nC];
+    int nFuel, nCanopy, nHeight;
+
+    for( int i = nR - 1; i >= 0; i-- )
+    {
+        poBand = poDS->GetRasterBand(4);
+        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline_fuelM, nC, 1, GDT_Int32, 0, 0);
+        poBand = poDS->GetRasterBand(5);
+        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline_canopyC, nC, 1, GDT_Int32, 0, 0);
+        poBand = poDS->GetRasterBand(6);
+        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline_canopyH, nC, 1, GDT_Int32, 0, 0);
+        for( int j = 0; j < nC; j++ )
+        {
+            nFuel = panScanline_fuelM[j];
+            if( nFuel == nDV_fuelM )
+            {
+                nFuel = 99;
+            }
+            nCanopy = panScanline_canopyC[j];
+            if( nCanopy == nDV_canopyC )
+            {
+                nCanopy = 0;
+            }
+            nHeight = panScanline_canopyH[j];
+            if( nHeight == nDV_canopyH )
+            {
+                nHeight = 15;
+            }
+            fuelModel->set_cellValue(nR - 1 - i, j, nFuel);
+            canopyCover->set_cellValue(nR - 1 - i, j, nCanopy);
+            canopyHeight->set_cellValue(nR - 1 - i, j, nHeight);
+        }
+    }
+    delete[] panScanline_fuelM;
+    delete[] panScanline_canopyC;
+    delete[] panScanline_canopyH;
+}
+
 void Usage()
 {
     printf("surface_input_nodata_filler input_dem_file\n");
@@ -149,7 +248,9 @@ int main(int argc, char *argv[])
 
 
     Elevation dem;
-
+    AsciiGrid<int> fuelModel;
+    AsciiGrid<double> canopyCover;
+    AsciiGrid<double> canopyHeight;
 
     GDALDataset *poDS;
 
@@ -188,6 +289,10 @@ int main(int argc, char *argv[])
     //    importGeoTIFF(poDS);
     //else
     //    importSingleBand(poDS);
+    if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )
+    {
+        importVegationData(poDS, &fuelModel, &canopyCover, &canopyHeight, dem);
+    }
 
     if(poDS)
         GDALClose((GDALDatasetH)poDS);
@@ -226,6 +331,10 @@ int main(int argc, char *argv[])
 
         // now edit/write/overwrite the gdal file with the ascii data
         std::cout << "overwriting input elevation file with NO_DATA filled data" << std::endl;
+        #ifdef _OPENMP
+        startTime = omp_get_wtime();
+        #endif
+
         GDALDataset *poDS;
         poDS = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_Update);
         if(poDS == NULL)
@@ -249,11 +358,45 @@ int main(int argc, char *argv[])
             }
             poBand->RasterIO(GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
         }
-
         poBand->SetNoDataValue(dem.get_NoDataValue());
-
         delete [] padfScanline;
+
+        if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )
+        {
+            int* panScanline_fuelM = new int[nXSize];
+            int* panScanline_canopyC = new int[nXSize];
+            int* panScanline_canopyH = new int[nXSize];
+            for(int i = nYSize-1; i >= 0; i--)
+            {
+                for(int j = 0; j < nXSize; j++)
+                {
+                    panScanline_fuelM[j] = fuelModel.get_cellValue(nYSize-1-i, j);
+                    panScanline_canopyC[j] = canopyCover.get_cellValue(nYSize-1-i, j);
+                    panScanline_canopyH[j] = canopyHeight.get_cellValue(nYSize-1-i, j);
+                }
+                poBand = poDS->GetRasterBand(4);
+                poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline_fuelM, nXSize, 1, GDT_Int32, 0, 0);
+                poBand = poDS->GetRasterBand(5);
+                poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline_canopyC, nXSize, 1, GDT_Int32, 0, 0);
+                poBand = poDS->GetRasterBand(6);
+                poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline_canopyH, nXSize, 1, GDT_Int32, 0, 0);
+            }
+            poBand = poDS->GetRasterBand(4);
+            poBand->SetNoDataValue(fuelModel.get_NoDataValue());
+            poBand = poDS->GetRasterBand(5);
+            poBand->SetNoDataValue(canopyCover.get_NoDataValue());
+            poBand = poDS->GetRasterBand(6);
+            poBand->SetNoDataValue(canopyHeight.get_NoDataValue());
+            delete[] panScanline_fuelM;
+            delete[] panScanline_canopyC;
+            delete[] panScanline_canopyH;
+        }
+
         GDALClose((GDALDatasetH)poDS);
+        #ifdef _OPENMP
+        endTime = omp_get_wtime();
+        std::cout << "overwriting input elevation file time was " << endTime-startTime << " seconds" << std::endl;
+        #endif
     }
 
 
