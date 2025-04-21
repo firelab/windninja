@@ -193,8 +193,8 @@
     const overlayMaps = {};
     const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
 
-    loadKmzFromUrl(map, "big_butte_5_5_307m.kmz", layerControl);
-    loadKmzFromUrl(map, "big_butte_10_10_307m.kmz", layerControl);
+    //loadKmzFromUrl("big_butte_5_5_307m.kmz");
+    //loadKmzFromUrl("big_butte_10_10_307m.kmz");
     L.control.scale().addTo(map);
 
 
@@ -329,7 +329,7 @@
         document.getElementById("radius").removeEventListener("input", update_center);
     }
 
-    async function loadKmzFromUrl(map, kmzUrl, layerControl) {
+    async function loadKmzFromUrl(kmzUrl) {
       try {
         const response = await fetch(kmzUrl);
         const arrayBuffer = await response.arrayBuffer();

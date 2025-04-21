@@ -20,7 +20,8 @@
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
-
+#include <vector>
+#include <string>
 
 // Menu filtering class
 class DirectoryFilterModel : public QSortFilterProxyModel {
@@ -701,6 +702,17 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
   }
 }
 
+void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
+
+  for (const auto& dir : input) {
+    QString qDir = QString::fromStdString(dir).replace("\"", "\\\""); // escape quotes
+    QString jsCall = QString("loadKmzFromUrl(\"%1\");").arg(qDir);
+
+    webView->page()->runJavaScript(jsCall);
+  }
+
+
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
