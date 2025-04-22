@@ -1,4 +1,8 @@
 #include "controller.h"
+#include <string>
+#include <vector>
+
+using  namespace std;
 
 Controller::Controller(MainWindow* view, QObject* parent)
     : QObject(parent), view(view)
@@ -17,7 +21,19 @@ void Controller::onSolveRequest() {
   if (state.domainAverageWindOk) {
     DomainAverageWind domainAvgWind = setDomainAverageWind();
     provider.domain_average_exec(domainAvgWind);
+  }else if(state.pointInitializationOk){
+    PointInitialization pointInit = setPointInitialization();
+    provider.point_exec(pointInit);
+  }else if(state.weatherModelOk){
+    WeatherModel weatherModel = setWeatherModel();
+    provider.wxmodel_exec(weatherModel);
   }
+
+
+  //Todo Implement File Search
+  vector<string> tempListOfKmz = {"/home/vboxuser/Documents/windninja/data/big_butte_10_10_307m.kmz", "/home/vboxuser/Documents/windninja/data/big_butte_5_5_307m.kmz"};
+
+  view->loadMapKMZ(tempListOfKmz);
 }
 
 // Get time zone list from provider
@@ -124,4 +140,47 @@ DomainAverageWind Controller::setDomainAverageWind() {
     speedUnits.toStdString(),
     directionList
   );
+}
+
+PointInitialization Controller::setPointInitialization() {
+  //Todo Implement Point Methods
+  BaseInput baseInput = setBaseInput();
+
+  int year = 0;
+  int month = 0;
+  int day = 0;
+  int hour = 0;
+  int minute = 0;
+  char* station_path = "NULL";
+  char* elevation_file = "NULL";
+  char* osTimeZone= "NULL";
+  bool matchPointFlag = false;
+
+  return PointInitialization (
+      baseInput,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      station_path,
+      elevation_file,
+      osTimeZone,
+      matchPointFlag
+      );
+}
+
+
+WeatherModel Controller::setWeatherModel() {
+  //Todo Implement WeatherModel
+  BaseInput baseInput = setBaseInput();
+
+  char* forecast = "NULL";
+  char* osTimeZone= "NULL";
+
+  return WeatherModel (
+      baseInput,
+      forecast,
+      osTimeZone
+      );
 }
