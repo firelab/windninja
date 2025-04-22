@@ -42,7 +42,6 @@
 FROM ubuntu:20.04
 USER root
 ADD . /opt/src/windninja/
-ADD ../../scripts/ /opt/src/scripts/
 SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
 ENV WM_PROJECT_INST_DIR /opt
@@ -53,12 +52,10 @@ RUN dpkg-reconfigure debconf --frontend=noninteractive && \
                        pkg-config g++ libboost-program-options-dev \
                        libboost-date-time-dev libboost-test-dev python3-pip && \
     cd /opt/src && \
-    DEBIAN_FRONTEND=noninteractive ./windninja/scripts/build_deps_docker.sh && \
+    DEBIAN_FRONTEND=noninteractive /opt/src/windninja/scripts/build_deps_docker.sh && \
     rm -rf /var/lib/apt/lists
 
-RUN cd  /opt/src/windninja && \
-    mkdir build && \
-    mkdir /data && \
+RUN mkdir -p /opt/src/windninja/build && \
     cd  /opt/src/windninja/build && \
 
     # Building the windninja with different funationalites
@@ -81,7 +78,7 @@ RUN cd  /opt/src/windninja && \
     cd /opt/src/windninja 
 
 
-# This segment is responsible for 
+# This segment is responsible for openfoam8
 RUN source /opt/openfoam8/etc/bashrc &&\
 mkdir -p $FOAM_RUN/../applications && \
 cp -r /opt/src/windninja/src/ninjafoam/8/* $FOAM_RUN/../applications && \
@@ -104,3 +101,4 @@ chmod 755 /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/applyInit
 #    docker build -t windninja:latest .
 # 2. Convert the Docker image to a Singularity image
 #    singularity build windninja_latest.sif docker-daemon://windninja:latest
+
