@@ -380,6 +380,13 @@ void MainWindow::on_getFromMapButton_clicked()
   if (northLat != 0 && southLat != 0 && eastLon != 0 && westLon != 0) {
     // AppState::instance().
   }
+  qDebug() << northLat;
+  qDebug() << southLat;
+  qDebug() << eastLon;
+  qDebug() << westLon;
+  qDebug() << centerLat;
+  qDebug() << centerLon;
+  qDebug() << radius;
 }
 
 // User changes the mesh resolution spec for surface input
@@ -387,17 +394,29 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
 {
   switch(index) {
   case 0:
-    ui->meshResValue->setValue(256.34);
+    if (ui->meshResFeet->isChecked()) {
+      ui->meshResValue->setValue(256.34);
+    } else {
+      ui->meshResValue->setValue(78.13);
+    }
     ui->meshResValue->setEnabled(false);
     break;
 
   case 1:
-    ui->meshResValue->setValue(162.12);
+    if (ui->meshResFeet->isChecked()) {
+      ui->meshResValue->setValue(162.12);
+    } else {
+      ui->meshResValue->setValue(49.41);
+    }
     ui->meshResValue->setEnabled(false);
     break;
 
   case 2:
-    ui->meshResValue->setValue(114.64);
+    if (ui->meshResFeet->isChecked()) {
+      ui->meshResValue->setValue(114.64);
+    } else {
+      ui->meshResValue->setValue(34.94);
+    }
     ui->meshResValue->setEnabled(false);
     break;
 
@@ -406,6 +425,18 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
     break;
 
   }
+}
+
+// User selects new mesh resolution unit
+void MainWindow::on_meshResFeet_clicked()
+{
+  MainWindow::on_meshResType_currentIndexChanged(ui->meshResType->currentIndex());
+}
+
+
+void MainWindow::on_meshResMeters_clicked()
+{
+  MainWindow::on_meshResType_currentIndexChanged(ui->meshResType->currentIndex());
 }
 
 // User selects a new time zone
@@ -575,7 +606,7 @@ void MainWindow::on_windTableData_cellChanged(int row, int column)
       break;
     }
     case 3: {
-      QDate d = QDate::fromString(value, "mm/dd/yyyy");
+      QDate d = QDate::fromString(value, "MM/dd/yyyy");
       valid = d.isValid();
       if (!valid) errorMessage = "Must be a valid date (MM/DD/YYYY)";
       break;

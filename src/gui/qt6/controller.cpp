@@ -23,7 +23,8 @@ void Controller::onSolveRequest() {
 // Get time zone list from provider
 void Controller::onTimeZoneDataRequest() {
   // Call provider to get 2D vector with timezone data
-  QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData();
+  bool showAllZones = view->getUi()->showAllTimeZones->isChecked();
+  QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData(showAllZones);
 
   // Clear timezone list
   view->getUi()->timeZoneSelector->clear();
@@ -80,10 +81,8 @@ BaseInput Controller::setBaseInput() {
   int numNinjas = 1;
   // Count the number of ninjas, depending on the wind method being used
   QVector<QVector<QString>> domainAvgTable = provider.parseDomainAvgTable(view->getUi()->windTableData);
-  if (view->getUi()->useDiurnalWind->isChecked()) {
-    if (domainAvgTable.size() > 0) {
-      numNinjas = domainAvgTable.size();
-    }
+  if (domainAvgTable.size() > 0) {
+    numNinjas = domainAvgTable.size();
   }
   QString outputPath = view->getUi()->outputDirectory->toPlainText();
 

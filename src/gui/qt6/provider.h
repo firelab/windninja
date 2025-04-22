@@ -20,10 +20,12 @@ class Provider {
 
   public:
     Provider();
-    QVector<QVector<QString>> getTimeZoneData();
-    QString getTimeZoneDetails(const QString& currentTimeZone);
-    QVector<QVector<QString>> parseDomainAvgTable(QTableWidget* table);
     int domain_average_exec(class DomainAverageWind& input);
+    QVector<QVector<QString>> getTimeZoneData(bool showAllZones);
+    QVector<QVector<QString>> parseDomainAvgTable(QTableWidget* table);
+    QString getKmzFilePaths();
+    QString getTimeZoneDetails(const QString& currentTimeZone);
+    void setMapLayers();
 };
 
 #endif //PROVIDER_H

@@ -19,11 +19,15 @@ const int nCPUs = 1;
 char ** papszOptions = NULL;
 NinjaErr err = 0;
 
+Provider::Provider() {
+
+}
+
 int Provider::domain_average_exec(DomainAverageWind& input) {
   std::vector<double> speedVector = input.getSpeedList();
   const double* speedList = speedVector.data();
   std::vector<double> directionVector = input.getDirectionList();
-  const double* directionList = speedVector.data();
+  const double* directionList = directionVector.data();
   const char * demFile = input.getDemFile().c_str();
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
@@ -106,7 +110,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
     }
 
 
-           //heighUnits set static
+    //heighUnits set static
 
     err = NinjaSetInputWindHeight(ninjaArmy, i, height, heightUnits, papszOptions);
     if(err != NINJA_SUCCESS)
@@ -520,13 +524,8 @@ int Provider::wxmodel_exec(WeatherModel& input) {
   return NINJA_SUCCESS;
 }
 
-Provider::Provider() {
-
-}
-
 // Time zone data provider
-QVector<QVector<QString>> Provider::getTimeZoneData() {
-  AppState& state = AppState::instance();
+QVector<QVector<QString>> Provider::getTimeZoneData(bool showAllZones) {
   QVector<QVector<QString>> fullData;
   QVector<QVector<QString>> americaData;
 
@@ -566,7 +565,7 @@ QVector<QVector<QString>> Provider::getTimeZoneData() {
 
   file.close();
 
-  if (state.showAllZones) {
+  if (showAllZones) {
     return fullData;
   } else {
     return americaData;
@@ -699,3 +698,4 @@ QVector<QVector<QString>> Provider::parseDomainAvgTable(QTableWidget* table) {
   }
   return result;
 }
+

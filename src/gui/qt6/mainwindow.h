@@ -64,6 +64,10 @@ private slots:
 
   void on_windTableData_cellChanged(int row, int column);
 
+  void on_meshResFeet_clicked();
+
+  void on_meshResMeters_clicked();
+
 signals:
   void solveRequest();
   void timeZoneDataRequest();
