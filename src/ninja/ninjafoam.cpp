@@ -1812,6 +1812,7 @@ bool NinjaFoam::SimpleFoam()
                 return false;
             }
         }
+
     }
     else{
         const char *const papszArgv[] = { "simpleFoam",
@@ -3721,6 +3722,8 @@ void NinjaFoam::UpdateExistingCase()
             continue;
         }
     }
+
+    CSLDestroy(papszOutputSurfacePath);
 
     //set meshResolution from log.ninja
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
