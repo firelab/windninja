@@ -95,10 +95,15 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
         delete ninjas[i];
     ninjas.resize( nSize );
     for( i = 0; i < nSize; i++ ){
-        if(momentumFlag)
+#ifdef NINJAFOAM
+        if(momentumFlag){
             ninjas[i] = new NinjaFoam();
-        else
+        }else{
             ninjas[i] = new ninja();
+        }
+#else
+        ninjas[i] = new ninja();
+#endif //NINJAFOAM
     }
 }
 
