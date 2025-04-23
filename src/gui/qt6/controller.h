@@ -18,6 +18,8 @@ private:
   Provider provider;
   BaseInput setBaseInput();
   DomainAverageWind setDomainAverageWind();
+  PointInitialization setPointInitialization();
+  WeatherModel setWeatherModel();
 
   void onSolveRequest();
   void onTimeZoneDataRequest();

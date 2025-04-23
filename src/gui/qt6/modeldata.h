@@ -77,11 +77,9 @@ class PointInitialization : public BaseInput {
 
   public:
     // Constructor
-    PointInitialization(char* demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
-                        int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas, string outputPath,
+    PointInitialization(const BaseInput& baseInput,
                         int year, int month, int day, int hour, int minute, char* station_path, char* elevation_file, char* osTimeZone, bool matchPointFlag)
-      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas, outputPath),
-        year(year), month(month), day(day), hour(hour), minute(minute), station_path(station_path), elevation_file(elevation_file), osTimeZone(osTimeZone), matchPointFlag(matchPointFlag) {}
+        : BaseInput(baseInput), year(year), month(month), day(day), hour(hour), minute(minute), station_path(station_path), elevation_file(elevation_file), osTimeZone(osTimeZone), matchPointFlag(matchPointFlag) {}
 
     // Getter methods
     int getYear() { return year; }
@@ -102,11 +100,9 @@ class WeatherModel : public BaseInput {
 
   public:
     // Constructor
-    WeatherModel(char* demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
-                 int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas, string outputPath,
+    WeatherModel(const BaseInput& baseInput,
                  char* forecast, char* osTimeZone)
-      : BaseInput(demFile, outputResolution, initializationMethod, meshChoice, vegetation, nLayers, diurnalFlag, height, heightUnits, momentumFlag, numNinjas, outputPath),
-        forecast(forecast), osTimeZone(osTimeZone) {}
+      : BaseInput(baseInput), forecast(forecast), osTimeZone(osTimeZone) {}
 
     // Getter methods
     char* getForecast() { return forecast; }

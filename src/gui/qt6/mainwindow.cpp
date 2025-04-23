@@ -20,7 +20,8 @@
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
-
+#include <vector>
+#include <string>
 
 // Menu filtering class
 class DirectoryFilterModel : public QSortFilterProxyModel {
@@ -387,6 +388,16 @@ void MainWindow::on_getFromMapButton_clicked()
   qDebug() << centerLat;
   qDebug() << centerLon;
   qDebug() << radius;
+
+    QString defaultName = "output.tif";
+    QString filter = "TIF Files (*.tif)";
+
+    QString fileName = QFileDialog::getSaveFileName(this,
+                        "Save DEM File",
+                        QDir::homePath() + "/" + defaultName,
+                        filter);
+    qDebug() << fileName;
+
 }
 
 // User changes the mesh resolution spec for surface input
@@ -588,6 +599,7 @@ void MainWindow::on_windTableData_cellChanged(int row, int column)
     case 0: {
       double d = value.toDouble(&valid);
       if (!valid || d <= 0)
+        valid = false;
         errorMessage = "Must be a positive number";
       break;
     }
@@ -732,6 +744,17 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
   }
 }
 
+void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
+
+  for (const auto& dir : input) {
+    QString qDir = QString::fromStdString(dir).replace("\"", "\\\""); // escape quotes
+    QString jsCall = QString("loadKmzFromUrl(\"%1\");").arg(qDir);
+
+    webView->page()->runJavaScript(jsCall);
+  }
+
+
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),

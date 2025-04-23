@@ -5,6 +5,8 @@
 #include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include "ui_mainwindow.h"
+#include <vector>
+#include <string>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,6 +21,8 @@ public:
   Ui::MainWindow* getUi() const { return ui; }
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
+  void loadMapKMZ(const std::vector<std::string>& input);
+
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
