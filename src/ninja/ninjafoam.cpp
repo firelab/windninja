@@ -1812,7 +1812,6 @@ bool NinjaFoam::SimpleFoam()
                 return false;
             }
         }
-
     }
     else{
         const char *const papszArgv[] = { "simpleFoam",
@@ -3725,35 +3724,8 @@ void NinjaFoam::UpdateExistingCase()
 
     CSLDestroy(papszOutputSurfacePath);
 
-    //set meshResolution from log.ninja
-    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
-    VSILFILE *fin;
-    fin = VSIFOpenL(pszInput, "r");
-
-    char *data;
-
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
-
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-    VSIFReadL(data, offset, 1, fin);
-    data[offset] = '\0';
-
-    std::string s(data);
-
-    CPLFree(data);
-    VSIFCloseL(fin);
-
-    std::string h;
-    int pos;
-    if(s.find("meshResolution") != s.npos){
-        pos = s.find("firstCellHeight ");
-        h = s.substr(pos+18, pos+23);
-    }
-
-    meshResolution = atof(h.c_str());
+    //set meshResolution and other values from log.ninja
+    ReadNinjaLog();
 
     //write the new dict files
     WriteFoamFiles();
@@ -3956,16 +3928,61 @@ void NinjaFoam::GenerateNewCase()
 void NinjaFoam::WriteNinjaLog()
 {
     //write log.ninja to store info needed for reusing cases
+    int nRet = -1;
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
     VSILFILE *fout;
     fout = VSIFOpenL(pszInput, "w");
     if( !fout ){
         throw std::runtime_error("Error writing log.ninja to case directory.");
     }
-    const char *d = CPLSPrintf("meshResolution = %.2f", meshResolution);
-    int nSize = strlen(d);
-    VSIFWriteL(d, nSize, 1, fout);
+    nRet = VSIFPrintfL(fout, "meshResolution = %.2f\n", meshResolution);
+    nRet = VSIFPrintfL(fout, "nRoundsRefinement = %d\n", nRoundsRefinement);
     VSIFCloseL(fout);
+}
+
+void NinjaFoam::ReadNinjaLog()
+{
+    // set meshResolution and other values from log.ninja
+    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
+    VSILFILE *fin;
+    fin = VSIFOpenL(pszInput, "r");
+    if(fin == NULL)
+    {
+        throw std::runtime_error("Can't open log.ninja to set the mesh resolution!");
+    }
+
+    std::string currentLine, currentSubstr;
+    size_t pos1, pos2;
+
+    currentLine = CPLReadLineL(fin);
+    pos1 = currentLine.find("meshResolution");
+    if(pos1 == currentLine.npos)
+    {
+        throw std::runtime_error("log.ninja does not contain meshResolution!");
+    } else
+    {
+        pos1 = pos1 + 17;
+        pos2 = currentLine.length() - 1;
+        currentSubstr = currentLine.substr(pos1, pos2-pos1+1);
+        meshResolution = atof(currentSubstr.c_str());
+        CPLDebug("NINJAFOAM", "meshResolution= %f", meshResolution);
+    }
+
+    currentLine = CPLReadLineL(fin);
+    pos1 = currentLine.find("nRoundsRefinement");
+    if(pos1 == currentLine.npos)
+    {
+        throw std::runtime_error("log.ninja does not contain nRoundsRefinement!");
+    } else
+    {
+        pos1 = pos1 + 20;
+        pos2 = currentLine.length() - 1;
+        currentSubstr = currentLine.substr(pos1, pos2-pos1+1);
+        nRoundsRefinement = atof(currentSubstr.c_str());
+        CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
+    }
+
+    VSIFCloseL(fin);
 }
 
 int NinjaFoam::GetLatestTimeOnDisk()
@@ -4104,39 +4121,8 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
 {
     //if we are re-using a case, just set the meshResolution
     if(CheckForValidCaseDir(pszFoamPath)){
-        //set meshResolution from log.ninja
-        const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
-        VSILFILE *fin;
-        fin = VSIFOpenL(pszInput, "r");
-        if(fin == NULL)
-        {
-            throw std::runtime_error("Can't open log.ninja to set the mesh resolution!");
-        }
-
-        char *data;
-
-        vsi_l_offset offset;
-        VSIFSeekL(fin, 0, SEEK_END);
-        offset = VSIFTellL(fin);
-
-        VSIRewindL(fin);
-        data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-        VSIFReadL(data, offset, 1, fin);
-        data[offset] = '\0';
-
-        std::string s(data);
-
-        CPLFree(data);
-        VSIFCloseL(fin);
-
-        std::string h;
-        int pos;
-        if(s.find("meshResolution") != s.npos){
-            pos = s.find("firstCellHeight ");
-            h = s.substr(pos+18, pos+23);
-        }
-
-        meshResolution = atof(h.c_str());
+        //set meshResolution and other values from log.ninja
+        ReadNinjaLog();
     }
     //otherwise, if the mesh resolution hasn't been set, calculate it
     else if(meshResolution < 0.0){

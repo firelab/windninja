@@ -151,6 +151,7 @@ private:
     void SetMeshResolutionAndResampleDem();
 
     void WriteNinjaLog();
+    void ReadNinjaLog();
     
     /* OpenFOAM utilities */
     void RefineSurfaceLayer();
