@@ -23,7 +23,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
   std::vector<double> speedVector = input.getSpeedList();
   const double* speedList = speedVector.data();
   std::vector<double> directionVector = input.getDirectionList();
-  const double* directionList = speedVector.data();
+  const double* directionList = directionVector.data();
   const char * demFile = input.getDemFile().c_str();
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
@@ -221,18 +221,21 @@ int Provider::point_exec(PointInitialization& input) {
   /*
    * Create the army
    */
-  int year = input.getYear();
-  int month = input.getMonth();
-  int day = input.getDay();
-  int hour = input.getHour();
-  int minute = input.getMinute();
-  char* station_path = input.getStationPath();
-  char* elevation_file = input.getElevationFile();
-  char* osTimeZone = input.getOSTimeZone();
+  vector<int> yearVector = input.getYear();
+   int* year = yearVector.data();
+  vector<int> monthVector = input.getMonth();
+   int* month = monthVector.data();
+  vector<int> dayVector = input.getDay();
+   int* day = dayVector.data();
+  vector<int> hourVector = input.getHour();
+   int* hour = hourVector.data();
+  vector<int> minuteVector = input.getMinute();
+   int* minute = minuteVector.data();
+   char* station_path = input.getStationPath();
+   char* osTimeZone = input.getOSTimeZone();
   bool matchPointFlag = input.getMatchPointFlag();
-  bool momemtumFlag = input.getMomentumFlag();
 
-  const char * demFile = input.getDemFile().c_str();
+   char * demFile = const_cast<char*>(input.getDemFile().c_str());
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
   const char* meshChoice = input.getMeshChoice().c_str();
@@ -246,7 +249,7 @@ int Provider::point_exec(PointInitialization& input) {
   const char * outputPath =  input.getOutputPath().c_str();
 
 
-  ninjaArmy = NinjaMakePointArmy(&year, &month, &day, &hour, &minute, numNinjas, osTimeZone, station_path, elevation_file, matchPointFlag, momemtumFlag, papszOptions);
+  ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, numNinjas, osTimeZone, station_path, demFile, matchPointFlag, momentumFlag, papszOptions);
 
   if( NULL == ninjaArmy )
   {
