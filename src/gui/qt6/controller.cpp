@@ -10,6 +10,7 @@ Controller::Controller(MainWindow* view, QObject* parent)
     connect(view, &MainWindow::solveRequest, this, &Controller::onSolveRequest);
     connect(view, &MainWindow::timeZoneDataRequest, this, &Controller::onTimeZoneDataRequest);
     connect(view, &MainWindow::timeZoneDetailsRequest, this, &Controller::onTimeZoneDetailsRequest);
+    connect(view, &MainWindow::getDEMrequest, this, &Controller::onGetDEMrequest);
 }
 
 // Listens for solve request; facilitates model creation and provider passing
@@ -33,7 +34,7 @@ void Controller::onSolveRequest() {
   vector<string> outputFileList = provider.getOutputFileNames(
     view->getUi()->elevFilePath->text(),
     view->getUi()->windTableData,
-    view->getUi()->meshResType->currentText(),
+    view->getUi()->meshResValue->text(),
     provider.parseDomainAvgTable(view->getUi()->windTableData).size(),
     view->getUi()->outputDirectory->toPlainText());
 
@@ -67,6 +68,28 @@ void Controller::onTimeZoneDetailsRequest() {
 
   // Set value in ui
   view->getUi()->timeZoneDetails->setText(timeZoneDetails);
+}
+
+void Controller::onGetDEMrequest(double boundsBox[], QString outputFile) {
+  string demFile = view->getUi()->elevFilePath->text().toStdString();
+
+  // Get correct fetch type
+  // TODO: set correct string for landscape files in else condition
+  int fetchIndex = view->getUi()->fetchType->currentIndex();
+  string fetchType;
+  if (fetchIndex == 0) {
+    fetchType = "srtm";
+  } else if (fetchIndex	== 1) {
+    fetchType = "gmted";
+  } else {
+    fetchType = "land";
+  }
+
+  double resolution = view->getUi()->meshResValue->value();
+
+  int result = provider.fetchDEMBoundingBox(demFile, fetchType, resolution, boundsBox);
+  qDebug() << result;
+  view->getUi()->elevFilePath->setText(outputFile);
 }
 
 /*

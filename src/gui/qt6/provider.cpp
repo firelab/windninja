@@ -738,13 +738,6 @@ QVector<QVector<QString>> Provider::parseDomainAvgTable(QTableWidget* table) {
 int Provider::fetchDEMBoundingBox(const string demFileOutPut, const string fetch_type, int resolution, double* boundsBox)
 {
   /*
-   * const char * demFile = "data/output.tif"; // output file name
-   * char * fetch_type = "gmted";
-   * double resolution = 30; // 30 m resolution
-   * double boundsBox [] = {40.07, -104.0, 40.0, -104.07};
-   */
-
-  /*
    * Setting up NinjaArmy
    */
   NinjaArmyH* ninjaArmy = NULL;
@@ -873,18 +866,12 @@ int Provider::fetchFromDEMPoint (double adfPoints[2], double adfBuff[2], const s
   return NINJA_SUCCESS;
 }
 
-vector<string> Provider::getOutputFileNames(QString demFile, QTableWidget *table, QString meshType, int numFiles, QString outputPath) {
+vector<string> Provider::getOutputFileNames(QString demFile, QTableWidget *table, QString meshValue, int numFiles, QString outputPath) {
   vector<string> outputFiles;
   QDir outDir(outputPath);
   QString demName = QFileInfo(demFile).completeBaseName();
-  QString meshSize = "";
-  if (meshType == "Coarse") {
-    meshSize = "307m";
-  } else if (meshType == "Medium") {
-    meshSize = "194m";
-  } else if (meshType == "Fine") {
-    meshSize = "137";
-  }
+  int meshInt = static_cast<int>(std::round(meshValue.toDouble()));
+  QString meshSize = QString::number(meshInt) + "m";
 
   for (int i = 0; i < numFiles; i++) {
     QString direction = table->item(i, 1)->text().trimmed();

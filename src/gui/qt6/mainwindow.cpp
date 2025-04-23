@@ -377,26 +377,28 @@ void MainWindow::on_getFromMapButton_clicked()
   run("center_lon");
   run("radius");
 
-  // Verify input validity
+  // Verify input validity and write file
   if (northLat != 0 && southLat != 0 && eastLon != 0 && westLon != 0) {
-    // AppState::instance().
-  }
-  qDebug() << northLat;
-  qDebug() << southLat;
-  qDebug() << eastLon;
-  qDebug() << westLon;
-  qDebug() << centerLat;
-  qDebug() << centerLon;
-  qDebug() << radius;
-
-    QString defaultName = "output.tif";
+    QString defaultName = "demDownload.tif";
     QString filter = "TIF Files (*.tif)";
 
+    // Get downloads path and join to filename
+    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    QDir dir(downloadsPath);
+    QString fullPath = dir.filePath(defaultName);
+
+    // Open save window
     QString fileName = QFileDialog::getSaveFileName(this,
                         "Save DEM File",
-                        QDir::homePath() + "/" + defaultName,
+                        fullPath,
                         filter);
-    qDebug() << fileName;
+
+    if (fileName != "") {
+      double coords[] = { northLat, eastLon, southLat, westLon };
+      getDEMrequest(coords, fileName);
+    }
+
+  }
 
 }
 
@@ -405,8 +407,8 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
 {
   switch(index) {
   case 0:
-    if (ui->meshResFeet->isChecked()) {
-      ui->meshResValue->setValue(256.34);
+    if (ui->meshResMeters->isChecked()) {
+      ui->meshResValue->setValue(512.00);
     } else {
       ui->meshResValue->setValue(78.13);
     }
@@ -414,7 +416,7 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
     break;
 
   case 1:
-    if (ui->meshResFeet->isChecked()) {
+    if (ui->meshResMeters->isChecked()) {
       ui->meshResValue->setValue(162.12);
     } else {
       ui->meshResValue->setValue(49.41);
@@ -423,7 +425,7 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
     break;
 
   case 2:
-    if (ui->meshResFeet->isChecked()) {
+    if (ui->meshResMeters->isChecked()) {
       ui->meshResValue->setValue(114.64);
     } else {
       ui->meshResValue->setValue(34.94);

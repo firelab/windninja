@@ -3,6 +3,7 @@
 
 #include "appstate.h"
 #include "modeldata.h"
+#include <cmath>
 #include <QDir>
 #include <QFileInfo>
 #include <QString>

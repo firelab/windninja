@@ -76,6 +76,7 @@ signals:
   void solveRequest();
   void timeZoneDataRequest();
   void timeZoneDetailsRequest();
+  void getDEMrequest(double boundBox[], QString outputFile);
 
 private:
   void onTreeItemClicked(QTreeWidgetItem *item, int column);
