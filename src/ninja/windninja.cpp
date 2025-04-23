@@ -932,6 +932,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetUniVegetation
     }
 }
 
+/**
+ * \brief Get the diurnal flag set for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param papszOptions options
+ *
+ * \return Array of strings indicating each wxstation.
+ */
 WINDNINJADLL_EXPORT char ** NinjaGetWxStations
     ( NinjaArmyH * army, const int nIndex, char ** papszOptions );
 
@@ -1012,6 +1021,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDustFlag
 /*-----------------------------------------------------------------------------
  *  Stability Methods
  *-----------------------------------------------------------------------------*/
+/**
+ * \brief Set the stability flag for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag on = 1, off = 2.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
     ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1025,6 +1043,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetStabilityFlag
     }
 }
 
+/**
+ * \brief Set the alpha stability for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param stability_ The alpha stability to use.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
     ( NinjaArmyH * army, const int nIndex, const double stability_, char ** papszOptions )
 {
@@ -1581,6 +1608,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
     }
 }
 
+/**
+ * \brief Set the scaling of the Google Earth output for a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param scaling The scaling at which to write the Google Earth output.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
     ( NinjaArmyH * army, const int nIndex, const char * scaling, char ** papszOptions )
 {
@@ -1595,6 +1633,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
     }
 }
 
+/**
+ * \brief Set the line width of the Google Earth output for a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param scaling The line width at which to write the Google Earth output.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
     ( NinjaArmyH * army, const int nIndex, const double width, char ** papszOptions )
 {
@@ -1732,6 +1781,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
     }
 }
 
+/**
+ * \brief Set the flag to write Txt output for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not VTK output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
     ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1746,6 +1805,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
 
 }
 
+/**
+ * \brief Set the flag to write PDF output for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not VTK output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
     ( NinjaArmyH* army, const int nIndex, const bool flag, char ** options )
 {
@@ -1760,6 +1829,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
 
 }
 
+/**
+ * \brief Set the line width of the PDF output for a simulation.
+ *
+ * \note Only valid if NinjaSetPDFOutFlag is set to 1.
+ * 
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param lineWidth The line width of the PDF output.
+ * \param papszOptions options.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFLineWidth
     ( NinjaArmyH* army, const int nIndex, const float lineWidth, char ** papszOptions )
 {
@@ -1773,6 +1854,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFLineWidth
     }
 }
 
+/**
+ * \brief Set the base map of the PDF output for a simulation.
+ *
+ * \note Only valid if NinjaSetPDFOutFlag is set to 1.
+ * 
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param eType The base map at which to write the PDF output ("TOPOFIRE", "HILLSHADE").
+ * \param papszOptions options.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFBaseMap
     ( NinjaArmyH* army, const int nIndex, const int eType, char ** papszOptions )
 {
@@ -1786,6 +1879,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFBaseMap
     }
 }
 
+/**
+ * \brief Set the DEM of the PDF output for a simulation.
+ *
+ * \note Only valid if NinjaSetPDFOutFlag is set to 1.
+ * 
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param demFileName The filepath of the simulation DEM.
+ * \param papszOptions options.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFDEM
     ( NinjaArmyH* army, const int nIndex, const char * demFileName, char ** papszOptions )
 {
@@ -1799,6 +1904,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFDEM
     }
 }
 
+/**
+ * \brief Set the size of the PDF output for a simulation
+ *
+ * \note Only valid if NinjaSetPDFOutFlag is set to 1.
+ * 
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param height The height at which to write the PDF output.
+ * \param width The width at which to write the PDF output.
+ * \param dpi The dpi at which to write the PDF output.
+ * \param papszOptions options.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFSize
     ( NinjaArmyH* army, const int nIndex, const double height, const double width, const unsigned short dpi, char ** papszOptions)
 {
@@ -1812,7 +1931,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFSize
     }   
 }
 
-
+/**
+ * \brief Set the resolution of the PDF output for a simulation.
+ *
+ * \note Only valid if NinjaSetPDFOutFlag is set to 1.
+ * 
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the PDF output.
+ * \param units The units of the PDF output resolution ("ft", "m").
+ * \param papszOptions options.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
     ( NinjaArmyH* army, const int nIndex, const double resolution, const char * units, char ** papszOptions )
 {
@@ -1827,6 +1958,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
     }
 }
 
+/**
+ * \brief Get the output path for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param papszOptions options.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
     ( NinjaArmyH * army, const int nIndex, char ** papszOptions )
 {
@@ -1841,6 +1981,14 @@ WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
  *  Termination Methods
  *-----------------------------------------------------------------------------*/
 
+ /**
+ * \brief Resets the Army.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param papszOptions options.
+ * 
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaReset( NinjaArmyH * army, char ** papszOptions )
 {
     if( NULL != army )
@@ -1854,6 +2002,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaReset( NinjaArmyH * army, char ** papszOptions
     }
 }
 
+/**
+ * \brief Cancels the Army.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param papszOptions options
+ * 
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaArmyH * army, char ** papszOptions )
 {
     if( NULL != army )
@@ -1867,6 +2023,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaArmyH * army, char ** papszOption
     }
 }
 
+/**
+ * \brief Cancels and resets the Army.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param papszOptions options
+ * 
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** papszOptions )
 {
     if( NULL != army )
