@@ -10,6 +10,7 @@ Controller::Controller(MainWindow* view, QObject* parent)
     connect(view, &MainWindow::solveRequest, this, &Controller::onSolveRequest);
     connect(view, &MainWindow::timeZoneDataRequest, this, &Controller::onTimeZoneDataRequest);
     connect(view, &MainWindow::timeZoneDetailsRequest, this, &Controller::onTimeZoneDetailsRequest);
+    connect(view, &MainWindow::getDEMrequest, this, &Controller::onGetDEMrequest);
 }
 
 // Listens for solve request; facilitates model creation and provider passing
@@ -30,16 +31,21 @@ void Controller::onSolveRequest() {
   }
 
 
-  //Todo Implement File Search
-  vector<string> tempListOfKmz = {"/home/vboxuser/Documents/windninja/data/big_butte_10_10_307m.kmz", "/home/vboxuser/Documents/windninja/data/big_butte_5_5_307m.kmz"};
+  vector<string> outputFileList = provider.getOutputFileNames(
+    view->getUi()->elevFilePath->text(),
+    view->getUi()->windTableData,
+    view->getUi()->meshResValue->text(),
+    provider.parseDomainAvgTable(view->getUi()->windTableData).size(),
+    view->getUi()->outputDirectory->toPlainText());
 
-  view->loadMapKMZ(tempListOfKmz);
+  view->loadMapKMZ(outputFileList);
 }
 
 // Get time zone list from provider
 void Controller::onTimeZoneDataRequest() {
   // Call provider to get 2D vector with timezone data
-  QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData();
+  bool showAllZones = view->getUi()->showAllTimeZones->isChecked();
+  QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData(showAllZones);
 
   // Clear timezone list
   view->getUi()->timeZoneSelector->clear();
@@ -62,6 +68,28 @@ void Controller::onTimeZoneDetailsRequest() {
 
   // Set value in ui
   view->getUi()->timeZoneDetails->setText(timeZoneDetails);
+}
+
+void Controller::onGetDEMrequest(double boundsBox[], QString outputFile) {
+  string demFile = view->getUi()->elevFilePath->text().toStdString();
+
+  // Get correct fetch type
+  // TODO: set correct string for landscape files in else condition
+  int fetchIndex = view->getUi()->fetchType->currentIndex();
+  string fetchType;
+  if (fetchIndex == 0) {
+    fetchType = "srtm";
+  } else if (fetchIndex	== 1) {
+    fetchType = "gmted";
+  } else {
+    fetchType = "land";
+  }
+
+  double resolution = view->getUi()->meshResValue->value();
+
+  int result = provider.fetchDEMBoundingBox(demFile, fetchType, resolution, boundsBox);
+  qDebug() << result;
+  view->getUi()->elevFilePath->setText(outputFile);
 }
 
 /*
@@ -96,16 +124,18 @@ BaseInput Controller::setBaseInput() {
   int numNinjas = 1;
   // Count the number of ninjas, depending on the wind method being used
   QVector<QVector<QString>> domainAvgTable = provider.parseDomainAvgTable(view->getUi()->windTableData);
+
   if (view->getUi()->useDomainAvgWind->isChecked()) {
     if (domainAvgTable.size() > 0) {
       numNinjas = domainAvgTable.size();
     }
-  }else if(view->getUi()->usePointInit->isChecked()){
+  } else if (view->getUi()->usePointInit->isChecked()) {
     //TODO
       //numNinjas = view->getUi()->pointInitStepsValue->value();
-  }else{
+  } else {
     //Todo wxmodel
   }
+  
   QString outputPath = view->getUi()->outputDirectory->toPlainText();
 
   return BaseInput (

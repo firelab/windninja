@@ -19,6 +19,10 @@ const int nCPUs = 1;
 char ** papszOptions = NULL;
 NinjaErr err = 0;
 
+Provider::Provider() {
+
+}
+
 int Provider::domain_average_exec(DomainAverageWind& input) {
   std::vector<double> speedVector = input.getSpeedList();
   const double* speedList = speedVector.data();
@@ -106,7 +110,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
     }
 
 
-           //heighUnits set static
+    //heighUnits set static
 
     err = NinjaSetInputWindHeight(ninjaArmy, i, height, heightUnits, papszOptions);
     if(err != NINJA_SUCCESS)
@@ -559,13 +563,8 @@ int Provider::wxmodel_exec(WeatherModel& input) {
   return NINJA_SUCCESS;
 }
 
-Provider::Provider() {
-
-}
-
 // Time zone data provider
-QVector<QVector<QString>> Provider::getTimeZoneData() {
-  AppState& state = AppState::instance();
+QVector<QVector<QString>> Provider::getTimeZoneData(bool showAllZones) {
   QVector<QVector<QString>> fullData;
   QVector<QVector<QString>> americaData;
 
@@ -605,7 +604,7 @@ QVector<QVector<QString>> Provider::getTimeZoneData() {
 
   file.close();
 
-  if (state.showAllZones) {
+  if (showAllZones) {
     return fullData;
   } else {
     return americaData;
@@ -742,13 +741,6 @@ QVector<QVector<QString>> Provider::parseDomainAvgTable(QTableWidget* table) {
 int Provider::fetchDEMBoundingBox(const string demFileOutPut, const string fetch_type, int resolution, double* boundsBox)
 {
   /*
-   * const char * demFile = "data/output.tif"; // output file name
-   * char * fetch_type = "gmted";
-   * double resolution = 30; // 30 m resolution
-   * double boundsBox [] = {40.07, -104.0, 40.0, -104.07};
-   */
-
-  /*
    * Setting up NinjaArmy
    */
   NinjaArmyH* ninjaArmy = NULL;
@@ -877,3 +869,24 @@ int Provider::fetchFromDEMPoint (double adfPoints[2], double adfBuff[2], const s
   return NINJA_SUCCESS;
 }
 
+vector<string> Provider::getOutputFileNames(QString demFile, QTableWidget *table, QString meshValue, int numFiles, QString outputPath) {
+  vector<string> outputFiles;
+  QDir outDir(outputPath);
+  QString demName = QFileInfo(demFile).completeBaseName();
+  int meshInt = static_cast<int>(std::round(meshValue.toDouble()));
+  QString meshSize = QString::number(meshInt) + "m";
+
+  for (int i = 0; i < numFiles; i++) {
+    QString direction = table->item(i, 1)->text().trimmed();
+    QString speed = table->item(i, 0)->text().trimmed();
+    QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
+                           .arg(demName)
+                           .arg(direction)
+                           .arg(speed)
+                           .arg(meshSize));
+    outputFiles.push_back(filePath.toStdString());
+    qDebug() << filePath;
+  }
+
+  return outputFiles;
+}

@@ -24,6 +24,7 @@ private:
   void onSolveRequest();
   void onTimeZoneDataRequest();
   void onTimeZoneDetailsRequest();
+  void onGetDEMrequest(double boundBox[], QString outputFile);
 };
 
 #endif // CONTROLLER_H
