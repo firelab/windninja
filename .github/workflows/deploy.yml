@@ -24,4 +24,5 @@ jobs:
 
       - name: Copy documentation to server
         run: |
-          sudo scp -r ./doc/html/* octobot@ninjastorm.firelab.org:/var/www/html/windninjaapi/
+          sudo scp -o StrictHostKeyChecking=no -r ./doc/html/* octobot@ninjastorm.firelab.org:/var/www/html/windninjaapi/
+
