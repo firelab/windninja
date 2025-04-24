@@ -63,11 +63,6 @@ int main()
     bool momentumFlag = 0; //we're using the conservation of mass solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - must be equal to array sizes
 
-    /* inputs that can vary among ninjas in an army */
-    const double speedList[] = {5.5, 5.5}; // matches the size of numNinjas
-    const char * speedUnits = "mps";
-    const double directionList[] = {220, 300}; // matches the size of numNinjas
-
     /* inputs specific to output 
      * Note: Outputs have default values if inputs are not specified (like resolution)
      */
@@ -78,10 +73,25 @@ int main()
     const char * outputPath  = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/output";
     const bool outputFlag = 1;
 
+    /* inputs that can vary among ninjas in an army */
+    const double speedList[] = {5.5, 5.5}; // matches the size of numNinjas
+    const char * speedUnits = "mps";
+    const double directionList[2] = {220, 300};
+    const int year[2] = {2023, 2023};
+    const int month[2] = {10, 11};
+    const int day[2] = {10, 11};
+    const int hour[2] = {12, 13};
+    const int minute[2] = {30, 31};
+    const char * timezone = "UTC";
+    const int air[2] = {50, 50};
+    const char * airUnits = "F";
+    const int cloud[2] = {10, 10};
+    const char * cloudUnits = "percent";
+
     /* 
      * Create the army
      */
-    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
     if( NULL == ninjaArmy )
     {
         printf("NinjaCreateArmy: ninjaArmy = NULL\n");
