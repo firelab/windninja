@@ -740,6 +740,7 @@ int Provider::fetchDEMBoundingBox(const string demFileOutPut, const string fetch
   /*
    * Setting up NinjaArmy
    */
+
   NinjaArmyH* ninjaArmy = NULL;
   char ** papszOptions = NULL;
   NinjaErr err = 0;
@@ -882,7 +883,6 @@ vector<string> Provider::getOutputFileNames(QString demFile, QTableWidget *table
                            .arg(speed)
                            .arg(meshSize));
     outputFiles.push_back(filePath.toStdString());
-    qDebug() << filePath;
   }
 
   return outputFiles;

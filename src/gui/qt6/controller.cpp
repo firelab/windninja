@@ -70,8 +70,7 @@ void Controller::onTimeZoneDetailsRequest() {
   view->getUi()->timeZoneDetails->setText(timeZoneDetails);
 }
 
-void Controller::onGetDEMrequest(double boundsBox[], QString outputFile) {
-  string demFile = view->getUi()->elevFilePath->text().toStdString();
+void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString outputFile) {
 
   // Get correct fetch type
   // TODO: set correct string for landscape files in else condition
@@ -87,8 +86,7 @@ void Controller::onGetDEMrequest(double boundsBox[], QString outputFile) {
 
   double resolution = view->getUi()->meshResValue->value();
 
-  int result = provider.fetchDEMBoundingBox(demFile, fetchType, resolution, boundsBox);
-  qDebug() << result;
+  provider.fetchDEMBoundingBox(outputFile.toStdString(), fetchType, resolution, boundsBox.data());
   view->getUi()->elevFilePath->setText(outputFile);
 }
 
