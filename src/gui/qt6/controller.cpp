@@ -122,9 +122,18 @@ BaseInput Controller::setBaseInput() {
   int numNinjas = 1;
   // Count the number of ninjas, depending on the wind method being used
   QVector<QVector<QString>> domainAvgTable = provider.parseDomainAvgTable(view->getUi()->windTableData);
-  if (domainAvgTable.size() > 0) {
-    numNinjas = domainAvgTable.size();
+
+  if (view->getUi()->useDomainAvgWind->isChecked()) {
+    if (domainAvgTable.size() > 0) {
+      numNinjas = domainAvgTable.size();
+    }
+  } else if (view->getUi()->usePointInit->isChecked()) {
+    //TODO
+      //numNinjas = view->getUi()->pointInitStepsValue->value();
+  } else {
+    //Todo wxmodel
   }
+  
   QString outputPath = view->getUi()->outputDirectory->toPlainText();
 
   return BaseInput (
@@ -167,18 +176,44 @@ DomainAverageWind Controller::setDomainAverageWind() {
 }
 
 PointInitialization Controller::setPointInitialization() {
-  //Todo Implement Point Methods
   BaseInput baseInput = setBaseInput();
 
-  int year = 0;
-  int month = 0;
-  int day = 0;
-  int hour = 0;
-  int minute = 0;
+  vector<int> year;
+  vector<int> month;
+  vector<int> day ;
+  vector<int> hour ;
+  vector<int> minute ;
+  //ToDo Understand QT setting and  receivingS
   char* station_path = "NULL";
-  char* elevation_file = "NULL";
-  char* osTimeZone= "NULL";
-  bool matchPointFlag = false;
+  char* osTimeZone= view->getUi()->timeZoneSelector->currentText().toUtf8().data();;
+  bool matchPointFlag = true;
+  int numNinjas = baseInput.getNumNinjas();
+
+  QDateTime startTime = QDateTime::fromString("2025-04-22 00:00", "yyyy-MM-dd HH:mm");
+  QDateTime endTime = QDateTime::fromString("2025-04-22 12:00", "yyyy-MM-dd HH:mm");
+
+  //divides times and setsup simulations
+  QList<QDateTime> ninjaTimes;
+
+  qint64 totalSeconds = startTime.secsTo(endTime);
+
+  qint64 step = totalSeconds / (numNinjas - 1);
+
+  for (int i = 0; i < numNinjas; ++i) {
+    QDateTime timePoint = startTime.addSecs(i * step);
+    ninjaTimes.append(timePoint);
+  }
+
+  for (const QDateTime& dt : ninjaTimes) {
+    QDate date = dt.date();
+    QTime time = dt.time();
+
+    year.push_back(date.year());
+    month.push_back(date.month());
+    day.push_back(date.day());
+    hour.push_back(time.hour());
+    minute.push_back(time.minute());
+  }
 
   return PointInitialization (
       baseInput,
@@ -188,7 +223,6 @@ PointInitialization Controller::setPointInitialization() {
       hour,
       minute,
       station_path,
-      elevation_file,
       osTimeZone,
       matchPointFlag
       );

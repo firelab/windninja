@@ -65,30 +65,28 @@ class DomainAverageWind : public BaseInput {
 
 class PointInitialization : public BaseInput {
   private:
-    int year;
-    int month;
-    int day;
-    int hour;
-    int minute;
+    vector<int> year;
+    vector<int> month;
+    vector<int> day;
+    vector<int> hour;
+    vector<int> minute;
     char* station_path;
-    char* elevation_file;
     char* osTimeZone;
     bool matchPointFlag;
 
   public:
     // Constructor
     PointInitialization(const BaseInput& baseInput,
-                        int year, int month, int day, int hour, int minute, char* station_path, char* elevation_file, char* osTimeZone, bool matchPointFlag)
-        : BaseInput(baseInput), year(year), month(month), day(day), hour(hour), minute(minute), station_path(station_path), elevation_file(elevation_file), osTimeZone(osTimeZone), matchPointFlag(matchPointFlag) {}
+                        vector<int> year, vector<int> month, vector<int> day, vector<int> hour, vector<int> minute, char* station_path, char* osTimeZone, bool matchPointFlag)
+        : BaseInput(baseInput), year(year), month(month), day(day), hour(hour), minute(minute), station_path(station_path), osTimeZone(osTimeZone), matchPointFlag(matchPointFlag) {}
 
     // Getter methods
-    int getYear() { return year; }
-    int getMonth() { return month; }
-    int getDay() { return day; }
-    int getHour() { return hour; }
-    int getMinute() { return minute; }
+    vector<int> getYear() { return year; }
+    vector<int> getMonth() { return month; }
+    vector<int> getDay() { return day; }
+    vector<int> getHour() { return hour; }
+    vector<int> getMinute() { return minute; }
     char* getStationPath() { return station_path; }
-    char* getElevationFile() { return elevation_file; }
     char* getOSTimeZone() { return osTimeZone; }
     bool getMatchPointFlag() {return matchPointFlag;}
 };
