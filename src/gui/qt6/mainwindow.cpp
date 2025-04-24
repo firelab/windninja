@@ -317,6 +317,51 @@ void MainWindow::on_useCOMM_clicked()
 // User selects an elevation input file (by file)
 void MainWindow::on_elevFilePath_textChanged(const QString &arg1)
 {
+  // Get GDAL data information on DEM input
+  QString fileName = ui->elevFilePath->text();
+  double adfGeoTransform[6];
+  GDALDataset *poInputDS;
+  poInputDS = (GDALDataset*)GDALOpen(fileName.toStdString().c_str(), GA_ReadOnly);
+
+  // Set driver info
+  GDALDriverName = poInputDS->GetDriver()->GetDescription();
+  GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
+
+  // get x and y dimensions
+  GDALXSize = poInputDS->GetRasterXSize();
+  GDALYSize = poInputDS->GetRasterYSize();
+
+  // Calculate cell size
+  if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
+    int c1, c2;
+    c1 = adfGeoTransform[1];
+    c2 = adfGeoTransform[5];
+    if (abs(c1) == abs(c2)) {
+      GDALCellSize = abs(c1);
+    } else {
+      GDALClose((GDALDatasetH)poInputDS);
+    }
+  }
+
+  // Get GDAL min/max values
+  GDALRasterBand* band = poInputDS->GetRasterBand(1);
+  int gotMin = 0, gotMax = 0;
+  double minVal = band->GetMinimum(&gotMin);
+  double maxVal = band->GetMaximum(&gotMax);
+
+  if (!gotMin || !gotMax) {
+    band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
+  }
+
+  GDALMinValue = minVal;
+  GDALMaxValue = maxVal;
+
+  // Close
+  GDALClose((GDALDatasetH)poInputDS);
+
+  // Run mesh calculator
+  MainWindow::on_meshResType_currentIndexChanged(ui->meshResType->currentIndex());
+
   refreshUI(ui);
 }
 
@@ -335,7 +380,6 @@ void MainWindow::on_openFileButton_clicked()
 
 
 // User selects an elevation input file (by map import)
-// TODO: get DEM file on button press
 void MainWindow::on_getFromMapButton_clicked()
 {
   // We have to use batching since the Javascript part is async
@@ -377,79 +421,89 @@ void MainWindow::on_getFromMapButton_clicked()
   run("center_lon");
   run("radius");
 
-  // Verify input validity and write file
+         // Verify input validity and write file
   if (northLat != 0 && southLat != 0 && eastLon != 0 && westLon != 0) {
     QString defaultName = "demDownload.tif";
     QString filter = "TIF Files (*.tif)";
 
-    // Get downloads path and join to filename
+           // Get downloads path and join to filename
     QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     QDir dir(downloadsPath);
     QString fullPath = dir.filePath(defaultName);
 
-    // Open save window
+           // Open save window
     QString fileName = QFileDialog::getSaveFileName(this,
-                        "Save DEM File",
-                        fullPath,
-                        filter);
+                                                    "Save DEM File",
+                                                    fullPath,
+                                                    filter);
 
     if (fileName != "") {
-      double coords[] = { northLat, eastLon, southLat, westLon };
-      getDEMrequest(coords, fileName);
+      std::array<double, 4> coordsCopy = { northLat, eastLon, southLat, westLon };
+      QString fileNameCopy = fileName;
+
+      QtConcurrent::run([coordsCopy, fileNameCopy, this]() {
+        emit getDEMrequest(coordsCopy, fileNameCopy);
+      });
     }
-
   }
-
 }
 
-// User changes the mesh resolution spec for surface input
+  // User changes the mesh resolution spec for surface input
 void MainWindow::on_meshResType_currentIndexChanged(int index)
 {
-  switch(index) {
-  case 0:
-    if (ui->meshResMeters->isChecked()) {
-      ui->meshResValue->setValue(512.00);
-    } else {
-      ui->meshResValue->setValue(78.13);
-    }
-    ui->meshResValue->setEnabled(false);
-    break;
-
-  case 1:
-    if (ui->meshResMeters->isChecked()) {
-      ui->meshResValue->setValue(162.12);
-    } else {
-      ui->meshResValue->setValue(49.41);
-    }
-    ui->meshResValue->setEnabled(false);
-    break;
-
-  case 2:
-    if (ui->meshResMeters->isChecked()) {
-      ui->meshResValue->setValue(114.64);
-    } else {
-      ui->meshResValue->setValue(34.94);
-    }
-    ui->meshResValue->setEnabled(false);
-    break;
-
-  case 3:
+  // Set value box enable for custom/other
+  if (index == 3) {
     ui->meshResValue->setEnabled(true);
-    break;
+  } else {
+    ui->meshResValue->setEnabled(false);
+  }
 
+  int coarse = 4000;
+  int medium = 10000;
+  int fine = 20000;
+  double meshResolution = 200.0;
+
+  int targetNumHorizCells = fine;
+  switch (index) {
+  case 0:
+    targetNumHorizCells = coarse;
+    break;
+  case 1:
+    targetNumHorizCells = medium;
+    break;
+  case 2:
+    targetNumHorizCells = fine;
+    break;
+  case 3:
+    targetNumHorizCells = meshResolution;
+  }
+
+  double XLength = GDALXSize * GDALCellSize;
+  double YLength = GDALYSize * GDALCellSize;
+  double nXcells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
+  double nYcells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
+
+  double XCellSize = XLength / nXcells;
+  double YCellSize = YLength / nYcells;
+
+  meshResolution = (XCellSize + YCellSize) / 2;
+
+  ui->meshResValue->setValue(meshResolution);
+
+}
+
+void MainWindow::on_meshResMeters_toggled(bool checked)
+{
+  if (checked) {
+    ui->meshResValue->setValue(ui->meshResValue->value() * 0.3048);
   }
 }
 
-// User selects new mesh resolution unit
-void MainWindow::on_meshResFeet_clicked()
+void MainWindow::on_meshResFeet_toggled(bool checked)
 {
-  MainWindow::on_meshResType_currentIndexChanged(ui->meshResType->currentIndex());
-}
-
-
-void MainWindow::on_meshResMeters_clicked()
-{
-  MainWindow::on_meshResType_currentIndexChanged(ui->meshResType->currentIndex());
+  if (checked) {
+    ui->meshResValue->setValue(ui->meshResValue->value() * 3.28084);
+  }
 }
 
 // User selects a new time zone
@@ -772,6 +826,9 @@ MainWindow::MainWindow(QWidget *parent)
   // Expand tree UI
   ui->treeWidget->expandAll();
 
+  // Register GDAL drivers
+  GDALAllRegister();
+
   /*
    * Create file handler window for point init screen
    */
@@ -911,4 +968,3 @@ MainWindow::MainWindow(QWidget *parent)
     ui->windTableData->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
 }
-

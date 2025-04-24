@@ -1,10 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrentRun>
+#include <QProgressDialog>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include "ui_mainwindow.h"
+#include "gdal/gdal_utils.h"
+#include "gdal/gdal_priv.h"
 #include <vector>
 #include <string>
 
@@ -22,6 +28,17 @@ public:
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
   void loadMapKMZ(const std::vector<std::string>& input);
+
+  // GDAL Values
+  QString GDALDriverName, GDALDriverLongName;
+  std::string GDALProjRef;
+  bool hasGDALCenter;
+  double GDALCenterLat;
+  double GDALCenterLon;
+  int GDALXSize, GDALYSize;
+  double GDALCellSize, GDALNoData;
+  double GDALMaxValue, GDALMinValue;
+
 
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
@@ -68,15 +85,15 @@ private slots:
 
   void on_windTableData_cellChanged(int row, int column);
 
-  void on_meshResFeet_clicked();
+  void on_meshResMeters_toggled(bool checked);
 
-  void on_meshResMeters_clicked();
+  void on_meshResFeet_toggled(bool checked);
 
 signals:
   void solveRequest();
   void timeZoneDataRequest();
   void timeZoneDetailsRequest();
-  void getDEMrequest(double boundBox[], QString outputFile);
+  void getDEMrequest(std::array<double, 4> boundsBox, QString outputFile);
 
 private:
   void onTreeItemClicked(QTreeWidgetItem *item, int column);
