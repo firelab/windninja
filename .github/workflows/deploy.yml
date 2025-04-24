@@ -24,4 +24,4 @@ jobs:
 
       - name: Copy documentation to server
         run: |
-          sudo scp -r ./doc/html/* octobot@ninjastorm:/var/www/html/windninjaapi/
+          sudo scp -r ./doc/html/* octobot@ninjastorm.firelab.org:/var/www/html/windninjaapi/
