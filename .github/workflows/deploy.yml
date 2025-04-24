@@ -20,7 +20,7 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+          ssh-private-key: ${{ secrets.DEPLOY_NINJASTORM_KEY }}
 
       - name: Copy documentation to server
         run: |
