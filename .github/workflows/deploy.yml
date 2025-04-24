@@ -1,0 +1,27 @@
+name: Deploy API to Ninjastorm
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      - name: Generate Doxygen Documentation
+        run: doxygen Doxyfile
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Copy documentation to server
+        run: |
+          sudo scp -r ./docs/html/* octobot@ninjastorm:/var/www/html/windninjaapi/
