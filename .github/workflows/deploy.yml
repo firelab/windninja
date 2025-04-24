@@ -13,11 +13,6 @@ jobs:
 
       - name: Install Doxygen
         run: sudo apt-get update && sudo apt-get install -y doxygen
-      
-      - name: List files before running Doxygen
-        run: |
-          echo "Files in ./doc/html before running Doxygen:"
-          find ./doc/html -type f
 
       - name: Generate Doxygen Documentation
         run: doxygen Doxyfile
