@@ -17,11 +17,6 @@ jobs:
       - name: Generate Doxygen Documentation
         run: doxygen Doxyfile
 
-      - name: List files after running Doxygen
-        run: |
-          echo "Files in ./doc/html after running Doxygen:"
-          find ./doc/html -type f
-
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.7.0
         with:
