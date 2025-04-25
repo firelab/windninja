@@ -199,22 +199,27 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                           CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
         int nTokens = CSLCount( papszTokens );
 
-        CPLDebug( "LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
         CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
 
-        for( int i = 1; i < nTokens; i++ )
-        {
-            if(EQUAL( papszTokens[i], "jobStatus" )) 
-            {
-                if(EQUAL( papszTokens[i + 1], "esriJobSucceeded" ) )
-                    downloadReady = true;
-                if(EQUAL( papszTokens[i + 1], "esriJobFailed" ) )
-                    downloadFailed = true;
-                break;
-            }
+        if(EQUAL( papszTokens[5], "Succeeded" )) {
+          downloadReady = true;
         }
+        if(EQUAL( papszTokens[5], "Failed")) {
+          downloadFailed = true;
+        }
+
         CPLDebug( "LCP_CLIENT", "Attempting to fetch LCP, try %d of %d, jobStatus: %s", i,
             nMaxTries, papszTokens[3] );
+
+        std::string strLCPTest = papszTokens[nTokens - 1];
+
+        // Check if the last character is '}', and if so, remove it
+        if (!strLCPTest.empty() && strLCPTest.back() == '}') {
+          strLCPTest.pop_back(); // Removes the last character '}'
+        }
+
+        // If you need it as a const char* again:
+        LCPTest = strLCPTest.c_str();
 
         CSLDestroy( papszTokens );
         i++;
@@ -246,7 +251,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Download the landfire model
      *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_DOWNLOAD_JOB_TEMPLATE, m_JobId.c_str(), m_JobId.c_str() );
+    pszUrl = LCPTest.c_str();
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get job status" );
 
