@@ -70,7 +70,7 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
         for (int i = 0; i < spd.get_nRows(); ++i) {
           for (int j = 0; j < spd.get_nCols(); ++j) {
             if (spd(i, j) > 1e36) {
-              spd(i, j) = -9999.0;
+              spd(i, j) = spd.get_noDataValue();
             }
           }
         }
