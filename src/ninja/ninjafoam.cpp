@@ -3732,7 +3732,10 @@ void NinjaFoam::UpdateExistingCase()
     
     //rm latestTime in case (old flow solution)
     latestTime = GetLatestTimeOnDisk();
-    NinjaUnlinkTree(CPLSPrintf("%s/%d", pszFoamPath, latestTime));
+    if( latestTime > 50+nRoundsRefinement )
+    {
+        NinjaUnlinkTree(CPLSPrintf("%s/%d", pszFoamPath, latestTime));
+    }
 
     //now latestTime on disk is where we want to start (the mesh is here)
     latestTime = GetLatestTimeOnDisk();
