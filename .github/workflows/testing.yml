@@ -54,11 +54,11 @@ jobs:
                             libopenjp2-7-dev \
                             libtiff-dev
         # sudo make poppler, proj, and gdal
-        cd ${{github.workspace}}/scripts/poppler-0.23.4
+        cd ${{github.workspace}}/scripts/poppler-22.02.0
         sudo make install
-        cd ${{github.workspace}}/scripts/proj-6.3.2
+        cd ${{github.workspace}}/scripts/proj-8.2.1
         sudo make install
-        cd ${{github.workspace}}/scripts/gdal-3.2.1
+        cd ${{github.workspace}}/scripts/gdal-3.4.1
         sudo make install
 
     - name: make build directory
