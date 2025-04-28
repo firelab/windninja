@@ -898,7 +898,7 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
  * @return void
  */
 void wxStation::writeKmlFile( std::vector<wxStation> stations,
-                              std::string demFileName,std::string basePath, velocityUnits::eVelocityUnits velUnits)
+                              std::string demFileName, std::string outPath, velocityUnits::eVelocityUnits velUnits)
 {
     std::string outFileNameStamp;
     std::string outFileNameMod;
@@ -920,15 +920,13 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     std::string path_str(demPath);
     std::string filePart = std::string(demChar)+"-stations-"+timestream.str();
 
-    if(basePath=="") //If the user doesn't specify out output path, put with dEM
+    if(outPath=="") //If the user doesn't specify out output path, put with dEM
     {
         outFileNameStamp = std::string(CPLFormFilename(path_str.c_str(),filePart.c_str(),".kml"));
-//      outFileNameStamp=path_str+demChar+"-stations-"+timestream.str()+".kml";
     }
     else //put with other output files in output path
     {
-        outFileNameStamp = std::string(CPLFormFilename(basePath.c_str(),filePart.c_str(),".kml"));
-//        outFileNameStamp=basePath+demChar+"-stations-"+timestream.str()+".kml";
+        outFileNameStamp = std::string(CPLFormFilename(outPath.c_str(),filePart.c_str(),".kml"));
     }
     if( stations.size() == 0 )
         return;

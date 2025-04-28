@@ -2212,13 +2212,13 @@ int mainWindow::solve()
         }
         if (writeStationKML==true) //Write KMLS for each time step
         {
+            std::string outputDir = tree->solve->outputDirectory().toStdString();
             writeToConsole("Writing Weather Station .kml");
             nRuns = army->getSize();
             for (int i_=0;i_<nRuns;i_++)
             {
                 wxStation::writeKmlFile(army->getWxStations(i_),
-                                        demFile,
-                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/", outputSpeedUnits);
+                                        demFile, (outputDir + "/").c_str(), outputSpeedUnits);
             }
         }
 //                if (writeStationCSV==true)
