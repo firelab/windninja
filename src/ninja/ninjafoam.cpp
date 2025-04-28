@@ -1491,7 +1491,7 @@ void NinjaFoam::MoveDynamicMesh()
     finalFirstCellHeight = initialFirstCellHeight;
     oldFirstCellHeight = finalFirstCellHeight;
     UpdateSimpleFoamControlDict();
-    UpdateDictFiles();
+    UpdateTimeDirFiles();
 }
 
 void NinjaFoam::RefineSurfaceLayer()
@@ -1543,7 +1543,9 @@ void NinjaFoam::RefineSurfaceLayer()
         finalFirstCellHeight /= 2.0; //keep track of first cell height
         //meshResolution /= 2.0;
         
-        UpdateDictFiles();
+        //update dict files
+        UpdateSimpleFoamControlDict();
+        UpdateTimeDirFiles();
 
         pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
@@ -1567,11 +1569,8 @@ void NinjaFoam::RefineSurfaceLayer()
     CPLDebug("NINJAFOAM", "finalFirstCellHeight = %f", finalFirstCellHeight);
 }
 
-void NinjaFoam::UpdateDictFiles()
+void NinjaFoam::UpdateTimeDirFiles()
 {
-    /* update simpleFoam controlDict writeInterval */
-    UpdateSimpleFoamControlDict();
-
     /* copy files to latestTime and update firstCellHeight */   
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%s/U", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
@@ -1593,13 +1592,11 @@ void NinjaFoam::UpdateDictFiles()
 
     CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/nut", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
 
 void NinjaFoam::UpdateSimpleFoamControlDict()
 {
+    //update simpleFoam controlDict endTime
     int oldSimpleFoamEndTime = simpleFoamEndTime; 
     simpleFoamEndTime = latestTime + input.nIterations; //only write final timestep
     CPLDebug("NINJAFOAM", "simpleFoamEndTime = %d", simpleFoamEndTime);
@@ -1812,7 +1809,6 @@ bool NinjaFoam::SimpleFoam()
                 return false;
             }
         }
-
     }
     else{
         const char *const papszArgv[] = { "simpleFoam",
@@ -3671,7 +3667,6 @@ void NinjaFoam::UpdateExistingCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
 
-
     /*
     ** Copy and save OpenFOAM files for this timestep if NINJAFOAM_KEEP_ALL_TIMESTEPS is TRUE.
     */
@@ -3707,116 +3702,93 @@ void NinjaFoam::UpdateExistingCase()
         CSLDestroy(papszFileList);
     }
 
-    //find and delete the old sampled output directory
-    char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
-
-    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
-        if(std::string(papszOutputSurfacePath[i]) != "." &&
-           std::string(papszOutputSurfacePath[i]) != "..") {
-            NinjaUnlinkTree(CPLSPrintf("%s/postProcessing/surfaces/%s", 
-                    pszFoamPath, papszOutputSurfacePath[i]));
-            break;
-        }
-        else{
-            continue;
-        }
+    //find and delete the old sampled output and residual directories
+    std::string outputSurfacePath = CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath);
+    std::string outputProbesPath = CPLSPrintf("%s/postProcessing/probes/", pszFoamPath);
+    if ( foamVersion == "2.2.0" ) {
+        outputProbesPath = CPLSPrintf("%s/postProcessing/sets/", pszFoamPath);
     }
+    std::string outputResidualsPath = CPLSPrintf("%s/postProcessing/residuals/", pszFoamPath);
 
-    CSLDestroy(papszOutputSurfacePath);
+    NinjaUnlinkTree( outputSurfacePath.c_str() );
+    NinjaUnlinkTree( outputProbesPath.c_str() );
+    NinjaUnlinkTree( outputResidualsPath.c_str() );
 
-    //set meshResolution from log.ninja
-    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
-    VSILFILE *fin;
-    fin = VSIFOpenL(pszInput, "r");
+    //set meshResolution and other values from log.ninja
+    ReadNinjaLog();
 
-    char *data;
+    //read in firstCellHeight from the 0 dir on disk before it is lost during WriteFoamFiles()
+    initialFirstCellHeight = GetFirstCellHeightFromDisk(0);
 
-    vsi_l_offset offset;
-    VSIFSeekL(fin, 0, SEEK_END);
-    offset = VSIFTellL(fin);
-
-    VSIRewindL(fin);
-    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-    VSIFReadL(data, offset, 1, fin);
-    data[offset] = '\0';
-
-    std::string s(data);
-
-    CPLFree(data);
-    VSIFCloseL(fin);
-
-    std::string h;
-    int pos;
-    if(s.find("meshResolution") != s.npos){
-        pos = s.find("firstCellHeight ");
-        h = s.substr(pos+18, pos+23);
-    }
-
-    meshResolution = atof(h.c_str());
+    //many files are overwritten by writeFoamFiles(), most with the same values replaced back in
+    //make a tmp copy of those files overwritten by writeFoamFiles(), but where the values are not replaced back in
+    std::string tmpPath = CPLGetPath(input.dem.fileName.c_str());
+    CopyFile(CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""),
+             CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    CopyFile(CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""),
+             CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""));
 
     //write the new dict files
     WriteFoamFiles();
-    
+
+    //put the tmp copy files back, delete the leftover tmp files from the tmp location
+    CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
+             CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""));
+    CopyFile(CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""),
+             CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""));
+    VSIUnlink(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    VSIUnlink(CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""));
+
     //rm latestTime in case (old flow solution)
     latestTime = GetLatestTimeOnDisk();
-    NinjaUnlinkTree(CPLSPrintf("%s/%d", pszFoamPath, latestTime));
+    if( latestTime > 50+nRoundsRefinement )
+    {
+        NinjaUnlinkTree(CPLSPrintf("%s/%d", pszFoamPath, latestTime));
+    }
 
     //now latestTime on disk is where we want to start (the mesh is here)
     latestTime = GetLatestTimeOnDisk();
 
-    //read in firstCellHeight from latestTime dir on disk
-    finalFirstCellHeight = GetFirstCellHeightFromDisk(); 
-
     //Get rid of -9999.9 in 0/ files
-    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
-            CPLFormFilename(pszFoamPath, "0/U", ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight)); //just use final cell height here for now
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""),
+             CPLFormFilename(pszFoamPath, "0/U", ""),
+             "-9999.9",
+             CPLSPrintf("%.2f", initialFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
-            CPLFormFilename(pszFoamPath, "0/k", ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""),
+             CPLFormFilename(pszFoamPath, "0/k", ""),
+             "-9999.9",
+             CPLSPrintf("%.2f", initialFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
-            CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""),
+             CPLFormFilename(pszFoamPath, "0/epsilon", ""),
+             "-9999.9",
+             CPLSPrintf("%.2f", initialFirstCellHeight));
 
-    //copy 0/ to latestTime/
-    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/U", latestTime), ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/k", latestTime), ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
-            
-    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/nut", latestTime), ""));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), "")); 
+    //copy 0/ to each later time/ up to latestTime/
+    int finalTime = latestTime;
+    for( int time = 50; time <= finalTime; time++ )
+    {
+        // update latestTime to the current time for the current operation
+        latestTime = time;
+        //read in firstCellHeight from latestTime dir on disk before it is overwritten with the new files
+        finalFirstCellHeight = GetFirstCellHeightFromDisk(latestTime);
+        UpdateTimeDirFiles();
+    }
 
     //update controlDict
     CopyFile(CPLSPrintf("%s/system/controlDict_simpleFoam", pszFoamPath),
-            CPLSPrintf("%s/system/controlDict", pszFoamPath));
-    CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            "startFrom       latestTime", "startFrom       startTime");
-    CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            "latestTime", CPLSPrintf("%d", latestTime));
+             CPLSPrintf("%s/system/controlDict", pszFoamPath));
+    // this is for updating controlDict to a different, better form,
+    // rather than the standard form set in the line above
+    //CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         "startFrom       latestTime", "startFrom       startTime");
+    //CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         "latestTime", CPLSPrintf("%d", latestTime));
 
-    //update endTime
+    //update simpleFoam controlDict endTime
     UpdateSimpleFoamControlDict();
 
     //rm any processor* directories
@@ -3824,6 +3796,35 @@ void NinjaFoam::UpdateExistingCase()
     for(int n=0; n<dirList.size(); n++){
         NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
     }
+
+    //rm any additional log, output, and system files that will later be replaced during the run, if they exist
+    //log.blockMesh, log.moveDynamicMesh, log.refineMesh, log.topoSet should be kept, those processes aren't rerun
+    char **papszFileList = NULL;
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.decomposePar", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.reconstructPar", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.renumberMesh", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.applyInit", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.simpleFoam", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.sample", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "foam.tif", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "output.raw", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "output.vrt", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.probeSample", "") );
+    if ( foamVersion == "2.2.0" ) {
+        papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "") );
+    } else {
+        papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "system/probes", "") );
+    }
+    for(int i = 0; i < CSLCount( papszFileList ); i++)
+    {
+        VSIUnlink(papszFileList[i]);
+    }
+    CSLDestroy( papszFileList );
+
+    //renumbering mesh is NOT required, the mesh and files are already in renumbered form
+    //but calling renumberMesh is handy for updating the "value" entries in k and epsilon
+    CPLDebug("NINJAFOAM", "calling renumberMesh, to update latestTime \"value\" entries...");
+    RenumberMesh();
 }
 
 void NinjaFoam::GenerateNewCase()
@@ -3956,16 +3957,61 @@ void NinjaFoam::GenerateNewCase()
 void NinjaFoam::WriteNinjaLog()
 {
     //write log.ninja to store info needed for reusing cases
+    int nRet = -1;
     const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
     VSILFILE *fout;
     fout = VSIFOpenL(pszInput, "w");
     if( !fout ){
         throw std::runtime_error("Error writing log.ninja to case directory.");
     }
-    const char *d = CPLSPrintf("meshResolution = %.2f", meshResolution);
-    int nSize = strlen(d);
-    VSIFWriteL(d, nSize, 1, fout);
+    nRet = VSIFPrintfL(fout, "meshResolution = %.2f\n", meshResolution);
+    nRet = VSIFPrintfL(fout, "nRoundsRefinement = %d\n", nRoundsRefinement);
     VSIFCloseL(fout);
+}
+
+void NinjaFoam::ReadNinjaLog()
+{
+    // set meshResolution and other values from log.ninja
+    const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
+    VSILFILE *fin;
+    fin = VSIFOpenL(pszInput, "r");
+    if(fin == NULL)
+    {
+        throw std::runtime_error("Can't open log.ninja to set the mesh resolution!");
+    }
+
+    std::string currentLine, currentSubstr;
+    size_t pos1, pos2;
+
+    currentLine = CPLReadLineL(fin);
+    pos1 = currentLine.find("meshResolution");
+    if(pos1 == currentLine.npos)
+    {
+        throw std::runtime_error("log.ninja does not contain meshResolution!");
+    } else
+    {
+        pos1 = pos1 + 17;
+        pos2 = currentLine.length() - 1;
+        currentSubstr = currentLine.substr(pos1, pos2-pos1+1);
+        set_meshResolution( atof(currentSubstr.c_str()), lengthUnits::meters );
+        CPLDebug("NINJAFOAM", "meshResolution = %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits));
+    }
+
+    currentLine = CPLReadLineL(fin);
+    pos1 = currentLine.find("nRoundsRefinement");
+    if(pos1 == currentLine.npos)
+    {
+        throw std::runtime_error("log.ninja does not contain nRoundsRefinement!");
+    } else
+    {
+        pos1 = pos1 + 20;
+        pos2 = currentLine.length() - 1;
+        currentSubstr = currentLine.substr(pos1, pos2-pos1+1);
+        nRoundsRefinement = atof(currentSubstr.c_str());
+        CPLDebug("NINJAFOAM", "nRoundsRefinement = %d", nRoundsRefinement);
+    }
+
+    VSIFCloseL(fin);
 }
 
 int NinjaFoam::GetLatestTimeOnDisk()
@@ -4027,10 +4073,8 @@ bool NinjaFoam::StringIsNumeric(const std::string &str)
     return str.find_first_not_of("0123456789") == std::string::npos;
 }
 
-double NinjaFoam::GetFirstCellHeightFromDisk()
+double NinjaFoam::GetFirstCellHeightFromDisk(int time)
 {
-    int time = GetLatestTimeOnDisk();
-
     //read time/U and search for firstCellHeight
     const char *pszInput = CPLSPrintf("%s/%d/U", pszFoamPath, time);
     VSILFILE *fin;
@@ -4061,7 +4105,7 @@ double NinjaFoam::GetFirstCellHeightFromDisk()
         h = s.substr(pos+16, (s.find(";", pos+16) - (pos+16)));
     }
 
-    double height = atoi(h.c_str());
+    double height = atof(h.c_str());
 
     return height;
 }
@@ -4104,39 +4148,8 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
 {
     //if we are re-using a case, just set the meshResolution
     if(CheckForValidCaseDir(pszFoamPath)){
-        //set meshResolution from log.ninja
-        const char *pszInput = CPLSPrintf("%s/log.ninja", pszFoamPath);
-        VSILFILE *fin;
-        fin = VSIFOpenL(pszInput, "r");
-        if(fin == NULL)
-        {
-            throw std::runtime_error("Can't open log.ninja to set the mesh resolution!");
-        }
-
-        char *data;
-
-        vsi_l_offset offset;
-        VSIFSeekL(fin, 0, SEEK_END);
-        offset = VSIFTellL(fin);
-
-        VSIRewindL(fin);
-        data = (char*)CPLMalloc(offset * sizeof(char) + 1);
-        VSIFReadL(data, offset, 1, fin);
-        data[offset] = '\0';
-
-        std::string s(data);
-
-        CPLFree(data);
-        VSIFCloseL(fin);
-
-        std::string h;
-        int pos;
-        if(s.find("meshResolution") != s.npos){
-            pos = s.find("firstCellHeight ");
-            h = s.substr(pos+18, pos+23);
-        }
-
-        meshResolution = atof(h.c_str());
+        //set meshResolution and other values from log.ninja
+        ReadNinjaLog();
     }
     //otherwise, if the mesh resolution hasn't been set, calculate it
     else if(meshResolution < 0.0){
