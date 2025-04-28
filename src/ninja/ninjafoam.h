@@ -145,7 +145,7 @@ private:
     std::vector<std::string> GetTimeDirsOnDisk();
     std::vector<std::string> GetProcessorDirsOnDisk();
     bool StringIsNumeric(const std::string &str);
-    double GetFirstCellHeightFromDisk();
+    double GetFirstCellHeightFromDisk(int time);
     bool CheckForValidCaseDir(const char* dir);
     bool CheckForValidDem();
     void SetMeshResolutionAndResampleDem();

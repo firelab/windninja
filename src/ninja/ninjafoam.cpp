@@ -3721,9 +3721,12 @@ void NinjaFoam::UpdateExistingCase()
     //set meshResolution and other values from log.ninja
     ReadNinjaLog();
 
+    //read in firstCellHeight from the 0 dir on disk before it is lost during WriteFoamFiles()
+    initialFirstCellHeight = GetFirstCellHeightFromDisk(0);
+
     //write the new dict files
     WriteFoamFiles();
-    
+
     //rm latestTime in case (old flow solution)
     latestTime = GetLatestTimeOnDisk();
     if( latestTime > 50+nRoundsRefinement )
@@ -3735,45 +3738,45 @@ void NinjaFoam::UpdateExistingCase()
     latestTime = GetLatestTimeOnDisk();
 
     //read in firstCellHeight from latestTime dir on disk
-    finalFirstCellHeight = GetFirstCellHeightFromDisk(); 
+    finalFirstCellHeight = GetFirstCellHeightFromDisk(latestTime);
 
     //Get rid of -9999.9 in 0/ files
-    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
-            CPLFormFilename(pszFoamPath, "0/U", ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight)); //just use final cell height here for now
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""),
+             CPLFormFilename(pszFoamPath, "0/U", ""),
+             "-9999.9",
+             CPLSPrintf("%.2f", initialFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
-            CPLFormFilename(pszFoamPath, "0/k", ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""),
+             CPLFormFilename(pszFoamPath, "0/k", ""),
+             "-9999.9",
+             CPLSPrintf("%.2f", initialFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
-            CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
-            "-9999.9", 
-            CPLSPrintf("%.2f", finalFirstCellHeight));
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""),
+             CPLFormFilename(pszFoamPath, "0/epsilon", ""),
+             "-9999.9",
+             CPLSPrintf("%.2f", initialFirstCellHeight));
 
     //copy 0/ to latestTime/
-    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/U", latestTime), ""), 
-            "-9999.9", 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/U", latestTime), ""),
+            CPLSPrintf("%.2f", initialFirstCellHeight),
             CPLSPrintf("%.2f", finalFirstCellHeight));
 
-    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/k", latestTime), ""), 
-            "-9999.9", 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/k", latestTime), ""),
+            CPLSPrintf("%.2f", initialFirstCellHeight),
             CPLSPrintf("%.2f", finalFirstCellHeight));
             
-    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""), 
-            "-9999.9", 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""),
+            CPLSPrintf("%.2f", initialFirstCellHeight),
             CPLSPrintf("%.2f", finalFirstCellHeight));
 
     CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
             CPLFormFilename(pszFoamPath, CPLSPrintf("%d/nut", latestTime), ""));
 
-    CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), "")); 
+    CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""),
+            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), ""));
 
     //update controlDict
     CopyFile(CPLSPrintf("%s/system/controlDict_simpleFoam", pszFoamPath),
@@ -4041,10 +4044,8 @@ bool NinjaFoam::StringIsNumeric(const std::string &str)
     return str.find_first_not_of("0123456789") == std::string::npos;
 }
 
-double NinjaFoam::GetFirstCellHeightFromDisk()
+double NinjaFoam::GetFirstCellHeightFromDisk(int time)
 {
-    int time = GetLatestTimeOnDisk();
-
     //read time/U and search for firstCellHeight
     const char *pszInput = CPLSPrintf("%s/%d/U", pszFoamPath, time);
     VSILFILE *fin;
@@ -4075,7 +4076,7 @@ double NinjaFoam::GetFirstCellHeightFromDisk()
         h = s.substr(pos+16, (s.find(";", pos+16) - (pos+16)));
     }
 
-    double height = atoi(h.c_str());
+    double height = atof(h.c_str());
 
     return height;
 }
