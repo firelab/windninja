@@ -3706,23 +3706,17 @@ void NinjaFoam::UpdateExistingCase()
         CSLDestroy(papszFileList);
     }
 
-    //find and delete the old sampled output directory
-    char **papszOutputSurfacePath;
-    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
-
-    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
-        if(std::string(papszOutputSurfacePath[i]) != "." &&
-           std::string(papszOutputSurfacePath[i]) != "..") {
-            NinjaUnlinkTree(CPLSPrintf("%s/postProcessing/surfaces/%s", 
-                    pszFoamPath, papszOutputSurfacePath[i]));
-            break;
-        }
-        else{
-            continue;
-        }
+    //find and delete the old sampled output and residual directories
+    std::string outputSurfacePath = CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath);
+    std::string outputProbesPath = CPLSPrintf("%s/postProcessing/probes/", pszFoamPath);
+    if ( foamVersion == "2.2.0" ) {
+        outputProbesPath = CPLSPrintf("%s/postProcessing/sets/", pszFoamPath);
     }
+    std::string outputResidualsPath = CPLSPrintf("%s/postProcessing/residuals/", pszFoamPath);
 
-    CSLDestroy(papszOutputSurfacePath);
+    NinjaUnlinkTree( outputSurfacePath.c_str() );
+    NinjaUnlinkTree( outputProbesPath.c_str() );
+    NinjaUnlinkTree( outputResidualsPath.c_str() );
 
     //set meshResolution and other values from log.ninja
     ReadNinjaLog();
