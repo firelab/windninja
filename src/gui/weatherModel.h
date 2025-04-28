@@ -136,6 +136,7 @@ class weatherModel : public QWidget
     QString tzString;
 
     std::vector<blt::local_date_time> timeList();
+    std::vector<blt::local_date_time> getFullTimeList();
  private:
     void loadModelComboBox();
 

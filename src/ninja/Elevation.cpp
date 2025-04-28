@@ -166,7 +166,7 @@ void Elevation::smooth_elevation(const int smoothDist)
 {
     if( smoothDist < 1 )
     {
-        throw std::runtime_error("input smoothDist "+std::to_string(smoothDist)+" for Elevation::smooth_elevation() is not 1 or greater!");
+        throw std::runtime_error("input smoothDist "+std::to_string(static_cast<unsigned long long>(smoothDist))+" for Elevation::smooth_elevation() is not 1 or greater!");
     }
 
     Elevation dem;  // make a temporary copy to keep the calculation values the same

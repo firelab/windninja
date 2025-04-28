@@ -3145,7 +3145,7 @@ void NinjaFoam::GenerateAndSampleMassMesh()
     
     // generate massMesh if required for other outputs
     try{
-	    if ( writeMassMesh == true ) {
+	    if ( writeMassMesh == true || casefile->getIsZipOpen() ) {
 	        generateMassMesh();
 	    }
 	}catch (exception& e)
@@ -3211,7 +3211,7 @@ void NinjaFoam::SetOutputResolution()
 void NinjaFoam::SetOutputFilenames()
 {
     //Do file naming string stuff for all output files
-    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
+    std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, case_fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
         shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
 
@@ -3256,6 +3256,7 @@ void NinjaFoam::SetOutputFilenames()
 
     timeAppend = timestream.str();
 
+
     ostringstream wxModelTimestream;
     boost::local_time::local_time_facet* wxModelOutputFacet;
     wxModelOutputFacet = new boost::local_time::local_time_facet();
@@ -3272,12 +3273,13 @@ void NinjaFoam::SetOutputFilenames()
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    ostringstream os, os_case, os_kmz, os_shp, os_ascii, os_pdf;
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
         os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_case << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
@@ -3299,16 +3301,20 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_case << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
 
     fileAppend = os.str();
+    case_fileAppend = os_case.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+
+    casefilename = rootFile + case_fileAppend + "_ninja.zip";
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -3599,48 +3605,49 @@ void NinjaFoam::WriteOutputFiles()
             output.write(input.pdfFile, "PDF");
 
 
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-		}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
-	}
-	
-	
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
+    }
+
+
 	try{
-	    if ( input.volVTKOutFlag == true ) {
-	        writeMassMeshVtkOutput();
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
-	}
-	
+        // write mass mesh if casefile is turned on - casefile always needs a vtk
+        if( input.volVTKOutFlag == true || casefile->getIsZipOpen())
+        {
+            writeMassMeshVtkOutput();
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
+    }
+
 }
 
 
 void NinjaFoam::writeMassMeshVtkOutput()
 {
-    CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
-    
     try {
+        CPLDebug("NINJAFOAM", "writing vtk file");
         bool vtk_out_as_utm = false;
-	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+        if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
         {
             vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
         }
@@ -3651,13 +3658,42 @@ void NinjaFoam::writeMassMeshVtkOutput()
         {
             vtkWriteFormat = found_vtkWriteFormat;
         }
-		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
-	} catch (exception& e) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-	} catch (...) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-	}
-	
+        volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
+
+        std::string volVtkFilename = CPLGetFilename(input.volVTKFile.c_str());
+        std::string volVtkSurfFilename = CPLSPrintf("%s_surf.vtk",CPLGetBasename(input.volVTKFile.c_str()));
+        std::string volVtkSurfFile = CPLFormFilename(CPLGetPath(input.volVTKFile.c_str()), volVtkSurfFilename.c_str(), "");
+        if( casefile->getIsZipOpen() )
+        {
+            casefile->updateCaseZipFile(casefilename);
+
+            std::string timestr = "";
+            if( input.ninjaTime.is_not_a_date_time() )
+            {
+                timestr = casefile->getCurrentTime();
+            } else
+            {
+                timestr = casefile->convertDateTimeToStd(input.ninjaTime);
+            }
+
+            std::string volVtkZipEntry = CPLFormFilename(timestr.c_str(), volVtkFilename.c_str(), "");
+            casefile->addFileToZip(volVtkZipEntry, input.volVTKFile);
+            std::string volVtkSurfZipEntry = CPLFormFilename(timestr.c_str(), volVtkSurfFilename.c_str(), "");
+            casefile->addFileToZip(volVtkSurfZipEntry, volVtkSurfFile);
+        }
+
+        if( input.volVTKOutFlag == false )
+        {
+            VSIUnlink( input.volVTKFile.c_str() );
+            VSIUnlink( volVtkSurfFile.c_str() );
+        }
+
+    } catch (exception& e) {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
+    } catch (...) {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+    }
+
 }
 
 
@@ -4136,7 +4172,7 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
             h = s.substr(pos+18, pos+23);
         }
 
-        meshResolution = atof(h.c_str());
+        set_meshResolution( atof(h.c_str()), lengthUnits::meters );
     }
     //otherwise, if the mesh resolution hasn't been set, calculate it
     else if(meshResolution < 0.0){
@@ -4187,7 +4223,9 @@ void NinjaFoam::SetMeshResolutionAndResampleDem()
     }
     
     
-    if ( writeMassMesh == true ) {
+    // write mass mesh if casefile is turned on - casefile always needs a vtk
+    if( writeMassMesh == true || casefile->getIsZipOpen() )
+    {
         // need to setup mesh sizing BEFORE the dem gets resampled, but AFTER the mesh resolution gets set
         massMesh.set_numVertLayers(20);  // done in cli.cpp calling ninja_army calling ninja calling this function, with windsim.setNumVertLayers( i_, 20); where i_ is ninjaIdx
         massMesh.set_meshResolution(meshResolution, meshResolutionUnits);

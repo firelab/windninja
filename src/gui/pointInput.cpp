@@ -37,6 +37,7 @@ static int wxStationFormat;
 
 pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 {
+    xWidget = NULL;
     pointGroupBox = new QGroupBox( "Point Initialization", this );
     pointGroupBox->setCheckable( true );
     pointGroupBox->setChecked(false);
@@ -271,6 +272,44 @@ pointInput::~pointInput()
 
 }
 
+void pointInput::collectAllIndexes(const QModelIndex &parent, std::vector<QModelIndex> &allIndexes) const
+{
+    for (int row = 0; row < sfModel->rowCount(parent); row++)
+    {
+        QModelIndex index = sfModel->index(row, 0, parent);
+        allIndexes.push_back(index);
+        if (sfModel->isDir(index))
+        {
+            collectAllIndexes(index, allIndexes); // Recursively collect child indexes
+        }
+    }
+}
+
+void pointInput::generateFullFileList()
+{
+    std::vector<QModelIndex> allIndexes;
+    std::vector<std::string> fileList;
+
+    // Collect all indexes starting from the root index
+    QModelIndex rootIndex = treeView->rootIndex();
+
+    collectAllIndexes(rootIndex, allIndexes);
+
+    for( size_t qIdx = 0; qIdx < allIndexes.size(); qIdx++ )
+    {
+        const QModelIndex &index = allIndexes[qIdx];
+
+        // Check if it is a file
+        if (!sfModel->isDir(index))
+        {
+            QString filePath = sfModel->filePath(index);
+            fileList.push_back(filePath.toStdString());
+        }
+    }
+
+    fullFileList = fileList;
+}
+
 /**
  * @brief pointInput::readStationFiles
  * Reads the files on disk that the user selects
@@ -301,6 +340,8 @@ void pointInput::readStationFiles(const QItemSelection &x ,const QItemSelection 
     std::vector<int> finalTypes; //What type they are
     CPLDebug("STATION_FETCH","========================================");
     CPLDebug("STATION_FETCH","NUMBER OF SELECTED STATIONS: %i",idx0.count());
+
+    generateFullFileList();
 
     for(int i=0;i<idx0.count();i++)
     {
@@ -996,7 +1037,6 @@ void pointInput::setDiurnalParam(bool diurnalCheck)
     isDiurnalChecked = diurnalCheck;//Note that this works for stability too
     CPLDebug("STATION_FETCH","DIURNAL/STABILITY STATUS: %i",isDiurnalChecked);
 }
-
 
 /**
  * *@brief pointInput::checkForModelData

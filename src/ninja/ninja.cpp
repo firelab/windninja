@@ -83,6 +83,8 @@ ninja::ninja()
     input.inputsComType = ninjaComClass::ninjaDefaultCom;
     input.Com = new ninjaDefaultComHandler();
 
+    casefilename = "";
+    casefile = NULL;
 }
 
 /**Ninja destructor
@@ -154,7 +156,6 @@ ninja::ninja(const ninja &rhs)
     endSolve=0.0;
     startWriteOut=0.0;
     endWriteOut=0.0;
-
     //Pointers to dynamically allocated memory
     DIAG=NULL;
     PHI=NULL;
@@ -170,6 +171,9 @@ ninja::ninja(const ninja &rhs)
     slope=NULL;
     shade=NULL;
     solar=NULL;
+
+    casefilename = rhs.casefilename;
+    casefile = rhs.casefile;
 }
 
 /**
@@ -247,6 +251,9 @@ ninja &ninja::operator=(const ninja &rhs)
         slope=NULL;
         shade=NULL;
         solar=NULL;
+
+        casefilename = rhs.casefilename;
+        casefile = rhs.casefile;
     }
     return *this;
 }
@@ -2822,17 +2829,17 @@ void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, 
 /**Writes output files.
  * Writes VTK, FARSITE ASCII Raster, text comparison, shape, and kmz output files.
  */
-
 void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
-	//Write volume data to VTK format (always in m/s?)
-	if(input.volVTKOutFlag)
-	{
-		try{
+    //Write volume data to VTK format (always in m/s?)
+    //write to casefile regardless of if VTK is checked
+    if(input.volVTKOutFlag == true || casefile->getIsZipOpen())
+    {
+        try{
             bool vtk_out_as_utm = false;
-		    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+            if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
             {
                 vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
             }
@@ -2843,19 +2850,48 @@ void ninja::writeOutputFiles()
             {
                 vtkWriteFormat = found_vtkWriteFormat;
             }
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
-		}catch (exception& e)
-		{
-			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-		}catch (...)
-		{
-			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-		}
-	}
+            volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
 
-	u.deallocate();
-	v.deallocate();
-	w.deallocate();
+            std::string volVtkFilename = CPLGetFilename(input.volVTKFile.c_str());
+            std::string volVtkSurfFilename = CPLSPrintf("%s_surf.vtk",CPLGetBasename(input.volVTKFile.c_str()));
+            std::string volVtkSurfFile = CPLFormFilename(CPLGetPath(input.volVTKFile.c_str()), volVtkSurfFilename.c_str(), "");
+            if( casefile->getIsZipOpen() )
+            {
+                casefile->updateCaseZipFile(casefilename);
+
+                std::string timestr = "";
+                if( input.ninjaTime.is_not_a_date_time() )
+                {
+                    timestr = casefile->getCurrentTime();
+                } else
+                {
+                    timestr = casefile->convertDateTimeToStd(input.ninjaTime);
+                }
+
+                std::string volVtkZipEntry = CPLFormFilename(timestr.c_str(), volVtkFilename.c_str(), "");
+                casefile->addFileToZip(volVtkZipEntry, input.volVTKFile);
+                std::string volVtkSurfZipEntry = CPLFormFilename(timestr.c_str(), volVtkSurfFilename.c_str(), "");
+                casefile->addFileToZip(volVtkSurfZipEntry, volVtkSurfFile);
+            }
+
+            if( input.volVTKOutFlag == false )
+            {
+                VSIUnlink( input.volVTKFile.c_str() );
+                VSIUnlink( volVtkSurfFile.c_str() );
+            }
+
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+        }
+    }
+
+    u.deallocate();
+    v.deallocate();
+    w.deallocate();
 
 	#pragma omp parallel sections
 	{
@@ -4528,6 +4564,16 @@ void ninja::set_position(double lat_degrees, double lat_minutes, double lat_seco
                                "less than -180 degrees in ninja::set_position().");
 }
 
+/**
+ * Set the pointer to the shared casefile.
+ *
+ * @param a casefile class passed in as a reference
+ */
+void ninja::set_casefilePtr( CaseFile &theCaseFile )
+{
+    casefile = &theCaseFile;
+}
+
 void ninja::set_numberCPUs(int CPUs)
 {
     if(CPUs < 1)
@@ -4876,7 +4922,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         input.pdfResolution = meshResolution;
 
     //Do file naming string stuff for all output files
-    std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
+    std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, case_fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
         shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
 
@@ -4960,13 +5006,15 @@ void ninja::set_outputFilenames(double& meshResolution,
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    ostringstream os, os_case, os_kmz, os_shp, os_ascii, os_pdf;
+
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
         input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
         os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_case << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
@@ -4975,6 +5023,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
         os << "_point";
+        os_case << "_point";
         os_kmz << "_point";
         os_shp << "_point";
         os_ascii << "_point";
@@ -4995,6 +5044,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
+    os_case << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
@@ -5003,6 +5053,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
         os       << "_alpha_" << input.alphaStability;
+        os_case  << "_alpha_" << input.alphaStability;
         os_kmz   << "_alpha_" << input.alphaStability;
         os_shp   << "_alpha_" << input.alphaStability;
         os_ascii << "_alpha_" << input.alphaStability;
@@ -5011,6 +5062,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
     {
         os       << "_non_neutral_stability";
+        os_case  << "_non_neutral_stability";
         os_kmz   << "_non_neutral_stability";
         os_shp   << "_non_neutral_stability";
         os_ascii << "_non_neutral_stability";
@@ -5018,11 +5070,14 @@ void ninja::set_outputFilenames(double& meshResolution,
     }
 
     fileAppend = os.str();
+    case_fileAppend = os_case.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
 
+
+    casefilename = rootFile + case_fileAppend + "_ninja.zip";
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
