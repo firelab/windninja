@@ -68,7 +68,7 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
 	speedUnits = units;
 	spd = s;
         for (int i = 0; i < spd.get_nRows(); ++i) {
-          for (int j = 0; j < spd.nCols(); ++j) {
+          for (int j = 0; j < spd.get_nCols(); ++j) {
             if (spd(i, j) > 1e36) {
               spd(i, j) = -9999.0;
             }
