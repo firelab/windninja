@@ -927,6 +927,7 @@ void mainWindow::updateFileInputForCase(const char* file)
 
       inputFileName = fileName;
       inputFileDir = QFileInfo(fileName).absolutePath();
+      tree->solve->setOutputDir( inputFileDir.absolutePath() );
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
