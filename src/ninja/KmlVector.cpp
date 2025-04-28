@@ -67,6 +67,13 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
 {
 	speedUnits = units;
 	spd = s;
+        for (int i = 0; i < spd.get_nRows(); ++i) {
+          for (int j = 0; j < spd.get_nCols(); ++j) {
+            if (spd(i, j) > 1e36) {
+              spd(i, j) = spd.get_noDataValue();
+            }
+          }
+        }
 }
 
 void KmlVector::setDirGrid(AsciiGrid<double> &d)
@@ -1717,14 +1724,13 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 	nR = spd.get_nRows();
 	nC = spd.get_nCols();
 
-
 	//double PI = acos(-1.0);
 	geTheta = 0;
 	for(int i = 0;i < nR;i++)
 	{
 		for(int j = 0;j < nC;j++)
 		{
-			yScale = 0.5;
+                        yScale = 0.5;
 			s = spd(i,j);
 			geTheta = dir(i,j);
 			theta = dir(i,j) + 180.0;
@@ -1801,7 +1807,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 			coordTransform->Transform(1, &xHeadRight, &yHeadRight);
 			coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
 
-			if(s != spd.get_noDataValue() && theta != dir.get_noDataValue())
+                        if(s != spd.get_noDataValue() && theta != dir.get_noDataValue())
 			{
                 VSIFPrintfL(fileOut, "<Placemark>");
 				//fprintf(fileOut, "\n<Icon><href>ffs_icon.ico</href></Icon>");

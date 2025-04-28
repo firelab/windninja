@@ -422,21 +422,47 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     CPLDebug( "WINDNINJA", "Forecast URL: %s", urlAddress.c_str() );
     if( poResult == NULL )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
+      CPLHTTPDestroyResult( poResult );
+      throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
     }
 
     if( poResult->nStatus != 0 )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( poResult->pszErrBuf ) );
+      CPLHTTPDestroyResult( poResult );
+      throw ( badForecastFile( poResult->pszErrBuf ) );
+    }
+
+    if (poResult->pszErrBuf && urlAddress.find("NDFD") != std::string::npos)
+    {
+      CPLDebug("WINDNINJA", "Received 404, retrying with new URL.");
+      std::string toReplace = "Best";
+      std::string replacement = "Best/LambertConformal_1377X2145-38p23N-95p44W-2";
+
+      size_t pos = urlAddress.find(toReplace);
+      if (pos != std::string::npos) {
+        urlAddress.replace(pos, toReplace.length(), replacement);
+      }
+
+      CPLDebug("WINDNINJA", "New Forecast URL: %s", urlAddress.c_str());
+      poResult = CPLHTTPFetch(urlAddress.c_str(), NULL);
+
+      if (poResult == NULL)
+      {
+        throw badForecastFile("CPLHTTPResult is NULL!");
+      }
+
+      if (poResult->nStatus != 0)
+      {
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile(poResult->pszErrBuf);
+      }
     }
 
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( "Failed to download forecast." ) );
+      CPLHTTPDestroyResult( poResult );
+      throw ( badForecastFile( "Failed to download forecast." ) );
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
     CPLHTTPDestroyResult( poResult );
