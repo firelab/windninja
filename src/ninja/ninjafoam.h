@@ -135,7 +135,7 @@ private:
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
     void CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
-    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateTimeDirFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
     void UpdateSimpleFoamControlDict();
 
     int latestTime; //latest time directory

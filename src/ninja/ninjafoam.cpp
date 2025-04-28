@@ -1491,7 +1491,7 @@ void NinjaFoam::MoveDynamicMesh()
     finalFirstCellHeight = initialFirstCellHeight;
     oldFirstCellHeight = finalFirstCellHeight;
     UpdateSimpleFoamControlDict();
-    UpdateDictFiles();
+    UpdateTimeDirFiles();
 }
 
 void NinjaFoam::RefineSurfaceLayer()
@@ -1543,7 +1543,9 @@ void NinjaFoam::RefineSurfaceLayer()
         finalFirstCellHeight /= 2.0; //keep track of first cell height
         //meshResolution /= 2.0;
         
-        UpdateDictFiles();
+        //update dict files
+        UpdateSimpleFoamControlDict();
+        UpdateTimeDirFiles();
 
         pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
@@ -1567,11 +1569,8 @@ void NinjaFoam::RefineSurfaceLayer()
     CPLDebug("NINJAFOAM", "finalFirstCellHeight = %f", finalFirstCellHeight);
 }
 
-void NinjaFoam::UpdateDictFiles()
+void NinjaFoam::UpdateTimeDirFiles()
 {
-    /* update simpleFoam controlDict writeInterval */
-    UpdateSimpleFoamControlDict();
-
     /* copy files to latestTime and update firstCellHeight */   
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%s/U", boost::lexical_cast<std::string>(latestTime).c_str()),  ""),
@@ -1593,13 +1592,11 @@ void NinjaFoam::UpdateDictFiles()
 
     CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""), 
             CPLFormFilename(pszFoamPath, CPLSPrintf("%s/p", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%s/nut", boost::lexical_cast<std::string>(latestTime).c_str()),  ""));
 }
 
 void NinjaFoam::UpdateSimpleFoamControlDict()
 {
+    //update simpleFoam controlDict endTime
     int oldSimpleFoamEndTime = simpleFoamEndTime; 
     simpleFoamEndTime = latestTime + input.nIterations; //only write final timestep
     CPLDebug("NINJAFOAM", "simpleFoamEndTime = %d", simpleFoamEndTime);
@@ -3670,7 +3667,6 @@ void NinjaFoam::UpdateExistingCase()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Using existing case directory...");
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Updating case files...");
 
-
     /*
     ** Copy and save OpenFOAM files for this timestep if NINJAFOAM_KEEP_ALL_TIMESTEPS is TRUE.
     */
@@ -3724,8 +3720,24 @@ void NinjaFoam::UpdateExistingCase()
     //read in firstCellHeight from the 0 dir on disk before it is lost during WriteFoamFiles()
     initialFirstCellHeight = GetFirstCellHeightFromDisk(0);
 
+    //many files are overwritten by writeFoamFiles(), most with the same values replaced back in
+    //make a tmp copy of those files overwritten by writeFoamFiles(), but where the values are not replaced back in
+    std::string tmpPath = CPLGetPath(input.dem.fileName.c_str());
+    CopyFile(CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""),
+             CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    CopyFile(CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""),
+             CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""));
+
     //write the new dict files
     WriteFoamFiles();
+
+    //put the tmp copy files back, delete the leftover tmp files from the tmp location
+    CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
+             CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""));
+    CopyFile(CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""),
+             CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""));
+    VSIUnlink(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    VSIUnlink(CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""));
 
     //rm latestTime in case (old flow solution)
     latestTime = GetLatestTimeOnDisk();
@@ -3736,9 +3748,6 @@ void NinjaFoam::UpdateExistingCase()
 
     //now latestTime on disk is where we want to start (the mesh is here)
     latestTime = GetLatestTimeOnDisk();
-
-    //read in firstCellHeight from latestTime dir on disk
-    finalFirstCellHeight = GetFirstCellHeightFromDisk(latestTime);
 
     //Get rid of -9999.9 in 0/ files
     CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""),
@@ -3756,39 +3765,30 @@ void NinjaFoam::UpdateExistingCase()
              "-9999.9",
              CPLSPrintf("%.2f", initialFirstCellHeight));
 
-    //copy 0/ to latestTime/
-    CopyFile(CPLFormFilename(pszFoamPath, "0/U", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/U", latestTime), ""),
-            CPLSPrintf("%.2f", initialFirstCellHeight),
-            CPLSPrintf("%.2f", finalFirstCellHeight));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/k", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/k", latestTime), ""),
-            CPLSPrintf("%.2f", initialFirstCellHeight),
-            CPLSPrintf("%.2f", finalFirstCellHeight));
-            
-    CopyFile(CPLFormFilename(pszFoamPath, "0/epsilon", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/epsilon", latestTime), ""),
-            CPLSPrintf("%.2f", initialFirstCellHeight),
-            CPLSPrintf("%.2f", finalFirstCellHeight));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/nut", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/nut", latestTime), ""));
-
-    CopyFile(CPLFormFilename(pszFoamPath, "0/p", ""),
-            CPLFormFilename(pszFoamPath, CPLSPrintf("%d/p", latestTime), ""));
+    //copy 0/ to each later time/ up to latestTime/
+    int finalTime = latestTime;
+    for( int time = 50; time <= finalTime; time++ )
+    {
+        // update latestTime to the current time for the current operation
+        latestTime = time;
+        //read in firstCellHeight from latestTime dir on disk before it is overwritten with the new files
+        finalFirstCellHeight = GetFirstCellHeightFromDisk(latestTime);
+        UpdateTimeDirFiles();
+    }
 
     //update controlDict
     CopyFile(CPLSPrintf("%s/system/controlDict_simpleFoam", pszFoamPath),
-            CPLSPrintf("%s/system/controlDict", pszFoamPath));
-    CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            "startFrom       latestTime", "startFrom       startTime");
-    CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            CPLSPrintf("%s/system/controlDict", pszFoamPath),
-            "latestTime", CPLSPrintf("%d", latestTime));
+             CPLSPrintf("%s/system/controlDict", pszFoamPath));
+    // this is for updating controlDict to a different, better form,
+    // rather than the standard form set in the line above
+    //CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         "startFrom       latestTime", "startFrom       startTime");
+    //CopyFile(CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         CPLSPrintf("%s/system/controlDict", pszFoamPath),
+    //         "latestTime", CPLSPrintf("%d", latestTime));
 
-    //update endTime
+    //update simpleFoam controlDict endTime
     UpdateSimpleFoamControlDict();
 
     //rm any processor* directories
@@ -3796,6 +3796,35 @@ void NinjaFoam::UpdateExistingCase()
     for(int n=0; n<dirList.size(); n++){
         NinjaUnlinkTree( CPLSPrintf( "%s/processor%d", pszFoamPath, n) );
     }
+
+    //rm any additional log, output, and system files that will later be replaced during the run, if they exist
+    //log.blockMesh, log.moveDynamicMesh, log.refineMesh, log.topoSet should be kept, those processes aren't rerun
+    char **papszFileList = NULL;
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.decomposePar", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.reconstructPar", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.renumberMesh", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.applyInit", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.simpleFoam", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.sample", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "foam.tif", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "output.raw", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "output.vrt", "") );
+    papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.probeSample", "") );
+    if ( foamVersion == "2.2.0" ) {
+        papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "") );
+    } else {
+        papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "system/probes", "") );
+    }
+    for(int i = 0; i < CSLCount( papszFileList ); i++)
+    {
+        VSIUnlink(papszFileList[i]);
+    }
+    CSLDestroy( papszFileList );
+
+    //renumbering mesh is NOT required, the mesh and files are already in renumbered form
+    //but calling renumberMesh is handy for updating the "value" entries in k and epsilon
+    CPLDebug("NINJAFOAM", "calling renumberMesh, to update latestTime \"value\" entries...");
+    RenumberMesh();
 }
 
 void NinjaFoam::GenerateNewCase()
