@@ -99,7 +99,6 @@ class pointInitialization : public initialize
                                                 std::vector<boost::posix_time::ptime> timeList);
 
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
-        static double interpolateDirection(double lowDir, double highDir);
         static double unixTime(boost::posix_time::ptime time);
 
         static bool fetchStationFromBbox(std::string demFile,

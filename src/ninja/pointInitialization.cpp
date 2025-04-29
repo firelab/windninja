@@ -1442,30 +1442,6 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     return result;
 }
 
-//interpolateDirection uses a MEAN OF CIRCULAR QUANTITIES equation, converts from polar to cartesian,
-//averages and then returns degrees. See https://en.wikipedia.org/wiki/Mean_of_circular_quantities
-double pointInitialization::interpolateDirection(double lowDir, double highDir)
-{
-    double lowRad = lowDir * PI / 180.0;
-    double highRad = highDir * PI / 180.0;
-    double sinSum = sin(lowRad) + sin(highRad);
-    double cosSum = cos(lowRad) + cos(highRad);
-    double average = atan2(sinSum, cosSum);
-    double degAverage = average * 180.0 / PI;
-
-    if (degAverage < 0.0)
-    {
-        degAverage = degAverage + 360.0;
-    }
-    //Changing isnan() to CPLIsNan() for MSVC2010 compliance
-    if (CPLIsNan(degAverage))
-    {
-        degAverage=0.0; //Sometimes the interpolation fails, temporary fix here!
-        CPLDebug("STATION_FETCH","Direction Interpolation Failed! Zeroing out bad point!");
-    }
-
-    return degAverage;
-}
 /**
  * @brief pointInitialization::BuildTime
  * Combines individual time component strings into one string
