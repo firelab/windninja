@@ -1315,7 +1315,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     vector<vector<pointInitialization::preInterpolate> > sts,
     std::vector<bpt::ptime> timeList)
 {
-	
     CPLDebug("STATION_FETCH", "Interpolating Weather Data...");
 
     vector<vector<preInterpolate> > interpolatedWxData;
@@ -1333,7 +1332,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             if (sts[k][mm].datetime < sts[k][minIdx].datetime) { minIdx = mm; }
             if (sts[k][mm].datetime > sts[k][maxIdx].datetime) { maxIdx = mm; }
         }
-
 
         for (int i = 0; i < timeList.size(); i++)
         {
@@ -1368,7 +1366,6 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
             double yy = w0 * cos(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * cos(sts[k][idx1].direction * PI / 180.0);
             double angle = atan2(xx, yy) * 180.0 / PI;
             if (angle < 0.0) { angle += 360.0; }
-
 
            // Create interpolated data
            //----------------------------
