@@ -57,7 +57,10 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    delete ninjas[0];
+    if(ninjas.size() >= 1)
+    {
+        delete ninjas[0];
+    }
     destoryLocalData();
 }
 
@@ -123,7 +126,7 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
     //interpolate raw data to actual time steps
 
     int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
-    
+
     if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
     {
         stationList = pointInitialization::readWxStations(demFile,timeZone);
