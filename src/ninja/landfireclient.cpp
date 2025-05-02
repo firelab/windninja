@@ -76,7 +76,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
      *-----------------------------------------------------------------------------*/
     int i = 0;
     char *p;
-    //int nMaxTries = atoi( CPLGetConfigOption( "LCP_MAX_DOWNLOAD_TRIES", "40" ) );
     int nMaxTries = atoi( CPLGetConfigOption( "LCP_MAX_DOWNLOAD_TRIES", "300" ) );
     double dfWait = atof( CPLGetConfigOption( "LCP_DOWNLOAD_WAIT", "3" ) );
     const char *pszProduct = CPLStrdup( CSLFetchNameValue( options, "PRODUCT" ) );
@@ -97,21 +96,21 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         CPLDebug( "LCP_CLIENT", "Testing if %s contains %s", osDataPath.c_str(),
                   pszGeom );
         //using same code for all geographic areas, but could update by region as updates
-        //become available. See codes at lfps.usgs.gov/helpdocs/productstable.html
+        //become available. See codes at https://lfps.usgs.gov/products
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
-            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
-                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
+          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
+                                 "240CH;240CBD;240CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
-            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
-                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
+          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
+                                 "240CH;240CBD;240CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "hi" ) )
         {
-            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
-                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
+          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
+                                 "240CH;240CBD;240CBH" ); //2024 data
         }
         else
         {
@@ -153,6 +152,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get download URL" );
     CPLDebug( "LCP_CLIENT", "Request URL: %s", pszUrl );
+
      /*-----------------------------------------------------------------------------
      *  Parse the JSON result of the request
      *-----------------------------------------------------------------------------*/
