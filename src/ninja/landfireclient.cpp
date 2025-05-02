@@ -212,14 +212,8 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
             nMaxTries, papszTokens[3] );
 
         std::string strLCPTest = papszTokens[nTokens - 1];
-
-        // Check if the last character is '}', and if so, remove it
-        if (!strLCPTest.empty() && strLCPTest.back() == '}') {
-          strLCPTest.pop_back(); // Removes the last character '}'
-        }
-
-        // If you need it as a const char* again:
-        LCPTest = strLCPTest.c_str();
+        strLCPTest.pop_back(); // Removes the last character '}'
+        downloadUrl = strLCPTest.c_str();
 
         CSLDestroy( papszTokens );
         i++;
@@ -251,7 +245,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Download the landfire model
      *-----------------------------------------------------------------------------*/
-    pszUrl = LCPTest.c_str();
+    pszUrl = downloadUrl.c_str();
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get job status" );
 
@@ -282,15 +276,15 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     papszFileList = VSIReadDirRecursive( pszVSIZip );
     int bFound = FALSE;
     std::string osFullPath;
-    CPLDebug( "LCP_CLIENT", "Extracting %s", (CPLSPrintf("%s.tif", m_JobId.c_str())) );
     for( int i = 0; i < CSLCount( papszFileList ); i++ )
     {
-        osFullPath = papszFileList[i];
-        if( osFullPath.find( CPLSPrintf("%s.tif", m_JobId.c_str()) ) != std::string::npos )
-        {
-            bFound = TRUE;
-            break;
-        }
+      osFullPath = papszFileList[i];
+      if( osFullPath.size() >= 4 &&
+          osFullPath.substr(osFullPath.size() - 4) == ".tif" )
+      {
+        bFound = TRUE;
+        break;
+      }
     }
     CSLDestroy( papszFileList );
     if( !bFound )
@@ -301,7 +295,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_IO_ERR;
     }
     int nError = 0;
-    const char *pszFileToFind = CPLSPrintf( "%s.tif", m_JobId.c_str() );
+    const char *pszFileToFind = osFullPath.c_str();
     nError = ExtractFileFromZip( pszTmpZip, pszFileToFind, filename );
     if( nError )
     {

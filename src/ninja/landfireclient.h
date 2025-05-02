@@ -55,13 +55,10 @@
                             "api/job/submit?Email=wind.ninja.support@gmail.com" \
                             "&Output_Projection=%d&Layer_List=%s" \
                             "&Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
-                            "&f=pjson&Priority_Code=WNDNJA"
-
-#define LF_DOWNLOAD_JOB_TEMPLATE "https://lfps.usgs.gov/arcgis/rest/directories/" \
-                                  "arcgisjobs/landfireproductservice_gpserver/%s/scratch/%s.zip"
+                            "&Priority_Code=WNDNJA"
 
 #define LF_GET_STATUS_TEMPLATE "https://lfps.usgs.gov/api/job/status?" \
-                               "JobId=%s&f=pjson"
+                               "JobId=%s"
                                
 
 #define LF_DEFAULT_SRS_TOKENS     "&prj=102039,&prj=0"
@@ -99,7 +96,7 @@ private:
 
     CPLHTTPResult *m_poResult;
     std::string m_JobId;
-    std::string LCPTest;
+    std::string downloadUrl;
 };
 
 #endif /* LANDFIRE_CLIENT_H_ */
