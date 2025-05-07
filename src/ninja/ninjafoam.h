@@ -165,6 +165,8 @@ private:
     void ApplyInit();
     bool SimpleFoam();
     void Sample();
+    void createMinZpatchStl();
+    void createOutputSurfSampleStl();
 
     /* Output */
     Elevation outputSampleGrid;

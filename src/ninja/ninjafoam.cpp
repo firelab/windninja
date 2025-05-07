@@ -1894,6 +1894,65 @@ void NinjaFoam::Sample()
     VSIFCloseL(fout);
 }
 
+void NinjaFoam::createMinZpatchStl()
+{
+    int nRet = -1;
+
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.createMinZpatchStl", ""), "w");
+
+    const char *const papszArgv[] = { "surfaceMeshTriangulate",
+                                      "-case",
+                                      pszFoamPath,
+                                      "-patches",
+                                      "\(minZ\)",
+                                      "constant/triSurface/minZpatch.stl",
+                                      NULL };
+
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE );
+
+    if(nRet != 0)
+    {
+        VSIFCloseL(fout);
+        throw std::runtime_error("Error during createMinZpatchStl().");
+    }
+
+    VSIFCloseL(fout);
+}
+
+void NinjaFoam::createOutputSurfSampleStl()
+{
+    createMinZpatchStl();
+
+    const char *pszMinZpatchStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/minZpatch.stl", pszFoamPath)));
+
+    std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+    const char *pszSurfOutStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
+
+    int nRet = -1;
+
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.createOutputSurfSampleStl", ""), "w");
+
+    const char *const papszArgv[] = { "surfaceTransformPoints",
+                                      "-translate",
+                                      CPLSPrintf("(0 0 %f)",input.outputWindHeight),
+                                      pszMinZpatchStlFileName,
+                                      pszSurfOutStlFileName,
+                                      NULL };
+
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE );
+
+    if(nRet != 0)
+    {
+        VSIFCloseL(fout);
+        throw std::runtime_error("Error during createOutputSurfSampleStl().");
+    }
+
+    VSIFCloseL(fout);
+
+    CPLFree((void*)pszMinZpatchStlFileName);
+    CPLFree((void*)pszSurfOutStlFileName);
+}
+
 /*
 ** Sanitize OpenFOAM output so OGR can consume the data using a VRT.
 **
@@ -2315,7 +2374,7 @@ bool NinjaFoam::SampleRawOutput()
 
     rc = SampleCloudGrid();
     //rc = SampleCloud();
-    
+
     GDALDatasetH hDS;
     hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )
@@ -3890,15 +3949,16 @@ void NinjaFoam::GenerateNewCase()
     endStlConversion = omp_get_wtime();
     #endif
 
-    /*-------------------------------------------------------------------*/
-    /*  write output stl and run surfaceCheck on original stl            */
-    /*-------------------------------------------------------------------*/
-
-    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
-
-    // create the output surface stl with NinjaElevationToStl unless
-    demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
-    pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
+//    keeping this here until sampleCloud() has been updated to no longer use outputSampleGrid
+//    /*-------------------------------------------------------------------*/
+//    /*  write output stl and run surfaceCheck on original stl            */
+//    /*-------------------------------------------------------------------*/
+//
+//    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
+//
+//    // create the output surface stl with NinjaElevationToStl unless
+//    demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+//    pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
 
     //create the grid to sample on (input.outputWindHeight above the DEM)
     //note that input.dem has already been resampled to the mesh resolution
@@ -3906,12 +3966,12 @@ void NinjaFoam::GenerateNewCase()
     //make sure the grid is completely inside the mesh
     outputSampleGrid.BufferAroundGridInPlace(-1, -1);
 
-    eErr = NinjaElevationToStl(outputSampleGrid,
-                        pszStlFileName,
-                        NinjaStlBinary,
-                        input.outputWindHeight);
-
-    CPLFree((void*)pszStlFileName);
+//    eErr = NinjaElevationToStl(outputSampleGrid,
+//                        pszStlFileName,
+//                        NinjaStlBinary,
+//                        input.outputWindHeight);
+//
+//    CPLFree((void*)pszStlFileName);
 
     /*-------------------------------------------------------------------*/
     /*  write remaining mesh file(s)                                     */
@@ -3950,6 +4010,10 @@ void NinjaFoam::GenerateNewCase()
 
     //write log.ninja
     WriteNinjaLog();
+
+    //write output stl
+    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
+    createOutputSurfSampleStl();
 
     checkCancel();
 }
