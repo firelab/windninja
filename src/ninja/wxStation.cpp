@@ -991,7 +991,7 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
         fprintf( fout, "          Temperature: %.1lf %s\n",
                 temperatureTemp, temperatureUnits::getString(stations[i].tempUnits).c_str() );
         fprintf( fout, "          Local Time:  %s\n",
-                localTimeTemp.to_string().c_str() );
+                boost::lexical_cast<std::string>(localTimeTemp).c_str() );
 
         if(stations[i].get_influenceRadius() > 0.0)
         {

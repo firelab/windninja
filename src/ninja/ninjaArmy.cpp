@@ -162,7 +162,7 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
         //in case that is necessary
         CPLDebug("STATION_FETCH","STEP NUM:%i",i);
         CPLDebug("STATION_FETCH","UTC: %s",boost::posix_time::to_iso_extended_string(timeList[i]).c_str());
-        CPLDebug("STATION_FETCH","LOCAL: %s",(localTimeList[i].to_string()).c_str());
+        CPLDebug("STATION_FETCH","LOCAL: %s",boost::lexical_cast<std::string>(localTimeList[i]).c_str());
         CPLDebug("STATION_FETCH","----");
     }
     //handle old wxStation format

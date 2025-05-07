@@ -2384,18 +2384,15 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         }
     }
     
-    
-    //// do debug output
-    CPLDebug("STATION_FETCH","start_local: %s",start_local.to_string().c_str());
-    CPLDebug("STATION_FETCH","end_local: %s",end_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","start_local: %s",boost::lexical_cast<std::string>(start_local).c_str());
+    CPLDebug("STATION_FETCH","end_local: %s",boost::lexical_cast<std::string>(end_local).c_str());
     CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
-    CPLDebug("STATION_FETCH","start_UTC: %s",boost::posix_time::to_simple_string(start_UTC).c_str());
-    CPLDebug("STATION_FETCH","end_UTC: %s",boost::posix_time::to_simple_string(end_UTC).c_str());
+    CPLDebug("STATION_FETCH","start_UTC: %s",boost::lexical_cast<std::string>(start_UTC).c_str());
+    CPLDebug("STATION_FETCH","end_UTC: %s",boost::lexical_cast<std::string>(end_UTC).c_str());
     
     
     // Sets these for use in the fetch-station functions
     setLocalStartAndStopTimes(start_local,end_local);
-    
     
     // problem occurs with everything after this point if start_UTC > end_UTC or end_UTC < start_UTC, diffTime goes negative
     // problem is, can't do the check with effective messaging and keeping WindNinja open here, WindNinja would just quit altogether
@@ -2507,10 +2504,9 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
         std::cout << "\nSTATION_FETCH warning: Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.\n" << std::endl;
     }
     
-    //// do debug output
-    CPLDebug("STATION_FETCH","x_local: %s",x_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","x_local: %s",boost::lexical_cast<std::string>(x_local).c_str());
     CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
-    CPLDebug("STATION_FETCH","x_UTC: %s",boost::posix_time::to_simple_string(x_UTC).c_str());
+    CPLDebug("STATION_FETCH","x_UTC: %s",boost::lexical_cast<std::string>(x_UTC).c_str());
     
     return x_UTC;
 }
