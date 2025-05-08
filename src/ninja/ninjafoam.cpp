@@ -2075,7 +2075,7 @@ int NinjaFoam::SampleCloud()
                   "Failed to extract a valid layer for NinjaFoam resampling" );
         return NINJA_E_OTHER;
     }
-    double dfX, dfY, dfU, dfV;
+    double dfX, dfY, dfU, dfV, dfK;
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
 
@@ -2094,13 +2094,15 @@ int NinjaFoam::SampleCloud()
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
     pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
-    hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 2,
+    hGriddedDS = GDALCreate( hDriver, pszGridFilename, nXSize, nYSize, 3,
                              GDT_Float64, NULL );
-    GDALRasterBandH hUBand, hVBand;
+    GDALRasterBandH hUBand, hVBand, hKBand;
     hUBand = GDALGetRasterBand( hGriddedDS, 1 );
     hVBand = GDALGetRasterBand( hGriddedDS, 2 );
+    hKBand = GDALGetRasterBand( hGriddedDS, 3 );
     GDALSetRasterNoDataValue( hUBand, -9999 );
     GDALSetRasterNoDataValue( hVBand, -9999 );
+    GDALSetRasterNoDataValue( hKBand, -9999 );
 
     /* Set the projection from the DEM */
     rc = GDALSetProjection( hGriddedDS, outputSampleGrid.prjString.c_str() );
@@ -2116,12 +2118,13 @@ int NinjaFoam::SampleCloud()
     rc = GDALInvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
     int i = 0;
-    int nUIndex, nVIndex;
+    int nUIndex, nVIndex, nKIndex;
     int nPixel, nLine;
     OGR_L_ResetReading( hLayer );
     hFeatDefn = OGR_L_GetLayerDefn( hLayer );
     nUIndex = OGR_FD_GetFieldIndex( hFeatDefn, "U" );
     nVIndex = OGR_FD_GetFieldIndex( hFeatDefn, "V" );
+    nKIndex = OGR_FD_GetFieldIndex( hFeatDefn, "K" );
     while( (hFeature = OGR_L_GetNextFeature( hLayer )) != NULL )
     {
         hGeometry = OGR_F_GetGeometryRef( hFeature );
@@ -2129,13 +2132,17 @@ int NinjaFoam::SampleCloud()
         dfY = OGR_G_GetY( hGeometry, 0 );
         dfU = OGR_F_GetFieldAsDouble( hFeature, nUIndex );
         dfV = OGR_F_GetFieldAsDouble( hFeature, nVIndex );
+        dfK = OGR_F_GetFieldAsDouble( hFeature, nKIndex );
         TransformGeoToPixelSpace( adfInvGeoTransform, dfX, dfY, &nPixel, &nLine );
         rc = GDALRasterIO( hUBand, GF_Write, nPixel, nLine, 1, 1, &dfU,
                       1, 1, GDT_Float64, 0, 0 );
         rc = GDALRasterIO( hVBand, GF_Write, nPixel, nLine, 1, 1, &dfV,
                       1, 1, GDT_Float64, 0, 0 );
+        rc = GDALRasterIO( hKBand, GF_Write, nPixel, nLine, 1, 1, &dfK,
+                      1, 1, GDT_Float64, 0, 0 );
         i++;
     }
+
     OGR_G_DestroyGeometry( hGeometry );
     OGR_F_Destroy( hFeature );
     OGR_DS_Destroy( hDS );
@@ -2315,7 +2322,7 @@ bool NinjaFoam::SampleRawOutput()
 
     rc = SampleCloudGrid();
     //rc = SampleCloud();
-    
+
     GDALDatasetH hDS;
     hDS = GDALOpen( GetGridFilename(), GA_ReadOnly );
     if( hDS == NULL )
