@@ -52,6 +52,7 @@
 #include <QSpinBox>
 #include <QThread>
 #include <QLineEdit>
+#include <QDateEdit>
 
 #include <QDebug>
 
@@ -63,6 +64,7 @@
 #include "ninjaException.h"
 #include "wxModelInitializationFactory.h"
 #include "nomads_wx_init.h"
+#include "gcp_wx_init.h"
 
 #include "gdal_util.h"
 #include "netcdf.h"
@@ -117,6 +119,10 @@ class weatherModel : public QWidget
     QListView *listView;
     QToolButton *selectAllTimesButton;
     QToolButton *selectNoTimesButton;
+    QDateTimeEdit *startTime;
+    QDateTimeEdit *stopTime;
+    QLabel *startDateLabel;
+    QLabel *endDateLabel;
 
     QDir cwd;
     QString inputFile;
@@ -146,7 +152,7 @@ class weatherModel : public QWidget
     ncepRapSurfInitialization rap;
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
-    ArchivedHRRRInitialization archhrr;
+    GCPWxModel archhrr;
 
 
 
@@ -164,6 +170,7 @@ class weatherModel : public QWidget
     void unselectForecast( bool checked );
     void setTimeLimits( int index );
     void setComboToolTip( int index );
+    void displayArchiveDates( int index );
     void clearTimes();
  public slots:
     void checkForModelData();

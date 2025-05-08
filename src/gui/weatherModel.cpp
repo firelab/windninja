@@ -110,6 +110,31 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     refreshToolButton->setToolTip(tr("Refresh the forecast listing."));
     refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
+    // --- Create date labels ---
+    startDateLabel = new QLabel(tr("Start Date:"), this);
+    endDateLabel = new QLabel(tr("End Date:"), this);
+
+    // --- Create date/time edits ---
+    startTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
+    startTime->setDisplayFormat("yyyy-MM-dd HH");
+    startTime->setCalendarPopup(true);
+
+    stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
+    stopTime->setDisplayFormat("yyyy-MM-dd HH");
+    stopTime->setCalendarPopup(true);
+
+    startDateLabel->setVisible(false);
+    endDateLabel->setVisible(false);
+    startTime->setVisible(false);
+    stopTime->setVisible(false);
+
+    // --- Layout for date/time widgets ---
+    QHBoxLayout *dateTimeLayout = new QHBoxLayout;
+    dateTimeLayout->addWidget(startDateLabel);
+    dateTimeLayout->addWidget(startTime);
+    dateTimeLayout->addWidget(endDateLabel);
+    dateTimeLayout->addWidget(stopTime);
+
     connect(downloadToolButton, SIGNAL(clicked()),
         this, SLOT(getData()));
     connect(refreshToolButton, SIGNAL(clicked()),
@@ -126,6 +151,8 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
         this, SLOT(setTimeLimits(int)));
     connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(setComboToolTip(int)));
+    connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(displayArchiveDates(int)));
 
     connect(selectAllTimesButton, SIGNAL(clicked(bool)),
         listView, SLOT(selectAll(void)));
@@ -162,6 +189,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
 
     weatherLayout = new QVBoxLayout;
     weatherLayout->addWidget(downloadGroupBox);
+    weatherLayout->addLayout(dateTimeLayout);
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
     weatherLayout->addWidget(timeGroupBox);
@@ -307,6 +335,9 @@ void weatherModel::getData()
         model = new ncepNamAlaskaSurfInitialization( namAk );
     else if( modelChoice == 4 )
         model = new ncepGfsSurfInitialization( gfs );
+    else if ( modelChoice == 5) {
+      model = new GCPWxModel(archhrr);
+    }
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
@@ -548,6 +579,24 @@ void weatherModel::setComboToolTip(int)
     QString s = modelComboBox->currentText();
     s = ExpandDescription( s.toLocal8Bit().data() );
     modelComboBox->setToolTip( s );
+}
+
+void weatherModel::displayArchiveDates(int index)
+{
+  if (index == 5) {
+    startDateLabel->setVisible(true);
+    endDateLabel->setVisible(true);
+    startTime->setVisible(true);
+    stopTime->setVisible(true);
+    hourSpinBox->setVisible(false);
+  }
+  else {
+    startDateLabel->setVisible(false);
+    endDateLabel->setVisible(false);
+    startTime->setVisible(false);
+    stopTime->setVisible(false);
+    hourSpinBox->setVisible(true);
+  }
 }
 
 std::vector<blt::local_date_time> weatherModel::timeList() {
