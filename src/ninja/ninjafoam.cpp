@@ -3775,8 +3775,13 @@ void NinjaFoam::UpdateExistingCase()
     //many files are overwritten by writeFoamFiles(), most with the same values replaced back in
     //make a tmp copy of those files overwritten by writeFoamFiles(), but where the values are not replaced back in
     std::string tmpPath = CPLGetPath(input.dem.fileName.c_str());
-    CopyFile(CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""),
-             CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    if( foamVersion == "9" ) {
+        CopyFile(CPLFormFilename(pszFoamPath,     "system/blockMeshDict", ""),
+                 CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    } else {
+        CopyFile(CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""),
+                 CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
+    }
     CopyFile(CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""),
              CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""));
 
@@ -3784,8 +3789,13 @@ void NinjaFoam::UpdateExistingCase()
     WriteFoamFiles();
 
     //put the tmp copy files back, delete the leftover tmp files from the tmp location
-    CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
-             CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""));
+    if( foamVersion == "9" ) {
+        CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
+                 CPLFormFilename(pszFoamPath,     "system/blockMeshDict", ""));
+    } else {
+        CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
+                 CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""));
+    }
     CopyFile(CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""),
              CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""));
     VSIUnlink(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
