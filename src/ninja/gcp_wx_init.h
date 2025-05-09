@@ -4,8 +4,8 @@
 * $Id$
 *
 * Project:  WindNinja
-* Purpose:  Purpose:  Handle GCP fetching for archived HRRR and other GCP related issues
-* Author:   Rui Zhang <ruizhangslc2017@gmail.com>
+* Purpose:  Handle GCP fetching for weather model data
+* Author:   masonwillman <masonwillman0@gmail.com>
 *
 ******************************************************************************
 *
@@ -34,16 +34,15 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "gdal_priv.h"
-#include "cpl_conv.h" 
-#include <iostream>
-#include <cstdlib> // For setenv
-#include "gdal_utils.h"
 #include <string>
+#include <iostream>
+#include <cstdlib>
 
+#include "gdal_utils.h"
+#include "cpl_http.h"
+#include "gdal_priv.h"
+#include "cpl_conv.h"
 #include "wxModelInitialization.h"
-
-#include "nomads.h"
 
 class GCPWxModel : public wxModelInitialization
 {
@@ -55,11 +54,12 @@ public:
   GCPWxModel(GCPWxModel const&A);
   virtual ~GCPWxModel();
 
-  virtual std::string fetchForecast( std::string demFile, int nHours );
+  virtual std::string fetchForecast( std::string demFile, int nhours);
 
   virtual std::vector<blt::local_date_time>
   getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
 
+  virtual void set3dGrids( WindNinjaInputs &input, Mesh const& mesh );
   virtual bool identify( std::string fileName );
   const char ** FindModelKey( const char *pszFilename );
   virtual std::vector<std::string> getVariableList();
@@ -77,6 +77,9 @@ public:
                                AsciiGrid<double> &vGrid,
                                AsciiGrid<double> &wGrid );
 
+  void setDateTime(boost::gregorian::date date1, boost::gregorian::date date2, std::string hours1, std::string hours2);
+
+
 private:
   const char *pszKey;
   const char **ppszModelData;
@@ -84,21 +87,16 @@ private:
   int InitializeForecastTimes();
   char * NomadsFindForecast( const char *pszFilePath, time_t nTime );
 
-  nomads_utc *u;
-
-  wn_3dArray oArray;
-  Mesh wxMesh;
-  wn_3dScalarField *wxFields[4];
-  wn_3dScalarField *fields[4];
-
-  int CheckFileName( const char *pszFile, const char *pszFormat );
-  int ClipNoData( GDALRasterBandH hBand, double dfNoData, int *pnRowsToCull,
-                 int *pnColsToCull );
-  GDALRasterBandH FindBand( GDALDatasetH hDS, const char *pszVar,
-                           const char *pszHeight );
+  std::vector<int> findBands(std::string filename, std::vector<std::string> variables);
+  std::vector<const char *> getOptions(std::vector<int> bands, std::vector<std::string> variables, std::string buffer[]);
 
   std::string privateKey;
   std::string clientEmail;
+
+  boost::gregorian::date startDate;
+  boost::gregorian::date endDate;
+  std::string starthours;
+  std::string endhours;
 
 };
 

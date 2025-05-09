@@ -359,7 +359,38 @@ void weatherModel::getData()
     }
 
     try {
+      if(modelChoice != 5) {
         model->fetchForecast( inputFile.toStdString(), hours );
+      }
+      else {
+        QDateTime startDT = startTime->dateTime();
+        QDateTime endDT = stopTime->dateTime();
+
+        // Extract start date and time
+        QDate startQDate = startDT.date();
+        QTime startQTime = startDT.time();
+        int startYear = startQDate.year();
+        int startMonth = startQDate.month();
+        int startDay = startQDate.day();
+        int startHour = startQTime.hour();
+
+        // Extract end date and time
+        QDate endQDate = endDT.date();
+        QTime endQTime = endDT.time();
+        int endYear = endQDate.year();
+        int endMonth = endQDate.month();
+        int endDay = endQDate.day();
+        int endHour = endQTime.hour();
+
+        // Convert to boost dates
+        boost::gregorian::date startDate(startYear, startMonth, startDay);
+        boost::gregorian::date endDate(endYear, endMonth, endDay);
+
+        auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+        forecastModel->setDateTime(startDate, endDate, to_string(startHour), to_string(endHour));
+
+        model->fetchForecast(inputFile.toStdString(), hours);
+      }
     }
     catch( badForecastFile &e ) {
         progressDialog->close();
@@ -423,6 +454,8 @@ void weatherModel::checkForModelData()
     /* gfs */
     filters << QString::fromStdString( gfs.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();
+    filters << "test";
+    filters << "pastcast.zip";
 
 #ifdef WITH_NOMADS_SUPPORT
     int i;
