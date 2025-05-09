@@ -464,6 +464,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         if(gammavalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericTypeVal.tmp");
+            } else if ( foamVersion == "9" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericTypeVal.tmp");
             } else {
                 pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericTypeVal.tmp");
             }
@@ -471,6 +473,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         else if(inletoutletvalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType.tmp");
+            } else if ( foamVersion == "9" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericType.tmp");
             } else {
                 pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType.tmp");
             }
@@ -478,6 +482,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         else{
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType-kep.tmp");
+            } else if ( foamVersion == "9" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericType-kep.tmp");
             } else {
                 pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType-kep.tmp");
             }
@@ -486,6 +492,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
     else{
         if ( foamVersion == "2.2.0" ) {
             pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", template_.c_str());
+        } else if ( foamVersion == "9" ) {
+            pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", template_.c_str());
         } else {
             pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", template_.c_str());
         }
@@ -678,6 +686,8 @@ void NinjaFoam::WriteFoamFiles()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "9" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     } else {
         pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
@@ -706,6 +716,8 @@ void NinjaFoam::WriteFoamFiles()
             pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
             if ( foamVersion == "2.2.0" ) {
                 pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+            } else if ( foamVersion == "9" ) {
+                pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
             } else {
                 pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
             }
@@ -1124,6 +1136,8 @@ void NinjaFoam::writeMoveDynamicMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "9" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     } else {
         pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
