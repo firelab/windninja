@@ -1908,7 +1908,6 @@ void NinjaFoam::Sample()
 ** This essentially copies the data and changes it inline.
 **
 */
-
 int NinjaFoam::SanitizeOutput()
 {
     /*
@@ -1916,8 +1915,6 @@ int NinjaFoam::SanitizeOutput()
     ** the VSIFGets functions.
     */
     FILE *fin, *fin2;
-    //VSILFILE *fin, *fin2;
-    //FILE *fout, *fvrt;
     VSILFILE *fout, *fvrt;
     char buf[512];
     char buf2[512];
@@ -1948,22 +1945,19 @@ int NinjaFoam::SanitizeOutput()
                         papszOutputSurfacePath[i]), "r");
             break;
         }
-        else{
-            continue;
-        }
     }
 
     fout = VSIFOpenL( pszMem, "w" );
     fvrt = VSIFOpenL( pszVrtMem, "w" );
     if( !fin )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open U output file for " \
                                                 "reading." );
         return NINJA_E_FILE_IO;
     }
     if( !fin2 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open k output file for " \
                                                 "reading." );
         return NINJA_E_FILE_IO;
     }
@@ -1971,7 +1965,7 @@ int NinjaFoam::SanitizeOutput()
     {
         VSIFClose( fin );
         VSIFClose( fin2 );
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output.raw file for " \
                                                 "writing." );
         return NINJA_E_FILE_IO;
     }
@@ -2016,7 +2010,6 @@ int NinjaFoam::SanitizeOutput()
     /*
     ** sanitize the data.
     */
-    char **papszTokens = NULL;
     while( VSIFGets( buf, 512, fin ) != NULL )
     {
         buf[ strcspn( buf, "\n" ) ] = '\0';
@@ -2025,15 +2018,18 @@ int NinjaFoam::SanitizeOutput()
         s2 = buf2;
         ReplaceKeys( s, " ", ",", 5 );
         ReplaceKeys( s2, " ", ",", 5 );
-        papszTokens = CSLTokenizeString2( s2.c_str(), ",", 0);
+        char **papszTokens = CSLTokenizeString2( s2.c_str(), ",", 0);
         s = s + "," + std::string(papszTokens[CSLCount( papszTokens )-1]); 
         VSIFWriteL( s.c_str(), s.size(), 1, fout );
+        CSLDestroy( papszTokens );
     }
 
-    CSLDestroy( papszTokens );
+    CSLDestroy( papszOutputSurfacePath );
     VSIFClose( fin );
     VSIFClose( fin2 );
     VSIFCloseL( fout );
+
+    return NINJA_SUCCESS;
 }
 
 static int TransformGeoToPixelSpace( double *adfInvGeoTransform, double dfX,
