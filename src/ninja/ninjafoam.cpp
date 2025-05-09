@@ -569,6 +569,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         if(gammavalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericTypeVal.tmp");
+            } else if ( foamVersion == "9" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericTypeVal.tmp");
             } else {
                 pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericTypeVal.tmp");
             }
@@ -576,6 +578,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         else if(inletoutletvalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType.tmp");
+            } else if ( foamVersion == "9" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericType.tmp");
             } else {
                 pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType.tmp");
             }
@@ -583,6 +587,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         else{
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType-kep.tmp");
+            } else if ( foamVersion == "9" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericType-kep.tmp");
             } else {
                 pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType-kep.tmp");
             }
@@ -591,6 +597,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
     else{
         if ( foamVersion == "2.2.0" ) {
             pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", template_.c_str());
+        } else if ( foamVersion == "9" ) {
+            pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", template_.c_str());
         } else {
             pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", template_.c_str());
         }
@@ -783,6 +791,8 @@ void NinjaFoam::WriteFoamFiles()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "9" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     } else {
         pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
@@ -811,6 +821,8 @@ void NinjaFoam::WriteFoamFiles()
             pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
             if ( foamVersion == "2.2.0" ) {
                 pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+            } else if ( foamVersion == "9" ) {
+                pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
             } else {
                 pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
             }
@@ -1138,12 +1150,19 @@ void NinjaFoam::writeBlockMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "9" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     } else {
         pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
 
-    pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
-    pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
+    if( foamVersion == "9" ) {
+        pszInput = CPLFormFilename(pszArchive, "system/blockMeshDict", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/blockMeshDict", "");
+    } else {
+        pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
+    }
 
     VSILFILE *fin;
     VSILFILE *fout;
@@ -1222,6 +1241,8 @@ void NinjaFoam::writeMoveDynamicMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "9" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     } else {
         pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
@@ -1612,42 +1633,77 @@ void NinjaFoam::UpdateSimpleFoamControlDict()
 void NinjaFoam::TopoSet()
 {
     int nRet = -1;
-       
-    const char *const papszArgv[] = { "topoSet",
-                                    "-case",
-                                    pszFoamPath,
-                                    "-dict",
-                                    "system/topoSetDict",
-                                    "-latestTime",
-                                    NULL };
-
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
     
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    if(nRet != 0)
-        throw std::runtime_error("Error during topoSet().");
+    if( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "topoSet",
+                                        "-case",
+                                        pszFoamPath,
+                                        "-latestTime",
+                                        NULL };
 
-    VSIFCloseL(fout);
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during topoSet().");
+
+        VSIFCloseL(fout);
+    } else
+    {
+        const char *const papszArgv[] = { "topoSet",
+                                        "-case",
+                                        pszFoamPath,
+                                        "-dict",
+                                        "system/topoSetDict",
+                                        "-latestTime",
+                                        NULL };
+
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.topoSet", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during topoSet().");
+
+        VSIFCloseL(fout);
+    }
 }
 
 void NinjaFoam::RefineMesh()
 {
     int nRet = -1;
     
-    const char *const papszArgv[] = { "refineMesh",
-                                    "-case",
-                                    pszFoamPath,
-                                    "-dict",
-                                    "system/refineMeshDict", 
-                                    NULL };
+    if ( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "refineMesh",
+                                        "-case",
+                                        pszFoamPath,
+                                        NULL };
 
-    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
-    
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-    if(nRet != 0)
-        throw std::runtime_error("Error during refineMesh().");
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during refineMesh().");
 
-    VSIFCloseL(fout);
+        VSIFCloseL(fout);
+    } else
+    {
+        const char *const papszArgv[] = { "refineMesh",
+                                        "-case",
+                                        pszFoamPath,
+                                        "-dict",
+                                        "system/refineMeshDict", 
+                                        NULL };
+
+        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
+        
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+        if(nRet != 0)
+            throw std::runtime_error("Error during refineMesh().");
+
+        VSIFCloseL(fout);
+    }
 }
 
 void NinjaFoam::BlockMesh()
