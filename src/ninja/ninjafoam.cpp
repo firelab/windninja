@@ -1387,6 +1387,7 @@ void NinjaFoam::MoveDynamicMesh()
         pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
         CopyFile(pszInput, pszOutput);
 
+        CPLSpawnedProcess *sp;
 #ifdef WIN32
         const char *const papszArgv[] = { "mpiexec",
                                       "-env",
@@ -1399,21 +1400,46 @@ void NinjaFoam::MoveDynamicMesh()
                                       pszFoamPath,
                                       "-parallel",
                                       NULL };
+
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
+
+        sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+
 #else
-        const char *const papszArgv[] = { "mpiexec",
+        if ( foamVersion == "2.2.0" )
+        {
+            const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
-                                      "--allow-run-as-root",  // will need to comment this out for foam 2.2.0 runs
                                       "moveDynamicMesh",
                                       "-case",
                                       pszFoamPath,
                                       "-parallel",
                                       NULL };
+
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
+
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+
+        } else
+        {
+            const char *const papszArgv[] = { "mpiexec",
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",
+                                      "moveDynamicMesh",
+                                      "-case",
+                                      pszFoamPath,
+                                      "-parallel",
+                                      NULL };
+
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
+
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+
+        }
 #endif
 
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
-
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         char data[PIPE_BUFFER_SIZE + 1];
@@ -1810,6 +1836,7 @@ bool NinjaFoam::SimpleFoam()
     double p;
 
     if(input.numberCPUs > 1){
+        CPLSpawnedProcess *sp;
         #ifdef WIN32
         const char *const papszArgv[] = { "mpiexec",
                                       "-env",
@@ -1822,20 +1849,35 @@ bool NinjaFoam::SimpleFoam()
                                       pszFoamPath,
                                       "-parallel",
                                        NULL };
+        sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         #else
         CPLSetConfigOption("MPI_BUFFER_SIZE", "20000000");
-        const char *const papszArgv[] = { "mpiexec",
+        if ( foamVersion == "2.2.0" )
+        {
+            const char *const papszArgv[] = { "mpiexec",
                                       "-np",
                                       CPLSPrintf("%d", input.numberCPUs),
-                                      "--allow-run-as-root",  // will need to comment this out for foam 2.2.0 runs
                                       "simpleFoam",
                                       "-case",
                                       pszFoamPath,
                                       "-parallel",
                                        NULL };
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        } else
+        {
+            const char *const papszArgv[] = { "mpiexec",
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",
+                                      "simpleFoam",
+                                      "-case",
+                                      pszFoamPath,
+                                      "-parallel",
+                                       NULL };
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
         #endif
 
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
