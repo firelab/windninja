@@ -169,7 +169,6 @@ private:
     void createOutputSurfSampleStl();
 
     /* Output */
-    Elevation outputSampleGrid;
     bool SampleRawOutput();
     void WriteOutputFiles();
     void SetOutputResolution();

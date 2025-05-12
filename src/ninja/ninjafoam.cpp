@@ -2145,18 +2145,18 @@ int NinjaFoam::SampleCloud()
     int nPoints, nXSize, nYSize;
     double dfXMax, dfYMax, dfXMin, dfYMin, dfCellSize;
 
-    dfXMin = outputSampleGrid.get_xllCorner();
-    dfXMax = outputSampleGrid.get_xllCorner() + outputSampleGrid.get_xDimension();
-    dfYMin = outputSampleGrid.get_yllCorner();
-    dfYMax = outputSampleGrid.get_yllCorner() + outputSampleGrid.get_yDimension();
-    dfCellSize = outputSampleGrid.get_cellSize();
+    dfXMin = bbox[0];
+    dfXMax = bbox[3];
+    dfYMin = bbox[1];
+    dfYMax = bbox[4];
+    dfCellSize = meshResolution;
 
     nPoints = OGR_L_GetFeatureCount( hLayer, TRUE );
     CPLDebug( "WINDNINJA", "NinjaFoam gridding %d points", nPoints );
 
     /* Get DEM/output specs */
-    nXSize = outputSampleGrid.get_nCols();
-    nYSize = outputSampleGrid.get_nRows();
+    nXSize = nCells[0]*2*nRoundsRefinement + 1;  // want nPts, not nCells
+    nYSize = nCells[1]*2*nRoundsRefinement + 1;
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
     pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
@@ -2171,7 +2171,7 @@ int NinjaFoam::SampleCloud()
     GDALSetRasterNoDataValue( hKBand, -9999 );
 
     /* Set the projection from the DEM */
-    rc = GDALSetProjection( hGriddedDS, outputSampleGrid.prjString.c_str() );
+    rc = GDALSetProjection( hGriddedDS, input.dem.prjString.c_str() );
 
     adfGeoTransform[0] = dfXMin;
     adfGeoTransform[1] = dfCellSize;
@@ -2207,6 +2207,16 @@ int NinjaFoam::SampleCloud()
         rc = GDALRasterIO( hKBand, GF_Write, nPixel, nLine, 1, 1, &dfK,
                       1, 1, GDT_Float64, 0, 0 );
         i++;
+    }
+
+    // reading in minZpatch.stl sample data using the InverseGeoTransform method above results in NO_DATA values in the bottom row and right column
+    // attempt a one time NO_DATA filling
+    int nNoDataValues;
+    if(GDALHasNoData(hGriddedDS, 1))
+    {
+        nNoDataValues = GDALFillBandNoData(hGriddedDS, 1, 1000);
+        nNoDataValues = GDALFillBandNoData(hGriddedDS, 2, 1000);
+        nNoDataValues = GDALFillBandNoData(hGriddedDS, 3, 1000);
     }
 
     OGR_G_DestroyGeometry( hGeometry );
@@ -2400,6 +2410,13 @@ bool NinjaFoam::SampleRawOutput()
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
     GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
 
+    // If we failed to fill in the data for the entire grid, we've failed.
+    // Report a better message.
+    if( foamU.get_hasNoDataValues() || foamV.get_hasNoDataValues() ) {
+        CPLError( CE_Failure, CPLE_AppDefined, "The openfoam output could not be interpolated to a proper surface.");
+        return false;
+    }
+
     if(!CheckIfOutputWindHeightIsResolved()){
         //if the output wind height is not resolved, interpolate to output height using a log profile
         windProfile profile;
@@ -2439,12 +2456,7 @@ bool NinjaFoam::SampleRawOutput()
         }
     }
 
-    // If we failed to fill in the data for the entire grid, we've failed.
-    // Report a better message.
-    if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
-        CPLError( CE_Failure, CPLE_AppDefined, "The openfoam output could not be interpolated to a proper surface.");
-        return false;
-    }
+    //final check, to see if values are greater than the largest known wind speed
     if(VelocityGrid.get_maxValue() > 220.0){
         CPLError( CE_Failure, CPLE_AppDefined, "The flow solution did not converge. This may occasionally "
                 "happen in very complex terrain when the mesh resolution is high. Try the simulation "
@@ -3962,30 +3974,6 @@ void NinjaFoam::GenerateNewCase()
     #ifdef _OPENMP
     endStlConversion = omp_get_wtime();
     #endif
-
-//    keeping this here until sampleCloud() has been updated to no longer use outputSampleGrid
-//    /*-------------------------------------------------------------------*/
-//    /*  write output stl and run surfaceCheck on original stl            */
-//    /*-------------------------------------------------------------------*/
-//
-//    input.Com->ninjaCom(ninjaComClass::ninjaNone, "Transforming surface points to output wind height...");
-//
-//    // create the output surface stl with NinjaElevationToStl unless
-//    demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
-//    pszStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
-
-    //create the grid to sample on (input.outputWindHeight above the DEM)
-    //note that input.dem has already been resampled to the mesh resolution
-    outputSampleGrid = input.dem; 
-    //make sure the grid is completely inside the mesh
-    outputSampleGrid.BufferAroundGridInPlace(-1, -1);
-
-//    eErr = NinjaElevationToStl(outputSampleGrid,
-//                        pszStlFileName,
-//                        NinjaStlBinary,
-//                        input.outputWindHeight);
-//
-//    CPLFree((void*)pszStlFileName);
 
     /*-------------------------------------------------------------------*/
     /*  write remaining mesh file(s)                                     */
