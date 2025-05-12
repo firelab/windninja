@@ -1503,7 +1503,10 @@ void NinjaFoam::RefineSurfaceLayer()
     pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
     pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
 
-    std::string stlName = NinjaSanitizeString(std::string(CPLGetBasename(input.dem.fileName.c_str())));
+    //create the minZpatch.stl for the current time, to refine to
+    createMinZpatchStl();
+
+    std::string stlName = CPLSPrintf("minZpatch_time%d", latestTime);
 
     CopyFile(pszInput, pszOutput, "$terrain$", 
             CPLFormFilename(CPLSPrintf("%s/constant/triSurface", pszFoamPath), stlName.c_str(), ""));
@@ -1905,7 +1908,7 @@ void NinjaFoam::createMinZpatchStl()
                                       pszFoamPath,
                                       "-patches",
                                       "\(minZ\)",
-                                      "constant/triSurface/minZpatch.stl",
+                                      CPLSPrintf("constant/triSurface/minZpatch_time%d.stl",latestTime),
                                       NULL };
 
     nRet = CPLSpawn(papszArgv, NULL, fout, TRUE );
@@ -1921,9 +1924,10 @@ void NinjaFoam::createMinZpatchStl()
 
 void NinjaFoam::createOutputSurfSampleStl()
 {
+    //create the minZpatch.stl for the current time, to raise up to the output wind height
     createMinZpatchStl();
 
-    const char *pszMinZpatchStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/minZpatch.stl", pszFoamPath)));
+    const char *pszMinZpatchStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/minZpatch_time%d.stl", pszFoamPath, latestTime)));
 
     std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
     const char *pszSurfOutStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
@@ -1948,6 +1952,9 @@ void NinjaFoam::createOutputSurfSampleStl()
     }
 
     VSIFCloseL(fout);
+
+    // no need to keep the original surface used in the translation
+    VSIUnlink(pszMinZpatchStlFileName);
 
     CPLFree((void*)pszMinZpatchStlFileName);
     CPLFree((void*)pszSurfOutStlFileName);
