@@ -1936,7 +1936,7 @@ void NinjaFoam::createOutputSurfSampleStl()
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.createOutputSurfSampleStl", ""), "w");
 
-    const char *const papszArgv[] = { "surfaceTransformPoints",
+    const char *const papszArgv[] = { "mySurfaceTransformPoints",
                                       "-translate",
                                       CPLSPrintf("(0 0 %f)",input.outputWindHeight),
                                       pszMinZpatchStlFileName,
