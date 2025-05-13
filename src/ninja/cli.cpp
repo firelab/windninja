@@ -186,7 +186,8 @@ int windNinjaCLI(int argc, char* argv[])
         std::string osAvailableWx = "type of wx model to download (";
         osAvailableWx += std::string( "UCAR-NAM-CONUS-12-KM, UCAR-NAM-ALASKA-11-KM, " ) +
                          std::string( "UCAR-NDFD-CONUS-2.5-KM, UCAR-RAP-CONUS-13-KM, " ) +
-                         std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
+                         std::string( "UCAR-GFS-GLOBAL-0.5-DEG" ) +
+                         std::string( "PAST-CAST-GCP-HRRR-CONUS-3KM" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
         char *pszNomadsName;
@@ -941,12 +942,51 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
                 std::string model_type = vm["wx_model_type"].as<std::string>();
-                wxModelInitialization *model;
+                wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+                std::string forecastFileName;
                 try
                 {
-                    model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
-                    std::string forecastFileName = model->fetchForecast( *elevation_file, vm["forecast_duration"].as<int>() );
-                    if(vm.count("start_year"))
+                  if (model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+                  {
+                     forecastFileName = model->fetchForecast( *elevation_file, vm["forecast_duration"].as<int>() );
+                  }
+                  else {
+                    conflicting_options(vm, "forecast_time", "start_year");
+                    verify_option_set(vm, "start_month");
+                    verify_option_set(vm, "start_day");
+                    verify_option_set(vm, "start_hour");
+                    verify_option_set(vm, "start_minute");
+                    verify_option_set(vm, "stop_year");
+                    verify_option_set(vm, "stop_month");
+                    verify_option_set(vm, "stop_day");
+                    verify_option_set(vm, "stop_hour");
+                    verify_option_set(vm, "stop_minute");
+
+                    int startYear   = vm["start_year"].as<int>();
+                    int startMonth  = vm["start_month"].as<int>();
+                    int startDay    = vm["start_day"].as<int>();
+                    int startHour   = vm["start_hour"].as<int>();
+                    int startMinute = vm["start_minute"].as<int>();
+
+                    int stopYear    = vm["stop_year"].as<int>();
+                    int stopMonth   = vm["stop_month"].as<int>();
+                    int stopDay     = vm["stop_day"].as<int>();
+                    int stopHour    = vm["stop_hour"].as<int>();
+                    int stopMinute  = vm["stop_minute"].as<int>();
+
+                    boost::gregorian::date startDate(startYear, startMonth, startDay);
+                    boost::gregorian::date stopDate(stopYear, stopMonth, stopDay);
+
+                    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+                    if (!forecastModel)
+                      throw std::runtime_error("Model is not a GCPWxModel but expected one.");
+
+                    forecastModel->setDateTime(startDate, stopDate, std::to_string(startHour), std::to_string(stopHour));
+
+                    forecastFileName = model->fetchForecast(*elevation_file, 1);
+                  }
+
+                    if(vm.count("start_year") && model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
                     {
                         conflicting_options(vm, "forecast_time", "start_year");
                         verify_option_set(vm, "start_month");
