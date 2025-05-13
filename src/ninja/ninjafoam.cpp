@@ -132,7 +132,13 @@ bool NinjaFoam::simulate_wind()
     foamVersion = CPLGetConfigOption("WM_PROJECT_VERSION", "");
     #endif
     CPLDebug("NINJAFOAM", CPLSPrintf("foamVersion = \"%s\"",foamVersion.c_str()));
-    
+
+    std::string pszWnDataPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
+    if( !CPLCheckForFile((char*)pszWnDataPath.c_str(), NULL) )
+    {
+        throw std::runtime_error("invalid WINDNINJA_DATA path for ninjafoam.");
+    }
+
     if(CSLTestBoolean(CPLGetConfigOption("WRITE_TURBULENCE", "FALSE")))
     {
         CPLDebug("NINJAFOAM", "Writing turbulence output...");

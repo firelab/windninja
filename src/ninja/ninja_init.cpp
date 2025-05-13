@@ -299,11 +299,19 @@ int NinjaInitialize(const char* typeofrun)
     /*
     ** Set windninja data if it isn't set.
     */
-    if (!CSLTestBoolean(CPLGetConfigOption("WINDNINJA_DATA", "FALSE"))) {
+    std::string wnDataPath = CPLGetConfigOption("WINDNINJA_DATA", "FALSE");
+    if( !CPLCheckForFile((char*)wnDataPath.c_str(), NULL) )
+    {
+        CPLDebug( "WINDNINJA", "WINDNINJA_DATA \"%s\" is not valid, attempting to find valid WINDNINJA_DATA", wnDataPath.c_str() );
         std::string osDataPath;
         osDataPath = FindDataPath("tz_world.zip");
-        if (osDataPath != "") {
+        if (osDataPath != "")
+        {
+            CPLDebug( "WINDNINJA", "found WINDNINJA_DATA \"%s\"", CPLGetPath(osDataPath.c_str()) );
             CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
+        } else
+        {
+            throw std::runtime_error("no valid WINDNINJA_DATA found, please set valid WINDNINJA_DATA");
         }
     }
 
