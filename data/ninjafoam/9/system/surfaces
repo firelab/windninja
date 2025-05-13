@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out surface files with interpolated field data in Raw or VTK format, e.g.
+    for cutting planes, iso-surfaces, patch boundary surfaces, triSurfaceMesh surfaces, etc.
+    
+    See /opt/openfoam8/src/sampling/sampledSurface/ for the various types of surfaces
+    and the header files of the various functions for examples of how to use them,
+    see /opt/openfoam8/etc/caseDicts/postProcessing/visualization/ for an example of
+    using the /opt/openfoam8/src/sampling/sampledSurface/ functions.
+    
+    This can be used as a runTime processing function, or as a post processing function.
+    See https://cfd.direct/openfoam/user-guide/v9-graphs-monitoring/#x33-2590006.3 for examples of runTime processing, a little bit of post processing,
+    see https://cfd.direct/openfoam/user-guide/v9-post-processing-cli/ for examples of post processing.
+    
+\*---------------------------------------------------------------------------*/
+
+type            surfaces;
+libs            ("libsampling.so");
+
+writeControl    writeTime;
+
+surfaceFormat   raw;//vtk;//raw;
+interpolationScheme $interpolationScheme$;//cellPoint;//cell;
+
+// optionally define extra controls for the output formats
+formatOptions
+{
+    ensight
+    {
+        format  ascii;
+    }
+}
+
+
+fields
+(
+   // p
+    U
+    k
+);
+
+surfaces
+(
+    triSurfaceSampling
+    {
+        // Sampling on triSurface
+        type        triSurfaceMesh;
+        surface     $stlFileName$;
+        source      cells;  // see /opt/openfoam8/src/sampling/sampledSurface/sampledTriSurfaceMesh/sampledTriSurfaceMesh.H for more options
+        interpolate yes;
+    }
+);
+
+
+// ************************************************************************* //
