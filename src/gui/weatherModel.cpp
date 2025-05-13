@@ -454,8 +454,8 @@ void weatherModel::checkForModelData()
     /* gfs */
     filters << QString::fromStdString( gfs.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();
-    filters << "test";
-    filters << "pastcast.zip";
+    filters << QString::fromStdString( archhrr.getForecastIdentifier() )
+                   + "-" + QFileInfo( inputFile ).fileName();
 
 #ifdef WITH_NOMADS_SUPPORT
     int i;

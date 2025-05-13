@@ -85,9 +85,8 @@ private:
   const char **ppszModelData;
 
   int InitializeForecastTimes();
-  char * NomadsFindForecast( const char *pszFilePath, time_t nTime );
-
   std::vector<int> findBands(std::string filename, std::vector<std::string> variables);
+  char* FindForecast(const char* pszFilePath, time_t nTime);
   std::vector<const char *> getOptions(std::vector<int> bands, std::vector<std::string> variables, std::string buffer[]);
 
   std::string privateKey;

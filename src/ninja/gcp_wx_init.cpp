@@ -36,7 +36,16 @@ GCPWxModel::GCPWxModel(GCPWxModel const&A) : wxModelInitialization(A) {
 
 GCPWxModel::GCPWxModel()
 {
+  ppszModelData = NULL;
+  pfnProgress = NULL;
+}
 
+
+GCPWxModel::GCPWxModel( std::string filename)
+{
+  wxModelFileName = filename;
+  pfnProgress = NULL;
+  ppszModelData = NULL;
 }
 
 GCPWxModel::~GCPWxModel()
@@ -53,10 +62,97 @@ double GCPWxModel::getGridResolution()
   return 3;
 }
 
+std::string GCPWxModel::getForecastReadable( const char bySwapWithSpace )
+{
+  return "PAST-CAST-GCP-HRRR-CONUS-3KM";
+}
+
+std::string GCPWxModel::getForecastIdentifier()
+{
+  return "PAST-CAST-GCP-HRRR-CONUS-3KM";
+}
+
+bool GCPWxModel::identify( std::string fileName )
+{
+
+  if (fileName.find("PAST-CAST-GCP-HRRR-CONUS-3KM") != std::string::npos)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
 std::vector<blt::local_date_time>
 GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
 {
 
+  if (aoCachedTimes.size() > 0)
+    return aoCachedTimes;
+
+  if (wxModelFileName.empty())
+  {
+    throw badForecastFile("ZIP file path is empty");
+  }
+
+         // Point to the ZIP file using GDAL VSI
+  std::string vsiZipPath = "/vsizip/" + wxModelFileName;
+
+         // Read contents of the ZIP archive
+  char **papszFileList = VSIReadDir(vsiZipPath.c_str());
+  if (!papszFileList || CSLCount(papszFileList) == 0)
+  {
+    throw badForecastFile("No files found in ZIP archive");
+  }
+
+  std::vector<blt::local_date_time> aoTimeList;
+  char **papszTimeList = NULL;
+
+  for (int i = 0; papszFileList[i] != NULL; ++i)
+  {
+    SKIP_DOT_AND_DOTDOT(papszFileList[i]);
+
+    std::string filePath = vsiZipPath + "/" + std::string(papszFileList[i]);
+    GDALDatasetH hDS = GDALOpen(filePath.c_str(), GA_ReadOnly);
+    if (!hDS)
+    {
+      CPLDebug("GCP", "Failed to open GRIB file: %s", filePath.c_str());
+      continue;
+    }
+
+    int nBandCount = GDALGetRasterCount(hDS);
+    for (int j = 0; j < nBandCount; ++j)
+    {
+      GDALRasterBandH hBand = GDALGetRasterBand(hDS, j + 1);
+      const char *pszValidTime = GDALGetMetadataItem(hBand, "GRIB_VALID_TIME", NULL);
+      if (pszValidTime && CSLFindString(papszTimeList, pszValidTime) == -1)
+      {
+        papszTimeList = CSLAddString(papszTimeList, pszValidTime);
+        CPLDebug("GCP", "Found valid time: %s", pszValidTime);
+      }
+    }
+
+    GDALClose(hDS);
+  }
+
+  // Convert time strings to local_date_time
+  for (int i = 0; i < CSLCount(papszTimeList); ++i)
+  {
+    time_t nValidTime = static_cast<time_t>(atoi(papszTimeList[i]));
+
+    bpt::ptime epoch(boost::gregorian::date(1970, 1, 1));
+    bpt::ptime utc_time = epoch + bpt::seconds(nValidTime);
+    blt::local_date_time local_time(utc_time, timeZonePtr);
+    aoTimeList.push_back(local_time);
+  }
+
+  CSLDestroy(papszFileList);
+  CSLDestroy(papszTimeList);
+
+  aoCachedTimes = aoTimeList;
+  return aoCachedTimes;
 }
 
 
@@ -102,12 +198,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
          // Create output directory
   std::string path(CPLGetDirname(demFile.c_str()));
   std::string fileName(CPLGetFilename(demFile.c_str()));
-  std::string outFolder = path + "/test/";
+  std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
+  std::string outFolder = path + "/" + getForecastReadable("-") + "-" + fileName + "/" + startDateStr + "T" + starthours + "00" + "/";
   VSIStatBufL sStat;
   memset(&sStat, 0, sizeof(VSIStatBufL));
   if (VSIStatL(outFolder.c_str(), &sStat) != 0 || !VSI_ISDIR(sStat.st_mode))
   {
-    VSIMkdir(outFolder.c_str(), 0777);
+    VSIMkdirRecursive(outFolder.c_str(), 0777);
   }
 
          // Temporary zip file
@@ -127,7 +224,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     std::string srcFile = "/vsigs/high-resolution-rapid-refresh/hrrr." + dateStr +
                           "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
 
-    std::string outFile = outFolder + "hrrr_" + dateStr + "_" + hourStr + ".grib2";
+    std::string outFile = outFolder + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
     std::string idxFile = "https://storage.googleapis.com/high-resolution-rapid-refresh/hrrr." + dateStr +
                           "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2.idx";
 
@@ -156,39 +253,84 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     GDALClose(outDataset);
     filePathsToZip.push_back(outFile);
   }
-  // Create the zip archive using GDAL's /vsizip/ virtual file system
-  std::string zipPath = outFolder + "pastcast.zip";
-  std::string zipVSIPath = "/vsizip/" + zipPath;
 
-  for (const std::string &file : filePathsToZip)
+         // Create directory using startDate
+  std::string zipFolder = outFolder;
+
+  if (VSIStatL(zipFolder.c_str(), &sStat) != 0 || !VSI_ISDIR(sStat.st_mode))
   {
-    std::string filenameOnly = CPLGetFilename(file.c_str());
-    std::string zipEntryPath = zipVSIPath + "/" + filenameOnly;
+    VSIMkdir(zipFolder.c_str(), 0777);
+  }
 
-    VSILFILE *in = VSIFOpenL(file.c_str(), "rb");
-    VSILFILE *out = VSIFOpenL(zipEntryPath.c_str(), "wb");
+         // Final path for the zip file
+  std::string zipFilePath = zipFolder + startDateStr + ".zip";
 
-    if (!in || !out)
+         // Construct virtual ZIP path (for writing)
+  std::string zipVirtualPath = "/vsizip/" + zipFilePath;
+
+         // Create the zip archive
+  for (const std::string &filePath : filePathsToZip)
+  {
+    // Extract the filename to use as internal zip entry name
+    std::string fileNameOnly(CPLGetFilename(filePath.c_str()));
+
+           // Build the internal path inside the zip archive
+    std::string zipEntryPath = zipVirtualPath + "/" + fileNameOnly;
+
+           // Read from original file
+    VSILFILE *fpSrc = VSIFOpenL(filePath.c_str(), "rb");
+    if (!fpSrc)
     {
-      CPLDebug("GCP", "Failed to open file for zipping: %s", file.c_str());
-      if (in) VSIFCloseL(in);
-      if (out) VSIFCloseL(out);
+      CPLDebug("GCP", "Failed to open source file for zipping: %s", filePath.c_str());
       continue;
     }
 
-    char buffer[8192];
-    size_t nRead;
-    while ((nRead = VSIFReadL(buffer, 1, sizeof(buffer), in)) > 0)
+    VSIFSeekL(fpSrc, 0, SEEK_END);
+    vsi_l_offset fileSize = VSIFTellL(fpSrc);
+    VSIFSeekL(fpSrc, 0, SEEK_SET);
+
+    std::vector<char> buffer(fileSize);
+    if (VSIFReadL(buffer.data(), 1, fileSize, fpSrc) != fileSize)
     {
-      VSIFWriteL(buffer, 1, nRead, out);
+      CPLDebug("GCP", "Failed to read complete file for zipping: %s", filePath.c_str());
+      VSIFCloseL(fpSrc);
+      continue;
     }
 
-    VSIFCloseL(in);
-    VSIFCloseL(out);
-  }
-  wxModelFileName = zipPath;
+    VSIFCloseL(fpSrc);
 
-  return zipPath;
+           // Write to zip archive
+    VSILFILE *fpZip = VSIFOpenL(zipEntryPath.c_str(), "wb");
+    if (!fpZip)
+    {
+      CPLDebug("GCP", "Failed to create zip entry: %s", zipEntryPath.c_str());
+      continue;
+    }
+
+    if (VSIFWriteL(buffer.data(), 1, fileSize, fpZip) != fileSize)
+    {
+      CPLDebug("GCP", "Failed to write data to zip entry: %s", zipEntryPath.c_str());
+    }
+
+    VSIFCloseL(fpZip);
+  }
+
+  for (const std::string &filePath : filePathsToZip)
+  {
+    if (VSIUnlink(filePath.c_str()) != 0)
+    {
+      CPLDebug("GCP", "Failed to delete temporary file: %s", filePath.c_str());
+    }
+    else
+    {
+      CPLDebug("GCP", "Deleted temporary file: %s", filePath.c_str());
+    }
+  }
+
+  CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
+
+  return zipFilePath;
+
 
 }
 
@@ -275,623 +417,235 @@ void GCPWxModel::setDateTime(boost::gregorian::date date1, boost::gregorian::dat
   endhours = hours2;
 }
 
-std::string GCPWxModel::getForecastIdentifier()
-{
-  return "PAST-CAST-ARCHIVED-HRRR-CONUS-3KM";
-}
-
-
-char * GCPWxModel::NomadsFindForecast( const char *pszFilePath,
-                                        time_t nTime )
-{
-
-}
-
-void GCPWxModel::setSurfaceGrids( WindNinjaInputs &input,
-                                    AsciiGrid<double> &airGrid,
-                                    AsciiGrid<double> &cloudGrid,
-                                    AsciiGrid<double> &uGrid,
-                                    AsciiGrid<double> &vGrid,
-                                    AsciiGrid<double> &wGrid )
+void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
+                                 AsciiGrid<double>& airGrid,
+                                 AsciiGrid<double>& cloudGrid,
+                                 AsciiGrid<double>& uGrid,
+                                 AsciiGrid<double>& vGrid,
+                                 AsciiGrid<double>& wGrid)
 {
   std::vector<blt::local_date_time> timeList( getTimeList( NULL, input.ninjaTimeZone ) );
-  int i;
-  GDALDatasetH hSrcDS, hVrtDS;
-  GDALDatasetH hBand;
-  const char *pszSrcWkt, *pszDstWkt;
-  GDALWarpOptions *psWarpOptions;
-  int bSuccess;
-  double dfNoData;
-  int nBandCount;
-  int bNeedNextCloud = FALSE;
-  AsciiGrid<double> speedGrid;
-  AsciiGrid<double> directionGrid;
-  bool blendCheck;
-
-  /*
-  ** We need to find the correct file in the directory.  It may not be the
-  ** filename.
-  */
-  const char *pszForecastFile = NULL;
-  for( i = 0; i < (int)timeList.size(); i++ )
-  {
-    if( timeList[i] == input.ninjaTime )
-    {
-      bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );
-      bpt::time_duration::sec_type t;
-      t = (input.ninjaTime.utc_time() - epoch).total_seconds();
-      pszForecastFile =
-          NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
-      if( i == 0 && timeList.size() > 1 )
-      {
-        bNeedNextCloud = TRUE;
-      }
-      break;
-    }
-
+  if (timeList.empty()) {
+    throw badForecastFile("No forecast time steps found.");
   }
+
+  GDALDatasetH hSrcDS = nullptr, hVrtDS = nullptr;
+  const char* pszSrcWkt = nullptr;
+  const char* pszDstWkt = input.dem.prjString.c_str();
+  GDALWarpOptions* psWarpOptions = nullptr;
+  double dfNoData = -9999.0;
+  bool bHaveTemp = false, bHaveCloud = false, bNeedNextCloud = false;
+
+         // Extract date string: YYYYMMDD
+  std::ostringstream dateStrStream;
+  dateStrStream << boost::gregorian::to_iso_string(input.ninjaTime.date());
+  std::string dateStr = dateStrStream.str();
+
+         // Extract hour string: HH (zero-padded)
+  std::ostringstream hourStrStream;
+  hourStrStream << std::setw(2) << std::setfill('0') << input.ninjaTime.time_of_day().hours();
+  std::string hourStr = hourStrStream.str();
+
+         // Build the GRIB2 filename: "hrrr.t20z.wrfsubhf00.grib2"
+  std::string grib2FileName = "hrrr." + dateStr + "t" + hourStr + "z.wrfsfcf00.grib2";
+
+         // Combine into VSI path
+  std::string vsiPath = "/vsizip/" + input.forecastFilename + "/" + grib2FileName;
+  const char *pszForecastFile = vsiPath.c_str();
   if( !pszForecastFile )
   {
     throw badForecastFile( "Could not find forecast associated with " \
                           "requested time step" );
   }
 
-  hSrcDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
-  if( hSrcDS == NULL ) {
-    throw badForecastFile( "Could not find forecast associated with " \
-                          "requested time step" );
-  }
-  CPLFree( (void*) pszForecastFile );
-  pszForecastFile = NULL;
-  nBandCount = GDALGetRasterCount( hSrcDS );
-  hBand = GDALGetRasterBand( hSrcDS, 1 );
-  dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
-  if( bSuccess == FALSE )
-  {
-    dfNoData = -9999.0;
+  hSrcDS = GDALOpenShared(pszForecastFile, GA_ReadOnly);
+  if (!hSrcDS) {
+    throw badForecastFile("Failed to open forecast dataset.");
   }
 
+  int nBandCount = GDALGetRasterCount(hSrcDS);
+  GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, 1);
+  int bSuccess;
+  dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
+  if (!bSuccess) dfNoData = -9999.0;
+
+  // Setup warp options
   psWarpOptions = GDALCreateWarpOptions();
-  psWarpOptions->padfDstNoDataReal =
-      (double*) CPLMalloc( sizeof( double ) * nBandCount );
-  psWarpOptions->padfDstNoDataImag =
-      (double*) CPLMalloc( sizeof( double ) * nBandCount );
-  for( i = 0; i < nBandCount; i++ )
-  {
+  psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+  psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+  for (int i = 0; i < nBandCount; ++i) {
     psWarpOptions->padfDstNoDataReal[i] = dfNoData;
     psWarpOptions->padfDstNoDataImag[i] = dfNoData;
   }
 
-  pszSrcWkt = GDALGetProjectionRef( hSrcDS );
-  pszDstWkt = input.dem.prjString.c_str();
-#ifdef NOMADS_INTERNAL_VRT
-  hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
-                                     GRA_NearestNeighbour, 1.0,
-                                     psWarpOptions );
-#else
-  hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
-                                   GRA_NearestNeighbour, 1.0,
-                                   psWarpOptions );
-#endif
+  pszSrcWkt = GDALGetProjectionRef(hSrcDS);
+  hVrtDS = GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWkt, pszDstWkt, GRA_NearestNeighbour, 1.0, psWarpOptions);
 
-  const char *pszElement;
-  const char *pszComment;
-  const char *pszShortName;
-  int bHaveTemp, bHaveCloud;
-  bHaveTemp = FALSE;
-  bHaveCloud = FALSE;
-  for( i = 0; i < nBandCount; i++ )
-  {
-    hBand = GDALGetRasterBand( hVrtDS, i + 1 );
-    /*
-    ** Check the shortname and make sure it's valid.  HRRR TCDC uses
-    ** entire_atmosphere instead of
-    ** entire_atmosphere_(considered_as_a_single_layer), so we account for
-    ** this with the 0-RESERVED(10).
-    */
-    pszShortName = GDALGetMetadataItem( hBand, "GRIB_SHORT_NAME", NULL );
-    if( !EQUAL( "10-HTGL", pszShortName ) &&
-        !EQUAL( "2-HTGL", pszShortName ) &&
-        !EQUAL( "0-EATM", pszShortName ) &&
-        !EQUAL( "0-CCY", pszShortName ) &&
-        !EQUAL( "0-RESERVED(10)", pszShortName ) &&
-        !EQUAL( "0-HCY", pszShortName ))
-    {
-      continue;
-    }
+         // Extract desired bands
+  for (int i = 0; i < nBandCount; ++i) {
+    hBand = GDALGetRasterBand(hVrtDS, i + 1);
+    const char* pszElement = GDALGetMetadataItem(hBand, "GRIB_ELEMENT", nullptr);
+    const char* pszShortName = GDALGetMetadataItem(hBand, "GRIB_SHORT_NAME", nullptr);
+    if (!pszElement || !pszShortName) continue;
 
-    pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
-    if( !pszElement )
-    {
-      throw badForecastFile( "Could not fetch proper band" );
+    if (EQUAL(pszElement, "TMP")) {
+      GDAL2AsciiGrid((GDALDataset*)hVrtDS, i + 1, airGrid);
+      airGrid.set_noDataValue(dfNoData);
+      airGrid.replaceNan(dfNoData);
+      bHaveTemp = true;
     }
-    if( EQUAL( pszElement, "TMP" ) )
-    {
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        airGrid.set_noDataValue( -9999.0 );
-        airGrid.replaceNan( -9999.0 );
-      }
-      bHaveTemp = TRUE;
+    else if (EQUAL(pszElement, "UGRD")) {
+      GDAL2AsciiGrid((GDALDataset*)hVrtDS, i + 1, uGrid);
+      uGrid.set_noDataValue(dfNoData);
+      uGrid.replaceNan(dfNoData);
     }
-    else if( EQUAL( pszElement, "UGRD" ) )
-    {
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, uGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        uGrid.set_noDataValue( -9999.0 );
-        uGrid.replaceNan( -9999.0 );
-      }
+    else if (EQUAL(pszElement, "VGRD")) {
+      GDAL2AsciiGrid((GDALDataset*)hVrtDS, i + 1, vGrid);
+      vGrid.set_noDataValue(dfNoData);
+      vGrid.replaceNan(dfNoData);
     }
-    else if( EQUAL( pszElement, "VGRD" ) )
-    {
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, vGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        vGrid.set_noDataValue( -9999.0 );
-        vGrid.replaceNan( -9999.0 );
-      }
-    }
-    else if( EQUAL( pszElement, "TCDC" ) )
-    {
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, cloudGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        cloudGrid.set_noDataValue( -9999.0 );
-        cloudGrid.replaceNan( -9999.0 );
-      }
-      bHaveCloud = TRUE;
-    }
-    else if( EQUAL( pszElement, "T" ) )
-    {
-      pszComment = GDALGetMetadataItem( hBand, "GRIB_COMMENT", NULL );
-
-      if( EQUAL( pszComment, "Temperature [stddev]")) {
-        continue;
-      }
-
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        airGrid.set_noDataValue( -9999.0 );
-        airGrid.replaceNan( -9999.0 );
-      }
-      bHaveTemp = TRUE;
-    }
-    else if( EQUAL( pszElement, "WindSpd" ) )
-    {
-      blendCheck = true;
-      pszComment = GDALGetMetadataItem( hBand, "GRIB_COMMENT", NULL );
-
-      if( EQUAL( pszComment, "Wind speed [stddev]")) {
-        continue;
-      }
-
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, speedGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        speedGrid.set_noDataValue( -9999.0 );
-        speedGrid.replaceNan( -9999.0 );
-      }
-    }
-    else if( EQUAL( pszElement, "WindDir" ) )
-    {
-      blendCheck = true;
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, directionGrid );
-      if( CPLIsNan( dfNoData ) )
-      {
-        directionGrid.set_noDataValue( -9999.0 );
-        directionGrid.replaceNan( -9999.0 );
-      }
+    else if (EQUAL(pszElement, "TCDC")) {
+      GDAL2AsciiGrid((GDALDataset*)hVrtDS, i + 1, cloudGrid);
+      cloudGrid.set_noDataValue(dfNoData);
+      cloudGrid.replaceNan(dfNoData);
+      bHaveCloud = true;
     }
   }
-  GDALClose( hSrcDS );
-  GDALClose( hVrtDS );
-  if( !bHaveCloud )
-  {
-    /*
-    ** If we don't have cloud cover, and we are on the first time step, we
-    ** may be in a strange discretization situation.  GFS 0th time step
-    ** doesn't have time averaged cloud cover.  Let's go forward in time
-    ** and copy the cloud cover from the 1st time.  Issue a warning.
-    **
-    ** Note that GDAL handles thread safety *in* the GRIB driver by
-    ** acquiring a mutex in the driver.  We should be fine here, as long as
-    ** we use GDALOpenShared().
-    */
-    if( bNeedNextCloud == TRUE )
-    {
-      GDALDatasetH hDSNextCloud;
-      const char *pszNextFcst;
-      bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );
-      bpt::time_duration::sec_type t;
-      t = (timeList[1].utc_time() - epoch).total_seconds();
-      pszNextFcst =
-          NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
-      hSrcDS = GDALOpenShared( pszNextFcst, GA_ReadOnly );
-      if( hSrcDS == NULL )
-      {
-        throw badForecastFile( "Could not load cloud data." );
-      }
-      pszSrcWkt = GDALGetProjectionRef( hSrcDS );
-#ifdef NOMADS_VRT
-      hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
-                                         GRA_NearestNeighbour, 1.0,
-                                         psWarpOptions );
-#else
-      hVrtDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
-                                       GRA_NearestNeighbour, 1.0,
-                                       psWarpOptions );
-#endif
-      if( hVrtDS == NULL )
-      {
-        throw badForecastFile( "Could not load cloud data." );
-      }
-      int j = 0;
-      for( j = 0; j < GDALGetRasterCount( hVrtDS ); j++ )
-      {
-        hBand = GDALGetRasterBand( hVrtDS, j + 1 );
-        pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
-        if( EQUAL( pszElement, "TCDC" ) )
-        {
+
+  GDALClose(hSrcDS);
+  GDALClose(hVrtDS);
+
+  if (!bHaveCloud && bNeedNextCloud) {
+    // Try loading cloud data from next time step
+    bpt::ptime epoch(boost::gregorian::date(1970, 1, 1));
+    time_t t = (timeList[1].utc_time() - epoch).total_seconds();
+    const char* pszNextFcst = FindForecast(input.forecastFilename.c_str(), t);
+    hSrcDS = GDALOpenShared(pszNextFcst, GA_ReadOnly);
+    CPLFree((void*)pszNextFcst);
+
+    if (hSrcDS) {
+      pszSrcWkt = GDALGetProjectionRef(hSrcDS);
+      hVrtDS = GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWkt, pszDstWkt, GRA_NearestNeighbour, 1.0, psWarpOptions);
+      for (int i = 0; i < GDALGetRasterCount(hVrtDS); ++i) {
+        hBand = GDALGetRasterBand(hVrtDS, i + 1);
+        const char* pszElement = GDALGetMetadataItem(hBand, "GRIB_ELEMENT", nullptr);
+        if (EQUAL(pszElement, "TCDC")) {
+          GDAL2AsciiGrid((GDALDataset*)hVrtDS, i + 1, cloudGrid);
+          cloudGrid.set_noDataValue(dfNoData);
+          cloudGrid.replaceNan(dfNoData);
+          bHaveCloud = true;
           break;
         }
-        hBand = NULL;
       }
-      if( hBand == NULL )
-      {
-        /*
-         ** This is okay for models that have no cloud cover data at
-         ** all, for example HRRR subhourly.  Before incorporation of
-         ** the HRRR subhourly, this threw a bad forecast file, now we
-         ** just set the cloud cover to 0 and issue a warning.
-         */
-        CPLFree( (void*)pszNextFcst );
-        GDALClose( hSrcDS );
-        GDALClose( hVrtDS );
-        goto noCloudOK;
-      }
-      GDAL2AsciiGrid( (GDALDataset*)hVrtDS, j + 1, cloudGrid );
-      dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
-      if( bSuccess == FALSE )
-      {
-        dfNoData = -9999.0;
-      }
-      if( CPLIsNan( dfNoData ) )
-      {
-        cloudGrid.set_noDataValue( -9999.0 );
-        cloudGrid.replaceNan( -9999.0 );
-      }
-      CPLFree( (void*)pszNextFcst );
-      GDALClose( hSrcDS );
-      GDALClose( hVrtDS );
-      CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data "
-                                            "from 0th time step, using time step 1." );
+      GDALClose(hSrcDS);
+      GDALClose(hVrtDS);
     }
-    else
-    {
-    noCloudOK:
-      CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data " \
-               "from the forecast file, setting to 0." );
 
-      cloudGrid.set_headerData( uGrid );
+    if (!bHaveCloud) {
+      CPLError(CE_Warning, CPLE_AppDefined, "No cloud data found. Setting cloud grid to 0.");
+      cloudGrid.set_headerData(uGrid);
       cloudGrid = 0.0;
     }
   }
+  else if (!bHaveCloud) {
+    cloudGrid.set_headerData(uGrid);
+    cloudGrid = 0.0;
+  }
+
   cloudGrid /= 100.0;
-  airGrid += 273.15;
+  airGrid += 273.15;  // Celsius to Kelvin
+  wGrid.set_headerData(uGrid);
+  wGrid = 0.0;
 
-  if(EQUAL(pszKey, "nbm_conus")) {
-    uGrid.set_headerData(speedGrid);
-    vGrid.set_headerData(speedGrid);
-    wGrid.set_headerData(speedGrid);
+  GDALDestroyWarpOptions(psWarpOptions);
+}
 
-    for(int i=0; i<speedGrid.get_nRows(); i++)
+char* GCPWxModel::FindForecast(const char* pszFilePath, time_t nTime)
+{
+  VSIStatBufL sStat;
+  VSIStatL(pszFilePath, &sStat);
+
+  const char* pszPath = nullptr;
+  if (VSI_ISDIR(sStat.st_mode))
+    pszPath = CPLStrdup(pszFilePath);
+  else if (strstr(wxModelFileName.c_str(), ".zip"))
+    pszPath = CPLStrdup(CPLSPrintf("/vsizip/%s", wxModelFileName.c_str()));
+  else
+    pszPath = CPLStrdup(CPLGetPath(pszFilePath));
+
+  char** papszFileList = VSIReadDir(pszPath);
+  if (!papszFileList || CSLCount(papszFileList) == 0)
+  {
+    CPLFree((void*)pszPath);
+    return nullptr;
+  }
+
+  for (int i = 0; papszFileList[i] != nullptr; ++i)
+  {
+    std::string filename = papszFileList[i];
+
+           // Skip dotfiles
+    if (filename == "." || filename == "..")
+      continue;
+
+           // Try to match pattern: 20250512.hrrr.t15z.wrfnatf00.grib2
+    size_t posDate = filename.find('.');
+    size_t posHour = filename.find(".hrrr.t");
+    size_t posZ = filename.find('z', posHour);
+
+    if (posDate == std::string::npos || posHour == std::string::npos || posZ == std::string::npos)
+      continue;
+
+    std::string dateStr = filename.substr(0, posDate); // "20250512"
+    std::string hourStr = filename.substr(posHour + 7, posZ - (posHour + 7)); // "15"
+
+    if (dateStr.length() != 8 || hourStr.length() != 2)
+      continue;
+
+           // Build datetime string and convert to time_t
+    std::string datetimeStr = dateStr + hourStr;
+
+    struct tm tmTime = {};
+    strptime(datetimeStr.c_str(), "%Y%m%d%H", &tmTime);
+    time_t fileTime = mktime(&tmTime);
+
+    if (fileTime == nTime)
     {
-      for(int j=0; j<speedGrid.get_nCols(); j++)
-      {
-        if( speedGrid(i,j) == speedGrid.get_NoDataValue() || directionGrid(i,j) == directionGrid.get_NoDataValue() ) {
-          uGrid(i,j) = uGrid.get_NoDataValue();
-          vGrid(i,j) = vGrid.get_NoDataValue();
-        }
-        else
-          wind_sd_to_uv(speedGrid(i,j), directionGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
-      }
+      std::string fullPath = std::string(pszPath) + "/" + filename;
+      CPLFree((void*)pszPath);
+      CSLDestroy(papszFileList);
+      return CPLStrdup(fullPath.c_str());
     }
   }
 
-  wGrid = 0.0;
-
-  speedGrid.deallocate();
-  directionGrid.deallocate();
-  GDALDestroyWarpOptions( psWarpOptions );
+  CPLFree((void*)pszPath);
+  CSLDestroy(papszFileList);
+  return nullptr;
 }
+
 
 void GCPWxModel::checkForValidData()
 {
   return;
 }
 
-
-bool GCPWxModel::identify( std::string fileName )
-{
-  return GCPWxModel::FindModelKey( fileName.c_str() ) ? TRUE : FALSE;
-}
-
 int GCPWxModel::getEndHour()
 {
-  if( !ppszModelData )
-  {
-    return 0;
-  }
-  char **papszTokens = NULL;
-  int nHour = 0;
-  int nCount = 0;
-  papszTokens = CSLTokenizeString2( ppszModelData[0],
-                                   ":,", 0 );
-  nCount = CSLCount( papszTokens );
-  nHour = atoi( papszTokens[nCount - 2] );
-  CSLDestroy( papszTokens );
-  return nHour;
+  return NULL;
 }
 
 int GCPWxModel::getStartHour()
 {
-  if( !ppszModelData )
-  {
-    return 0;
-  }
-  char **papszTokens = NULL;
-  int nHour = 0;
-  int nCount = 0;
-  papszTokens = CSLTokenizeString2( ppszModelData[0],
-                                   ":,", 0 );
-  nCount = CSLCount( papszTokens );
-  if( nCount == 0 )
-    return 0;
-  nHour = atoi( papszTokens[0] );
-  CSLDestroy( papszTokens );
-  return nHour;
+  return NULL;
 }
 
-
-#define NOMADS_NON_PRES 4
 
 void GCPWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 {
-#ifdef NOMADS_ENABLE_3D
-  if( ppszModelData == NULL )
-    return;
-  int g, h, i, j, k, n;
-  GDALDatasetH hDS, hVrtDS;
-  GDALRasterBandH hBand;
-  const char *pszSrcWkt, *pszDstWkt;
-  GDALWarpOptions *psWarpOptions;
-  int nLayerCount;
-
-  char **papszLevels =
-      CSLTokenizeString2( ppszModelData[NOMADS_LEVELS], ",", 0 );
-  nLayerCount = CSLCount( papszLevels );
-  if( nLayerCount < 4 )
-  {
-    CSLDestroy( papszLevels );
-    return;
-  }
-  std::vector<blt::local_date_time> timeList( getTimeList( NULL, input.ninjaTimeZone ) );
-  /*
-  ** We need to find the correct file in the directory.  It may not be the
-  ** filename.
-  */
-  const char *pszForecastFile = NULL;
-  for( i = 0; i < (int)timeList.size(); i++ )
-  {
-    if( timeList[i] == input.ninjaTime )
-    {
-      bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );
-      bpt::time_duration::sec_type t;
-      t = (input.ninjaTime.utc_time() - epoch).total_seconds();
-      pszForecastFile =
-          NomadsFindForecast( input.forecastFilename.c_str(), (time_t)t );
-      break;
-    }
-  }
-  if( !pszForecastFile )
-  {
-    throw badForecastFile( "Could not find forecast associated with " \
-                          "requested time step" );
-  }
-
-  hDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
-  CPLFree( (void*)pszForecastFile );
-  int nBandCount = GDALGetRasterCount( hDS );
-  hBand = GDALGetRasterBand( hDS, 1 );
-  int bSuccess;
-  double dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
-  if( !bSuccess )
-    dfNoData = -9999.0;
-  psWarpOptions = GDALCreateWarpOptions();
-  psWarpOptions->padfDstNoDataReal =
-      (double*) CPLMalloc( sizeof( double ) * nBandCount );
-  psWarpOptions->padfDstNoDataImag =
-      (double*) CPLMalloc( sizeof( double ) * nBandCount );
-  for( i = 0; i < nBandCount; i++ )
-  {
-    psWarpOptions->padfDstNoDataReal[i] = dfNoData;
-    psWarpOptions->padfDstNoDataImag[i] = dfNoData;
-  }
-  psWarpOptions->papszWarpOptions =
-      CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                      "INIT_DEST", "-9999.0" );
-
-  pszSrcWkt = GDALGetProjectionRef( hDS );
-  pszDstWkt = input.dem.prjString.c_str();
-#ifdef NOMADS_VRT
-  hVrtDS = NomadsAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
-                                     GRA_NearestNeighbour, 1.0,
-                                     psWarpOptions );
-#else
-  hVrtDS = GDALAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
-                                   GRA_NearestNeighbour, 1.0,
-                                   psWarpOptions );
-#endif
-
-  int nSkipRows, nSkipCols;
-  hBand = GDALGetRasterBand( hVrtDS, 1 );
-  ClipNoData( hBand, dfNoData, &nSkipRows, &nSkipCols );
-  nSkipRows++;
-  nSkipCols++;
-
-  int nXSize, nYSize;
-  double dfXOrigin, dfYOrigin;
-  double dfDeltaX, dfDeltaY;
-  double adfGeoTransform[6];
-  GDALGetGeoTransform( hVrtDS, adfGeoTransform );
-  dfXOrigin = adfGeoTransform[0];
-  dfYOrigin = adfGeoTransform[3];
-  dfDeltaX = adfGeoTransform[1];
-  dfDeltaY = adfGeoTransform[5];
-  nXSize = GDALGetRasterXSize( hVrtDS );
-  nYSize = GDALGetRasterYSize( hVrtDS );
-  int nXSubSize ,nYSubSize;
-  nXSubSize = nXSize - nSkipCols * 2;
-  nYSubSize = nYSize - nSkipRows * 2;
-  double *padfData = (double*)CPLMalloc( sizeof( double ) * nXSubSize );
-  /* Subtract the surface layers */
-  nLayerCount -= NOMADS_NON_PRES;
-  oArray.allocate( nYSubSize, nXSubSize, nLayerCount );
-  /* We assume our levels are in order from the groud up in the level list */
-  int rc;
-  i = 0;
-  h = 0;
-  while( h < nLayerCount && i < nLayerCount + NOMADS_NON_PRES )
-  {
-    if( strstr( papszLevels[i], "_m_above_ground" ) ||
-        strstr( papszLevels[i], "surface" ) ||
-        strstr( papszLevels[i], "entire_atmosphere" ) )
-    {
-      i++;
-      continue;
-    }
-
-    hBand = FindBand( hVrtDS, "HGT", papszLevels[i] );
-    if( hBand == NULL )
-    {
-      i++;
-      continue;
-    }
-    n = 0;
-    for( j = nYSize - nSkipRows - 1; j >= nSkipRows; j-- )
-    {
-      rc = GDALRasterIO( hBand, GF_Read, nSkipCols, j, nXSubSize, 1,
-                        padfData, nXSubSize, 1, GDT_Float64, 0, 0 );
-      for( k = 0; k < nXSubSize; k++ )
-      {
-        oArray( n, k, h ) = padfData[k];
-      }
-      n++;
-    }
-    h++;
-    i++;
-  }
-  double xOffset, yOffset;
-  double xllNinja, yllNinja, xllWxModel, yllWxModel;
-  input.dem.get_cellPosition( 0, 0, &xllNinja, &yllNinja );
-  xllWxModel = dfXOrigin + nSkipCols * dfDeltaX;
-  yllWxModel = dfYOrigin + ((nYSize - nSkipRows) * dfDeltaY);
-
-  xllWxModel += dfDeltaX / 2;
-  yllWxModel += dfDeltaY / 2;
-
-  xOffset = xllWxModel - xllNinja;
-  yOffset = yllWxModel - yllNinja;
-
-  wxMesh.buildFrom3dWeatherModel( input, oArray, dfDeltaX,
-                                 nYSubSize, nXSubSize, nLayerCount,
-                                 xOffset, yOffset );
-  volVTK vtk;
-  vtk.writeMeshVolVTK(wxMesh.XORD, wxMesh.YORD, wxMesh.ZORD,
-                      wxMesh.ncols, wxMesh.nrows, wxMesh.nlayers,
-                      "wxMesh.vtk");
-  Mesh m2 = mesh;
-  vtk.writeMeshVolVTK(m2.XORD, m2.YORD, m2.ZORD,
-                      m2.ncols, m2.nrows, m2.nlayers,
-                      "mackay.vtk");
-
-  /* u,v,w,t */
-  wxFields[0] = &wxU3d;
-  wxFields[1] = &wxV3d;
-  wxFields[2] = &wxW3d;
-  wxFields[3] = &wxAir3d;
-  wxFields[4] = &wxCloud3d;
-  fields[0] = &u3d;
-  fields[1] = &v3d;
-  fields[2] = &w3d;
-  fields[3] = &air3d;
-  h = 0;
-
-  static const char *apszVarList[] = { "UGRD", "VGRD", "DZDT", "TMP", NULL };
-  while( apszVarList[h] != NULL )
-  {
-    wxFields[h]->allocate( &wxMesh );
-    i = 0;
-    g = 0;
-    while( g < nLayerCount  && i < nLayerCount + NOMADS_NON_PRES )
-    {
-      if( strstr( papszLevels[i], "_m_above_ground" ) ||
-          strstr( papszLevels[i], "surface" ) ||
-          strstr( papszLevels[i], "entire_atmosphere" ) )
-      {
-        i++;
-        continue;
-      }
-      hBand = FindBand( hVrtDS, apszVarList[h], papszLevels[i] );
-      if( hBand == NULL )
-      {
-        i++;
-        continue;
-      }
-      n = 0;
-      for( j = nYSize - nSkipRows - 1; j >= nSkipRows; j-- )
-      {
-        rc = GDALRasterIO( hBand, GF_Read, nSkipCols, j, nXSubSize, 1,
-                          padfData, nXSubSize, 1, GDT_Float64, 0, 0 );
-        for( k = 0; k < nXSubSize; k++ )
-        {
-          (*(wxFields[h]))( n, k, g ) = padfData[k];
-        }
-        n++;
-      }
-      g++;
-      i++;
-    }
-    h++;
-  }
-  wxCloud3d.allocate( &wxMesh );
-
-  CPLFree( (void*)padfData );
-  CSLDestroy( papszLevels );
-  GDALClose( hDS );
-  GDALClose( hVrtDS );
-
-  for( i = 0; i < 4; i++ )
-  {
-    fields[i]->allocate( &mesh );
-    wxFields[i]->interpolateScalarData((*(fields[i])), mesh, input);
-  }
-#endif /* NOMADS_ENABLE_3D */
   return;
 }
 
-const char ** GCPWxModel::FindModelKey( const char *pszFilename )
-{
 
-}
-
-std::string GCPWxModel::getForecastReadable( const char bySwapWithSpace )
-{
-
-}
 
 
 
