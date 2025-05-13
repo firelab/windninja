@@ -56,6 +56,8 @@ using namespace Foam::constant::mathematical;
 
 int main(int argc, char *argv[])
 {
+    IOstream::defaultPrecision(12);
+
     #include "removeCaseOptions.H"
 
     argList::addNote
