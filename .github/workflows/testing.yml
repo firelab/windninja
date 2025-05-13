@@ -27,7 +27,7 @@ jobs:
         restore-keys: ${{ runner.os }}-windDep
     
     - name: build dependencies -- no cache
-      if: steps.cacheDep.outputs.cache-hit != 'true'
+      #if: steps.cacheDep.outputs.cache-hit != 'true'
       run: |
         sudo -E apt-get update -y
         sudo -E apt-get upgrade -y
@@ -37,7 +37,8 @@ jobs:
         cd ${{github.workspace}}
       
     - name: build dependencies -- with cache
-      if: steps.cacheDep.outputs.cache-hit == 'true'
+      #if: steps.cacheDep.outputs.cache-hit == 'true'
+      if: steps.cacheDep.outputs.cache-hit != 'true'
       run: |
         # install standard dependencies
         sudo -E apt-get update -y
@@ -60,6 +61,19 @@ jobs:
         sudo make install
         cd ${{github.workspace}}/scripts/gdal-3.4.1
         sudo make install
+        # install qt
+        sudo add-apt-repository ppa:rock-core/qt4
+        sudo apt-get update
+        sudo -E apt-get install -y libqt4-dev libqtwebkit-dev
+        # Use OpenFOAM 8
+        # add the dl.openfoam.org repo and install OpenFOAM 8
+        sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+        sudo add-apt-repository http://dl.openfoam.org/ubuntu
+        sudo apt-get update
+        sudo -E apt-get install -y openfoam8
+        echo "source /opt/openfoam8/etc/bashrc" >> ~/.bashrc
+        # return to start directory
+        cd ${{github.workspace}}
 
     - name: make build directory
       run: mkdir build
