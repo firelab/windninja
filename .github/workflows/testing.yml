@@ -27,7 +27,7 @@ jobs:
         restore-keys: ${{ runner.os }}-windDep
     
     - name: build dependencies -- no cache
-      #if: steps.cacheDep.outputs.cache-hit != 'true'
+      if: steps.cacheDep.outputs.cache-hit != 'true'
       run: |
         sudo -E apt-get update -y
         sudo -E apt-get upgrade -y
@@ -37,8 +37,7 @@ jobs:
         cd ${{github.workspace}}
       
     - name: build dependencies -- with cache
-      #if: steps.cacheDep.outputs.cache-hit == 'true'
-      if: steps.cacheDep.outputs.cache-hit != 'true'
+      if: steps.cacheDep.outputs.cache-hit == 'true'
       run: |
         # install standard dependencies
         sudo -E apt-get update -y
