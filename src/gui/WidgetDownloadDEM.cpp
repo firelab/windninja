@@ -283,10 +283,10 @@ void WidgetDownloadDEM::saveDEM()
             progressBar->reset();
             bool test = progressBar->wasCanceled();
 
-            connect(&futureWatcher, SIGNAL(finished()), this, SLOT(updateProgress()));
+//            connect(&futureWatcher, SIGNAL(finished()), this, SLOT(updateProgress()));
             connect(progressBar, SIGNAL(canceled()), this, SLOT(updateProgress()));
 
-            futureWatcher.setFuture(QtConcurrent::run(this, &WidgetDownloadDEM::fetchBoundBox, boundBox, demFile, currentResolution));
+//            futureWatcher.setFuture(QtConcurrent::run(this, &WidgetDownloadDEM::fetchBoundBox, boundBox, demFile, currentResolution));
 
             progressBar->exec();
         } 
@@ -300,20 +300,21 @@ void WidgetDownloadDEM::saveDEM()
 void WidgetDownloadDEM::updateProgress()
 {
     disconnect(progressBar, SIGNAL(canceled()), this, SLOT(updateProgress()));
-    disconnect(&futureWatcher, SIGNAL(finished()), this, SLOT(updateProgress()));
+//    disconnect(&futureWatcher, SIGNAL(finished()), this, SLOT(updateProgress()));
 
     if(progressBar->wasCanceled())
     {
         progressBar->setLabelText("Canceling...");
         progressBar->setCancelButton(0);
-        futureWatcher.waitForFinished();
+//        futureWatcher.waitForFinished();
         VSIUnlink(demFile);
         progressBar->cancel();
     }
     else
     {
-        futureWatcher.waitForFinished();
-        int result = futureWatcher.result();
+//        futureWatcher.waitForFinished();
+//        int result = futureWatcher.result();
+        int result = 100;
 
         if(result < 0)
         {

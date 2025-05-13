@@ -92,7 +92,7 @@ protected:
 private:
         //Progress Bar Stuff
         QProgressDialog *stationFetchProgress;
-        QFutureWatcher<int> stationFutureWatcher;
+//        QFutureWatcher<int> stationFutureWatcher;
         
 friend class pointInput;
 };

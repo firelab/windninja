@@ -148,14 +148,15 @@ void stationFetchWidget::updateFetchProgress()
     {
         stationFetchProgress->setLabelText("Canceling!");
         stationFetchProgress->setCancelButton(0);
-        stationFutureWatcher.waitForFinished();
+//        stationFutureWatcher.waitForFinished();
         stationFetchProgress->cancel();
         setCursor(Qt::ArrowCursor);
     }
     else
     {
-        stationFutureWatcher.waitForFinished();
-        int result = stationFutureWatcher.result(); //Get the result, 1 good, -1 bad
+//        stationFutureWatcher.waitForFinished();
+//        int result = stationFutureWatcher.result(); //Get the result, 1 good, -1 bad
+        int result = 0;
 
         if (result==-1) //Means that we failed to get data, the error_msg should tell the user
         { //What happened
@@ -201,7 +202,7 @@ void stationFetchWidget::executeFetchStation()
     stationFetchProgress->setCancelButtonText("Cancel");
     stationFetchProgress->reset(); //Set the progress bar back to its basic state
 
-    connect(&stationFutureWatcher,SIGNAL(finished()),this,SLOT(updateFetchProgress()));
+//    connect(&stationFutureWatcher,SIGNAL(finished()),this,SLOT(updateFetchProgress()));
     connect(stationFetchProgress,SIGNAL(canceled()),this,SLOT(updateFetchProgress()));
 
      /* Note on Concurrent Processing:
@@ -212,7 +213,7 @@ void stationFetchWidget::executeFetchStation()
      * Always update the UI from outside the spawned thread...
      */
 
-    stationFutureWatcher.setFuture(QtConcurrent::run(this,&stationFetchWidget::fetchStation)); //Run the
+//    stationFutureWatcher.setFuture(QtConcurrent::run(this,&stationFetchWidget::fetchStation)); //Run the
     //actual fetching
     setCursor(Qt::WaitCursor);//Make the cursor spinny
     stationFetchProgress->exec(); //Execute the progress bar to do its thing

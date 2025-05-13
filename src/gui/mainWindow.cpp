@@ -409,9 +409,9 @@ void mainWindow::createActions()
           SLOT(bugReport()));
 
   //about qt action
-  aboutQtAction = new QAction(tr("About &Qt"), this);
-  aboutQtAction->setStatusTip(tr("Show the Qt library's About box"));
-  connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
+//  aboutQtAction = new QAction(tr("About &Qt"), this);
+//  aboutQtAction->setStatusTip(tr("Show the Qt library's About box"));
+//  connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 
   //test action to test slots.
   testAction = new QAction(tr("Test"), this);

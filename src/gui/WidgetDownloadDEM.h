@@ -117,7 +117,7 @@ private:
 
     const char *demFile;
     QDir demFileDir;
-    QFutureWatcher<int> futureWatcher;
+//    QFutureWatcher<int> futureWatcher;
     QProgressDialog *progressBar;
     QMessageBox *boundsError;
     QMessageBox *bufferError;
