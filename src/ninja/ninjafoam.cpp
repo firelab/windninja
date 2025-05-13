@@ -1924,22 +1924,20 @@ void NinjaFoam::createMinZpatchStl()
 
 void NinjaFoam::createOutputSurfSampleStl()
 {
-    //create the minZpatch.stl for the current time, to raise up to the output wind height
-    createMinZpatchStl();
-
-    const char *pszMinZpatchStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/minZpatch_time%d.stl", pszFoamPath, latestTime)));
-
-    std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
-    const char *pszSurfOutStlFileName = CPLStrdup((CPLSPrintf("%s/constant/triSurface/%s_out.stl", pszFoamPath, demName.c_str())));
-
     int nRet = -1;
 
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.createOutputSurfSampleStl", ""), "w");
 
-    const char *const papszArgv[] = { "mySurfaceTransformPoints",
+    std::string demName = NinjaSanitizeString(CPLGetBasename(input.dem.fileName.c_str()));
+    const char *pszSurfOutStlFileName = CPLStrdup((CPLSPrintf("constant/triSurface/%s_out.stl", demName.c_str())));
+
+    const char *const papszArgv[] = { "surfaceMeshTriangulateWithTransform",
+                                      "-case",
+                                      pszFoamPath,
+                                      "-patches",
+                                      "\(minZ\)",
                                       "-translate",
                                       CPLSPrintf("(0 0 %f)",input.outputWindHeight),
-                                      pszMinZpatchStlFileName,
                                       pszSurfOutStlFileName,
                                       NULL };
 
@@ -1952,11 +1950,6 @@ void NinjaFoam::createOutputSurfSampleStl()
     }
 
     VSIFCloseL(fout);
-
-    // no need to keep the original surface used in the translation
-    VSIUnlink(pszMinZpatchStlFileName);
-
-    CPLFree((void*)pszMinZpatchStlFileName);
     CPLFree((void*)pszSurfOutStlFileName);
 }
 
