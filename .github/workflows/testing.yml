@@ -60,17 +60,19 @@ jobs:
         sudo make install
         cd ${{github.workspace}}/scripts/gdal-3.4.1
         sudo make install
-        # install qt
-        sudo add-apt-repository ppa:rock-core/qt4
-        sudo apt-get update
-        sudo -E apt-get install -y libqt4-dev libqtwebkit-dev
-        # Use OpenFOAM 8
-        # add the dl.openfoam.org repo and install OpenFOAM 8
-        sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key | apt-key add -"
+        # Add qt4 libs from ppa
+        # See here for more info:
+        # https://ubuntuhandbook.org/index.php/2020/07/install-qt4-ubuntu-20-04/
+        sudo add-apt-repository ppa:ubuntuhandbook1/ppa
+        sudo apt update
+        sudo apt install -y libqt4-dev libqtwebkit-dev
+        # Use OpenFOAM 9; OpenFOAM 8 not available for Ubuntu 22.04
+        # add the dl.openfoam.org repo and install OpenFOAM 9
+        sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
         sudo add-apt-repository http://dl.openfoam.org/ubuntu
-        sudo apt-get update
-        sudo -E apt-get install -y openfoam8
-        echo "source /opt/openfoam8/etc/bashrc" >> ~/.bashrc
+        sudo apt update
+        sudo apt install -y openfoam9
+        echo "source /opt/openfoam9/etc/bashrc" >> ~/.bashrc
         # return to start directory
         cd ${{github.workspace}}
 
