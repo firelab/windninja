@@ -265,6 +265,12 @@ void WidgetDownloadDEM::saveDEM()
         demBoundsError.setText("File size is limited to 50mb. Please select a smaller area.");
         demBoundsError.exec();
     }
+    else if(cbDEMSource->currentIndex() == 0 && (CPLGetConfigOption("CUSTOM_SRTM_API_KEY", NULL) == NULL || CPLGetConfigOption("NINJA_GUI_SRTM_API_KEY", NULL) != NULL))
+    {
+      QMessageBox apiKeyError;
+      apiKeyError.setText("API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY");
+      apiKeyError.exec();
+    }
     else
     {
         QFileDialog saveDialog(this, tr("Save File"), demFileDir.absolutePath(), currentSaveAsDesc);
