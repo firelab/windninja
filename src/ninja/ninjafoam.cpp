@@ -134,7 +134,7 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", CPLSPrintf("foamVersion = \"%s\"",foamVersion.c_str()));
 
     std::string pszWnDataPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
-    if( !CPLCheckForFile((char*)pszWnDataPath.c_str(), NULL) )
+    if( !CPLCheckForFile((char*)CPLFormFilename(pszWnDataPath.c_str(),"tz_world.zip",NULL), NULL) )
     {
         throw std::runtime_error("invalid WINDNINJA_DATA path for ninjafoam.");
     }

@@ -300,7 +300,7 @@ int NinjaInitialize(const char* typeofrun)
     ** Set windninja data if it isn't set.
     */
     std::string wnDataPath = CPLGetConfigOption("WINDNINJA_DATA", "FALSE");
-    if( !CPLCheckForFile((char*)wnDataPath.c_str(), NULL) )
+    if( !CPLCheckForFile((char*)CPLFormFilename(wnDataPath.c_str(),"tz_world.zip",NULL), NULL) )
     {
         CPLDebug( "WINDNINJA", "WINDNINJA_DATA \"%s\" is not valid, attempting to find valid WINDNINJA_DATA", wnDataPath.c_str() );
         std::string osDataPath;
