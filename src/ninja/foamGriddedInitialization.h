@@ -3,7 +3,7 @@
 * $Id:$
 *
 * Project:  WindNinja
-* Purpose:  Initializing with wx model NinjaFOAM simulations for use with diurnal 
+* Purpose:  Initializing with gridded NinjaFOAM simulations for use with diurnal 
 * Author:   Natalie Wagenbrenner <nwagenbrenner@gmail.com>
 *
 ******************************************************************************
@@ -27,8 +27,8 @@
 *
 *****************************************************************************/
 
-#ifndef FOAM_WX_MODEL_INITIALIZATION_H
-#define FOAM_WX_MODEL_INITIALIZATION_H
+#ifndef FOAM_GRIDDED_INITIALIZATION_H
+#define FOAM_GRIDDED_INITIALIZATION_H
 
 #include "initialize.h"
 #include "ascii_grid.h"
@@ -46,11 +46,11 @@
  * or go.
  */
 
-class foamWxModelInitialization : public initialize
+class foamGriddedInitialization : public initialize
 {
     public:
-        foamWxModelInitialization();
-        virtual ~foamWxModelInitialization();
+        foamGriddedInitialization();
+        virtual ~foamGriddedInitialization();
     
         virtual void initializeFields(WindNinjaInputs &input,
 		        Mesh const& mesh,
@@ -67,4 +67,4 @@ class foamWxModelInitialization : public initialize
         void setWn2dGrids(WindNinjaInputs &input);
         void setInitializationGrids(WindNinjaInputs &input);
 };
-#endif /* FOAM_WX_MODEL_INITIALIZATION_H */
+#endif /* FOAM_GRIDDED_INITIALIZATION_H */

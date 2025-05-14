@@ -60,6 +60,9 @@ initialize* initializationFactory::makeInitialization(WindNinjaInputs& input)
     else if(input.initializationMethod==WindNinjaInputs::foamWxModelInitializationFlag) {
         return new foamWxModelInitialization;
     }
+    else if(input.initializationMethod==WindNinjaInputs::foamGriddedInitializationFlag) {
+        return new foamGriddedInitialization;
+    }
 #endif
     else{
         std::ostringstream outString;
