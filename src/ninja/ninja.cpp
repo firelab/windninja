@@ -1729,6 +1729,21 @@ void ninja::discretize()
         }
     }
     else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::griddedInitializationFlag) //it's a gridded-initialization run
+	{
+        stb.SetDomainAverageAlpha(input, mesh);  //sets alpha based on incident solar radiation
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0;j<input.dem.get_nCols();j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
 	{
         stb.SetPointInitializationAlpha(input, mesh);
