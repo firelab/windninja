@@ -181,6 +181,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     wrf3dInitialization wrf3d;
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
+    GCPWxModel archrrr;
 
 
 //Determine what type of weather model the file came from
@@ -216,6 +217,10 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     }
     else if(genericSurf.getForecastReadable() == identifier) {
         return new genericSurfInitialization(genericSurf);
+    }
+    else if(archrrr.getForecastReadable() == identifier)
+    {
+      return new GCPWxModel(archrrr);
     }
     else {
 #ifdef WITH_NOMADS_SUPPORT
