@@ -110,30 +110,42 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     refreshToolButton->setToolTip(tr("Refresh the forecast listing."));
     refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
-    // --- Create date labels ---
-    startDateLabel = new QLabel(tr("Start Date:"), this);
+    QDateTime minDateTime(QDate(2014, 07, 30), QTime(18, 0), Qt::UTC);
+    QDateTime maxDateTime = QDateTime::currentDateTimeUtc();
+
+    startDateLabel = new QLabel(tr("Start Date (min: %1):").arg(minDateTime.toString("yyyy-MM-dd HH:mm 'UTC'")), this);
     endDateLabel = new QLabel(tr("End Date:"), this);
 
-    // --- Create date/time edits ---
     startTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
     startTime->setDisplayFormat("yyyy-MM-dd HH");
     startTime->setCalendarPopup(true);
+    startTime->setMinimumDateTime(minDateTime);
+    startTime->setMaximumDateTime(maxDateTime);
+    startTime->setToolTip(tr("Minimum allowed date/time: %1").arg(minDateTime.toString("yyyy-MM-dd HH:mm 'UTC'")));
 
     stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
     stopTime->setDisplayFormat("yyyy-MM-dd HH");
     stopTime->setCalendarPopup(true);
+    stopTime->setMinimumDateTime(minDateTime);
+    stopTime->setMaximumDateTime(maxDateTime);
 
     startDateLabel->setVisible(false);
     endDateLabel->setVisible(false);
     startTime->setVisible(false);
     stopTime->setVisible(false);
 
-    // --- Layout for date/time widgets ---
+    QVBoxLayout *startTimeLayout = new QVBoxLayout;
+    startTimeLayout->addWidget(startDateLabel);
+    startTimeLayout->addWidget(startTime);
+
+    QVBoxLayout *stopTimeLayout = new QVBoxLayout;
+    stopTimeLayout->addWidget(endDateLabel);
+    stopTimeLayout->addWidget(stopTime);
+
     QHBoxLayout *dateTimeLayout = new QHBoxLayout;
-    dateTimeLayout->addWidget(startDateLabel);
-    dateTimeLayout->addWidget(startTime);
-    dateTimeLayout->addWidget(endDateLabel);
-    dateTimeLayout->addWidget(stopTime);
+    dateTimeLayout->addLayout(startTimeLayout);
+    dateTimeLayout->addLayout(stopTimeLayout);
+
 
     connect(downloadToolButton, SIGNAL(clicked()),
         this, SLOT(getData()));
@@ -363,8 +375,8 @@ void weatherModel::getData()
         model->fetchForecast( inputFile.toStdString(), hours );
       }
       else {
-        QDateTime startDT = startTime->dateTime();
-        QDateTime endDT = stopTime->dateTime();
+        QDateTime startDT = startTime->dateTime().toUTC();
+        QDateTime endDT = stopTime->dateTime().toUTC();
 
         // Extract start date and time
         QDate startQDate = startDT.date();
