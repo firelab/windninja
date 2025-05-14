@@ -1323,7 +1323,7 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.makeDomainAverageArmy(1, false);
 #endif
         }
-        if(vm["initialization_method"].as<std::string>() == string("griddedInitalization"))
+        if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
         {
             //TODO: double check proper construction of gridded initialization now that we have modified the ninjaArmy 
             //contructors and added new functions for builiding armies.
