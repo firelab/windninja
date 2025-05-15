@@ -974,14 +974,43 @@ int windNinjaCLI(int argc, char* argv[])
                     int stopHour    = vm["stop_hour"].as<int>();
                     int stopMinute  = vm["stop_minute"].as<int>();
 
-                    boost::gregorian::date startDate(startYear, startMonth, startDay);
-                    boost::gregorian::date stopDate(stopYear, stopMonth, stopDay);
+                    boost::posix_time::ptime startDateTime(
+                        boost::gregorian::date(startYear, startMonth, startDay),
+                        boost::posix_time::hours(startHour) + boost::posix_time::minutes(startMinute)
+                        );
+                    boost::posix_time::ptime stopDateTime(
+                        boost::gregorian::date(stopYear, stopMonth, stopDay),
+                        boost::posix_time::hours(stopHour) + boost::posix_time::minutes(stopMinute)
+                        );
+
+                    boost::posix_time::ptime minDateTimeUTC(
+                        boost::gregorian::date(2014, 7, 30),
+                        boost::posix_time::hours(18)
+                        );
+                    boost::posix_time::ptime minDateTimeLocal =
+                        boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(minDateTimeUTC);
+                    boost::posix_time::ptime maxDateTimeLocal = boost::posix_time::second_clock::local_time();
+
+                    if (startDateTime < minDateTimeLocal || stopDateTime > maxDateTimeLocal) {
+                      throw std::runtime_error(
+                          "Datetime must be within the allowed range (from " +
+                          boost::posix_time::to_simple_string(minDateTimeLocal) +
+                          " to " +
+                          boost::posix_time::to_simple_string(maxDateTimeLocal) +
+                          ")."
+                          );
+                    }
+                    if (startDateTime > stopDateTime) {
+                      throw std::runtime_error("Start datetime cannot be after stop datetime.");
+                    }
+                    boost::posix_time::time_duration range = stopDateTime - startDateTime;
+                    if (range.hours() > 14 * 24) {
+                      throw std::runtime_error("Datetime range must not exceed 14 days.");
+                    }
 
                     auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
-                    if (!forecastModel)
-                      throw std::runtime_error("Model is not a GCPWxModel but expected one.");
 
-                    forecastModel->setDateTime(startDate, stopDate, std::to_string(startHour), std::to_string(stopHour));
+                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), std::to_string(startHour), std::to_string(stopHour));
 
                     forecastFileName = model->fetchForecast(*elevation_file, 1);
                   }

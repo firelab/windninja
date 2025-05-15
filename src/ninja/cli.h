@@ -31,6 +31,7 @@
 #define CLI_H
 #ifndef Q_MOC_RUN
 #include <boost/date_time/local_time/local_time.hpp>
+#include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/token_functions.hpp>
