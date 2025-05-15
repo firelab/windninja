@@ -1,0 +1,10 @@
+    $boundary_name$
+    {
+        type            $type$;
+        UfreeStream     $U_freestream$;
+        uDirection      $direction$;
+        inputWindHeight_Veg $InputWindHeight$;
+        z0              $z0$;
+        Rd              $Rd$;
+        firstCellHeight -9999.9;
+    }
