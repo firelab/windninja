@@ -111,24 +111,20 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
     QDateTime minUtcDateTime(QDate(2014, 7, 30), QTime(18, 0), Qt::UTC);
-    QDateTime minDateTime = minUtcDateTime.toLocalTime();
-    QDateTime maxDateTime = QDateTime::currentDateTimeUtc();
+    minDateTime = minUtcDateTime.toLocalTime();
+    maxDateTime = QDateTime::currentDateTimeUtc();
 
-    startDateLabel = new QLabel(tr("Start Date (min: %1):").arg(minDateTime.toString("yyyy-MM-dd HH:mm")), this);
+    startDateLabel = new QLabel(tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toString("yyyy-MM-dd HH:mm")), this);
     endDateLabel = new QLabel(tr("End Date:"), this);
 
     startTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
     startTime->setDisplayFormat("yyyy-MM-dd HH");
     startTime->setCalendarPopup(true);
-    startTime->setMinimumDateTime(minDateTime);
-    startTime->setMaximumDateTime(maxDateTime);
     startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("yyyy-MM-dd HH:mm")));
 
     stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
     stopTime->setDisplayFormat("yyyy-MM-dd HH");
     stopTime->setCalendarPopup(true);
-    stopTime->setMinimumDateTime(minDateTime);
-    stopTime->setMaximumDateTime(maxDateTime);
 
     startDateLabel->setVisible(false);
     endDateLabel->setVisible(false);
@@ -263,9 +259,6 @@ weatherModel::~weatherModel()
  */
 void weatherModel::loadModelComboBox()
 {
-  // Clear previous items if needed
-  modelComboBox->clear();
-
   modelComboBox->addItem("=== Forecasts ===");
   QModelIndex index = modelComboBox->model()->index(modelComboBox->count() - 1, 0);
   modelComboBox->model()->setData(index, 0, Qt::UserRole - 1);
@@ -395,14 +388,20 @@ void weatherModel::getData()
         QDateTime startDT = startTime->dateTime().toUTC();
         QDateTime endDT = stopTime->dateTime().toUTC();
 
+        if (startDT < minDateTime || endDT > maxDateTime) {
+          QMessageBox::warning(this, "Out of Bounds",
+                               QString("Date range must be between %1 and %2.")
+                                   .arg(minDateTime.toString("yyyy-MM-dd HH"))
+                                   .arg(maxDateTime.toString("yyyy-MM-dd HH")));
+          setCursor(Qt::ArrowCursor);
+          return;
+        }
         if (startDT > endDT) {
           QMessageBox::warning(this, "Invalid Range", "The start time must be before the stop time.");
           setCursor(Qt::ArrowCursor);
           return;
         }
         if (startDT.daysTo(endDT) > 14) {
-          //QDateTime maxEndDT = startDT.addDays(14);
-          //stopTime->setDateTime(maxEndDT);
           QMessageBox::warning(this, "Invalid Range", "The date range cannot exceed 14 days.");
           setCursor(Qt::ArrowCursor);
           return;
