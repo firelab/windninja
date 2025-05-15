@@ -76,7 +76,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
      *-----------------------------------------------------------------------------*/
     int i = 0;
     char *p;
-    //int nMaxTries = atoi( CPLGetConfigOption( "LCP_MAX_DOWNLOAD_TRIES", "40" ) );
     int nMaxTries = atoi( CPLGetConfigOption( "LCP_MAX_DOWNLOAD_TRIES", "300" ) );
     double dfWait = atof( CPLGetConfigOption( "LCP_DOWNLOAD_WAIT", "3" ) );
     const char *pszProduct = CPLStrdup( CSLFetchNameValue( options, "PRODUCT" ) );
@@ -97,21 +96,21 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         CPLDebug( "LCP_CLIENT", "Testing if %s contains %s", osDataPath.c_str(),
                   pszGeom );
         //using same code for all geographic areas, but could update by region as updates
-        //become available. See codes at lfps.usgs.gov/helpdocs/productstable.html
+        //become available. See codes at https://lfps.usgs.gov/products
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
-            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
-                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
+          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
+                                 "240CH;240CBD;240CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
-            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
-                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
+          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
+                                 "240CH;240CBD;240CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "hi" ) )
         {
-            pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;200F40_20;200CC_20;" \
-                    "200CH_20;200CBH_20;200CBD_20" ); //2020 data
+          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
+                                 "240CH;240CBD;240CBH" ); //2024 data
         }
         else
         {
@@ -153,6 +152,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get download URL" );
     CPLDebug( "LCP_CLIENT", "Request URL: %s", pszUrl );
+
      /*-----------------------------------------------------------------------------
      *  Parse the JSON result of the request
      *-----------------------------------------------------------------------------*/
@@ -199,22 +199,21 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                           CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
         int nTokens = CSLCount( papszTokens );
 
-        CPLDebug( "LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
         CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
 
-        for( int i = 1; i < nTokens; i++ )
-        {
-            if(EQUAL( papszTokens[i], "jobStatus" )) 
-            {
-                if(EQUAL( papszTokens[i + 1], "esriJobSucceeded" ) )
-                    downloadReady = true;
-                if(EQUAL( papszTokens[i + 1], "esriJobFailed" ) )
-                    downloadFailed = true;
-                break;
-            }
+        if(EQUAL( papszTokens[5], "Succeeded" )) {
+          downloadReady = true;
         }
+        if(EQUAL( papszTokens[5], "Failed")) {
+          downloadFailed = true;
+        }
+
         CPLDebug( "LCP_CLIENT", "Attempting to fetch LCP, try %d of %d, jobStatus: %s", i,
             nMaxTries, papszTokens[3] );
+
+        std::string strLCPTest = papszTokens[nTokens - 1];
+        strLCPTest.pop_back(); // Removes the last character '}'
+        downloadUrl = strLCPTest.c_str();
 
         CSLDestroy( papszTokens );
         i++;
@@ -246,7 +245,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Download the landfire model
      *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_DOWNLOAD_JOB_TEMPLATE, m_JobId.c_str(), m_JobId.c_str() );
+    pszUrl = downloadUrl.c_str();
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get job status" );
 
@@ -277,15 +276,15 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     papszFileList = VSIReadDirRecursive( pszVSIZip );
     int bFound = FALSE;
     std::string osFullPath;
-    CPLDebug( "LCP_CLIENT", "Extracting %s", (CPLSPrintf("%s.tif", m_JobId.c_str())) );
     for( int i = 0; i < CSLCount( papszFileList ); i++ )
     {
-        osFullPath = papszFileList[i];
-        if( osFullPath.find( CPLSPrintf("%s.tif", m_JobId.c_str()) ) != std::string::npos )
-        {
-            bFound = TRUE;
-            break;
-        }
+      osFullPath = papszFileList[i];
+      if( osFullPath.size() >= 4 &&
+          osFullPath.substr(osFullPath.size() - 4) == ".tif" )
+      {
+        bFound = TRUE;
+        break;
+      }
     }
     CSLDestroy( papszFileList );
     if( !bFound )
@@ -296,7 +295,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_IO_ERR;
     }
     int nError = 0;
-    const char *pszFileToFind = CPLSPrintf( "%s.tif", m_JobId.c_str() );
+    const char *pszFileToFind = osFullPath.c_str();
     nError = ExtractFileFromZip( pszTmpZip, pszFileToFind, filename );
     if( nError )
     {
