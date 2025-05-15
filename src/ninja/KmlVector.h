@@ -107,7 +107,6 @@ public:
 
 	inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
 
-    bool writeKml(string cScheme,bool vector_scaling);
     bool writeKml(egoogSpeedScaling scaling,std::string cScheme,bool vector_scaling);
 	bool makeKmz();
 	bool removeKmlFile();
