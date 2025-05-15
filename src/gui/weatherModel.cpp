@@ -263,22 +263,35 @@ weatherModel::~weatherModel()
  */
 void weatherModel::loadModelComboBox()
 {
-    modelComboBox->addItem(  QString::fromStdString(ndfd.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(nam.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(rap.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(namAk.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(gfs.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(archhrr.getForecastIdentifier() ) );
+  // Clear previous items if needed
+  modelComboBox->clear();
+
+  modelComboBox->addItem("=== Forecasts ===");
+  QModelIndex index = modelComboBox->model()->index(modelComboBox->count() - 1, 0);
+  modelComboBox->model()->setData(index, 0, Qt::UserRole - 1);
+
+  modelComboBox->addItem(QString::fromStdString(ndfd.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(nam.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(rap.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(namAk.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(gfs.getForecastIdentifier()));
+
 #ifdef WITH_NOMADS_SUPPORT
-    /* Nomads */
-    QString s;
-    for( int i = 0; i < nNomadsCount; i++ )
-    {
-        s = QString::fromStdString( papoNomads[i]->getForecastReadable( '-' ) );
-        s = s.toUpper();
-        modelComboBox->addItem( s );
-    }
+
+  for (int i = 0; i < nNomadsCount; i++)
+  {
+    QString s = QString::fromStdString(papoNomads[i]->getForecastReadable('-')).toUpper();
+    modelComboBox->addItem(s);
+  }
 #endif
+
+  modelComboBox->addItem("=== Pastcasts ===");
+  index = modelComboBox->model()->index(modelComboBox->count() - 1, 0);
+  modelComboBox->model()->setData(index, 0, Qt::UserRole - 1);
+  modelComboBox->addItem(QString::fromStdString(archhrr.getForecastIdentifier()));
+
+  modelComboBox->setCurrentIndex(1);
+
 }
 
 void weatherModel::setTimeLimits( int index )
@@ -293,6 +306,9 @@ void weatherModel::setTimeLimits( int index )
         hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
     else if( index == 4 )
         hourSpinBox->setRange( gfs.getStartHour(), gfs.getEndHour() );
+    else if (index == modelComboBox->count() - 1) {
+      return;
+    }
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
@@ -338,17 +354,17 @@ void weatherModel::getData()
     setCursor(Qt::ArrowCursor);
     return;
     }
-    if( modelChoice == 0 )
+    if( modelChoice == 1 )
         model = new ncepNdfdInitialization( ndfd );
-    else if( modelChoice == 1 )
-        model = new ncepNamSurfInitialization( nam );
     else if( modelChoice == 2 )
-        model = new ncepRapSurfInitialization( rap );
+        model = new ncepNamSurfInitialization( nam );
     else if( modelChoice == 3 )
-        model = new ncepNamAlaskaSurfInitialization( namAk );
+        model = new ncepRapSurfInitialization( rap );
     else if( modelChoice == 4 )
+        model = new ncepNamAlaskaSurfInitialization( namAk );
+    else if( modelChoice == 5 )
         model = new ncepGfsSurfInitialization( gfs );
-    else if ( modelChoice == 5) {
+    else if ( modelChoice == modelComboBox->count() - 1) {
       model = new GCPWxModel(archhrr);
     }
     else
@@ -372,7 +388,7 @@ void weatherModel::getData()
     }
 
     try {
-      if(modelChoice != 5) {
+      if(modelChoice != modelComboBox->count() - 1) {
         model->fetchForecast( inputFile.toStdString(), hours );
       }
       else {
@@ -437,7 +453,7 @@ void weatherModel::getData()
     }
 
 #if !defined(NINJA_32BIT)
-    if( modelChoice > 4 )
+    if( modelChoice > 5 )
     {
         progressDialog->setRange( 0, 100 );
         progressDialog->setValue( 100 );
@@ -452,7 +468,7 @@ void weatherModel::getData()
     setCursor(Qt::ArrowCursor);
 
     //connect with thread::finished()?
-    if( modelChoice < 5 )
+    if( modelChoice < 6 )
         delete model;
 }
 
@@ -642,7 +658,7 @@ void weatherModel::setComboToolTip(int)
 
 void weatherModel::displayArchiveDates(int index)
 {
-  if (index == 5) {
+  if (index == modelComboBox->count() - 1) {
     startDateLabel->setVisible(true);
     endDateLabel->setVisible(true);
     startTime->setVisible(true);

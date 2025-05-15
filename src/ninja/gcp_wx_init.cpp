@@ -158,11 +158,6 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
 
 std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 {
-  if (!ppszModelData)
-  {
-    throw badForecastFile("Model not found");
-  }
-
   GDALDatasetH hDS = GDALOpen(demFile.c_str(), GA_ReadOnly);
   double demBounds[4];
   if (!GDALGetBounds((GDALDataset *)hDS, demBounds))
