@@ -1228,20 +1228,23 @@ void mainWindow::aboutWindNinja()
 
   aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
-                                               "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
-                                               "Bret Butler<br/>"); \
+                                               "Kyle Shannon<br/>" \
+                                               "Loren Atwood<br/>" \
+                                               "Mason Willman"); \
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
   aboutText.append("5775 Highway 10 W.<br />");
   aboutText.append("Missoula, MT 59808</p>");
+  aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CONTRIBUTORS\">Contributors</a></p>");
   aboutText.append("<h4>Sponsored By:</h4>");
-  aboutText.append("US Forest Service<br />");
+  aboutText.append("USDA Forest Service<br />");
   aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br />");
   aboutText.append("Joint Fire Sciences Program<br />");
   aboutText.append("Washington State University</p>");
   aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
+  aboutText.append("<br />");
 
   QMessageBox::about(this, tr("About WindNinja"),
              aboutText);
@@ -1258,7 +1261,7 @@ void mainWindow::citeWindNinja()
   citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
 
   citeText.append("<h4>For additional WindNinja publications visit:</h4>");
-  citeText.append("https://weather.firelab.org/windninja/publications/");
+  citeText.append("<p><a href=\"https://ninjastorm.firelab.org/windninja/publications/\">https://ninjastorm.firelab.org/windninja/publications</a></p>");
 
   QMessageBox::about(this, tr("Cite WindNinja"),
              citeText);
