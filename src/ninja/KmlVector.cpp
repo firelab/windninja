@@ -33,8 +33,8 @@ KmlVector::KmlVector()
 : kmlTime(boost::local_time::not_a_date_time),
   wxModelStartTime(boost::local_time::not_a_date_time)
 {
-    colors = 0;
-    splitValue = 0;
+    colors = NULL;
+    splitValue = NULL;
     coordTransform = NULL;
     lineWidth = 1.0;
     resolution = -1.0;
@@ -61,11 +61,15 @@ KmlVector::~KmlVector()
         {
             delete colors[i];
         }
-        delete[]colors;
+        delete[] colors;
+        colors = NULL;
     }
 
     if(splitValue)
-        delete[]splitValue;
+    {
+        delete[] splitValue;
+        splitValue = NULL;
+    }
 
     OCTDestroyCoordinateTransformation( coordTransform );
 }
@@ -153,9 +157,15 @@ void KmlVector::setWxModel(const std::string& modelName, const boost::local_time
 
 bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
 {
-
     if(colors)
-        delete[]colors;
+    {
+        for(int i = 0;i < numColors;i++)
+        {
+            delete colors[i];
+        }
+        delete[] colors;
+        colors = NULL;
+    }
 
 //  colors[4] = new Style("red", 255, 27, 31, 166, 4.0*arrowWidth); //highest windspeed
 //  colors[3] = new Style("orange", 255, 114, 162, 198, 3.0*arrowWidth); //2nd highest
@@ -310,7 +320,10 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
     }
 
     if(splitValue)
+    {
         delete[] splitValue;
+        splitValue = NULL;
+    }
     splitValue = new double[numColors];
     double interval;
     switch(scaling)
