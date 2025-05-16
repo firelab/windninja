@@ -300,89 +300,90 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
 
     makeDefaultStyles(cScheme,vector_scaling);
     if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
-        return false;
-    else
     {
-        if(setOGR())
-        {
-            if(splitValue)
-                delete[] splitValue;
-            splitValue = new double[numColors];
-            double interval;
-            switch(scaling)
-            {
-                case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
-                    spd.divide_gridData(splitValue, numColors);
-                    break;
-                case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-                    interval = spd.get_maxValue()/numColors;
-                    for(int i = 0;i < numColors;i++)
-                    {
-                        splitValue[i] = i * interval;
-                    }
-                    break;
-                default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
-                    spd.divide_gridData(splitValue, numColors);
-                    break;
-            }
-
-            writeHeader(fout);
-            writeRegion(fout);
-            writeStyles(fout);
-            //writeHtmlLegend(fout);
-            writeScreenOverlayLegend(fout,cScheme);
-            if(wxModelName.empty())
-                writeScreenOverlayDateTimeLegend(fout);
-            else
-                writeScreenOverlayDateTimeLegendWxModelRun(fout);
-            VSIFPrintfL(fout, "<Folder>");
-            VSIFPrintfL(fout, "\n\t<name>Wind Speed</name>\n");
-            writeVectors(fout);
-            VSIFPrintfL(fout, "</Folder>");
-
-            if(turbulenceFlag)
-            {
-                VSIFPrintfL(fout, "<Folder>");
-                VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
-                writeTurbulence(fout);
-                VSIFPrintfL(fout, "</Folder>");
-            }
-
-            if(colMaxFlag)
-            {
-                VSIFPrintfL(fout, "<Folder>");
-                VSIFPrintfL(fout, "\n\t<name>Column Max Velocity Fluctuations</name>\n");
-                writeColMax(fout);
-                VSIFPrintfL(fout, "</Folder>");
-            }
-
-            #ifdef FRICTION_VELOCITY
-            if(ustarFlag)
-            {
-                VSIFPrintfL(fout, "<Folder>");
-                VSIFPrintfL(fout, "\n\t<name>Friction Velocity</name>\n");
-                writeUstar(fout);
-                VSIFPrintfL(fout, "</Folder>");
-            }
-            #endif
-
-            #ifdef EMISSIONS
-            if(dustFlag)
-            {
-                VSIFPrintfL(fout, "<Folder>");
-                VSIFPrintfL(fout, "\n\t<name>PM10</name>\n");
-                writeDust(fout);
-                VSIFPrintfL(fout, "</Folder>");
-            }
-            #endif
-
-            VSIFPrintfL(fout, "\n</Document>\n</kml>");
-            VSIFCloseL(fout);
-            return true;
-        }
-        else
-            return false;
+        return false;
     }
+
+    if(!setOGR())
+    {
+        return false;
+    }
+
+    if(splitValue)
+        delete[] splitValue;
+    splitValue = new double[numColors];
+    double interval;
+    switch(scaling)
+    {
+        case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
+            spd.divide_gridData(splitValue, numColors);
+            break;
+        case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+            interval = spd.get_maxValue()/numColors;
+            for(int i = 0;i < numColors;i++)
+            {
+                splitValue[i] = i * interval;
+            }
+            break;
+        default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
+            spd.divide_gridData(splitValue, numColors);
+            break;
+    }
+
+    writeHeader(fout);
+    writeRegion(fout);
+    writeStyles(fout);
+    //writeHtmlLegend(fout);
+    writeScreenOverlayLegend(fout,cScheme);
+    if(wxModelName.empty())
+        writeScreenOverlayDateTimeLegend(fout);
+    else
+        writeScreenOverlayDateTimeLegendWxModelRun(fout);
+    VSIFPrintfL(fout, "<Folder>");
+    VSIFPrintfL(fout, "\n\t<name>Wind Speed</name>\n");
+    writeVectors(fout);
+    VSIFPrintfL(fout, "</Folder>");
+
+    if(turbulenceFlag)
+    {
+        VSIFPrintfL(fout, "<Folder>");
+        VSIFPrintfL(fout, "\n\t<name>Average Velocity Fluctuations</name>\n");
+        writeTurbulence(fout);
+        VSIFPrintfL(fout, "</Folder>");
+    }
+
+    if(colMaxFlag)
+    {
+        VSIFPrintfL(fout, "<Folder>");
+        VSIFPrintfL(fout, "\n\t<name>Column Max Velocity Fluctuations</name>\n");
+        writeColMax(fout);
+        VSIFPrintfL(fout, "</Folder>");
+    }
+
+    #ifdef FRICTION_VELOCITY
+    if(ustarFlag)
+    {
+        VSIFPrintfL(fout, "<Folder>");
+        VSIFPrintfL(fout, "\n\t<name>Friction Velocity</name>\n");
+        writeUstar(fout);
+        VSIFPrintfL(fout, "</Folder>");
+    }
+    #endif
+
+    #ifdef EMISSIONS
+    if(dustFlag)
+    {
+        VSIFPrintfL(fout, "<Folder>");
+        VSIFPrintfL(fout, "\n\t<name>PM10</name>\n");
+        writeDust(fout);
+        VSIFPrintfL(fout, "</Folder>");
+    }
+    #endif
+
+    VSIFPrintfL(fout, "\n</Document>\n</kml>");
+    VSIFCloseL(fout);
+
+    return true;
 }
 
 bool KmlVector::writeHeader(VSILFILE* fileOut)
