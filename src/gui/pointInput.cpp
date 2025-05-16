@@ -284,6 +284,10 @@ pointInput::pointInput( QWidget *parent ) : QWidget( parent )
 
     connect(selectNoneButton, SIGNAL(clicked()), //Refreshes new Format, deselects files
             this, SLOT(selectNone()));
+    connect(treeView, SIGNAL(clicked(const QModelIndex&)),
+            this, SLOT(onTreeViewClicked(const QModelIndex&)));
+
+
 
 }
 
@@ -1046,6 +1050,28 @@ void pointInput::selectNone()
 
 void pointInput::selectAll()
 {
-  treeView->selectAll();
+  selectNone();
+  if (lastSelectedDirIndex.isValid() && sfModel->fileInfo(lastSelectedDirIndex).isDir())
+  {
+    int fileCount = sfModel->rowCount(lastSelectedDirIndex);
+    for (int row = 0; row < fileCount; ++row)
+    {
+      QModelIndex fileIndex = sfModel->index(row, 0, lastSelectedDirIndex);
+      QFileInfo info = sfModel->fileInfo(fileIndex);
+      if (!info.isDir())
+      {
+        treeView->selectionModel()->select(fileIndex, QItemSelectionModel::Select | QItemSelectionModel::Rows);
+      }
+    }
+  }
+}
+
+void pointInput::onTreeViewClicked(const QModelIndex &index)
+{
+  QFileInfo info = sfModel->fileInfo(index);
+  if (info.isDir())
+  {
+    lastSelectedDirIndex = index;
+  }
 }
 

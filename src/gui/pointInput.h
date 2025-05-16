@@ -105,6 +105,8 @@ class pointInput : public QWidget
     QLabel *treeLabel;
 
     QTreeView *treeView;
+    QModelIndex lastSelectedDirIndex;
+
     QVBoxLayout *vTreeLayout;
     QHBoxLayout *hDownloaderLayout; //Put the downloader up near the top of the page
     QWidget *newForm;
@@ -163,6 +165,7 @@ class pointInput : public QWidget
     void setOneStepTimeseries();
     void selectAll();
     void selectNone();
+    void onTreeViewClicked(const QModelIndex &index);
   private slots:
     void readStationFiles(const QItemSelection &x ,const QItemSelection &y);
     void selChanged(const QItemSelection &x ,const QItemSelection &y); //Test Function
