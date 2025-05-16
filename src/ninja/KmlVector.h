@@ -101,9 +101,9 @@ public:
         equal_interval
     };
 
-
     inline void setLineWidth(double width){lineWidth = width;}
     bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
+    void calcSpeedSplitVals(egoogSpeedScaling scaling);
 
     inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
 

@@ -304,26 +304,14 @@ bool KmlVector::setOGR()
     return false;
 }
 
-bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_scaling)
+void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
 {
-    VSILFILE *fout;
-
-    makeDefaultStyles(cScheme,vector_scaling);
-    if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
-    {
-        return false;
-    }
-
-    if(!setOGR())
-    {
-        return false;
-    }
-
     if(splitValue)
     {
         delete[] splitValue;
         splitValue = NULL;
     }
+
     splitValue = new double[numColors];
     double interval;
     switch(scaling)
@@ -341,6 +329,27 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
         default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
             spd.divide_gridData(splitValue, numColors);
             break;
+    }
+}
+
+bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_scaling)
+{
+    VSILFILE *fout;
+
+    makeDefaultStyles(cScheme,vector_scaling);
+    if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
+    {
+        return false;
+    }
+
+    if(!setOGR())
+    {
+        return false;
+    }
+
+    if(!splitValue)
+    {
+        calcSpeedSplitVals(scaling);
     }
 
     writeHeader(fout);
