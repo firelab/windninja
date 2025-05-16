@@ -222,6 +222,10 @@ bool NinjaFoam::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
     }
 
+#ifdef C_API
+    keepOutputGridsInMemory(true);
+#endif
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();

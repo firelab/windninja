@@ -275,7 +275,7 @@ bool ninja::simulate_wind()
 	}
 
 #ifdef C_API
-        keepOutputGridsInMemory(true);
+    keepOutputGridsInMemory(true);
 #endif
 
 	#ifdef _OPENMP
