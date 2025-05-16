@@ -158,6 +158,7 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
 
 std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 {
+
   GDALDatasetH hDS = GDALOpen(demFile.c_str(), GA_ReadOnly);
   double demBounds[4];
   if (!GDALGetBounds((GDALDataset *)hDS, demBounds))
@@ -321,6 +322,9 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
       CPLDebug("GCP", "Deleted temporary file: %s", filePath.c_str());
     }
   }
+
+  if (pfnProgress)
+    pfnProgress(1.0, "Forecast download complete.", nullptr);
 
   CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
 

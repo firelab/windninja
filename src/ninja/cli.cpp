@@ -186,8 +186,7 @@ int windNinjaCLI(int argc, char* argv[])
         std::string osAvailableWx = "type of wx model to download (";
         osAvailableWx += std::string( "UCAR-NAM-CONUS-12-KM, UCAR-NAM-ALASKA-11-KM, " ) +
                          std::string( "UCAR-NDFD-CONUS-2.5-KM, UCAR-RAP-CONUS-13-KM, " ) +
-                         std::string( "UCAR-GFS-GLOBAL-0.5-DEG" ) +
-                         std::string( "PAST-CAST-GCP-HRRR-CONUS-3KM" );
+                         std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
         char *pszNomadsName;
@@ -202,6 +201,7 @@ int windNinjaCLI(int argc, char* argv[])
             i++;
         }
 #endif /* WITH_NOMADS_SUPPORT */
+        osAvailableWx += std::string( ", PAST-CAST-GCP-HRRR-CONUS-3KM" );
         osAvailableWx += ")";
 
         std::string osSurfaceSources = "source for downloading elevation data (srtm";
@@ -948,9 +948,23 @@ int windNinjaCLI(int argc, char* argv[])
                 {
                   if (model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
                   {
-                     forecastFileName = model->fetchForecast( *elevation_file, vm["forecast_duration"].as<int>() );
+                    std::cout << "Downloading forecast data..." << std::endl;
+                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
+                    std::cout << "Download complete." << std::endl;
                   }
                   else {
+
+                    const char* privateKeyPath = std::getenv("GS_OAUTH2_PRIVATE_KEY_FILE");
+                    const char* clientEmail    = std::getenv("GS_OAUTH2_CLIENT_EMAIL");
+
+                    if (!privateKeyPath || !clientEmail) {
+                      throw std::runtime_error(
+                          "ERROR 15: Missing required GCS credentials. Both of the following environment variables must be set:\n"
+                          "- GS_OAUTH2_PRIVATE_KEY_FILE\n"
+                          "- GS_OAUTH2_CLIENT_EMAIL"
+                          );
+                    }
+
                     conflicting_options(vm, "forecast_time", "start_year");
                     verify_option_set(vm, "start_month");
                     verify_option_set(vm, "start_day");
@@ -994,11 +1008,8 @@ int windNinjaCLI(int argc, char* argv[])
                     if (startDateTime < minDateTimeLocal || stopDateTime > maxDateTimeLocal) {
                       throw std::runtime_error(
                           "Datetime must be within the allowed range (from " +
-                          boost::posix_time::to_simple_string(minDateTimeLocal) +
-                          " to " +
-                          boost::posix_time::to_simple_string(maxDateTimeLocal) +
-                          ")."
-                          );
+                          boost::posix_time::to_simple_string(minDateTimeLocal) + " to " +
+                          boost::posix_time::to_simple_string(maxDateTimeLocal) + ").");
                     }
                     if (startDateTime > stopDateTime) {
                       throw std::runtime_error("Start datetime cannot be after stop datetime.");
@@ -1012,7 +1023,9 @@ int windNinjaCLI(int argc, char* argv[])
 
                     forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), std::to_string(startHour), std::to_string(stopHour));
 
-                    forecastFileName = model->fetchForecast(*elevation_file, 1);
+                    std::cout << "Downloading forecast data..." << std::endl;
+                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
+                    std::cout << "Download complete." << std::endl;
                   }
 
                     if(vm.count("start_year") && model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
