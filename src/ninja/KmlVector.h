@@ -142,18 +142,14 @@ public:
     void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
     void setDirGrid(AsciiGrid<double> &d);
     void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
-    void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
     double colMax_colHeightAGL;
     lengthUnits::eLengthUnits colMax_colHeightAGL_units;
     void setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units);
-    void setColMaxFlag(bool inputColMaxFlag){colMaxFlag = inputColMaxFlag;}
     #ifdef FRICTION_VELOCITY
     void setUstarGrid(AsciiGrid<double> &ust);
-    void setUstarFlag(bool inputUstarFlag){ustarFlag = inputUstarFlag;}
     #endif
     #ifdef EMISSIONS
     void setDustGrid(AsciiGrid<double> &dst);
-    void setDustFlag(bool inputDustFlag){dustFlag = inputDustFlag;}
     #endif
     void setTime(const boost::local_time::local_date_time& timeIn){kmlTime = timeIn;}
     void setWxModel(const std::string& modelName, const boost::local_time::local_date_time& startTime);

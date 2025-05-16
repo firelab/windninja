@@ -3614,14 +3614,12 @@ void NinjaFoam::WriteOutputFiles()
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
-                            //ninjaKmlFiles.setTurbulenceFlag("true");
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
                             colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
-                            ninjaKmlFiles.setColMaxFlag("true");
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                             
                             //// for debugging

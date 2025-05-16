@@ -3047,14 +3047,12 @@ void ninja::writeOutputFiles()
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
-                            //ninjaKmlFiles.setTurbulenceFlag("true");
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
                             colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
-                            ninjaKmlFiles.setColMaxFlag("true");
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
@@ -3067,7 +3065,6 @@ void ninja::writeOutputFiles()
 
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                ninjaKmlFiles.setUstarFlag(input.frictionVelocityFlag);
                 ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
 
                 if(ustarTempGrid)
@@ -3086,7 +3083,6 @@ void ninja::writeOutputFiles()
 
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                ninjaKmlFiles.setDustFlag(input.dustFlag);
                 ninjaKmlFiles.setDustGrid(*dustTempGrid);
 
                 if(dustTempGrid)

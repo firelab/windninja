@@ -35,17 +35,22 @@ KmlVector::KmlVector()
 {
     colors = 0;
     splitValue = 0;
+    coordTransform = NULL;
     lineWidth = 1.0;
-    //makeDefaultStyles();
-    speedUnits = velocityUnits::milesPerHour;
     resolution = -1.0;
+    speedUnits = velocityUnits::milesPerHour;
     timeDateLegendFile = "";
     wxModelName = "";
-    coordTransform = NULL;
     turbulenceFlag = false;
     colMaxFlag = false;
     colMax_colHeightAGL = -1.0;
     colMax_colHeightAGL_units = lengthUnits::meters;
+    #ifdef FRICTION_VELOCITY
+    ustarFlag = false;
+    #endif
+    #ifdef EMISSIONS
+    dustFlag = false;
+    #endif
 }
 
 KmlVector::~KmlVector()
@@ -91,12 +96,24 @@ void KmlVector::setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVeloc
 {
     speedUnits = units;
     turbulence = turb;
+    turbulenceFlag = true;
+    if(turbulence.get_nRows() == 0 || turbulence.get_nCols() == 0)
+    {
+        std::cout << "Warning, KmlVector::setTurbulenceGrid() called with an empty ascii file! skipping turbulence output..." << std::endl;
+        turbulenceFlag = false;
+    }
 }
 
 void KmlVector::setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units)
 {
     speedUnits = units;
     colMax = columnMax;
+    colMaxFlag = true;
+    if(colMax.get_nRows() == 0 || colMax.get_nCols() == 0)
+    {
+        std::cout << "Warning, KmlVector::setColMaxGrid() called with an empty ascii file! skipping colMax output..." << std::endl;
+        colMaxFlag = false;
+    }
 
     colMax_colHeightAGL = colHeightAGL;
     colMax_colHeightAGL_units = colHeightAGL_units;
@@ -106,6 +123,12 @@ void KmlVector::setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelo
 void KmlVector::setUstarGrid(AsciiGrid<double> &ust)
 {
     ustar = ust;
+    ustarFlag = true;
+    if(ustar.get_nRows() == 0 || ustar.get_nCols() == 0)
+    {
+        std::cout << "Warning, KmlVector::setUstarGrid() called with an empty ascii file! skipping ustar output..." << std::endl;
+        ustarFlag = false;
+    }
 }
 #endif
 
@@ -113,6 +136,12 @@ void KmlVector::setUstarGrid(AsciiGrid<double> &ust)
 void KmlVector::setDustGrid(AsciiGrid<double> &dst)
 {
     dust = dst;
+    dustFlag = true;
+    if(dust.get_nRows() == 0 || dust.get_nCols() == 0)
+    {
+        std::cout << "Warning, KmlVector::setDustGrid() called with an empty ascii file! skipping dust output..." << std::endl;
+        dustFlag = false;
+    }
 }
 #endif
 
@@ -328,12 +357,7 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
             }
 
             #ifdef FRICTION_VELOCITY
-            ustarFlag = false;
-
-            if(ustar.get_nRows()!=0)
-                ustarFlag = true;
-
-            if(ustarFlag ==true)
+            if(ustarFlag)
             {
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>Friction Velocity</name>\n");
@@ -343,12 +367,7 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
             #endif
 
             #ifdef EMISSIONS
-            dustFlag = false;
-
-            if(dust.get_nRows()!=0)
-                dustFlag = true;
-
-            if(dustFlag==true)
+            if(dustFlag)
             {
                 VSIFPrintfL(fout, "<Folder>");
                 VSIFPrintfL(fout, "\n\t<name>PM10</name>\n");
@@ -1840,7 +1859,7 @@ bool KmlVector::makeKmz()
     }
 
     #ifdef FRICTION_VELOCITY
-    if(ustarFlag==1)
+    if(ustarFlag)
     {
         filesToZip.push_back(ustar_png);
         filesToZip.push_back(ustar_legend);
@@ -1850,7 +1869,7 @@ bool KmlVector::makeKmz()
     #endif
 
     #ifdef EMISSIONS
-    if(dustFlag==1)
+    if(dustFlag)
     {
         filesToZip.push_back(dust_png);
         filesToZip.push_back(dust_legend);
