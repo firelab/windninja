@@ -52,10 +52,16 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   applyVectorScaling->setCheckable(true);
   applyVectorScaling->setChecked(false);
 
+  applyConsistentColorScheme = new QCheckBox("Use Consistent Color Scheme");
+  applyConsistentColorScheme->setToolTip("Enable cross data/shared across runs color scheme.");
+  applyConsistentColorScheme->setCheckable(true);
+  applyConsistentColorScheme->setChecked(true);
+
   vectorLayout = new QHBoxLayout;
   vectorLayout->addWidget(vectorWidthLabel);
   vectorLayout->addWidget(vectorWidthDoubleSpinBox);
   vectorLayout->addWidget(applyVectorScaling);
+  vectorLayout->addWidget(applyConsistentColorScheme);
   vectorLayout->addStretch();
 
   vectorGroupBox->setLayout(vectorLayout);

@@ -226,6 +226,11 @@ bool NinjaFoam::simulate_wind()
     keepOutputGridsInMemory(true);
 #endif
 
+    if(input.googUseConsistentColorScheme)
+    {
+        keepOutputGridsInMemory(true);
+    }
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();
@@ -3598,7 +3603,7 @@ void NinjaFoam::WriteOutputFiles()
 
 	//write kmz file
 	try{
-		if(input.googOutFlag==true)
+		if(input.googOutFlag==true && input.googUseConsistentColorScheme==false)
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;

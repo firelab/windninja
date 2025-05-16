@@ -63,6 +63,7 @@ class googleOutput : public QWidget
   QGroupBox *colorblindBox;
   QComboBox *inputColorblindComboBox;
   QCheckBox *applyVectorScaling;
+  QCheckBox *applyConsistentColorScheme;
 
   QGridLayout *colorLayout;
 

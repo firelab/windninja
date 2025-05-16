@@ -332,6 +332,70 @@ void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
     }
 }
 
+void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals)
+{
+    if(numSplitVals != numColors)
+    {
+        throw std::runtime_error("KmlVector::calcSplitValsFromSplitVals() input array in array size does not match KmlVector numColors!!");
+    }
+
+    if(splitValue)
+    {
+        delete[] splitValue;
+        splitValue = NULL;
+    }
+
+    double sum, average;
+    splitValue = new double[numColors];
+    for(int i = 0; i < numColors; i++)
+    {
+        sum = 0;
+        for( int j = 0; j < nSets; j++ )
+        {
+            sum = sum + speedSplitVals[j][i];
+        }
+        average = sum/nSets;
+        splitValue[i] = average;
+    }
+}
+
+double* KmlVector::getSpeedSplitVals(int &size)
+{
+    if(!splitValue)
+    {
+        throw std::runtime_error("KmlVector::getSpeedSplitVals() called before a call to KmlVector::calcSpeedSplitVals()!! No speedSplitValues available to get!!");
+    }
+
+    double* speedSplitVals = new double[numColors];
+    for(int i = 0; i < numColors; i++)
+    {
+        speedSplitVals[i] = splitValue[i];
+    }
+
+    size = numColors;  // need to pass back the size of the array too
+    return speedSplitVals;
+}
+
+void KmlVector::setSpeedSplitVals(const double *speedSplitVals, const int size)
+{
+    if(size != numColors)
+    {
+        throw std::runtime_error("KmlVector::setSpeedSplitVals() input array size does not match KmlVector numColors!!");
+    }
+
+    if(splitValue)
+    {
+        delete[] splitValue;
+        splitValue = NULL;
+    }
+
+    splitValue = new double[numColors];
+    for(int i = 0; i < numColors; i++)
+    {
+        splitValue[i] = speedSplitVals[i];
+    }
+}
+
 bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_scaling)
 {
     VSILFILE *fout;
@@ -563,8 +627,8 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
-//          os[i] << splitValue[4] << " + ";
-            os << splitValue[4] << " - " << maxxx;
+            os << splitValue[4] << " + ";
+//            os << splitValue[4] << " - " << maxxx;
         else if(i == 4)
             os << "0.00 - " << splitValue[1] - 0.01;
         else if(i != 0)

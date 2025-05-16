@@ -291,6 +291,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("goog_out_speed_interval_scaling",po::value<std::string>()->default_value("equal_interval"),"Sets the Wind speed color scale interval calculation method (default:equal_interval/interval, equal_color/color)\nIn the gui, equal_interval is \"Uniform Range\", equal_color is \"Equal Count\"")
                 ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options:\n default (ROYGB), oranges, blues, greens,pinks, magic_beans, pink_to_green,ROPGW")
                 ("goog_out_vector_scaling",po::value<bool>()->default_value(false),"Enable Vector Scaling based on Wind speed")
+                ("goog_out_use_consistent_color_scheme",po::value<bool>()->default_value(true),"Enable shared across runs color scheme (true, false)")
                 ("write_wx_model_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file for the raw wx model forecast (true, false)")
                 ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
@@ -1838,6 +1839,7 @@ int windNinjaCLI(int argc, char* argv[])
                         lengthUnits::getUnit(vm["units_goog_out_resolution"].as<std::string>()));
                 windsim.setGoogSpeedScaling(i_,vm["goog_out_speed_interval_scaling"].as<std::string>());
                 windsim.setGoogColor(i_,vm["goog_out_color_scheme"].as<std::string>(),vm["goog_out_vector_scaling"].as<bool>());
+                windsim.setGoogConsistentColorScheme(i_,vm["goog_out_use_consistent_color_scheme"].as<bool>(),windsim.getSize());
             }
             if(vm["write_shapefile_output"].as<bool>())
             {

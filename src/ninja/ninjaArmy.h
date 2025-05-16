@@ -1034,14 +1034,23 @@ public:
     */
     int setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Set the Google KML output resolution for a ninja
+    * \brief Set the Google KML output color scheme and vector scaling for a ninja
     *
     * \param nIndex index of a ninja
-    * \param resolution desired resolution value
-    * \param units units of the resolution value
+    * \param colorScheme desired colorScheme value
+    * \param scaling desired vector scaling value
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setGoogColor(const int nIndex, std::string colorScheme,bool scaling);
+    int setGoogColor(const int nIndex, std::string colorScheme, bool scaling);
+    /**
+    * \brief Set the Google KML googUseConsistentColorSchemeFlag value for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \param numRuns the number of ninjas/simulations to be run
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGoogConsistentColorScheme(const int nIndex, bool flag, int numRuns);
     /**
      * @brief setGoogResolution
      * @param nIndex

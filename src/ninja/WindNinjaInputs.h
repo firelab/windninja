@@ -181,6 +181,7 @@ public:
 
     std::string googColor; //sets color scheme for output /Colorblind mode
     bool googVectorScale; //sets the vector scaling
+    bool googUseConsistentColorScheme;    // flag specifying whether to use a cross data color scheme or standard single data color scheme, for kmz files
 
     KmlVector::egoogSpeedScaling googSpeedScaling;		//flag specifying the speed scaling for the legend/colors in the *.kmz file (0=>equal colors, 1=>equal interval)
     double googLineWidth;		//drawing line width for google output vectors

@@ -784,7 +784,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                if( i != 0  )
+                //need to keep the ninjas for now, if doing a consistent color scheme set of outputs
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScheme == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -905,7 +906,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                if( i != 0  )
+                //need to keep the ninjas for now, if doing a consistent color scheme set of outputs
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScheme == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -1009,7 +1011,101 @@ bool ninjaArmy::startRuns(int numProcessors)
             throw;
         }
     }
-    
+
+    try{
+        //write consistent color scale outputs
+        if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScheme == true)
+        {
+            int numColors;
+            KmlVector **ninjaKmlFiles = new KmlVector*[ninjas.size()];
+            double **speedSplitVals = new double*[ninjas.size()];
+            for( int i = 0; i < ninjas.size(); i++ )
+            {
+                ninjaKmlFiles[i] = new KmlVector;
+
+                ninjaKmlFiles[i]->setKmlFile(ninjas[i]->input.kmlFile);
+                ninjaKmlFiles[i]->setKmzFile(ninjas[i]->input.kmzFile);
+                ninjaKmlFiles[i]->setDemFile(ninjas[i]->input.dem.fileName);
+
+                ninjaKmlFiles[i]->setLegendFile(ninjas[i]->input.legFile);
+                ninjaKmlFiles[i]->setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
+                ninjaKmlFiles[i]->setSpeedGrid(ninjas[i]->VelocityGrid, ninjas[i]->input.outputSpeedUnits);
+                ninjaKmlFiles[i]->setDirGrid(ninjas[i]->AngleGrid);
+
+                ninjaKmlFiles[i]->setLineWidth(ninjas[i]->input.googLineWidth);
+                ninjaKmlFiles[i]->setTime(ninjas[i]->input.ninjaTime);
+                if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                {
+                    // init is protected, can't do this yet
+                    //std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                    //ninjaKmlFiles[i]->setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+                }
+
+                ninjaKmlFiles[i]->calcSpeedSplitVals(ninjas[i]->input.googSpeedScaling);
+
+                speedSplitVals[i] = ninjaKmlFiles[i]->getSpeedSplitVals(numColors);
+            }
+
+            ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors);
+            double *finalSpeedSplitVals = ninjaKmlFiles[0]->getSpeedSplitVals(numColors);
+
+            for( int i = 0; i < ninjas.size(); i++ )
+            {
+                ninjaKmlFiles[i]->setSpeedSplitVals(finalSpeedSplitVals,numColors);
+                if(ninjaKmlFiles[i]->writeKml(ninjas[i]->input.googSpeedScaling,ninjas[i]->input.googColor,ninjas[i]->input.googVectorScale))
+                {
+                    if(ninjaKmlFiles[i]->makeKmz())
+                        ninjaKmlFiles[i]->removeKmlFile();
+                }
+            }
+
+            //cleanup at the end
+            for( int i = 0; i < ninjas.size(); i++ )
+            {
+                delete ninjaKmlFiles[i];
+                ninjaKmlFiles[i] = NULL;
+
+                delete speedSplitVals[i];
+                speedSplitVals[i] = NULL;
+
+                //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
+                if( i != 0 )
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+            }
+            delete[] ninjaKmlFiles;
+            ninjaKmlFiles = NULL;
+            delete[] speedSplitVals;
+            speedSplitVals = NULL;
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = NULL;
+        }
+    }catch (bad_alloc& e)
+    {
+        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
+        std::cout << "WindNinja appears to have run out of memory." << endl;
+        status = false;
+        throw;
+    }catch (cancelledByUser& e)
+    {
+        std::cout << "Exception caught: " << e.what() << endl;
+        status = false;
+        throw;
+    }catch (exception& e)
+    {
+        std::cout << "Exception caught: " << e.what() << endl;
+        status = false;
+        throw;
+    }catch (...)
+    {
+        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        status = false;
+        throw;
+    }
+
     return status;
 }
 
@@ -1961,7 +2057,10 @@ int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 {
     IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
 }
-
+int ninjaArmy::setGoogConsistentColorScheme(const int nIndex, bool flag, int numRuns)
+{
+    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googConsistentColorScheme(flag, numRuns));
+}
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
 {

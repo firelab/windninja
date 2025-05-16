@@ -278,6 +278,11 @@ bool ninja::simulate_wind()
     keepOutputGridsInMemory(true);
 #endif
 
+    if(input.googUseConsistentColorScheme)
+    {
+        keepOutputGridsInMemory(true);
+    }
+
 	#ifdef _OPENMP
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
 	#endif
@@ -3021,7 +3026,7 @@ void ninja::writeOutputFiles()
 	#pragma omp section
 	{
 	try{
-		if(input.googOutFlag==true)
+		if(input.googOutFlag==true && input.googUseConsistentColorScheme==false)
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
@@ -4686,7 +4691,13 @@ void ninja::set_googColor(std::string scheme, bool scaling)
     input.googVectorScale = scaling;
 }
 
-
+void ninja::set_googConsistentColorScheme(bool flag, int numRuns)
+{
+    input.googUseConsistentColorScheme = flag;
+    // don't actually want to do this if there is only a single run
+    if(numRuns <= 1)
+        input.googUseConsistentColorScheme = false;
+}
 
 void ninja::set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling)
 {
