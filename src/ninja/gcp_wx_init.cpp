@@ -158,6 +158,9 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
 
 std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 {
+  if (pfnProgress) {
+    pfnProgress(0.0, "Starting Download...", nullptr);
+  }
 
   GDALDatasetH hDS = GDALOpen(demFile.c_str(), GA_ReadOnly);
   double demBounds[4];
@@ -210,6 +213,9 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
   std::vector<std::string> filePathsToZip;
 
+  int totalSteps = (endDateTime - startDateTime).hours() + 1; // total hours to download
+  int stepCount = 0;
+
   for (boost::posix_time::ptime dt = startDateTime; dt <= endDateTime; dt += boost::posix_time::hours(1))
   {
     std::string dateStr = boost::gregorian::to_iso_string(dt.date());
@@ -219,6 +225,14 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
     std::string srcFile = "/vsigs/high-resolution-rapid-refresh/hrrr." + dateStr +
                           "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
+
+    stepCount++;
+
+    if (pfnProgress) {
+      double progress = static_cast<double>(stepCount) / (totalSteps + 1); // +1 for zipping phase
+      std::string message = "Downloading hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
+      pfnProgress(progress, message.c_str(), nullptr);
+    }
 
     std::string outFile = outFolder + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
     std::string idxFile = "https://storage.googleapis.com/high-resolution-rapid-refresh/hrrr." + dateStr +
@@ -248,6 +262,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
     GDALClose(outDataset);
     filePathsToZip.push_back(outFile);
+  }
+
+  if (pfnProgress) {
+    double progress = static_cast<double>(stepCount) / (totalSteps + 1);
+    pfnProgress(progress, "Zipping Files...", nullptr);
   }
 
          // Create directory using startDate
@@ -323,15 +342,15 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     }
   }
 
-  if (pfnProgress)
-    pfnProgress(1.0, "Forecast download complete.", nullptr);
-
   CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
 
+  if (pfnProgress) {
+    pfnProgress(1.0, "Download Complete.", nullptr);
+  }
+
   return zipFilePath;
-
-
 }
+
 
 
 std::vector<std::string> GCPWxModel::getVariableList()

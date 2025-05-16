@@ -343,9 +343,9 @@ void weatherModel::getData()
     wxModelInitialization *model;
 
     if( inputFile.isEmpty() ) {
-    statusLabel->setText( "No input dem file specified" );
-    setCursor(Qt::ArrowCursor);
-    return;
+      statusLabel->setText( "No input dem file specified" );
+      setCursor(Qt::ArrowCursor);
+      return;
     }
     if( modelChoice == 1 )
         model = new ncepNdfdInitialization( ndfd );
@@ -359,6 +359,11 @@ void weatherModel::getData()
         model = new ncepGfsSurfInitialization( gfs );
     else if ( modelChoice == modelComboBox->count() - 1) {
       model = new GCPWxModel(archhrr);
+      progressDialog->reset();
+      progressDialog->setRange( 0, 100 );
+      model->SetProgressFunc( (GDALProgressFunc)&UpdateProgress );
+      progressDialog->show();
+      progressDialog->setCancelButtonText( "Cancel" );
     }
     else
     {
