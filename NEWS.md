@@ -1,6 +1,46 @@
 Release Notes
 =============
 
+WindNinja 3.12.0
+---------------
+- Fixed issue in point initialization where requested start/stop times outside the range of the station file times would cause the application to crash (#586)
+
+- Fixed issue causing an inaccurate mesh resolution to sometimes be displayed in the GUI (#564)
+
+- Updated LANDFIRE LFPS endpoints (#562)
+
+- Fixed issue causing some UCAR models to fail (#557)
+
+- Added a DEM smoothing algorithm for cases where the momentum solver diverges due to a low quality mesh (#555)
+
+- Ensure weather station files are written to the correct directory (#545)
+
+- Added the ability to handled DEMs in non-north-up projections (#544)
+
+- Added a check for a proper datum in weather station files (#541)
+
+- Fixed an issue causing the GUI to crash when a custom output path was not set correctly (#540)
+
+- Upgraded LCP downloads to LF 2023 version 2.4.0 (#539)
+
+- Updated shapefile display tutorial (#536)
+
+- Improved SRTM DEM downloads (#529)
+
+- Added a proper check for surface data bounds in the GUI (#523)
+
+- Enabled pastcasts with historical HRRR forecasts from GCP (#514)
+
+- Fixed inconsistent output file naming in gridded initialization runs (#512)
+
+- Enabled a consistent color scale across time steps for KMZ outputs (#441)
+
+- Improved interpolations in point initialization (#419)
+
+- Added RAP and HRRR extended forecasts (#365)
+
+- Added the NBM forecast (#222)
+
 WindNinja 3.11.2
 ---------------
 - Fix Qt SSL issue causing the DEM download widget map not to load for some users (#535)
