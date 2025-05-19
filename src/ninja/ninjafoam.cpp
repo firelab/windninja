@@ -3647,6 +3647,11 @@ void NinjaFoam::WriteOutputFiles()
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
 			ninjaKmlFiles.setTime(input.ninjaTime);
+			if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+			{
+			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
+			}
 
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
