@@ -370,11 +370,11 @@ public:
     void dumpMemory();
 
     WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
+    boost::shared_ptr<initialize> init;
 
 protected:
     void checkCancel();
     void write_compare_output();
-    boost::shared_ptr<initialize> init;
 
 private:
 

@@ -627,8 +627,8 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
-            os << splitValue[4] << " + ";
-//            os << splitValue[4] << " - " << maxxx;
+//            os << splitValue[4] << " + ";
+            os << splitValue[4] << " - " << maxxx;
         else if(i == 4)
             os << "0.00 - " << splitValue[1] - 0.01;
         else if(i != 0)

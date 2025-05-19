@@ -3115,6 +3115,7 @@ void ninja::writeOutputFiles()
 			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
 			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
+
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
 				if(ninjaKmlFiles.makeKmz())
