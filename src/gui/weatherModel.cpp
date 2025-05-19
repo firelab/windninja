@@ -114,16 +114,16 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     minDateTime = minUtcDateTime.toLocalTime();
     maxDateTime = QDateTime::currentDateTimeUtc();
 
-    startDateLabel = new QLabel(tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toString("yyyy-MM-dd HH:mm")), this);
+    startDateLabel = new QLabel(tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toString("yyyy/MM/dd HH:mm")), this);
     endDateLabel = new QLabel(tr("End Date:"), this);
 
     startTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
-    startTime->setDisplayFormat("yyyy-MM-dd HH");
+    startTime->setDisplayFormat("yyyy/MM/dd HH:mm");
     startTime->setCalendarPopup(true);
-    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("yyyy-MM-dd HH:mm")));
+    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("yyyy/MM/dd HH:mm")));
 
     stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
-    stopTime->setDisplayFormat("yyyy-MM-dd HH");
+    stopTime->setDisplayFormat("yyyy-MM-dd HH:mm");
     stopTime->setCalendarPopup(true);
 
     startDateLabel->setVisible(false);
@@ -396,8 +396,8 @@ void weatherModel::getData()
         if (startDT < minDateTime || endDT > maxDateTime) {
           QMessageBox::warning(this, "Out of Bounds",
                                QString("Date range must be between %1 and %2.")
-                                   .arg(minDateTime.toString("yyyy-MM-dd HH"))
-                                   .arg(maxDateTime.toString("yyyy-MM-dd HH")));
+                                   .arg(minDateTime.toString("yyyy/MM/dd HH:mm"))
+                                   .arg(maxDateTime.toString("yyyy/MM/dd HH:mm")));
           setCursor(Qt::ArrowCursor);
           return;
         }
