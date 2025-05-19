@@ -933,7 +933,10 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
-            option_dependency(vm, "wx_model_type", "forecast_duration");
+            if (vm["wx_model_type"].as<std::string>() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+            {
+              option_dependency(vm, "wx_model_type", "forecast_duration");
+            }
             option_dependency(vm, "wx_model_type", "time_zone");
             std::vector<blt::local_date_time> timeList;
             if(vm.count("forecast_time")) {
@@ -959,7 +962,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                     if (!privateKeyPath || !clientEmail) {
                       throw std::runtime_error(
-                          "ERROR 15: Missing required GCS credentials. Both of the following environment variables must be set:\n"
+                          "Missing required GCS credentials. Both of the following environment variables must be set:\n"
                           "- GS_OAUTH2_PRIVATE_KEY_FILE\n"
                           "- GS_OAUTH2_CLIENT_EMAIL"
                           );
@@ -1024,7 +1027,7 @@ int windNinjaCLI(int argc, char* argv[])
                     forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), std::to_string(startHour), std::to_string(stopHour));
 
                     std::cout << "Downloading forecast data..." << std::endl;
-                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
+                    forecastFileName = model->fetchForecast(*elevation_file, 1);
                     std::cout << "Download complete." << std::endl;
                   }
 
