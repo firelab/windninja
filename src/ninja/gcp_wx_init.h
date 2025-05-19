@@ -37,6 +37,7 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <future>
 
 #include "gdal_utils.h"
 #include "cpl_http.h"
@@ -85,9 +86,11 @@ private:
   const char **ppszModelData;
 
   int InitializeForecastTimes();
-  std::vector<int> findBands(std::string filename, std::vector<std::string> variables);
+  std::string findBands(std::string idxFilePath, std::vector<std::string> variables);
   char* FindForecast(const char* pszFilePath, time_t nTime);
-  std::vector<const char *> getOptions(std::vector<int> bands, std::vector<std::string> variables, std::string buffer[]);
+  std::vector<std::vector<const char*>> getOptions(const std::vector<std::string>& bands, const std::string buffer[4]);
+  bool CopyFileToVSI(const std::string& srcPath, const std::string& destPath);
+  static void ThreadFunc(void* pData);
 
   std::string privateKey;
   std::string clientEmail;
@@ -96,6 +99,13 @@ private:
   boost::gregorian::date endDate;
   std::string starthours;
   std::string endhours;
+  struct ThreadParams
+  {
+    boost::posix_time::ptime dt;
+    std::string tmp;
+    std::vector<std::vector<const char*>> options;
+    int i;
+  };
 
 };
 
