@@ -390,10 +390,22 @@ void weatherModel::getData()
         model->fetchForecast( inputFile.toStdString(), hours );
       }
       else {
+
+        if(CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", NULL) == NULL || CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", NULL) == NULL)
+        {
+          progressDialog->close();
+          QMessageBox::warning(this, "Invalid Environment Variables", "Missing required GCS credentials. Both of the following environment variables must be set:\n"
+                                                                      "GS_OAUTH2_PRIVATE_KEY_FILE\n"
+                                                                      "GS_OAUTH2_CLIENT_EMAIL");
+          setCursor(Qt::ArrowCursor);
+          return;
+        }
+
         QDateTime startDT = startTime->dateTime().toUTC();
         QDateTime endDT = stopTime->dateTime().toUTC();
 
         if (startDT < minDateTime || endDT > maxDateTime) {
+          progressDialog->close();
           QMessageBox::warning(this, "Out of Bounds",
                                QString("Date range must be between %1 and %2.")
                                    .arg(minDateTime.toString("yyyy/MM/dd HH:mm"))
@@ -402,11 +414,13 @@ void weatherModel::getData()
           return;
         }
         if (startDT > endDT) {
+          progressDialog->close();
           QMessageBox::warning(this, "Invalid Range", "The start time must be before the stop time.");
           setCursor(Qt::ArrowCursor);
           return;
         }
         if (startDT.daysTo(endDT) > 14) {
+          progressDialog->close();
           QMessageBox::warning(this, "Invalid Range", "The date range cannot exceed 14 days.");
           setCursor(Qt::ArrowCursor);
           return;
