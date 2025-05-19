@@ -123,7 +123,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("yyyy/MM/dd HH:mm")));
 
     stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
-    stopTime->setDisplayFormat("yyyy-MM-dd HH:mm");
+    stopTime->setDisplayFormat("yyyy/MM/dd HH:mm");
     stopTime->setCalendarPopup(true);
 
     startDateLabel->setVisible(false);
