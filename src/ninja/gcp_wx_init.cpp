@@ -188,10 +188,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
   std::string fileName(CPLGetFilename(demFile.c_str()));
   std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
 
-  std::string outFolder = path + "/" + getForecastReadable() + "-" + fileName + "/" + startDateStr + "T" + starthours + "00/";
+  std::string identifier = path + "/" + getForecastReadable() + "-" + fileName + "/";
+  std::string outFolder = identifier + startDateStr + "T" + starthours + "00/";
+  std::string tmp = outFolder + "tmp/";
+  VSIMkdir(identifier.c_str(), 0777);
   VSIMkdir(outFolder.c_str(), 0777);
-
-  std::string tmp = outFolder + "/tmp/";
   VSIMkdir(tmp.c_str(), 0777);
 
   std::vector<std::string> fileBands;
@@ -263,7 +264,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     i++;
   }
 
-  for (auto& handle : threadHandles)
+  for (void* handle : threadHandles)
     CPLJoinThread(handle);
 
   threadHandles.clear();
@@ -322,10 +323,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
   return zipFilePath;
 }
 
-
-
-// Thread function (must take void* and return void)
-static void GCPWxModel::ThreadFunc(void* pData)
+void GCPWxModel::ThreadFunc(void* pData)
 {
   ThreadParams* params = static_cast<ThreadParams*>(pData);
   boost::posix_time::ptime dt = params->dt;
@@ -342,9 +340,10 @@ static void GCPWxModel::ThreadFunc(void* pData)
                         "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
   std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
 
-  GDALTranslateOptions *transOptions = GDALTranslateOptionsNew(options[i].data(), NULL);
-  GDALDataset *srcDataset = (GDALDataset *)GDALOpen(srcFile.c_str(), GA_ReadOnly);
-  if (!srcDataset)
+  GDALTranslateOptions *transOptions = GDALTranslateOptionsNew((char**)options[i].data(), NULL);
+
+  GDALDatasetH hSrcDS = GDALOpen(srcFile.c_str(), GA_ReadOnly);
+  if (!hSrcDS)
   {
     CPLDebug("GCP", "Failed to open input dataset for %s", srcFile.c_str());
     GDALTranslateOptionsFree(transOptions);
@@ -352,18 +351,19 @@ static void GCPWxModel::ThreadFunc(void* pData)
     return;
   }
 
-  GDALDataset *outDataset = GDALTranslate(outFile.c_str(), srcDataset, transOptions, NULL);
-  GDALClose(srcDataset);
+  GDALDatasetH hOutDS = GDALTranslate(outFile.c_str(), hSrcDS, transOptions, NULL);
+  GDALClose(hSrcDS);
   GDALTranslateOptionsFree(transOptions);
 
-  if (!outDataset)
+  if (!hOutDS)
   {
     CPLDebug("GCP", "GDALTranslate Failed for %s", outFile.c_str());
   }
   else
   {
-    GDALClose(outDataset);
+    GDALClose(hOutDS);
   }
+
   delete params;
 }
 
@@ -621,65 +621,7 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
 
 char* GCPWxModel::FindForecast(const char* pszFilePath, time_t nTime)
 {
-  VSIStatBufL sStat;
-  VSIStatL(pszFilePath, &sStat);
-
-  const char* pszPath = nullptr;
-  if (VSI_ISDIR(sStat.st_mode))
-    pszPath = CPLStrdup(pszFilePath);
-  else if (strstr(wxModelFileName.c_str(), ".zip"))
-    pszPath = CPLStrdup(CPLSPrintf("/vsizip/%s", wxModelFileName.c_str()));
-  else
-    pszPath = CPLStrdup(CPLGetPath(pszFilePath));
-
-  char** papszFileList = VSIReadDir(pszPath);
-  if (!papszFileList || CSLCount(papszFileList) == 0)
-  {
-    CPLFree((void*)pszPath);
-    return nullptr;
-  }
-
-  for (int i = 0; papszFileList[i] != nullptr; ++i)
-  {
-    std::string filename = papszFileList[i];
-
-           // Skip dotfiles
-    if (filename == "." || filename == "..")
-      continue;
-
-           // Try to match pattern: 20250512.hrrr.t15z.wrfnatf00.grib2
-    size_t posDate = filename.find('.');
-    size_t posHour = filename.find(".hrrr.t");
-    size_t posZ = filename.find('z', posHour);
-
-    if (posDate == std::string::npos || posHour == std::string::npos || posZ == std::string::npos)
-      continue;
-
-    std::string dateStr = filename.substr(0, posDate); // "20250512"
-    std::string hourStr = filename.substr(posHour + 7, posZ - (posHour + 7)); // "15"
-
-    if (dateStr.length() != 8 || hourStr.length() != 2)
-      continue;
-
-           // Build datetime string and convert to time_t
-    std::string datetimeStr = dateStr + hourStr;
-
-    struct tm tmTime = {};
-    strptime(datetimeStr.c_str(), "%Y%m%d%H", &tmTime);
-    time_t fileTime = mktime(&tmTime);
-
-    if (fileTime == nTime)
-    {
-      std::string fullPath = std::string(pszPath) + "/" + filename;
-      CPLFree((void*)pszPath);
-      CSLDestroy(papszFileList);
-      return CPLStrdup(fullPath.c_str());
-    }
-  }
-
-  CPLFree((void*)pszPath);
-  CSLDestroy(papszFileList);
-  return nullptr;
+  return NULL;
 }
 
 
