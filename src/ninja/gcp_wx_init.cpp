@@ -148,6 +148,9 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
     aoTimeList.push_back(local_time);
   }
 
+  // Sort the list to ensure chronological order
+  std::sort(aoTimeList.begin(), aoTimeList.end());
+
   CSLDestroy(papszFileList);
   CSLDestroy(papszTimeList);
 
