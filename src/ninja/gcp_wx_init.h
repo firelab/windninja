@@ -37,7 +37,6 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
-#include <future>
 
 #include "gdal_utils.h"
 #include "cpl_http.h"
