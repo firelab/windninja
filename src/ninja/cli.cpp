@@ -1024,7 +1024,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                     auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
 
-                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), std::to_string(startHour), std::to_string(stopHour));
+                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(stopHour));
 
                     std::cout << "Downloading forecast data..." << std::endl;
                     forecastFileName = model->fetchForecast(*elevation_file, 1);
