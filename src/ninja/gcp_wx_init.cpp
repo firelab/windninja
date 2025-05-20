@@ -251,7 +251,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
       threadHandles.erase(threadHandles.begin());
     }
 
-    ThreadParams* params = new ThreadParams{validTimes[dt], tmp, options, i};
+    ThreadParams* params = new ThreadParams();
+    params->dt = validTimes[dt];
+    params->outPath = tmp;
+    params->options = options;
+    params->i = i;
 
     void* handle = CPLCreateJoinableThread(ThreadFunc, params);
     if (!handle) {
@@ -264,8 +268,10 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     i++;
   }
 
-  for (void* handle : threadHandles)
-    CPLJoinThread(handle);
+  for(int i = 0; i < threadHandles.size(); i++)
+  {
+    CPLJoinThread(threadHandles[i]);
+  }
 
   threadHandles.clear();
 
