@@ -96,7 +96,8 @@ public:
         wxModelInitializationFlag,	//Weather forecast model initialization
         griddedInitializationFlag,  //gridded speed and direction
         foamDomainAverageInitializationFlag, //foam "parent" run initialized with domain avg init
-        foamWxModelInitializationFlag //foam "parent" run initialized with wx model init
+        foamWxModelInitializationFlag, //foam "parent" run initialized with wx model init
+        foamGriddedInitializationFlag //foam "parent" run initialized with gridded init
     };
 
     eVegetation vegetation;

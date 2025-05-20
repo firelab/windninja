@@ -1729,6 +1729,21 @@ void ninja::discretize()
         }
     }
     else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::griddedInitializationFlag) //it's a gridded-initialization run
+	{
+        stb.SetDomainAverageAlpha(input, mesh);  //sets alpha based on incident solar radiation
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0;j<input.dem.get_nCols();j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
 	{
         stb.SetPointInitializationAlpha(input, mesh);
@@ -2247,6 +2262,21 @@ void ninja::prepareOutput()
             CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(), 
                     input.dem.get_yllCorner(),
                     (longEdge * input.dem.cellSize), 
+                    -9999.0, tempCloudCover, input.dem.prjString);
+        }
+        if(input.initializationMethod == WindNinjaInputs::foamGriddedInitializationFlag){
+            //Set cloud grid
+            int longEdge = input.dem.get_nRows();
+            if(input.dem.get_nRows() < input.dem.get_nCols())
+                    longEdge = input.dem.get_nCols();
+            double tempCloudCover;
+            if(input.cloudCover < 0)
+                tempCloudCover = 0.0;
+            else
+                tempCloudCover = input.cloudCover;
+            CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
+                    input.dem.get_yllCorner(),
+                    (longEdge * input.dem.cellSize),
                     -9999.0, tempCloudCover, input.dem.prjString);
         }
 

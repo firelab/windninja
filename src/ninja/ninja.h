@@ -87,6 +87,7 @@
 #ifdef NINJAFOAM
 #include "foamDomainAverageInitialization.h"
 #include "foamWxModelInitialization.h"
+#include "foamGriddedInitialization.h"
 #endif
 
 #include "wxStation.h"

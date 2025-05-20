@@ -110,7 +110,8 @@ if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp
                     foamDomainAverageInitialization.cpp
-                    foamWxModelInitialization.cpp)
+                    foamWxModelInitialization.cpp
+                    foamGriddedInitialization.cpp)
 endif(NINJAFOAM)
 
 if(WITH_NOMADS_SUPPORT)

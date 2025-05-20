@@ -669,7 +669,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
                 }
                 else if(ninjas[0]->input.initializationMethod == WindNinjaInputs::griddedInitializationFlag){
-                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamGriddedInitializationFlag;
                 }
                 else{
                     throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
@@ -757,7 +757,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                         diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
                     }
                     else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::griddedInitializationFlag){
-                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
+                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamGriddedInitializationFlag;
                     }
                     else{
                         throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
