@@ -206,6 +206,7 @@ private:
     double geTheta;
 
     static const int numColors = 5;
+    static const int numSplits = numColors+1;
 
     double *splitValue;
 

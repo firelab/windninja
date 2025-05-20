@@ -312,31 +312,33 @@ void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
         splitValue = NULL;
     }
 
-    splitValue = new double[numColors];
+    splitValue = new double[numSplits];
     double interval;
     switch(scaling)
     {
         case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
-            spd.divide_gridData(splitValue, numColors);
+            spd.divide_gridData(splitValue, numSplits);
             break;
         case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-            interval = spd.get_maxValue()/numColors;
-            for(int i = 0;i < numColors;i++)
+            //interval = spd.get_maxValue()/(numSplits-1);
+            interval = (spd.get_maxValue()-spd.get_minValue())/(numSplits-1);
+            for(int i = 0; i < numSplits; i++)
             {
-                splitValue[i] = i * interval;
+                //splitValue[i] = i * interval;
+                splitValue[i] = i * interval + spd.get_minValue();
             }
             break;
         default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
-            spd.divide_gridData(splitValue, numColors);
+            spd.divide_gridData(splitValue, numSplits);
             break;
     }
 }
 
 void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals)
 {
-    if(numSplitVals != numColors)
+    if(numSplitVals != numSplits)
     {
-        throw std::runtime_error("KmlVector::calcSplitValsFromSplitVals() input array in array size does not match KmlVector numColors!!");
+        throw std::runtime_error("KmlVector::calcSplitValsFromSplitVals() input array in array size does not match KmlVector numSplits!!");
     }
 
     if(splitValue)
@@ -346,8 +348,8 @@ void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const 
     }
 
     double sum, average;
-    splitValue = new double[numColors];
-    for(int i = 0; i < numColors; i++)
+    splitValue = new double[numSplits];
+    for(int i = 0; i < numSplits; i++)
     {
         sum = 0;
         for( int j = 0; j < nSets; j++ )
@@ -366,21 +368,21 @@ double* KmlVector::getSpeedSplitVals(int &size)
         throw std::runtime_error("KmlVector::getSpeedSplitVals() called before a call to KmlVector::calcSpeedSplitVals()!! No speedSplitValues available to get!!");
     }
 
-    double* speedSplitVals = new double[numColors];
-    for(int i = 0; i < numColors; i++)
+    double* speedSplitVals = new double[numSplits];
+    for(int i = 0; i < numSplits; i++)
     {
         speedSplitVals[i] = splitValue[i];
     }
 
-    size = numColors;  // need to pass back the size of the array too
+    size = numSplits;  // need to pass back the size of the array too
     return speedSplitVals;
 }
 
 void KmlVector::setSpeedSplitVals(const double *speedSplitVals, const int size)
 {
-    if(size != numColors)
+    if(size != numSplits)
     {
-        throw std::runtime_error("KmlVector::setSpeedSplitVals() input array size does not match KmlVector numColors!!");
+        throw std::runtime_error("KmlVector::setSpeedSplitVals() input array size does not match KmlVector numSplits!!");
     }
 
     if(splitValue)
@@ -389,8 +391,8 @@ void KmlVector::setSpeedSplitVals(const double *speedSplitVals, const int size)
         splitValue = NULL;
     }
 
-    splitValue = new double[numColors];
-    for(int i = 0; i < numColors; i++)
+    splitValue = new double[numSplits];
+    for(int i = 0; i < numSplits; i++)
     {
         splitValue[i] = speedSplitVals[i];
     }
@@ -586,24 +588,26 @@ bool KmlVector::writeHtmlLegend(VSILFILE *fileOut)
     VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"><i>Wind Speed (mph)</i><br></font></big></big>");
     //red range
     VSIFPrintfL(fileOut, "\n<big><big><big><big><font color=\"red\">&rarr </font></big></big></big></big>");
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numColors - 1]);
-    VSIFPrintfL(fileOut, "<big><big><font color=\"white\">+</font></big></big><br>");
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 2]);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 1]);
+    //VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> + </font></big></big><br>");
     //orange range
     VSIFPrintfL(fileOut, "\n<big><big><big><big><font color=\"orange\"> &rarr </font></big></big></big></big>");
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numColors - 2]);
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numColors - 1] - 0.01);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 3]);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 2] - 0.01);
     //yellow range
     VSIFPrintfL(fileOut, "\n<big><big><big><big><font color=\"yellow\">&rarr </font></big></big></big></big>");
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numColors - 3]);
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numColors - 2] - 0.01);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 4]);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 3] - 0.01);
     //green range
     VSIFPrintfL(fileOut, "\n<big><big><big><big><font color=\"green\">&rarr </font></big></big></big></big>");
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numColors - 4]);
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numColors - 3] - 0.01);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 5]);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 4] - 0.01);
     //blue range
     VSIFPrintfL(fileOut, "\n<big><big><big><big><font color=\"blue\">&rarr </font></big></big></big></big>");
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", 0.0);
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf </font></big></big><br>", splitValue[numColors - 4] - 0.01);
+    //VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", 0.0);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 6]);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 5] - 0.01);
 
     VSIFPrintfL(fileOut, "\n]]></description>");
     VSIFPrintfL(fileOut, "\n</Placemark>");
@@ -618,21 +622,23 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     int legendHeight = int(legendWidth / 0.75);
     BMP legend;
 
-    std::string legendStrings[5];
+    std::string legendStrings[numColors];
     ostringstream os;
 
     double maxxx = spd.get_maxValue();
 
-    for(int i = 0;i < 5;i++)
+    for(int i = 0; i < numColors; i++)
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
-//            os << splitValue[4] << " + ";
-            os << splitValue[4] << " - " << maxxx;
-        else if(i == 4)
-            os << "0.00 - " << splitValue[1] - 0.01;
-        else if(i != 0)
-            os << splitValue[5 - i - 1] << " - " << splitValue[5 - i] - 0.01;
+            //os << splitValue[numSplits-2] << " + ";
+            //os << splitValue[numSplits-2] << " - " << maxxx;
+            os << splitValue[numSplits-2] << " - " << splitValue[numSplits-1];
+        else if(i == numColors-1)
+            //os << "0.00 - " << splitValue[1] - 0.01;
+            os << splitValue[0] << " - " << splitValue[1] - 0.01;
+        else
+            os << splitValue[numSplits - i - 2] << " - " << splitValue[numSplits - i - 1] - 0.01;
 
         legendStrings[i] = os.str();
         os.str("");
@@ -678,7 +684,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     white.Blue = 255;
     white.Alpha = 0;
 
-    RGBApixel colors[5];
+    RGBApixel colors[numColors];
 //  RGBApixel red, orange, yellow, green, blue;
     if(cScheme=="default")
     {
@@ -902,7 +908,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     int arrowHeadLength = 10; // pixels;
     int textHeight = 12; //pixels- 10 for maximum speed of "999.99 - 555.55";
                          //12 for normal double digits
-    if(splitValue[4] >= 100)
+    if(splitValue[numSplits-1] >= 100)
         textHeight = 10;
     int titleTextHeight = int(1.2 * textHeight);
     int titleX, titleY;
@@ -941,7 +947,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
             break;
     }
 
-    for(int i = 0;i < 5;i++)
+    for(int i = 0; i < numColors; i++)
     {
         x1 = int(legendWidth * x);
         x2 = x1 + arrowLength;

@@ -33,7 +33,7 @@
 ** TODO(kyle): handle color schemes
 */
 
-static int writeLegend(const char *pszFilename, double splits[5], double max,
+static int writeLegend(const char *pszFilename, double splits[6], double max,
                        const char *pszUnits) {
   const int width = 180;
   const int height = int(width / 0.75);
@@ -100,7 +100,7 @@ static int writeLegend(const char *pszFilename, double splits[5], double max,
   colors[3] = green;
   colors[4] = blue;
 
-  if (splits[4] >= 100) {
+  if (splits[5] >= 100) {
     textHeight = 10;
   }
   x = 0.05;
@@ -133,12 +133,13 @@ static int writeLegend(const char *pszFilename, double splits[5], double max,
     DrawLine(legend, x2, y2, x4, y4, colors[i]);
 
     if (i == 0) {
-      pszHiLow = CPLSPrintf("%.2f - %.2f", splits[4], max);
+      //pszHiLow = CPLSPrintf("%.2f - %.2f", splits[4], max);
+      pszHiLow = CPLSPrintf("%.2f - %.2f", splits[4], splits[5]);
     } else if (i == 4) {
-      pszHiLow = CPLSPrintf("%.2f - %.2f", 0, splits[1] - 0.01);
+      //pszHiLow = CPLSPrintf("%.2f - %.2f", 0.0, splits[1] - 0.01);
+      pszHiLow = CPLSPrintf("%.2f - %.2f", splits[0], splits[1] - 0.01);
     } else {
-      pszHiLow =
-          CPLSPrintf("%.2f - %.2f", splits[5 - i - 1], splits[5 - i] - 0.01);
+      pszHiLow = CPLSPrintf("%.2f - %.2f", splits[6 - i - 2], splits[6 - i - 1] - 0.01);
     }
     PrintString(legend, pszHiLow, textX, textY, textHeight, white);
     y += 0.15;
@@ -328,8 +329,8 @@ int NinjaGDALVectorOutput(const char *pszDriver, // GDAL vector driver name
     hDstSRS = OSRClone(hSRS);
   }
 
-  double splits[5];
-  spd.divide_gridData(splits, 5);
+  double splits[6];
+  spd.divide_gridData(splits, 6);
   // Handle the KML special options
   char **papszKMLOptions = 0;
   if (EQUAL(pszDriver, "LIBKML")) {

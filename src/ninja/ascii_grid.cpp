@@ -1661,11 +1661,13 @@ void AsciiGrid<T>::divide_gridData(double *d, int splits)
 {
     if(!sortedData)
         sort_grid();
-    int x = int(floor((double)(data.size() / splits)));;
-    for(int i = 0;i < splits;i++)
+    int x = int(floor((double)(data.size() / (splits-1))));
+    // do the final value as the exact last index
+    for(int i = 0; i < splits-1; i++)
     {
         d[i] = sortedData[i * x];
     }
+    d[splits-1] = sortedData[data.size()-1];
 }
 
 template<class T>
