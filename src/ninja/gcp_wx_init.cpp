@@ -62,7 +62,7 @@ double GCPWxModel::getGridResolution()
   return 3;
 }
 
-std::string GCPWxModel::getForecastReadable( const char bySwapWithSpace )
+std::string GCPWxModel::getForecastReadable()
 {
   return "PAST-CAST-GCP-HRRR-CONUS-3KM";
 }
@@ -162,13 +162,9 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     pfnProgress(0.0, "Downloading files...", nullptr);
   }
 
-  /*-----------------------------------------------------------------------------
-   *  Calculates the DEM buffer
-   *-----------------------------------------------------------------------------*/
   GDALDatasetH hDS = GDALOpen(demFile.c_str(), GA_ReadOnly);
   double demBounds[4];
-  if (!GDALGetBounds((GDALDataset *)hDS, demBounds))
-  {
+  if (!GDALGetBounds((GDALDataset *)hDS, demBounds)) {
     throw badForecastFile("Could not download weather forecast, invalid projection for the DEM");
   }
 
@@ -183,32 +179,23 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
       boost::lexical_cast<std::string>(adfNESW[2])
   };
 
-  /*-----------------------------------------------------------------------------
-   *  Get Environment variables
-   *-----------------------------------------------------------------------------*/
   privateKey = CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", NULL);
   clientEmail = CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", NULL);
 
-  /*-----------------------------------------------------------------------------
-   *  Create File Directories
-   *-----------------------------------------------------------------------------*/
   boost::posix_time::ptime startDateTime(startDate, boost::posix_time::duration_from_string(starthours + ":00:00"));
   boost::posix_time::ptime endDateTime(endDate, boost::posix_time::duration_from_string(endhours + ":00:00"));
   std::string path(CPLGetDirname(demFile.c_str()));
   std::string fileName(CPLGetFilename(demFile.c_str()));
   std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
-  std::string outFolder = path + "/" + getForecastReadable("-") + "-" + fileName + "/" + startDateStr + "T" + starthours + "00" + "/";
-  VSIStatBufL sStat;
-  memset(&sStat, 0, sizeof(VSIStatBufL));
-  if (VSIStatL(outFolder.c_str(), &sStat) != 0 || !VSI_ISDIR(sStat.st_mode))
-  {
-    VSIMkdirRecursive(outFolder.c_str(), 0777);
-  }
+
+  std::string outFolder = path + "/" + getForecastReadable() + "-" + fileName + "/" + startDateStr + "T" + starthours + "00/";
+  VSIMkdirRecursive(outFolder.c_str(), 0777);
+
+  std::string tmp = outFolder + "/tmp/";
+  VSIMkdirRecursive(tmp.c_str(), 0777);
 
   std::vector<std::string> fileBands;
   std::vector<std::string> variables = getVariableList();
-  std::string tmp = outFolder + "tmp/";
-  VSIMkdirRecursive(tmp.c_str(), 0755);
   std::vector<boost::posix_time::ptime> validTimes;
 
   for (boost::posix_time::ptime dt = startDateTime; dt <= endDateTime; dt += boost::posix_time::hours(1))
@@ -223,15 +210,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     std::string localIdxPath = tmp + "hrrr." + dateStr + "t" + hourStr + "z.idx";
 
     VSILFILE *fpRemote = VSIFOpenL(("/vsicurl/" + idxUrl).c_str(), "r");
-    if (!fpRemote)
-    {
+    if (!fpRemote) {
       CPLDebug("IDXCache", "Failed to open remote idx file: %s", idxUrl.c_str());
       continue;
     }
 
     VSILFILE *fpLocal = VSIFOpenL(localIdxPath.c_str(), "w");
-    if (!fpLocal)
-    {
+    if (!fpLocal) {
       CPLDebug("IDXCache", "Failed to create local idx file: %s", localIdxPath.c_str());
       VSIFCloseL(fpRemote);
       continue;
@@ -240,9 +225,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     char buf[8192];
     size_t nRead = 0;
     while ((nRead = VSIFReadL(buf, 1, sizeof(buf), fpRemote)) > 0)
-    {
       VSIFWriteL(buf, 1, nRead, fpLocal);
-    }
 
     VSIFCloseL(fpRemote);
     VSIFCloseL(fpLocal);
@@ -251,13 +234,10 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     fileBands.push_back(bands);
     validTimes.push_back(dt);
 
-    if (VSIUnlink(localIdxPath.c_str()) != 0)
-    {
-      CPLDebug("IDXCache", "Warning: failed to delete .idx file: %s", localIdxPath.c_str());
-    }
+    VSIUnlink(localIdxPath.c_str());
   }
-  std::vector<std::vector<const char*>> options = getOptions(fileBands, buffer);
 
+  std::vector<std::vector<const char*>> options = getOptions(fileBands, buffer);
   const int MAX_CONCURRENT = 4;
   std::vector<void*> threadHandles;
 
@@ -273,8 +253,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     ThreadParams* params = new ThreadParams{validTimes[dt], tmp, options, i};
 
     void* handle = CPLCreateJoinableThread(ThreadFunc, params);
-    if (!handle)
-    {
+    if (!handle) {
       CPLDebug("GCP", "Failed to create thread");
       delete params;
       break;
@@ -289,59 +268,60 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
   threadHandles.clear();
 
-  std::string zipFilePath = outFolder +  startDateStr + "T" + starthours + "00" + ".zip";
+  std::string zipFolder = outFolder;
+  std::string zipFilePath = zipFolder + startDateStr + "T" + starthours + "00" + ".zip";
+  std::string zipVirtualPath = "/vsizip/" + zipFilePath;
 
-  // After all downloads are done or per hour batch:
-  for (size_t dt = 0; dt < validTimes.size(); ++dt)
-  {
+  char** fileList = VSIReadDir(tmp.c_str());
+  if (!fileList) {
+    throw std::runtime_error("Failed to read temporary directory: " + tmp);
+  }
 
-    std::string dateStr = boost::gregorian::to_iso_string(validTimes[dt].date());
-    std::stringstream hourSS;
-    hourSS << std::setw(2) << std::setfill('0') << validTimes[dt].time_of_day().hours();
-    std::string hourStr = hourSS.str();
-    std::string gribFile =  tmp + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
+  for (int i = 0; fileList[i] != nullptr; ++i) {
+    std::string fileNameOnly = fileList[i];
+    if (fileNameOnly == "." || fileNameOnly == "..") continue;
 
-           // Open source grib2 file
-    VSILFILE* srcFile = VSIFOpenL(gribFile.c_str(), "rb");
-    if (!srcFile)
-    {
-      CPLDebug("ZipTmp", "Failed to open grib2 file: %s", gribFile.c_str());
+    std::string filePath = tmp + fileNameOnly;
+    std::string zipEntryPath = zipVirtualPath + "/" + fileNameOnly;
+
+    VSILFILE* fpSrc = VSIFOpenL(filePath.c_str(), "rb");
+    if (!fpSrc) {
+      CPLDebug("GCP", "Failed to open source file for zipping: %s", filePath.c_str());
       continue;
     }
 
-           // Open zip file in append mode using VSI path
-    std::string zipVSIPath = "/vsizip/" + zipFilePath + "/hour_" + boost::lexical_cast<std::string>(dt) + ".grib2";
-    VSILFILE* zipFile = VSIFOpenL(zipVSIPath.c_str(), "wb");
-    if (!zipFile)
-    {
-      CPLDebug("ZipTmp", "Failed to open zip internal file: %s", zipVSIPath.c_str());
-      VSIFCloseL(srcFile);
+    VSIFSeekL(fpSrc, 0, SEEK_END);
+    vsi_l_offset fileSize = VSIFTellL(fpSrc);
+    VSIFSeekL(fpSrc, 0, SEEK_SET);
+
+    std::vector<char> buffer(fileSize);
+    if (VSIFReadL(buffer.data(), 1, fileSize, fpSrc) != fileSize) {
+      CPLDebug("GCP", "Failed to read complete file for zipping: %s", filePath.c_str());
+      VSIFCloseL(fpSrc);
+      continue;
+    }
+    VSIFCloseL(fpSrc);
+
+    VSILFILE* fpZip = VSIFOpenL(zipEntryPath.c_str(), "wb");
+    if (!fpZip) {
+      CPLDebug("GCP", "Failed to create zip entry: %s", zipEntryPath.c_str());
       continue;
     }
 
-           // Copy contents
-    char buffer[8192];
-    size_t bytesRead;
-    while ((bytesRead = VSIFReadL(buffer, 1, sizeof(buffer), srcFile)) > 0)
-    {
-      VSIFWriteL(buffer, 1, bytesRead, zipFile);
+    if (VSIFWriteL(buffer.data(), 1, fileSize, fpZip) != fileSize) {
+      CPLDebug("GCP", "Failed to write data to zip entry: %s", zipEntryPath.c_str());
     }
 
-    VSIFCloseL(srcFile);
-    VSIFCloseL(zipFile);
-
-           // Optionally delete original grib file if you want
-    VSIUnlink(gribFile.c_str());
+    VSIFCloseL(fpZip);
   }
+  VSIRmdirRecursive(tmp.c_str());
+  CSLDestroy(fileList);
 
+  CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
 
-
-   if (pfnProgress) {
-     pfnProgress(1.0, "Download complete!", nullptr);
-  }
-
-   return zipFilePath;
+  return zipFilePath;
 }
+
 
 
 // Thread function (must take void* and return void)
@@ -349,7 +329,7 @@ static void GCPWxModel::ThreadFunc(void* pData)
 {
   ThreadParams* params = static_cast<ThreadParams*>(pData);
   boost::posix_time::ptime dt = params->dt;
-  std::string tmp = params->tmp;
+  std::string outPath = params->outPath;
   int i = params->i;
   auto options = params->options;
 
@@ -360,7 +340,7 @@ static void GCPWxModel::ThreadFunc(void* pData)
 
   std::string srcFile = "/vsigs/high-resolution-rapid-refresh/hrrr." + dateStr +
                         "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
-  std::string outFile = tmp + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
+  std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
 
   GDALTranslateOptions *transOptions = GDALTranslateOptionsNew(options[i].data(), NULL);
   GDALDataset *srcDataset = (GDALDataset *)GDALOpen(srcFile.c_str(), GA_ReadOnly);
