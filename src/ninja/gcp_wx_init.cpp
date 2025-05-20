@@ -189,10 +189,10 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
   std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
 
   std::string outFolder = path + "/" + getForecastReadable() + "-" + fileName + "/" + startDateStr + "T" + starthours + "00/";
-  VSIMkdirRecursive(outFolder.c_str(), 0777);
+  VSIMkdir(outFolder.c_str(), 0777);
 
   std::string tmp = outFolder + "/tmp/";
-  VSIMkdirRecursive(tmp.c_str(), 0777);
+  VSIMkdir(tmp.c_str(), 0777);
 
   std::vector<std::string> fileBands;
   std::vector<std::string> variables = getVariableList();
@@ -314,7 +314,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
     VSIFCloseL(fpZip);
   }
-  VSIRmdirRecursive(tmp.c_str());
+  VSIRmdir(tmp.c_str());
   CSLDestroy(fileList);
 
   CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
