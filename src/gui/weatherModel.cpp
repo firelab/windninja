@@ -447,7 +447,7 @@ void weatherModel::getData()
         boost::gregorian::date endDate(endYear, endMonth, endDay);
 
         auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
-        forecastModel->setDateTime(startDate, endDate, to_string(startHour), to_string(endHour));
+        forecastModel->setDateTime(startDate, endDate, boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(endHour));
 
         model->fetchForecast(inputFile.toStdString(), hours);
       }

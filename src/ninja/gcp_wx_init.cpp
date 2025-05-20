@@ -177,10 +177,10 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
   GDALClose(hDS);
 
   std::string buffer[] = {
-      to_string(adfNESW[3]),
-      to_string(adfNESW[0]),
-      to_string(adfNESW[1]),
-      to_string(adfNESW[2])
+      boost::lexical_cast<std::string>(adfNESW[3]),
+      boost::lexical_cast<std::string>(adfNESW[0]),
+      boost::lexical_cast<std::string>(adfNESW[1]),
+      boost::lexical_cast<std::string>(adfNESW[2])
   };
 
   /*-----------------------------------------------------------------------------
@@ -310,7 +310,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     }
 
            // Open zip file in append mode using VSI path
-    std::string zipVSIPath = "/vsizip/" + zipFilePath + "/hour_" + std::to_string(dt) + ".grib2";
+    std::string zipVSIPath = "/vsizip/" + zipFilePath + "/hour_" + boost::lexical_cast<std::string>(dt) + ".grib2";
     VSILFILE* zipFile = VSIFOpenL(zipVSIPath.c_str(), "wb");
     if (!zipFile)
     {
