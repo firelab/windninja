@@ -64,7 +64,7 @@ public:
   const char ** FindModelKey( const char *pszFilename );
   virtual std::vector<std::string> getVariableList();
   virtual std::string getForecastIdentifier();
-  virtual std::string getForecastReadable( const char bySwapWithSpace=' ' );
+  virtual std::string getForecastReadable();
   virtual double getGridResolution();
   virtual int getStartHour();
   virtual int getEndHour();
@@ -101,7 +101,7 @@ private:
   struct ThreadParams
   {
     boost::posix_time::ptime dt;
-    std::string tmp;
+    std::string outPath;
     std::vector<std::vector<const char*>> options;
     int i;
   };
