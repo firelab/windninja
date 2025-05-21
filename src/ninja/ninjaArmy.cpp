@@ -1115,7 +1115,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 #endif //EMISSIONS
             }
 
-            ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors);
+            ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors, ninjas[0]->input.googSpeedScaling);
             double *finalSpeedSplitVals = ninjaKmlFiles[0]->getSpeedSplitVals(numColors);
 
             for( int i = 0; i < ninjas.size(); i++ )

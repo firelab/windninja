@@ -334,7 +334,7 @@ void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
     }
 }
 
-void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals)
+void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling)
 {
     if(numSplitVals != numSplits)
     {
@@ -347,17 +347,94 @@ void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const 
         splitValue = NULL;
     }
 
-    double sum, average;
     splitValue = new double[numSplits];
-    for(int i = 0; i < numSplits; i++)
+
+    double minVal = 9999;
+    double maxVal = -9999;
+    for( int j = 0; j < nSets; j++ )
     {
-        sum = 0;
-        for( int j = 0; j < nSets; j++ )
+        if( speedSplitVals[j][0] < minVal )
         {
-            sum = sum + speedSplitVals[j][i];
+            minVal = speedSplitVals[j][0];
         }
-        average = sum/nSets;
-        splitValue[i] = average;
+        if( speedSplitVals[j][numSplits-1] > maxVal )
+        {
+            maxVal = speedSplitVals[j][numSplits-1];
+        }
+    }
+    splitValue[0] = minVal;
+    splitValue[numSplits-1] = maxVal;
+
+    double interval;
+    double sum;
+    switch(scaling)
+    {
+        case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
+            //for(int i = 1; i < numSplits-1; i++)
+            for(int i = 1; i < numSplits; i++)
+            {
+                sum = 0;
+                for( int j = 0; j < nSets; j++ )
+                {
+                    //interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / speedSplitVals[j][numSplits-1];
+                    interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / (speedSplitVals[j][numSplits-1] - speedSplitVals[j][0]);
+                    sum = sum + interval;
+                }
+                //interval = sum / nSets * maxVal;
+                interval = sum / nSets * (maxVal-minVal);
+                //splitValue[i] = i * interval + minVal;
+                splitValue[i] = interval + splitValue[i-1];
+            }
+            break;
+        case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+
+            //// original method, works great!!
+            //interval = maxVal/(numSplits-1);
+            interval = (maxVal-minVal)/(numSplits-1);
+            //for(int i = 1; i < numSplits-1; i++)
+            for(int i = 1; i < numSplits; i++)
+            {
+                //// all these come out equivalent for this method
+                //splitValue[i] = i * interval;
+                splitValue[i] = i * interval + minVal;
+                //splitValue[i] = interval + splitValue[i-1];
+            }
+
+            //// lever rule method, comes out the same as the original method, for intervals of equal size
+            //for(int i = 1; i < numSplits-1; i++)
+            for(int i = 1; i < numSplits; i++)
+            {
+                sum = 0;
+                for( int j = 0; j < nSets; j++ )
+                {
+                    //interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / speedSplitVals[j][numSplits-1];
+                    interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / (speedSplitVals[j][numSplits-1] - speedSplitVals[j][0]);
+                    sum = sum + interval;
+                }
+                //interval = sum / nSets * maxVal;
+                interval = sum / nSets * (maxVal-minVal);
+                ////splitValue[i] = i * interval;
+                //splitValue[i] = i * interval + minVal;
+                splitValue[i] = interval + splitValue[i-1];
+            }
+            break;
+        default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
+            //for(int i = 1; i < numSplits-1; i++)
+            for(int i = 1; i < numSplits; i++)
+            {
+                sum = 0;
+                for( int j = 0; j < nSets; j++ )
+                {
+                    //interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / speedSplitVals[j][numSplits-1];
+                    interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / (speedSplitVals[j][numSplits-1] - speedSplitVals[j][0]);
+                    sum = sum + interval;
+                }
+                //interval = sum / nSets * maxVal;
+                interval = sum / nSets * (maxVal-minVal);
+                //splitValue[i] = i * interval + minVal;
+                splitValue[i] = interval + splitValue[i-1];
+            }
+            break;
     }
 }
 
