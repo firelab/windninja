@@ -370,69 +370,35 @@ void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const 
     switch(scaling)
     {
         case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
-            //for(int i = 1; i < numSplits-1; i++)
-            for(int i = 1; i < numSplits; i++)
+            for(int i = 1; i < numSplits-1; i++)
             {
                 sum = 0;
                 for( int j = 0; j < nSets; j++ )
                 {
-                    //interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / speedSplitVals[j][numSplits-1];
-                    interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / (speedSplitVals[j][numSplits-1] - speedSplitVals[j][0]);
-                    sum = sum + interval;
+                    sum = sum + speedSplitVals[j][i];
                 }
-                //interval = sum / nSets * maxVal;
-                interval = sum / nSets * (maxVal-minVal);
-                //splitValue[i] = i * interval + minVal;
-                splitValue[i] = interval + splitValue[i-1];
+                splitValue[i] = sum / nSets;
             }
             break;
         case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-
-            //// original method, works great!!
             //interval = maxVal/(numSplits-1);
             interval = (maxVal-minVal)/(numSplits-1);
-            //for(int i = 1; i < numSplits-1; i++)
-            for(int i = 1; i < numSplits; i++)
+            for(int i = 1; i < numSplits-1; i++)
+            //for(int i = 1; i < numSplits; i++) // is equivalent, but using the max directly is probably better, in case slight rounding errors don't quite add up to the max value
             {
-                //// all these come out equivalent for this method
                 //splitValue[i] = i * interval;
                 splitValue[i] = i * interval + minVal;
-                //splitValue[i] = interval + splitValue[i-1];
-            }
-
-            //// lever rule method, comes out the same as the original method, for intervals of equal size
-            //for(int i = 1; i < numSplits-1; i++)
-            for(int i = 1; i < numSplits; i++)
-            {
-                sum = 0;
-                for( int j = 0; j < nSets; j++ )
-                {
-                    //interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / speedSplitVals[j][numSplits-1];
-                    interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / (speedSplitVals[j][numSplits-1] - speedSplitVals[j][0]);
-                    sum = sum + interval;
-                }
-                //interval = sum / nSets * maxVal;
-                interval = sum / nSets * (maxVal-minVal);
-                ////splitValue[i] = i * interval;
-                //splitValue[i] = i * interval + minVal;
-                splitValue[i] = interval + splitValue[i-1];
             }
             break;
         default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
-            //for(int i = 1; i < numSplits-1; i++)
-            for(int i = 1; i < numSplits; i++)
+            for(int i = 1; i < numSplits-1; i++)
             {
                 sum = 0;
                 for( int j = 0; j < nSets; j++ )
                 {
-                    //interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / speedSplitVals[j][numSplits-1];
-                    interval = (speedSplitVals[j][i] - speedSplitVals[j][i-1]) / (speedSplitVals[j][numSplits-1] - speedSplitVals[j][0]);
-                    sum = sum + interval;
+                    sum = sum + speedSplitVals[j][i];
                 }
-                //interval = sum / nSets * maxVal;
-                interval = sum / nSets * (maxVal-minVal);
-                //splitValue[i] = i * interval + minVal;
-                splitValue[i] = interval + splitValue[i-1];
+                splitValue[i] = sum / nSets;
             }
             break;
     }
