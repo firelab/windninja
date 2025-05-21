@@ -1043,14 +1043,14 @@ public:
     */
     int setGoogColor(const int nIndex, std::string colorScheme, bool scaling);
     /**
-    * \brief Set the Google KML googUseConsistentColorSchemeFlag value for a ninja
+    * \brief Set the Google KML googUseConsistentColorScaleFlag value for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag Enabled if true, disabled if false
     * \param numRuns the number of ninjas/simulations to be run
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setGoogConsistentColorScheme(const int nIndex, bool flag, int numRuns);
+    int setGoogConsistentColorScale(const int nIndex, bool flag, int numRuns);
     /**
      * @brief setGoogResolution
      * @param nIndex

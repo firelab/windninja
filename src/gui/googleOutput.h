@@ -54,7 +54,7 @@ class googleOutput : public QWidget
   QCheckBox *applyVectorScaling;
   QGroupBox *legendGroupBox;
   QRadioButton *uniformRangeRadioButton,* equalCountRadioButton;
-  QCheckBox *applyConsistentColorScheme;
+  QCheckBox *applyConsistentColorScale;
   QCheckBox *contourCheckBox;
   QGroupBox *googleResGroupBox;
   QDoubleSpinBox *googleResSpinBox;

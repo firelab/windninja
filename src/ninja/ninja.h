@@ -327,7 +327,7 @@ public:
     void set_googOutFlag(bool flag);
 
     void set_googColor(std::string scheme,bool scaling);
-    void set_googConsistentColorScheme(bool flag, int numRuns);
+    void set_googConsistentColorScale(bool flag, int numRuns);
 
     void set_wxModelGoogOutFlag(bool flag);
     void set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling);	//sets the desired method of speed scaling in the Google Earth legend (equal_color=>equal numbers of arrows for each color,  equal_interval=>equal speed intervals over the speed range)

@@ -87,15 +87,15 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   //hide contour check box for now.
   contourCheckBox->setDisabled(true);
 
-  applyConsistentColorScheme = new QCheckBox(tr("Use Consistent Color Scale"));
-  applyConsistentColorScheme->setToolTip("Use a consistent color scale across simulations.");
-  applyConsistentColorScheme->setCheckable(true);
-  applyConsistentColorScheme->setChecked(false);
+  applyConsistentColorScale = new QCheckBox(tr("Use Consistent Color Scale"));
+  applyConsistentColorScale->setToolTip("Use a consistent color scale across simulations.");
+  applyConsistentColorScale->setCheckable(true);
+  applyConsistentColorScale->setChecked(false);
 
   optionLayout = new QVBoxLayout;
   optionLayout->addWidget(vectorGroupBox);
   optionLayout->addWidget(legendGroupBox);
-  optionLayout->addWidget(applyConsistentColorScheme);
+  optionLayout->addWidget(applyConsistentColorScale);
   //optionLayout->addWidget(contourCheckBox);
   optionLayout->addStretch();
   

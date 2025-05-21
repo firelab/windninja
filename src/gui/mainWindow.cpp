@@ -1851,7 +1851,7 @@ int mainWindow::solve()
 
     std::string googleScheme;
     bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
-    bool googConsistentColorScheme = tree->google->applyConsistentColorScheme->isChecked();
+    bool googConsistentColorScale = tree->google->applyConsistentColorScale->isChecked();
     if(tree->google->colorblindBox->isChecked())
     {
         std::string googCheckScheme;
@@ -2487,7 +2487,7 @@ int mainWindow::solve()
         army->setGoogResolution  (i,googleRes,googleUnits);
         army->setGoogSpeedScaling(i,googleScale);
         army->setGoogColor       (i,googleScheme,googVectorScaling); //FIX ME
-        army->setGoogConsistentColorScheme(i,googConsistentColorScheme,nRuns);
+        army->setGoogConsistentColorScale(i,googConsistentColorScale,nRuns);
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
         army->setPDFOutFlag      (i,writePdf);

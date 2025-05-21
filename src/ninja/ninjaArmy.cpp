@@ -784,8 +784,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                //need to keep the ninjas for now, if doing a consistent color scheme set of outputs
-                if( i != 0 && ninjas[0]->input.googUseConsistentColorScheme == false )
+                //need to keep the ninjas for now, if doing a consistent color scale set of outputs
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -906,8 +906,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                //need to keep the ninjas for now, if doing a consistent color scheme set of outputs
-                if( i != 0 && ninjas[0]->input.googUseConsistentColorScheme == false )
+                //need to keep the ninjas for now, if doing a consistent color scale set of outputs
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -1014,9 +1014,9 @@ bool ninjaArmy::startRuns(int numProcessors)
 
     try{
         //write consistent color scale outputs
-        if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScheme == true)
+        if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScale == true)
         {
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent/shared color scale output files...");
+            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent color scale output files...");
 
             int numColors;
             KmlVector **ninjaKmlFiles = new KmlVector*[ninjas.size()];
@@ -2129,9 +2129,9 @@ int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 {
     IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
 }
-int ninjaArmy::setGoogConsistentColorScheme(const int nIndex, bool flag, int numRuns)
+int ninjaArmy::setGoogConsistentColorScale(const int nIndex, bool flag, int numRuns)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googConsistentColorScheme(flag, numRuns));
+    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googConsistentColorScale(flag, numRuns));
 }
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
