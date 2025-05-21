@@ -37,7 +37,8 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
 
   vectorGroupBox = new QGroupBox(tr("Vectors"));
   //vectorGroupBox->setCheckable(true);
-  
+  //vectorGroupBox->setChecked(true);
+
   vectorWidthLabel = new QLabel(tr("Line Width"));
 
   vectorWidthDoubleSpinBox = new QDoubleSpinBox;
@@ -60,20 +61,16 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
 
   vectorGroupBox->setLayout(vectorLayout);
 
-  //vectorGroupBox->setChecked(true);
-
   legendGroupBox = new QGroupBox(tr("Legend"));
-  legendGroupBox->setCheckable(true);
-  legendGroupBox->setChecked(true);
-   
+  //legendGroupBox->setCheckable(true);
+  //legendGroupBox->setChecked(true);
+
   uniformRangeRadioButton = new QRadioButton;
   uniformRangeRadioButton->setText(tr("Uniform Range"));
   uniformRangeRadioButton->setChecked(true);
   equalCountRadioButton = new QRadioButton;
   equalCountRadioButton->setText(tr("Equal Count"));
 
-  legendGroupBox->setChecked(true);
- 
   legendOptionLayout = new QVBoxLayout;
   legendOptionLayout->addWidget(uniformRangeRadioButton);
   legendOptionLayout->addWidget(equalCountRadioButton);
