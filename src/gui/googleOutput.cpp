@@ -55,7 +55,7 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   applyConsistentColorScheme = new QCheckBox("Use Consistent Color Scheme");
   applyConsistentColorScheme->setToolTip("Enable cross data/shared across runs color scheme.");
   applyConsistentColorScheme->setCheckable(true);
-  applyConsistentColorScheme->setChecked(true);
+  applyConsistentColorScheme->setChecked(false);
 
   vectorLayout = new QHBoxLayout;
   vectorLayout->addWidget(vectorWidthLabel);
