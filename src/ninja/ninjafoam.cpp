@@ -222,6 +222,15 @@ bool NinjaFoam::simulate_wind()
         input.Com->ninjaCom(ninjaComClass::ninjaNone, out.str().c_str());
     }
 
+#ifdef C_API
+    keepOutputGridsInMemory(true);
+#endif
+
+    if(input.googUseConsistentColorScale)
+    {
+        keepOutputGridsInMemory(true);
+    }
+
     ComputeDirection(); //convert wind direction to unit vector notation
     SetInlets();
     SetBcs();
@@ -3594,7 +3603,7 @@ void NinjaFoam::WriteOutputFiles()
 
 	//write kmz file
 	try{
-		if(input.googOutFlag==true)
+		if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
@@ -3614,14 +3623,12 @@ void NinjaFoam::WriteOutputFiles()
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
-                            //ninjaKmlFiles.setTurbulenceFlag("true");
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
                             colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
-                            ninjaKmlFiles.setColMaxFlag("true");
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                             
                             //// for debugging
@@ -3640,6 +3647,11 @@ void NinjaFoam::WriteOutputFiles()
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
 			ninjaKmlFiles.setTime(input.ninjaTime);
+			if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+			{
+			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
+			}
 
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{

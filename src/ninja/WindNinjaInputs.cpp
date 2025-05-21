@@ -65,6 +65,7 @@ WindNinjaInputs::WindNinjaInputs()
 
     googColor = "default";
     googVectorScale = false;
+    googUseConsistentColorScale = false;
 
     writeAtmFile = false;
     googSpeedScaling = KmlVector::equal_interval;
@@ -299,6 +300,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       googLineWidth = rhs.googLineWidth;
       googColor = rhs.googColor;
       googVectorScale = rhs.googVectorScale;
+      googUseConsistentColorScale = rhs.googUseConsistentColorScale;
       wxModelGoogOutFlag = rhs.wxModelGoogOutFlag;
       wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
       wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;

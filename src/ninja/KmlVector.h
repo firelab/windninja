@@ -72,148 +72,147 @@ class KmlVector
 {
 public:
 
-	KmlVector();
+    KmlVector();
 
-	/*KmlVector(std::string kmzFileName);
+    /*KmlVector(std::string kmzFileName);
 
-	KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string demFileName, std::string kmzFileName, double res);
+    KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string demFileName, std::string kmzFileName, double res);
 
-	KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string kmzFileName);
-	KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string kmzFileName, double res);
-	KmlVector(std::string sFileName, std::string dFileName, std::string kmzFileName);
-	KmlVector(std::string sFileName, std::string dFileName, std::string kmzFileName, double res);*/
-	~KmlVector();
+    KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string kmzFileName);
+    KmlVector(AsciiGrid<double> *s, AsciiGrid<double> *d, std::string kmzFileName, double res);
+    KmlVector(std::string sFileName, std::string dFileName, std::string kmzFileName);
+    KmlVector(std::string sFileName, std::string dFileName, std::string kmzFileName, double res);*/
+    ~KmlVector();
 
-	AsciiGrid<double> spd, dir;
-	AsciiGrid<double> turbulence;
-	AsciiGrid<double> colMax;
-	#ifdef FRICTION_VELOCITY
-	AsciiGrid<double> ustar;
-	#endif
-	#ifdef EMISSIONS
-	AsciiGrid<double> dust;
-	#endif
+    AsciiGrid<double> spd, dir;
+    AsciiGrid<double> turbulence;
+    AsciiGrid<double> colMax;
+    #ifdef FRICTION_VELOCITY
+    AsciiGrid<double> ustar;
+    #endif
+    #ifdef EMISSIONS
+    AsciiGrid<double> dust;
+    #endif
 
-	Style **colors;
+    Style **colors;
 
-	enum egoogSpeedScaling{
-		equal_color,
-		equal_interval
-	};
+    enum egoogSpeedScaling{
+        equal_color,
+        equal_interval
+    };
 
-
-	inline void setLineWidth(double width){lineWidth = width;}
+    inline void setLineWidth(double width){lineWidth = width;}
     bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
+    void calcSpeedSplitVals(egoogSpeedScaling scaling);
+    void calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling);
+    double* getSpeedSplitVals(int &size);
+    void setSpeedSplitVals(const double *speedSplitVals, const int size);
 
-	inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
+    inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
 
-    bool writeKml(string cScheme,bool vector_scaling);
-    bool writeKml(egoogSpeedScaling scaling,std::string cScheme,bool vector_scaling);
-	bool makeKmz();
-	bool removeKmlFile();
+    bool writeKml(egoogSpeedScaling scaling, std::string cScheme, bool vector_scaling);
+    bool makeKmz();
+    bool removeKmlFile();
 
     void orangeLegend();
 
-	bool writeHeader(VSILFILE *fileOut);
-	bool writeRegion(VSILFILE *fileOut);
-	bool writeStyles(VSILFILE *fileOut);
-	bool writeHtmlLegend(VSILFILE *fileOut);
+    bool writeHeader(VSILFILE *fileOut);
+    bool writeRegion(VSILFILE *fileOut);
+    bool writeStyles(VSILFILE *fileOut);
+    bool writeHtmlLegend(VSILFILE *fileOut);
     bool writeScreenOverlayLegend(VSILFILE *fileOut,std::string cScheme);
-	bool writeScreenOverlayDateTimeLegend(VSILFILE *fileOut);
-	bool writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut);
+    bool writeScreenOverlayDateTimeLegend(VSILFILE *fileOut);
+    bool writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut);
 
-	bool writeVectors(VSILFILE *fileOut);
-	bool writeTurbulence(VSILFILE *fileOut);
-	bool writeColMax(VSILFILE *fileOut);
-	#ifdef FRICTION_VELOCITY
-	bool writeUstar(FILE *fileOut);
-	#endif
-	#ifdef EMISSIONS
-	bool writeDust(FILE *fileOut);
-	#endif
+    bool writeVectors(VSILFILE *fileOut);
+    bool writeTurbulence(VSILFILE *fileOut);
+    bool writeColMax(VSILFILE *fileOut);
+    #ifdef FRICTION_VELOCITY
+    bool writeUstar(FILE *fileOut);
+    #endif
+    #ifdef EMISSIONS
+    bool writeDust(FILE *fileOut);
+    #endif
 
-	void setDemFile(std::string fileName){demFile = fileName;}
-	void setKmzFile(std::string fileName){kmzFile = fileName;}
-	void setKmlFile(std::string fileName){kmlFile = fileName;}
-	void setLegendFile(std::string fileName){legendFile = fileName;}
-	void setDateTimeLegendFile(std::string fileName, const boost::local_time::local_date_time& time_){timeDateLegendFile = fileName; kmlTime = time_;}
-	void setInputSpeedFile(std::string fileName){inputSpeedFile = fileName;}
-	void setInputDirFile(std::string fileName){inputDirFile = fileName;}
+    void setDemFile(std::string fileName){demFile = fileName;}
+    void setKmzFile(std::string fileName){kmzFile = fileName;}
+    void setKmlFile(std::string fileName){kmlFile = fileName;}
+    void setLegendFile(std::string fileName){legendFile = fileName;}
+    void setDateTimeLegendFile(std::string fileName, const boost::local_time::local_date_time& time_){timeDateLegendFile = fileName; kmlTime = time_;}
+    void setInputSpeedFile(std::string fileName){inputSpeedFile = fileName;}
+    void setInputDirFile(std::string fileName){inputDirFile = fileName;}
 
-	void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
-	void setDirGrid(AsciiGrid<double> &d);
-	void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
-	void setTurbulenceFlag(bool inputTurbulenceFlag){turbulenceFlag = inputTurbulenceFlag;}
-	double colMax_colHeightAGL;
-	lengthUnits::eLengthUnits colMax_colHeightAGL_units;
-	void setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units);
-	void setColMaxFlag(bool inputColMaxFlag){colMaxFlag = inputColMaxFlag;}
-	#ifdef FRICTION_VELOCITY
-	void setUstarGrid(AsciiGrid<double> &ust);
-	void setUstarFlag(bool inputUstarFlag){ustarFlag = inputUstarFlag;}
-	#endif
-	#ifdef EMISSIONS
-	void setDustGrid(AsciiGrid<double> &dst);
-	void setDustFlag(bool inputDustFlag){dustFlag = inputDustFlag;}
-	#endif
-	void setTime(const boost::local_time::local_date_time& timeIn){kmlTime = timeIn;}
-	void setWxModel(const std::string& modelName, const boost::local_time::local_date_time& startTime);
+    void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
+    void setDirGrid(AsciiGrid<double> &d);
+    void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
+    double colMax_colHeightAGL;
+    lengthUnits::eLengthUnits colMax_colHeightAGL_units;
+    void setColMaxGrid(AsciiGrid<double> &columnMax, velocityUnits::eVelocityUnits units,  const double colHeightAGL, const lengthUnits::eLengthUnits colHeightAGL_units);
+    #ifdef FRICTION_VELOCITY
+    void setUstarGrid(AsciiGrid<double> &ust);
+    #endif
+    #ifdef EMISSIONS
+    void setDustGrid(AsciiGrid<double> &dst);
+    #endif
+    void setTime(const boost::local_time::local_date_time& timeIn){kmlTime = timeIn;}
+    void setWxModel(const std::string& modelName, const boost::local_time::local_date_time& startTime);
 
-	std::string getShortName(std::string file);
+    std::string getShortName(std::string file);
 
-	//bool readPrjFile();
-	bool setProj4(std::string prj);
+    //bool readPrjFile();
+    bool setProj4(std::string prj);
 
-	//OGR STUFF
-	bool setOGR();
-	OGRSpatialReference oSourceSRS, oTargetSRS;
-	OGRCoordinateTransformation *coordTransform;
+    //OGR STUFF
+    bool setOGR();
+    OGRSpatialReference oSourceSRS, oTargetSRS;
+    OGRCoordinateTransformation *coordTransform;
 
 
 private:
-	double resolution;
-	std::string demFile;
-	std::string inputSpeedFile;
-	velocityUnits::eVelocityUnits speedUnits;
-	std::string inputDirFile;
-	std::string kmlFile;
-	std::string kmzFile;
-	std::string legendFile;
-	std::string timeDateLegendFile;
-	std::string wxModelName;
-	bool turbulenceFlag;
-	std::string turbulence_tiff;
-	std::string turbulence_png;
+    double resolution;
+    std::string demFile;
+    std::string inputSpeedFile;
+    velocityUnits::eVelocityUnits speedUnits;
+    std::string inputDirFile;
+    std::string kmlFile;
+    std::string kmzFile;
+    std::string legendFile;
+    std::string timeDateLegendFile;
+    std::string wxModelName;
+    bool turbulenceFlag;
+    std::string turbulence_tiff;
+    std::string turbulence_png;
     std::string turbulence_legend;
     bool colMaxFlag;
-	std::string colMax_tiff;
-	std::string colMax_png;
+    std::string colMax_tiff;
+    std::string colMax_png;
     std::string colMax_legend;
-	#ifdef FRICTION_VELOCITY
-	bool ustarFlag;
-	std::string ustar_tiff;
-	std::string ustar_png;
+    #ifdef FRICTION_VELOCITY
+    bool ustarFlag;
+    std::string ustar_tiff;
+    std::string ustar_png;
     std::string ustar_legend;
-	#endif
-	#ifdef EMISSIONS
-	bool dustFlag;
+    #endif
+    #ifdef EMISSIONS
+    bool dustFlag;
     std::string dust_tiff;
     std::string dust_png;
     std::string dust_legend;
-	#endif
+    #endif
 
     boost::local_time::local_date_time kmlTime;
     boost::local_time::local_date_time wxModelStartTime;
 
-	double geTheta;
+    double geTheta;
 
-	static const int numColors = 5;
+    static const int numColors = 5;
+    static const int numSplits = numColors+1;
 
-	double *splitValue;
+    double *splitValue;
 
-	double northExtent, eastExtent, southExtent, westExtent;
-	double lineWidth;
+    double northExtent, eastExtent, southExtent, westExtent;
+    double lineWidth;
 
 };
 
-#endif	//KMLVECTOR_H
+#endif  //KMLVECTOR_H

@@ -1604,9 +1604,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             wxModelKmlFiles.setKmlFile(input.wxModelKmlFile);
             wxModelKmlFiles.setKmzFile(input.wxModelKmzFile);
             wxModelKmlFiles.setDemFile(input.dem.fileName);
-            #ifdef EMISSIONS
-            wxModelKmlFiles.setDustFlag(input.dustFlag);
-            #endif
             wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);

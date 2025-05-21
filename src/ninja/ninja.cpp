@@ -275,8 +275,13 @@ bool ninja::simulate_wind()
 	}
 
 #ifdef C_API
-        keepOutputGridsInMemory(true);
+    keepOutputGridsInMemory(true);
 #endif
+
+    if(input.googUseConsistentColorScale)
+    {
+        keepOutputGridsInMemory(true);
+    }
 
 	#ifdef _OPENMP
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -3051,7 +3056,7 @@ void ninja::writeOutputFiles()
 	#pragma omp section
 	{
 	try{
-		if(input.googOutFlag==true)
+		if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
@@ -3077,14 +3082,12 @@ void ninja::writeOutputFiles()
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
-                            //ninjaKmlFiles.setTurbulenceFlag("true");
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
                             colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
-                            ninjaKmlFiles.setColMaxFlag("true");
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
@@ -3097,7 +3100,6 @@ void ninja::writeOutputFiles()
 
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                ninjaKmlFiles.setUstarFlag(input.frictionVelocityFlag);
                 ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
 
                 if(ustarTempGrid)
@@ -3116,7 +3118,6 @@ void ninja::writeOutputFiles()
 
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                ninjaKmlFiles.setDustFlag(input.dustFlag);
                 ninjaKmlFiles.setDustGrid(*dustTempGrid);
 
                 if(dustTempGrid)
@@ -3144,6 +3145,7 @@ void ninja::writeOutputFiles()
 			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
 			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
+
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
 				if(ninjaKmlFiles.makeKmz())
@@ -4720,7 +4722,13 @@ void ninja::set_googColor(std::string scheme, bool scaling)
     input.googVectorScale = scaling;
 }
 
-
+void ninja::set_googConsistentColorScale(bool flag, int numRuns)
+{
+    input.googUseConsistentColorScale = flag;
+    // don't actually want to do this if there is only a single run
+    if(numRuns <= 1)
+        input.googUseConsistentColorScale = false;
+}
 
 void ninja::set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling)
 {
