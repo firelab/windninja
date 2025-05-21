@@ -51,9 +51,11 @@ class googleOutput : public QWidget
   QGroupBox *vectorGroupBox;
   QLabel *vectorWidthLabel;
   QDoubleSpinBox *vectorWidthDoubleSpinBox;
-  QCheckBox *contourCheckBox;
+  QCheckBox *applyVectorScaling;
   QGroupBox *legendGroupBox;
   QRadioButton *uniformRangeRadioButton,* equalCountRadioButton;
+  QCheckBox *applyConsistentColorScheme;
+  QCheckBox *contourCheckBox;
   QGroupBox *googleResGroupBox;
   QDoubleSpinBox *googleResSpinBox;
   QRadioButton *googleMetersRadioButton, *googleFeetRadioButton;
@@ -62,14 +64,12 @@ class googleOutput : public QWidget
   //alternative color Options
   QGroupBox *colorblindBox;
   QComboBox *inputColorblindComboBox;
-  QCheckBox *applyVectorScaling;
-  QCheckBox *applyConsistentColorScheme;
 
   QGridLayout *colorLayout;
 
   QHBoxLayout *vectorLayout;
-  QVBoxLayout *optionLayout;
   QVBoxLayout *legendOptionLayout;
+  QVBoxLayout *optionLayout;
   QGridLayout *resLayout;
   QVBoxLayout *pageLayout;
   QVBoxLayout *mainLayout;

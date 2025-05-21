@@ -52,19 +52,15 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   applyVectorScaling->setCheckable(true);
   applyVectorScaling->setChecked(false);
 
-  applyConsistentColorScheme = new QCheckBox("Use Consistent Color Scheme");
-  applyConsistentColorScheme->setToolTip("Enable cross data/shared across runs color scheme.");
-  applyConsistentColorScheme->setCheckable(true);
-  applyConsistentColorScheme->setChecked(false);
-
   vectorLayout = new QHBoxLayout;
   vectorLayout->addWidget(vectorWidthLabel);
   vectorLayout->addWidget(vectorWidthDoubleSpinBox);
   vectorLayout->addWidget(applyVectorScaling);
-  vectorLayout->addWidget(applyConsistentColorScheme);
   vectorLayout->addStretch();
 
   vectorGroupBox->setLayout(vectorLayout);
+
+  //vectorGroupBox->setChecked(true);
 
   legendGroupBox = new QGroupBox(tr("Legend"));
   legendGroupBox->setCheckable(true);
@@ -75,10 +71,6 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   uniformRangeRadioButton->setChecked(true);
   equalCountRadioButton = new QRadioButton;
   equalCountRadioButton->setText(tr("Equal Count"));
-   
-  contourCheckBox = new QCheckBox(tr("Contours (beta)"));
-  
-  //vectorGroupBox->setChecked(true);
 
   legendGroupBox->setChecked(true);
  
@@ -88,14 +80,22 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   // legendOptionLayout->addStretch();
   legendGroupBox->setLayout(legendOptionLayout);
 
+  contourCheckBox = new QCheckBox(tr("Contours (beta)"));
+
   contourCheckBox->setChecked(false);
 
   //hide contour check box for now.
   contourCheckBox->setDisabled(true);
-  
+
+  applyConsistentColorScheme = new QCheckBox(tr("Use Consistent Color Scheme"));
+  applyConsistentColorScheme->setToolTip("Enable cross data/shared across runs color scheme.");
+  applyConsistentColorScheme->setCheckable(true);
+  applyConsistentColorScheme->setChecked(false);
+
   optionLayout = new QVBoxLayout;
   optionLayout->addWidget(vectorGroupBox);
   optionLayout->addWidget(legendGroupBox);
+  optionLayout->addWidget(applyConsistentColorScheme);
   //optionLayout->addWidget(contourCheckBox);
   optionLayout->addStretch();
   
