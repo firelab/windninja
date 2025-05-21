@@ -114,16 +114,16 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     minDateTime = minUtcDateTime.toLocalTime();
     maxDateTime = QDateTime::currentDateTimeUtc();
 
-    startDateLabel = new QLabel(tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toString("yyyy/MM/dd HH:mm")), this);
+    startDateLabel = new QLabel(tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toString("MM/dd/yyyy HH:00")), this);
     endDateLabel = new QLabel(tr("End Date:"), this);
 
     startTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
-    startTime->setDisplayFormat("yyyy/MM/dd HH:mm");
+    startTime->setDisplayFormat("MM/dd/yyyy HH:00");
     startTime->setCalendarPopup(true);
-    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("yyyy/MM/dd HH:mm")));
+    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("MM/dd/yyyy HH:00")));
 
     stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
-    stopTime->setDisplayFormat("yyyy/MM/dd HH:mm");
+    stopTime->setDisplayFormat("MM/dd/yyyy HH:00");
     stopTime->setCalendarPopup(true);
 
     startDateLabel->setVisible(false);
