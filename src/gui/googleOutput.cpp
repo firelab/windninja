@@ -87,8 +87,8 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   //hide contour check box for now.
   contourCheckBox->setDisabled(true);
 
-  applyConsistentColorScheme = new QCheckBox(tr("Use Consistent Color Scheme"));
-  applyConsistentColorScheme->setToolTip("Enable cross data/shared across runs color scheme.");
+  applyConsistentColorScheme = new QCheckBox(tr("Use Consistent Color Scale"));
+  applyConsistentColorScheme->setToolTip("Use a consistent color scale across simulations.");
   applyConsistentColorScheme->setCheckable(true);
   applyConsistentColorScheme->setChecked(false);
 
