@@ -320,12 +320,12 @@ void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
             spd.divide_gridData(splitValue, numSplits);
             break;
         case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-            //interval = spd.get_maxValue()/(numSplits-1);
-            interval = (spd.get_maxValue()-spd.get_minValue())/(numSplits-1);
+            interval = spd.get_maxValue()/(numSplits-1);
+            //interval = (spd.get_maxValue()-spd.get_minValue())/(numSplits-1);
             for(int i = 0; i < numSplits; i++)
             {
-                //splitValue[i] = i * interval;
-                splitValue[i] = i * interval + spd.get_minValue();
+                splitValue[i] = i * interval;
+                //splitValue[i] = i * interval + spd.get_minValue();
             }
             break;
         default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
@@ -362,7 +362,8 @@ void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const 
             maxVal = speedSplitVals[j][numSplits-1];
         }
     }
-    splitValue[0] = minVal;
+    splitValue[0] = 0.0;
+    //splitValue[0] = minVal;
     splitValue[numSplits-1] = maxVal;
 
     double interval;
@@ -381,13 +382,12 @@ void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const 
             }
             break;
         case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-            //interval = maxVal/(numSplits-1);
-            interval = (maxVal-minVal)/(numSplits-1);
+            interval = maxVal/(numSplits-1);
+            //interval = (maxVal-minVal)/(numSplits-1);
             for(int i = 1; i < numSplits-1; i++)
-            //for(int i = 1; i < numSplits; i++) // is equivalent, but using the max directly is probably better, in case slight rounding errors don't quite add up to the max value
             {
-                //splitValue[i] = i * interval;
-                splitValue[i] = i * interval + minVal;
+                splitValue[i] = i * interval;
+                //splitValue[i] = i * interval + minVal;
             }
             break;
         default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
@@ -648,8 +648,8 @@ bool KmlVector::writeHtmlLegend(VSILFILE *fileOut)
     VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 4] - 0.01);
     //blue range
     VSIFPrintfL(fileOut, "\n<big><big><big><big><font color=\"blue\">&rarr </font></big></big></big></big>");
-    //VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", 0.0);
-    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 6]);
+    VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", 0.0);
+    //VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\">%.2lf</font></big></big>", splitValue[numSplits - 6]);
     VSIFPrintfL(fileOut, "\n<big><big><font color=\"white\"> - %.2lf</font></big></big><br>", splitValue[numSplits - 5] - 0.01);
 
     VSIFPrintfL(fileOut, "\n]]></description>");
@@ -668,18 +668,15 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     std::string legendStrings[numColors];
     ostringstream os;
 
-    double maxxx = spd.get_maxValue();
-
     for(int i = 0; i < numColors; i++)
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
             //os << splitValue[numSplits-2] << " + ";
-            //os << splitValue[numSplits-2] << " - " << maxxx;
             os << splitValue[numSplits-2] << " - " << splitValue[numSplits-1];
         else if(i == numColors-1)
-            //os << "0.00 - " << splitValue[1] - 0.01;
-            os << splitValue[0] << " - " << splitValue[1] - 0.01;
+            os << "0.00 - " << splitValue[1] - 0.01;
+            //os << splitValue[0] << " - " << splitValue[1] - 0.01;
         else
             os << splitValue[numSplits - i - 2] << " - " << splitValue[numSplits - i - 1] - 0.01;
 
