@@ -353,7 +353,7 @@ std::cout << "weather model raw data download time was " << endTime-startTime <<
   return zipFilePath;
 }
 
-int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
+static int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
 {
     std::string dateStr = boost::gregorian::to_iso_string(dt.date());
     std::stringstream hourSS;
@@ -399,50 +399,8 @@ void GCPWxModel::ThreadFunc(void* pData)
 {
   ThreadParams* params = static_cast<ThreadParams*>(pData);
 
-  boost::posix_time::ptime dt = params->dt;
-  std::string outPath = params->outPath;
-  int i = params->i;
-  std::vector<std::vector<std::string>> options = params->options;
-
-  std::string dateStr = boost::gregorian::to_iso_string(dt.date());
-  std::stringstream hourSS;
-  hourSS << std::setw(2) << std::setfill('0') << dt.time_of_day().hours();
-  std::string hourStr = hourSS.str();
-
-  std::string srcFile = "/vsigs/high-resolution-rapid-refresh/hrrr." + dateStr +
-                        "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
-  std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
-
-  std::vector<const char*> cstrArgs;
-  for (size_t kk = 0; kk < options[i].size(); ++kk)
-  {
-    cstrArgs.push_back(const_cast<const char*>(options[i][kk].c_str()));
-  }
-  cstrArgs.push_back(nullptr); // Null-terminated for GDAL
-
-  GDALTranslateOptions *transOptions = GDALTranslateOptionsNew((char**)cstrArgs.data(), NULL);
-
-  GDALDatasetH hSrcDS = GDALOpen(srcFile.c_str(), GA_ReadOnly);
-  if (!hSrcDS)
-  {
-    CPLDebug("GCP", "Failed to open input dataset for %s", srcFile.c_str());
-    GDALTranslateOptionsFree(transOptions);
-    delete params;
-    return;
-  }
-
-  GDALDatasetH hOutDS = GDALTranslate(outFile.c_str(), hSrcDS, transOptions, NULL);
-  GDALClose(hSrcDS);
-  GDALTranslateOptionsFree(transOptions);
-
-  if (!hOutDS)
-  {
-    CPLDebug("GCP", "GDALTranslate Failed for %s", outFile.c_str());
-  }
-  else
-  {
-    GDALClose(hOutDS);
-  }
+  int rc = 0;
+  rc = GCPWxModel::fetchData( params->dt, params->outPath, params->options, params->i );
 
   delete params;
 }
