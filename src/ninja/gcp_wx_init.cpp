@@ -241,7 +241,22 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     VSIUnlink(localIdxPath.c_str());
   }
 
-  std::vector<std::vector<const char*>> options = getOptions(fileBands, buffer);
+  std::vector<std::vector<std::string>> options = getOptions(fileBands, buffer);
+
+#ifdef _OPENMP
+double startTime = omp_get_wtime();
+#endif
+
+/*
+  // try single threaded download
+  int rc = 0;
+  for (size_t i = 0; i < validTimes.size(); i++)
+  {
+    rc = fetchData( validTimes[i], tmp, options, i );
+  }
+*/
+
+  // try multi threaded download
   const int MAX_CONCURRENT = 4;
   std::vector<void*> threadHandles;
 
@@ -277,6 +292,12 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
   }
 
   threadHandles.clear();
+
+
+#ifdef _OPENMP
+double endTime = omp_get_wtime();
+std::cout << "weather model raw data download time was " << endTime-startTime << " seconds." << std::endl;
+#endif
 
   std::string zipFolder = outFolder;
   std::string zipFilePath = zipFolder + startDateStr + "T" + starthours + "00" + ".zip";
@@ -332,13 +353,56 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
   return zipFilePath;
 }
 
+int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
+{
+    std::string dateStr = boost::gregorian::to_iso_string(dt.date());
+    std::stringstream hourSS;
+    hourSS << std::setw(2) << std::setfill('0') << dt.time_of_day().hours();
+    std::string hourStr = hourSS.str();
+
+    std::string srcFile = "/vsigs/high-resolution-rapid-refresh/hrrr." + dateStr +
+                        "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
+    std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
+
+    std::vector<const char*> cstrArgs;
+    for (size_t kk = 0; kk < options[i].size(); ++kk)
+    {
+      cstrArgs.push_back(const_cast<const char*>(options[i][kk].c_str()));
+    }
+    cstrArgs.push_back(nullptr); // Null-terminated for GDAL
+
+    GDALTranslateOptions *transOptions = GDALTranslateOptionsNew((char**)cstrArgs.data(), NULL);
+
+    GDALDatasetH hSrcDS = GDALOpen(srcFile.c_str(), GA_ReadOnly);
+    if (!hSrcDS)
+    {
+        CPLDebug("GCP", "Failed to open input dataset for %s", srcFile.c_str());
+        GDALTranslateOptionsFree(transOptions);
+        return;
+    }
+
+    GDALDatasetH hOutDS = GDALTranslate(outFile.c_str(), hSrcDS, transOptions, NULL);
+    GDALClose(hSrcDS);
+    GDALTranslateOptionsFree(transOptions);
+
+    if (!hOutDS)
+    {
+        CPLDebug("GCP", "GDALTranslate Failed for %s", outFile.c_str());
+    }
+    else
+    {
+        GDALClose(hOutDS);
+    }
+}
+
 void GCPWxModel::ThreadFunc(void* pData)
 {
   ThreadParams* params = static_cast<ThreadParams*>(pData);
+
   boost::posix_time::ptime dt = params->dt;
   std::string outPath = params->outPath;
   int i = params->i;
-  auto options = params->options;
+  std::vector<std::vector<std::string>> options = params->options;
 
   std::string dateStr = boost::gregorian::to_iso_string(dt.date());
   std::stringstream hourSS;
@@ -349,7 +413,14 @@ void GCPWxModel::ThreadFunc(void* pData)
                         "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
   std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
 
-  GDALTranslateOptions *transOptions = GDALTranslateOptionsNew((char**)options[i].data(), NULL);
+  std::vector<const char*> cstrArgs;
+  for (size_t kk = 0; kk < options[i].size(); ++kk)
+  {
+    cstrArgs.push_back(const_cast<const char*>(options[i][kk].c_str()));
+  }
+  cstrArgs.push_back(nullptr); // Null-terminated for GDAL
+
+  GDALTranslateOptions *transOptions = GDALTranslateOptionsNew((char**)cstrArgs.data(), NULL);
 
   GDALDatasetH hSrcDS = GDALOpen(srcFile.c_str(), GA_ReadOnly);
   if (!hSrcDS)
@@ -434,9 +505,9 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
 }
 
 
-std::vector<std::vector<const char*>> GCPWxModel::getOptions(const std::vector<std::string>& bands, const std::string buffer[4])
+std::vector<std::vector<std::string>> GCPWxModel::getOptions(const std::vector<std::string>& bands, const std::string buffer[4])
 {
-  std::vector<std::vector<const char*>> allOptions;
+  std::vector<std::vector<std::string>> allOptions;
 
   for (size_t i = 0; i < bands.size(); ++i)
   {
@@ -463,15 +534,7 @@ std::vector<std::vector<const char*>> GCPWxModel::getOptions(const std::vector<s
     strOptions.push_back("-of");
     strOptions.push_back("GRIB");
 
-           // Convert std::string to char* safely
-    std::vector<const char*> cstrArgs;
-    for (size_t j = 0; j < strOptions.size(); ++j)
-    {
-      cstrArgs.push_back(const_cast<const char*>(strOptions[j].c_str()));
-    }
-    cstrArgs.push_back(nullptr); // Null-terminated for GDAL
-
-    allOptions.push_back(cstrArgs); // Store each option list
+    allOptions.push_back(strOptions); // Store each option list
   }
 
   return allOptions;

@@ -87,9 +87,10 @@ private:
   int InitializeForecastTimes();
   std::string findBands(std::string idxFilePath, std::vector<std::string> variables);
   char* FindForecast(const char* pszFilePath, time_t nTime);
-  std::vector<std::vector<const char*>> getOptions(const std::vector<std::string>& bands, const std::string buffer[4]);
-  bool CopyFileToVSI(const std::string& srcPath, const std::string& destPath);
+  std::vector<std::vector<std::string>> getOptions(const std::vector<std::string>& bands, const std::string buffer[4]);
+//  bool CopyFileToVSI(const std::string& srcPath, const std::string& destPath);
   static void ThreadFunc(void* pData);
+  int fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i );
 
   std::string privateKey;
   std::string clientEmail;
@@ -102,7 +103,7 @@ private:
   {
     boost::posix_time::ptime dt;
     std::string outPath;
-    std::vector<std::vector<const char*>> options;
+    std::vector<std::vector<std::string>> options;
     int i;
   };
 
