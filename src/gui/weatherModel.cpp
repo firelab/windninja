@@ -368,7 +368,7 @@ void weatherModel::getData()
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
-        model = papoNomads[modelChoice - 5];
+        model = papoNomads[modelChoice - 6];
         /*
         ** Disable progress on 32-bit windows as we segfault.
         */
