@@ -104,9 +104,9 @@ Local diurnal slope winds can optionally be included in a weather model initiali
 
 \textbf{\color{red} Left-click on “Weather Model” in the navigation tree, which is located under  “Wind Input”.  In the input panel, check the “Weather Model Initialization” check box.}
 
-There are currently 21 different weather forecast model initializations to choose from in WindNinja.  The models are all run by the U.S. National Oceanic and Atmospheric Administration's (NOAA) National Centers for Environmental Prediction (NCEP).  WindNinja accesses these data from two different servers, the NOAA NOMADS server and the University Corporation for Atmospheric Research (UCAR) thredds server.  The two servers provide a means for a fail safe for WindNinja in case one server is down.  We recommend using the NOMADS server as a first choice, as it seems to be more reliable.
+There are currently 30 different weather forecast model initializations to choose from in WindNinja.  The models are all run by the U.S. National Oceanic and Atmospheric Administration's (NOAA) National Centers for Environmental Prediction (NCEP).  WindNinja accesses these data from three different servers, the NOAA NOMADS server, the University Corporation for Atmospheric Research (UCAR) thredds server, and Google's Cloud Platform.  The UCAR and NOMADS servers provide a means for a fail safe for WindNinja in case one server is down.  We recommend using the NOMADS server as a first choice, as it seems to be more reliable.
 
-The 21 different forecast models have certain advantages and disadvantages depending on your particular situation.  Many of the differences have to do with temporal and spatial resolution and extent, and how often the forecast model is run.  Some of the 21 choices in WindNinja are actually duplicates of the same underlying weather forecast model but provided by both servers.  The table below and following paragraphs give some information about each model.
+The 30 different forecast models have certain advantages and disadvantages depending on your particular situation.  Many of the differences have to do with temporal and spatial resolution and extent, and how often the forecast model is run.  Some of the 30 choices in WindNinja are actually duplicates of the same underlying weather forecast model but provided by both servers.  The table below and following paragraphs give some information about each model.
 
 \begin{landscape}
 \begin{longtable}[1]{|p{4.0cm}|p{2.0cm}|p{2.2cm}|p{2.0cm}|p{2.2cm}|p{3.4cm}|p{3.6cm}|}
@@ -169,6 +169,9 @@ NOMADS-RAP-NORTH-AMERICA-32-KM & NOMADS & Rapid Refresh (RAP) & North America & 
 \hline
 NOMADS-NBM-CONUS-2.5-KM & NOMADS & National Blend of Models (NBM) & North America & 2.5 km & 1 hourly to 36 hrs & updated every 1 hour\\
 \hline
+\hline
+PAST-CAST-GCP-HRRR-CONUS-3-KM & Google Cloud Platform & High Resolution Rapid Refresh (HRRR) & North America & 3 km & 1 hourly to 36 hrs & updated every 1 hour\\
+\hline
 %\end{tabular}
 \caption{Comparison of the forecast weather models available in WindNinja.}
 \end{longtable}
@@ -181,6 +184,7 @@ Below is some general information to consider when choosing a forecast model:
 \begin{itemize}
 \item Higher spatial resolution is generally better than lower resolution.
 \item Since forecast accuracy degrades with time, forecast models that are run more often might give more accurate results.  An example of this degradation is shown in Figure 2.1.  The reason for degradation with time is that small errors in the model can accumulate over time.  So if a forecast for 1 hour from now was simulated 11 hours ago, that forecast will probably be less accurate than one that was simulated 1 hour ago.  The more recent forecast would start with a better description of the current state of the atmosphere and the small accumulating errors wouldn't have as much time to grow.
+\item \textbf{PAST-CAST} refers to a model that has been run in the past, and its forecasts are stored and can fetched. Currently, only the HRRR model has pastcast capabilities. In order to use it properly, you have to specify a date range instead of a forecast duration, and WindNinja will fetch each pastcast hour available between the dates. 
 \end{itemize}
 
 
@@ -299,3 +303,4 @@ A handy feature in WindNinja is the “Open Output Files Path” button on the S
 This concludes \textbf{WindNinja Tutorial 4: Weather Model Initialization}.
 
 \end{document}
+

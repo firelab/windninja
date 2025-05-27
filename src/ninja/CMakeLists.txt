@@ -105,7 +105,8 @@ set(NINJA_SOURCES air.cpp
                   wxModelInitialization.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp
-                  windninja.cpp)
+                  windninja.cpp
+                  gcp_wx_init.cpp)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp

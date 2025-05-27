@@ -201,6 +201,7 @@ int windNinjaCLI(int argc, char* argv[])
             i++;
         }
 #endif /* WITH_NOMADS_SUPPORT */
+        osAvailableWx += std::string( ", PAST-CAST-GCP-HRRR-CONUS-3KM" );
         osAvailableWx += ")";
 
         std::string osSurfaceSources = "source for downloading elevation data (srtm";
@@ -934,7 +935,10 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
-            option_dependency(vm, "wx_model_type", "forecast_duration");
+            if (vm["wx_model_type"].as<std::string>() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+            {
+              option_dependency(vm, "wx_model_type", "forecast_duration");
+            }
             option_dependency(vm, "wx_model_type", "time_zone");
             std::vector<blt::local_date_time> timeList;
             if(vm.count("forecast_time")) {
@@ -943,12 +947,93 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
                 std::string model_type = vm["wx_model_type"].as<std::string>();
-                wxModelInitialization *model;
+                wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+                std::string forecastFileName;
                 try
                 {
-                    model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
-                    std::string forecastFileName = model->fetchForecast( *elevation_file, vm["forecast_duration"].as<int>() );
-                    if(vm.count("start_year"))
+                  if (model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+                  {
+                    std::cout << "Downloading forecast data..." << std::endl;
+                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
+                    std::cout << "Download complete." << std::endl;
+                  }
+                  else {
+
+                    const char* privateKeyPath = std::getenv("GS_OAUTH2_PRIVATE_KEY_FILE");
+                    const char* clientEmail    = std::getenv("GS_OAUTH2_CLIENT_EMAIL");
+
+                    if (!privateKeyPath || !clientEmail) {
+                      throw std::runtime_error(
+                          "Missing required GCS credentials. Both of the following environment variables must be set:\n"
+                          "- GS_OAUTH2_PRIVATE_KEY_FILE\n"
+                          "- GS_OAUTH2_CLIENT_EMAIL"
+                          );
+                    }
+
+                    conflicting_options(vm, "forecast_time", "start_year");
+                    verify_option_set(vm, "start_month");
+                    verify_option_set(vm, "start_day");
+                    verify_option_set(vm, "start_hour");
+                    verify_option_set(vm, "start_minute");
+                    verify_option_set(vm, "stop_year");
+                    verify_option_set(vm, "stop_month");
+                    verify_option_set(vm, "stop_day");
+                    verify_option_set(vm, "stop_hour");
+                    verify_option_set(vm, "stop_minute");
+
+                    int startYear   = vm["start_year"].as<int>();
+                    int startMonth  = vm["start_month"].as<int>();
+                    int startDay    = vm["start_day"].as<int>();
+                    int startHour   = vm["start_hour"].as<int>();
+                    int startMinute = vm["start_minute"].as<int>();
+
+                    int stopYear    = vm["stop_year"].as<int>();
+                    int stopMonth   = vm["stop_month"].as<int>();
+                    int stopDay     = vm["stop_day"].as<int>();
+                    int stopHour    = vm["stop_hour"].as<int>();
+                    int stopMinute  = vm["stop_minute"].as<int>();
+
+                    boost::posix_time::ptime startDateTime(
+                        boost::gregorian::date(startYear, startMonth, startDay),
+                        boost::posix_time::hours(startHour) + boost::posix_time::minutes(startMinute)
+                        );
+                    boost::posix_time::ptime stopDateTime(
+                        boost::gregorian::date(stopYear, stopMonth, stopDay),
+                        boost::posix_time::hours(stopHour) + boost::posix_time::minutes(stopMinute)
+                        );
+
+                    boost::posix_time::ptime minDateTimeUTC(
+                        boost::gregorian::date(2014, 7, 30),
+                        boost::posix_time::hours(18)
+                        );
+                    boost::posix_time::ptime minDateTimeLocal =
+                        boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(minDateTimeUTC);
+                    boost::posix_time::ptime maxDateTimeLocal = boost::posix_time::second_clock::local_time();
+
+                    if (startDateTime < minDateTimeLocal || stopDateTime > maxDateTimeLocal) {
+                      throw std::runtime_error(
+                          "Datetime must be within the allowed range (from " +
+                          boost::posix_time::to_simple_string(minDateTimeLocal) + " to " +
+                          boost::posix_time::to_simple_string(maxDateTimeLocal) + ").");
+                    }
+                    if (startDateTime > stopDateTime) {
+                      throw std::runtime_error("Start datetime cannot be after stop datetime.");
+                    }
+                    boost::posix_time::time_duration range = stopDateTime - startDateTime;
+                    if (range.hours() > 14 * 24) {
+                      throw std::runtime_error("Datetime range must not exceed 14 days.");
+                    }
+
+                    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+
+                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(stopHour));
+
+                    std::cout << "Downloading forecast data..." << std::endl;
+                    forecastFileName = model->fetchForecast(*elevation_file, 1);
+                    std::cout << "Download complete." << std::endl;
+                  }
+
+                    if(vm.count("start_year") && model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
                     {
                         conflicting_options(vm, "forecast_time", "start_year");
                         verify_option_set(vm, "start_month");
