@@ -48,65 +48,63 @@ class GCPWxModel : public wxModelInitialization
 {
 
 public:
-  GCPWxModel();
-  GCPWxModel( std::string filename );
-  GCPWxModel( const char *pszModelKey );
-  GCPWxModel(GCPWxModel const&A);
-  virtual ~GCPWxModel();
+    GCPWxModel();
+    GCPWxModel( std::string filename );
+    GCPWxModel( const char *pszModelKey );
+    GCPWxModel(GCPWxModel const&A);
+    virtual ~GCPWxModel();
 
-  virtual std::string fetchForecast( std::string demFile, int nhours);
+    virtual std::string fetchForecast( std::string demFile, int nhours);
 
-  virtual std::vector<blt::local_date_time>
-  getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
+    virtual std::vector<blt::local_date_time>
+    getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
 
-  virtual void set3dGrids( WindNinjaInputs &input, Mesh const& mesh );
-  virtual bool identify( std::string fileName );
-  const char ** FindModelKey( const char *pszFilename );
-  virtual std::vector<std::string> getVariableList();
-  virtual std::string getForecastIdentifier();
-  virtual std::string getForecastReadable();
-  virtual double getGridResolution();
-  virtual int getStartHour();
-  virtual int getEndHour();
-  virtual void checkForValidData();
-  virtual double Get_Wind_Height() { return 10; }
-  virtual void setSurfaceGrids( WindNinjaInputs &input,
+    virtual void set3dGrids( WindNinjaInputs &input, Mesh const& mesh );
+    virtual bool identify( std::string fileName );
+    const char ** FindModelKey( const char *pszFilename );
+    virtual std::vector<std::string> getVariableList();
+    virtual std::string getForecastIdentifier();
+    virtual std::string getForecastReadable();
+    virtual double getGridResolution();
+    virtual int getStartHour();
+    virtual int getEndHour();
+    virtual void checkForValidData();
+    virtual double Get_Wind_Height() { return 10; }
+    virtual void setSurfaceGrids( WindNinjaInputs &input,
                                AsciiGrid<double> &airGrid,
                                AsciiGrid<double> &cloudGrid,
                                AsciiGrid<double> &uGrid,
                                AsciiGrid<double> &vGrid,
                                AsciiGrid<double> &wGrid );
 
-  void setDateTime(boost::gregorian::date date1, boost::gregorian::date date2, std::string hours1, std::string hours2);
-
+    void setDateTime(boost::gregorian::date date1, boost::gregorian::date date2, std::string hours1, std::string hours2);
 
 private:
-  const char *pszKey;
-  const char **ppszModelData;
+    const char *pszKey;
+    const char **ppszModelData;
 
-  int InitializeForecastTimes();
-  std::string findBands(std::string idxFilePath, std::vector<std::string> variables);
-  char* FindForecast(const char* pszFilePath, time_t nTime);
-  std::vector<std::vector<std::string>> getOptions(const std::vector<std::string>& bands, const std::string buffer[4]);
-//  bool CopyFileToVSI(const std::string& srcPath, const std::string& destPath);
-  static void ThreadFunc(void* pData);
-  static int fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i );
+    int InitializeForecastTimes();
+    std::string findBands(std::string idxFilePath, std::vector<std::string> variables);
+    char* FindForecast(const char* pszFilePath, time_t nTime);
+    std::vector<std::vector<std::string>> getOptions(const std::vector<std::string>& bands, const std::string buffer[4]);
+    //  bool CopyFileToVSI(const std::string& srcPath, const std::string& destPath);
+    static void ThreadFunc(void* pData);
+    static int fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i );
 
-  std::string privateKey;
-  std::string clientEmail;
+    std::string privateKey;
+    std::string clientEmail;
 
-  boost::gregorian::date startDate;
-  boost::gregorian::date endDate;
-  std::string starthours;
-  std::string endhours;
-  struct ThreadParams
-  {
-    boost::posix_time::ptime dt;
-    std::string outPath;
-    std::vector<std::vector<std::string>> options;
-    int i;
-  };
-
+    boost::gregorian::date startDate;
+    boost::gregorian::date endDate;
+    std::string starthours;
+    std::string endhours;
+    struct ThreadParams
+    {
+        boost::posix_time::ptime dt;
+        std::string outPath;
+        std::vector<std::vector<std::string>> options;
+        int i;
+    };
 };
 
 #endif /* GCP_WX_MODEL_H_ */
