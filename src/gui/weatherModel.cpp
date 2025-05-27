@@ -408,8 +408,8 @@ void weatherModel::getData()
           progressDialog->close();
           QMessageBox::warning(this, "Out of Bounds",
                                QString("Date range must be between %1 and %2.")
-                                   .arg(minDateTime.toString("yyyy/MM/dd HH:mm"))
-                                   .arg(maxDateTime.toString("yyyy/MM/dd HH:mm")));
+                                   .arg(minDateTime.toLocalTime().toString("yyyy/MM/dd HH:mm"))
+                                   .arg(maxDateTime.toLocalTime().toString("yyyy/MM/dd HH:mm")));
           setCursor(Qt::ArrowCursor);
           return;
         }

@@ -1013,6 +1013,9 @@ int windNinjaCLI(int argc, char* argv[])
                         boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(minDateTimeUTC);
                     boost::posix_time::ptime maxDateTimeLocal = boost::posix_time::second_clock::local_time();
 
+                    startDateTime = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(startDateTime);
+                    stopDateTime = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(stopDateTime);
+
                     if (startDateTime < minDateTimeLocal || stopDateTime > maxDateTimeLocal) {
                       throw std::runtime_error(
                           "Datetime must be within the allowed range (from " +
