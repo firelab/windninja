@@ -289,15 +289,15 @@ void weatherModel::loadModelComboBox()
 
 void weatherModel::setTimeLimits( int index )
 {
-    if( index == 0 )
+    if( index == 1 )
         hourSpinBox->setRange( ndfd.getStartHour(), ndfd.getEndHour() );
-    else if( index == 1 )
-        hourSpinBox->setRange( nam.getStartHour(), nam.getEndHour() );
     else if( index == 2 )
-        hourSpinBox->setRange( rap.getStartHour(), rap.getEndHour() );
+        hourSpinBox->setRange( nam.getStartHour(), nam.getEndHour() );
     else if( index == 3 )
-        hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
+        hourSpinBox->setRange( rap.getStartHour(), rap.getEndHour() );
     else if( index == 4 )
+        hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
+    else if( index == 5 )
         hourSpinBox->setRange( gfs.getStartHour(), gfs.getEndHour() );
     else if (index == modelComboBox->count() - 1) {
       return;
@@ -305,7 +305,7 @@ void weatherModel::setTimeLimits( int index )
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
-        int n = index - 5;
+        int n = index - 6;
         hourSpinBox->setRange( papoNomads[n]->getStartHour(),
                                papoNomads[n]->getEndHour() );
 #endif
