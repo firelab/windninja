@@ -13,9 +13,7 @@ WindNinja 3.12.0
 
 - Added a DEM smoothing algorithm for cases where the momentum solver diverges due to a low quality mesh (#555)
 
-- Ensure weather station files are written to the correct directory (#545)
-
-- Added the ability to handled DEMs in non-north-up projections (#544)
+- Fixed issue causing weather station files to be written to the wrong directory (#545)
 
 - Added a check for a proper datum in weather station files (#541)
 
