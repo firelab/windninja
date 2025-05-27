@@ -104,7 +104,7 @@ public:
     inline void setLineWidth(double width){lineWidth = width;}
     bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
     void calcSpeedSplitVals(egoogSpeedScaling scaling);
-    void calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling);
+    void calcSplitValsFromSplitVals(double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling);
     double* getSpeedSplitVals(int &size);
     void setSpeedSplitVals(const double *speedSplitVals, const int size);
 

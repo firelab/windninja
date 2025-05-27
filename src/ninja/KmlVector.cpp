@@ -334,7 +334,7 @@ void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
     }
 }
 
-void KmlVector::calcSplitValsFromSplitVals(const double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling)
+void KmlVector::calcSplitValsFromSplitVals(double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling)
 {
     if(numSplitVals != numSplits)
     {
