@@ -349,7 +349,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     return zipFilePath;
 }
 
-int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
+static int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
 {
     std::string dateStr = boost::gregorian::to_iso_string(dt.date());
     std::stringstream hourSS;
@@ -374,7 +374,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
     {
         CPLDebug("GCP", "Failed to open input dataset for %s", srcFile.c_str());
         GDALTranslateOptionsFree(transOptions);
-        return;
+        return GCP_ERR;
     }
 
     GDALDatasetH hOutDS = GDALTranslate(outFile.c_str(), hSrcDS, transOptions, NULL);
@@ -384,11 +384,14 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
     if (!hOutDS)
     {
         CPLDebug("GCP", "GDALTranslate Failed for %s", outFile.c_str());
+        return GCP_ERR;
     }
     else
     {
         GDALClose(hOutDS);
     }
+
+    return GCP_OK;
 }
 
 void GCPWxModel::ThreadFunc(void* pData)

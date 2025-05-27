@@ -44,6 +44,9 @@
 #include "cpl_conv.h"
 #include "wxModelInitialization.h"
 
+#define GCP_OK  0
+#define GCP_ERR 1
+
 class GCPWxModel : public wxModelInitialization
 {
 
