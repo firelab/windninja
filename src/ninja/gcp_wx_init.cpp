@@ -349,7 +349,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     return zipFilePath;
 }
 
-static int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
+int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std::vector<std::vector<std::string>> options, int i )
 {
     std::string dateStr = boost::gregorian::to_iso_string(dt.date());
     std::stringstream hourSS;
