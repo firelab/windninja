@@ -935,10 +935,6 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
-            if (vm["wx_model_type"].as<std::string>() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
-            {
-              option_dependency(vm, "wx_model_type", "forecast_duration");
-            }
             option_dependency(vm, "wx_model_type", "time_zone");
             std::vector<blt::local_date_time> timeList;
             if(vm.count("forecast_time")) {
@@ -946,6 +942,10 @@ int windNinjaCLI(int argc, char* argv[])
             }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
+                if (vm["wx_model_type"].as<std::string>() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+                {
+                    option_dependency(vm, "wx_model_type", "forecast_duration");
+                }
                 std::string model_type = vm["wx_model_type"].as<std::string>();
                 wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
                 std::string forecastFileName;
@@ -959,6 +959,8 @@ int windNinjaCLI(int argc, char* argv[])
                   }
                   else {
 
+                    conflicting_options(vm, "wx_model_type", "forecast_duration");
+
                     const char* privateKeyPath = std::getenv("GS_OAUTH2_PRIVATE_KEY_FILE");
                     const char* clientEmail    = std::getenv("GS_OAUTH2_CLIENT_EMAIL");
 
@@ -971,6 +973,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
 
                     conflicting_options(vm, "forecast_time", "start_year");
+                    verify_option_set(vm, "start_year");
                     verify_option_set(vm, "start_month");
                     verify_option_set(vm, "start_day");
                     verify_option_set(vm, "start_hour");
