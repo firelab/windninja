@@ -971,9 +971,7 @@ int windNinjaCLI(int argc, char* argv[])
                               "                OR \n"
                               "GS_OAUTH2_PRIVATE_KEY_FILE and GS_OAUTH2_CLIENT_EMAIL"
                               );
-                          return;
                         }
-
                     }
 
                     conflicting_options(vm, "forecast_time", "start_year");
