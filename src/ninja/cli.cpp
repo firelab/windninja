@@ -984,51 +984,61 @@ int windNinjaCLI(int argc, char* argv[])
                     verify_option_set(vm, "stop_hour");
                     verify_option_set(vm, "stop_minute");
 
-                    int startYear   = vm["start_year"].as<int>();
-                    int startMonth  = vm["start_month"].as<int>();
-                    int startDay    = vm["start_day"].as<int>();
-                    int startHour   = vm["start_hour"].as<int>();
-                    int startMinute = vm["start_minute"].as<int>();
+                    boost::local_time::time_zone_ptr timeZone;
+                    timeZone = globalTimeZoneDB.time_zone_from_region(osTimeZone);
+                    if( NULL ==  timeZone )
+                    {
+                        ostringstream os;
+                        os << "The time zone string: " << osTimeZone.c_str() << " does not match any in "
+                           << "the time zone database file: date_time_zonespec.csv.";
+                        throw std::runtime_error(os.str());
+                    }
 
-                    int stopYear    = vm["stop_year"].as<int>();
-                    int stopMonth   = vm["stop_month"].as<int>();
-                    int stopDay     = vm["stop_day"].as<int>();
-                    int stopHour    = vm["stop_hour"].as<int>();
-                    int stopMinute  = vm["stop_minute"].as<int>();
+                    blt::local_date_time startDateTime(boost::local_time::not_a_date_time);
+                    blt::local_date_time stopDateTime(boost::local_time::not_a_date_time);
+                    startDateTime = boost::local_time::local_date_time(
+                        boost::gregorian::date(vm["start_year"].as<int>(), vm["start_month"].as<int>(), vm["start_day"].as<int>()),
+                        boost::posix_time::time_duration(vm["start_hour"].as<int>(),vm["start_minute"].as<int>(),0,0),
+                        timeZone,
+                        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+                        );
+                    stopDateTime = boost::local_time::local_date_time(
+                        boost::gregorian::date(vm["stop_year"].as<int>(), vm["stop_month"].as<int>(), vm["stop_day"].as<int>()),
+                        boost::posix_time::time_duration(vm["stop_hour"].as<int>(),vm["stop_minute"].as<int>(),0,0),
+                        timeZone,
+                        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+                        );
 
-                    boost::posix_time::ptime startDateTime(
-                        boost::gregorian::date(startYear, startMonth, startDay),
-                        boost::posix_time::hours(startHour) + boost::posix_time::minutes(startMinute)
+                    // use the UTC constructor, from a ptime instead of from a date and duration (which is a local time constructor)
+                    blt::local_date_time minDateTime(boost::local_time::not_a_date_time);
+                    minDateTime = boost::local_time::local_date_time(
+                        boost::posix_time::ptime(
+                            boost::gregorian::date(2014, 7, 30),
+                            boost::posix_time::hours(18)
+                            ),
+                        timeZone
                         );
-                    boost::posix_time::ptime stopDateTime(
-                        boost::gregorian::date(stopYear, stopMonth, stopDay),
-                        boost::posix_time::hours(stopHour) + boost::posix_time::minutes(stopMinute)
-                        );
-
-                    boost::posix_time::ptime minDateTimeUTC(
-                        boost::gregorian::date(2014, 7, 30),
-                        boost::posix_time::hours(18)
-                        );
-                    boost::posix_time::ptime minDateTimeLocal =
-                        boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(minDateTimeUTC);
 
                     // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
                     // will be more accurate across dates/times edge cases if the math is done right on the starting time structure
-                    boost::posix_time::ptime currentTimeLocal = boost::posix_time::second_clock::local_time();
+                    boost::posix_time::ptime currentTimeLocal = boost::posix_time::second_clock::universal_time();
                     currentTimeLocal = currentTimeLocal - boost::posix_time::hours(1);
-                    boost::posix_time::ptime maxDateTimeLocal(
-                        boost::gregorian::date( currentTimeLocal.date().year(), currentTimeLocal.date().month(), currentTimeLocal.date().day() ),
-                        boost::posix_time::time_duration( currentTimeLocal.time_of_day().hours(), 59, 0, 0 )
+                    // use the UTC constructor, from universal_time() rather than local_time(), this allows proper conversion of the currentTime
+                    // from machine local time, properly to UTC time, to code local time
+                    blt::local_date_time maxDateTime(boost::local_time::not_a_date_time);
+                    maxDateTime = boost::local_time::local_date_time(
+                        boost::posix_time::ptime(
+                            boost::gregorian::date( currentTimeLocal.date().year(), currentTimeLocal.date().month(), currentTimeLocal.date().day() ),
+                            boost::posix_time::time_duration( currentTimeLocal.time_of_day().hours(), 59, 0, 0 )
+                            ),
+                        timeZone
                         );
 
-                    startDateTime = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(startDateTime);
-                    stopDateTime = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(stopDateTime);
-
-                    if (startDateTime < minDateTimeLocal || stopDateTime > maxDateTimeLocal) {
+                    if (startDateTime < minDateTime || stopDateTime > maxDateTime) {
                       throw std::runtime_error(
                           "Datetime must be within the allowed range (from " +
-                          boost::posix_time::to_simple_string(minDateTimeLocal) + " to " +
-                          boost::posix_time::to_simple_string(maxDateTimeLocal) + ").");
+                          boost::posix_time::to_simple_string(minDateTime.local_time()) + " to " +
+                          boost::posix_time::to_simple_string(maxDateTime.local_time()) + ").");
                     }
                     if (startDateTime > stopDateTime) {
                       throw std::runtime_error("Start datetime cannot be after stop datetime.");
@@ -1040,7 +1050,10 @@ int windNinjaCLI(int argc, char* argv[])
 
                     auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
 
-                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(), boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(stopHour));
+                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(),
+                                               boost::lexical_cast<std::string>(startDateTime.utc_time().time_of_day().hours()),
+                                               boost::lexical_cast<std::string>(stopDateTime.utc_time().time_of_day().hours())
+                                               );
 
                     std::cout << "Downloading forecast data..." << std::endl;
                     forecastFileName = model->fetchForecast(*elevation_file, 1);
