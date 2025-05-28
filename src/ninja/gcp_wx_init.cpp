@@ -116,7 +116,7 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
         GDALDatasetH hDS = GDALOpen(filePath.c_str(), GA_ReadOnly);
         if (!hDS)
         {
-           CPLDebug("GCP", "Failed to open GRIB file: %s", filePath.c_str());
+           CPLDebug("GCP", "Failed to open file: %s", filePath.c_str());
            continue;
         }
 
@@ -373,7 +373,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
 
     std::string srcFile = "/vsigs/high-resolution-rapid-refresh/hrrr." + dateStr +
                         "/conus/hrrr.t" + hourStr + "z.wrfsfcf00.grib2";
-    std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.grib2";
+    std::string outFile = outPath + "hrrr." + dateStr + "t" + hourStr + "z." + "wrfsfcf00.tif";
 
     std::vector<const char*> cstrArgs;
     for (size_t kk = 0; kk < options[i].size(); ++kk)
@@ -504,7 +504,7 @@ std::vector<std::vector<std::string>> GCPWxModel::getOptions(const std::vector<s
         strOptions.push_back("EPSG:4326");
 
         strOptions.push_back("-of");
-        strOptions.push_back("GRIB");
+        strOptions.push_back("GTIFF");
 
         allOptions.push_back(strOptions); // Store each option list
     }
@@ -549,11 +549,12 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
     hourStrStream << std::setw(2) << std::setfill('0') << input.ninjaTime.time_of_day().hours();
     std::string hourStr = hourStrStream.str();
 
-    // Build the GRIB2 filename: "hrrr.t20z.wrfsubhf00.grib2"
-    std::string grib2FileName = "hrrr." + dateStr + "t" + hourStr + "z.wrfsfcf00.grib2";
+    // Build the filename: "hrrr.20250520t20z.wrfsubhf00.tif"
+    // Build the filename: "hrrr.20250520t20z.wrfsfcf00.tif"
+    std::string filename = "hrrr." + dateStr + "t" + hourStr + "z.wrfsfcf00.tif";
 
     // Combine into VSI path
-    std::string vsiPath = "/vsizip/" + input.forecastFilename + "/" + grib2FileName;
+    std::string vsiPath = "/vsizip/" + input.forecastFilename + "/" + filename;
     const char *pszForecastFile = vsiPath.c_str();
     if( !pszForecastFile )
     {
