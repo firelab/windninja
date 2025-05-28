@@ -664,7 +664,8 @@ void weatherModel::updatePastcastTimesAndLabels()
     maxDateTime.setTime( QTime(maxDateTime.time().hour(), 59, 0) );
 
     startDateLabel->setText( tr("Earliest PASTCAST Date: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy")) );
-    endDateLabel->setText( tr("Latest PASTCAST Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy")) );
+//    endDateLabel->setText( tr("Latest PASTCAST Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy")) );
+    endDateLabel->setText( tr("") );
 
     startTime->setDateTime( QDateTime::currentDateTimeUtc() );
     startTime->setTime( QTime(startTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
