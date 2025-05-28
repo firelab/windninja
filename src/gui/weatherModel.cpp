@@ -395,8 +395,8 @@ void weatherModel::getData()
           progressDialog->close();
           QMessageBox::warning(this, "Out of Bounds",
                                QString("Date range must be between %1 and %2.")
-                                   .arg(UtcToLocal(minDateTime).toString("yyyy/MM/dd HH:mm"))
-                                   .arg(UtcToLocal(maxDateTime).toString("yyyy/MM/dd HH:mm")));
+                                   .arg(UtcToLocal(minDateTime).toString("yyyy/MM/dd HH:00"))
+                                   .arg(UtcToLocal(maxDateTime).toString("yyyy/MM/dd HH:00")));
           setCursor(Qt::ArrowCursor);
           return;
         }
@@ -664,15 +664,17 @@ void weatherModel::updatePastcastTimesAndLabels()
     maxDateTime.setTime( QTime(maxDateTime.time().hour(), 59, 0) );
 
     startDateLabel->setText( tr("Start Date (Earliest Pastcast date: %1):").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")) );
-    endDateLabel->setText( tr("End Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy HH:mm")) );
+    endDateLabel->setText( tr("End Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy HH:00")) );
 
     startTime->setDateTime( QDateTime::currentDateTimeUtc() );
     startTime->setTime( QTime(startTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
+    startTime->setDateTime( startTime->dateTime().addSecs(-3600) );  // start at the max time, which is 1 minus the hours of the current time, not the current time
     startTime->setDateTime( UtcToLocal(startTime->dateTime()) ); // displayed times need to be local times, NOT utc times, so this is stored as a local time, not a UTC time
-    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")));
+    startTime->setToolTip(tr("Minimum allowed time: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")));
 
     stopTime->setDateTime( QDateTime::currentDateTimeUtc() );
     stopTime->setTime( QTime(stopTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
+    stopTime->setDateTime( stopTime->dateTime().addSecs(-3600) );  // start at the max time, which is 1 minus the hours of the current time, not the current time
     stopTime->setDateTime( UtcToLocal(stopTime->dateTime()) ); // displayed times need to be local times, NOT utc times, so this is stored as a local time, not a UTC time
 }
 
