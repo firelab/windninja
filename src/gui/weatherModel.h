@@ -153,6 +153,9 @@ class weatherModel : public QWidget
 
     void updatePastcastTimesAndLabels();
 
+    QDateTime LocalToUtc(QDateTime qat);
+    QDateTime UtcToLocal(QDateTime qat);
+
     ncepNamSurfInitialization nam;
     ncepNdfdInitialization ndfd;
     ncepRapSurfInitialization rap;

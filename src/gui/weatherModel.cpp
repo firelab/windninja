@@ -388,15 +388,15 @@ void weatherModel::getData()
       }
       else {
 
-        QDateTime startDT = startTime->dateTime().toUTC();
-        QDateTime endDT = stopTime->dateTime().toUTC();
+        QDateTime startDT = LocalToUtc(startTime->dateTime());
+        QDateTime endDT = LocalToUtc(stopTime->dateTime());
 
         if (startDT < minDateTime || endDT > maxDateTime) {
           progressDialog->close();
           QMessageBox::warning(this, "Out of Bounds",
                                QString("Date range must be between %1 and %2.")
-                                   .arg(minDateTime.toLocalTime().toString("yyyy/MM/dd HH:mm"))
-                                   .arg(maxDateTime.toLocalTime().toString("yyyy/MM/dd HH:mm")));
+                                   .arg(UtcToLocal(minDateTime).toString("yyyy/MM/dd HH:mm"))
+                                   .arg(UtcToLocal(maxDateTime).toString("yyyy/MM/dd HH:mm")));
           setCursor(Qt::ArrowCursor);
           return;
         }
@@ -663,15 +663,64 @@ void weatherModel::updatePastcastTimesAndLabels()
     maxDateTime = maxDateTime.addSecs(-3600);
     maxDateTime.setTime( QTime(maxDateTime.time().hour(), 59, 0) );
 
-    startDateLabel->setText( tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toLocalTime().toString("MM/dd/yyyy HH:00")) );
-    endDateLabel->setText( tr("End Date: %1").arg(maxDateTime.toLocalTime().toString("MM/dd/yyyy HH:mm")) );
+    startDateLabel->setText( tr("Start Date (Earliest Pastcast date: %1):").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")) );
+    endDateLabel->setText( tr("End Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy HH:mm")) );
 
-    startTime->setDateTime( QDateTime::currentDateTime() );
+    startTime->setDateTime( QDateTime::currentDateTimeUtc() );
     startTime->setTime( QTime(startTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
-    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toLocalTime().toString("MM/dd/yyyy HH:00")));
+    startTime->setDateTime( UtcToLocal(startTime->dateTime()) ); // displayed times need to be local times, NOT utc times, so this is stored as a local time, not a UTC time
+    startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")));
 
-    stopTime->setDateTime( QDateTime::currentDateTime() );
+    stopTime->setDateTime( QDateTime::currentDateTimeUtc() );
     stopTime->setTime( QTime(stopTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
+    stopTime->setDateTime( UtcToLocal(stopTime->dateTime()) ); // displayed times need to be local times, NOT utc times, so this is stored as a local time, not a UTC time
+}
+
+QDateTime weatherModel::LocalToUtc(QDateTime qat)
+{
+    boost::local_time::time_zone_ptr timeZone;
+    timeZone = globalTimeZoneDB.time_zone_from_region(tzString.toStdString());
+
+    // use the local time constructor, from a date and duration instead of from a ptime (which is a UTC time constructor)
+    blt::local_date_time new_blt(boost::local_time::not_a_date_time);
+    new_blt = boost::local_time::local_date_time(
+        boost::gregorian::date(qat.date().year(), qat.date().month(), qat.date().day()),
+        boost::posix_time::time_duration(qat.time().hour(),qat.time().minute(),qat.time().second(),qat.time().msec()),
+        timeZone,
+        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+        );
+
+    QDateTime new_qat = QDateTime(
+        QDate(new_blt.utc_time().date().year(), new_blt.utc_time().date().month(), new_blt.utc_time().date().day()),
+        QTime(new_blt.utc_time().time_of_day().hours(), new_blt.utc_time().time_of_day().minutes()),
+        Qt::UTC
+        );
+
+    return new_qat;
+}
+
+QDateTime weatherModel::UtcToLocal(QDateTime qat)
+{
+    boost::local_time::time_zone_ptr timeZone;
+    timeZone = globalTimeZoneDB.time_zone_from_region(tzString.toStdString());
+
+    // use the UTC constructor, from a ptime instead of from a date and duration (which is a local time constructor)
+    blt::local_date_time new_blt(boost::local_time::not_a_date_time);
+    new_blt = boost::local_time::local_date_time(
+        boost::posix_time::ptime(
+            boost::gregorian::date(qat.date().year(), qat.date().month(), qat.date().day()),
+            boost::posix_time::time_duration(qat.time().hour(),qat.time().minute(),qat.time().second(),qat.time().msec())
+            ),
+        timeZone
+        );
+
+    QDateTime new_qat = QDateTime(
+        QDate(new_blt.local_time().date().year(), new_blt.local_time().date().month(), new_blt.local_time().date().day()),
+        QTime(new_blt.local_time().time_of_day().hours(), new_blt.local_time().time_of_day().minutes()),
+        Qt::UTC
+        );
+
+    return new_qat;
 }
 
 void weatherModel::setComboToolTip(int)
