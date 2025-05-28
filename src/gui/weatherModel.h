@@ -151,14 +151,14 @@ class weatherModel : public QWidget
 
     const char * ExpandDescription( const char *pszReadable );
 
+    void updatePastcastTimesAndLabels();
+
     ncepNamSurfInitialization nam;
     ncepNdfdInitialization ndfd;
     ncepRapSurfInitialization rap;
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
     GCPWxModel archhrr;
-
-
 
 #ifdef WITH_NOMADS_SUPPORT
     int nNomadsCount;
