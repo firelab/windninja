@@ -961,15 +961,19 @@ int windNinjaCLI(int argc, char* argv[])
 
                     conflicting_options(vm, "wx_model_type", "forecast_duration");
 
-                    const char* privateKeyPath = std::getenv("GS_OAUTH2_PRIVATE_KEY_FILE");
-                    const char* clientEmail    = std::getenv("GS_OAUTH2_CLIENT_EMAIL");
+                    if(CPLGetConfigOption("GS_SECRET_ACCESS_KEY", NULL) == NULL || CPLGetConfigOption("GS_ACCESS_KEY_ID", NULL) == NULL)
+                    {
+                        if(CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", NULL) == NULL || CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", NULL) == NULL)
+                        {
+                          throw std::runtime_error(
+                              "Missing required GCS credentials. One of the following pairs of environment variables must be set:\n"
+                              "GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID \n"
+                              "                OR \n"
+                              "GS_OAUTH2_PRIVATE_KEY_FILE and GS_OAUTH2_CLIENT_EMAIL"
+                              );
+                          return;
+                        }
 
-                    if (!privateKeyPath || !clientEmail) {
-                      throw std::runtime_error(
-                          "Missing required GCS credentials. Both of the following environment variables must be set:\n"
-                          "- GS_OAUTH2_PRIVATE_KEY_FILE\n"
-                          "- GS_OAUTH2_CLIENT_EMAIL"
-                          );
                     }
 
                     conflicting_options(vm, "forecast_time", "start_year");

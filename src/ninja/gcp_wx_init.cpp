@@ -179,9 +179,6 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         boost::lexical_cast<std::string>(adfNESW[2])
     };
 
-    privateKey = CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", NULL);
-    clientEmail = CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", NULL);
-
     boost::posix_time::ptime startDateTime(startDate, boost::posix_time::duration_from_string(starthours + ":00:00"));
     boost::posix_time::ptime endDateTime(endDate, boost::posix_time::duration_from_string(endhours + ":00:00"));
     std::string path(CPLGetDirname(demFile.c_str()));
