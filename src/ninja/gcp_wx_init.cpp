@@ -299,6 +299,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     std::string zipFilePath = zipFolder + startDateStr + "T" + starthours + "00" + ".zip";
     std::string zipVirtualPath = "/vsizip/" + zipFilePath;
 
+    if( CPLCheckForFile((char*)zipFilePath.c_str(), NULL) )
+    {
+        CPLUnlinkTree(zipFilePath.c_str());
+    }
+
     char** fileList = VSIReadDir(tmp.c_str());
     if (!fileList) {
         throw std::runtime_error("Failed to read temporary directory: " + tmp);
@@ -340,9 +345,8 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         }
 
         VSIFCloseL(fpZip);
-        VSIUnlink(filePath.c_str());
     }
-    VSIRmdir(tmp.c_str());
+    NinjaUnlinkTree(tmp.c_str());
     CSLDestroy(fileList);
 
     CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
