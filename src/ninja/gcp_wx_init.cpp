@@ -340,6 +340,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         }
 
         VSIFCloseL(fpZip);
+        VSIUnlink(filePath.c_str());
     }
     VSIRmdir(tmp.c_str());
     CSLDestroy(fileList);
