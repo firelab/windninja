@@ -394,7 +394,7 @@ void weatherModel::getData()
         if (startDT < minDateTime || endDT > maxDateTime) {
           progressDialog->close();
           QMessageBox::warning(this, "Out of Bounds",
-                               QString("Date range must be between %1 and %2.")
+                               QString("Time range must be between %1 and %2.")
                                    .arg(UtcToLocal(minDateTime).toString("yyyy/MM/dd HH:00"))
                                    .arg(UtcToLocal(maxDateTime).toString("yyyy/MM/dd HH:00")));
           setCursor(Qt::ArrowCursor);
@@ -408,7 +408,7 @@ void weatherModel::getData()
         }
         if (startDT.daysTo(endDT) > 14) {
           progressDialog->close();
-          QMessageBox::warning(this, "Invalid Range", "The date range cannot exceed 14 days.");
+          QMessageBox::warning(this, "Invalid Range", "The time range cannot exceed 14 days.");
           setCursor(Qt::ArrowCursor);
           return;
         }
@@ -663,8 +663,8 @@ void weatherModel::updatePastcastTimesAndLabels()
     maxDateTime = maxDateTime.addSecs(-3600);
     maxDateTime.setTime( QTime(maxDateTime.time().hour(), 59, 0) );
 
-    startDateLabel->setText( tr("Start Date (Earliest Pastcast date: %1):").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")) );
-    endDateLabel->setText( tr("End Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy HH:00")) );
+    startDateLabel->setText( tr("Earliest PASTCAST Date: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy")) );
+    endDateLabel->setText( tr("Latest PASTCAST Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy")) );
 
     startTime->setDateTime( QDateTime::currentDateTimeUtc() );
     startTime->setTime( QTime(startTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
