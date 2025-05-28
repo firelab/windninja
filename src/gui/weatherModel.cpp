@@ -113,16 +113,21 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     QDateTime minUtcDateTime(QDate(2014, 7, 30), QTime(18, 0), Qt::UTC);
     minDateTime = minUtcDateTime.toLocalTime();
     maxDateTime = QDateTime::currentDateTimeUtc();
+    // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
+    maxDateTime = maxDateTime.addSecs(-3600);
+    maxDateTime.setTime( QTime(maxDateTime.time().hour(), 59, 0) );
 
     startDateLabel = new QLabel(tr("Start Date (Earliest Pastcast date: %1):").arg(minDateTime.toString("MM/dd/yyyy HH:00")), this);
     endDateLabel = new QLabel(tr("End Date:"), this);
 
     startTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
+    startTime->setTime( QTime(startTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
     startTime->setDisplayFormat("MM/dd/yyyy HH:00");
     startTime->setCalendarPopup(true);
     startTime->setToolTip(tr("Minimum allowed date and time: %1").arg(minDateTime.toString("MM/dd/yyyy HH:00")));
 
     stopTime = new QDateTimeEdit(QDateTime::currentDateTime(), this);
+    stopTime->setTime( QTime(stopTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
     stopTime->setDisplayFormat("MM/dd/yyyy HH:00");
     stopTime->setCalendarPopup(true);
 

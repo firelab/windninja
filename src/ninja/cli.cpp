@@ -1011,7 +1011,15 @@ int windNinjaCLI(int argc, char* argv[])
                         );
                     boost::posix_time::ptime minDateTimeLocal =
                         boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(minDateTimeUTC);
-                    boost::posix_time::ptime maxDateTimeLocal = boost::posix_time::second_clock::local_time();
+
+                    // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
+                    // will be more accurate across dates/times edge cases if the math is done right on the starting time structure
+                    boost::posix_time::ptime currentTimeLocal = boost::posix_time::second_clock::local_time();
+                    currentTimeLocal = currentTimeLocal - boost::posix_time::hours(1);
+                    boost::posix_time::ptime maxDateTimeLocal(
+                        boost::gregorian::date( currentTimeLocal.date().year(), currentTimeLocal.date().month(), currentTimeLocal.date().day() ),
+                        boost::posix_time::time_duration( currentTimeLocal.time_of_day().hours(), 59, 0, 0 )
+                        );
 
                     startDateTime = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(startDateTime);
                     stopDateTime = boost::date_time::c_local_adjustor<boost::posix_time::ptime>::utc_to_local(stopDateTime);
