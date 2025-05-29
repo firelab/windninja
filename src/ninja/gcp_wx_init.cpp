@@ -75,11 +75,11 @@ bool GCPWxModel::identify( std::string fileName )
 {
     if (fileName.find("PAST-CAST-GCP-HRRR-CONUS-3KM") != std::string::npos)
     {
-    return true;
+        return true;
     }
     else
     {
-    return false;
+        return false;
     }
 }
 
