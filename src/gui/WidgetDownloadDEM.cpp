@@ -107,13 +107,12 @@ WidgetDownloadDEM::WidgetDownloadDEM(QWidget *parent)
     this->cbDEMSource->removeItem(2);
 #endif
 
-    //cbDEMSource->setItemData(0, "US coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
-    //cbDEMSource->setItemData(1, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 90 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
+    cbDEMSource->setItemData(0, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
 #ifdef HAVE_GMTED
     cbDEMSource->setItemData(1, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
 #endif
 #ifdef WITH_LCP_CLIENT
-    cbDEMSource->setItemData(2, "Description for LCP goes here.", Qt::ToolTipRole);
+    cbDEMSource->setItemData(2, "US coverage LANDFIRE 2023 Landscape data at 30 meter resolution.", Qt::ToolTipRole);
 #endif
     updateDEMSource(cbDEMSource->currentIndex());
 
