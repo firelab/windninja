@@ -35,7 +35,7 @@
 */
 ncepNamAlaskaSurfInitialization::ncepNamAlaskaSurfInitialization() : wxModelInitialization()
 {
-    heightVarName = "height_above_ground1";
+    heightVarName = "height_above_ground2";
     path = "/thredds/ncss/grid/grib/NCEP/NAM/Alaska_11km/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
     //Don't call LoadFromCSV here because all necep model constructors get called in makeWxInitialization and values get overwritten
     //LoadFromCsv();
@@ -76,7 +76,7 @@ ncepNamAlaskaSurfInitialization& ncepNamAlaskaSurfInitialization::operator= (nce
 */
 double ncepNamAlaskaSurfInitialization::Get_Wind_Height()
 {
-    return GetWindHeight("height_above_ground1");
+    return GetWindHeight("height_above_ground2");
 }
 
 /**
@@ -313,6 +313,20 @@ bool ncepNamAlaskaSurfInitialization::identify( std::string fileName )
         model[len] = '\0';
         std::string s( model );
         if( s.find( "MESO NAM Model" ) == s.npos ) {
+            identified = false;
+        }
+        delete [] model;
+    }
+
+    status = nc_inq_att( ncid, NC_GLOBAL, "History", &type, &len );
+    if( status != NC_NOERR )
+        identified = false;
+    else {
+        model = new char[len + 1];
+        status = nc_get_att_text( ncid, NC_GLOBAL, "History", model );
+        model[len] = '\0';
+        std::string s( model );
+        if( s.find( "NAM-Alaska_11km" ) == s.npos ) {
             identified = false;
         }
         delete [] model;
