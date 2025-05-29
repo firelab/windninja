@@ -171,8 +171,10 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         }
     }
 
-    if (pfnProgress) {
-        pfnProgress(0.0, "Downloading files...", nullptr);
+    CPLDebug( "GCP", "Starting download..." );
+    if (pfnProgress)
+    {
+        pfnProgress(0.0, "Starting download...", NULL);
     }
 
     GDALDatasetH hDS = GDALOpen(demFile.c_str(), GA_ReadOnly);
@@ -254,6 +256,21 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     double startTime = omp_get_wtime();
 #endif
 
+    int nrc;
+
+    if( pfnProgress )
+    {
+        if( pfnProgress( 0.1,
+                         CPLSPrintf( "Downloading file 1 out of %d...", validTimes.size() ),
+                         NULL ) )
+        {
+            CPLError( CE_Failure, CPLE_UserInterrupt,
+                      "Cancelled by user." );
+            nrc = GCP_ERR;
+            return "";
+        }
+    }
+
     /*
     // try single threaded download
     int rc = 0;
@@ -295,6 +312,18 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
     for(int i = 0; i < threadHandles.size(); i++)
     {
+        if( pfnProgress )
+        {
+            if( pfnProgress( 0.1+(0.9*(double)i / threadHandles.size()),
+                             CPLSPrintf( "Downloading file %d out of %d...", i+1, threadHandles.size() ),
+                             NULL ) )
+            {
+                CPLError( CE_Failure, CPLE_UserInterrupt,
+                          "Cancelled by user." );
+                nrc = GCP_ERR;
+                return "";
+            }
+        }
         CPLJoinThread(threadHandles[i]);
     }
 
@@ -361,6 +390,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
     CPLDebug("GCP", "Created zip archive at %s", zipFilePath.c_str());
 
+    if( nrc == GCP_OK && pfnProgress )
+    {
+        pfnProgress( 1.0, NULL, NULL );
+    }
+
     return zipFilePath;
 }
 
@@ -401,10 +435,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
         CPLDebug("GCP", "GDALTranslate Failed for %s", outFile.c_str());
         return GCP_ERR;
     }
-    else
-    {
-        GDALClose(hOutDS);
-    }
+    GDALClose(hOutDS);
 
     return GCP_OK;
 }
