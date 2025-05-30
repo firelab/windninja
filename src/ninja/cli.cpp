@@ -201,7 +201,7 @@ int windNinjaCLI(int argc, char* argv[])
             i++;
         }
 #endif /* WITH_NOMADS_SUPPORT */
-        osAvailableWx += std::string( ", PAST-CAST-GCP-HRRR-CONUS-3KM" );
+        osAvailableWx += std::string( ", PASTCAST-GCP-HRRR-CONUS-3KM" );
         osAvailableWx += ")";
 
         std::string osSurfaceSources = "source for downloading elevation data (srtm";
@@ -942,7 +942,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
-                if (vm["wx_model_type"].as<std::string>() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+                if (vm["wx_model_type"].as<std::string>() != "PASTCAST-GCP-HRRR-CONUS-3KM")
                 {
                     option_dependency(vm, "wx_model_type", "forecast_duration");
                 }
@@ -951,7 +951,7 @@ int windNinjaCLI(int argc, char* argv[])
                 std::string forecastFileName;
                 try
                 {
-                  if (model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+                  if (model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3KM")
                   {
                     std::cout << "Downloading forecast data..." << std::endl;
                     forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
@@ -1048,7 +1048,7 @@ int windNinjaCLI(int argc, char* argv[])
                     std::cout << "Download complete." << std::endl;
                   }
 
-                    if(vm.count("start_year") && model->getForecastIdentifier() != "PAST-CAST-GCP-HRRR-CONUS-3KM")
+                    if(vm.count("start_year") && model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3KM")
                     {
                         conflicting_options(vm, "forecast_time", "start_year");
                         verify_option_set(vm, "start_month");

@@ -63,17 +63,17 @@ double GCPWxModel::getGridResolution()
 
 std::string GCPWxModel::getForecastReadable()
 {
-   return "PAST-CAST-GCP-HRRR-CONUS-3KM";
+   return "PASTCAST-GCP-HRRR-CONUS-3KM";
 }
 
 std::string GCPWxModel::getForecastIdentifier()
 {
-   return "PAST-CAST-GCP-HRRR-CONUS-3KM";
+   return "PASTCAST-GCP-HRRR-CONUS-3KM";
 }
 
 bool GCPWxModel::identify( std::string fileName )
 {
-    if (fileName.find("PAST-CAST-GCP-HRRR-CONUS-3KM") != std::string::npos)
+    if (fileName.find("PASTCAST-GCP-HRRR-CONUS-3KM") != std::string::npos)
     {
         return true;
     }
