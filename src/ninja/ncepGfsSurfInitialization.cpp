@@ -78,7 +78,7 @@ ncepGfsSurfInitialization& ncepGfsSurfInitialization::operator= (ncepGfsSurfInit
 */
 double ncepGfsSurfInitialization::Get_Wind_Height()
 {
-    return GetWindHeight("height_above_ground4");
+    return GetWindHeight("height_above_ground2");
 }
 
 /**
