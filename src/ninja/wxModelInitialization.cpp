@@ -1638,55 +1638,58 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
  */
 double wxModelInitialization::GetWindHeight(std::string varName)
 {
-    /* Override with internal storage */
+  /* Override with internal storage */
+  if(!(wxModelFileName.find("GFS") != std::string::npos)) {
+
     varName = heightVarName;
-    int status, ncid, height_id;
-    size_t unit_len;
-    double d;
-    std::string var_name = varName;
-    char *units;
+  }
+  int status, ncid, height_id;
+  size_t unit_len;
+  double d;
+  std::string var_name = varName;
+  char *units;
 
-    static size_t var_index[] = {0};
+  static size_t var_index[] = {0};
 #ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
+  omp_guard netCDF_guard(netCDF_lock);
 #endif
-    status = nc_open(wxModelFileName.c_str(), 0, &ncid);
-    status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
+  status = nc_open(wxModelFileName.c_str(), 0, &ncid);
+  status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
 
-    if(status == 0)
-    {
-        status = nc_get_var1_double(ncid, height_id, var_index, &d);
-    }
+  if(status == 0)
+  {
+      status = nc_get_var1_double(ncid, height_id, var_index, &d);
+  }
 
-    if( status != 0 )
-    {
-        std::string err = "Failed to find height for " + varName;
-        throw badForecastFile( err );
-    }
+  if( status != 0 )
+  {
+      std::string err = "Failed to find height for " + varName;
+      throw badForecastFile( err );
+  }
 
-    status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
-    units = (char*)malloc(unit_len + 1);
-    status = nc_get_att_text(ncid, height_id, "units", units);
-    units[unit_len] = '\0';
+  status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
+  units = (char*)malloc(unit_len + 1);
+  status = nc_get_att_text(ncid, height_id, "units", units);
+  units[unit_len] = '\0';
 
-    if(EQUAL(units,"m") || EQUAL(units, "meters"))
-    {
-    }
-    else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
-    {
-        lengthUnits::toBaseUnits(d, "feet");
-    }
-    else
-    {
-        free(units);
-        nc_close(ncid);
-        throw badForecastFile("Cannot determine wind height units in "
-                              "forecast file");
-    }
-    free(units);
-    nc_close(ncid);
+  if(EQUAL(units,"m") || EQUAL(units, "meters"))
+  {
+  }
+  else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
+  {
+      lengthUnits::toBaseUnits(d, "feet");
+  }
+  else
+  {
+      free(units);
+      nc_close(ncid);
+      throw badForecastFile("Cannot determine wind height units in "
+                            "forecast file");
+  }
+  free(units);
+  nc_close(ncid);
 
-    return d;
+  return d;
 }
 
 /**
