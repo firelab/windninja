@@ -130,9 +130,9 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
               bool fileHasEXT = fileName.find("EXT") != std::string::npos;
               bool keyHasEXT  = keyName.find("ext") != std::string::npos;
 
-              if (keyHasEXT)
+              if (fileHasEXT)
               {
-                if(fileHasEXT)
+                if(keyHasEXT)
                 {
                   ppszKey = apszNomadsKeys[i];
                   goto found;

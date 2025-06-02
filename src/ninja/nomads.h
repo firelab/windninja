@@ -611,26 +611,6 @@ static const char *apszNomadsKeys[][11] =
       "3 km",
       "HRRR CONUS EXT" },
     /*
-    ** RAP Extended
-    */
-    {
-      "rap_conus_ext",
-      "filter_rap.pl",
-      "rap.t%02dz.awp130pgrbf%02d.grib2",
-      "rap.%s",
-      NOMADS_GENERIC_DATE,
-      "3:21:3",
-      "0:51:1",
-      NOMADS_GENERIC_VAR_LIST,
-      /*
-      ** The August 2016 TIN changed the level for cloud cover to
-      ** entire_atmosphere.  Request both levels so if they change it, we won't
-      ** fail.
-      */
-      NOMADS_GENERIC_LEVELS_LIST ",entire_atmosphere",
-      "13 km",
-      "RAP CONUS EXT" },
-    /*
     ** RAP
     */
     {
@@ -649,7 +629,27 @@ static const char *apszNomadsKeys[][11] =
       */
       NOMADS_GENERIC_LEVELS_LIST ",entire_atmosphere",
       "13 km",
-      "RAP CONUS" },
+    "RAP CONUS" },
+    /*
+    ** RAP Extended
+    */
+    {
+     "rap_conus_ext",
+     "filter_rap.pl",
+     "rap.t%02dz.awp130pgrbf%02d.grib2",
+     "rap.%s",
+     NOMADS_GENERIC_DATE,
+     "3:21:3",
+     "0:51:1",
+     NOMADS_GENERIC_VAR_LIST,
+     /*
+     ** The August 2016 TIN changed the level for cloud cover to
+     ** entire_atmosphere.  Request both levels so if they change it, we won't
+     ** fail.
+     */
+     NOMADS_GENERIC_LEVELS_LIST ",entire_atmosphere",
+     "13 km",
+     "RAP CONUS EXT" },
     /*
     ** RAP North America
     */
