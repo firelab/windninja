@@ -50,9 +50,12 @@ else()
     endif()
 endif()
 
+target_include_directories(qt6_application PRIVATE /usr/local/include)
+
 add_dependencies(qt6_application ninja)
 
 add_definitions(-DMAP_PATH="${CMAKE_SOURCE_DIR}/data/map.html")
+
 
 target_link_libraries(qt6_application PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
 

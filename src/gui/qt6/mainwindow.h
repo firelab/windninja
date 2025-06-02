@@ -9,8 +9,8 @@
 #include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include "ui_mainwindow.h"
-#include "gdal/gdal_utils.h"
-#include "gdal/gdal_priv.h"
+#include "gdal_utils.h"
+#include "gdal_priv.h"
 #include <vector>
 #include <string>
 
