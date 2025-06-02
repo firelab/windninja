@@ -261,7 +261,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     if( pfnProgress )
     {
         if( pfnProgress( 0.1,
-                         CPLSPrintf( "Downloading file 1 out of %d...", validTimes.size() ),
+                         CPLSPrintf( "Downloading file 1 out of %d...\n This may take a few minutes...", validTimes.size() ),
                          NULL ) )
         {
             CPLError( CE_Failure, CPLE_UserInterrupt,
