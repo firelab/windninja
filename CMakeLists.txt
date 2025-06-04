@@ -465,7 +465,7 @@ set(share_files date_time_zonespec.csv
                 config_options.csv
                 tz_world.zip
                 landfire.zip
-                map.htm
+                map.html
                 qt_certs_bundle.pem
                 thredds.csv
                 surface_data.zip
