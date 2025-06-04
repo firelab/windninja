@@ -48,7 +48,7 @@ SurfaceFetch* FetchFactory::GetSurfaceFetch(FetchType type, std::string path)
 
     if( type == WORLD_GMTED )
     {
-        p = FindDataPath("/home/vboxuser/Documents/windninja/data/surface_data.zip");
+        p = FindDataPath("surface_data.zip");
         pszPath = CPLFormFilename("/vsizip/", p.c_str(), NULL);
 #ifdef HAVE_GMTED
         pszPath = CPLFormFilename(pszPath, "gmted", ".vrt");
