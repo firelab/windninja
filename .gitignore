@@ -29,7 +29,6 @@
 
 # Build folder
 debug*
-build*
 
 # Doxygen
 doxy.tag
