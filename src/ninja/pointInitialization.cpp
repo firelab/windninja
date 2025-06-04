@@ -1664,7 +1664,7 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         OGR_F_Destroy( hFeature );
     }
 
-    OGR_DS_Destroy(poDS);
+    GDALClose(poDS);
     GDALClose(hDS);
 }
 /**

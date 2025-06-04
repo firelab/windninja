@@ -60,7 +60,7 @@ KmlVector::~KmlVector()
     if(splitValue)
 	delete[]splitValue;
 
-    OCTDestroyCoordinateTransformation( coordTransform );
+    OCTDestroyCoordinateTransformation( reinterpret_cast<OGRCoordinateTransformationH>(coordTransform) );
 }
 
 void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units)
