@@ -803,12 +803,15 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
 void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
 
   for (const auto& dir : input) {
-    QString qDir = QString::fromStdString(dir).replace("\"", "\\\""); // escape quotes
-    QString jsCall = QString("loadKmzFromUrl(\"%1\");").arg(qDir);
+    QString qDir = QString::fromStdString(dir);
 
-    webView->page()->runJavaScript(jsCall);
+    QFile f(qDir);
+    f.open(QIODevice::ReadOnly);
+    QByteArray data = f.readAll();
+    QString base64 = data.toBase64();
+
+    webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
   }
-
 
 }
 

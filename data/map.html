@@ -329,12 +329,15 @@
         document.getElementById("radius").removeEventListener("input", update_center);
     }
 
-    async function loadKmzFromUrl(kmzUrl) {
+    async function loadKmzFromBase64(base64Data) {
       try {
-        const response = await fetch(kmzUrl);
-        const arrayBuffer = await response.arrayBuffer();
+        const binary = atob(base64Data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+           bytes[i] = binary.charCodeAt(i);
+        }
 
-        const zip = await JSZip.loadAsync(arrayBuffer);
+        const zip = await JSZip.loadAsync(bytes.buffer);
         const kmlFiles = Object.values(zip.files).filter(entry =>
           entry.name.toLowerCase().endsWith('.kml')
         );
