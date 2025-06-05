@@ -3,6 +3,12 @@ Release Notes
 
 WindNinja 3.12.0
 ---------------
+- Fixed issue where the 2-m temperature band was not properly identified in the NBM model, causing diurnal runs to fail (#600)
+
+- Fixed issue where HRRR-EXT and RAP-EXT were improperly identified as HRRR and RAP (#601)
+
+WindNinja 3.12.0
+---------------
 - Fixed issue in point initialization where requested start/stop times outside the range of the station file times would cause the application to crash (#586)
 
 - Fixed issue causing an inaccurate mesh resolution to sometimes be displayed in the GUI (#564)
