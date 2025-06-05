@@ -600,6 +600,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 
     const char *pszElement;
     const char *pszComment;
+    const char *pszPDTN;
     const char *pszShortName;
     int bHaveTemp, bHaveCloud;
     bHaveTemp = FALSE;
@@ -670,8 +671,9 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         else if( EQUAL( pszElement, "T" ) )
         {
           pszComment = GDALGetMetadataItem( hBand, "GRIB_COMMENT", NULL );
+          pszPDTN = GDALGetMetadataItem( hBand, "GRIB_PDS_PDTN", NULL );
 
-          if( EQUAL( pszComment, "Temperature [stddev]")) {
+          if( EQUAL( pszComment, "Temperature [stddev]") || EQUAL( pszPDTN, "2" ) ) {
             continue;
           }
 
@@ -687,8 +689,9 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         {
           blendCheck = true;
           pszComment = GDALGetMetadataItem( hBand, "GRIB_COMMENT", NULL );
+          pszPDTN = GDALGetMetadataItem( hBand, "GRIB_PDS_PDTN", NULL );
 
-          if( EQUAL( pszComment, "Wind speed [stddev]")) {
+          if( EQUAL( pszComment, "Wind speed [stddev]") || EQUAL( pszPDTN, "2" ) ) {
             continue;
           }
 
