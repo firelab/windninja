@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-WindNinja 3.12.0
+WindNinja 3.12.1
 ---------------
 - Fixed issue where the 2-m temperature band was not properly identified in the NBM model, causing diurnal runs to fail (#600)
 
