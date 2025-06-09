@@ -264,6 +264,46 @@ void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid)
     delete [] padfScanline;
 }
 
+void prepAspectForNoDataFill(AsciiGrid<double>* aspect_grid)
+{
+    int nRows = aspect_grid->get_nRows();
+    int nCols = aspect_grid->get_nCols();
+
+    double rawValue;
+    for(int i = 0; i < nRows; i++)
+    {
+        for(int j = 0; j < nCols; j++)
+        {
+            rawValue = aspect_grid->get_cellValue(i, j);
+            if( rawValue == -1 )
+            {
+                rawValue = 0;
+                aspect_grid->set_cellValue(i, j, rawValue);
+            }
+        }
+    }
+}
+
+void cleanAspectAfterNoDataFill(AsciiGrid<double>* aspect_grid)
+{
+    int nRows = aspect_grid->get_nRows();
+    int nCols = aspect_grid->get_nCols();
+
+    double rawValue;
+    for(int i = 0; i < nRows; i++)
+    {
+        for(int j = 0; j < nCols; j++)
+        {
+            rawValue = aspect_grid->get_cellValue(i, j);
+            if( rawValue == 360.0 )
+            {
+                rawValue = 0.0;
+                aspect_grid->set_cellValue(i, j, rawValue);
+            }
+        }
+    }
+}
+
 void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::string fill_type)
 {
     std::cout << "filling NO_DATA values in " << band_name << " band..." << std::endl;
@@ -419,12 +459,6 @@ int main(int argc, char *argv[])
     int nBands = poDS->GetRasterCount();
 
     importElevationData(poDS, &dem);
-    //if (GDALDriverName == "LCP")
-    //    importLCP(poDS);
-    //else if (GDALDriverName == "GTiff")
-    //    importGeoTIFF(poDS);
-    //else
-    //    importSingleBand(poDS);
     if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )
     {
         // assume if 8 or greater bands then it is a landscape GeoTIFF!
@@ -471,7 +505,9 @@ int main(int argc, char *argv[])
         {
             fillAsciiNoData(&slope, "slope", "double");
             //fillAsciiNoData(&aspect, "aspect", "double");
+            prepAspectForNoDataFill(&aspect);
             fillAsciiNoData(&aspect, "aspect", "angle");
+            cleanAspectAfterNoDataFill(&aspect);
             fillAsciiNoData(&fuelModel, "fuelModel", "categorical");
             fillAsciiNoData(&canopyCover, "canopyCover", "double");
             fillAsciiNoData(&canopyHeight, "canopyHeight", "double");
