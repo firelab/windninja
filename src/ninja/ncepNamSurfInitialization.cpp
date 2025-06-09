@@ -318,6 +318,20 @@ bool ncepNamSurfInitialization::identify( std::string fileName )
         delete[] model;
     }
 
+    status = nc_inq_att( ncid, NC_GLOBAL, "History", &type, &len );
+    if( status != NC_NOERR )
+        identified = false;
+    else {
+        model = new char[len + 1];
+        status = nc_get_att_text( ncid, NC_GLOBAL, "History", model );
+        model[len] = '\0';
+        std::string s( model );
+        if( s.find( "NAM-CONUS_12km" ) == s.npos ) {
+            identified = false;
+        }
+        delete [] model;
+    }
+
     /*
      * Check the global attributes for the following tag:
      * :location = "Proto fmrc:NAM_CONUS_12km-noaaport"

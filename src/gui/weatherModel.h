@@ -52,6 +52,7 @@
 #include <QSpinBox>
 #include <QThread>
 #include <QLineEdit>
+#include <QDateEdit>
 
 #include <QDebug>
 
@@ -63,6 +64,7 @@
 #include "ninjaException.h"
 #include "wxModelInitializationFactory.h"
 #include "nomads_wx_init.h"
+#include "gcp_wx_init.h"
 
 #include "gdal_util.h"
 #include "netcdf.h"
@@ -117,6 +119,10 @@ class weatherModel : public QWidget
     QListView *listView;
     QToolButton *selectAllTimesButton;
     QToolButton *selectNoTimesButton;
+    QDateTimeEdit *startTime;
+    QDateTimeEdit *stopTime;
+    QLabel *startDateLabel;
+    QLabel *endDateLabel;
 
     QDir cwd;
     QString inputFile;
@@ -136,16 +142,26 @@ class weatherModel : public QWidget
     QString tzString;
 
     std::vector<blt::local_date_time> timeList();
+
+    QDateTime minDateTime;
+    QDateTime maxDateTime;
+
  private:
     void loadModelComboBox();
 
     const char * ExpandDescription( const char *pszReadable );
+
+    void updatePastcastTimesAndLabels();
+
+    QDateTime LocalToUtc(QDateTime qat);
+    QDateTime UtcToLocal(QDateTime qat);
 
     ncepNamSurfInitialization nam;
     ncepNdfdInitialization ndfd;
     ncepRapSurfInitialization rap;
     ncepNamAlaskaSurfInitialization namAk;
     ncepGfsSurfInitialization gfs;
+    GCPWxModel archhrr;
 
 #ifdef WITH_NOMADS_SUPPORT
     int nNomadsCount;
@@ -161,6 +177,7 @@ class weatherModel : public QWidget
     void unselectForecast( bool checked );
     void setTimeLimits( int index );
     void setComboToolTip( int index );
+    void displayArchiveDates( int index );
     void clearTimes();
  public slots:
     void checkForModelData();

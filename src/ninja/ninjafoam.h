@@ -135,7 +135,7 @@ private:
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
     void CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
-    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateTimeDirFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
     void UpdateSimpleFoamControlDict();
 
     int latestTime; //latest time directory
@@ -145,12 +145,13 @@ private:
     std::vector<std::string> GetTimeDirsOnDisk();
     std::vector<std::string> GetProcessorDirsOnDisk();
     bool StringIsNumeric(const std::string &str);
-    double GetFirstCellHeightFromDisk();
+    double GetFirstCellHeightFromDisk(int time);
     bool CheckForValidCaseDir(const char* dir);
     bool CheckForValidDem();
     void SetMeshResolutionAndResampleDem();
 
     void WriteNinjaLog();
+    void ReadNinjaLog();
     
     /* OpenFOAM utilities */
     void RefineSurfaceLayer();

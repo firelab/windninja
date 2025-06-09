@@ -1315,11 +1315,11 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
     vector<vector<pointInitialization::preInterpolate> > sts,
     std::vector<bpt::ptime> timeList)
 {
-	
     CPLDebug("STATION_FETCH", "Interpolating Weather Data...");
 
     vector<vector<preInterpolate> > interpolatedWxData;
 
+    //loop over stations
     for (int k = 0; k < sts.size(); k++)
     {
         vector<preInterpolate> subInter;
@@ -1328,12 +1328,14 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
         //----------------------------------------------------
         int minIdx = 0;
         int maxIdx = 0;
+
+        //loop over time entries in the current station
         for (int mm = 0; mm < sts[k].size(); mm++)
         {
+            //set station start and end times based on datetime range identified for the current station
             if (sts[k][mm].datetime < sts[k][minIdx].datetime) { minIdx = mm; }
             if (sts[k][mm].datetime > sts[k][maxIdx].datetime) { maxIdx = mm; }
         }
-
 
         for (int i = 0; i < timeList.size(); i++)
         {
@@ -1361,14 +1363,13 @@ vector<vector<pointInitialization::preInterpolate> > pointInitialization::interp
 
             //Interpolate
             //---------------------
-            double speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed ;
+            double speed = w0 * sts[k][idx0].speed + (1 - w0) * sts[k][idx1].speed;
             double temperature = w0 * sts[k][idx0].temperature + (1 - w0) * sts[k][idx1].temperature;
             double cloudCover = w0 * sts[k][idx0].cloudCover + (1 - w0) * sts[k][idx1].cloudCover;
-            double xx = w0 * sin(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * sin(sts[k][idx1].direction * PI / 180.0) ;
+            double xx = w0 * sin(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * sin(sts[k][idx1].direction * PI / 180.0);
             double yy = w0 * cos(sts[k][idx0].direction * PI / 180.0) + (1 - w0) * cos(sts[k][idx1].direction * PI / 180.0);
             double angle = atan2(xx, yy) * 180.0 / PI;
             if (angle < 0.0) { angle += 360.0; }
-
 
            // Create interpolated data
            //----------------------------
@@ -1442,30 +1443,6 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     return result;
 }
 
-//interpolateDirection uses a MEAN OF CIRCULAR QUANTITIES equation, converts from polar to cartesian,
-//averages and then returns degrees. See https://en.wikipedia.org/wiki/Mean_of_circular_quantities
-double pointInitialization::interpolateDirection(double lowDir, double highDir)
-{
-    double lowRad = lowDir * PI / 180.0;
-    double highRad = highDir * PI / 180.0;
-    double sinSum = sin(lowRad) + sin(highRad);
-    double cosSum = cos(lowRad) + cos(highRad);
-    double average = atan2(sinSum, cosSum);
-    double degAverage = average * 180.0 / PI;
-
-    if (degAverage < 0.0)
-    {
-        degAverage = degAverage + 360.0;
-    }
-    //Changing isnan() to CPLIsNan() for MSVC2010 compliance
-    if (CPLIsNan(degAverage))
-    {
-        degAverage=0.0; //Sometimes the interpolation fails, temporary fix here!
-        CPLDebug("STATION_FETCH","Direction Interpolation Failed! Zeroing out bad point!");
-    }
-
-    return degAverage;
-}
 /**
  * @brief pointInitialization::BuildTime
  * Combines individual time component strings into one string
@@ -2407,18 +2384,15 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         }
     }
     
-    
-    //// do debug output
-    CPLDebug("STATION_FETCH","start_local: %s",start_local.to_string().c_str());
-    CPLDebug("STATION_FETCH","end_local: %s",end_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","start_local: %s",boost::lexical_cast<std::string>(start_local).c_str());
+    CPLDebug("STATION_FETCH","end_local: %s",boost::lexical_cast<std::string>(end_local).c_str());
     CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
-    CPLDebug("STATION_FETCH","start_UTC: %s",boost::posix_time::to_simple_string(start_UTC).c_str());
-    CPLDebug("STATION_FETCH","end_UTC: %s",boost::posix_time::to_simple_string(end_UTC).c_str());
+    CPLDebug("STATION_FETCH","start_UTC: %s",boost::lexical_cast<std::string>(start_UTC).c_str());
+    CPLDebug("STATION_FETCH","end_UTC: %s",boost::lexical_cast<std::string>(end_UTC).c_str());
     
     
     // Sets these for use in the fetch-station functions
     setLocalStartAndStopTimes(start_local,end_local);
-    
     
     // problem occurs with everything after this point if start_UTC > end_UTC or end_UTC < start_UTC, diffTime goes negative
     // problem is, can't do the check with effective messaging and keeping WindNinja open here, WindNinja would just quit altogether
@@ -2530,10 +2504,9 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
         std::cout << "\nSTATION_FETCH warning: Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.\n" << std::endl;
     }
     
-    //// do debug output
-    CPLDebug("STATION_FETCH","x_local: %s",x_local.to_string().c_str());
+    CPLDebug("STATION_FETCH","x_local: %s",boost::lexical_cast<std::string>(x_local).c_str());
     CPLDebug("STATION_FETCH","tzAbbrev: %s",tzAbbrev.c_str());
-    CPLDebug("STATION_FETCH","x_UTC: %s",boost::posix_time::to_simple_string(x_UTC).c_str());
+    CPLDebug("STATION_FETCH","x_UTC: %s",boost::lexical_cast<std::string>(x_UTC).c_str());
     
     return x_UTC;
 }

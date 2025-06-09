@@ -322,10 +322,10 @@ void mainWindow::createActions()
       SLOT(windNinjaHelp()));
 
   //arcMap action
-  displayShapeFileMapAction = new QAction(tr("How to Display Shapefiles in ArcMap"), this);
-  displayShapeFileMapAction->setIcon(QIcon(":page_white_acrobat.png"));
-  connect(displayShapeFileMapAction, SIGNAL(triggered()), this,
-      SLOT(displayArcMap()));
+  displayShapeFileProAction = new QAction(tr("How to Display Shapefiles in ArcGIS Pro"), this);
+  displayShapeFileProAction->setIcon(QIcon(":page_white_acrobat.png"));
+  connect(displayShapeFileProAction, SIGNAL(triggered()), this,
+      SLOT(displayArcGISPro()));
 
   //open wind ninja tutorial 1 action
   tutorial1Action = new QAction(tr("Tutorial &1:The Basics"), this);
@@ -440,7 +440,7 @@ void mainWindow::createMenus()
   //help/tutorial menus
   helpMenu = menuBar()->addMenu(tr("&Help"));
   shapeSubMenu = helpMenu->addMenu(tr("Displaying Shapefiles"));
-  shapeSubMenu->addAction(displayShapeFileMapAction);
+  shapeSubMenu->addAction(displayShapeFileProAction);
   QMenu *shapeSubMenu;
   tutorialSubMenu = helpMenu->addMenu(tr("Tutorials"));
   tutorialSubMenu->addAction(tutorial1Action);
@@ -927,6 +927,7 @@ void mainWindow::updateFileInputForCase(const char* file)
 
       inputFileName = fileName;
       inputFileDir = QFileInfo(fileName).absolutePath();
+      tree->solve->setOutputDir( inputFileDir.absolutePath() );
       shortInputFileName = shortName;
       checkMeshCombo();
       checkInputItem();
@@ -1177,11 +1178,11 @@ void mainWindow::fetchDem()
 }
 
 
-void mainWindow::displayArcMap()
+void mainWindow::displayArcGISPro()
 {
   pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"));
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"))))
+  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcGIS_Pro.pdf"));
+  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcGIS_Pro.pdf"))))
     {
 
       QMessageBox::warning(this, tr("Broken Link."),
@@ -1227,20 +1228,23 @@ void mainWindow::aboutWindNinja()
 
   aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
   aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
-                                               "Kyle Shannon<br/>" \
                                                "Natalie Wagenbrenner<br/>" \
-                                               "Bret Butler<br/>"); \
+                                               "Kyle Shannon<br/>" \
+                                               "Loren Atwood<br/>" \
+                                               "Mason Willman"); \
   aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
   aboutText.append("Rocky Mountain Research Station<br />");
   aboutText.append("USDA Forest Service<br />");
   aboutText.append("5775 Highway 10 W.<br />");
   aboutText.append("Missoula, MT 59808</p>");
+  aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CONTRIBUTORS\">Contributors</a></p>");
   aboutText.append("<h4>Sponsored By:</h4>");
-  aboutText.append("US Forest Service<br />");
+  aboutText.append("USDA Forest Service<br />");
   aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br />");
   aboutText.append("Joint Fire Sciences Program<br />");
   aboutText.append("Washington State University</p>");
   aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
+  aboutText.append("<br />");
 
   QMessageBox::about(this, tr("About WindNinja"),
              aboutText);
@@ -1257,7 +1261,7 @@ void mainWindow::citeWindNinja()
   citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
 
   citeText.append("<h4>For additional WindNinja publications visit:</h4>");
-  citeText.append("https://weather.firelab.org/windninja/publications/");
+  citeText.append("<p><a href=\"https://ninjastorm.firelab.org/windninja/publications/\">https://ninjastorm.firelab.org/windninja/publications</a></p>");
 
   QMessageBox::about(this, tr("Cite WindNinja"),
              citeText);
@@ -1607,7 +1611,7 @@ int mainWindow::checkInputFile(QString fileName)
     //get the geo-transform
     if(poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
-        int c1, c2;
+        double c1, c2;
         c1 = adfGeoTransform[1];
         c2 = adfGeoTransform[5];
         if(abs(c1) == abs(c2))
@@ -1847,6 +1851,7 @@ int mainWindow::solve()
 
     std::string googleScheme;
     bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
+    bool googConsistentColorScale = tree->google->applyConsistentColorScale->isChecked();
     if(tree->google->colorblindBox->isChecked())
     {
         std::string googCheckScheme;
@@ -2212,13 +2217,13 @@ int mainWindow::solve()
         }
         if (writeStationKML==true) //Write KMLS for each time step
         {
+            std::string outputDir = tree->solve->outputDirectory().toStdString();
             writeToConsole("Writing Weather Station .kml");
             nRuns = army->getSize();
             for (int i_=0;i_<nRuns;i_++)
             {
                 wxStation::writeKmlFile(army->getWxStations(i_),
-                                        demFile,
-                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/", outputSpeedUnits);
+                                        demFile, (outputDir + "/").c_str(), outputSpeedUnits);
             }
         }
 //                if (writeStationCSV==true)
@@ -2482,6 +2487,7 @@ int mainWindow::solve()
         army->setGoogResolution  (i,googleRes,googleUnits);
         army->setGoogSpeedScaling(i,googleScale);
         army->setGoogColor       (i,googleScheme,googVectorScaling); //FIX ME
+        army->setGoogConsistentColorScale(i,googConsistentColorScale,nRuns);
         army->setShpOutFlag      (i,writeShape); 
         army->setShpResolution   (i,shapeRes,shapeUnits);
         army->setPDFOutFlag      (i,writePdf);
@@ -3191,13 +3197,13 @@ int mainWindow::checkGoogleItem()
     {
       if(checkSurfaceItem() != red)
     {
-      if((int)noGoogleCellSize > tree->google->googleResSpinBox->value())
+      if(noGoogleCellSize > tree->google->googleResSpinBox->value())
         {
           tree->googleItem->setIcon(0, tree->caution);
           tree->googleItem->setToolTip(0, "The resolution of the google file may be too fine.");
           status = amber;
         }
-      else if((int)GDALCellSize > tree->google->googleResSpinBox->value())
+      else if(GDALCellSize > tree->google->googleResSpinBox->value())
         {
           tree->googleItem->setIcon(0, tree->caution);
           tree->googleItem->setToolTip(0, "The output resolution is finer than the DEM resolution");
@@ -3241,7 +3247,7 @@ int mainWindow::checkFbItem()
     {
       if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
     {
-      if((int)GDALCellSize > tree->fb->fbResSpinBox->value())
+      if(GDALCellSize > tree->fb->fbResSpinBox->value())
         {
           tree->fbItem->setIcon(0, tree->caution);
           tree->fbItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
@@ -3286,7 +3292,7 @@ int mainWindow::checkShapeItem()
           status = amber;
         }
       */
-      if((int)GDALCellSize > tree->shape->shapeResSpinBox->value())
+      if(GDALCellSize > tree->shape->shapeResSpinBox->value())
         {
           tree->shapeItem->setIcon(0, tree->caution);
           tree->shapeItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
@@ -3330,7 +3336,7 @@ int mainWindow::checkPdfItem()
           status = amber;
         }
       */
-      if((int)GDALCellSize > tree->pdf->pdfResSpinBox->value())
+      if(GDALCellSize > tree->pdf->pdfResSpinBox->value())
         {
           tree->pdfItem->setIcon(0, tree->caution);
           tree->pdfItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");

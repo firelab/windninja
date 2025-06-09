@@ -52,6 +52,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     wrf3dInitialization wrf3d;
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
+    GCPWxModel arrhrr;
 
 #ifdef WITH_NOMADS_SUPPORT
     NomadsWxModel nomad;
@@ -127,6 +128,11 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     }
     else
     {
+      if(arrhrr.identify(fileName))
+      {
+        return new GCPWxModel(fileName);
+      }
+      else {
 #ifdef WITH_NOMADS_SUPPORT
         if(nomad.identify(fileName))
         {
@@ -153,6 +159,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
                 "identified as a valid weather model initialization file.";
         throw std::runtime_error(outString.str());
 #endif
+      }
     }
 }
 
@@ -174,6 +181,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     wrf3dInitialization wrf3d;
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
+    GCPWxModel archrrr;
 
 
 //Determine what type of weather model the file came from
@@ -209,6 +217,10 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     }
     else if(genericSurf.getForecastReadable() == identifier) {
         return new genericSurfInitialization(genericSurf);
+    }
+    else if(archrrr.getForecastReadable() == identifier)
+    {
+      return new GCPWxModel(archrrr);
     }
     else {
 #ifdef WITH_NOMADS_SUPPORT

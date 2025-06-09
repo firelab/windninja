@@ -422,21 +422,47 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     CPLDebug( "WINDNINJA", "Forecast URL: %s", urlAddress.c_str() );
     if( poResult == NULL )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
+      CPLHTTPDestroyResult( poResult );
+      throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
     }
 
     if( poResult->nStatus != 0 )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( poResult->pszErrBuf ) );
+      CPLHTTPDestroyResult( poResult );
+      throw ( badForecastFile( poResult->pszErrBuf ) );
+    }
+
+    if (poResult->pszErrBuf && urlAddress.find("NDFD") != std::string::npos)
+    {
+      CPLDebug("WINDNINJA", "Received 404, retrying with new URL.");
+      std::string toReplace = "Best";
+      std::string replacement = "Best/LambertConformal_1377X2145-38p23N-95p44W-2";
+
+      size_t pos = urlAddress.find(toReplace);
+      if (pos != std::string::npos) {
+        urlAddress.replace(pos, toReplace.length(), replacement);
+      }
+
+      CPLDebug("WINDNINJA", "New Forecast URL: %s", urlAddress.c_str());
+      poResult = CPLHTTPFetch(urlAddress.c_str(), NULL);
+
+      if (poResult == NULL)
+      {
+        throw badForecastFile("CPLHTTPResult is NULL!");
+      }
+
+      if (poResult->nStatus != 0)
+      {
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile(poResult->pszErrBuf);
+      }
     }
 
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( "Failed to download forecast." ) );
+      CPLHTTPDestroyResult( poResult );
+      throw ( badForecastFile( "Failed to download forecast." ) );
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
     CPLHTTPDestroyResult( poResult );
@@ -1578,9 +1604,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             wxModelKmlFiles.setKmlFile(input.wxModelKmlFile);
             wxModelKmlFiles.setKmzFile(input.wxModelKmzFile);
             wxModelKmlFiles.setDemFile(input.dem.fileName);
-            #ifdef EMISSIONS
-            wxModelKmlFiles.setDustFlag(input.dustFlag);
-            #endif
             wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
@@ -1615,55 +1638,58 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
  */
 double wxModelInitialization::GetWindHeight(std::string varName)
 {
-    /* Override with internal storage */
+  /* Override with internal storage */
+  if(!(wxModelFileName.find("GFS") != std::string::npos)) {
+
     varName = heightVarName;
-    int status, ncid, height_id;
-    size_t unit_len;
-    double d;
-    std::string var_name = varName;
-    char *units;
+  }
+  int status, ncid, height_id;
+  size_t unit_len;
+  double d;
+  std::string var_name = varName;
+  char *units;
 
-    static size_t var_index[] = {0};
+  static size_t var_index[] = {0};
 #ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
+  omp_guard netCDF_guard(netCDF_lock);
 #endif
-    status = nc_open(wxModelFileName.c_str(), 0, &ncid);
-    status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
+  status = nc_open(wxModelFileName.c_str(), 0, &ncid);
+  status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
 
-    if(status == 0)
-    {
-        status = nc_get_var1_double(ncid, height_id, var_index, &d);
-    }
+  if(status == 0)
+  {
+      status = nc_get_var1_double(ncid, height_id, var_index, &d);
+  }
 
-    if( status != 0 )
-    {
-        std::string err = "Failed to find height for " + varName;
-        throw badForecastFile( err );
-    }
+  if( status != 0 )
+  {
+      std::string err = "Failed to find height for " + varName;
+      throw badForecastFile( err );
+  }
 
-    status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
-    units = (char*)malloc(unit_len + 1);
-    status = nc_get_att_text(ncid, height_id, "units", units);
-    units[unit_len] = '\0';
+  status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
+  units = (char*)malloc(unit_len + 1);
+  status = nc_get_att_text(ncid, height_id, "units", units);
+  units[unit_len] = '\0';
 
-    if(EQUAL(units,"m") || EQUAL(units, "meters"))
-    {
-    }
-    else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
-    {
-        lengthUnits::toBaseUnits(d, "feet");
-    }
-    else
-    {
-        free(units);
-        nc_close(ncid);
-        throw badForecastFile("Cannot determine wind height units in "
-                              "forecast file");
-    }
-    free(units);
-    nc_close(ncid);
+  if(EQUAL(units,"m") || EQUAL(units, "meters"))
+  {
+  }
+  else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
+  {
+      lengthUnits::toBaseUnits(d, "feet");
+  }
+  else
+  {
+      free(units);
+      nc_close(ncid);
+      throw badForecastFile("Cannot determine wind height units in "
+                            "forecast file");
+  }
+  free(units);
+  nc_close(ncid);
 
-    return d;
+  return d;
 }
 
 /**

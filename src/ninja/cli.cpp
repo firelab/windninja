@@ -201,6 +201,7 @@ int windNinjaCLI(int argc, char* argv[])
             i++;
         }
 #endif /* WITH_NOMADS_SUPPORT */
+        osAvailableWx += std::string( ", PASTCAST-GCP-HRRR-CONUS-3KM" );
         osAvailableWx += ")";
 
         std::string osSurfaceSources = "source for downloading elevation data (srtm";
@@ -288,8 +289,10 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_goog_output", po::value<bool>()->default_value(false), "write a Google Earth kmz output file (true, false)")
                 ("goog_out_resolution", po::value<double>()->default_value(-1.0), "resolution of Google Earth output file (-1 to use mesh resolution)")
                 ("units_goog_out_resolution", po::value<std::string>()->default_value("m"), "units of Google Earth resolution (ft, m)")
+                ("goog_out_speed_interval_scaling",po::value<std::string>()->default_value("equal_interval"),"Sets the Wind speed color scale interval calculation method (default:equal_interval/interval, equal_color/color)\nIn the gui, equal_interval is \"Uniform Range\", equal_color is \"Equal Count\"")
                 ("goog_out_color_scheme",po::value<std::string>()->default_value("default"),"Sets the color scheme for kml outputs, available options:\n default (ROYGB), oranges, blues, greens,pinks, magic_beans, pink_to_green,ROPGW")
                 ("goog_out_vector_scaling",po::value<bool>()->default_value(false),"Enable Vector Scaling based on Wind speed")
+                ("goog_out_use_consistent_color_scale",po::value<bool>()->default_value(false),"Use a consistent color scale across simulations (true, false)")
                 ("write_wx_model_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file for the raw wx model forecast (true, false)")
                 ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
@@ -932,7 +935,6 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
-            option_dependency(vm, "wx_model_type", "forecast_duration");
             option_dependency(vm, "wx_model_type", "time_zone");
             std::vector<blt::local_date_time> timeList;
             if(vm.count("forecast_time")) {
@@ -940,13 +942,113 @@ int windNinjaCLI(int argc, char* argv[])
             }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
+                if (vm["wx_model_type"].as<std::string>() != "PASTCAST-GCP-HRRR-CONUS-3KM")
+                {
+                    option_dependency(vm, "wx_model_type", "forecast_duration");
+                }
                 std::string model_type = vm["wx_model_type"].as<std::string>();
-                wxModelInitialization *model;
+                wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
+                std::string forecastFileName;
                 try
                 {
-                    model = wxModelInitializationFactory::makeWxInitializationFromId( model_type );
-                    std::string forecastFileName = model->fetchForecast( *elevation_file, vm["forecast_duration"].as<int>() );
-                    if(vm.count("start_year"))
+                  if (model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3KM")
+                  {
+                    std::cout << "Downloading forecast data..." << std::endl;
+                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
+                    std::cout << "Download complete." << std::endl;
+                  }
+                  else {
+
+                    conflicting_options(vm, "wx_model_type", "forecast_duration");
+                    conflicting_options(vm, "forecast_time", "start_year");
+                    verify_option_set(vm, "start_year");
+                    verify_option_set(vm, "start_month");
+                    verify_option_set(vm, "start_day");
+                    verify_option_set(vm, "start_hour");
+                    verify_option_set(vm, "start_minute");
+                    verify_option_set(vm, "stop_year");
+                    verify_option_set(vm, "stop_month");
+                    verify_option_set(vm, "stop_day");
+                    verify_option_set(vm, "stop_hour");
+                    verify_option_set(vm, "stop_minute");
+
+                    boost::local_time::time_zone_ptr timeZone;
+                    timeZone = globalTimeZoneDB.time_zone_from_region(osTimeZone);
+                    if( NULL ==  timeZone )
+                    {
+                        ostringstream os;
+                        os << "The time zone string: " << osTimeZone.c_str() << " does not match any in "
+                           << "the time zone database file: date_time_zonespec.csv.";
+                        throw std::runtime_error(os.str());
+                    }
+
+                    blt::local_date_time startDateTime(boost::local_time::not_a_date_time);
+                    blt::local_date_time stopDateTime(boost::local_time::not_a_date_time);
+                    startDateTime = boost::local_time::local_date_time(
+                        boost::gregorian::date(vm["start_year"].as<int>(), vm["start_month"].as<int>(), vm["start_day"].as<int>()),
+                        boost::posix_time::time_duration(vm["start_hour"].as<int>(),vm["start_minute"].as<int>(),0,0),
+                        timeZone,
+                        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+                        );
+                    stopDateTime = boost::local_time::local_date_time(
+                        boost::gregorian::date(vm["stop_year"].as<int>(), vm["stop_month"].as<int>(), vm["stop_day"].as<int>()),
+                        boost::posix_time::time_duration(vm["stop_hour"].as<int>(),vm["stop_minute"].as<int>(),0,0),
+                        timeZone,
+                        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+                        );
+
+                    // use the UTC constructor, from a ptime instead of from a date and duration (which is a local time constructor)
+                    blt::local_date_time minDateTime(boost::local_time::not_a_date_time);
+                    minDateTime = boost::local_time::local_date_time(
+                        boost::posix_time::ptime(
+                            boost::gregorian::date(2014, 7, 30),
+                            boost::posix_time::hours(18)
+                            ),
+                        timeZone
+                        );
+
+                    // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
+                    // will be more accurate across dates/times edge cases if the math is done right on the starting time structure
+                    boost::posix_time::ptime currentTimeLocal = boost::posix_time::second_clock::universal_time();
+                    currentTimeLocal = currentTimeLocal - boost::posix_time::hours(1);
+                    // use the UTC constructor, from universal_time() rather than local_time(), this allows proper conversion of the currentTime
+                    // from machine local time, properly to UTC time, to code local time
+                    blt::local_date_time maxDateTime(boost::local_time::not_a_date_time);
+                    maxDateTime = boost::local_time::local_date_time(
+                        boost::posix_time::ptime(
+                            boost::gregorian::date( currentTimeLocal.date().year(), currentTimeLocal.date().month(), currentTimeLocal.date().day() ),
+                            boost::posix_time::time_duration( currentTimeLocal.time_of_day().hours(), 59, 0, 0 )
+                            ),
+                        timeZone
+                        );
+
+                    if (startDateTime < minDateTime || stopDateTime > maxDateTime) {
+                      throw std::runtime_error(
+                          "Datetime must be within the allowed range (from " +
+                          boost::posix_time::to_simple_string(minDateTime.local_time()) + " to " +
+                          boost::posix_time::to_simple_string(maxDateTime.local_time()) + ").");
+                    }
+                    if (startDateTime > stopDateTime) {
+                      throw std::runtime_error("Start datetime cannot be after stop datetime.");
+                    }
+                    boost::posix_time::time_duration range = stopDateTime - startDateTime;
+                    if (range.hours() > 14 * 24) {
+                      throw std::runtime_error("Datetime range must not exceed 14 days.");
+                    }
+
+                    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+
+                    forecastModel->setDateTime(startDateTime.date(), stopDateTime.date(),
+                                               boost::lexical_cast<std::string>(startDateTime.utc_time().time_of_day().hours()),
+                                               boost::lexical_cast<std::string>(stopDateTime.utc_time().time_of_day().hours())
+                                               );
+
+                    std::cout << "Downloading forecast data..." << std::endl;
+                    forecastFileName = model->fetchForecast(*elevation_file, 1);
+                    std::cout << "Download complete." << std::endl;
+                  }
+
+                    if(vm.count("start_year") && model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3KM")
                     {
                         conflicting_options(vm, "forecast_time", "start_year");
                         verify_option_set(vm, "start_month");
@@ -1323,10 +1425,8 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.makeDomainAverageArmy(1, false);
 #endif
         }
-        if(vm["initialization_method"].as<std::string>() == string("griddedInitalization"))
+        if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
         {
-            //TODO: double check proper construction of gridded initialization now that we have modified the ninjaArmy 
-            //contructors and added new functions for builiding armies.
 #ifdef NINJAFOAM
                 windsim.makeDomainAverageArmy(1, vm["momentum_flag"].as<bool>());
 #else
@@ -1714,6 +1814,45 @@ int windNinjaCLI(int argc, char* argv[])
                                         vm["minute"].as<int>(), 0.0,
                                         osTimeZone);
                 }
+                //Atmospheric stability selections
+                if(vm["non_neutral_stability"].as<bool>())
+                {
+                    if(vm.count("alpha_stability")) //if alpha is specified directly, use that; else, get the info we need to calculate it
+                    {
+                        if (vm["alpha_stability"].as<double>() > 0 && vm["alpha_stability"].as<double>() <= 5)
+                        {
+                            windsim.setAlphaStability( i_, vm["alpha_stability"].as<double>());
+                            windsim.setStabilityFlag( i_, true);
+                        }
+                        else
+                        {
+                            cout << "alpha_stability = " << vm["alpha_stability"].as<double>() << " is not valid.\n";
+                            cout << "Valid range for alpha is: 0 < alpha_stability <= 5\n";
+                            return -1;
+                        }
+                    }
+                    else{
+                        verify_option_set(vm, "uni_cloud_cover");
+                        option_dependency(vm, "uni_cloud_cover", "cloud_cover_units");
+                        option_dependency(vm, "uni_cloud_cover", "year");
+                        option_dependency(vm, "uni_cloud_cover", "month");
+                        option_dependency(vm, "uni_cloud_cover", "day");
+                        option_dependency(vm, "uni_cloud_cover", "hour");
+                        option_dependency(vm, "uni_cloud_cover", "minute");
+                        option_dependency(vm, "uni_cloud_cover", "time_zone");
+
+                        windsim.setStabilityFlag( i_, true);
+                        windsim.setUniCloudCover( i_, vm["uni_cloud_cover"].as<double>(),
+                                                               coverUnits::getUnit(vm["cloud_cover_units"].as<std::string>()));
+                        windsim.setDateTime( i_, vm["year"].as<int>(),
+                                                               vm["month"].as<int>(),
+                                                               vm["day"].as<int>(),
+                                                               vm["hour"].as<int>(),
+                                                               vm["minute"].as<int>(),
+                                                               0.0,
+                                                               osTimeZone);
+                    }
+                }
                 
                 windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>(),
                         velocityUnits::getUnit( vm["input_speed_units"].as<std::string>() ) );
@@ -1835,7 +1974,9 @@ int windNinjaCLI(int argc, char* argv[])
                 option_dependency(vm, "goog_out_resolution", "units_goog_out_resolution");
                 windsim.setGoogResolution( i_, vm["goog_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_goog_out_resolution"].as<std::string>()));
+                windsim.setGoogSpeedScaling(i_,vm["goog_out_speed_interval_scaling"].as<std::string>());
                 windsim.setGoogColor(i_,vm["goog_out_color_scheme"].as<std::string>(),vm["goog_out_vector_scaling"].as<bool>());
+                windsim.setGoogConsistentColorScale(i_,vm["goog_out_use_consistent_color_scale"].as<bool>(),windsim.getSize());
             }
             if(vm["write_shapefile_output"].as<bool>())
             {

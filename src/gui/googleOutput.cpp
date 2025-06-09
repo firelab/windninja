@@ -37,7 +37,8 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
 
   vectorGroupBox = new QGroupBox(tr("Vectors"));
   //vectorGroupBox->setCheckable(true);
-  
+  //vectorGroupBox->setChecked(true);
+
   vectorWidthLabel = new QLabel(tr("Line Width"));
 
   vectorWidthDoubleSpinBox = new QDoubleSpinBox;
@@ -61,35 +62,37 @@ googleOutput::googleOutput(QWidget *parent) : QWidget(parent)
   vectorGroupBox->setLayout(vectorLayout);
 
   legendGroupBox = new QGroupBox(tr("Legend"));
-  legendGroupBox->setCheckable(true);
-  legendGroupBox->setChecked(true);
-   
+  //legendGroupBox->setCheckable(true);
+  //legendGroupBox->setChecked(true);
+
   uniformRangeRadioButton = new QRadioButton;
   uniformRangeRadioButton->setText(tr("Uniform Range"));
   uniformRangeRadioButton->setChecked(true);
   equalCountRadioButton = new QRadioButton;
   equalCountRadioButton->setText(tr("Equal Count"));
-   
-  contourCheckBox = new QCheckBox(tr("Contours (beta)"));
-  
-  //vectorGroupBox->setChecked(true);
 
-  legendGroupBox->setChecked(true);
- 
   legendOptionLayout = new QVBoxLayout;
   legendOptionLayout->addWidget(uniformRangeRadioButton);
   legendOptionLayout->addWidget(equalCountRadioButton);
   // legendOptionLayout->addStretch();
   legendGroupBox->setLayout(legendOptionLayout);
 
+  contourCheckBox = new QCheckBox(tr("Contours (beta)"));
+
   contourCheckBox->setChecked(false);
 
   //hide contour check box for now.
   contourCheckBox->setDisabled(true);
-  
+
+  applyConsistentColorScale = new QCheckBox(tr("Use Consistent Color Scale"));
+  applyConsistentColorScale->setToolTip("Use a consistent color scale across simulations.");
+  applyConsistentColorScale->setCheckable(true);
+  applyConsistentColorScale->setChecked(false);
+
   optionLayout = new QVBoxLayout;
   optionLayout->addWidget(vectorGroupBox);
   optionLayout->addWidget(legendGroupBox);
+  optionLayout->addWidget(applyConsistentColorScale);
   //optionLayout->addWidget(contourCheckBox);
   optionLayout->addStretch();
   

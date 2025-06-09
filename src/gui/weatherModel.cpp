@@ -110,6 +110,37 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
     refreshToolButton->setToolTip(tr("Refresh the forecast listing."));
     refreshToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 
+    startDateLabel = new QLabel(this);
+    endDateLabel = new QLabel(this);
+
+    startTime = new QDateTimeEdit(this);
+    startTime->setDisplayFormat("MM/dd/yyyy HH:00");
+    startTime->setCalendarPopup(true);
+
+    stopTime = new QDateTimeEdit(this);
+    stopTime->setDisplayFormat("MM/dd/yyyy HH:00");
+    stopTime->setCalendarPopup(true);
+
+    updatePastcastTimesAndLabels();
+
+    startDateLabel->setVisible(false);
+    endDateLabel->setVisible(false);
+    startTime->setVisible(false);
+    stopTime->setVisible(false);
+
+    QVBoxLayout *startTimeLayout = new QVBoxLayout;
+    startTimeLayout->addWidget(startDateLabel);
+    startTimeLayout->addWidget(startTime);
+
+    QVBoxLayout *stopTimeLayout = new QVBoxLayout;
+    stopTimeLayout->addWidget(endDateLabel);
+    stopTimeLayout->addWidget(stopTime);
+
+    QHBoxLayout *dateTimeLayout = new QHBoxLayout;
+    dateTimeLayout->addLayout(startTimeLayout);
+    dateTimeLayout->addLayout(stopTimeLayout);
+
+
     connect(downloadToolButton, SIGNAL(clicked()),
         this, SLOT(getData()));
     connect(refreshToolButton, SIGNAL(clicked()),
@@ -126,6 +157,8 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
         this, SLOT(setTimeLimits(int)));
     connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
         this, SLOT(setComboToolTip(int)));
+    connect(modelComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(displayArchiveDates(int)));
 
     connect(selectAllTimesButton, SIGNAL(clicked(bool)),
         listView, SLOT(selectAll(void)));
@@ -162,6 +195,7 @@ weatherModel::weatherModel(QWidget *parent) : QWidget(parent)
 
     weatherLayout = new QVBoxLayout;
     weatherLayout->addWidget(downloadGroupBox);
+    weatherLayout->addLayout(dateTimeLayout);
     weatherLayout->addWidget(forecastListLabel);
     weatherLayout->addLayout(treeLayout);
     weatherLayout->addWidget(timeGroupBox);
@@ -222,39 +256,53 @@ weatherModel::~weatherModel()
  */
 void weatherModel::loadModelComboBox()
 {
-    modelComboBox->addItem(  QString::fromStdString(ndfd.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(nam.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(rap.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(namAk.getForecastIdentifier() ) );
-    modelComboBox->addItem( QString::fromStdString(gfs.getForecastIdentifier() ) );
+  modelComboBox->addItem("=== Forecasts ===");
+  QModelIndex index = modelComboBox->model()->index(modelComboBox->count() - 1, 0);
+  modelComboBox->model()->setData(index, 0, Qt::UserRole - 1);
+
+  modelComboBox->addItem(QString::fromStdString(ndfd.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(nam.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(rap.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(namAk.getForecastIdentifier()));
+  modelComboBox->addItem(QString::fromStdString(gfs.getForecastIdentifier()));
+
 #ifdef WITH_NOMADS_SUPPORT
-    /* Nomads */
-    QString s;
-    for( int i = 0; i < nNomadsCount; i++ )
-    {
-        s = QString::fromStdString( papoNomads[i]->getForecastReadable( '-' ) );
-        s = s.toUpper();
-        modelComboBox->addItem( s );
-    }
+
+  for (int i = 0; i < nNomadsCount; i++)
+  {
+    QString s = QString::fromStdString(papoNomads[i]->getForecastReadable('-')).toUpper();
+    modelComboBox->addItem(s);
+  }
 #endif
+
+  modelComboBox->addItem("=== Pastcasts ===");
+  index = modelComboBox->model()->index(modelComboBox->count() - 1, 0);
+  modelComboBox->model()->setData(index, 0, Qt::UserRole - 1);
+  modelComboBox->addItem(QString::fromStdString(archhrr.getForecastIdentifier()));
+
+  modelComboBox->setCurrentIndex(1);
+
 }
 
 void weatherModel::setTimeLimits( int index )
 {
-    if( index == 0 )
+    if( index == 1 )
         hourSpinBox->setRange( ndfd.getStartHour(), ndfd.getEndHour() );
-    else if( index == 1 )
-        hourSpinBox->setRange( nam.getStartHour(), nam.getEndHour() );
     else if( index == 2 )
-        hourSpinBox->setRange( rap.getStartHour(), rap.getEndHour() );
+        hourSpinBox->setRange( nam.getStartHour(), nam.getEndHour() );
     else if( index == 3 )
-        hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
+        hourSpinBox->setRange( rap.getStartHour(), rap.getEndHour() );
     else if( index == 4 )
+        hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
+    else if( index == 5 )
         hourSpinBox->setRange( gfs.getStartHour(), gfs.getEndHour() );
+    else if (index == modelComboBox->count() - 1) {
+      return;
+    }
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
-        int n = index - 5;
+        int n = index - 6;
         hourSpinBox->setRange( papoNomads[n]->getStartHour(),
                                papoNomads[n]->getEndHour() );
 #endif
@@ -292,24 +340,32 @@ void weatherModel::getData()
     wxModelInitialization *model;
 
     if( inputFile.isEmpty() ) {
-    statusLabel->setText( "No input dem file specified" );
-    setCursor(Qt::ArrowCursor);
-    return;
+      statusLabel->setText( "No input dem file specified" );
+      setCursor(Qt::ArrowCursor);
+      return;
     }
-    if( modelChoice == 0 )
+    if( modelChoice == 1 )
         model = new ncepNdfdInitialization( ndfd );
-    else if( modelChoice == 1 )
-        model = new ncepNamSurfInitialization( nam );
     else if( modelChoice == 2 )
-        model = new ncepRapSurfInitialization( rap );
+        model = new ncepNamSurfInitialization( nam );
     else if( modelChoice == 3 )
-        model = new ncepNamAlaskaSurfInitialization( namAk );
+        model = new ncepRapSurfInitialization( rap );
     else if( modelChoice == 4 )
+        model = new ncepNamAlaskaSurfInitialization( namAk );
+    else if( modelChoice == 5 )
         model = new ncepGfsSurfInitialization( gfs );
+    else if ( modelChoice == modelComboBox->count() - 1) {
+      model = new GCPWxModel(archhrr);
+      progressDialog->reset();
+      progressDialog->setRange( 0, 100 );
+      model->SetProgressFunc( (GDALProgressFunc)&UpdateProgress );
+      progressDialog->show();
+      progressDialog->setCancelButtonText( "Cancel" );
+    }
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
-        model = papoNomads[modelChoice - 5];
+        model = papoNomads[modelChoice - 6];
         /*
         ** Disable progress on 32-bit windows as we segfault.
         */
@@ -327,7 +383,61 @@ void weatherModel::getData()
     }
 
     try {
+      if(modelChoice != modelComboBox->count() - 1) {
         model->fetchForecast( inputFile.toStdString(), hours );
+      }
+      else {
+
+        QDateTime startDT = LocalToUtc(startTime->dateTime());
+        QDateTime endDT = LocalToUtc(stopTime->dateTime());
+
+        if (startDT < minDateTime || endDT > maxDateTime) {
+          progressDialog->close();
+          QMessageBox::warning(this, "Out of Bounds",
+                               QString("Time range must be between %1 and %2.")
+                                   .arg(UtcToLocal(minDateTime).toString("yyyy/MM/dd HH:00"))
+                                   .arg(UtcToLocal(maxDateTime).toString("yyyy/MM/dd HH:00")));
+          setCursor(Qt::ArrowCursor);
+          return;
+        }
+        if (startDT > endDT) {
+          progressDialog->close();
+          QMessageBox::warning(this, "Invalid Range", "The start time must be before the stop time.");
+          setCursor(Qt::ArrowCursor);
+          return;
+        }
+        if (startDT.daysTo(endDT) > 14) {
+          progressDialog->close();
+          QMessageBox::warning(this, "Invalid Range", "The time range cannot exceed 14 days.");
+          setCursor(Qt::ArrowCursor);
+          return;
+        }
+
+        // Extract start date and time
+        QDate startQDate = startDT.date();
+        QTime startQTime = startDT.time();
+        int startYear = startQDate.year();
+        int startMonth = startQDate.month();
+        int startDay = startQDate.day();
+        int startHour = startQTime.hour();
+
+        // Extract end date and time
+        QDate endQDate = endDT.date();
+        QTime endQTime = endDT.time();
+        int endYear = endQDate.year();
+        int endMonth = endQDate.month();
+        int endDay = endQDate.day();
+        int endHour = endQTime.hour();
+
+        // Convert to boost dates
+        boost::gregorian::date startDate(startYear, startMonth, startDay);
+        boost::gregorian::date endDate(endYear, endMonth, endDay);
+
+        auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+        forecastModel->setDateTime(startDate, endDate, boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(endHour));
+
+        model->fetchForecast(inputFile.toStdString(), hours);
+      }
     }
     catch( badForecastFile &e ) {
         progressDialog->close();
@@ -348,7 +458,7 @@ void weatherModel::getData()
     }
 
 #if !defined(NINJA_32BIT)
-    if( modelChoice > 4 )
+    if( modelChoice > 5 )
     {
         progressDialog->setRange( 0, 100 );
         progressDialog->setValue( 100 );
@@ -363,7 +473,7 @@ void weatherModel::getData()
     setCursor(Qt::ArrowCursor);
 
     //connect with thread::finished()?
-    if( modelChoice < 5 )
+    if( modelChoice < 6 )
         delete model;
 }
 
@@ -391,6 +501,8 @@ void weatherModel::checkForModelData()
     /* gfs */
     filters << QString::fromStdString( gfs.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();
+    filters << QString::fromStdString( archhrr.getForecastIdentifier() )
+                   + "-" + QFileInfo( inputFile ).fileName();
 
 #ifdef WITH_NOMADS_SUPPORT
     int i;
@@ -501,6 +613,7 @@ void weatherModel::updateTz( QString tz )
 {
     tzString = tz;
     checkForModelData();
+    updatePastcastTimesAndLabels();
 }
 
 /**
@@ -542,11 +655,100 @@ const char * weatherModel::ExpandDescription( const char *pszReadable )
     return pszDesc;
 }
 
+void weatherModel::updatePastcastTimesAndLabels()
+{
+    minDateTime = QDateTime( QDate(2014, 7, 30), QTime(18, 0), Qt::UTC );
+    maxDateTime = QDateTime::currentDateTimeUtc();
+    // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
+    maxDateTime = maxDateTime.addSecs(-3600);
+    maxDateTime.setTime( QTime(maxDateTime.time().hour(), 59, 0) );
+
+    startDateLabel->setText( tr("Earliest PASTCAST Date: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy")) );
+//    endDateLabel->setText( tr("Latest PASTCAST Date: %1").arg(UtcToLocal(maxDateTime).toString("MM/dd/yyyy")) );
+    endDateLabel->setText( tr("") );
+
+    startTime->setDateTime( QDateTime::currentDateTimeUtc() );
+    startTime->setTime( QTime(startTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
+    startTime->setDateTime( startTime->dateTime().addSecs(-3600) );  // start at the max time, which is 1 minus the hours of the current time, not the current time
+    startTime->setDateTime( UtcToLocal(startTime->dateTime()) ); // displayed times need to be local times, NOT utc times, so this is stored as a local time, not a UTC time
+    startTime->setToolTip(tr("Minimum allowed time: %1").arg(UtcToLocal(minDateTime).toString("MM/dd/yyyy HH:00")));
+
+    stopTime->setDateTime( QDateTime::currentDateTimeUtc() );
+    stopTime->setTime( QTime(stopTime->time().hour(), 0, 0) ); // clean up the time a bit, drop all the min and seconds
+    stopTime->setDateTime( stopTime->dateTime().addSecs(-3600) );  // start at the max time, which is 1 minus the hours of the current time, not the current time
+    stopTime->setDateTime( UtcToLocal(stopTime->dateTime()) ); // displayed times need to be local times, NOT utc times, so this is stored as a local time, not a UTC time
+}
+
+QDateTime weatherModel::LocalToUtc(QDateTime qat)
+{
+    boost::local_time::time_zone_ptr timeZone;
+    timeZone = globalTimeZoneDB.time_zone_from_region(tzString.toStdString());
+
+    // use the local time constructor, from a date and duration instead of from a ptime (which is a UTC time constructor)
+    blt::local_date_time new_blt(boost::local_time::not_a_date_time);
+    new_blt = boost::local_time::local_date_time(
+        boost::gregorian::date(qat.date().year(), qat.date().month(), qat.date().day()),
+        boost::posix_time::time_duration(qat.time().hour(),qat.time().minute(),qat.time().second(),qat.time().msec()),
+        timeZone,
+        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+        );
+
+    QDateTime new_qat = QDateTime(
+        QDate(new_blt.utc_time().date().year(), new_blt.utc_time().date().month(), new_blt.utc_time().date().day()),
+        QTime(new_blt.utc_time().time_of_day().hours(), new_blt.utc_time().time_of_day().minutes()),
+        Qt::UTC
+        );
+
+    return new_qat;
+}
+
+QDateTime weatherModel::UtcToLocal(QDateTime qat)
+{
+    boost::local_time::time_zone_ptr timeZone;
+    timeZone = globalTimeZoneDB.time_zone_from_region(tzString.toStdString());
+
+    // use the UTC constructor, from a ptime instead of from a date and duration (which is a local time constructor)
+    blt::local_date_time new_blt(boost::local_time::not_a_date_time);
+    new_blt = boost::local_time::local_date_time(
+        boost::posix_time::ptime(
+            boost::gregorian::date(qat.date().year(), qat.date().month(), qat.date().day()),
+            boost::posix_time::time_duration(qat.time().hour(),qat.time().minute(),qat.time().second(),qat.time().msec())
+            ),
+        timeZone
+        );
+
+    QDateTime new_qat = QDateTime(
+        QDate(new_blt.local_time().date().year(), new_blt.local_time().date().month(), new_blt.local_time().date().day()),
+        QTime(new_blt.local_time().time_of_day().hours(), new_blt.local_time().time_of_day().minutes()),
+        Qt::UTC
+        );
+
+    return new_qat;
+}
+
 void weatherModel::setComboToolTip(int)
 {
     QString s = modelComboBox->currentText();
     s = ExpandDescription( s.toLocal8Bit().data() );
     modelComboBox->setToolTip( s );
+}
+
+void weatherModel::displayArchiveDates(int index)
+{
+  if (index == modelComboBox->count() - 1) {
+    startDateLabel->setVisible(true);
+    endDateLabel->setVisible(true);
+    startTime->setVisible(true);
+    stopTime->setVisible(true);
+    hourSpinBox->setVisible(false);
+  }
+  else {
+    startDateLabel->setVisible(false);
+    endDateLabel->setVisible(false);
+    startTime->setVisible(false);
+    stopTime->setVisible(false);
+    hourSpinBox->setVisible(true);
+  }
 }
 
 std::vector<blt::local_date_time> weatherModel::timeList() {

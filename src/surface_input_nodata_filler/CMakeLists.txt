@@ -18,9 +18,12 @@
 cmake_minimum_required(VERSION 2.6)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/ninja
-                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR})
+                    ${GDAL_SYSTEM_INCLUDE} 
+                    ${Boost_INCLUDE_DIRS} 
+                    ${GDAL_INCLUDE_DIR})
 
-set(LINK_LIBS ${GDAL_LIBRARY})
+set(LINK_LIBS ${Boost_LIBRARIES}
+              ${GDAL_LIBRARY})
 
 set(SURFACE_INPUT_NODATA_FILLER_SRC surface_input_nodata_filler.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp

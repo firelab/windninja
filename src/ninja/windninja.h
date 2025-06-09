@@ -51,6 +51,13 @@
     #endif //WIN32 && WINDNINJA_EXPORTS
 #endif //WINDNINJADLL_EXPORT
 
+#ifdef WIN32
+#define true 1
+#define false 0
+#else
+#include <stdbool.h>
+#endif
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -62,8 +69,6 @@
 WN_C_START
 
 #include <stdlib.h>
-//#include <stdint.h>
-#include <stdbool.h>
 
 //Use structs instead of void * for type checking by C compilier
 struct NinjaArmyH;

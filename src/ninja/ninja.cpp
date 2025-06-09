@@ -275,8 +275,13 @@ bool ninja::simulate_wind()
 	}
 
 #ifdef C_API
-        keepOutputGridsInMemory(true);
+    keepOutputGridsInMemory(true);
 #endif
+
+    if(input.googUseConsistentColorScale)
+    {
+        keepOutputGridsInMemory(true);
+    }
 
 	#ifdef _OPENMP
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Run number %d started with %d threads.", input.inputsRunNumber, input.numberCPUs);
@@ -1729,6 +1734,21 @@ void ninja::discretize()
         }
     }
     else if(input.stabilityFlag==1 &&
+            input.initializationMethod==WindNinjaInputs::griddedInitializationFlag) //it's a gridded-initialization run
+	{
+        stb.SetDomainAverageAlpha(input, mesh);  //sets alpha based on incident solar radiation
+        for(unsigned int k=0; k<mesh.nlayers; k++)
+        {
+            for(unsigned int i=0; i<mesh.nrows; i++)
+            {
+                for(unsigned int j=0;j<input.dem.get_nCols();j++)
+                {
+                    alphaVfield(i,j,k) = alphaH/stb.alphaField(i,j,k);
+                }
+            }
+        }
+    }
+    else if(input.stabilityFlag==1 &&
             input.initializationMethod==WindNinjaInputs::pointInitializationFlag) //it's a point-initialization run
 	{
         stb.SetPointInitializationAlpha(input, mesh);
@@ -2247,6 +2267,21 @@ void ninja::prepareOutput()
             CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(), 
                     input.dem.get_yllCorner(),
                     (longEdge * input.dem.cellSize), 
+                    -9999.0, tempCloudCover, input.dem.prjString);
+        }
+        if(input.initializationMethod == WindNinjaInputs::foamGriddedInitializationFlag){
+            //Set cloud grid
+            int longEdge = input.dem.get_nRows();
+            if(input.dem.get_nRows() < input.dem.get_nCols())
+                    longEdge = input.dem.get_nCols();
+            double tempCloudCover;
+            if(input.cloudCover < 0)
+                tempCloudCover = 0.0;
+            else
+                tempCloudCover = input.cloudCover;
+            CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
+                    input.dem.get_yllCorner(),
+                    (longEdge * input.dem.cellSize),
                     -9999.0, tempCloudCover, input.dem.prjString);
         }
 
@@ -3021,7 +3056,7 @@ void ninja::writeOutputFiles()
 	#pragma omp section
 	{
 	try{
-		if(input.googOutFlag==true)
+		if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
 
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
@@ -3047,14 +3082,12 @@ void ninja::writeOutputFiles()
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
                             //            AsciiGrid<double>::order0));
                             //
-                            //ninjaKmlFiles.setTurbulenceFlag("true");
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
                             
                             
                             colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
                                         AsciiGrid<double>::order0));
                             
-                            ninjaKmlFiles.setColMaxFlag("true");
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
@@ -3067,7 +3100,6 @@ void ninja::writeOutputFiles()
 
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                ninjaKmlFiles.setUstarFlag(input.frictionVelocityFlag);
                 ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
 
                 if(ustarTempGrid)
@@ -3086,7 +3118,6 @@ void ninja::writeOutputFiles()
 
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                ninjaKmlFiles.setDustFlag(input.dustFlag);
                 ninjaKmlFiles.setDustGrid(*dustTempGrid);
 
                 if(dustTempGrid)
@@ -3114,6 +3145,7 @@ void ninja::writeOutputFiles()
 			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
 			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
 			}
+
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
 			{
 				if(ninjaKmlFiles.makeKmz())
@@ -4690,7 +4722,13 @@ void ninja::set_googColor(std::string scheme, bool scaling)
     input.googVectorScale = scaling;
 }
 
-
+void ninja::set_googConsistentColorScale(bool flag, int numRuns)
+{
+    input.googUseConsistentColorScale = flag;
+    // don't actually want to do this if there is only a single run
+    if(numRuns <= 1)
+        input.googUseConsistentColorScale = false;
+}
 
 void ninja::set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling)
 {

@@ -169,7 +169,7 @@ class mainWindow : public QMainWindow
   void resampleData();
   void writeBlankStationFile();
   void windNinjaHelp();
-  void displayArcMap();
+  void displayArcGISPro();
   void tutorial1();
   void tutorial2();
   void tutorial3();
@@ -254,7 +254,7 @@ class mainWindow : public QMainWindow
   QAction *downloadDemAction;
   QAction *fetchDemAction;
   QAction *displayShapeFileViewAction;
-  QAction *displayShapeFileMapAction;
+  QAction *displayShapeFileProAction;
   QAction *cliInstructionsAction;
   QAction *aboutWindNinjaAction;
   QAction *aboutQtAction;
