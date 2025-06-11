@@ -304,8 +304,14 @@ void cleanAspectAfterNoDataFill(AsciiGrid<double>* aspect_grid)
     }
 }
 
-void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::string fill_type)
+void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::string fill_type, bool& isNoDataFound)
 {
+    if( !ascii_grid->checkForNoDataValues() )
+    {
+        std::cout << "no NO_DATA values found to fill in " << band_name << " band" << std::endl;
+        return;
+    }
+    isNoDataFound = true;
     std::cout << "filling NO_DATA values in " << band_name << " band..." << std::endl;
     #ifdef _OPENMP
     double startTime = omp_get_wtime();
@@ -337,8 +343,14 @@ void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::
     }
 }
 
-void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::string fill_type)
+void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::string fill_type, bool& isNoDataFound)
 {
+    if( !ascii_grid->checkForNoDataValues() )
+    {
+        std::cout << "no NO_DATA values found to fill in " << band_name << " band" << std::endl;
+        return;
+    }
+    isNoDataFound = true;
     std::cout << "filling NO_DATA values in " << band_name << " band..." << std::endl;
     #ifdef _OPENMP
     double startTime = omp_get_wtime();
@@ -372,7 +384,31 @@ void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::str
 
 void Usage()
 {
-    printf("surface_input_nodata_filler input_dem_file\n");
+    printf("\n"
+           "surface_input_nodata_filler [--fvb/fill_vegetation_bands bool]\n"
+           "                            input_dem_file\n"
+           "\n"
+           "Defaults:\n"
+           "    --fill_vegetation_bands \"false\"\n"
+           "\n"
+           "Description:\n"
+           "  the script expects a WindNinja dem as input (input_dem_file), which can either be a single band of elevation data, or a GTIFF/LCP file with the following 8 bands in this specific order:\n"
+           "    band 1: elevation (ELEV) land height above mean sea level, in meters\n"
+           "    band 2: slope (SLPD) percent change of elevation over a specific area, in degrees, 0 to 90\n"
+           "    band 3: aspect (ASP) azimuth of the sloped surfaces across a landscape, in degrees, should be 0 to 360, but is actually -1 to 359, where the NO_DATA filling replaces values of -1 and 360 with a value of 0\n"
+           "    band 4: fuel model (FBFM40) Scott & Burgan Fire Behavior Fuel Models (40), in categories\n"
+           "    band 5: canopy cover (CC) proportion of the forest floor covered by the vertical projection of the tree crowns, in percent, 0 to 100\n"
+           "    band 6: canopy height (CH) average height of the top of the vegetated canopy, in meters * 10, 0 to > 510\n"
+           "    band 7: canopy bulk density (CBD) density of available canopy fuel in a stand, in kg m-3 * 100, 0 to > 45\n"
+           "    band 8: canopy base height (CBH) average height from the ground to a forest stand's canopy bottom at which there is enough forest canopy fuel to propagate fire vertically into the canopy, in meters * 10, 0 to > 100\n"
+           "\n"
+           "  the script overwrites the input_dem_file bands with NO_DATA filled bands. The script always overwrites the 1st elevation band, but filling the other vegetation bands requires setting fill_vegetation_bands to \"true\" as filling NO_DATA values for any single band can be quite time consuming for even moderately sized dems.\n"
+           "\n"
+           "  priority is given to NO_DATA filling just the 1st elevation band, instead of all the vegetation bands, because WindNinja only requires the 1st elevation band to be NO_DATA filled to run without slowdown. Upon detecting NO_DATA values in an input dem, WindNinja normally fills the NO_DATA values of the elevation band the same way as this script, with significant slowdown. But WindNinja just replaces NO_DATA values with set generic values for the vegetation bands, which has no slowdown, and the slight discontinuities this introduces at the edges of the NO_DATA filled regions have much less effect on the stability of the flow solution for the vegetation bands than they do for the elevation band\n"
+           "\n"
+           "  the script also asks the user if they really want to overwrite the input_dem_file, and aborts without changes to the input_dem_file if they decline\n"
+           "\n"
+           );
     exit(1);
 }
 
@@ -380,14 +416,32 @@ int main(int argc, char *argv[])
 {
 
     std::string input_dem_file = "";
+    bool fill_vegetation_bands = false;
 
     // parse input arguments
     int i = 1;
     while( i < argc )
     {
-        if(EQUAL(argv[i], "--help") || EQUAL(argv[i], "--h"))
+        if( EQUAL(argv[i], "--help") || EQUAL(argv[i], "--h") || EQUAL(argv[i], "-help") || EQUAL(argv[i], "-h") )
         {
             Usage();
+        }
+        else if( EQUAL(argv[i], "--fill_vegetation_bands") || EQUAL(argv[i], "--fvb") || EQUAL(argv[i], "-fill_vegetation_bands") || EQUAL(argv[i], "-fvb") )
+        {
+            std::string fill_vegetation_bands_str = std::string( argv[++i] );
+            if( EQUAL( fill_vegetation_bands_str.c_str(), "true" ) || EQUAL( fill_vegetation_bands_str.c_str(), "t" ) || EQUAL( fill_vegetation_bands_str.c_str(), "1" ) )
+            {
+                fill_vegetation_bands = true;
+            }
+            else if ( EQUAL( fill_vegetation_bands_str.c_str(), "false" ) || EQUAL( fill_vegetation_bands_str.c_str(), "f" ) || EQUAL( fill_vegetation_bands_str.c_str(), "0" ) )
+            {
+                fill_vegetation_bands = false;
+            }
+            else
+            {
+                printf("\nInvalid argument for \"--fill_vegetation_bands\": \"%s\"\n", argv[i]);
+                Usage();
+            }
         }
         else if( input_dem_file == "" )
         {
@@ -395,7 +449,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            printf("Invalid argument: \"%s\"\n", argv[i]);
+            printf("\nInvalid argument: \"%s\"\n", argv[i]);
             Usage();
         }
         i++;
@@ -404,15 +458,39 @@ int main(int argc, char *argv[])
     int isValidFile = CPLCheckForFile((char*)input_dem_file.c_str(),NULL);
     if( isValidFile != 1 )
     {
-        printf("input_dem_file \"%s\" file does not exist!!\n", input_dem_file.c_str());
+        printf("\ninput_dem_file \"%s\" file does not exist!!\n", input_dem_file.c_str());
         Usage();
     }
 
-    std::cout << "input_dem_file = \"" << input_dem_file.c_str() << "\"" << std::endl;
+    //std::cout << "input_dem_file = \"" << input_dem_file.c_str() << "\"" << std::endl;
 
+    std::string response;
+    bool valid_response = false;
+    printf("\nThis script will overwrite the input_dem_file \"%s\" if it detects NO_DATA values in the file.\n", input_dem_file.c_str());
+    while ( valid_response == false )
+    {
+        std::cout << "   continue? (y,n)" << std::endl;
+        std::cin >> response;
+
+        if( EQUAL( response.c_str(), "n" ) || EQUAL( response.c_str(), "no" ) )
+        {
+            std::cout << "\nexiting script\n" << std::endl;
+            valid_response = true;
+            exit(0);
+        }
+        else if( EQUAL( response.c_str(), "y" ) || EQUAL( response.c_str(), "yes" ) )
+        {
+            std::cout << "\ncontinuing script\n" << std::endl;
+            valid_response = true;
+            break;
+        }
+        else
+        {
+            std::cout << "unknown response, try again" << std::endl;
+        }
+    }
 
     NinjaInitialize();  // needed for GDALAllRegister()
-
 
     Elevation dem;  // ELEV, land height above mean sea level, in meters
     AsciiGrid<double> slope;  // SLPD, percent change of elevation over a specific area, in degrees, 0 to 90
@@ -431,7 +509,9 @@ int main(int argc, char *argv[])
     // open GDALDataset, check
     poDS = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_ReadOnly);
     if(poDS == NULL)
-        throw std::runtime_error("Cannot open input_dem_file \"" + input_dem_file + "\"");
+    {
+        throw std::runtime_error("\nCannot open input_dem_file \""+input_dem_file+"\"");
+    }
 
     // get the GDAL driver type
     GDALDriverName = poDS->GetDriver()->GetDescription();
@@ -440,7 +520,7 @@ int main(int argc, char *argv[])
     // check for the prj info
     if(poDS->GetProjectionRef() == NULL)
     {
-        throw std::runtime_error("No projection available in input_dem_file \"" + input_dem_file + "\"");
+        throw std::runtime_error("\nNo projection available in input_dem_file \""+input_dem_file+"\"");
     } else
     {
         pszPrj = (char*)poDS->GetProjectionRef();
@@ -458,19 +538,28 @@ int main(int argc, char *argv[])
 
     int nBands = poDS->GetRasterCount();
 
-    importElevationData(poDS, &dem);
-    if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )
+    bool isLcp = false;
+    //if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )  // this idea doesn't work because LCP files are now GTIFFs
+    if( nBands > 1 )
     {
-        // assume if 8 or greater bands then it is a landscape GeoTIFF!
-        // but we want to reject filling if there are more than 8 bands
+        // assume if greater than 1 band then it is a landscape GeoTIFF!
+        isLcp = true;
+        // but if not enough bands, then reject the dataset
+        // but we also want to reject filling if there are more than 8 bands, need the exact specific order and count if there is vegetation in the dataset
         if( nBands < 8)
         {
-            throw std::runtime_error("Too few bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + std::to_string(nBands) + " bands");
+            throw std::runtime_error("\nToo few bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + std::to_string(nBands) + " bands");
         }
         if( nBands > 8)
         {
-            throw std::runtime_error("Too many bands in dataset for GTiff!\nexpected 8 bands, but dataset has " + std::to_string(nBands) + " bands");
+            throw std::runtime_error("\nToo many bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + std::to_string(nBands) + " bands");
         }
+    }
+
+    importElevationData(poDS, &dem);
+
+    if( isLcp == true && fill_vegetation_bands == true )
+    {
         importBandData(poDS, 2, &slope, dem);
         importBandData(poDS, 3, &aspect, dem);
         importBandData(poDS, 4, &fuelModel, dem);
@@ -481,73 +570,83 @@ int main(int argc, char *argv[])
     }
 
     if(poDS)
+    {
         GDALClose((GDALDatasetH)poDS);
+    }
 
     // fill nodata here
-    if( !dem.checkForNoDataValues() )
+    // the ascii_grid.checkForNoDataValues() check is done during the fillAsciiNoData() call, rather than doing the check manually for each band here
+
+    bool isNoDataFound = false;
+
+    fillAsciiNoData(&dem, "elevation", "double", isNoDataFound);
+    // double check that the filling was successful
+    if(GDALDriverName == "LCP")
     {
-        std::cout << "no NO_DATA values found to fill in dem file elevation band" << std::endl;
+        dem.set_noDataValue(-9999.0);
+        if( dem.checkForNoDataValues() )
+        {
+            throw std::runtime_error("NO_DATA values still found in elevation band");
+        }
     }
-    else
+
+    if( isLcp == true && fill_vegetation_bands == true )
     {
-        fillAsciiNoData(&dem, "elevation", "double");
-        // double check that the filling was successful
-        if(GDALDriverName == "LCP")
-        {
-            dem.set_noDataValue(-9999.0);
-            if( dem.checkForNoDataValues() )
-            {
-                throw std::runtime_error("NO_DATA values still found in elevation band.");
-            }
-        }
+        fillAsciiNoData(&slope, "slope", "double", isNoDataFound);
 
-        if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )
+        //fillAsciiNoData(&aspect, "aspect", "double", isNoDataFound);
+        bool found_aspect_noData = aspect.checkForNoDataValues();
+        if( !found_aspect_noData )
         {
-            fillAsciiNoData(&slope, "slope", "double");
-            //fillAsciiNoData(&aspect, "aspect", "double");
             prepAspectForNoDataFill(&aspect);
-            fillAsciiNoData(&aspect, "aspect", "angle");
+        }
+        fillAsciiNoData(&aspect, "aspect", "angle", isNoDataFound);
+        if( !found_aspect_noData )
+        {
             cleanAspectAfterNoDataFill(&aspect);
-            fillAsciiNoData(&fuelModel, "fuelModel", "categorical");
-            fillAsciiNoData(&canopyCover, "canopyCover", "double");
-            fillAsciiNoData(&canopyHeight, "canopyHeight", "double");
-            fillAsciiNoData(&canopyBulkDensity, "canopyBulkDensity", "double");
-            fillAsciiNoData(&canopyBaseHeight, "canopyBaseHeight", "double");
         }
 
-        // now edit/write/overwrite the gdal file with the ascii data
-        std::cout << "overwriting input elevation file with NO_DATA filled data" << std::endl;
+        fillAsciiNoData(&fuelModel, "fuel model", "categorical", isNoDataFound);
+        fillAsciiNoData(&canopyCover, "canopy cover", "double", isNoDataFound);
+        fillAsciiNoData(&canopyHeight, "canopy height", "double", isNoDataFound);
+        fillAsciiNoData(&canopyBulkDensity, "canopy bulk density", "double", isNoDataFound);
+        fillAsciiNoData(&canopyBaseHeight, "canopy base height", "double", isNoDataFound);
+    }
+
+    // now edit/write/overwrite the gdal file with the ascii data
+    if( isNoDataFound == true )
+    {
+        std::cout << "\noverwriting input_dem_file \"" << input_dem_file << "\" with NO_DATA filled data" << std::endl;
         #ifdef _OPENMP
         double startTime = omp_get_wtime();
         #endif
 
-        GDALDataset *poDS;
-        poDS = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_Update);
-        if(poDS == NULL)
+        GDALDataset *poDS_out;
+        poDS_out = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_Update);
+        if(poDS_out == NULL)
         {
-            throw std::runtime_error("Could not open DEM for writing");
+            throw std::runtime_error("Could not open input_dem_file \""+input_dem_file+"\" for writing");
         }
 
-        writeBandData(poDS, 1, &dem);
+        writeBandData(poDS_out, 1, &dem);
 
-        if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )
+        if( isLcp == true && fill_vegetation_bands == true )
         {
-            writeBandDataIntStyle(poDS, 2, &slope);
-            writeBandDataIntStyle(poDS, 3, &aspect);
-            writeBandData(poDS, 4, &fuelModel);
-            writeBandDataIntStyle(poDS, 5, &canopyCover);
-            writeBandDataIntStyle(poDS, 6, &canopyHeight);
-            writeBandDataIntStyle(poDS, 7, &canopyBulkDensity);
-            writeBandDataIntStyle(poDS, 8, &canopyBaseHeight);
+            writeBandDataIntStyle(poDS_out, 2, &slope);
+            writeBandDataIntStyle(poDS_out, 3, &aspect);
+            writeBandData(poDS_out, 4, &fuelModel);
+            writeBandDataIntStyle(poDS_out, 5, &canopyCover);
+            writeBandDataIntStyle(poDS_out, 6, &canopyHeight);
+            writeBandDataIntStyle(poDS_out, 7, &canopyBulkDensity);
+            writeBandDataIntStyle(poDS_out, 8, &canopyBaseHeight);
         }
 
-        GDALClose((GDALDatasetH)poDS);
+        GDALClose((GDALDatasetH)poDS_out);
         #ifdef _OPENMP
         double endTime = omp_get_wtime();
-        std::cout << "overwriting input elevation file time was " << endTime-startTime << " seconds" << std::endl;
+        std::cout << "overwriting input_dem_file time was " << endTime-startTime << " seconds" << std::endl;
         #endif
     }
-
 
     return 0;
 }
