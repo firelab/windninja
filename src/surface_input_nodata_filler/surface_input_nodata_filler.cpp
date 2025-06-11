@@ -385,10 +385,14 @@ void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::str
 void Usage()
 {
     printf("\n"
-           "surface_input_nodata_filler [--fvb/fill_vegetation_bands bool]\n"
+           "surface_input_nodata_filler [--o/output_dem_file file]\n"
+           "                            [--ifow/ignore_file_overwrite_warnings]\n"
+           "                            [--fvb/fill_vegetation_bands bool]\n"
            "                            input_dem_file\n"
            "\n"
            "Defaults:\n"
+           "    --output_dem_file \"input_dem_file\" (overwrites existing file, which is input_dem_file if not set)\n"
+           "    --ignore_file_overwrite_warnings \"false\"\n"
            "    --fill_vegetation_bands \"false\"\n"
            "\n"
            "Description:\n"
@@ -402,11 +406,11 @@ void Usage()
            "    band 7: canopy bulk density (CBD) density of available canopy fuel in a stand, in kg m-3 * 100, 0 to > 45\n"
            "    band 8: canopy base height (CBH) average height from the ground to a forest stand's canopy bottom at which there is enough forest canopy fuel to propagate fire vertically into the canopy, in meters * 10, 0 to > 100\n"
            "\n"
-           "  the script overwrites the input_dem_file bands with NO_DATA filled bands. The script always overwrites the 1st elevation band, but filling the other vegetation bands requires setting fill_vegetation_bands to \"true\" as filling NO_DATA values for any single band can be quite time consuming for even moderately sized dems.\n"
+           "  the script writes the input_dem_file to output_dem_file as a full copy, overwriting the selected bands with NO_DATA filled values, overwriting the output_dem_file if it already exists. If no output_dem_file is specified, or the output_dem_file is specified to be the input_dem_file in some way, the input_dem_file is overwritten\n"
            "\n"
-           "  priority is given to NO_DATA filling just the 1st elevation band, instead of all the vegetation bands, because WindNinja only requires the 1st elevation band to be NO_DATA filled to run without slowdown. Upon detecting NO_DATA values in an input dem, WindNinja normally fills the NO_DATA values of the elevation band the same way as this script, with significant slowdown. But WindNinja just replaces NO_DATA values with set generic values for the vegetation bands, which has no slowdown, and the slight discontinuities this introduces at the edges of the NO_DATA filled regions have much less effect on the stability of the flow solution for the vegetation bands than they do for the elevation band\n"
+           "  the script always overwrites the 1st elevation band, but filling the other vegetation bands requires setting fill_vegetation_bands to \"true\". This is made optional because filling NO_DATA values for any single band can be quite time consuming for even moderately sized dems, let alone for 8 or more bands\n"
            "\n"
-           "  the script also asks the user if they really want to overwrite the input_dem_file, and aborts without changes to the input_dem_file if they decline\n"
+           "  NO_DATA filling for the vegetation bands can be skipped because, upon detecting NO_DATA values in an input dem, WindNinja normally fills the NO_DATA values of the elevation band the same way as this script, with significant slowdown. But WindNinja just replaces NO_DATA values with set generic values for the vegetation bands, which has no slowdown, and the slight discontinuities this introduces at the edges of the NO_DATA filled regions have much less effect on the stability of the flow solution for the vegetation bands than they do for the elevation band\n"
            "\n"
            );
     exit(1);
@@ -416,6 +420,8 @@ int main(int argc, char *argv[])
 {
 
     std::string input_dem_file = "";
+    std::string output_dem_file = "";
+    bool ignore_file_overwrite_warnings = false;
     bool fill_vegetation_bands = false;
 
     // parse input arguments
@@ -426,14 +432,35 @@ int main(int argc, char *argv[])
         {
             Usage();
         }
+        else if( EQUAL(argv[i], "--output_dem_file") || EQUAL(argv[i], "--o") || EQUAL(argv[i], "-output_dem_file") || EQUAL(argv[i], "-o") )
+        {
+            output_dem_file = std::string( argv[++i] );
+        }
+        else if( EQUAL(argv[i], "--ignore_file_overwrite_warnings") || EQUAL(argv[i], "--ifow") || EQUAL(argv[i], "-ignore_file_overwrite_warnings") || EQUAL(argv[i], "-ifow") )
+        {
+            std::string input_str = std::string( argv[++i] );
+            if( EQUAL( input_str.c_str(), "true" ) || EQUAL( input_str.c_str(), "t" ) || EQUAL( input_str.c_str(), "1" ) )
+            {
+                ignore_file_overwrite_warnings = true;
+            }
+            else if ( EQUAL( input_str.c_str(), "false" ) || EQUAL( input_str.c_str(), "f" ) || EQUAL( input_str.c_str(), "0" ) )
+            {
+                ignore_file_overwrite_warnings = false;
+            }
+            else
+            {
+                printf("\nInvalid argument for \"--fill_vegetation_bands\": \"%s\"\n", argv[i]);
+                Usage();
+            }
+        }
         else if( EQUAL(argv[i], "--fill_vegetation_bands") || EQUAL(argv[i], "--fvb") || EQUAL(argv[i], "-fill_vegetation_bands") || EQUAL(argv[i], "-fvb") )
         {
-            std::string fill_vegetation_bands_str = std::string( argv[++i] );
-            if( EQUAL( fill_vegetation_bands_str.c_str(), "true" ) || EQUAL( fill_vegetation_bands_str.c_str(), "t" ) || EQUAL( fill_vegetation_bands_str.c_str(), "1" ) )
+            std::string input_str = std::string( argv[++i] );
+            if( EQUAL( input_str.c_str(), "true" ) || EQUAL( input_str.c_str(), "t" ) || EQUAL( input_str.c_str(), "1" ) )
             {
                 fill_vegetation_bands = true;
             }
-            else if ( EQUAL( fill_vegetation_bands_str.c_str(), "false" ) || EQUAL( fill_vegetation_bands_str.c_str(), "f" ) || EQUAL( fill_vegetation_bands_str.c_str(), "0" ) )
+            else if ( EQUAL( input_str.c_str(), "false" ) || EQUAL( input_str.c_str(), "f" ) || EQUAL( input_str.c_str(), "0" ) )
             {
                 fill_vegetation_bands = false;
             }
@@ -455,41 +482,51 @@ int main(int argc, char *argv[])
         i++;
     }
 
+    // check parsed inputs
     int isValidFile = CPLCheckForFile((char*)input_dem_file.c_str(),NULL);
     if( isValidFile != 1 )
     {
         printf("\ninput_dem_file \"%s\" file does not exist!!\n", input_dem_file.c_str());
         Usage();
     }
-
-    //std::cout << "input_dem_file = \"" << input_dem_file.c_str() << "\"" << std::endl;
-
-    std::string response;
-    bool valid_response = false;
-    printf("\nThis script will overwrite the input_dem_file \"%s\" if it detects NO_DATA values in the file.\n", input_dem_file.c_str());
-    while ( valid_response == false )
+    if( output_dem_file != "" )
     {
-        std::cout << "   continue? (y,n)" << std::endl;
-        std::cin >> response;
-
-        if( EQUAL( response.c_str(), "n" ) || EQUAL( response.c_str(), "no" ) )
+        std::string output_dem_path = CPLGetPath(output_dem_file.c_str());
+        isValidFile = CPLCheckForFile((char*)output_dem_path.c_str(),NULL);
+        if( isValidFile != 1 )
         {
-            std::cout << "\nexiting script\n" << std::endl;
-            valid_response = true;
-            exit(0);
-        }
-        else if( EQUAL( response.c_str(), "y" ) || EQUAL( response.c_str(), "yes" ) )
-        {
-            std::cout << "\ncontinuing script\n" << std::endl;
-            valid_response = true;
-            break;
-        }
-        else
-        {
-            std::cout << "unknown response, try again" << std::endl;
+            printf("\noutput_dem_file \"%s\" path does not exist!!\n", output_dem_file.c_str());
+            Usage();
         }
     }
 
+    // print parsed inputs
+    //std::cout << std::endl;
+    //std::cout << "input_dem_file  = \"" <<  input_dem_file.c_str() << "\"" << std::endl;
+    //std::cout << "output_dem_file = \"" << output_dem_file.c_str() << "\"" << std::endl;
+    //std::cout << "ignore_file_overwrite_warnings = " << ignore_file_overwrite_warnings << std::endl;
+    //std::cout << "fill_vegetation_bands = " << fill_vegetation_bands << std::endl;
+    //std::cout << std::endl;
+
+    // do additional settings/checks/warnings/overrides on parsed inputs
+    if( output_dem_file != "" && ignore_file_overwrite_warnings == false )
+    {
+        isValidFile = CPLCheckForFile((char*)output_dem_file.c_str(),NULL);
+        if( isValidFile == 1 )
+        {
+            printf("\n!! warning !! output_dem_file \"%s\" file already exists, it will be overwritten !!\n\n", output_dem_file.c_str());
+        }
+    }
+    if( output_dem_file == "" )
+    {
+        if( ignore_file_overwrite_warnings == false )
+        {
+            printf("\n!! warning !! output_dem_file not specified, so it will be set to input_dem_file, input_dem_file \"%s\" file will be overwritten !!\n\n", input_dem_file.c_str());
+        }
+        output_dem_file = input_dem_file;
+    }
+
+    // start the script stuff
     NinjaInitialize();  // needed for GDALAllRegister()
 
     Elevation dem;  // ELEV, land height above mean sea level, in meters
@@ -616,16 +653,37 @@ int main(int argc, char *argv[])
     // now edit/write/overwrite the gdal file with the ascii data
     if( isNoDataFound == true )
     {
-        std::cout << "\noverwriting input_dem_file \"" << input_dem_file << "\" with NO_DATA filled data" << std::endl;
         #ifdef _OPENMP
         double startTime = omp_get_wtime();
         #endif
 
+        // if the output file already exists, delete it, and replace it with a copy of the input file for editing
+        int nRet;
+        isValidFile = CPLCheckForFile((char*)output_dem_file.c_str(),NULL);
+        if( isValidFile == 1 )
+        {
+            // CPLCopyFile() is NOT safe for copying to the same file location,
+            // but currently we CANNOT detect whether two paths/filenames are the same if they are specified with different styles (.. and . stuff vs absolute path),
+            // so actually need to make the copy from an intermediate copy of the input file, before deleting the pre-existing output file,
+            // just in case the output file is the same as the input file
+            std::string output_dem_path = CPLGetPath(output_dem_file.c_str());
+            std::string tmp_dem_file = CPLFormFilename(output_dem_path.c_str(), "tmp", "tif");
+            std::cout << "\noverwriting output_dem_file \"" << output_dem_file << "\" with NO_DATA filled data" << std::endl;
+            nRet = CPLCopyFile(tmp_dem_file.c_str(), input_dem_file.c_str());
+            VSIUnlink( output_dem_file.c_str() );
+            nRet = CPLCopyFile(output_dem_file.c_str(), tmp_dem_file.c_str());
+            VSIUnlink( tmp_dem_file.c_str() );
+        } else
+        {
+            std::cout << "\nwriting output_dem_file \"" << output_dem_file << "\" with NO_DATA filled data" << std::endl;
+            nRet = CPLCopyFile(output_dem_file.c_str(), input_dem_file.c_str());
+        }
+
         GDALDataset *poDS_out;
-        poDS_out = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_Update);
+        poDS_out = (GDALDataset*)GDALOpen(output_dem_file.c_str(), GA_Update);
         if(poDS_out == NULL)
         {
-            throw std::runtime_error("Could not open input_dem_file \""+input_dem_file+"\" for writing");
+            throw std::runtime_error("Could not open output_dem_file \""+output_dem_file+"\" for writing");
         }
 
         writeBandData(poDS_out, 1, &dem);
@@ -644,7 +702,7 @@ int main(int argc, char *argv[])
         GDALClose((GDALDatasetH)poDS_out);
         #ifdef _OPENMP
         double endTime = omp_get_wtime();
-        std::cout << "overwriting input_dem_file time was " << endTime-startTime << " seconds" << std::endl;
+        std::cout << "writing output_dem_file time was " << endTime-startTime << " seconds" << std::endl;
         #endif
     }
 
