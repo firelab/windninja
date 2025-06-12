@@ -385,14 +385,14 @@ void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::str
 void Usage()
 {
     printf("\n"
-           "surface_input_nodata_filler [--o/output_dem_file file]\n"
-           "                            [--ifow/ignore_file_overwrite_warnings]\n"
+           "surface_input_nodata_filler [--ow/overwrite_file]\n"
+           "                            [--o/output_dem_file file]\n"
            "                            [--fvb/fill_vegetation_bands bool]\n"
            "                            input_dem_file\n"
            "\n"
            "Defaults:\n"
-           "    --output_dem_file \"input_dem_file\" (overwrites existing file, which is input_dem_file if not set)\n"
-           "    --ignore_file_overwrite_warnings \"false\"\n"
+           "    --overwrite_file \"false\" (if output_dem_file already exists, or is specified as input_dem_file (the default when no output_dem_file is specified), allows overwriting)\n"
+           "    --output_dem_file \"input_dem_file\" (requires --overwrite_file=true to allow overwriting an existing file)\n"
            "    --fill_vegetation_bands \"false\"\n"
            "\n"
            "Description:\n"
@@ -406,7 +406,7 @@ void Usage()
            "    band 7: canopy bulk density (CBD) density of available canopy fuel in a stand, in kg m-3 * 100, 0 to > 45\n"
            "    band 8: canopy base height (CBH) average height from the ground to a forest stand's canopy bottom at which there is enough forest canopy fuel to propagate fire vertically into the canopy, in meters * 10, 0 to > 100\n"
            "\n"
-           "  the script writes the input_dem_file to output_dem_file as a full copy, overwriting the selected bands with NO_DATA filled values, overwriting the output_dem_file if it already exists. If no output_dem_file is specified, or the output_dem_file is specified to be the input_dem_file in some way, the input_dem_file is overwritten\n"
+           "  the script writes the input_dem_file to output_dem_file as a full copy, overwriting the selected bands with NO_DATA filled values. If the output_dem_file already exists, overwrite_file must be set to \"true\" or the script will not continue. If no output_dem_file is specified, or the output_dem_file is specified to be the input_dem_file in some way, overwrite_file must be set to \"true\" or the script will not continue, because the input_dem_file would then be overwritten\n"
            "\n"
            "  the script always overwrites the 1st elevation band, but filling the other vegetation bands requires setting fill_vegetation_bands to \"true\". This is made optional because filling NO_DATA values for any single band can be quite time consuming for even moderately sized dems, let alone for 8 or more bands\n"
            "\n"
@@ -421,7 +421,7 @@ int main(int argc, char *argv[])
 
     std::string input_dem_file = "";
     std::string output_dem_file = "";
-    bool ignore_file_overwrite_warnings = false;
+    bool overwrite_file = false;
     bool fill_vegetation_bands = false;
 
     // parse input arguments
@@ -436,20 +436,20 @@ int main(int argc, char *argv[])
         {
             output_dem_file = std::string( argv[++i] );
         }
-        else if( EQUAL(argv[i], "--ignore_file_overwrite_warnings") || EQUAL(argv[i], "--ifow") || EQUAL(argv[i], "-ignore_file_overwrite_warnings") || EQUAL(argv[i], "-ifow") )
+        else if( EQUAL(argv[i], "--overwrite_file") || EQUAL(argv[i], "--ow") || EQUAL(argv[i], "-overwrite_file") || EQUAL(argv[i], "-ow") )
         {
             std::string input_str = std::string( argv[++i] );
             if( EQUAL( input_str.c_str(), "true" ) || EQUAL( input_str.c_str(), "t" ) || EQUAL( input_str.c_str(), "1" ) )
             {
-                ignore_file_overwrite_warnings = true;
+                overwrite_file = true;
             }
             else if ( EQUAL( input_str.c_str(), "false" ) || EQUAL( input_str.c_str(), "f" ) || EQUAL( input_str.c_str(), "0" ) )
             {
-                ignore_file_overwrite_warnings = false;
+                overwrite_file = false;
             }
             else
             {
-                printf("\nInvalid argument for \"--fill_vegetation_bands\": \"%s\"\n", argv[i]);
+                printf("\nInvalid argument for \"--overwrite_file\": \"%s\"\n", argv[i]);
                 Usage();
             }
         }
@@ -498,33 +498,47 @@ int main(int argc, char *argv[])
             printf("\noutput_dem_file \"%s\" path does not exist!!\n", output_dem_file.c_str());
             Usage();
         }
+        if( EQUAL( output_dem_path.c_str(), "/" ) )
+        {
+            printf("\noutput_dem_file \"%s\" path \"/\" is ROOT, did you mean to specify \"./\" ??\n", output_dem_file.c_str());
+            Usage();
+        }
+        if( EQUAL( output_dem_file.c_str(), "./" ) )
+        {
+            printf("\noutput_dem_file \"%s\" is NOT a valid filename!!\n", output_dem_file.c_str());
+            Usage();
+        }
     }
 
     // print parsed inputs
     //std::cout << std::endl;
     //std::cout << "input_dem_file  = \"" <<  input_dem_file.c_str() << "\"" << std::endl;
     //std::cout << "output_dem_file = \"" << output_dem_file.c_str() << "\"" << std::endl;
-    //std::cout << "ignore_file_overwrite_warnings = " << ignore_file_overwrite_warnings << std::endl;
+    //std::cout << "overwrite_file = " << overwrite_file << std::endl;
     //std::cout << "fill_vegetation_bands = " << fill_vegetation_bands << std::endl;
     //std::cout << std::endl;
 
     // do additional settings/checks/warnings/overrides on parsed inputs
-    if( output_dem_file != "" && ignore_file_overwrite_warnings == false )
+    if( output_dem_file != "" && overwrite_file == false )
     {
         isValidFile = CPLCheckForFile((char*)output_dem_file.c_str(),NULL);
         if( isValidFile == 1 )
         {
-            printf("\n!! warning !! output_dem_file \"%s\" file already exists, it will be overwritten !!\n\n", output_dem_file.c_str());
+            printf("\n!! output_dem_file \"%s\" file already exists !!\n   if you still want to run the script with these inputs, set --overwrite_file to \"true\"\n\n", output_dem_file.c_str());
+            Usage();
         }
     }
     if( output_dem_file == "" )
     {
-        if( ignore_file_overwrite_warnings == false )
+        if( overwrite_file == false )
         {
-            printf("\n!! warning !! output_dem_file not specified, so it will be set to input_dem_file, input_dem_file \"%s\" file will be overwritten !!\n\n", input_dem_file.c_str());
+            printf("\n!! output_dem_file not specified, so it would be set to input_dem_file, input_dem_file \"%s\" file would be overwritten !!\n   if you still want to run the script with these inputs, set --overwrite_file to \"true\"\n\n", input_dem_file.c_str());
+            Usage();
         }
         output_dem_file = input_dem_file;
     }
+
+    std::cout << std::endl;  // just cleaner with an extra line break in the command line output right here
 
     // start the script stuff
     NinjaInitialize();  // needed for GDALAllRegister()
