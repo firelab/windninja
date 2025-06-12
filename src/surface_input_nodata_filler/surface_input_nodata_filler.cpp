@@ -416,6 +416,15 @@ void Usage()
     exit(1);
 }
 
+void checkArgs( int argIdx, int nSubArgs, char* arg, int argc )
+{
+    if( (argIdx+nSubArgs) >= argc )
+    {
+        std::cout << "\nnot enough args for input \"" << arg << "\", input \"" << arg << "\" requires " << nSubArgs << " args" << std::endl;
+        Usage();
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -434,10 +443,12 @@ int main(int argc, char *argv[])
         }
         else if( EQUAL(argv[i], "--output_dem_file") || EQUAL(argv[i], "--o") || EQUAL(argv[i], "-output_dem_file") || EQUAL(argv[i], "-o") )
         {
+            checkArgs( i, 1, argv[i], argc );
             output_dem_file = std::string( argv[++i] );
         }
         else if( EQUAL(argv[i], "--overwrite_file") || EQUAL(argv[i], "--ow") || EQUAL(argv[i], "-overwrite_file") || EQUAL(argv[i], "-ow") )
         {
+            checkArgs( i, 1, argv[i], argc );
             std::string input_str = std::string( argv[++i] );
             if( EQUAL( input_str.c_str(), "true" ) || EQUAL( input_str.c_str(), "t" ) || EQUAL( input_str.c_str(), "1" ) )
             {
@@ -455,6 +466,7 @@ int main(int argc, char *argv[])
         }
         else if( EQUAL(argv[i], "--fill_vegetation_bands") || EQUAL(argv[i], "--fvb") || EQUAL(argv[i], "-fill_vegetation_bands") || EQUAL(argv[i], "-fvb") )
         {
+            checkArgs( i, 1, argv[i], argc );
             std::string input_str = std::string( argv[++i] );
             if( EQUAL( input_str.c_str(), "true" ) || EQUAL( input_str.c_str(), "t" ) || EQUAL( input_str.c_str(), "1" ) )
             {
