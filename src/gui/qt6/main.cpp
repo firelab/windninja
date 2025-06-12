@@ -17,6 +17,10 @@ int main(int argc, char *argv[]) {
   // Immediately pull timezone data
   QTimer::singleShot(0, &w, &MainWindow::timeZoneDataRequest);
 
+  QIcon icon(":/wn-icon.png");
+  a.setWindowIcon(icon);
+  w.setWindowIcon(icon);
+
   w.show();
   return a.exec();
 }
