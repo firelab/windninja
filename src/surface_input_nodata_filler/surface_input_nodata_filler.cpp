@@ -391,8 +391,8 @@ void Usage()
            "                            input_dem_file\n"
            "\n"
            "Defaults:\n"
-           "    --overwrite_file=false\n"
-           "    --output_dem_file=input_dem_file_filled\n"
+           "    --overwrite_file=false (when set to false, if an output_dem_file already exists, outputs to <output_dem_file>_filled.tif)\n"
+           "    --output_dem_file=<input_dem_file>_filled.tif when overwrite_file set to false (default), <input_dem_file>.tif when overwrite_file set to true\n"
            "    --fill_vegetation_bands=false\n"
            "\n"
            "Description:\n"
@@ -410,7 +410,11 @@ void Usage()
            "            fuel to propagate fire vertically into the canopy, in meters * 10, 0 to > 100\n"
            "\n"
            "  This utility writes the input_dem_file to output_dem_file, filling any cells with NO_DATA values in the specified bands.\n"
-           "  Set overwrite_file to \"true\" to overwrite the original surface input file instead of writing a new output file.\n" 
+           "\n"
+           "  Setting overwrite_file to \"true\" when no output_dem_file is set overwrites the original surface input file.\n"
+           "  Setting overwrite_file to \"true\" when output_dem_file is set overwrites output_dem_file, even if output_dem_file is set to input_dem_file.\n"
+           "  If a pre-existing output_dem_file is present and overwrite_file is set to \"false\", the output is written to \"<output_dem_file>_filled.tif\",\n"
+           "  which would technically be \"<input_dem_file>_filled.tif\" if output_dem_file is not set or is technically set to the same value as input_dem_file.\n"
            "\n"
            "  This utility always fills the 1st band of a Landscape file, but filling the other bands requires setting fill_vegetation_bands to \"true\".\n"
            "  This is optional because the method used here to fill the NO_DATA values is time consuming and NO_DATA values in the the vegetation bands\n"
@@ -535,23 +539,37 @@ int main(int argc, char *argv[])
     //std::cout << std::endl;
 
     // do additional settings/checks/warnings/overrides on parsed inputs
-    if( output_dem_file != "" && overwrite_file == false )
+    if( output_dem_file != "" )
     {
         isValidFile = CPLCheckForFile((char*)output_dem_file.c_str(),NULL);
         if( isValidFile == 1 )
         {
-            printf("\n!! output_dem_file \"%s\" file already exists !!\n   if you still want to run the script with these inputs, set --overwrite_file to \"true\"\n\n", output_dem_file.c_str());
-            Usage();
+            if( overwrite_file == false )
+            {
+                std::string output_dem_path = CPLGetPath(output_dem_file.c_str());
+                std::string output_dem_basename = CPLGetBasename(output_dem_file.c_str());
+                output_dem_file = CPLFormFilename(output_dem_path.c_str(), CPLSPrintf("%s_filled", output_dem_basename.c_str()), "tif");
+                printf("\noutput_dem_file file already exists, with overwrite_file set to \"false\", so writing to \"%s\" file\n", output_dem_file.c_str());
+            } else
+            {
+                printf("\noutput_dem_file file already exists, with overwrite_file set to \"true\", so will overwrite output_dem_file \"%s\" file\n", output_dem_file.c_str());
+            }
         }
+        // else, output_dem_file doesn't exist, no complications, will just simply write to output_dem_file
     }
     if( output_dem_file == "" )
     {
         if( overwrite_file == false )
         {
-            printf("\n!! output_dem_file not specified, so it would be set to input_dem_file, input_dem_file \"%s\" file would be overwritten !!\n   if you still want to run the script with these inputs, set --overwrite_file to \"true\"\n\n", input_dem_file.c_str());
-            Usage();
+            std::string input_dem_path = CPLGetPath(input_dem_file.c_str());
+            std::string input_dem_basename = CPLGetBasename(input_dem_file.c_str());
+            output_dem_file = CPLFormFilename(input_dem_path.c_str(), CPLSPrintf("%s_filled", input_dem_basename.c_str()), "tif");
+            printf("\noutput_dem_file not specified, with overwrite_file set to \"false\", so writing to \"%s\" file\n", output_dem_file.c_str());
+        } else
+        {
+            output_dem_file = input_dem_file;
+            printf("\noutput_dem_file not specified, with overwrite_file set to \"true\", so overwriting input_dem_file \"%s\"\n", input_dem_file.c_str());
         }
-        output_dem_file = input_dem_file;
     }
 
     std::cout << std::endl;  // just cleaner with an extra line break in the command line output right here
