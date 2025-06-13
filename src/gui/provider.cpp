@@ -1,6 +1,6 @@
 #include "provider.h"
 #include "modeldata.h"
-#include "../../ninja/windninja.h"
+#include "../ninja/windninja.h"
 
 #include <iostream>
 #include <list>
