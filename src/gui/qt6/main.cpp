@@ -9,6 +9,14 @@
 
 int main(int argc, char *argv[]) {
 
+  char ** papszOptions = NULL;
+  NinjaErr err = 0;
+  err = NinjaInit(papszOptions);
+  if(err != NINJA_SUCCESS)
+  {
+    printf("NinjaInit: err = %d\n", err);
+  }
+
   QApplication a(argc, argv);
   MainWindow w;
 

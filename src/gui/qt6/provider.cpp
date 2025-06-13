@@ -24,6 +24,7 @@ Provider::Provider() {
 }
 
 int Provider::domain_average_exec(DomainAverageWind& input) {
+
   std::vector<double> speedVector = input.getSpeedList();
   const double* speedList = speedVector.data();
   std::vector<double> directionVector = input.getDirectionList();
@@ -42,30 +43,13 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
   unsigned int numNinjas = input.getNumNinjas();
   const char* outputPath = input.getOutputPath().c_str();
 
-
-  /*
-   * Setting up the simulation
-   */
-  err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
-  ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
-
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
-
   /*
    * Create the army
    */
+  ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
   if( NULL == ninjaArmy )
   {
     printf("NinjaCreateArmy: ninjaArmy = NULL\n");
-  }
-
-  err = NinjaInit(papszOptions); //must be called for any simulation
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
   }
 
   /*
@@ -212,19 +196,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
 }
 
 int Provider::point_exec(PointInitialization& input) {
-  /*
-   * Setting up the simulation
-   */
 
-  //initialize global singletons and environments (GDAL_DATA, etc.)
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
-
-  /*
-   * Create the army
-   */
   vector<int> yearVector = input.getYear();
    int* year = yearVector.data();
   vector<int> monthVector = input.getMonth();
@@ -252,18 +224,14 @@ int Provider::point_exec(PointInitialization& input) {
   unsigned int numNinjas = input.getNumNinjas();
   const char * outputPath =  input.getOutputPath().c_str();
 
-
+  /*
+   * Create the army
+   */
   ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, numNinjas, osTimeZone, station_path, demFile, matchPointFlag, momentumFlag, papszOptions);
 
   if( NULL == ninjaArmy )
   {
     printf("NinjaCreateArmy: ninjaArmy = NULL\n");
-  }
-
-  err = NinjaInit(papszOptions); //must be called for any simulation
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
   }
 
   /*
@@ -376,15 +344,6 @@ int Provider::point_exec(PointInitialization& input) {
 }
 
 int Provider::wxmodel_exec(WeatherModel& input) {
-  /*
-   * Setting up the simulation
-   */
-
-  err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
 
   /*
    * Set up Weather Model Initialization run
@@ -407,22 +366,16 @@ int Provider::wxmodel_exec(WeatherModel& input) {
   /* inputs that can vary among ninjas in an army */
   //const char * speedUnits = input.get;
 
-  /*
-   * Create the army
-   */
   const char * forecast = input.getForecast();
   const char * osTimeZone = input.getOSTimeZone();
 
+  /*
+   * Create the army
+   */
   ninjaArmy = NinjaMakeWeatherModelArmy(forecast, osTimeZone, momentumFlag, papszOptions);
   if( NULL == ninjaArmy )
   {
     printf("NinjaCreateArmy: ninjaArmy = NULL\n");
-  }
-
-  err = NinjaInit(papszOptions); //must be called for any simulation
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
   }
 
   /*
@@ -747,11 +700,7 @@ int Provider::fetchDEMBoundingBox(const string demFileOutPut, const string fetch
   NinjaArmyH* ninjaArmy = NULL;
   char ** papszOptions = NULL;
   NinjaErr err = 0;
-  err = NinjaInit(papszOptions); // must be called for fetching and simulations
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
+
   /*
    * Testing fetching from a DEM bounding box
    */
@@ -776,11 +725,7 @@ int Provider::fetchForecast(const string wx_model_type, int numNinjas, const str
   NinjaArmyH* ninjaArmy = NULL;
   char ** papszOptions = NULL;
   NinjaErr err = 0;
-  err = NinjaInit(papszOptions); // must be called for fetching and simulations
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
+
   /*
    * Testing fetching for a Forecast file (wx_model_type are the names listed in the weather station download in WindNinja)
    */
@@ -814,11 +759,6 @@ int Provider::fetchStationData(int year, int month, int day, int hour, int minut
   NinjaArmyH* ninjaArmy = NULL;
   char ** papszOptions = NULL;
   NinjaErr err = 0;
-  err = NinjaInit(papszOptions); // must be called for fetching and simulations
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
 
   /*
    * Testing fetching station data from a geotiff file.
@@ -850,12 +790,6 @@ int Provider::fetchFromDEMPoint (double adfPoints[2], double adfBuff[2], const s
   NinjaArmyH* ninjaArmy = NULL;
   char ** papszOptions = NULL;
   NinjaErr err = 0;
-  err = NinjaInit(papszOptions); // must be called for fetching and simulations
-  if(err != NINJA_SUCCESS)
-  {
-    printf("NinjaInit: err = %d\n", err);
-  }
-
 
   /*
    * Testing fetching from a DEM point
