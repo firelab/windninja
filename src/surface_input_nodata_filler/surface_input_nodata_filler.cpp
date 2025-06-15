@@ -519,14 +519,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    // print parsed inputs
-    //std::cout << std::endl;
-    //std::cout << "input_dem_file  = \"" <<  input_dem_file.c_str() << "\"" << std::endl;
-    //std::cout << "output_dem_file = \"" << output_dem_file.c_str() << "\"" << std::endl;
-    //std::cout << "overwrite_file = " << overwrite_file << std::endl;
-    //std::cout << "fill_vegetation_bands = " << fill_vegetation_bands << std::endl;
-    //std::cout << std::endl;
-
     // do additional settings/checks/warnings/overrides on parsed inputs
     if( output_dem_file != "" )
     {
@@ -613,7 +605,6 @@ int main(int argc, char *argv[])
     int nBands = poDS->GetRasterCount();
 
     bool isLcp = false;
-    //if( GDALDriverName == "LCP" || GDALDriverName == "GTiff" )  // this idea doesn't work because LCP files are now GTIFFs
     if( nBands > 1 )
     {
         // assume if greater than 1 band then it is a landscape GeoTIFF!
