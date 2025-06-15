@@ -37,7 +37,6 @@
 #include <omp.h>
 #endif
 
-
 void importElevationData(GDALDataset* poDS, Elevation* dem)
 {
     int nC, nR;
@@ -137,13 +136,11 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_gri
     ascii_grid->set_headerData(nC, nR, xL, yL, cS, nDV, nDV, prjStr);
 
     // read in the data for the specific band into the ascii grid, one scanline at a time
-    //double* panScanline = new double[nC];
     int* panScanline = new int[nC];
 
     for( int i = nR - 1; i >= 0; i-- )
     {
-        //poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Float64, 0, 0);
-        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Int32, 0, 0);
+        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Float64, 0, 0);
         for( int j = 0; j < nC; j++ )
         {
             ascii_grid->set_cellValue(nR - 1 - i, j, panScanline[j]);
