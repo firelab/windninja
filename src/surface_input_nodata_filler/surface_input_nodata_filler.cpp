@@ -410,15 +410,8 @@ void Usage()
            "            fuel to propagate fire vertically into the canopy, in meters * 10, 0 to > 100\n"
            "\n"
            "  This utility writes the input_dem_file to output_dem_file, filling any cells with NO_DATA values in the specified bands.\n"
-           "\n"
-           "  Setting overwrite_file to \"true\" when no output_dem_file is set overwrites the original surface input file.\n"
-           "  Setting overwrite_file to \"true\" when output_dem_file is set overwrites output_dem_file, even if output_dem_file is set to input_dem_file.\n"
-           "  If a pre-existing output_dem_file is present and overwrite_file is set to \"false\", the output is written to \"<output_dem_file>_filled.tif\",\n"
-           "  which would technically be \"<input_dem_file>_filled.tif\" if output_dem_file is not set or is technically set to the same value as input_dem_file.\n"
-           "\n"
-           "  This utility always fills the 1st band of a Landscape file, but filling the other bands requires setting fill_vegetation_bands to \"true\".\n"
-           "  This is optional because the method used here to fill the NO_DATA values is time consuming and NO_DATA values in the the vegetation bands\n"
-           "  are automatically filled during initialization of a WindNinja simulation.\n"
+           "  The first band of a Landscape file will always be filled, but filling other bands requires setting fill_vegetation_bands to \"true.\"\n"
+           "  Filling the non-DEM bands is optional because the NO_DATA values in these bands are automatically filled during initialization of a WindNinja simulation.\n"
            "\n"
            );
     exit(1);
