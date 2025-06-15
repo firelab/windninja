@@ -159,7 +159,6 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid, 
     int hasNdv;
 
     // get global header info
-    // all these have the same value between poDS, dem, and all the other bands
     nC = poDS->GetRasterXSize();
     nR = poDS->GetRasterYSize();
     cS = dem.get_cellSize();
@@ -233,7 +232,7 @@ void writeBandDataIntStyle(GDALDataset* poDS, int bandNum, AsciiGrid<double>* as
         {
             padfScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
         }
-        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Int32, 0, 0);
+        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
     }
     poBand->SetNoDataValue(ascii_grid->get_NoDataValue());
     delete [] padfScanline;
