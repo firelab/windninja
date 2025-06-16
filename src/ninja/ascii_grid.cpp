@@ -988,6 +988,82 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
 }
 
 template<class T>
+bool AsciiGrid<T>::fillNoDataValuesAngle( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
+{
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            if(get_cellValue(i,j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
+                numNoDataValues++;
+        }
+    }
+    if(numNoDataValues == 0)
+        return true;
+    else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
+        throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
+
+    double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
+    double sinSum, cosSum;
+    int nValues;
+    int numPasses = 0;
+    double noDataValue = get_noDataValue();
+    T val;
+
+    if(percentNoData > maxPercentNoData)
+    {
+        return false;
+    }else{
+        do{
+            numNoDataValues = 0;
+            numPasses++;
+            for(int i = 0;i < data.get_numRows();i++)
+            {
+                for(int j = 0;j < data.get_numCols();j++)
+                {
+                    if(get_cellValue(i, j) == noDataValue || cplIsNan(get_cellValue(i,j)))
+                    {
+                        sinSum = 0.0;
+                        cosSum = 0.0;
+                        nValues = 0;
+                        for(int ii = i-1; ii <= i+1; ii++)
+                        {
+                            for(int jj = j-1; jj <= j+1; jj++)
+                            {
+                                if(ii < 0 || ii >= get_nRows() ||
+                                    jj < 0 || jj >= get_nCols())
+                                    continue;
+
+                                if(get_cellValue(ii, jj) == noDataValue || cplIsNan(get_cellValue(ii, jj)))
+                                    continue;
+
+                                sinSum = sinSum + sin(get_cellValue(ii, jj)*pi/180.0);
+                                cosSum = cosSum + cos(get_cellValue(ii, jj)*pi/180.0);
+                                nValues++;
+                            }
+                        }
+                        if(nValues > 0)
+                        {
+                            val = atan2(sinSum/nValues,cosSum/nValues)*180.0/pi;
+                            if(val < 0.0)
+                            {
+                                val = val + 360.0;
+                            }
+                            set_cellValue(i, j, val);
+                        } else
+                        {
+                            numNoDataValues++;
+                        }
+                    }
+                }
+            }
+        }while(numNoDataValues > 0 && numPasses <= maxNumPasses);
+    }
+    return true;
+}
+
+template<class T>
 bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
 {
     int numNoDataValues = 0;

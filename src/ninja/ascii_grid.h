@@ -150,6 +150,7 @@ public:
 
     double get_meanValue() const;
     bool fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
+    bool fillNoDataValuesAngle( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
     bool fillNoDataValuesCategorical( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
 
     bool find_firstValue(T m, T buffer, int *k, int *l);
