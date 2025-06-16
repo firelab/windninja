@@ -7,7 +7,16 @@
 #include "controller.h"
 
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
+
 int main(int argc, char *argv[]) {
+
+  int result;
+  #ifdef _OPENMP
+  omp_init_lock (&netCDF_lock);
+  #endif
 
   char ** papszOptions = NULL;
   NinjaErr err = 0;
@@ -15,6 +24,9 @@ int main(int argc, char *argv[]) {
   if(err != NINJA_SUCCESS)
   {
     printf("NinjaInit: err = %d\n", err);
+    #ifdef _OPENMP
+    omp_destroy_lock (&netCDF_lock);
+    #endif
   }
 
   QApplication a(argc, argv);
@@ -26,5 +38,11 @@ int main(int argc, char *argv[]) {
   QTimer::singleShot(0, &w, &MainWindow::timeZoneDataRequest);
 
   w.show();
-  return a.exec();
+  result = a.exec();
+
+  #ifdef _OPENMP
+  omp_destroy_lock (&netCDF_lock);
+  #endif
+
+  return result;
 }
