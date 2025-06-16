@@ -252,7 +252,10 @@ int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* unit
     else if (strcmp(fetchType, "relief") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
     }
-    else{
+    else if (strcmp(fetchType, "lcp") == 0){
+        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
+    }
+    if (fetcher == NULL) {
         delete fetcher;
         return NINJA_E_INVALID;
     }
@@ -290,8 +293,12 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         else if (strcmp(fetchType, "relief") == 0){
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
         }
+        else if (strcmp(fetchType, "lcp") == 0){
+            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
+        }
         if (fetcher == NULL) {
-            return NINJA_E_INVALID;  
+            delete fetcher;
+            return NINJA_E_INVALID;
         }
         
         double northBound = boundsBox[0];
@@ -299,13 +306,13 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         double southBound = boundsBox[2];
         double westBound = boundsBox[3];
         int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
-        delete fetcher;
         if (result != 0)
         {
+            delete fetcher;
             return NINJA_E_INVALID;
         }
+        delete fetcher;
         return NINJA_SUCCESS;
-        
 }
 
 /**

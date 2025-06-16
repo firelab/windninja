@@ -73,18 +73,21 @@ void Controller::onTimeZoneDetailsRequest() {
 void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString outputFile) {
 
   // Get correct fetch type
-  // TODO: set correct string for landscape files in else condition
   int fetchIndex = view->getUi()->fetchType->currentIndex();
   string fetchType;
   if (fetchIndex == 0) {
     fetchType = "srtm";
-  } else if (fetchIndex	== 1) {
+  } else if (fetchIndex == 1) {
     fetchType = "gmted";
+  } else if (fetchIndex == 2) {
+    printf("downloading lcp file\n");
+    fetchType = "lcp";
   } else {
-    fetchType = "land";
+    printf("Controller::onGetDEMrequest(), fetchIndex %d is outside of range, using fetchType \"lcp\"\n", fetchIndex);
+    fetchType = "lcp";
   }
 
-  double resolution = view->getUi()->meshResValue->value();
+  double resolution = 30.0;
 
   provider.fetchDEMBoundingBox(outputFile.toStdString(), fetchType, resolution, boundsBox.data());
   view->getUi()->elevFilePath->setText(outputFile);
