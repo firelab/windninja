@@ -127,12 +127,6 @@ ELSE(USE_VCPKG)
     endif(WIN32)
 endif(USE_VCPKG)
 
-option(NINJA_QT6GUI "build Qt6 experimental GUI" ON)
-if(NINJA_QT6GUI)
-    message("building qt6 gui")
-    add_subdirectory(src/gui)
-endif(NINJA_QT6GUI)
-
 if(USE_VCPKG)
     set(GDAL_LIBRARY GDAL::GDAL)
     set(NETCDF_LIBRARIES_C netCDF::netcdf)
@@ -158,20 +152,6 @@ ENDIF(USE_VCPKG)
 
 # Ninja executables
 option(NINJA_QTGUI "Build Qt GUI" OFF)
-if(NINJA_QTGUI)
-    set(QT_USE_QTMAIN_LIBRARY 1)
-    include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtNetwork REQUIRED)
-    include(${QT_USE_FILE})
-    add_definitions(-DNINJA_GUI)
-    if(WIN32)
-        option(ENABLE_CONSOLE "Show the console for CLI/GUI runs" OFF)
-        option(ENABLE_FIDDLER "Use Fiddler2 proxy to monitor web traffic" OFF)
-    endif(WIN32)
-    if(ENABLE_FIDDLER)
-        add_definitions(-DENABLE_FIDDLER)
-    endif(ENABLE_FIDDLER)
-endif(NINJA_QTGUI)
 
 option(NINJA_CLI "Build Command Line Interface" ON)
 
