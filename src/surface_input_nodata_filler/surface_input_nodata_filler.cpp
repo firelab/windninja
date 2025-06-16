@@ -37,6 +37,13 @@
 #include <omp.h>
 #endif
 
+inline void check(CPLErr res) {
+    if (res != CE_None) {
+        CPLErrorNum err = CPLGetLastErrorNo();
+        CPLError(res, err, "GDAL error: %d", err);
+    }
+}
+
 void importElevationData(GDALDataset* poDS, Elevation* dem)
 {
     int nC, nR;
@@ -93,7 +100,7 @@ void importElevationData(GDALDataset* poDS, Elevation* dem)
 
     for( int i = nR - 1; i >= 0; i-- )
     {
-        poBand->RasterIO(GF_Read, 0, i, nC, 1, padfScanline, nC, 1, GDT_Float64, 0, 0);
+        check(poBand->RasterIO(GF_Read, 0, i, nC, 1, padfScanline, nC, 1, GDT_Float64, 0, 0));
         for( int j = 0; j < nC; j++ )
         {
             dem->set_cellValue(nR - 1 - i, j, padfScanline[j]);
@@ -140,7 +147,7 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_gri
 
     for( int i = nR - 1; i >= 0; i-- )
     {
-        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Int32, 0, 0);
+        check(poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Int32, 0, 0));
         for( int j = 0; j < nC; j++ )
         {
             ascii_grid->set_cellValue(nR - 1 - i, j, panScanline[j]);
@@ -185,7 +192,7 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid, 
 
     for( int i = nR - 1; i >= 0; i-- )
     {
-        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Int32, 0, 0);
+        check(poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Int32, 0, 0));
         for( int j = 0; j < nC; j++ )
         {
             ascii_grid->set_cellValue(nR - 1 - i, j, panScanline[j]);
@@ -210,7 +217,7 @@ void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_grid
         {
             panScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
         }
-        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline, nXSize, 1, GDT_Int32, 0, 0);
+        check(poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline, nXSize, 1, GDT_Int32, 0, 0));
     }
     poBand->SetNoDataValue(ascii_grid->get_NoDataValue());
     delete [] panScanline;
@@ -231,7 +238,7 @@ void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid)
         {
             panScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
         }
-        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline, nXSize, 1, GDT_Int32, 0, 0);
+        check(poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline, nXSize, 1, GDT_Int32, 0, 0));
     }
     poBand->SetNoDataValue(ascii_grid->get_NoDataValue());
     delete [] panScanline;
@@ -685,6 +692,10 @@ int main(int argc, char *argv[])
         {
             std::cout << "\nwriting output_dem_file \"" << output_dem_file << "\" with NO_DATA filled data" << std::endl;
             nRet = CPLCopyFile(output_dem_file.c_str(), input_dem_file.c_str());
+        }
+        if( nRet != 0 )
+        {
+            throw std::runtime_error("Problem writing output_dem_file \""+output_dem_file+"\"");
         }
 
         GDALDataset *poDS_out;
