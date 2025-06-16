@@ -136,7 +136,7 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_gri
     ascii_grid->set_headerData(nC, nR, xL, yL, cS, nDV, nDV, prjStr);
 
     // read in the data for the specific band into the ascii grid, one scanline at a time
-    int* panScanline = new int[nC];
+    double* panScanline = new double[nC];
 
     for( int i = nR - 1; i >= 0; i-- )
     {
@@ -223,8 +223,8 @@ void writeBandDataIntStyle(GDALDataset* poDS, int bandNum, AsciiGrid<double>* as
 
     GDALRasterBand *poBand = poDS->GetRasterBand(bandNum);
 
-    int *padfScanline;
-    padfScanline = new int[nXSize];
+    double *padfScanline;
+    padfScanline = new double[nXSize];
 
     for(int i = nYSize-1; i >= 0; i--)
     {
