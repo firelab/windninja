@@ -89,8 +89,7 @@ void importElevationData(GDALDataset* poDS, Elevation* dem)
     dem->set_headerData(nC, nR, xL, yL, cS, nDV, nDV, dem->prjString);
 
     // read in value at i, j and set dem value
-    double* padfScanline;
-    padfScanline = new double[nC];
+    double* padfScanline = new double[nC];
 
     for( int i = nR - 1; i >= 0; i-- )
     {
@@ -103,6 +102,7 @@ void importElevationData(GDALDataset* poDS, Elevation* dem)
     delete[] padfScanline;
 }
 
+// disk data is GDT_Int32, but ascii grid is double, to retain precision during calculations, and nan filling
 void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_grid, Elevation& dem)
 {
     int nC, nR;
@@ -136,11 +136,11 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_gri
     ascii_grid->set_headerData(nC, nR, xL, yL, cS, nDV, nDV, prjStr);
 
     // read in the data for the specific band into the ascii grid, one scanline at a time
-    double* panScanline = new double[nC];
+    int* panScanline = new int[nC];
 
     for( int i = nR - 1; i >= 0; i-- )
     {
-        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Float64, 0, 0);
+        poBand->RasterIO(GF_Read, 0, i, nC, 1, panScanline, nC, 1, GDT_Int32, 0, 0);
         for( int j = 0; j < nC; j++ )
         {
             ascii_grid->set_cellValue(nR - 1 - i, j, panScanline[j]);
@@ -194,6 +194,7 @@ void importBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid, 
     delete[] panScanline;
 }
 
+// disk data is GDT_Int32, but ascii grid is double, to retain precision during calculations, and nan filling
 void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_grid)
 {
     int nXSize = poDS->GetRasterXSize();
@@ -201,41 +202,18 @@ void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_grid
 
     GDALRasterBand *poBand = poDS->GetRasterBand(bandNum);
 
-    double *padfScanline;
-    padfScanline = new double[nXSize];
+    int *panScanline = new int[nXSize];
 
     for(int i = nYSize-1; i >= 0; i--)
     {
         for(int j = 0; j < nXSize; j++)
         {
-            padfScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
+            panScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
         }
-        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
+        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline, nXSize, 1, GDT_Int32, 0, 0);
     }
     poBand->SetNoDataValue(ascii_grid->get_NoDataValue());
-    delete [] padfScanline;
-}
-
-void writeBandDataIntStyle(GDALDataset* poDS, int bandNum, AsciiGrid<double>* ascii_grid)
-{
-    int nXSize = poDS->GetRasterXSize();
-    int nYSize = poDS->GetRasterYSize();
-
-    GDALRasterBand *poBand = poDS->GetRasterBand(bandNum);
-
-    double *padfScanline;
-    padfScanline = new double[nXSize];
-
-    for(int i = nYSize-1; i >= 0; i--)
-    {
-        for(int j = 0; j < nXSize; j++)
-        {
-            padfScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
-        }
-        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
-    }
-    poBand->SetNoDataValue(ascii_grid->get_NoDataValue());
-    delete [] padfScanline;
+    delete [] panScanline;
 }
 
 void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid)
@@ -245,19 +223,18 @@ void writeBandData(GDALDataset* poDS, int bandNum, AsciiGrid<int>* ascii_grid)
 
     GDALRasterBand *poBand = poDS->GetRasterBand(bandNum);
 
-    int *padfScanline;
-    padfScanline = new int[nXSize];
+    int *panScanline = new int[nXSize];
 
     for(int i = nYSize-1; i >= 0; i--)
     {
         for(int j = 0; j < nXSize; j++)
         {
-            padfScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
+            panScanline[j] = ascii_grid->get_cellValue(nYSize-1-i, j);
         }
-        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Int32, 0, 0);
+        poBand->RasterIO(GF_Write, 0, i, nXSize, 1, panScanline, nXSize, 1, GDT_Int32, 0, 0);
     }
     poBand->SetNoDataValue(ascii_grid->get_NoDataValue());
-    delete [] padfScanline;
+    delete [] panScanline;
 }
 
 void prepAspectForNoDataFill(AsciiGrid<double>* aspect_grid)
@@ -718,13 +695,13 @@ int main(int argc, char *argv[])
 
         if( isLcp == true && fill_vegetation_bands == true )
         {
-            writeBandDataIntStyle(poDS_out, 2, &slope);
-            writeBandDataIntStyle(poDS_out, 3, &aspect);
+            writeBandData(poDS_out, 2, &slope);
+            writeBandData(poDS_out, 3, &aspect);
             writeBandData(poDS_out, 4, &fuelModel);
-            writeBandDataIntStyle(poDS_out, 5, &canopyCover);
-            writeBandDataIntStyle(poDS_out, 6, &canopyHeight);
-            writeBandDataIntStyle(poDS_out, 7, &canopyBulkDensity);
-            writeBandDataIntStyle(poDS_out, 8, &canopyBaseHeight);
+            writeBandData(poDS_out, 5, &canopyCover);
+            writeBandData(poDS_out, 6, &canopyHeight);
+            writeBandData(poDS_out, 7, &canopyBulkDensity);
+            writeBandData(poDS_out, 8, &canopyBaseHeight);
         }
 
         GDALClose((GDALDatasetH)poDS_out);
