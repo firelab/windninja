@@ -106,7 +106,8 @@ set(NINJA_SOURCES air.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp
                   windninja.cpp
-                  gcp_wx_init.cpp)
+                  gcp_wx_init.cpp
+                  ninjaArmy.h)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp
@@ -134,7 +135,6 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
 
 if(NINJA_QTGUI)
     include_directories(${NINJA_INCLUDES} ${QT_INCLUDES})
-    QT4_WRAP_CPP(NINJA_LIB_INCLUDES_MOC ninjaCom.h)
     set(NINJA_SOURCES ${NINJA_SOURCES} ${NINJA_LIB_INCLUDES_MOC})
     set(LINK_LIBS ${LINK_LIBS} ${QT_LIBRARIES})
 else(NINJA_QTGUI)
