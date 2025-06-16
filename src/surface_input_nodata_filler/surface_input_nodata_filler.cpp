@@ -277,7 +277,7 @@ void cleanAspectAfterNoDataFill(AsciiGrid<double>* aspect_grid)
     }
 }
 
-void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::string fill_type, bool& isNoDataFound)
+void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, bool& isNoDataFound)
 {
     if( !ascii_grid->checkForNoDataValues() )
     {
@@ -289,21 +289,9 @@ void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::
     #ifdef _OPENMP
     double startTime = omp_get_wtime();
     #endif
-    if( fill_type == "double" )
+    if( !ascii_grid->fillNoDataValues(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
     {
-        if( !ascii_grid->fillNoDataValues(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
-            throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
-    } else if( fill_type == "angle" )
-    {
-        if( !ascii_grid->fillNoDataValuesAngle(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
-            throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
-    } else if( fill_type == "categorical" )
-    {
-        if( !ascii_grid->fillNoDataValuesCategorical(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
-            throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
-    } else
-    {
-        throw std::runtime_error("fillAsciiNoData() input fill_type \""+fill_type+"\" is not a valid fill_type!!\n  valid fill_types are \"double\", \"categorical\", and \"angle\"");
+        throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
     }
     #ifdef _OPENMP
     double endTime = omp_get_wtime();
@@ -316,7 +304,7 @@ void fillAsciiNoData(AsciiGrid<double>* ascii_grid, std::string band_name, std::
     }
 }
 
-void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::string fill_type, bool& isNoDataFound)
+void fillAsciiAngleNoData(AsciiGrid<double>* ascii_grid, std::string band_name, bool& isNoDataFound)
 {
     if( !ascii_grid->checkForNoDataValues() )
     {
@@ -328,21 +316,36 @@ void fillAsciiNoData(AsciiGrid<int>* ascii_grid, std::string band_name, std::str
     #ifdef _OPENMP
     double startTime = omp_get_wtime();
     #endif
-    if( fill_type == "double" )
+    if( !ascii_grid->fillNoDataValuesAngle(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
     {
-        if( !ascii_grid->fillNoDataValues(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
-            throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
-    } else if( fill_type == "angle" )
+        throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValuesAngle()");
+    }
+    #ifdef _OPENMP
+    double endTime = omp_get_wtime();
+    std::cout << "NO_DATA value filling time was " << endTime-startTime << " seconds" << std::endl;
+    #endif
+    // double check that the filling was successful
+    if( ascii_grid->checkForNoDataValues() )
     {
-        if( !ascii_grid->fillNoDataValuesAngle(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
-            throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
-    } else if( fill_type == "categorical" )
+        throw std::runtime_error("NO_DATA values still found in "+band_name+" band.");
+    }
+}
+
+void fillAsciiCategoricalNoData(AsciiGrid<int>* ascii_grid, std::string band_name, bool& isNoDataFound)
+{
+    if( !ascii_grid->checkForNoDataValues() )
     {
-        if( !ascii_grid->fillNoDataValuesCategorical(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
-            throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValues()");
-    } else
+        std::cout << "no NO_DATA values found to fill in " << band_name << " band" << std::endl;
+        return;
+    }
+    isNoDataFound = true;
+    std::cout << "filling NO_DATA values in " << band_name << " band..." << std::endl;
+    #ifdef _OPENMP
+    double startTime = omp_get_wtime();
+    #endif
+    if( !ascii_grid->fillNoDataValuesCategorical(1, 99.0, ascii_grid->get_nCols()*ascii_grid->get_nRows()) )
     {
-        throw std::runtime_error("fillAsciiNoData() input fill_type \""+fill_type+"\" is not a valid fill_type!!\n  valid fill_types are \"double\", \"categorical\", and \"angle\"");
+        throw std::runtime_error("Could not fill NO_DATA values in AsciiGrid::fillNoDataValuesCategorical()");
     }
     #ifdef _OPENMP
     double endTime = omp_get_wtime();
@@ -621,7 +624,7 @@ int main(int argc, char *argv[])
 
     bool isNoDataFound = false;
 
-    fillAsciiNoData(&dem, "elevation", "double", isNoDataFound);
+    fillAsciiNoData(&dem, "elevation", isNoDataFound);
     // double check that the filling was successful
     if(GDALDriverName == "LCP")
     {
@@ -634,25 +637,25 @@ int main(int argc, char *argv[])
 
     if( isLcp == true && fill_vegetation_bands == true )
     {
-        fillAsciiNoData(&slope, "slope", "double", isNoDataFound);
+        fillAsciiNoData(&slope, "slope", isNoDataFound);
 
-        //fillAsciiNoData(&aspect, "aspect", "double", isNoDataFound);
+        //fillAsciiNoData(&aspect, "aspect", isNoDataFound);
         bool found_aspect_noData = aspect.checkForNoDataValues();
         if( !found_aspect_noData )
         {
             prepAspectForNoDataFill(&aspect);
         }
-        fillAsciiNoData(&aspect, "aspect", "angle", isNoDataFound);
+        fillAsciiAngleNoData(&aspect, "aspect", isNoDataFound);
         if( !found_aspect_noData )
         {
             cleanAspectAfterNoDataFill(&aspect);
         }
 
-        fillAsciiNoData(&fuelModel, "fuel model", "categorical", isNoDataFound);
-        fillAsciiNoData(&canopyCover, "canopy cover", "double", isNoDataFound);
-        fillAsciiNoData(&canopyHeight, "canopy height", "double", isNoDataFound);
-        fillAsciiNoData(&canopyBulkDensity, "canopy bulk density", "double", isNoDataFound);
-        fillAsciiNoData(&canopyBaseHeight, "canopy base height", "double", isNoDataFound);
+        fillAsciiCategoricalNoData(&fuelModel, "fuel model", isNoDataFound);
+        fillAsciiNoData(&canopyCover, "canopy cover", isNoDataFound);
+        fillAsciiNoData(&canopyHeight, "canopy height", isNoDataFound);
+        fillAsciiNoData(&canopyBulkDensity, "canopy bulk density", isNoDataFound);
+        fillAsciiNoData(&canopyBaseHeight, "canopy base height", isNoDataFound);
     }
 
     // now edit/write/overwrite the gdal file with the ascii data
