@@ -32,11 +32,11 @@ void Controller::onSolveRequest() {
 
 
   vector<string> outputFileList = provider.getOutputFileNames(
-    view->getUi()->elevFilePath->text(),
-    view->getUi()->windTableData,
-    view->getUi()->meshResValue->text(),
-    provider.parseDomainAvgTable(view->getUi()->windTableData).size(),
-    view->getUi()->outputDirectory->toPlainText());
+    view->getUi()->elevationInputFileLineEdit->text(),
+    view->getUi()->domainAverageTable,
+    view->getUi()->meshResolutionSpinBox->text(),
+    provider.parseDomainAvgTable(view->getUi()->domainAverageTable).size(),
+    view->getUi()->outputDirectoryTextEdit->toPlainText());
 
   view->loadMapKMZ(outputFileList);
 }
@@ -44,37 +44,37 @@ void Controller::onSolveRequest() {
 // Get time zone list from provider
 void Controller::onTimeZoneDataRequest() {
   // Call provider to get 2D vector with timezone data
-  bool showAllZones = view->getUi()->showAllTimeZones->isChecked();
+  bool showAllZones = view->getUi()->timeZoneAllZonesCheckBox->isChecked();
   QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData(showAllZones);
 
   // Clear timezone list
-  view->getUi()->timeZoneSelector->clear();
+  view->getUi()->timeZoneComboBox->clear();
 
   // Populate timezone list
   for (const QVector<QString>& zone : timeZoneData) {
     if (!zone.isEmpty()) {
-      view->getUi()->timeZoneSelector->addItem(zone[0]);
+      view->getUi()->timeZoneComboBox->addItem(zone[0]);
     }
   }
 
   // Default to America/Denver
-  view->getUi()->timeZoneSelector->setCurrentText("America/Denver");
+  view->getUi()->timeZoneComboBox->setCurrentText("America/Denver");
 }
 
 // Get time zone details from provider
 void Controller::onTimeZoneDetailsRequest() {
-  QString currentTimeZone = view->getUi()->timeZoneSelector->currentText();
+  QString currentTimeZone = view->getUi()->timeZoneComboBox->currentText();
   QString timeZoneDetails = provider.getTimeZoneDetails(currentTimeZone);
 
   // Set value in ui
-  view->getUi()->timeZoneDetails->setText(timeZoneDetails);
+  view->getUi()->timeZoneDetailsTextEdit->setText(timeZoneDetails);
 }
 
 void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString outputFile) {
 
   // Get correct fetch type
   // TODO: set correct string for landscape files in else condition
-  int fetchIndex = view->getUi()->fetchType->currentIndex();
+  int fetchIndex = view->getUi()->elevationInputFileComboBox->currentIndex();
   string fetchType;
   if (fetchIndex == 0) {
     fetchType = "srtm";
@@ -84,10 +84,10 @@ void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString output
     fetchType = "land";
   }
 
-  double resolution = view->getUi()->meshResValue->value();
+  double resolution = view->getUi()->meshResolutionSpinBox->value();
 
   provider.fetchDEMBoundingBox(outputFile.toStdString(), fetchType, resolution, boundsBox.data());
-  view->getUi()->elevFilePath->setText(outputFile);
+  view->getUi()->elevationInputFileLineEdit->setText(outputFile);
 }
 
 /*
@@ -95,20 +95,20 @@ void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString output
  */
 
 BaseInput Controller::setBaseInput() {
-  QString demPath = view->getUi()->elevFilePath->text();
-  double outputResolution = view->getUi()->meshResValue->value();
+  QString demPath = view->getUi()->elevationInputFileLineEdit->text();
+  double outputResolution = view->getUi()->meshResolutionSpinBox->value();
   QString initMethod;
-  if (view->getUi()->useDomainAvgWind->isChecked()) {
+  if (view->getUi()->domainAverageCheckBox->isChecked()) {
     initMethod = "domain_average";
-  } else if (view->getUi()->usePointInit->isChecked()) {
+  } else if (view->getUi()->pointInitializationCheckBox->isChecked()) {
     initMethod = "point";
   } else {
     initMethod = "wxmodel";
   }
-  QString meshType = view->getUi()->meshResType->currentText().toLower();
-  QString vegetation = view->getUi()->vegetationType->currentText().toLower();
+  QString meshType = view->getUi()->meshResolutionComboBox->currentText().toLower();
+  QString vegetation = view->getUi()->vegetationComboBox->currentText().toLower();
   int nLayers = 20;
-  int diurnalFlag = view->getUi()->useDiurnalWind->isChecked() ? 1 : 0;
+  int diurnalFlag = view->getUi()->diurnalWindCheckBox->isChecked() ? 1 : 0;
 
   double height = view->getUi()->windHeightValue->value();
   QString heightUnits;
@@ -118,23 +118,23 @@ BaseInput Controller::setBaseInput() {
     heightUnits = "m";
   }
 
-  bool useMomentum = view->getUi()->useCOMM->isChecked() ? 1 : 0;
+  bool useMomentum = view->getUi()->massAndMomentumSolverCheckBox->isChecked() ? 1 : 0;
   int numNinjas = 1;
   // Count the number of ninjas, depending on the wind method being used
-  QVector<QVector<QString>> domainAvgTable = provider.parseDomainAvgTable(view->getUi()->windTableData);
+  QVector<QVector<QString>> domainAvgTable = provider.parseDomainAvgTable(view->getUi()->domainAverageTable);
 
-  if (view->getUi()->useDomainAvgWind->isChecked()) {
+  if (view->getUi()->domainAverageCheckBox->isChecked()) {
     if (domainAvgTable.size() > 0) {
       numNinjas = domainAvgTable.size();
     }
-  } else if (view->getUi()->usePointInit->isChecked()) {
+  } else if (view->getUi()->pointInitializationCheckBox->isChecked()) {
     //TODO
       //numNinjas = view->getUi()->pointInitStepsValue->value();
   } else {
     //Todo wxmodel
   }
   
-  QString outputPath = view->getUi()->outputDirectory->toPlainText();
+  QString outputPath = view->getUi()->outputDirectoryTextEdit->toPlainText();
 
   return BaseInput (
     demPath.toStdString(),
@@ -156,7 +156,7 @@ DomainAverageWind Controller::setDomainAverageWind() {
   BaseInput baseInput = setBaseInput();
 
   // Get all wind data
-  QVector<QVector<QString>> windData = provider.parseDomainAvgTable(view->getUi()->windTableData);
+  QVector<QVector<QString>> windData = provider.parseDomainAvgTable(view->getUi()->domainAverageTable);
 
   // Get speed and direction lists
   vector<double> speedList;
@@ -165,7 +165,7 @@ DomainAverageWind Controller::setDomainAverageWind() {
     speedList.push_back(windData[i][0].toDouble());
     directionList.push_back(windData[i][1].toDouble());
   }
-  QString speedUnits = view->getUi()->speedUnits->currentText();
+  QString speedUnits = view->getUi()->tableSpeedUnits->currentText();
 
   return DomainAverageWind (
     baseInput,
@@ -185,7 +185,7 @@ PointInitialization Controller::setPointInitialization() {
   vector<int> minute ;
   //ToDo Understand QT setting and  receivingS
   char* station_path = "NULL";
-  char* osTimeZone= view->getUi()->timeZoneSelector->currentText().toUtf8().data();;
+  char* osTimeZone= view->getUi()->timeZoneComboBox->currentText().toUtf8().data();;
   bool matchPointFlag = true;
   int numNinjas = baseInput.getNumNinjas();
 
