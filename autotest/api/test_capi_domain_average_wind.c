@@ -52,7 +52,7 @@ int main()
      * Set up domain average run 
      */
     /* inputs that do not vary among ninjas in an army */
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/missoula_valley.tif"; 
+    const char * demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
     const char * initializationMethod = "domain_average";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
@@ -60,7 +60,8 @@ int main()
     const int diurnalFlag = 0; //diurnal slope wind parameterization not used
     const double height = 10.0;
     const char * heightUnits = "m";
-    bool momentumFlag = 0; //we're using the conservation of mass solver
+    //bool momentumFlag = 0; //we're using the conservation of mass solver
+    bool momentumFlag = 1; //we're using the conservation of momentum solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - must be equal to array sizes
 
     /* inputs specific to output 
@@ -70,23 +71,26 @@ int main()
     const char * units = "m";
     const double width = 1.0;
     const char * scaling = "equal_color";
-    const char * outputPath  = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/output";
+    const char * outputPath  = "/home/atw09001/src/wind/windninja/autotest/api/data/output";
     const bool outputFlag = 1;
 
     /* inputs that can vary among ninjas in an army */
     const double speedList[] = {5.5, 5.5}; // matches the size of numNinjas
     const char * speedUnits = "mps";
-    const double directionList[2] = {220, 300};
+    const double directionList[2] = {220.0, 300.0};
     const int year[2] = {2023, 2023};
     const int month[2] = {10, 11};
     const int day[2] = {10, 11};
     const int hour[2] = {12, 13};
     const int minute[2] = {30, 31};
     const char * timezone = "UTC";
-    const int air[2] = {50, 50};
+    const double air[2] = {50.0, 50.0};
     const char * airUnits = "F";
-    const int cloud[2] = {10, 10};
+    const double cloud[2] = {10.0, 10.0};
     const char * cloudUnits = "percent";
+
+    const double meshResolution = 300;
+    const char * meshResolutionUnits = "m";
 
     /* 
      * Create the army
@@ -164,13 +168,24 @@ int main()
       {
         printf("NinjaSetUniVegetation: err = %d\n", err);
       }
-    
-      err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
-      if(err != NINJA_SUCCESS)
+
+      if( momentumFlag == true )
       {
-          printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+        err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetMeshResolution: err = %d\n", err);
+        }
       }
-    
+      else
+      {
+        err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+        }
+      }
+
       err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers, papszOptions);
       if(err != NINJA_SUCCESS)
       {
