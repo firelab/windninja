@@ -263,14 +263,14 @@ static void refreshUI(const Ui::MainWindow* ui)
 
   // Update solve state
   if (state.solverMethodologyOk && state.inputsOk) {
-    ui->solveButton->setEnabled(true);
+    ui->solveBtn->setEnabled(true);
     ui->solverPageSolveBtn->setEnabled(true);
-    ui->solveButton->setToolTip("");
+    ui->solveBtn->setToolTip("");
     ui->solverPageSolveBtn->setToolTip("");
   } else {
-    ui->solveButton->setEnabled(false);
+    ui->solveBtn->setEnabled(false);
     ui->solverPageSolveBtn->setEnabled(false);
-    ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+    ui->solveBtn->setToolTip("Solver Methodology and Inputs must be passing to solve.");
     ui->solverPageSolveBtn->setToolTip("Solver Methodology and Inputs must be passing to solve.");
   }
 }
@@ -771,7 +771,7 @@ void MainWindow::on_outputSaveLocationBtn_clicked()
 // User selects the solve button on the solver page
 void MainWindow::on_solverPageSolveBtn_clicked()
 {
-  ui->solveButton->click();
+  ui->solveBtn->click();
 }
 
 // User selects the primary solve button
