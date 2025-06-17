@@ -333,7 +333,7 @@ void MainWindow::on_elevFilePath_textChanged(const QString &arg1)
 
   // Calculate cell size
   if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
-    int c1, c2;
+    double c1, c2;
     c1 = adfGeoTransform[1];
     c2 = adfGeoTransform[5];
     if (abs(c1) == abs(c2)) {
