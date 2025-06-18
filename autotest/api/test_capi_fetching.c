@@ -53,9 +53,9 @@ int main()
     /*
      * Testing fetching from a DEM bounding box  
      */
-    const char * demFileBBox = "data/fetch/DEMBBox.tif"; // output file name
-    char * fetch_type = "gmted"; // can be srtm, gmted, relief
-    double resolution = 30; // 30 m resolution
+    const char * demFileBBox = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMBBox.tif"; // output file name
+    char * fetch_type = "lcp"; // can be srtm, gmted, relief
+    double resolution = 30.0; // 30 m resolution
     double boundsBox [] = {40.07, -104.0, 40.0, -104.07}; // Bounding box (north, east, south, west)
     err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFileBBox, resolution, fetch_type, papszOptions);
     if (err != NINJA_SUCCESS){
@@ -112,8 +112,8 @@ int main()
     int hour[2] = {2, 2};
     int minute[2] = {2, 2};
     int size = 2;
-    const char* output_path = "data/fetch/";
-    const char* elevation_file = "data/missoula_valley.tif";
+    const char* output_path = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/";
+    const char* elevation_file = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
     const char* osTimeZone = "UTC";
     bool fetchLatestFlag = 1;
     double buffer = 10;
@@ -129,11 +129,11 @@ int main()
     /*
      * Testing fetching from a DEM point
      */
-    double adfPoint[] = {104.0, 40.07}; // Point coordinates (longitude, latitude)
-    double adfBuff[] = {30, 30}; // Buffer to store the elevation value
+    double adfPoint[] = {-104.0, 40.07}; // Point coordinates (longitude, latitude)
+    double adfBuff[] = {1.5, 1.5}; // Buffer to store the elevation value
     double dfCellSize = 30.0; // Cell size in meters
-    char* pszDstFile = "data/fetch/DEMpoint.tif";
-    char* fetchType = "gmted";
+    char* pszDstFile = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMpoint.tif";
+    char* fetchType = "lcp";
     err = NinjaFetchDEMPoint(ninjaArmy, adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
     if (err != NINJA_SUCCESS) {
         printf("NinjaFetchDemPoint: err = %d\n", err);
