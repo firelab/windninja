@@ -39,7 +39,7 @@ int main()
      */
     NinjaArmyH* ninjaArmy = NULL; 
     const char * comType = "cli"; //communication type is always set to "cli"
-    const int nCPUs = 1;
+    const int nCPUs = 4;
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
     err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)

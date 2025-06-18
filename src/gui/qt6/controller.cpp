@@ -99,6 +99,7 @@ void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString output
 
 BaseInput Controller::setBaseInput() {
   QString demPath = view->getUi()->elevFilePath->text();
+  int nCPUs = view->getUi()->numProcessorsSpinbox->value();
   double outputResolution = view->getUi()->meshResValue->value();
   QString initMethod;
   if (view->getUi()->useDomainAvgWind->isChecked()) {
@@ -141,6 +142,7 @@ BaseInput Controller::setBaseInput() {
 
   return BaseInput (
     demPath.toStdString(),
+    nCPUs,
     outputResolution,
     initMethod.toStdString(),
     meshType.toStdString(),

@@ -15,7 +15,6 @@ using namespace std;
 
 NinjaArmyH* ninjaArmy = NULL;
 const char * comType = "cli";
-const int nCPUs = 1;
 char ** papszOptions = NULL;
 NinjaErr err = 0;
 
@@ -30,6 +29,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
   std::vector<double> directionVector = input.getDirectionList();
   const double* directionList = directionVector.data();
   const char * demFile = input.getDemFile().c_str();
+  int nCPUs = input.getNumCPUs();
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
   const char* meshChoice = input.getMeshChoice().c_str();
@@ -239,6 +239,7 @@ int Provider::point_exec(PointInitialization& input) {
   bool matchPointFlag = input.getMatchPointFlag();
 
    char * demFile = const_cast<char*>(input.getDemFile().c_str());
+  int nCPUs = input.getNumCPUs();
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
   const char* meshChoice = input.getMeshChoice().c_str();
@@ -377,6 +378,7 @@ int Provider::wxmodel_exec(WeatherModel& input) {
    */
 
   const char * demFile = input.getDemFile().c_str();
+  int nCPUs = input.getNumCPUs();
   double outputResolution = input.getOutputResolution();
   const char* initializationMethod = input.getInitializationMethod().c_str();
   const char* meshChoice = input.getMeshChoice().c_str();

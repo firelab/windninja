@@ -945,10 +945,10 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Solver window
   // Update processor count and set user input default value & upper bound
-  int cpuCount = QThread::idealThreadCount();
-  ui->availableProcessors->setPlainText("Available Processors:  " + QString::number(cpuCount));
-  ui->numProcessorsSpinbox->setMaximum(cpuCount);
-  ui->numProcessorsSpinbox->setValue(cpuCount);
+  int nCPUs = QThread::idealThreadCount();
+  ui->availableProcessors->setPlainText("Available Processors:  " + QString::number(nCPUs));
+  ui->numProcessorsSpinbox->setMaximum(nCPUs);
+  ui->numProcessorsSpinbox->setValue(nCPUs);
 
   // Wind Input -> Point Init window
   ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
