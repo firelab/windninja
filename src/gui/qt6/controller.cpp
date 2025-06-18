@@ -108,7 +108,7 @@ BaseInput Controller::setBaseInput() {
   QString meshType = view->getUi()->meshResolutionComboBox->currentText().toLower();
   QString vegetation = view->getUi()->vegetationComboBox->currentText().toLower();
   int nLayers = 20;
-  int diurnalFlag = view->getUi()->diurnalWindCheckBox->isChecked() ? 1 : 0;
+  int diurnalFlag = view->getUi()->diurnalCheckBox->isChecked() ? 1 : 0;
 
   double height = view->getUi()->windHeightValue->value();
   QString heightUnits;

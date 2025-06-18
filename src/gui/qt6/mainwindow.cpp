@@ -74,7 +74,7 @@ MainWindow::~MainWindow() { delete ui; }
 void MainWindow::onTreeItemClicked(QTreeWidgetItem *item, int column) {
   int pageIndex = item->data(column, Qt::UserRole).toInt();
   if (pageIndex >= 0) {
-    ui->stackedInputPage->setCurrentIndex(pageIndex);
+    ui->stackedInputsPage->setCurrentIndex(pageIndex);
   }
 }
 
@@ -263,15 +263,15 @@ static void refreshUI(const Ui::MainWindow* ui)
 
   // Update solve state
   if (state.solverMethodologyOk && state.inputsOk) {
-    ui->solveBtn->setEnabled(true);
-    ui->numberOfProcessorsSolveBtn->setEnabled(true);
-    ui->solveBtn->setToolTip("");
-    ui->numberOfProcessorsSolveBtn->setToolTip("");
+    ui->solveButton->setEnabled(true);
+    ui->numberOfProcessorsSolveButton->setEnabled(true);
+    ui->solveButton->setToolTip("");
+    ui->numberOfProcessorsSolveButton->setToolTip("");
   } else {
-    ui->solveBtn->setEnabled(false);
-    ui->numberOfProcessorsSolveBtn->setEnabled(false);
-    ui->solveBtn->setToolTip("Solver Methodology and Inputs must be passing to solve.");
-    ui->numberOfProcessorsSolveBtn->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+    ui->solveButton->setEnabled(false);
+    ui->numberOfProcessorsSolveButton->setEnabled(false);
+    ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+    ui->numberOfProcessorsSolveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
   }
 }
 
@@ -281,7 +281,7 @@ static void refreshUI(const Ui::MainWindow* ui)
  */
 
 // Use selects Conservation of Mass
-void MainWindow::on_useCOM_clicked()
+void MainWindow::on_massSolverCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
@@ -298,7 +298,7 @@ void MainWindow::on_useCOM_clicked()
 
 
 // User selects Conservation of Mass and Momentum
-void MainWindow::on_useCOMM_clicked()
+void MainWindow::on_massAndMomentumSolverCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
@@ -315,7 +315,7 @@ void MainWindow::on_useCOMM_clicked()
 
 
 // User selects an elevation input file (by file)
-void MainWindow::on_elevFilePath_textChanged(const QString &arg1)
+void MainWindow::on_elevationInputFileLineEdit_textChanged(const QString &arg1)
 {
   // Get GDAL data information on DEM input
   QString fileName = ui->elevationInputFileLineEdit->text();
@@ -360,13 +360,13 @@ void MainWindow::on_elevFilePath_textChanged(const QString &arg1)
   GDALClose((GDALDatasetH)poInputDS);
 
   // Run mesh calculator
-  MainWindow::on_meshResType_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
 
   refreshUI(ui);
 }
 
 
-void MainWindow::on_openFileButton_clicked()
+void MainWindow::on_elevationInputFileOpenButton_clicked()
 {
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
   QString filePath = QFileDialog::getOpenFileName(this,
@@ -380,7 +380,7 @@ void MainWindow::on_openFileButton_clicked()
 
 
 // User selects an elevation input file (by map import)
-void MainWindow::on_getFromMapButton_clicked()
+void MainWindow::on_elevationInputFileDownloadButton_clicked()
 {
   // We have to use batching since the Javascript part is async
   struct JSFieldBatch {
@@ -449,7 +449,7 @@ void MainWindow::on_getFromMapButton_clicked()
 }
 
   // User changes the mesh resolution spec for surface input
-void MainWindow::on_meshResType_currentIndexChanged(int index)
+void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
 {
   // Set value box enable for custom/other
   if (index == 3) {
@@ -492,14 +492,14 @@ void MainWindow::on_meshResType_currentIndexChanged(int index)
 
 }
 
-void MainWindow::on_meshResMeters_toggled(bool checked)
+void MainWindow::on_meshResolutionMetersRadioButton_toggled(bool checked)
 {
   if (checked) {
     ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
   }
 }
 
-void MainWindow::on_meshResFeet_toggled(bool checked)
+void MainWindow::on_meshResolutionFeetRadioButton_toggled(bool checked)
 {
   if (checked) {
     ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
@@ -507,13 +507,13 @@ void MainWindow::on_meshResFeet_toggled(bool checked)
 }
 
 // User selects a new time zone
-void MainWindow::on_timeZoneSelector_currentIndexChanged(int index)
+void MainWindow::on_timeZoneComboBox_currentIndexChanged(int index)
 {
   emit timeZoneDetailsRequest();
 }
 
 // User toggles show all time zones
-void MainWindow::on_showAllTimeZones_clicked()
+void MainWindow::on_timeZoneAllZonesCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
@@ -524,12 +524,12 @@ void MainWindow::on_showAllTimeZones_clicked()
 }
 
 // User toggles show time zone details
-void MainWindow::on_displayTimeZoneDetails_clicked()
+void MainWindow::on_timeZoneDetailsCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
   // Update time zone details state
-  state.displayTimeZoneDetails = ui->timeZoneZoneDetailsCheckBox->isChecked();
+  state.displayTimeZoneDetails = ui->timeZoneDetailsCheckBox->isChecked();
 
   // Update visibility of details pane
   ui->timeZoneDetailsTextEdit->setVisible(state.displayTimeZoneDetails);
@@ -537,16 +537,16 @@ void MainWindow::on_displayTimeZoneDetails_clicked()
 }
 
 // User selects Diurnal Input
-void MainWindow::on_useDiurnalWind_clicked()
+void MainWindow::on_diurnalCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
   // Update UI state
-  state.diurnalInputToggled = ui->diurnalWindCheckBox->isChecked();
+  state.diurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
   // Change the domain average input table based on diurnal wind
   QTableWidget* table = ui->domainAverageTable;
-  if (!ui->diurnalWindCheckBox->isChecked()) {
+  if (!ui->diurnalCheckBox->isChecked()) {
     table->hideColumn(2);
     table->hideColumn(3);
     table->hideColumn(4);
@@ -564,7 +564,7 @@ void MainWindow::on_useDiurnalWind_clicked()
 }
 
 // User selects Stability Input
-void MainWindow::on_useStability_clicked()
+void MainWindow::on_stabilityCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
@@ -580,7 +580,7 @@ void MainWindow::on_useStability_clicked()
 // Domain Average Wind
 
 // User selects Domain Average Wind
-void MainWindow::on_useDomainAvgWind_clicked()
+void MainWindow::on_domainAverageCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
@@ -600,7 +600,7 @@ void MainWindow::on_useDomainAvgWind_clicked()
 }
 
 // User changes Domain Average Wind -> Input Wind Height
-void MainWindow::on_domainAvgPicklist_currentIndexChanged(int index)
+void MainWindow::on_windHeightComboBox_currentIndexChanged(int index)
 {
   switch(index) {
   case 0:
@@ -628,7 +628,7 @@ void MainWindow::on_domainAvgPicklist_currentIndexChanged(int index)
 }
 
 // User clears the domain average wind input table
-void MainWindow::on_clearDAWtable_clicked()
+void MainWindow::on_clearTableButton_clicked()
 {
   ui->domainAverageTable->clearContents();
   invalidDAWCells.clear();
@@ -637,7 +637,7 @@ void MainWindow::on_clearDAWtable_clicked()
 }
 
 // User changes a value in the domain average wind input table
-void MainWindow::on_windTableData_cellChanged(int row, int column)
+void MainWindow::on_domainAverageTable_cellChanged(int row, int column)
 {
   QTableWidget* table = ui->domainAverageTable;
   QTableWidgetItem* item = table->item(row, column);
@@ -713,7 +713,7 @@ void MainWindow::on_windTableData_cellChanged(int row, int column)
 }
 
 // User selects Point Initialization wind model
-void MainWindow::on_usePointInit_clicked()
+void MainWindow::on_pointInitializationCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
@@ -753,7 +753,7 @@ void MainWindow::on_useWeatherModelInit_clicked()
 }
 
 // User selects a new output location
-void MainWindow::on_outputSaveLocationBtn_clicked()
+void MainWindow::on_outputDirectoryButton_clicked()
 {
   QString currentPath = ui->outputDirectoryTextEdit->toPlainText();
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
@@ -768,13 +768,13 @@ void MainWindow::on_outputSaveLocationBtn_clicked()
   }
 }
 
-// User selects the solve button on the solver page
-void MainWindow::on_solverPageSolveBtn_clicked()
+// User selects the solve Button on the solver page
+void MainWindow::on_numberOfProcessorsSolveButton_clicked()
 {
-  ui->solveBtn->click();
+  ui->solveButton->click();
 }
 
-// User selects the primary solve button
+// User selects the primary solve Button
 void MainWindow::on_solveButton_clicked()
 {
   emit solveRequest();
@@ -788,7 +788,7 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
   } else if (item->text(0) == "Conservation of Mass and Momentum") {
     ui->massAndMomentumSolverCheckBox->click();
   } else if (item->text(0) == "Diurnal Input") {
-    ui->diurnalWindCheckBox->click();
+    ui->diurnalCheckBox->click();
   } else if (item->text(0) == "Stability Input") {
     ui->stabilityCheckBox->click();
   } else if (item->text(0) == "Domain Average Wind") {
@@ -908,7 +908,7 @@ MainWindow::MainWindow(QWidget *parent)
    */
 
   // Top-level items
-  ui->stackedInputPage->setCurrentIndex(0);
+  ui->stackedInputsPage->setCurrentIndex(0);
   ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
   ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
   ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
@@ -943,8 +943,8 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Surface Input window
   // Set icons
-  ui->elevationInputFileOpenBtn->setIcon(QIcon(":/folder.png"));
-  ui->elevationInputFileDownloadBtn->setIcon(QIcon(":/swoop_final.png"));
+  ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
+  ui->elevationInputFileDownloadButton->setIcon(QIcon(":/swoop_final.png"));
 
   // Solver window
   // Update processor count and set user input default value & upper bound
@@ -958,7 +958,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Populate default location for output location
   ui->outputDirectoryTextEdit->setText(downloadsPath);
-  ui->outputDirectoryBtn->setIcon(QIcon(":/folder.png"));
+  ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
 
   // Set initial visibility of time zone details
   ui->timeZoneDetailsTextEdit->setVisible(false);

@@ -44,50 +44,50 @@ public:
   ~MainWindow();
 
 private slots:
-  void on_useCOM_clicked();
-  void on_useCOMM_clicked();
+  void on_massSolverCheckBox_clicked();
+  void on_massAndMomentumSolverCheckBox_clicked();
 
-  void on_getFromMapButton_clicked();
+  void on_elevationInputFileDownloadButton_clicked();
 
-  void on_openFileButton_clicked();
+  void on_elevationInputFileOpenButton_clicked();
 
-  void on_elevFilePath_textChanged(const QString &arg1);
+  void on_elevationInputFileLineEdit_textChanged(const QString &arg1);
 
-  void on_meshResType_currentIndexChanged(int index);
+  void on_meshResolutionComboBox_currentIndexChanged(int index);
 
-  void on_useDiurnalWind_clicked();
+  void on_diurnalCheckBox_clicked();
 
-  void on_useStability_clicked();
+  void on_stabilityCheckBox_clicked();
 
-  void on_domainAvgPicklist_currentIndexChanged(int index);
+  void on_windHeightComboBox_currentIndexChanged(int index);
 
-  void on_useDomainAvgWind_clicked();
+  void on_domainAverageCheckBox_clicked();
 
   void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
 
-  void on_usePointInit_clicked();
+  void on_pointInitializationCheckBox_clicked();
 
   void on_useWeatherModelInit_clicked();
 
-  void on_clearDAWtable_clicked();
+  void on_clearTableButton_clicked();
 
   void on_solveButton_clicked();
 
-  void on_outputSaveLocationBtn_clicked();
+  void on_outputDirectoryButton_clicked();
 
-  void on_solverPageSolveBtn_clicked();
+  void on_numberOfProcessorsSolveButton_clicked();
 
-  void on_showAllTimeZones_clicked();
+  void on_timeZoneAllZonesCheckBox_clicked();
 
-  void on_displayTimeZoneDetails_clicked();
+  void on_timeZoneDetailsCheckBox_clicked();
 
-  void on_timeZoneSelector_currentIndexChanged(int index);
+  void on_timeZoneComboBox_currentIndexChanged(int index);
 
-  void on_windTableData_cellChanged(int row, int column);
+  void on_domainAverageTable_cellChanged(int row, int column);
 
-  void on_meshResMeters_toggled(bool checked);
+  void on_meshResolutionMetersRadioButton_toggled(bool checked);
 
-  void on_meshResFeet_toggled(bool checked);
+  void on_meshResolutionFeetRadioButton_toggled(bool checked);
 
 signals:
   void solveRequest();

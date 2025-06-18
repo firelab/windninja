@@ -274,7 +274,7 @@
        <bool>false</bool>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
-       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,1,0">
+       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,0,0">
         <property name="spacing">
          <number>0</number>
         </property>
@@ -476,7 +476,7 @@
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_13">
+         <spacer name="inputSpacer1">
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
           </property>
@@ -492,7 +492,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QStackedWidget" name="stackedInputPage">
+         <widget class="QStackedWidget" name="stackedInputsPage">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -524,10 +524,10 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>12</number>
+           <number>5</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
-          <widget class="QWidget" name="solverMethodologyPage">
+          <widget class="QWidget" name="solverMethodologyInformationPage">
            <layout class="QVBoxLayout" name="verticalLayout_8">
             <property name="spacing">
              <number>0</number>
@@ -545,7 +545,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QTextEdit" name="solverMethodologyTextEdit">
+             <widget class="QTextEdit" name="solverMethodologyInformationTextEdit">
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -572,7 +572,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="solverMethodologySpacer">
+             <spacer name="solverMethodologyInformationSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -642,7 +642,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="massSolverSpacer">
+             <spacer name="massSolverPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -720,7 +720,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="inputPage">
+          <widget class="QWidget" name="inputsInformationPage">
            <layout class="QVBoxLayout" name="verticalLayout_12">
             <property name="leftMargin">
              <number>5</number>
@@ -735,7 +735,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QTextEdit" name="inputTextEdit">
+             <widget class="QTextEdit" name="inputInformationPageTextEdit">
               <property name="font">
                <font>
                 <pointsize>8</pointsize>
@@ -766,7 +766,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="inputSpacer">
+             <spacer name="inputInformationPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -856,7 +856,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="elevationInputFileOpenBtn">
+                <widget class="QPushButton" name="elevationInputFileOpenButton">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -866,7 +866,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="elevationInputFileDownloadBtn">
+                <widget class="QPushButton" name="elevationInputFileDownloadButton">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -990,7 +990,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="meshResolutionFeetRadioBtn">
+                <widget class="QRadioButton" name="meshResolutionFeetRadioButton">
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
@@ -1012,7 +1012,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="meshResolutionMetersRadioBtn">
+                <widget class="QRadioButton" name="meshResolutionMetersRadioButton">
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
@@ -1096,7 +1096,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="vegetationGroupBoxSpacer">
+                <spacer name="vegetationSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -1211,7 +1211,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QCheckBox" name="timeZoneZoneDetailsCheckBox">
+                  <widget class="QCheckBox" name="timeZoneDetailsCheckBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -1227,7 +1227,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <spacer name="timeZoneInputLayoutSpacer">
+                  <spacer name="timeZoneLayoutSpacer">
                    <property name="orientation">
                     <enum>Qt::Orientation::Horizontal</enum>
                    </property>
@@ -1242,7 +1242,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </item>
                <item row="2" column="0">
-                <spacer name="timeZoneGroupBoxSpacer">
+                <spacer name="timeZoneSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Vertical</enum>
                  </property>
@@ -1277,7 +1277,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="diurnalWindCheckBox">
+             <widget class="QCheckBox" name="diurnalCheckBox">
               <property name="cursor">
                <cursorShape>PointingHandCursor</cursorShape>
               </property>
@@ -1287,7 +1287,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="diurnalWindSpacer">
+             <spacer name="diurnalSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1479,7 +1479,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="tableUnitLayout">
+             <layout class="QHBoxLayout" name="tableLayout">
               <item>
                <widget class="QLabel" name="tableUnitLabel">
                 <property name="text">
@@ -1571,7 +1571,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="clearTableBtn">
+               <widget class="QPushButton" name="clearTableButton">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1587,7 +1587,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <spacer name="tableFilterSpacer">
+               <spacer name="tableLayoutSpacer">
                 <property name="orientation">
                  <enum>Qt::Orientation::Horizontal</enum>
                 </property>
@@ -2410,9 +2410,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
-                   <property name="buttonSymbols">
-                    <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
-                   </property>
                    <property name="specialValueText">
                     <string/>
                    </property>
@@ -2589,7 +2586,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="numberOfProcessorsSolveBtn">
+               <widget class="QPushButton" name="numberOfProcessorsSolveButton">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
@@ -2654,7 +2651,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="outputDirectoryBtn">
+                <widget class="QPushButton" name="outputDirectoryButton">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -2680,7 +2677,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="solverPageSpacer">
+             <spacer name="solverSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -2697,7 +2694,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_4">
+         <spacer name="inputSpacer2">
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
           </property>
@@ -2713,7 +2710,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </spacer>
         </item>
         <item alignment="Qt::AlignmentFlag::AlignHCenter">
-         <widget class="QPushButton" name="solveBtn">
+         <widget class="QPushButton" name="solveButton">
           <property name="enabled">
            <bool>false</bool>
           </property>
@@ -2821,80 +2818,80 @@ QMenu::item:selected {
     background: #3c3c3c;
 }</string>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="fileMenu">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew_Project"/>
-    <addaction name="actionOpen_Project"/>
-    <addaction name="actionExport_Solution"/>
-    <addaction name="actionClose_Project"/>
-    <addaction name="actionExit_WindNinja"/>
+    <addaction name="newProjectAction"/>
+    <addaction name="openProjectAction"/>
+    <addaction name="exportSolutionAction"/>
+    <addaction name="closeProjectAction"/>
+    <addaction name="exitWindNinjaAction"/>
    </widget>
-   <widget class="QMenu" name="menuOptions">
+   <widget class="QMenu" name="optionsMenu">
     <property name="title">
      <string>Options</string>
     </property>
-    <addaction name="actionConsole_Output"/>
+    <addaction name="consoleOutput"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="toolsMenu">
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionWrite_blank_station_file"/>
-    <addaction name="actionSet_configuration_option"/>
+    <addaction name="writeBlankStationFileAction"/>
+    <addaction name="setConfigurationOptionAction"/>
    </widget>
-   <widget class="QMenu" name="menuHelp">
+   <widget class="QMenu" name="helpMenu">
     <property name="title">
      <string>Help</string>
     </property>
-    <widget class="QMenu" name="menuDisplaying_Shapefiles">
+    <widget class="QMenu" name="displayingShapeFilesMenu">
      <property name="title">
       <string>Displaying Shapefiles</string>
      </property>
-     <addaction name="actionHow_to_Display_Shapefiles_in_ArcMap"/>
+     <addaction name="howToDisplayShapeFilesInArcProAction"/>
     </widget>
-    <widget class="QMenu" name="menuTutorials">
+    <widget class="QMenu" name="tutorialsMenu">
      <property name="title">
       <string>Tutorials</string>
      </property>
-     <addaction name="actionTutorial_1_The_Basics"/>
-     <addaction name="actionTutorial_2_Diurnal_Winds_and_Non_Neutral_Stability"/>
-     <addaction name="actionTutorial_3_Point_Initialization"/>
-     <addaction name="actionTutorial_4_Weather_Model_Initialization"/>
+     <addaction name="tutorial1TheBasicsAction"/>
+     <addaction name="tutorial2DiurnalWindsandNonNeutralStabilityAction"/>
+     <addaction name="tutorial3PointInitializationAction"/>
+     <addaction name="tutorial4WeatherModelInitialization"/>
     </widget>
-    <widget class="QMenu" name="menuInstructions">
+    <widget class="QMenu" name="instructionsMenu">
      <property name="title">
       <string>Instructions</string>
      </property>
-     <addaction name="actionDEM_Download"/>
-     <addaction name="actionfetch_dem_Instructions"/>
-     <addaction name="actionCommand_Line_Interface"/>
+     <addaction name="demDownloadAction"/>
+     <addaction name="fetchDemInstructionsAction"/>
+     <addaction name="commandLineInterfaceAction"/>
     </widget>
-    <addaction name="menuDisplaying_Shapefiles"/>
-    <addaction name="menuTutorials"/>
-    <addaction name="menuInstructions"/>
-    <addaction name="actionAbout_WindNinja"/>
-    <addaction name="actionCitation"/>
-    <addaction name="actionEmail_Us"/>
-    <addaction name="actionSubmit_Bug_Report"/>
+    <addaction name="displayingShapeFilesMenu"/>
+    <addaction name="tutorialsMenu"/>
+    <addaction name="instructionsMenu"/>
+    <addaction name="aboutWindNinjaAction"/>
+    <addaction name="citationAction"/>
+    <addaction name="emailUsAction"/>
+    <addaction name="submitBugReportAction"/>
    </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuOptions"/>
-   <addaction name="menuTools"/>
-   <addaction name="menuHelp"/>
+   <addaction name="fileMenu"/>
+   <addaction name="optionsMenu"/>
+   <addaction name="toolsMenu"/>
+   <addaction name="helpMenu"/>
   </widget>
-  <action name="actionConsole_Output">
+  <action name="consoleOutput">
    <property name="text">
     <string>Console Output</string>
    </property>
   </action>
-  <action name="actionWrite_blank_station_file">
+  <action name="writeBlankStationFileAction">
    <property name="text">
     <string>Write blank station file</string>
    </property>
   </action>
-  <action name="actionSet_configuration_option">
+  <action name="setConfigurationOptionAction">
    <property name="text">
     <string>Set configuration option</string>
    </property>
@@ -2904,87 +2901,87 @@ QMenu::item:selected {
     <string>Displaying Shapefiles</string>
    </property>
   </action>
-  <action name="actionHow_to_Display_Shapefiles_in_ArcMap">
+  <action name="howToDisplayShapeFilesInArcProAction">
    <property name="text">
     <string>How to Display Shapefiles in ArcMap</string>
    </property>
   </action>
-  <action name="actionTutorial_1_The_Basics">
+  <action name="tutorial1TheBasicsAction">
    <property name="text">
     <string>Tutorial 1: The Basics</string>
    </property>
   </action>
-  <action name="actionTutorial_2_Diurnal_Winds_and_Non_Neutral_Stability">
+  <action name="tutorial2DiurnalWindsandNonNeutralStabilityAction">
    <property name="text">
     <string>Tutorial 2: Diurnal Winds and Non-Neutral Stability</string>
    </property>
   </action>
-  <action name="actionTutorial_3_Point_Initialization">
+  <action name="tutorial3PointInitializationAction">
    <property name="text">
     <string>Tutorial 3: Point Initialization</string>
    </property>
   </action>
-  <action name="actionTutorial_4_Weather_Model_Initialization">
+  <action name="tutorial4WeatherModelInitialization">
    <property name="text">
     <string>Tutorial 4: Weather Model Initialization</string>
    </property>
   </action>
-  <action name="actionDEM_Download">
+  <action name="demDownloadAction">
    <property name="text">
     <string>DEM Download</string>
    </property>
   </action>
-  <action name="actionfetch_dem_Instructions">
+  <action name="fetchDemInstructionsAction">
    <property name="text">
     <string>fetch_dem Instructions</string>
    </property>
   </action>
-  <action name="actionCommand_Line_Interface">
+  <action name="commandLineInterfaceAction">
    <property name="text">
     <string>Command Line Interface</string>
    </property>
   </action>
-  <action name="actionAbout_WindNinja">
+  <action name="aboutWindNinjaAction">
    <property name="text">
     <string>About WindNinja</string>
    </property>
   </action>
-  <action name="actionCitation">
+  <action name="citationAction">
    <property name="text">
     <string>Citation</string>
    </property>
   </action>
-  <action name="actionEmail_Us">
+  <action name="emailUsAction">
    <property name="text">
     <string>Email Us</string>
    </property>
   </action>
-  <action name="actionSubmit_Bug_Report">
+  <action name="submitBugReportAction">
    <property name="text">
     <string>Submit Bug Report</string>
    </property>
   </action>
-  <action name="actionNew_Project">
+  <action name="newProjectAction">
    <property name="text">
     <string>New Project</string>
    </property>
   </action>
-  <action name="actionOpen_Project">
+  <action name="openProjectAction">
    <property name="text">
     <string>Open Project</string>
    </property>
   </action>
-  <action name="actionExport_Solution">
+  <action name="exportSolutionAction">
    <property name="text">
     <string>Export Solution</string>
    </property>
   </action>
-  <action name="actionClose_Project">
+  <action name="closeProjectAction">
    <property name="text">
     <string>Close Project</string>
    </property>
   </action>
-  <action name="actionExit_WindNinja">
+  <action name="exitWindNinjaAction">
    <property name="text">
     <string>Exit WindNinja</string>
    </property>
