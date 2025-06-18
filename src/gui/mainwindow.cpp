@@ -829,9 +829,6 @@ MainWindow::MainWindow(QWidget *parent)
   // Expand tree UI
   ui->treeWidget->expandAll();
 
-  // Register GDAL drivers
-  GDALAllRegister();
-
   /*
    * Create file handler window for point init screen
    */

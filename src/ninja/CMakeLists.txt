@@ -33,7 +33,6 @@ set(NINJA_SOURCES air.cpp
                   Aspect.cpp
                   cellDiurnal.cpp
                   cli.cpp
-                  dbfopen.cpp
                   domainAverageInitialization.cpp
                   dust.cpp
                   EasyBMP.cpp
@@ -83,7 +82,6 @@ set(NINJA_SOURCES air.cpp
                   relief_fetch.cpp
                   Shade.cpp
                   ShapeVector.cpp
-                  shpopen.cpp
                   Slope.cpp
                   solar.cpp
                   solpos.cpp
