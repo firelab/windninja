@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1081</width>
-    <height>638</height>
+    <width>1969</width>
+    <height>1000</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -274,7 +274,7 @@
        <bool>false</bool>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
-       <layout class="QVBoxLayout" name="inputLayout" stretch="2,1,0,0">
+       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,0,0">
         <property name="spacing">
          <number>0</number>
         </property>
@@ -476,7 +476,7 @@
          </widget>
         </item>
         <item>
-         <spacer name="verticalSpacer_4">
+         <spacer name="inputSpacer1">
           <property name="orientation">
            <enum>Qt::Orientation::Vertical</enum>
           </property>
@@ -492,7 +492,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QStackedWidget" name="stackedInputPage">
+         <widget class="QStackedWidget" name="stackedInputsPage">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
@@ -527,8 +527,8 @@
            <number>5</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
-          <widget class="QWidget" name="solverMethodologyPage">
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <widget class="QWidget" name="solverMethodologyInformationPage">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
             <property name="spacing">
              <number>0</number>
             </property>
@@ -545,7 +545,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QTextEdit" name="textEdit_7">
+             <widget class="QTextEdit" name="solverMethodologyInformationTextEdit">
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -571,9 +571,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
              </widget>
             </item>
+            <item>
+             <spacer name="solverMethodologyInformationSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="comPage">
+          <widget class="QWidget" name="massSolverPage">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -594,44 +607,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QGroupBox" name="comGroupBox">
-              <property name="title">
-               <string/>
+             <widget class="QCheckBox" name="massSolverCheckBox">
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
               </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_9">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <property name="leftMargin">
-                <number>5</number>
-               </property>
-               <property name="topMargin">
-                <number>5</number>
-               </property>
-               <property name="rightMargin">
-                <number>5</number>
-               </property>
-               <property name="bottomMargin">
-                <number>5</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="useCOM">
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Use Conservation of Mass</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <property name="text">
+               <string>Use Conservation of Mass</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
              </widget>
             </item>
             <item>
-             <widget class="QTextEdit" name="comTextEdit">
+             <widget class="QTextEdit" name="massSolverTextEdit">
               <property name="font">
                <font>
                 <pointsize>8</pointsize>
@@ -653,7 +642,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer_3">
+             <spacer name="massSolverPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -667,7 +656,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="commPage">
+          <widget class="QWidget" name="massAndMomentumSolverPage">
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="leftMargin">
              <number>5</number>
@@ -682,41 +671,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QGroupBox" name="commGroupBox">
-              <property name="title">
-               <string/>
+             <widget class="QCheckBox" name="massAndMomentumSolverCheckBox">
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
               </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_10">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <property name="leftMargin">
-                <number>5</number>
-               </property>
-               <property name="topMargin">
-                <number>5</number>
-               </property>
-               <property name="rightMargin">
-                <number>5</number>
-               </property>
-               <property name="bottomMargin">
-                <number>5</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="useCOMM">
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Use Conservation of Mass and Momentum</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
+              <property name="text">
+               <string>Use Conservation of Mass and Momentum</string>
+              </property>
              </widget>
             </item>
             <item>
-             <widget class="QTextEdit" name="commTextEdit">
+             <widget class="QTextEdit" name="massAndMomentumSolverTextEdit">
               <property name="font">
                <font>
                 <pointsize>8</pointsize>
@@ -740,9 +705,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
              </widget>
             </item>
+            <item>
+             <spacer name="massAndMomentumSolverSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="inputPage">
+          <widget class="QWidget" name="inputsInformationPage">
            <layout class="QVBoxLayout" name="verticalLayout_12">
             <property name="leftMargin">
              <number>5</number>
@@ -757,7 +735,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QTextEdit" name="inputTextWindow">
+             <widget class="QTextEdit" name="inputInformationPageTextEdit">
               <property name="font">
                <font>
                 <pointsize>8</pointsize>
@@ -787,6 +765,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
              </widget>
             </item>
+            <item>
+             <spacer name="inputInformationPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </widget>
           <widget class="QWidget" name="surfaceInputPage">
@@ -802,7 +793,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <height>0</height>
             </size>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_3" stretch="1,1,1,1">
+           <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0,0">
             <property name="sizeConstraint">
              <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
             </property>
@@ -819,7 +810,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QGroupBox" name="elevInFileBox">
+             <widget class="QGroupBox" name="elevationInputFileGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -849,7 +840,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <number>5</number>
                </property>
                <item>
-                <widget class="QLineEdit" name="elevFilePath">
+                <widget class="QLineEdit" name="elevationInputFileLineEdit">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -865,7 +856,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="openFileButton">
+                <widget class="QPushButton" name="elevationInputFileOpenButton">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -875,17 +866,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="getFromMapButton">
+                <widget class="QPushButton" name="elevationInputFileDownloadButton">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
                  <property name="text">
-                  <string>Import From Map</string>
+                  <string>Download File</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="fetchType">
+                <widget class="QComboBox" name="elevationInputFileComboBox">
                  <item>
                   <property name="text">
                    <string>WORLD SRTM (30m)</string>
@@ -904,7 +895,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="horizontalSpacer_3">
+                <spacer name="elevationInputFileSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -920,69 +911,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="vegBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>70</height>
-               </size>
-              </property>
-              <property name="title">
-               <string>Vegetation</string>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout">
-               <item>
-                <widget class="QComboBox" name="vegetationType">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>Grass</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Brush</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>Trees</string>
-                  </property>
-                 </item>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QGroupBox" name="meshResBox">
+             <widget class="QGroupBox" name="meshResolutionGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1000,7 +929,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_5">
                <item>
-                <widget class="QComboBox" name="meshResType">
+                <widget class="QDoubleSpinBox" name="meshResolutionSpinBox">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="readOnly">
+                  <bool>false</bool>
+                 </property>
+                 <property name="minimum">
+                  <double>0.010000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>10000.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>200.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="meshResolutionComboBox">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -1033,57 +990,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QDoubleSpinBox" name="meshResValue">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="readOnly">
-                  <bool>false</bool>
-                 </property>
-                 <property name="minimum">
-                  <double>0.010000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>10000.000000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>200.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="meshResMeters">
-                 <property name="enabled">
-                  <bool>true</bool>
-                 </property>
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Meters</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QRadioButton" name="meshResFeet">
+                <widget class="QRadioButton" name="meshResolutionFeetRadioButton">
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
@@ -1105,7 +1012,29 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="horizontalSpacer_2">
+                <widget class="QRadioButton" name="meshResolutionMetersRadioButton">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="text">
+                  <string>Meters</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="meshResolutionSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -1121,7 +1050,69 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="timeZoneBox">
+             <widget class="QGroupBox" name="vegetationGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>70</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Vegetation</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout">
+               <item>
+                <widget class="QComboBox" name="vegetationComboBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Grass</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Brush</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Trees</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <spacer name="vegetationSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="timeZoneGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -1137,46 +1128,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="title">
                <string>Time Zone</string>
               </property>
-              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0" columnstretch="0,0,0,0" rowminimumheight="0,0,0">
-               <item row="0" column="0">
-                <widget class="QComboBox" name="timeZoneSelector">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>150</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>150</width>
-                   <height>16777215</height>
-                  </size>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="currentText">
-                  <string/>
-                 </property>
-                 <property name="currentIndex">
-                  <number>-1</number>
-                 </property>
-                 <property name="maxVisibleItems">
-                  <number>10</number>
-                 </property>
-                 <property name="sizeAdjustPolicy">
-                  <enum>QComboBox::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
-                 </property>
-                </widget>
-               </item>
-               <item row="2" column="0" colspan="4">
-                <widget class="QTextEdit" name="timeZoneDetails">
+              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0" columnstretch="0">
+               <item row="1" column="0">
+                <widget class="QTextEdit" name="timeZoneDetailsTextEdit">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -1201,53 +1155,94 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                 </widget>
                </item>
-               <item row="0" column="2">
-                <widget class="QCheckBox" name="displayTimeZoneDetails">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Display Time Zone Details</string>
-                 </property>
-                </widget>
+               <item row="0" column="0">
+                <layout class="QHBoxLayout" name="timeZoneInputLayout">
+                 <item>
+                  <widget class="QComboBox" name="timeZoneComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>150</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>150</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="currentText">
+                    <string/>
+                   </property>
+                   <property name="currentIndex">
+                    <number>-1</number>
+                   </property>
+                   <property name="maxVisibleItems">
+                    <number>10</number>
+                   </property>
+                   <property name="sizeAdjustPolicy">
+                    <enum>QComboBox::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="timeZoneAllZonesCheckBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="text">
+                    <string>Show All Zones</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QCheckBox" name="timeZoneDetailsCheckBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="cursor">
+                    <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="text">
+                    <string>Display Time Zone Details</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="timeZoneLayoutSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
                </item>
-               <item row="0" column="3">
-                <spacer name="horizontalSpacer_4">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item row="0" column="1">
-                <widget class="QCheckBox" name="showAllTimeZones">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Show All Zones</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="0">
-                <spacer name="verticalSpacer_10">
+               <item row="2" column="0">
+                <spacer name="timeZoneSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Vertical</enum>
                  </property>
@@ -1282,66 +1277,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QGroupBox" name="diurnalBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+             <widget class="QCheckBox" name="diurnalCheckBox">
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
               </property>
-              <property name="title">
-               <string/>
+              <property name="text">
+               <string>Use Diurnal Wind</string>
               </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_6">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <property name="leftMargin">
-                <number>5</number>
-               </property>
-               <property name="topMargin">
-                <number>5</number>
-               </property>
-               <property name="rightMargin">
-                <number>5</number>
-               </property>
-               <property name="bottomMargin">
-                <number>5</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="useDiurnalWind">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Use Diurnal Wind</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_5">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer">
+             <spacer name="diurnalSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1373,54 +1319,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QGroupBox" name="stabilityBox">
-              <property name="title">
-               <string/>
+             <widget class="QCheckBox" name="stabilityCheckBox">
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
               </property>
-              <layout class="QHBoxLayout" name="horizontalLayout_7">
-               <property name="spacing">
-                <number>0</number>
-               </property>
-               <property name="leftMargin">
-                <number>5</number>
-               </property>
-               <property name="topMargin">
-                <number>5</number>
-               </property>
-               <property name="rightMargin">
-                <number>5</number>
-               </property>
-               <property name="bottomMargin">
-                <number>5</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="useStability">
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="text">
-                  <string>Use Stability</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_6">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
+              <property name="text">
+               <string>Use Stability</string>
+              </property>
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer_2">
+             <spacer name="stabilitySpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1435,8 +1344,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </layout>
           </widget>
           <widget class="QWidget" name="windInputPage"/>
-          <widget class="QWidget" name="domainAvgWndTable">
-           <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0">
+          <widget class="QWidget" name="domainAveragePage">
+           <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0">
             <property name="spacing">
              <number>6</number>
             </property>
@@ -1453,505 +1362,422 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="domainAvgWndLayout" stretch="1,0,1,1,0">
-              <property name="spacing">
-               <number>6</number>
+             <widget class="QCheckBox" name="domainAverageCheckBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
-              <property name="sizeConstraint">
-               <enum>QLayout::SizeConstraint::SetMinAndMaxSize</enum>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>5</height>
+               </size>
               </property>
-              <property name="topMargin">
-               <number>0</number>
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
               </property>
-              <item>
-               <layout class="QHBoxLayout" name="domainAvgWindLayout">
-                <property name="sizeConstraint">
-                 <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
-                </property>
-                <property name="topMargin">
-                 <number>0</number>
-                </property>
-                <item>
-                 <widget class="QCheckBox" name="useDomainAvgWind">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>5</height>
-                   </size>
-                  </property>
-                  <property name="cursor">
-                   <cursorShape>PointingHandCursor</cursorShape>
-                  </property>
+              <property name="text">
+               <string>Domain Average Wind</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="inputWindHeight">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>100</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Input Wind Height</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_2">
+               <item>
+                <widget class="QDoubleSpinBox" name="windHeightValue">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="minimum">
+                  <double>0.010000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>20.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="windHeightComboBox">
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <item>
                   <property name="text">
-                   <string>Domain Average Wind</string>
+                   <string>20ft-US</string>
                   </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_11">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Horizontal</enum>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>10m-SI</string>
                   </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Custom</string>
                   </property>
-                 </spacer>
-                </item>
-               </layout>
-              </item>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="windHeightFeet">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="text">
+                  <string>Feet</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="windHeightMeters">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="text">
+                  <string>Meters</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="windHeightSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="tableLayout">
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_13">
-                <property name="topMargin">
-                 <number>10</number>
+               <widget class="QLabel" name="tableUnitLabel">
+                <property name="text">
+                 <string>Table Unites:</string>
                 </property>
-               </layout>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="inputWindHeight">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>100</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="title">
-                 <string>Input Wind Height</string>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_2">
-                 <item>
-                  <widget class="QComboBox" name="domainAvgPicklist">
-                   <property name="cursor">
-                    <cursorShape>PointingHandCursor</cursorShape>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>20ft-US</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>10m-SI</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Custom</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QDoubleSpinBox" name="windHeightValue">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="cursor">
-                    <cursorShape>PointingHandCursor</cursorShape>
-                   </property>
-                   <property name="minimum">
-                    <double>0.010000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>20.000000000000000</double>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="windHeightFeet">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="cursor">
-                    <cursorShape>PointingHandCursor</cursorShape>
-                   </property>
-                   <property name="text">
-                    <string>Feet</string>
-                   </property>
-                   <property name="checked">
-                    <bool>true</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QRadioButton" name="windHeightMeters">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="cursor">
-                    <cursorShape>PointingHandCursor</cursorShape>
-                   </property>
-                   <property name="text">
-                    <string>Meters</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="horizontalSpacer_10">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
                </widget>
               </item>
               <item>
-               <layout class="QHBoxLayout" name="clearTableLayout" stretch="1,0,1,4,1">
-                <property name="topMargin">
-                 <number>0</number>
+               <widget class="QComboBox" name="tableSpeedUnits">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="bottomMargin">
-                 <number>0</number>
+                <property name="minimumSize">
+                 <size>
+                  <width>60</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>60</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <item>
-                 <widget class="QLineEdit" name="unitTextField">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>90</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>90</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>Table Units:</string>
-                  </property>
-                  <property name="frame">
-                   <bool>false</bool>
-                  </property>
-                  <property name="readOnly">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
+                 <property name="text">
+                  <string>mph</string>
+                 </property>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="speedUnits">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>60</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>60</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="cursor">
-                   <cursorShape>PointingHandCursor</cursorShape>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>mph</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>m/s</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>kph</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>kts</string>
-                   </property>
-                  </item>
-                 </widget>
+                 <property name="text">
+                  <string>m/s</string>
+                 </property>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="tempUnits">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>40</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>40</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="cursor">
-                   <cursorShape>PointingHandCursor</cursorShape>
-                  </property>
-                  <property name="layoutDirection">
-                   <enum>Qt::LayoutDirection::LeftToRight</enum>
-                  </property>
-                  <item>
-                   <property name="text">
-                    <string>°F</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>°C</string>
-                   </property>
-                  </item>
-                 </widget>
+                 <property name="text">
+                  <string>kph</string>
+                 </property>
                 </item>
                 <item>
-                 <spacer name="horizontalSpacer_12">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
+                 <property name="text">
+                  <string>kts</string>
+                 </property>
                 </item>
-                <item>
-                 <widget class="QPushButton" name="clearDAWtable">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="cursor">
-                   <cursorShape>PointingHandCursor</cursorShape>
-                  </property>
-                  <property name="text">
-                   <string>Clear Table</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
+               </widget>
               </item>
               <item>
-               <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0">
-                <property name="sizeConstraint">
-                 <enum>QLayout::SizeConstraint::SetMaximumSize</enum>
+               <widget class="QComboBox" name="tableTempUnits">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="topMargin">
-                 <number>0</number>
+                <property name="minimumSize">
+                 <size>
+                  <width>40</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>40</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
+                <property name="layoutDirection">
+                 <enum>Qt::LayoutDirection::LeftToRight</enum>
                 </property>
                 <item>
-                 <widget class="QTableWidget" name="windTableData">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                    <horstretch>1</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>100</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="dragEnabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="dragDropMode">
-                   <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
-                  </property>
-                  <property name="defaultDropAction">
-                   <enum>Qt::DropAction::MoveAction</enum>
-                  </property>
-                  <property name="wordWrap">
-                   <bool>true</bool>
-                  </property>
-                  <property name="rowCount">
-                   <number>50</number>
-                  </property>
-                  <attribute name="horizontalHeaderCascadingSectionResizes">
-                   <bool>false</bool>
-                  </attribute>
-                  <attribute name="horizontalHeaderMinimumSectionSize">
-                   <number>20</number>
-                  </attribute>
-                  <attribute name="horizontalHeaderDefaultSectionSize">
-                   <number>80</number>
-                  </attribute>
-                  <attribute name="horizontalHeaderStretchLastSection">
-                   <bool>true</bool>
-                  </attribute>
-                  <attribute name="verticalHeaderCascadingSectionResizes">
-                   <bool>false</bool>
-                  </attribute>
-                  <attribute name="verticalHeaderMinimumSectionSize">
-                   <number>20</number>
-                  </attribute>
-                  <attribute name="verticalHeaderDefaultSectionSize">
-                   <number>20</number>
-                  </attribute>
-                  <attribute name="verticalHeaderStretchLastSection">
-                   <bool>true</bool>
-                  </attribute>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <row/>
-                  <column>
-                   <property name="text">
-                    <string>Speed
-(Select)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                  </column>
-                  <column>
-                   <property name="text">
-                    <string>Direction
-(degrees)</string>
-                   </property>
-                   <property name="toolTip">
-                    <string extracomment="degrees"/>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                  </column>
-                  <column>
-                   <property name="text">
-                    <string>Time
-(hh:mm)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                  </column>
-                  <column>
-                   <property name="text">
-                    <string>Date
-(mm/dd/yyyy)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                  </column>
-                  <column>
-                   <property name="text">
-                    <string>Cloud Cover
-(%)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                  </column>
-                  <column>
-                   <property name="text">
-                    <string>Air Temp
-(Select)</string>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>10</pointsize>
-                    </font>
-                   </property>
-                  </column>
-                 </widget>
+                 <property name="text">
+                  <string>°F</string>
+                 </property>
                 </item>
-               </layout>
+                <item>
+                 <property name="text">
+                  <string>°C</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="clearTableButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="cursor">
+                 <cursorShape>PointingHandCursor</cursorShape>
+                </property>
+                <property name="text">
+                 <string>Clear Table</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="tableLayoutSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
+            <item>
+             <widget class="QTableWidget" name="domainAverageTable">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>100</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="dragEnabled">
+               <bool>true</bool>
+              </property>
+              <property name="dragDropMode">
+               <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
+              </property>
+              <property name="defaultDropAction">
+               <enum>Qt::DropAction::MoveAction</enum>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+              <property name="rowCount">
+               <number>50</number>
+              </property>
+              <attribute name="horizontalHeaderCascadingSectionResizes">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderMinimumSectionSize">
+               <number>20</number>
+              </attribute>
+              <attribute name="horizontalHeaderDefaultSectionSize">
+               <number>80</number>
+              </attribute>
+              <attribute name="horizontalHeaderStretchLastSection">
+               <bool>true</bool>
+              </attribute>
+              <attribute name="verticalHeaderCascadingSectionResizes">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="verticalHeaderMinimumSectionSize">
+               <number>20</number>
+              </attribute>
+              <attribute name="verticalHeaderDefaultSectionSize">
+               <number>20</number>
+              </attribute>
+              <attribute name="verticalHeaderStretchLastSection">
+               <bool>true</bool>
+              </attribute>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <row/>
+              <column>
+               <property name="text">
+                <string>Speed
+(Select)</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Direction
+(degrees)</string>
+               </property>
+               <property name="toolTip">
+                <string extracomment="degrees"/>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Time
+(hh:mm)</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Date
+(mm/dd/yyyy)</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Cloud Cover
+(%)</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Air Temp
+(Select)</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>10</pointsize>
+                </font>
+               </property>
+              </column>
+             </widget>
+            </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="pointInitPage">
+          <widget class="QWidget" name="pointInitializationPage">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -1978,7 +1804,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="usePointInit">
+             <widget class="QCheckBox" name="pointInitializationCheckBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -2584,9 +2410,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
-                   <property name="buttonSymbols">
-                    <enum>QAbstractSpinBox::ButtonSymbols::UpDownArrows</enum>
-                   </property>
                    <property name="specialValueText">
                     <string/>
                    </property>
@@ -2680,7 +2503,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QPlainTextEdit" name="availableProcessors">
+             <widget class="QPlainTextEdit" name="availableProcessorsTextEdit">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -2714,15 +2537,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="processorLayout">
-              <property name="spacing">
-               <number>0</number>
-              </property>
-              <property name="topMargin">
-               <number>0</number>
-              </property>
+             <layout class="QHBoxLayout" name="numberOfProcessorsLayout">
               <item>
-               <widget class="QPlainTextEdit" name="numberOfProcessorsText">
+               <widget class="QPlainTextEdit" name="numberOfProcessorsTextEdit">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2759,7 +2576,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="numProcessorsSpinbox">
+               <widget class="QSpinBox" name="numberOfProcessorsSpinBox">
                 <property name="cursor">
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
@@ -2769,93 +2586,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <spacer name="horizontalSpacer_8">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
+               <widget class="QPushButton" name="numberOfProcessorsSolveButton">
+                <property name="enabled">
+                 <bool>false</bool>
                 </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="QPlainTextEdit" name="outputDirText">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::Shape::NoFrame</enum>
-              </property>
-              <property name="verticalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-              </property>
-              <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-              </property>
-              <property name="readOnly">
-               <bool>true</bool>
-              </property>
-              <property name="plainText">
-               <string>Output Directory</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="outputLayout">
-              <property name="spacing">
-               <number>10</number>
-              </property>
-              <item>
-               <widget class="QTextEdit" name="outputDirectory">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>300</width>
-                  <height>30</height>
-                 </size>
-                </property>
-                <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="outputSaveLocationBtn">
                 <property name="cursor">
                  <cursorShape>PointingHandCursor</cursorShape>
                 </property>
                 <property name="text">
-                 <string>Output Location</string>
+                 <string>Solve</string>
                 </property>
                </widget>
               </item>
               <item>
-               <spacer name="horizontalSpacer_9">
+               <spacer name="numberOfProcessorsSpacer">
                 <property name="orientation">
                  <enum>Qt::Orientation::Horizontal</enum>
                 </property>
@@ -2870,42 +2620,64 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </layout>
             </item>
             <item>
-             <spacer name="verticalSpacer_9">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
+             <widget class="QGroupBox" name="outputDirectoryGroupBox">
+              <property name="title">
+               <string>Output Directory</string>
               </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Policy::Fixed</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>10</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="solverPageSolveBtn">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="cursor">
-               <cursorShape>PointingHandCursor</cursorShape>
-              </property>
-              <property name="text">
-               <string>Solve</string>
-              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_18">
+               <item>
+                <widget class="QTextEdit" name="outputDirectoryTextEdit">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>300</width>
+                   <height>30</height>
+                  </size>
+                 </property>
+                 <property name="verticalScrollBarPolicy">
+                  <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+                 </property>
+                 <property name="horizontalScrollBarPolicy">
+                  <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+                 </property>
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="outputDirectoryButton">
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="text">
+                  <string>Output Location</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="outputDirectorySpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer_8">
+             <spacer name="solverSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -2922,78 +2694,56 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="solveButtonLayout" stretch="1,1,1">
-          <property name="spacing">
-           <number>0</number>
+         <spacer name="inputSpacer2">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
-          <property name="topMargin">
-           <number>3</number>
+          <property name="sizeType">
+           <enum>QSizePolicy::Policy::Fixed</enum>
           </property>
-          <property name="bottomMargin">
-           <number>3</number>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>10</height>
+           </size>
           </property>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_16">
-            <property name="spacing">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QWidget" name="widget" native="true"/>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_13">
-            <item>
-             <widget class="QPushButton" name="solveButton">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="cursor">
-               <cursorShape>PointingHandCursor</cursorShape>
-              </property>
-              <property name="layoutDirection">
-               <enum>Qt::LayoutDirection::LeftToRight</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">#solveButton {
+         </spacer>
+        </item>
+        <item alignment="Qt::AlignmentFlag::AlignHCenter">
+         <widget class="QPushButton" name="solveButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LayoutDirection::LeftToRight</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">#solveButton {
 	padding: 0;
 	width: 100px;
 	text-align: center;
 	padding: 5px;
 }</string>
-              </property>
-              <property name="text">
-               <string>Solve</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_12">
-            <item>
-             <widget class="QWidget" name="widget_2" native="true">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
+          </property>
+          <property name="text">
+           <string>Solve</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -3056,7 +2806,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1081</width>
+     <width>1969</width>
      <height>22</height>
     </rect>
    </property>
@@ -3068,80 +2818,80 @@ QMenu::item:selected {
     background: #3c3c3c;
 }</string>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="fileMenu">
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionNew_Project"/>
-    <addaction name="actionOpen_Project"/>
-    <addaction name="actionExport_Solution"/>
-    <addaction name="actionClose_Project"/>
-    <addaction name="actionExit_WindNinja"/>
+    <addaction name="newProjectAction"/>
+    <addaction name="openProjectAction"/>
+    <addaction name="exportSolutionAction"/>
+    <addaction name="closeProjectAction"/>
+    <addaction name="exitWindNinjaAction"/>
    </widget>
-   <widget class="QMenu" name="menuOptions">
+   <widget class="QMenu" name="optionsMenu">
     <property name="title">
      <string>Options</string>
     </property>
-    <addaction name="actionConsole_Output"/>
+    <addaction name="consoleOutput"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="toolsMenu">
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionWrite_blank_station_file"/>
-    <addaction name="actionSet_configuration_option"/>
+    <addaction name="writeBlankStationFileAction"/>
+    <addaction name="setConfigurationOptionAction"/>
    </widget>
-   <widget class="QMenu" name="menuHelp">
+   <widget class="QMenu" name="helpMenu">
     <property name="title">
      <string>Help</string>
     </property>
-    <widget class="QMenu" name="menuDisplaying_Shapefiles">
+    <widget class="QMenu" name="displayingShapeFilesMenu">
      <property name="title">
       <string>Displaying Shapefiles</string>
      </property>
-     <addaction name="actionHow_to_Display_Shapefiles_in_ArcMap"/>
+     <addaction name="howToDisplayShapeFilesInArcProAction"/>
     </widget>
-    <widget class="QMenu" name="menuTutorials">
+    <widget class="QMenu" name="tutorialsMenu">
      <property name="title">
       <string>Tutorials</string>
      </property>
-     <addaction name="actionTutorial_1_The_Basics"/>
-     <addaction name="actionTutorial_2_Diurnal_Winds_and_Non_Neutral_Stability"/>
-     <addaction name="actionTutorial_3_Point_Initialization"/>
-     <addaction name="actionTutorial_4_Weather_Model_Initialization"/>
+     <addaction name="tutorial1TheBasicsAction"/>
+     <addaction name="tutorial2DiurnalWindsandNonNeutralStabilityAction"/>
+     <addaction name="tutorial3PointInitializationAction"/>
+     <addaction name="tutorial4WeatherModelInitialization"/>
     </widget>
-    <widget class="QMenu" name="menuInstructions">
+    <widget class="QMenu" name="instructionsMenu">
      <property name="title">
       <string>Instructions</string>
      </property>
-     <addaction name="actionDEM_Download"/>
-     <addaction name="actionfetch_dem_Instructions"/>
-     <addaction name="actionCommand_Line_Interface"/>
+     <addaction name="demDownloadAction"/>
+     <addaction name="fetchDemInstructionsAction"/>
+     <addaction name="commandLineInterfaceAction"/>
     </widget>
-    <addaction name="menuDisplaying_Shapefiles"/>
-    <addaction name="menuTutorials"/>
-    <addaction name="menuInstructions"/>
-    <addaction name="actionAbout_WindNinja"/>
-    <addaction name="actionCitation"/>
-    <addaction name="actionEmail_Us"/>
-    <addaction name="actionSubmit_Bug_Report"/>
+    <addaction name="displayingShapeFilesMenu"/>
+    <addaction name="tutorialsMenu"/>
+    <addaction name="instructionsMenu"/>
+    <addaction name="aboutWindNinjaAction"/>
+    <addaction name="citationAction"/>
+    <addaction name="emailUsAction"/>
+    <addaction name="submitBugReportAction"/>
    </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuOptions"/>
-   <addaction name="menuTools"/>
-   <addaction name="menuHelp"/>
+   <addaction name="fileMenu"/>
+   <addaction name="optionsMenu"/>
+   <addaction name="toolsMenu"/>
+   <addaction name="helpMenu"/>
   </widget>
-  <action name="actionConsole_Output">
+  <action name="consoleOutput">
    <property name="text">
     <string>Console Output</string>
    </property>
   </action>
-  <action name="actionWrite_blank_station_file">
+  <action name="writeBlankStationFileAction">
    <property name="text">
     <string>Write blank station file</string>
    </property>
   </action>
-  <action name="actionSet_configuration_option">
+  <action name="setConfigurationOptionAction">
    <property name="text">
     <string>Set configuration option</string>
    </property>
@@ -3151,87 +2901,87 @@ QMenu::item:selected {
     <string>Displaying Shapefiles</string>
    </property>
   </action>
-  <action name="actionHow_to_Display_Shapefiles_in_ArcMap">
+  <action name="howToDisplayShapeFilesInArcProAction">
    <property name="text">
     <string>How to Display Shapefiles in ArcMap</string>
    </property>
   </action>
-  <action name="actionTutorial_1_The_Basics">
+  <action name="tutorial1TheBasicsAction">
    <property name="text">
     <string>Tutorial 1: The Basics</string>
    </property>
   </action>
-  <action name="actionTutorial_2_Diurnal_Winds_and_Non_Neutral_Stability">
+  <action name="tutorial2DiurnalWindsandNonNeutralStabilityAction">
    <property name="text">
     <string>Tutorial 2: Diurnal Winds and Non-Neutral Stability</string>
    </property>
   </action>
-  <action name="actionTutorial_3_Point_Initialization">
+  <action name="tutorial3PointInitializationAction">
    <property name="text">
     <string>Tutorial 3: Point Initialization</string>
    </property>
   </action>
-  <action name="actionTutorial_4_Weather_Model_Initialization">
+  <action name="tutorial4WeatherModelInitialization">
    <property name="text">
     <string>Tutorial 4: Weather Model Initialization</string>
    </property>
   </action>
-  <action name="actionDEM_Download">
+  <action name="demDownloadAction">
    <property name="text">
     <string>DEM Download</string>
    </property>
   </action>
-  <action name="actionfetch_dem_Instructions">
+  <action name="fetchDemInstructionsAction">
    <property name="text">
     <string>fetch_dem Instructions</string>
    </property>
   </action>
-  <action name="actionCommand_Line_Interface">
+  <action name="commandLineInterfaceAction">
    <property name="text">
     <string>Command Line Interface</string>
    </property>
   </action>
-  <action name="actionAbout_WindNinja">
+  <action name="aboutWindNinjaAction">
    <property name="text">
     <string>About WindNinja</string>
    </property>
   </action>
-  <action name="actionCitation">
+  <action name="citationAction">
    <property name="text">
     <string>Citation</string>
    </property>
   </action>
-  <action name="actionEmail_Us">
+  <action name="emailUsAction">
    <property name="text">
     <string>Email Us</string>
    </property>
   </action>
-  <action name="actionSubmit_Bug_Report">
+  <action name="submitBugReportAction">
    <property name="text">
     <string>Submit Bug Report</string>
    </property>
   </action>
-  <action name="actionNew_Project">
+  <action name="newProjectAction">
    <property name="text">
     <string>New Project</string>
    </property>
   </action>
-  <action name="actionOpen_Project">
+  <action name="openProjectAction">
    <property name="text">
     <string>Open Project</string>
    </property>
   </action>
-  <action name="actionExport_Solution">
+  <action name="exportSolutionAction">
    <property name="text">
     <string>Export Solution</string>
    </property>
   </action>
-  <action name="actionClose_Project">
+  <action name="closeProjectAction">
    <property name="text">
     <string>Close Project</string>
    </property>
   </action>
-  <action name="actionExit_WindNinja">
+  <action name="exitWindNinjaAction">
    <property name="text">
     <string>Exit WindNinja</string>
    </property>
