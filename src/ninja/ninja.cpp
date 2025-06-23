@@ -3721,7 +3721,9 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
         return WindNinjaInputs::fine;
     }
     else{
-        throw std::logic_error("Problem with mesh type string in ninja::get_eMeshType().");
+        throw std::invalid_argument( "Invalid input '" + meshChoice +
+                                     "' in ninja::get_eMeshType()" +
+                                     "\nchoices are: 'coarse', 'medium', or 'fine'" );
     }
 }
 
@@ -4393,7 +4395,8 @@ void ninja::set_meshResChoice( std::string choice )
     }
     else
         throw std::invalid_argument( "Invalid input '" + choice +
-                                    "' in ninja::set_meshResChoice" );
+                                     "' in ninja::set_meshResChoice()" +
+                                     "\nchoices are: 'coarse', 'medium', or 'fine'" );
 }
 void ninja::set_meshResChoice( const Mesh::eMeshChoice choice )
 {

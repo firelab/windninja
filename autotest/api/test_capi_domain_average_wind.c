@@ -89,7 +89,8 @@ int main()
     const double cloud[2] = {10.0, 10.0};
     const char * cloudUnits = "percent";
 
-    const double meshResolution = 300;
+    const double meshResolution = -1.0;  //set to value > 0.0 to override meshChoice with meshResolution value
+    //const double meshResolution = 300.0;
     const char * meshResolutionUnits = "m";
 
     /* 
@@ -169,7 +170,7 @@ int main()
         printf("NinjaSetUniVegetation: err = %d\n", err);
       }
 
-      if( momentumFlag == true )
+      if( meshResolution > 0.0 )
       {
         err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
         if(err != NINJA_SUCCESS)
@@ -177,7 +178,7 @@ int main()
           printf("NinjaSetMeshResolution: err = %d\n", err);
         }
       }
-      else
+      else  // meshResolution not set, use meshChoice
       {
         err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
         if(err != NINJA_SUCCESS)

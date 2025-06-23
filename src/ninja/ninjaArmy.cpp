@@ -1870,8 +1870,30 @@ int ninjaArmy::setUniVegetation( const int nIndex, char ** papszOptions )
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const std::string choice,
                                         char ** papszOptions )
 {
+#ifndef NINJAFOAM
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_meshResChoice( choice ) );
+#else
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        if( ninjas[ nIndex ]->identify() == "ninja" )
+        {
+            ninjas[ nIndex ]->set_meshResChoice( choice );
+            retval = NINJA_SUCCESS;
+        } else if( ninjas[ nIndex ]->identify() == "ninjafoam" )
+        {
+            ninjas[ nIndex ]->set_MeshCount( ninja::get_eNinjafoamMeshChoice(choice) );
+            retval = NINJA_SUCCESS;
+        }
+        else
+        {
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
+#endif
+
 }
 
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const Mesh::eMeshChoice choice,

@@ -142,7 +142,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
       printf("NinjaSetUniVegetation: err = %d\n", err);
     }
 
-    if( momentumFlag == true )
+    if( meshResolution > 0.0 )
     {
       err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
       if(err != NINJA_SUCCESS)
@@ -150,7 +150,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
         printf("NinjaSetMeshResolution: err = %d\n", err);
       }
     }
-    else
+    else  // meshResolution not set, use meshChoice
     {
       err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
       if(err != NINJA_SUCCESS)
@@ -252,6 +252,10 @@ int Provider::point_exec(PointInitialization& input) {
   unsigned int numNinjas = input.getNumNinjas();
   const char * outputPath =  input.getOutputPath().c_str();
 
+  //double meshResolution = view->getUi()->meshResValue->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
+  double meshResolution = outputResolution;
+  const char * meshResolutionUnits = "m";
+
   /*
    * Create the army
    */
@@ -346,10 +350,21 @@ int Provider::point_exec(PointInitialization& input) {
       printf("NinjaSetUniVegetation: err = %d\n", err);
     }
 
-    err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
-    if(err != NINJA_SUCCESS)
+    if( meshResolution > 0.0 )
     {
-      printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+      err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetMeshResolution: err = %d\n", err);
+      }
+    }
+    else  // meshResolution not set, use meshChoice
+    {
+      err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+      }
     }
 
     err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers, papszOptions);
@@ -488,7 +503,7 @@ int Provider::wxmodel_exec(WeatherModel& input) {
       printf("NinjaSetUniVegetation: err = %d\n", err);
     }
 
-    if( momentumFlag == true )
+    if( meshResolution > 0.0 )
     {
       err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
       if(err != NINJA_SUCCESS)
@@ -496,7 +511,7 @@ int Provider::wxmodel_exec(WeatherModel& input) {
         printf("NinjaSetMeshResolution: err = %d\n", err);
       }
     }
-    else
+    else  // meshResolution not set, use meshChoice
     {
       err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
       if(err != NINJA_SUCCESS)
