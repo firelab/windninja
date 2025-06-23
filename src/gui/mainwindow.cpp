@@ -961,10 +961,19 @@ MainWindow::MainWindow(QWidget *parent)
   ui->timeZoneDetailsTextEdit->setVisible(false);
 
   // Set initial formatting of domain average input table
-    ui->domainAverageTable->hideColumn(2);
-    ui->domainAverageTable->hideColumn(3);
-    ui->domainAverageTable->hideColumn(4);
-    ui->domainAverageTable->hideColumn(5);
-    ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  ui->domainAverageTable->hideColumn(2);
+  ui->domainAverageTable->hideColumn(3);
+  ui->domainAverageTable->hideColumn(4);
+  ui->domainAverageTable->hideColumn(5);
+  ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+  connect(ui->comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this, [=](int index) {
+            if (index == 2)
+              ui->stackedWidget->setCurrentIndex(1);
+            else
+              ui->stackedWidget->setCurrentIndex(0);
+          });
 
 }
+
