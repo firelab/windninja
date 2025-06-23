@@ -333,7 +333,7 @@ void MainWindow::on_elevationInputFileLineEdit_textChanged(const QString &arg1)
 
   // Calculate cell size
   if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
-    int c1, c2;
+    double c1, c2;
     c1 = adfGeoTransform[1];
     c2 = adfGeoTransform[5];
     if (abs(c1) == abs(c2)) {
@@ -458,10 +458,20 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
     ui->meshResolutionSpinBox->setEnabled(false);
   }
 
+  // default values are native mesh values
+
   int coarse = 4000;
   int medium = 10000;
   int fine = 20000;
   double meshResolution = 200.0;
+
+#ifdef NINJAFOAM
+  if (view->getUi()->useCOMM->isChecked()) {
+    coarse = 25000;
+    medium = 50000;
+    fine = 100000;
+  }
+#endif //NINJAFOAM
 
   int targetNumHorizCells = fine;
   switch (index) {
@@ -478,6 +488,8 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
     targetNumHorizCells = meshResolution;
   }
 
+  // default values are native mesh values
+
   double XLength = GDALXSize * GDALCellSize;
   double YLength = GDALYSize * GDALCellSize;
   double nXcells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
@@ -488,8 +500,46 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
 
   meshResolution = (XCellSize + YCellSize) / 2;
 
+<<<<<<< HEAD:src/gui/mainwindow.cpp
   ui->meshResolutionSpinBox->setValue(meshResolution);
+=======
+#ifdef NINJAFOAM
+  if (view->getUi()->useCOMM->isChecked()) {
+    XLength = GDALXSize * GDALCellSize;
+    YLength = GDALYSize * GDALCellSize;
 
+    double dz = GDALMaxValue - GDALMinValue;
+    double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
+    double zmin, zmax;
+    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+    zmax = GDALMaxValue + ZLength; //zmax
+
+    double volume;
+    double cellCount;
+    double cellVolume;
+
+    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
+    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
+    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
+
+    //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+    int nRoundsRefinement = 0;
+    while(refinedCellCount < (0.5 * targetNumHorizCells)){
+      nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+      refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+      nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+      nRoundsRefinement += 1;
+    }
+
+    meshResolution = side/(nRoundsRefinement*2.0);
+  }
+#endif //NINJAFOAM
+
+  ui->meshResValue->setValue(meshResolution);
 }
 
 void MainWindow::on_meshResolutionMetersRadioButton_toggled(bool checked)

@@ -9,6 +9,7 @@ using namespace std;
 class BaseInput {
   private:
     string demFile;
+    int nCPUs;
     double outputResolution;
     string initializationMethod;
     string meshChoice;
@@ -25,13 +26,14 @@ class BaseInput {
     BaseInput() {}
 
     // Constructor
-    BaseInput(string demFile, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
+    BaseInput(string demFile, int nCPUs, double outputResolution, string initializationMethod, string meshChoice, string vegetation,
               int nLayers, int diurnalFlag, double height, string heightUnits, bool momentumFlag, int numNinjas, string outputPath)
-      : demFile(demFile), outputResolution(outputResolution), initializationMethod(initializationMethod), meshChoice(meshChoice),
+      : demFile(demFile), nCPUs(nCPUs), outputResolution(outputResolution), initializationMethod(initializationMethod), meshChoice(meshChoice),
           vegetation(vegetation), nLayers(nLayers), diurnalFlag(diurnalFlag), height(height), heightUnits(heightUnits), momentumFlag(momentumFlag), numNinjas(numNinjas), outputPath(outputPath) {}
 
     // Getter methods
     const string& getDemFile() const { return demFile; }
+    int getNumCPUs() { return nCPUs; }
     double getOutputResolution() { return outputResolution; }
     const string& getInitializationMethod() const { return initializationMethod; }
     const string& getMeshChoice() const { return meshChoice; }
