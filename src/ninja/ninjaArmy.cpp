@@ -1893,7 +1893,6 @@ int ninjaArmy::setMeshResolutionChoice( const int nIndex, const std::string choi
     }
     return retval;
 #endif
-
 }
 
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const Mesh::eMeshChoice choice,

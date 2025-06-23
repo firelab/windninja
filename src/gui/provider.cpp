@@ -1,6 +1,6 @@
 #include "provider.h"
 #include "modeldata.h"
-#include "../../ninja/windninja.h"
+#include "../ninja/windninja.h"
 
 #include <iostream>
 #include <list>
@@ -43,7 +43,7 @@ int Provider::domain_average_exec(DomainAverageWind& input) {
   unsigned int numNinjas = input.getNumNinjas();
   const char* outputPath = input.getOutputPath().c_str();
 
-  //double meshResolution = view->getUi()->meshResValue->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
+  //double meshResolution = view->getUi()->meshResolutionSpinBox->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
   double meshResolution = outputResolution;
   const char * meshResolutionUnits = "m";
 
@@ -252,7 +252,7 @@ int Provider::point_exec(PointInitialization& input) {
   unsigned int numNinjas = input.getNumNinjas();
   const char * outputPath =  input.getOutputPath().c_str();
 
-  //double meshResolution = view->getUi()->meshResValue->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
+  //double meshResolution = view->getUi()->meshResolutionSpinBox->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
   double meshResolution = outputResolution;
   const char * meshResolutionUnits = "m";
 
@@ -406,7 +406,7 @@ int Provider::wxmodel_exec(WeatherModel& input) {
   unsigned int numNinjas = input.getNumNinjas();
   const char* outputPath = input.getOutputPath().c_str();
 
-  //double meshResolution = view->getUi()->meshResValue->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
+  //double meshResolution = view->getUi()->meshResolutionSpinBox->value();  // need to get this another way ..., currently outputResolution is set with this same command so will use that for now
   double meshResolution = outputResolution;
   const char * meshResolutionUnits = "m";
 

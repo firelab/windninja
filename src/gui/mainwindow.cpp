@@ -466,7 +466,7 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
   double meshResolution = 200.0;
 
 #ifdef NINJAFOAM
-  if (view->getUi()->useCOMM->isChecked()) {
+  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
     coarse = 25000;
     medium = 50000;
     fine = 100000;
@@ -500,16 +500,13 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
 
   meshResolution = (XCellSize + YCellSize) / 2;
 
-<<<<<<< HEAD:src/gui/mainwindow.cpp
-  ui->meshResolutionSpinBox->setValue(meshResolution);
-=======
 #ifdef NINJAFOAM
-  if (view->getUi()->useCOMM->isChecked()) {
+  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
     XLength = GDALXSize * GDALCellSize;
     YLength = GDALYSize * GDALCellSize;
 
     double dz = GDALMaxValue - GDALMinValue;
-    double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
+    double ZLength = std::max((0.1 * std::max(XLength, YLength)), (dz + 0.1 * dz));
     double zmin, zmax;
     zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
     zmax = GDALMaxValue + ZLength; //zmax
@@ -539,13 +536,14 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
   }
 #endif //NINJAFOAM
 
-  ui->meshResValue->setValue(meshResolution);
+  ui->meshResolutionSpinBox->setValue(meshResolution);
 }
 
 void MainWindow::on_meshResolutionMetersRadioButton_toggled(bool checked)
 {
   if (checked) {
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
+//    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
   }
 }
 
@@ -995,10 +993,10 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Solver window
   // Update processor count and set user input default value & upper bound
-  int cpuCount = QThread::idealThreadCount();
-  ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(cpuCount));
-  ui->numberOfProcessorsSpinBox->setMaximum(cpuCount);
-  ui->numberOfProcessorsSpinBox->setValue(cpuCount);
+  int nCPUs = QThread::idealThreadCount();
+  ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
+  ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
+  ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
   // Wind Input -> Point Init window
   ui->downloadPointInitData->setIcon(QIcon(":/application_get"));

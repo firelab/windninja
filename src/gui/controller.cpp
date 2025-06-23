@@ -101,7 +101,7 @@ void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString output
 BaseInput Controller::setBaseInput() {
   QString demPath = view->getUi()->elevationInputFileLineEdit->text();
   double outputResolution = view->getUi()->meshResolutionSpinBox->value();
-  int nCPUs = view->getUi()->numProcessorsSpinbox->value();
+  int nCPUs = view->getUi()->numberOfProcessorsSpinBox->value();
   QString initMethod;
   if (view->getUi()->domainAverageCheckBox->isChecked()) {
     initMethod = "domain_average";
