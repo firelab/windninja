@@ -10,7 +10,15 @@
 
 int main(int argc, char *argv[]) {
 
+  int result;
 
+  char ** papszOptions = NULL;
+  NinjaErr err = 0;
+  err = NinjaInit(papszOptions);
+  if(err != NINJA_SUCCESS)
+  {
+    printf("NinjaInit: err = %d\n", err);
+  }
 
   QApplication a(argc, argv);
   MainWindow w;
@@ -21,6 +29,7 @@ int main(int argc, char *argv[]) {
   QTimer::singleShot(0, &w, &MainWindow::timeZoneDataRequest);
 
   w.show();
+  result = a.exec();
 
-  return a.exec();
+  return result;
 }

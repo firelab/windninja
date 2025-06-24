@@ -73,7 +73,6 @@ void Controller::onTimeZoneDetailsRequest() {
 void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString outputFile) {
 
   // Get correct fetch type
-  // TODO: set correct string for landscape files in else condition
   int fetchIndex = view->getUi()->elevationInputFileComboBox->currentIndex();
   string fetchType;
   if (fetchIndex == 0) {
@@ -88,7 +87,7 @@ void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString output
     fetchType = "lcp";
   }
 
-  double resolution = view->getUi()->meshResolutionSpinBox->value();
+  double resolution = 30.0;
 
   provider.fetchDEMBoundingBox(outputFile.toStdString(), fetchType, resolution, boundsBox.data());
   view->getUi()->elevationInputFileLineEdit->setText(outputFile);
