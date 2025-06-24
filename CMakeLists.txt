@@ -151,7 +151,7 @@ ELSE(USE_VCPKG)
 ENDIF(USE_VCPKG)
 
 # Ninja executables
-option(NINJA_QTGUI "Build Qt GUI" OFF)
+option(NINJA_QTGUI "Build Qt GUI" ON)
 
 option(NINJA_CLI "Build Command Line Interface" ON)
 
