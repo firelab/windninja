@@ -293,6 +293,10 @@ void MainWindow::on_massSolverCheckBox_clicked()
 
   // Update app states
   state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
+
+  // Run mesh calculator
+  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+
   refreshUI(ui);
 }
 
@@ -310,6 +314,10 @@ void MainWindow::on_massAndMomentumSolverCheckBox_clicked()
 
   // Update app states
   state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
+
+  // Run mesh calculator
+  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+
   refreshUI(ui);
 }
 
@@ -465,6 +473,13 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
   int fine = 20000;
   double meshResolution = 200.0;
 
+  // initial run values, a dem file has not yet been selected
+  if( GDALCellSize == 0.0 || GDALXSize == 0 || GDALYSize == 0 )
+  {
+    ui->meshResolutionSpinBox->setValue(meshResolution);
+    return;
+  }
+
 #ifdef NINJAFOAM
   if (ui->massAndMomentumSolverCheckBox->isChecked()) {
     coarse = 25000;
@@ -485,7 +500,11 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
     targetNumHorizCells = fine;
     break;
   case 3:
-    targetNumHorizCells = meshResolution;
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
+    return;
+  default:
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
+    return;
   }
 
   // default values are native mesh values
