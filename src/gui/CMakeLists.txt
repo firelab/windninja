@@ -30,6 +30,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         modeldata.h provider.h
         controller.h
         controller.cpp
+        splashscreen.h
+        splashscreen.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
