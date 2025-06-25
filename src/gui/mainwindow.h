@@ -89,6 +89,8 @@ private slots:
 
   void on_meshResolutionFeetRadioButton_toggled(bool checked);
 
+  void on_surfaceInputDownloadCancelButton_clicked();
+
 signals:
   void solveRequest();
   void timeZoneDataRequest();
