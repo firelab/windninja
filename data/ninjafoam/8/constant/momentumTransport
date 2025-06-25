@@ -34,7 +34,7 @@ RAS
 	    alphak           1.0;
 	    alphaEps         0.76923;
 	}
-	
+
 	RNGkEpsilonCoeffs
     {
          Cmu         0.085;

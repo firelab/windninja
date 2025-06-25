@@ -45,9 +45,10 @@ boundaryField
     {
         type            nutkAtmRoughWallFunction;
         z0              uniform $z0$;
-        Cmu             0.085;
-        kappa           0.41;
-        E               9.8;
+        Cmu             0.09;  // original, this is for regular k epsilon model
+        //Cmu             0.085;  // for RNG k epsilon model
+        //kappa           0.41;   // uncomment this out for RNG k epsilon model, leave commented for k epsilon model
+        //E               9.8;    // uncomment this out for RNG k epsilon model, leave commented for k epsilon model
         value           uniform 0.1;    
     }
     maxZ

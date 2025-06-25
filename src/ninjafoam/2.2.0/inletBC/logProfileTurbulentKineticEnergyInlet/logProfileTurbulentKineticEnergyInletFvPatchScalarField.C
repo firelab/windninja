@@ -198,8 +198,8 @@ void logProfileTurbulentKineticEnergyInletFvPatchScalarField::updateCoeffs()
     //const scalar Cmu = rasModel.coeffDict().lookupOrDefault<scalar>("Cmu", 0.09);  // seemed to work
     //scalar Cmu = readScalar(rasModel.coeffDict().lookup("Cmu"));  // seemed to work
     ////scalar kappa = rasModel.kappa().value();  // Foam::incompressible::RASModel’ has no member named ‘kappa’
-    //scalar Cmu = 0.09;  // original, this is for regular k epsilon models
-    scalar Cmu = 0.085;  // for RNG k epsilon models
+    scalar Cmu = 0.09;  // original, this is for regular k epsilon models
+    //scalar Cmu = 0.085;  // for RNG k epsilon models
 
     scalar ustar = UfreeStream_*0.41/log((inputWindHeight_Veg_)/z0_);
 
