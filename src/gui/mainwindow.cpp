@@ -67,6 +67,145 @@ protected:
 
 MainWindow::~MainWindow() { delete ui; }
 
+//// functions for Menu actions
+
+void MainWindow::newProject()
+{
+  printf("newProject clicked\n");
+}
+void MainWindow::openProject()
+{
+  printf("openProject clicked\n");
+}
+void MainWindow::exportSolution()
+{
+  printf("exportSolution clicked\n");
+}
+void MainWindow::closeProject()
+{
+  printf("closeProject clicked\n");
+}
+
+void MainWindow::enableConsoleOutput()
+{
+  printf("enableConsoleOutput clicked\n");
+}
+void MainWindow::writeConsoleOutput()
+{
+  printf("writeConsoleOutput clicked\n");
+}
+
+void MainWindow::resampleData()
+{
+  printf("resampleData clicked\n");
+}
+void MainWindow::writeBlankStationFile()
+{
+  printf("writeBlankStationFile clicked\n");
+}
+void MainWindow::setConfigurationOption()
+{
+  printf("setConfigurationOption clicked\n");
+}
+
+void MainWindow::displayArcGISProGuide()
+{
+  printf("displayArcGISProGuide clicked\n");
+}
+
+void MainWindow::displayTutorial1()
+{
+  printf("displayTutorial1 clicked\n");
+}
+void MainWindow::displayTutorial2()
+{
+  printf("displayTutorial2 clicked\n");
+}
+void MainWindow::displayTutorial3()
+{
+  printf("displayTutorial3 clicked\n");
+}
+void MainWindow::displayTutorial4()
+{
+  printf("displayTutorial4 clicked\n");
+}
+
+void MainWindow::displayDemDownloadInstructions()
+{
+  printf("displayDemDownloadInstructions clicked\n");
+}
+void MainWindow::displayFetchDemInstructions()
+{
+  printf("displayFetchDemInstructions clicked\n");
+}
+void MainWindow::displayCommandLineInterfaceInstructions()
+{
+  printf("displayCommandLineInterfaceInstructions clicked\n");
+}
+
+void MainWindow::aboutWindNinja()
+{
+  printf("aboutWindNinja clicked\n");
+}
+void MainWindow::citeWindNinja()
+{
+  printf("citeWindNinja clicked\n");
+}
+void MainWindow::supportEmail()
+{
+  printf("supportEmail clicked\n");
+}
+void MainWindow::submitBugReport()
+{
+  printf("submitBugReport clicked\n");
+}
+
+//// end functions for Menu actions
+
+void MainWindow::connectMenuActions()
+{
+  // QMenu fileMenu "File" actions
+  connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::on_elevationInputFileOpenButton_clicked);
+  connect(ui->newProjectAction, &QAction::triggered, this, &MainWindow::newProject);
+  connect(ui->openProjectAction, &QAction::triggered, this, &MainWindow::openProject);
+  connect(ui->exportSolutionAction, &QAction::triggered, this, &MainWindow::exportSolution);
+  connect(ui->closeProjectAction, &QAction::triggered, this, &MainWindow::closeProject);
+  //connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
+  connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);  // just close the mainWindow (behavior of the old qt4 code)
+
+  // QMenu optionsMenu "Options" actions
+  connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MainWindow::enableConsoleOutput);
+  connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MainWindow::writeConsoleOutput);
+
+  // QMenu toolsMenu "Tools" actions
+  connect(ui->resampleDataAction, &QAction::triggered, this, &MainWindow::resampleData);
+  connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MainWindow::writeBlankStationFile);
+  connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MainWindow::setConfigurationOption);
+
+  // QMenu helpMenu "Help" actions
+
+  // sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
+  connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MainWindow::displayArcGISProGuide);
+
+  // sub QMenu tutorialsMenu "Tutorials" actions
+  connect(ui->displayTutorial1Action, &QAction::triggered, this, &MainWindow::displayTutorial1);
+  connect(ui->displayTutorial2Action, &QAction::triggered, this, &MainWindow::displayTutorial2);
+  connect(ui->displayTutorial3Action, &QAction::triggered, this, &MainWindow::displayTutorial3);
+  connect(ui->displayTutorial4Action, &QAction::triggered, this, &MainWindow::displayTutorial4);
+
+  // sub QMenu instructionsMenu "Instructions" actions
+  connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MainWindow::displayDemDownloadInstructions);
+  connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MainWindow::displayFetchDemInstructions);
+  connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MainWindow::displayCommandLineInterfaceInstructions);
+
+  // remaining non-sub QMenu actions
+  connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MainWindow::aboutWindNinja);
+  connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MainWindow::citeWindNinja);
+  connect(ui->supportEmailAction, &QAction::triggered, this, &MainWindow::supportEmail);
+  connect(ui->submitBugReportAction, &QAction::triggered, this, &MainWindow::submitBugReport);
+  connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
+}
+
 /*
  * Click tree item helper function
  */
@@ -996,6 +1135,8 @@ MainWindow::MainWindow(QWidget *parent)
   windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
 
   connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::onTreeItemClicked);
+
+  connectMenuActions();
 
   /*
    * Downloaded Forecast explorer

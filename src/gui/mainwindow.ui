@@ -2822,6 +2822,7 @@ QMenu::item:selected {
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="openElevationInputFileMenuAction"/>
     <addaction name="newProjectAction"/>
     <addaction name="openProjectAction"/>
     <addaction name="exportSolutionAction"/>
@@ -2832,12 +2833,14 @@ QMenu::item:selected {
     <property name="title">
      <string>Options</string>
     </property>
-    <addaction name="consoleOutput"/>
+    <addaction name="enableConsoleOutputAction"/>
+    <addaction name="writeConsoleOutputAction"/>
    </widget>
    <widget class="QMenu" name="toolsMenu">
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="resampleDataAction"/>
     <addaction name="writeBlankStationFileAction"/>
     <addaction name="setConfigurationOptionAction"/>
    </widget>
@@ -2849,41 +2852,52 @@ QMenu::item:selected {
      <property name="title">
       <string>Displaying Shapefiles</string>
      </property>
-     <addaction name="howToDisplayShapeFilesInArcProAction"/>
+     <addaction name="displayArcGISProGuideAction"/>
     </widget>
     <widget class="QMenu" name="tutorialsMenu">
      <property name="title">
       <string>Tutorials</string>
      </property>
-     <addaction name="tutorial1TheBasicsAction"/>
-     <addaction name="tutorial2DiurnalWindsandNonNeutralStabilityAction"/>
-     <addaction name="tutorial3PointInitializationAction"/>
-     <addaction name="tutorial4WeatherModelInitialization"/>
+     <addaction name="displayTutorial1Action"/>
+     <addaction name="displayTutorial2Action"/>
+     <addaction name="displayTutorial3Action"/>
+     <addaction name="displayTutorial4Action"/>
     </widget>
     <widget class="QMenu" name="instructionsMenu">
      <property name="title">
       <string>Instructions</string>
      </property>
-     <addaction name="demDownloadAction"/>
-     <addaction name="fetchDemInstructionsAction"/>
-     <addaction name="commandLineInterfaceAction"/>
+     <addaction name="displayDemDownloadInstructionsAction"/>
+     <addaction name="displayFetchDemInstructionsAction"/>
+     <addaction name="displayCommandLineInterfaceInstructionsAction"/>
     </widget>
     <addaction name="displayingShapeFilesMenu"/>
     <addaction name="tutorialsMenu"/>
     <addaction name="instructionsMenu"/>
     <addaction name="aboutWindNinjaAction"/>
-    <addaction name="citationAction"/>
-    <addaction name="emailUsAction"/>
+    <addaction name="citeWindNinjaAction"/>
+    <addaction name="supportEmailAction"/>
     <addaction name="submitBugReportAction"/>
+    <addaction name="aboutQtAction"/>
    </widget>
    <addaction name="fileMenu"/>
    <addaction name="optionsMenu"/>
    <addaction name="toolsMenu"/>
    <addaction name="helpMenu"/>
   </widget>
-  <action name="consoleOutput">
+  <action name="enableConsoleOutputAction">
    <property name="text">
-    <string>Console Output</string>
+    <string>Enable Console Output</string>
+   </property>
+  </action>
+  <action name="writeConsoleOutputAction">
+   <property name="text">
+    <string>Write console output to file...</string>
+   </property>
+  </action>
+  <action name="resampleDataAction">
+   <property name="text">
+    <string>Resample Existing Data</string>
    </property>
   </action>
   <action name="writeBlankStationFileAction">
@@ -2901,44 +2915,44 @@ QMenu::item:selected {
     <string>Displaying Shapefiles</string>
    </property>
   </action>
-  <action name="howToDisplayShapeFilesInArcProAction">
+  <action name="displayArcGISProGuideAction">
    <property name="text">
-    <string>How to Display Shapefiles in ArcMap</string>
+    <string>How to Display Shapefiles in ArcGIS Pro</string>
    </property>
   </action>
-  <action name="tutorial1TheBasicsAction">
+  <action name="displayTutorial1Action">
    <property name="text">
     <string>Tutorial 1: The Basics</string>
    </property>
   </action>
-  <action name="tutorial2DiurnalWindsandNonNeutralStabilityAction">
+  <action name="displayTutorial2Action">
    <property name="text">
     <string>Tutorial 2: Diurnal Winds and Non-Neutral Stability</string>
    </property>
   </action>
-  <action name="tutorial3PointInitializationAction">
+  <action name="displayTutorial3Action">
    <property name="text">
     <string>Tutorial 3: Point Initialization</string>
    </property>
   </action>
-  <action name="tutorial4WeatherModelInitialization">
+  <action name="displayTutorial4Action">
    <property name="text">
     <string>Tutorial 4: Weather Model Initialization</string>
    </property>
   </action>
-  <action name="demDownloadAction">
+  <action name="displayDemDownloadInstructionsAction">
    <property name="text">
-    <string>DEM Download</string>
+    <string>DEM Download Instructions</string>
    </property>
   </action>
-  <action name="fetchDemInstructionsAction">
+  <action name="displayFetchDemInstructionsAction">
    <property name="text">
     <string>fetch_dem Instructions</string>
    </property>
   </action>
-  <action name="commandLineInterfaceAction">
+  <action name="displayCommandLineInterfaceInstructionsAction">
    <property name="text">
-    <string>Command Line Interface</string>
+    <string>Command Line Interface Instructions</string>
    </property>
   </action>
   <action name="aboutWindNinjaAction">
@@ -2946,12 +2960,12 @@ QMenu::item:selected {
     <string>About WindNinja</string>
    </property>
   </action>
-  <action name="citationAction">
+  <action name="citeWindNinjaAction">
    <property name="text">
     <string>Citation</string>
    </property>
   </action>
-  <action name="emailUsAction">
+  <action name="supportEmailAction">
    <property name="text">
     <string>Email Us</string>
    </property>
@@ -2959,6 +2973,16 @@ QMenu::item:selected {
   <action name="submitBugReportAction">
    <property name="text">
     <string>Submit Bug Report</string>
+   </property>
+  </action>
+  <action name="aboutQtAction">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="openElevationInputFileMenuAction">
+   <property name="text">
+    <string>Open Elevation Input File</string>
    </property>
   </action>
   <action name="newProjectAction">
