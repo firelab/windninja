@@ -13,6 +13,10 @@
 #include "gdal_priv.h"
 #include <vector>
 #include <string>
+#include "ninja_version.h"
+#include "cpl_http.h"
+
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -112,5 +116,9 @@ private:
 
   Ui::MainWindow *ui;
   QWebEngineView *webView;
+
+  bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
+  char * NinjaQueryServerMessages(bool checkAbort);
+  void checkMessages(void);
 };
 #endif // MAINWINDOW_H

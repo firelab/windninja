@@ -17,7 +17,6 @@ class Provider {
   private:
     class NinjaArmyH* ninjaArmy = nullptr;
     const char* comType = "cli";
-    const int nCPUs = 1;
     char** papszOptions = nullptr;
     int err = 0;
 

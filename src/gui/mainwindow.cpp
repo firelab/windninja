@@ -290,7 +290,7 @@ void MainWindow::on_massSolverCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
-  // Only allow CoM or CoMM to be toggled
+  // Only allow CoM or CoMM to be toggledGithub requies
   if (state.useCOMMtoggled) {
     ui->massAndMomentumSolverCheckBox->setChecked(false);
     state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
@@ -298,6 +298,10 @@ void MainWindow::on_massSolverCheckBox_clicked()
 
   // Update app states
   state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
+
+  // Run mesh calculator
+  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+
   refreshUI(ui);
 }
 
@@ -315,6 +319,10 @@ void MainWindow::on_massAndMomentumSolverCheckBox_clicked()
 
   // Update app states
   state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
+
+  // Run mesh calculator
+  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+
   refreshUI(ui);
 }
 
@@ -338,7 +346,7 @@ void MainWindow::on_elevationInputFileLineEdit_textChanged(const QString &arg1)
 
   // Calculate cell size
   if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
-    int c1, c2;
+    double c1, c2;
     c1 = adfGeoTransform[1];
     c2 = adfGeoTransform[5];
     if (abs(c1) == abs(c2)) {
@@ -401,10 +409,27 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
     ui->meshResolutionSpinBox->setEnabled(false);
   }
 
+  // default values are native mesh values
+
   int coarse = 4000;
   int medium = 10000;
   int fine = 20000;
   double meshResolution = 200.0;
+
+  // initial run values, a dem file has not yet been selected
+  if( GDALCellSize == 0.0 || GDALXSize == 0 || GDALYSize == 0 )
+  {
+    ui->meshResolutionSpinBox->setValue(meshResolution);
+    return;
+  }
+
+#ifdef NINJAFOAM
+  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
+    coarse = 25000;
+    medium = 50000;
+    fine = 100000;
+  }
+#endif //NINJAFOAM
 
   int targetNumHorizCells = fine;
   switch (index) {
@@ -418,8 +443,14 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
     targetNumHorizCells = fine;
     break;
   case 3:
-    targetNumHorizCells = meshResolution;
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
+    return;
+  default:
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
+    return;
   }
+
+  // default values are native mesh values
 
   double XLength = GDALXSize * GDALCellSize;
   double YLength = GDALYSize * GDALCellSize;
@@ -431,14 +462,50 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
 
   meshResolution = (XCellSize + YCellSize) / 2;
 
-  ui->meshResolutionSpinBox->setValue(meshResolution);
+#ifdef NINJAFOAM
+  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
+    XLength = GDALXSize * GDALCellSize;
+    YLength = GDALYSize * GDALCellSize;
 
+    double dz = GDALMaxValue - GDALMinValue;
+    double ZLength = std::max((0.1 * std::max(XLength, YLength)), (dz + 0.1 * dz));
+    double zmin, zmax;
+    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+    zmax = GDALMaxValue + ZLength; //zmax
+
+    double volume;
+    double cellCount;
+    double cellVolume;
+
+    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
+    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
+    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
+
+    //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+    int nRoundsRefinement = 0;
+    while(refinedCellCount < (0.5 * targetNumHorizCells)){
+      nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+      refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+      nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+      nRoundsRefinement += 1;
+    }
+
+    meshResolution = side/(nRoundsRefinement*2.0);
+  }
+#endif //NINJAFOAM
+
+  ui->meshResolutionSpinBox->setValue(meshResolution);
 }
 
 void MainWindow::on_meshResolutionMetersRadioButton_toggled(bool checked)
 {
   if (checked) {
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
+//    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
   }
 }
 
@@ -764,6 +831,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
   ui->setupUi(this);
 
+  checkMessages();
+
   // Set default window size
   resize(1200, 700);
 
@@ -888,10 +957,10 @@ MainWindow::MainWindow(QWidget *parent)
 
   // Solver window
   // Update processor count and set user input default value & upper bound
-  int cpuCount = QThread::idealThreadCount();
-  ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(cpuCount));
-  ui->numberOfProcessorsSpinBox->setMaximum(cpuCount);
-  ui->numberOfProcessorsSpinBox->setValue(cpuCount);
+  int nCPUs = QThread::idealThreadCount();
+  ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
+  ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
+  ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
   // Wind Input -> Point Init window
   ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
@@ -921,3 +990,121 @@ void MainWindow::on_surfaceInputDownloadCancelButton_clicked()
   ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
 }
 
+/*
+** Check for version updates, or messages from the server.
+*/
+void MainWindow::checkMessages(void) {
+  QMessageBox mbox;
+  char *papszMsg = NinjaQueryServerMessages(true);
+  if (papszMsg != NULL) {
+    if (strcmp(papszMsg, "TRUE\n") == 0) {
+      mbox.setText("There is a fatal flaw in Windninja, it must close.");
+      mbox.exec();
+      delete[] papszMsg;
+      abort();
+    }
+
+    else {
+      char *papszMsg = NinjaQueryServerMessages(false);
+      if (papszMsg != NULL) {
+        mbox.setText(papszMsg);
+
+        mbox.exec();
+        delete[] papszMsg;
+      }
+    }
+  }
+}
+
+/*
+** Query the ninjastorm.firelab.org/sqlitetest/messages.txt and ask for the most up to date version.
+** There are three current values:
+**
+** VERSION -> a semantic version string, comparable with strcmp()
+** MESSAGE -> One or more messages to display to the user
+** ABORT   -> There is a fundamental problem with windninja, and it should call
+**            abort() after displaying a message.
+*/
+
+bool MainWindow::NinjaCheckVersions(char * mostrecentversion, char * localversion) {
+  char comparemostrecentversion[256];
+  char comparelocalversion[256];
+  int mostrecentversionIndex = 0;
+  int localversionIndex = 0;
+  while (*mostrecentversion) {
+    if (*mostrecentversion != '.') {
+      comparemostrecentversion[mostrecentversionIndex++] = *mostrecentversion;
+    }
+    mostrecentversion++;
+  }
+  comparemostrecentversion[mostrecentversionIndex] = '\0';
+
+  while (*localversion) {
+    if (*localversion != '.') {
+      comparelocalversion[localversionIndex++] = *localversion;
+    }
+    localversion++;
+  }
+
+  comparelocalversion[localversionIndex] = '\0';
+  return strcmp(comparemostrecentversion, comparelocalversion) == 0;
+
+}
+
+char * MainWindow::NinjaQueryServerMessages(bool checkAbort)
+{
+  CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+  const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
+  CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+  CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+  if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+  {
+    CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+    return NULL;
+  }
+
+  const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+  std::vector<std::string> messages;
+  std::istringstream iss(pszTextContent);
+  std::string message;
+
+         // Read all lines into the vector
+  while (std::getline(iss, message)) {
+    messages.push_back(message);
+  }
+
+         // Process all lines except the last two
+  std::ostringstream oss;
+  if (checkAbort) {
+    for (size_t i = 0; i < messages.size(); ++i) {
+      if (i == messages.size()-1) { // check final line
+        oss << messages[i] << "\n";
+      }
+    }
+  }
+  else {
+    bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING));
+    if (!versionisuptodate) {
+      oss << messages[0] << "\n";
+      oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
+    }
+    if (messages[4].empty() == false) {
+      for (size_t i = 3; i < messages.size() - 2; ++i) {
+        if (!messages[i].empty()) {
+          oss << messages[i] << "\n";
+        }
+      }
+    }
+    if (messages[4].empty() && versionisuptodate) {
+      return NULL;
+    }
+  }
+
+  std::string resultingmessage = oss.str();
+  char* returnString = new char[resultingmessage.length() + 1];
+  std::strcpy(returnString, resultingmessage.c_str());
+  CPLHTTPDestroyResult(poResult);
+  return returnString;
+
+  return NULL;
+}
