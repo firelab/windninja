@@ -16,7 +16,7 @@
     box-sizing: border-box;
  }
  #map {
-    height: 70% ;
+    height: 100% ;
     width: 100% ;
     max-width: 100%;
     box-sizing: border-box;
@@ -372,41 +372,6 @@
     }
   
 </script>
-
-<div id="data_entry" style="border: 1px solid #ccc">
-  <form id="center_radius" style="border-style: solid;">
-    <div class="adjust-line-height">
-    <p class="option_hdr">Point and Radius:</p>
-    <p style="color: grey" class="option_hdr2"> Enter lat, lon, and radius, then choose Data Source and click Download File</p>
-    </div>
-    <label for="center_lat">Center Lat</label>
-    <span class="input-help">
-    <input type="number" placeholder="44.334" id="center_lat" name="center_lat" />
-    <small style="color: grey" id="helpBlock" class="form-text text-muted">e.g., 44.334</small>
-    </span>
-    <label for="center_lon">Center Lon</label>
-    <span class="input-help">
-    <input type="number" placeholder="-112.555" id="center_lon" name="center_lon" />
-    <small style="color: grey" id="helpBlock" class="form-text text-muted">e.g., -112.555</small>
-    </span>
-    <label for="radius">Radius (miles)</label>
-    <span class="input-help">
-    <input type="number" placeholder="10" id="radius" name="radius" />
-    <small style="color: grey" id="helpBlock" class="form-text text-muted">e.g., 10 </small>
-    </span>
-  </form>
-  <form id="bounds" style="border-style: solid">
-    <p class="option_hdr">Bounding Box Coordinates:</p>
-    <label for="north_lat">North</label>
-    <input type="number" placeholder="44.334" id="north_lat" name="north_lat" />
-    <label for="south_lat">South</label>
-    <input type="number" placeholder="43.532" id="south_lat" name="south_lat" />
-    <label for="east_lon">East</label>
-    <input type="number" placeholder="-112.555" id="east_lon" name="east_lon" />
-    <label for="west_lon">West</label>
-    <input type="number" placeholder="-113.058" id="west_lon" name="west_lon" />
-  </form>
-</div>
 
 <script>
   enable_listeners();

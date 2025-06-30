@@ -74,7 +74,12 @@ MainWindow::~MainWindow() { delete ui; }
 void MainWindow::onTreeItemClicked(QTreeWidgetItem *item, int column) {
   int pageIndex = item->data(column, Qt::UserRole).toInt();
   if (pageIndex >= 0) {
-    ui->stackedInputsPage->setCurrentIndex(pageIndex);
+    if(pageIndex >= 6) {
+      ui->inputsStackedWidget->setCurrentIndex(pageIndex+1);
+    }
+    else {
+      ui->inputsStackedWidget->setCurrentIndex(pageIndex);
+    }
   }
 }
 
@@ -285,7 +290,7 @@ void MainWindow::on_massSolverCheckBox_clicked()
 {
   AppState& state = AppState::instance();
 
-  // Only allow CoM or CoMM to be toggled
+  // Only allow CoM or CoMM to be toggledGithub requies
   if (state.useCOMMtoggled) {
     ui->massAndMomentumSolverCheckBox->setChecked(false);
     state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
@@ -390,70 +395,8 @@ void MainWindow::on_elevationInputFileOpenButton_clicked()
 // User selects an elevation input file (by map import)
 void MainWindow::on_elevationInputFileDownloadButton_clicked()
 {
-  // We have to use batching since the Javascript part is async
-  struct JSFieldBatch {
-    QMap<QString, QVariant> results;
-    int expected = 7;
-    std::function<void(QMap<QString, QVariant>)> onReady;
-  };
-
-  auto batch = new JSFieldBatch();
-  batch->onReady = [this, batch](QMap<QString, QVariant> fields) {
-    northLat = fields["north_lat"].toDouble();
-    southLat = fields["south_lat"].toDouble();
-    eastLon  = fields["east_lon"].toDouble();
-    westLon  = fields["west_lon"].toDouble();
-    centerLat = fields["center_lat"].toDouble();
-    centerLon = fields["center_lon"].toDouble();
-    radius = fields["radius"].toDouble();
-
-    delete batch;  // clean up
-  };
-
-  auto run = [this, batch](QString fieldId) {
-    webView->page()->runJavaScript(QString("document.getElementById('%1').value;").arg(fieldId),
-                                   [fieldId, batch](const QVariant &result) {
-                                     batch->results[fieldId] = result;
-                                     if (batch->results.size() == batch->expected) {
-                                       batch->onReady(batch->results);
-                                     }
-                                   });
-  };
-
-  // Kick off all the field reads
-  run("north_lat");
-  run("south_lat");
-  run("east_lon");
-  run("west_lon");
-  run("center_lat");
-  run("center_lon");
-  run("radius");
-
-         // Verify input validity and write file
-  if (northLat != 0 && southLat != 0 && eastLon != 0 && westLon != 0) {
-    QString defaultName = "demDownload.tif";
-    QString filter = "TIF Files (*.tif)";
-
-           // Get downloads path and join to filename
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    QDir dir(downloadsPath);
-    QString fullPath = dir.filePath(defaultName);
-
-           // Open save window
-    QString fileName = QFileDialog::getSaveFileName(this,
-                                                    "Save DEM File",
-                                                    fullPath,
-                                                    filter);
-
-    if (fileName != "") {
-      std::array<double, 4> coordsCopy = { northLat, eastLon, southLat, westLon };
-      QString fileNameCopy = fileName;
-
-      QtConcurrent::run([coordsCopy, fileNameCopy, this]() {
-        emit getDEMrequest(coordsCopy, fileNameCopy);
-      });
-    }
-  }
+  int currentIndex = ui->inputsStackedWidget->currentIndex();
+  ui->inputsStackedWidget->setCurrentIndex(currentIndex+1);
 }
 
   // User changes the mesh resolution spec for surface input
@@ -974,7 +917,7 @@ MainWindow::MainWindow(QWidget *parent)
    */
 
   // Top-level items
-  ui->stackedInputsPage->setCurrentIndex(0);
+  ui->inputsStackedWidget->setCurrentIndex(0);
   ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
   ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
   ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
@@ -1030,14 +973,22 @@ MainWindow::MainWindow(QWidget *parent)
   ui->timeZoneDetailsTextEdit->setVisible(false);
 
   // Set initial formatting of domain average input table
-    ui->domainAverageTable->hideColumn(2);
-    ui->domainAverageTable->hideColumn(3);
-    ui->domainAverageTable->hideColumn(4);
-    ui->domainAverageTable->hideColumn(5);
-    ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+  ui->domainAverageTable->hideColumn(2);
+  ui->domainAverageTable->hideColumn(3);
+  ui->domainAverageTable->hideColumn(4);
+  ui->domainAverageTable->hideColumn(5);
+  ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+  connect(ui->elevationInputTypeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
 
 }
 
+void MainWindow::on_surfaceInputDownloadCancelButton_clicked()
+{
+  int currentIndex = ui->inputsStackedWidget->currentIndex();
+  ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+}
 
 /*
 ** Check for version updates, or messages from the server.

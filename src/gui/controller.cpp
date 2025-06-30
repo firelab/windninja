@@ -73,7 +73,8 @@ void Controller::onTimeZoneDetailsRequest() {
 void Controller::onGetDEMrequest(std::array<double, 4> boundsBox, QString outputFile) {
 
   // Get correct fetch type
-  int fetchIndex = view->getUi()->elevationInputFileComboBox->currentIndex();
+  // TODO: set correct string for landscape files in else condition
+  int fetchIndex = view->getUi()->elevationInputTypeComboBox->currentIndex();
   string fetchType;
   if (fetchIndex == 0) {
     fetchType = "srtm";
