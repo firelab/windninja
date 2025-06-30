@@ -48,52 +48,52 @@ public:
   ~MainWindow();
 
 private slots:
-  void on_massSolverCheckBox_clicked();
-  void on_massAndMomentumSolverCheckBox_clicked();
+  void massSolverCheckBoxClicked();
+  void massAndMomentumSolverCheckBoxClicked();
 
-  void on_elevationInputFileDownloadButton_clicked();
+  void elevationInputFileDownloadButtonClicked();
 
-  void on_elevationInputFileOpenButton_clicked();
+  void elevationInputFileOpenButtonClicked();
 
-  void on_elevationInputFileLineEdit_textChanged(const QString &arg1);
+  void elevationInputFileLineEditTextChanged(const QString &arg1);
 
-  void on_meshResolutionComboBox_currentIndexChanged(int index);
+  void meshResolutionComboBoxCurrentIndexChanged(int index);
 
-  void on_diurnalCheckBox_clicked();
+  void diurnalCheckBoxClicked();
 
-  void on_stabilityCheckBox_clicked();
+  void stabilityCheckBoxClicked();
 
-  void on_windHeightComboBox_currentIndexChanged(int index);
+  void windHeightComboBoxCurrentIndexChanged(int index);
 
-  void on_domainAverageCheckBox_clicked();
+  void domainAverageCheckBoxClicked();
 
-  void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
+  void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
 
-  void on_pointInitializationCheckBox_clicked();
+  void pointInitializationCheckBoxClicked();
 
-  void on_useWeatherModelInit_clicked();
+  void useWeatherModelInitClicked();
 
-  void on_clearTableButton_clicked();
+  void clearTableButtonClicked();
 
-  void on_solveButton_clicked();
+  void solveButtonClicked();
 
-  void on_outputDirectoryButton_clicked();
+  void outputDirectoryButtonClicked();
 
-  void on_numberOfProcessorsSolveButton_clicked();
+  void numberOfProcessorsSolveButtonClicked();
 
-  void on_timeZoneAllZonesCheckBox_clicked();
+  void timeZoneAllZonesCheckBoxClicked();
 
-  void on_timeZoneDetailsCheckBox_clicked();
+  void timeZoneDetailsCheckBoxClicked();
 
-  void on_timeZoneComboBox_currentIndexChanged(int index);
+  void timeZoneComboBoxCurrentIndexChanged(int index);
 
-  void on_domainAverageTable_cellChanged(int row, int column);
+  void domainAverageTableCellChanged(int row, int column);
 
-  void on_meshResolutionMetersRadioButton_toggled(bool checked);
+  void meshResolutionMetersRadioButtonToggled(bool checked);
 
-  void on_meshResolutionFeetRadioButton_toggled(bool checked);
+  void meshResolutionFeetRadioButtonToggled(bool checked);
 
-  void on_surfaceInputDownloadCancelButton_clicked();
+  void surfaceInputDownloadCancelButtonClicked();
 
 signals:
   void solveRequest();
