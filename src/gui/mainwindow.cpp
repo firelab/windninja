@@ -165,7 +165,7 @@ void MainWindow::submitBugReport()
 void MainWindow::connectMenuActions()
 {
   // QMenu fileMenu "File" actions
-  connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::on_elevationInputFileOpenButton_clicked);
+  connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
   connect(ui->newProjectAction, &QAction::triggered, this, &MainWindow::newProject);
   connect(ui->openProjectAction, &QAction::triggered, this, &MainWindow::openProject);
   connect(ui->exportSolutionAction, &QAction::triggered, this, &MainWindow::exportSolution);
@@ -425,7 +425,7 @@ static void refreshUI(const Ui::MainWindow* ui)
  */
 
 // Use selects Conservation of Mass
-void MainWindow::on_massSolverCheckBox_clicked()
+void MainWindow::massSolverCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -439,14 +439,14 @@ void MainWindow::on_massSolverCheckBox_clicked()
   state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
 
   // Run mesh calculator
-  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
 
   refreshUI(ui);
 }
 
 
 // User selects Conservation of Mass and Momentum
-void MainWindow::on_massAndMomentumSolverCheckBox_clicked()
+void MainWindow::massAndMomentumSolverCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -460,14 +460,14 @@ void MainWindow::on_massAndMomentumSolverCheckBox_clicked()
   state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
 
   // Run mesh calculator
-  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
 
   refreshUI(ui);
 }
 
 
 // User selects an elevation input file (by file)
-void MainWindow::on_elevationInputFileLineEdit_textChanged(const QString &arg1)
+void MainWindow::elevationInputFileLineEditTextChanged(const QString &arg1)
 {
   // Get GDAL data information on DEM input
   QString fileName = ui->elevationInputFileLineEdit->text();
@@ -512,13 +512,13 @@ void MainWindow::on_elevationInputFileLineEdit_textChanged(const QString &arg1)
   GDALClose((GDALDatasetH)poInputDS);
 
   // Run mesh calculator
-  MainWindow::on_meshResolutionComboBox_currentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
 
   refreshUI(ui);
 }
 
 
-void MainWindow::on_elevationInputFileOpenButton_clicked()
+void MainWindow::elevationInputFileOpenButtonClicked()
 {
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
   QString filePath = QFileDialog::getOpenFileName(this,
@@ -532,14 +532,14 @@ void MainWindow::on_elevationInputFileOpenButton_clicked()
 
 
 // User selects an elevation input file (by map import)
-void MainWindow::on_elevationInputFileDownloadButton_clicked()
+void MainWindow::elevationInputFileDownloadButtonClicked()
 {
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex+1);
 }
 
   // User changes the mesh resolution spec for surface input
-void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
+void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
 {
   // Set value box enable for custom/other
   if (index == 3) {
@@ -640,7 +640,7 @@ void MainWindow::on_meshResolutionComboBox_currentIndexChanged(int index)
   ui->meshResolutionSpinBox->setValue(meshResolution);
 }
 
-void MainWindow::on_meshResolutionMetersRadioButton_toggled(bool checked)
+void MainWindow::meshResolutionMetersRadioButtonToggled(bool checked)
 {
   if (checked) {
 //    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
@@ -648,7 +648,7 @@ void MainWindow::on_meshResolutionMetersRadioButton_toggled(bool checked)
   }
 }
 
-void MainWindow::on_meshResolutionFeetRadioButton_toggled(bool checked)
+void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
 {
   if (checked) {
     ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
@@ -656,13 +656,13 @@ void MainWindow::on_meshResolutionFeetRadioButton_toggled(bool checked)
 }
 
 // User selects a new time zone
-void MainWindow::on_timeZoneComboBox_currentIndexChanged(int index)
+void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
   emit timeZoneDetailsRequest();
 }
 
 // User toggles show all time zones
-void MainWindow::on_timeZoneAllZonesCheckBox_clicked()
+void MainWindow::timeZoneAllZonesCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -673,7 +673,7 @@ void MainWindow::on_timeZoneAllZonesCheckBox_clicked()
 }
 
 // User toggles show time zone details
-void MainWindow::on_timeZoneDetailsCheckBox_clicked()
+void MainWindow::timeZoneDetailsCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -686,7 +686,7 @@ void MainWindow::on_timeZoneDetailsCheckBox_clicked()
 }
 
 // User selects Diurnal Input
-void MainWindow::on_diurnalCheckBox_clicked()
+void MainWindow::diurnalCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -713,7 +713,7 @@ void MainWindow::on_diurnalCheckBox_clicked()
 }
 
 // User selects Stability Input
-void MainWindow::on_stabilityCheckBox_clicked()
+void MainWindow::stabilityCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -729,7 +729,7 @@ void MainWindow::on_stabilityCheckBox_clicked()
 // Domain Average Wind
 
 // User selects Domain Average Wind
-void MainWindow::on_domainAverageCheckBox_clicked()
+void MainWindow::domainAverageCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -749,7 +749,7 @@ void MainWindow::on_domainAverageCheckBox_clicked()
 }
 
 // User changes Domain Average Wind -> Input Wind Height
-void MainWindow::on_windHeightComboBox_currentIndexChanged(int index)
+void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
 {
   switch(index) {
   case 0:
@@ -777,7 +777,7 @@ void MainWindow::on_windHeightComboBox_currentIndexChanged(int index)
 }
 
 // User clears the domain average wind input table
-void MainWindow::on_clearTableButton_clicked()
+void MainWindow::clearTableButtonClicked()
 {
   ui->domainAverageTable->clearContents();
   invalidDAWCells.clear();
@@ -786,7 +786,7 @@ void MainWindow::on_clearTableButton_clicked()
 }
 
 // User changes a value in the domain average wind input table
-void MainWindow::on_domainAverageTable_cellChanged(int row, int column)
+void MainWindow::domainAverageTableCellChanged(int row, int column)
 {
   QTableWidget* table = ui->domainAverageTable;
   QTableWidgetItem* item = table->item(row, column);
@@ -862,7 +862,7 @@ void MainWindow::on_domainAverageTable_cellChanged(int row, int column)
 }
 
 // User selects Point Initialization wind model
-void MainWindow::on_pointInitializationCheckBox_clicked()
+void MainWindow::pointInitializationCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
@@ -882,7 +882,7 @@ void MainWindow::on_pointInitializationCheckBox_clicked()
 }
 
 // User selects Weather Model Initialization model
-void MainWindow::on_useWeatherModelInit_clicked()
+void MainWindow::useWeatherModelInitClicked()
 {
   AppState& state = AppState::instance();
 
@@ -902,7 +902,7 @@ void MainWindow::on_useWeatherModelInit_clicked()
 }
 
 // User selects a new output location
-void MainWindow::on_outputDirectoryButton_clicked()
+void MainWindow::outputDirectoryButtonClicked()
 {
   QString currentPath = ui->outputDirectoryTextEdit->toPlainText();
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
@@ -918,19 +918,19 @@ void MainWindow::on_outputDirectoryButton_clicked()
 }
 
 // User selects the solve Button on the solver page
-void MainWindow::on_numberOfProcessorsSolveButton_clicked()
+void MainWindow::numberOfProcessorsSolveButtonClicked()
 {
   ui->solveButton->click();
 }
 
 // User selects the primary solve Button
-void MainWindow::on_solveButton_clicked()
+void MainWindow::solveButtonClicked()
 {
   emit solveRequest();
 }
 
 // Enable double clicking on tree menu items
-void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
+void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
   if (item->text(0) == "Conservation of Mass") {
     ui->massSolverCheckBox->click();
@@ -1123,9 +1123,45 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->elevationInputTypeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
           ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
 
+  connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
+  connect(ui->massAndMomentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massAndMomentumSolverCheckBoxClicked);
+
+  connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileDownloadButtonClicked);
+  connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileOpenButtonClicked);
+  connect(ui->elevationInputFileLineEdit, &QLineEdit::textChanged, this, &MainWindow::elevationInputFileLineEditTextChanged);
+
+  connect(ui->meshResolutionComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::meshResolutionComboBoxCurrentIndexChanged);
+
+  connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
+  connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
+  connect(ui->windHeightComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::windHeightComboBoxCurrentIndexChanged);
+  connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &MainWindow::domainAverageCheckBoxClicked);
+
+  connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
+
+  connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
+  connect(ui->useWeatherModelInit, &QCheckBox::clicked, this, &MainWindow::useWeatherModelInitClicked);
+
+  connect(ui->clearTableButton, &QPushButton::clicked, this, &MainWindow::clearTableButtonClicked);
+  connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
+  connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
+  connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
+
+  connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneAllZonesCheckBoxClicked);
+  connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneDetailsCheckBoxClicked);
+  connect(ui->timeZoneComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::timeZoneComboBoxCurrentIndexChanged);
+
+  connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &MainWindow::domainAverageTableCellChanged);
+
+  connect(ui->meshResolutionMetersRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionMetersRadioButtonToggled);
+  connect(ui->meshResolutionFeetRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionFeetRadioButtonToggled);
+
+  connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadCancelButtonClicked);
+
+
 }
 
-void MainWindow::on_surfaceInputDownloadCancelButton_clicked()
+void MainWindow::surfaceInputDownloadCancelButtonClicked()
 {
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
