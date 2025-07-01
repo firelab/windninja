@@ -87,27 +87,27 @@ static void refreshUI(const Ui::MainWindow* ui)
   ui->treeWidget->setMouseTracking(true);
 
          // Update Solver Methodology UI
-  if (state.useCOMtoggled != state.useCOMMtoggled) {
-    state.solverMethodologyOk = true;
+  if (state.isMassSolverToggled != state.isMomentumSolverToggled) {
+    state.isSolverMethodologyValid = true;
     ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(0)->setToolTip(0, "");
-  } else if (state.useCOMtoggled && state.useCOMMtoggled) {
-    state.solverMethodologyOk = false;
+  } else if (state.isMassSolverToggled && state.isMomentumSolverToggled) {
+    state.isSolverMethodologyValid = false;
     ui->treeWidget->topLevelItem(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(0)->setToolTip(0,"Requires exactly one selection: currently too many selections.");
   } else {
-    state.solverMethodologyOk = false;
+    state.isSolverMethodologyValid = false;
     ui->treeWidget->topLevelItem(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(0)->setToolTip(0,"Requires exactly one selection: currently no selections.");
   }
 
-  if (state.useCOMtoggled) {
+  if (state.isMassSolverToggled) {
     ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
   }
 
-  if (state.useCOMMtoggled) {
+  if (state.isMomentumSolverToggled) {
     ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
@@ -119,92 +119,92 @@ static void refreshUI(const Ui::MainWindow* ui)
 
          // Update surface input state
   if (ui->elevationInputFileLineEdit->text() != "") {
-    state.surfaceInputOk = true;
+    state.isSurfaceInputValid = true;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "");
   } else {
-    state.surfaceInputOk = false;
+    state.isSurfaceInputValid = false;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "No DEM file detected.");
   }
 
          // Update diurnal input state
-  if (state.diurnalInputToggled) {
+  if (state.isDiurnalInputToggled) {
     ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, bulletIcon);
   }
 
          // Update stability input state
-  if (state.stabilityInputToggled) {
+  if (state.isStabilityInputToggled) {
     ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, bulletIcon);
   }
 
          // Update domain average wind state
-  if (state.domainAverageWindToggled && state.domainAverageWindInputTableOk) {
+  if (state.isDomainAverageInitializationToggled && state.isDomainAverageWindInputTableValid) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
-    state.domainAverageWindOk = true;
-  } else if (state.domainAverageWindToggled && !state.domainAverageWindInputTableOk){
+    state.isDomainAverageInitializationValid = true;
+  } else if (state.isDomainAverageInitializationToggled && !state.isDomainAverageWindInputTableValid){
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs; hover over red cells for explanation.");
-    state.domainAverageWindOk = false;
+    state.isDomainAverageInitializationValid = false;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
-    state.domainAverageWindOk = false;
+    state.isDomainAverageInitializationValid = false;
   }
 
          // Update point initialization state
-  if (state.pointInitializationToggled) {
+  if (state.isPointInitializationToggled) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
-    state.pointInitializationOk = true;
+    state.isPointInitializationValid = true;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
-    state.pointInitializationOk = false;
+    state.isPointInitializationValid = false;
   }
 
          // Update weather model state
-  if (state.weatherModelToggled) {
+  if (state.isWeatherModelInitializationToggled) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
-    state.weatherModelOk = true;
+    state.isWeatherModelInitializationValid = true;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, bulletIcon);
-    state.weatherModelOk = false;
+    state.isWeatherModelInitializationValid = false;
   }
 
          //  Update wind input
-  if (state.domainAverageWindOk || state.pointInitializationOk || state.weatherModelOk) {
+  if (state.isDomainAverageInitializationValid || state.isPointInitializationValid || state.isWeatherModelInitializationValid) {
     ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
-    state.windInputOk = true;
+    state.isWindInputValid = true;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, xIcon);
-    state.windInputOk = false;
+    state.isWindInputValid = false;
   }
 
          // Update overall input UI state
-  if (state.surfaceInputOk && state.windInputOk) {
-    state.inputsOk = true;
+  if (state.isSurfaceInputValid && state.isWindInputValid) {
+    state.isInputsValid = true;
     ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "");
-  } else if (!state.surfaceInputOk && !state.windInputOk) {
-    state.inputsOk = false;
+  } else if (!state.isSurfaceInputValid && !state.isWindInputValid) {
+    state.isInputsValid = false;
     ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad surface and wind inputs.");
-  } else if (!state.surfaceInputOk) {
-    state.inputsOk = false;
+  } else if (!state.isSurfaceInputValid) {
+    state.isInputsValid = false;
     ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad surface input.");
-  } else if (!state.windInputOk) {
-    state.inputsOk = false;
+  } else if (!state.isWindInputValid) {
+    state.isInputsValid = false;
     ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
   }
 
          // Update solve state
-  if (state.solverMethodologyOk && state.inputsOk) {
+  if (state.isSolverMethodologyValid && state.isInputsValid) {
     ui->solveButton->setEnabled(true);
     ui->numberOfProcessorsSolveButton->setEnabled(true);
     ui->solveButton->setToolTip("");
@@ -628,13 +628,13 @@ void MainWindow::massSolverCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Only allow CoM or CoMM to be toggledGithub requies
-  if (state.useCOMMtoggled) {
+  if (state.isMomentumSolverToggled) {
     ui->massAndMomentumSolverCheckBox->setChecked(false);
-    state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
+    state.isMomentumSolverToggled = ui->massAndMomentumSolverCheckBox->isChecked();
   }
 
   // Update app states
-  state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
+  state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
   // Run mesh calculator
   MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
@@ -649,13 +649,13 @@ void MainWindow::massAndMomentumSolverCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Only allow CoM or CoMM to be toggled
-  if (state.useCOMtoggled) {
+  if (state.isMassSolverToggled) {
     ui->massSolverCheckBox->setChecked(false);
-    state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
+    state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
   }
 
   // Update app states
-  state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
+  state.isMomentumSolverToggled = ui->massAndMomentumSolverCheckBox->isChecked();
 
   // Run mesh calculator
   MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
@@ -865,7 +865,7 @@ void MainWindow::timeZoneAllZonesCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Update show all zones state
-  state.showAllZones = ui->timeZoneAllZonesCheckBox->isChecked();
+  state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
 
   emit timeZoneDataRequest();
 }
@@ -876,10 +876,10 @@ void MainWindow::timeZoneDetailsCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Update time zone details state
-  state.displayTimeZoneDetails = ui->timeZoneDetailsCheckBox->isChecked();
+  state.isDisplayTimeZoneDetailsSelected = ui->timeZoneDetailsCheckBox->isChecked();
 
   // Update visibility of details pane
-  ui->timeZoneDetailsTextEdit->setVisible(state.displayTimeZoneDetails);
+  ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
 
 }
 
@@ -889,7 +889,7 @@ void MainWindow::diurnalCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Update UI state
-  state.diurnalInputToggled = ui->diurnalCheckBox->isChecked();
+  state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
   // Change the domain average input table based on diurnal wind
   QTableWidget* table = ui->domainAverageTable;
@@ -916,7 +916,7 @@ void MainWindow::stabilityCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Update UI state
-  state.stabilityInputToggled = ui->stabilityCheckBox->isChecked();
+  state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
   refreshUI(ui);
 }
 
@@ -932,14 +932,14 @@ void MainWindow::domainAverageCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Update the domain average wind state
-  state.domainAverageWindToggled = ui->domainAverageCheckBox->isChecked();
+  state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
 
   // Only allow one wind methodology to be used
-  if (state.domainAverageWindToggled) {
+  if (state.isDomainAverageInitializationToggled) {
     ui->pointInitializationCheckBox->setChecked(false);
     ui->useWeatherModelInit->setChecked(false);
-    state.pointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-    state.weatherModelToggled = ui->useWeatherModelInit->isChecked();
+    state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+    state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
   }
 
   // Update app state
@@ -979,7 +979,7 @@ void MainWindow::clearTableButtonClicked()
 {
   ui->domainAverageTable->clearContents();
   invalidDAWCells.clear();
-  AppState::instance().domainAverageWindInputTableOk = true;
+  AppState::instance().isDomainAverageWindInputTableValid = true;
   refreshUI(ui);
 }
 
@@ -1055,7 +1055,7 @@ void MainWindow::domainAverageTableCellChanged(int row, int column)
     item->setToolTip("");
   }
 
-  AppState::instance().domainAverageWindInputTableOk = invalidDAWCells.isEmpty();
+  AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
   refreshUI(ui);
 }
 
@@ -1065,14 +1065,14 @@ void MainWindow::pointInitializationCheckBoxClicked()
   AppState& state = AppState::instance();
 
   // Update the domain average wind state
-  state.pointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+  state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
 
   // Only allow one wind methodology to be used
-  if (state.pointInitializationToggled) {
+  if (state.isPointInitializationToggled) {
     ui->domainAverageCheckBox->setChecked(false);
     ui->useWeatherModelInit->setChecked(false);
-    state.domainAverageWindToggled = ui->domainAverageCheckBox->isChecked();
-    state.weatherModelToggled = ui->useWeatherModelInit->isChecked();
+    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
   }
 
   // Update app state
@@ -1085,14 +1085,14 @@ void MainWindow::useWeatherModelInitClicked()
   AppState& state = AppState::instance();
 
   // Update the domain average wind state
-  state.weatherModelToggled = ui->useWeatherModelInit->isChecked();
+  state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
 
   // Only allow one wind methodology to be used
-  if (state.weatherModelToggled) {
+  if (state.isWeatherModelInitializationToggled) {
     ui->domainAverageCheckBox->setChecked(false);
     ui->pointInitializationCheckBox->setChecked(false);
-    state.domainAverageWindToggled = ui->domainAverageCheckBox->isChecked();
-    state.pointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
   }
 
   // Update app state

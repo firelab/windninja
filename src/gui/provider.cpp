@@ -575,7 +575,7 @@ int Provider::wxmodel_exec(WeatherModel& input) {
 }
 
 // Time zone data provider
-QVector<QVector<QString>> Provider::getTimeZoneData(bool showAllZones) {
+QVector<QVector<QString>> Provider::getTimeZoneData(bool isShowAllTimeZonesSelected) {
   QVector<QVector<QString>> fullData;
   QVector<QVector<QString>> americaData;
 
@@ -615,7 +615,7 @@ QVector<QVector<QString>> Provider::getTimeZoneData(bool showAllZones) {
 
   file.close();
 
-  if (showAllZones) {
+  if (isShowAllTimeZonesSelected) {
     return fullData;
   } else {
     return americaData;

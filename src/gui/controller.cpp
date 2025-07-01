@@ -19,13 +19,13 @@ void Controller::onSolveRequest() {
   AppState& state = AppState::instance();
 
   // Determine which run to perform
-  if (state.domainAverageWindOk) {
+  if (state.isDomainAverageInitializationValid) {
     DomainAverageWind domainAvgWind = setDomainAverageWind();
     provider.domain_average_exec(domainAvgWind);
-  }else if(state.pointInitializationOk){
+  }else if(state.isPointInitializationValid){
     PointInitialization pointInit = setPointInitialization();
     provider.point_exec(pointInit);
-  }else if(state.weatherModelOk){
+  }else if(state.isWeatherModelInitializationValid){
     WeatherModel weatherModel = setWeatherModel();
     provider.wxmodel_exec(weatherModel);
   }
@@ -44,8 +44,8 @@ void Controller::onSolveRequest() {
 // Get time zone list from provider
 void Controller::onTimeZoneDataRequest() {
   // Call provider to get 2D vector with timezone data
-  bool showAllZones = view->getUi()->timeZoneAllZonesCheckBox->isChecked();
-  QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData(showAllZones);
+  bool isShowAllTimeZonesSelected = view->getUi()->timeZoneAllZonesCheckBox->isChecked();
+  QVector<QVector<QString>> timeZoneData = provider.getTimeZoneData(isShowAllTimeZonesSelected);
 
   // Clear timezone list
   view->getUi()->timeZoneComboBox->clear();

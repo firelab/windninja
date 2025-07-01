@@ -10,30 +10,30 @@ public:
     }
 
     // Solver Methodology input states
-    bool solverMethodologyOk = false;
-    bool useCOMtoggled = false;
-    bool useCOMMtoggled = false;
+    bool isSolverMethodologyValid = false;
+    bool isMassSolverToggled = false;
+    bool isMomentumSolverToggled = false;
 
     // Input states
-    bool inputsOk = false;
-    bool surfaceInputOk = false;
-    bool diurnalInputToggled = false;
-    bool stabilityInputToggled = false;
+    bool isInputsValid = false;
+    bool isSurfaceInputValid = false;
+    bool isDiurnalInputToggled = false;
+    bool isStabilityInputToggled = false;
 
     // Wind Input States
-    bool windInputOk = false;
-    bool domainAverageWindToggled = false;
-    bool domainAverageWindInputTableOk = true;
-    bool domainAverageWindOk = false;
-    bool pointInitializationToggled = false;
-    bool pointInitializationOk = false;
-    bool weatherModelToggled = false;
-    bool weatherModelOk = false;
-    bool showAllZones = false;
-    bool displayTimeZoneDetails = false;
+    bool isWindInputValid = false;
+    bool isDomainAverageInitializationToggled = false;
+    bool isDomainAverageWindInputTableValid = true;
+    bool isDomainAverageInitializationValid = false;
+    bool isPointInitializationToggled = false;
+    bool isPointInitializationValid = false;
+    bool isWeatherModelInitializationToggled = false;
+    bool isWeatherModelInitializationValid = false;
+    bool isShowAllTimeZonesSelected = false;
+    bool isDisplayTimeZoneDetailsSelected = false;
 
     // All Inputs Ok
-    bool solverReady = false;
+    bool isSolverReady = false;
 
 
 private:

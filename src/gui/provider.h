@@ -23,7 +23,7 @@ class Provider {
   public:
     Provider();
     int domain_average_exec(class DomainAverageWind& input);
-    QVector<QVector<QString>> getTimeZoneData(bool showAllZones);
+    QVector<QVector<QString>> getTimeZoneData(bool isShowAllTimeZonesSelected);
     QVector<QVector<QString>> parseDomainAvgTable(QTableWidget* table);
     vector<string> getOutputFileNames(QString demFile, QTableWidget* table, QString meshType, int numFiles, QString outputPath);
     QString getKmzFilePaths();
