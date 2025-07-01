@@ -50,49 +50,27 @@ public:
 private slots:
   void massSolverCheckBoxClicked();
   void massAndMomentumSolverCheckBoxClicked();
-
   void elevationInputFileDownloadButtonClicked();
-
   void elevationInputFileOpenButtonClicked();
-
   void elevationInputFileLineEditTextChanged(const QString &arg1);
-
   void meshResolutionComboBoxCurrentIndexChanged(int index);
-
   void diurnalCheckBoxClicked();
-
   void stabilityCheckBoxClicked();
-
   void windHeightComboBoxCurrentIndexChanged(int index);
-
   void domainAverageCheckBoxClicked();
-
   void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-
   void pointInitializationCheckBoxClicked();
-
   void useWeatherModelInitClicked();
-
   void clearTableButtonClicked();
-
   void solveButtonClicked();
-
   void outputDirectoryButtonClicked();
-
   void numberOfProcessorsSolveButtonClicked();
-
   void timeZoneAllZonesCheckBoxClicked();
-
   void timeZoneDetailsCheckBoxClicked();
-
   void timeZoneComboBoxCurrentIndexChanged(int index);
-
   void domainAverageTableCellChanged(int row, int column);
-
   void meshResolutionMetersRadioButtonToggled(bool checked);
-
   void meshResolutionFeetRadioButtonToggled(bool checked);
-
   void surfaceInputDownloadCancelButtonClicked();
 
 signals:

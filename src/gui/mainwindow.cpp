@@ -23,51 +23,6 @@
 #include <vector>
 #include <string>
 
-// Menu filtering class
-class DirectoryFilterModel : public QSortFilterProxyModel {
-protected:
-  bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
-    QFileSystemModel *fsModel = qobject_cast<QFileSystemModel *>(sourceModel());
-    if (!fsModel) return false;
-
-    QModelIndex index = fsModel->index(source_row, 0, source_parent);
-    if (!index.isValid()) return false;
-
-    // Define the download path
-    QFileInfo fileInfo = fsModel->fileInfo(index);
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-
-    // Keep the Downloads root directory
-    if (fileInfo.absoluteFilePath() == downloadsPath) {
-      return true;
-    }
-
-    // Ensure filtering applies only inside Downloads
-    if (!fileInfo.absoluteFilePath().startsWith(downloadsPath)) {
-      return false;
-    }
-
-    // Allow `WXSTATIONS-*` directories
-    if (fileInfo.isDir() && fileInfo.fileName().toLower().startsWith("wxstations")) {
-      return true;
-    }
-
-    // Allow files **inside** `WXSTATIONS-*`
-    QModelIndex parentIndex = index.parent();
-    if (parentIndex.isValid()) {
-      QFileInfo parentInfo = fsModel->fileInfo(parentIndex);
-      if (parentInfo.isDir() && parentInfo.fileName().toLower().startsWith("wxstations")) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-};
-
-/*
- * Dynamic UI handling
- */
 
 /*
  * Helper function to refresh the ui state of the app
@@ -75,18 +30,15 @@ protected:
  */
 static void refreshUI(const Ui::MainWindow* ui)
 {
-  // Alias the AppState
   AppState& state = AppState::instance();
 
-         // Define state icons
   QIcon tickIcon(":/tick.png");
   QIcon xIcon(":/cross.png");
   QIcon bulletIcon(":/bullet_blue.png");
 
-         // Enable mouse tracking on tree
   ui->treeWidget->setMouseTracking(true);
 
-         // Update Solver Methodology UI
+  // Update Solver Methodology UI
   if (state.isMassSolverToggled != state.isMomentumSolverToggled) {
     state.isSolverMethodologyValid = true;
     ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
@@ -113,11 +65,7 @@ static void refreshUI(const Ui::MainWindow* ui)
     ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
   }
 
-  /*
-   * Primary state machine for inputs (surface, wind, etc.)
-   */
-
-         // Update surface input state
+  // Update surface input state
   if (ui->elevationInputFileLineEdit->text() != "") {
     state.isSurfaceInputValid = true;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, tickIcon);
@@ -128,21 +76,21 @@ static void refreshUI(const Ui::MainWindow* ui)
     ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "No DEM file detected.");
   }
 
-         // Update diurnal input state
+  // Update diurnal input state
   if (state.isDiurnalInputToggled) {
     ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, bulletIcon);
   }
 
-         // Update stability input state
+  // Update stability input state
   if (state.isStabilityInputToggled) {
     ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, bulletIcon);
   }
 
-         // Update domain average wind state
+  // Update domain average initialization
   if (state.isDomainAverageInitializationToggled && state.isDomainAverageWindInputTableValid) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
@@ -157,7 +105,7 @@ static void refreshUI(const Ui::MainWindow* ui)
     state.isDomainAverageInitializationValid = false;
   }
 
-         // Update point initialization state
+  // Update point initialization
   if (state.isPointInitializationToggled) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
     state.isPointInitializationValid = true;
@@ -166,7 +114,7 @@ static void refreshUI(const Ui::MainWindow* ui)
     state.isPointInitializationValid = false;
   }
 
-         // Update weather model state
+  // Update weather model initialization
   if (state.isWeatherModelInitializationToggled) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
     state.isWeatherModelInitializationValid = true;
@@ -175,7 +123,7 @@ static void refreshUI(const Ui::MainWindow* ui)
     state.isWeatherModelInitializationValid = false;
   }
 
-         //  Update wind input
+  //  Update wind input
   if (state.isDomainAverageInitializationValid || state.isPointInitializationValid || state.isWeatherModelInitializationValid) {
     ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
     state.isWindInputValid = true;
@@ -184,7 +132,7 @@ static void refreshUI(const Ui::MainWindow* ui)
     state.isWindInputValid = false;
   }
 
-         // Update overall input UI state
+  // Update overall input UI state
   if (state.isSurfaceInputValid && state.isWindInputValid) {
     state.isInputsValid = true;
     ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
@@ -203,7 +151,7 @@ static void refreshUI(const Ui::MainWindow* ui)
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
   }
 
-         // Update solve state
+  // Update solve state
   if (state.isSolverMethodologyValid && state.isInputsValid) {
     ui->solveButton->setEnabled(true);
     ui->numberOfProcessorsSolveButton->setEnabled(true);
@@ -222,43 +170,33 @@ MainWindow::MainWindow(QWidget *parent)
       ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
-
   checkMessages();
-
-         // Set default window size
   resize(1200, 700);
 
-         // Immediately call a UI refresh to set initial states
+  // Immediately call a UI refresh to set initial states
   refreshUI(ui);
-  // Expand tree UI
+
   ui->treeWidget->expandAll();
 
   /*
    * Create file handler window for point init screen
    */
-
-         // Get the correct Downloads folder path
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-
-         // Enable QFileSystemModel to process directories and files
+  // Enable QFileSystemModel to process directories and files
   QFileSystemModel *model = new QFileSystemModel(this);
   model->setFilter(QDir::NoDotAndDotDot | QDir::AllDirs | QDir::AllEntries);  // Ensure files appear
   model->setRootPath(downloadsPath);
 
-         // Enable file watching so contents refresh properly
+  // Enable file watching so contents refresh properly
   model->setReadOnly(false);
   model->setResolveSymlinks(true);
 
-         // Create a filtering model
-  DirectoryFilterModel *filterModel = new DirectoryFilterModel();
-  filterModel->setSourceModel(model);
-
-         // Set the correct root index inside Downloads
+  // Set the correct root index inside Downloads
   QModelIndex rootIndex = model->index(downloadsPath);
-  ui->treeFileExplorer->setModel(filterModel);
-  ui->treeFileExplorer->setRootIndex(filterModel->mapFromSource(rootIndex));
+  ui->treeFileExplorer->setModel(model);
+  ui->treeFileExplorer->setRootIndex(rootIndex);
 
-         // Ensure folders expand and collapse correctly
+  // Ensure folders expand and collapse correctly
   ui->treeFileExplorer->setExpandsOnDoubleClick(true);
   ui->treeFileExplorer->setAnimated(true);
   ui->treeFileExplorer->setIndentation(15);
@@ -266,65 +204,57 @@ MainWindow::MainWindow(QWidget *parent)
   ui->treeFileExplorer->setItemsExpandable(true);
   ui->treeFileExplorer->setUniformRowHeights(true);
 
-         // Show only "Name" and "Date Modified" columns
+  // Show only "Name" and "Date Modified" columns
   ui->treeFileExplorer->hideColumn(1);  // Hide Size column
   ui->treeFileExplorer->hideColumn(2);  // Hide Type column
 
-         // Optional: Set column headers
+  // Optional: Set column headers
   QHeaderView *header = ui->treeFileExplorer->header();
-  header->setSectionResizeMode(0, QHeaderView::Interactive);  // Name fits content
-  header->setSectionResizeMode(3, QHeaderView::Stretch);           // Date Modified stretches
+  header->setSectionResizeMode(0, QHeaderView::Interactive);
+  header->setSectionResizeMode(3, QHeaderView::Stretch);
   model->setHeaderData(0, Qt::Horizontal, "Name");
   model->setHeaderData(3, Qt::Horizontal, "Date Modified");
 
-         // Force model to reload children
-  ui->treeFileExplorer->expandAll();  // Force expand all to check visibility
+  ui->treeFileExplorer->expandAll();
 
   /*
    * Functionality for the map widget
    */
-
-         // Enable remote content
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
-         // Resolve the map file path
   QString filePath = QString(MAP_PATH);
 
-         //Load HTML file with Leaflet
   webView = new QWebEngineView(ui->mapPanelWidget);
   QUrl url = QUrl::fromLocalFile(filePath);
   webView->setUrl(url);
 
-         // Set up layout
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(webView);
 
-         // Apply
   ui->mapPanelWidget->setLayout(layout);
 
   /*
    * Connect tree items to stacked tab window
    */
-
-         // Top-level items
+   // Top-level items
   ui->inputsStackedWidget->setCurrentIndex(0);
   ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
   ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
   ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
 
-         // Sub-items for Solver Methodology
+  // Sub-items for Solver Methodology
   ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
   ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);  // Conservation of Mass and Momentum (Page 2)
 
-         // Sub-items for Inputs
+  // Sub-items for Inputs
   ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 6)
   ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 7)
   ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 8)
   ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 9)
 
-         // Sub-sub-items for Wind Input
+  // Sub-sub-items for Wind Input
   QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
   windInputItem->child(0)->setData(0, Qt::UserRole, 9);  // Domain Average Wind (Page 9)
   windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
@@ -343,30 +273,27 @@ MainWindow::MainWindow(QWidget *parent)
   /*
    * Basic initial setup steps
    */
-
-         // Surface Input window
-         // Set icons
+  // Surface Input window
   ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
   ui->elevationInputFileDownloadButton->setIcon(QIcon(":/swoop_final.png"));
 
-         // Solver window
-         // Update processor count and set user input default value & upper bound
+  // Solver window
   int nCPUs = QThread::idealThreadCount();
   ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
   ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
   ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
-         // Wind Input -> Point Init window
+  // Wind Input -> Point Init window
   ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
 
-         // Populate default location for output location
+  // Populate default location for output location
   ui->outputDirectoryTextEdit->setText(downloadsPath);
   ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
 
-         // Set initial visibility of time zone details
+  // Set initial visibility of time zone details
   ui->timeZoneDetailsTextEdit->setVisible(false);
 
-         // Set initial formatting of domain average input table
+  // Set initial formatting of domain average input table
   ui->domainAverageTable->hideColumn(2);
   ui->domainAverageTable->hideColumn(3);
   ui->domainAverageTable->hideColumn(4);
