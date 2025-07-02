@@ -45,11 +45,15 @@
 double GDALGetMax( GDALDataset *poDS );
 double GDALGetMin( GDALDataset *poDS );
 bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude );
+bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *pszWkt );
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
+bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszWkt );
 bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth );
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, const char *pszWkt, double &coordinateTransformAngle );
 bool GDALTestSRS( GDALDataset *poDS );
 bool GDALHasNoData( GDALDataset *poDS, int band );
 bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid );
+bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszWkt );
 bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poDstDS,
                           const char *datum );
 bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
