@@ -357,19 +357,6 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
 	ninjaKmlFiles.setKmzFile(output_file_base + ".kmz");
 	//ninjaKmlFiles.setDemFile(dem_filename);
 
-    // add the angleFromNorth to each spd,dir, u,v dataset for kmz output, kmlVector requires the dirGrid to be in projected form, not lat/lon form
-    for(int i=0; i<foamDir.get_nRows(); i++)
-    {
-        for(int j=0; j<foamDir.get_nCols(); j++)
-        {
-            foamDir(i,j) = wrap0to360( foamDir(i,j) + angleFromNorth ); //account for projection rotation from north
-            // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-            // however, these u and v grids are not actually being used past this point
-            //wind_sd_to_uv(foamSpd(i,j), foamDir(i,j),
-            //        &(foamU)(i,j), &(foamV)(i,j));
-        }
-    }
-
 	ninjaKmlFiles.setLegendFile(output_file_base + ".bmp");
 	//ninjaKmlFiles.setDateTimeLegendFile("out_kml_time.bmp", "ninjatime.bmp");
 	ninjaKmlFiles.setSpeedGrid(foamSpd, velocityUnits::metersPerSecond);

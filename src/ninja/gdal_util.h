@@ -49,7 +49,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
 bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszWkt );
 bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth );
-bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, const char *pszWkt, double &coordinateTransformAngle );
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszWkt );
 bool GDALTestSRS( GDALDataset *poDS );
 bool GDALHasNoData( GDALDataset *poDS, int band );
 bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid );

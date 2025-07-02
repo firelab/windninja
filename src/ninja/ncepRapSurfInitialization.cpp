@@ -364,6 +364,8 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         }
 
     }
+
+    std::string dstWkt;
     if(bandNum < 0)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
 
@@ -378,7 +380,6 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
 
         //attempt to grab the projection from the dem?
         //check for member prjString first
-        std::string dstWkt;
         dstWkt = input.dem.prjString;
         if ( dstWkt.empty() ) {
             //try to open original
@@ -532,4 +533,44 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
 
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
+
+    //compute coordinate transformation angle, the angle between the v grid lines of the pre-warped and warped datasets,
+    //and correct the angles of the output dataset to convert from the original dataset projection angles to the warped dataset projection angles
+    double coordinateTransformationAngle = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        // need an intermediate spd and dir set of ascii grids
+        AsciiGrid<double> speedGrid;
+        AsciiGrid<double> dirGrid;
+        speedGrid.set_headerData(uGrid);
+        dirGrid.set_headerData(uGrid);
+        for(int i=0; i<uGrid.get_nRows(); i++) {
+            for(int j=0; j<uGrid.get_nCols(); j++) {
+                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+            }
+        }
+
+        // now calculate the coordinateTransformationAngle from the dataset
+        GDALDatasetH hDS = dirGrid.ascii2GDAL();
+        if(!GDALCalculateCoordinateTransformationAngle( hDS, coordinateTransformationAngle, dstWkt.c_str() ))
+        {
+            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+        }
+        GDALClose(hDS);
+
+        // add the coordinateTransformationAngle to each spd,dir, u,v dataset
+        for(int i=0; i<dirGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<dirGrid.get_nCols(); j++)
+            {
+                dirGrid(i,j) = wrap0to360( dirGrid(i,j) + coordinateTransformationAngle ); //account for projection rotation
+                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+            }
+        }
+
+        // cleanup the intermediate grids
+        speedGrid.deallocate();
+        dirGrid.deallocate();
+    }
 }

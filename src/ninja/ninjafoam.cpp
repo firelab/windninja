@@ -234,9 +234,9 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
     CPLDebug("NINJAFOAM", "input wind height = %lf", input.inputWindHeight);
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
-    CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
+    CPLDebug("NINJAFOAM", "input geographic direction = %lf", input.inputDirection);
     CPLDebug("NINJAFOAM", "angleFromNorth = %lf", input.dem.getAngleFromNorth());
-    CPLDebug("NINJAFOAM", "corrected input direction = %lf", wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() )); //account for projection rotation from north
+    CPLDebug("NINJAFOAM", "input projected direction = %lf", wrap0to360( input.inputDirection + input.dem.getAngleFromNorth() )); //account for projection rotation from north
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
     CPLDebug("NINJAFOAM", "Roughness = %f", input.surface.Roughness.get_meanValue());
@@ -398,45 +398,6 @@ bool NinjaFoam::simulate_wind()
     #ifdef _OPENMP
     endGenerateAndSampleMassMesh = omp_get_wtime();
     #endif
-
-    // subtract back off the angleFromNorth from each spd,dir, u,v dataset
-    // but not for diurnal winds, the mass solver does this instead for diurnal runs
-    if(input.diurnalWinds == false)
-    {
-        // only do this to the 3D data if it is required for output, runs a LOT slower
-        //
-        // turns out that the 3D data, vtk and NINJAFOAM, look best staying in the projected angle,
-        // vectors then still follow the terrain. So skip adjusting the 3D data after all
-        //if ( input.volVTKOutFlag == true )
-        //{
-        //    double spdVal, dirVal;
-        //    int idx;
-        //    for(int kk=0; kk<massMesh.nlayers; kk++)
-        //    {
-        //        for(int ii=0; ii<input.dem.get_nCols(); ii++)
-        //        {
-        //            for(int jj=0; jj<input.dem.get_nRows(); jj++)
-        //            {
-        //                idx = kk*input.dem.get_nCols()*input.dem.get_nRows() + ii*input.dem.get_nRows() + jj;
-        //                wind_uv_to_sd(massMesh_u(idx), massMesh_v(idx), &spdVal, &dirVal);
-        //                dirVal = wrap0to360( dirVal - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-        //                // need to recalculate the u and v grid val from the corrected dirVal
-        //                wind_sd_to_uv(spdVal, dirVal, &massMesh_u(idx), &massMesh_v(idx));
-        //            }
-        //        }
-        //    }
-        //}
-        for(int i=0; i<AngleGrid.get_nRows(); i++)
-        {
-            for(int j=0; j<AngleGrid.get_nCols(); j++)
-            {
-                AngleGrid(i,j) = wrap0to360( AngleGrid(i,j) - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                // however, no u and v ascii grids are actually being used past this point
-                //wind_sd_to_uv(VelocityGrid(i,j), AngleGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
-            }
-        }
-    }
 
     /*----------------------------------------*/
     /*  write output files                    */
@@ -3437,22 +3398,6 @@ void NinjaFoam::WriteOutputFiles()
                                     AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
                                     AsciiGrid<double>::order0));
-
-            // add the angleFromNorth to each spd,dir, u,v dataset for kmz output, kmlVector requires the dirGrid to be in projected form, not lat/lon form
-            double dirVal;
-            for(int i=0; i<angTempGrid->get_nRows(); i++)
-            {
-                for(int j=0; j<angTempGrid->get_nCols(); j++)
-                {
-                    dirVal = wrap0to360( angTempGrid->get_cellValue(i,j) + input.dem.getAngleFromNorth() ); //account for projection rotation from north
-                    angTempGrid->set_cellValue(i,j, dirVal);
-                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                    // however, these u and v grids are not actually being used past this point
-                    //wind_sd_to_uv(velTempGrid(i,j), angTempGrid(i,j),
-                    //        &(uTempGrid)(i,j), &(vTempGrid)(i,j));
-                }
-            }
-
                         if(input.writeTurbulence)
                         {
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
@@ -3530,21 +3475,6 @@ void NinjaFoam::WriteOutputFiles()
 
 			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-
-            // add the angleFromNorth to each spd,dir, u,v dataset for pdf output, OutputWriter requires the dirGrid to be in projected form, not lat/lon form
-            double dirVal;
-            for(int i=0; i<angTempGrid->get_nRows(); i++)
-            {
-                for(int j=0; j<angTempGrid->get_nCols(); j++)
-                {
-                    dirVal = wrap0to360( angTempGrid->get_cellValue(i,j) + input.dem.getAngleFromNorth() ); //account for projection rotation from north
-                    angTempGrid->set_cellValue(i,j, dirVal);
-                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                    // however, these u and v grids are not actually being used past this point
-                    //wind_sd_to_uv(velTempGrid(i,j), angTempGrid(i,j),
-                    //        &(uTempGrid)(i,j), &(vTempGrid)(i,j));
-                }
-            }
 
 			output.setDirGrid(*angTempGrid);
 			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);

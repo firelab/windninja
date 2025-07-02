@@ -471,13 +471,13 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 
 /** Calculate the angle between the "north" 0 degree grid lines of two datasets.
  * @param poSrsDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
+ * @param coordinateTransformAngle the computed angle between the 0 degree grid lines of the two datasets, to be filled
 // * @param poDstDS a pointer to a valid GDAL Dataset, from which the output spatial reference is obtained
 // * @param CRS the output Coordinate Reference System to which the angle should be calculated for
  * @param pszWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
- * @param coordinateTransformAngle the computed angle between the 0 degree grid lines of the two datasets, to be filled
  * @return true on success false on failure.
  */
-bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, const char *pszWkt, double &coordinateTransformAngle )
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszWkt )
 {
     double x1, y1; //center point of the poSrcDS in the projection of the poSrcDS, to be transformed to the poDstDS projection
     double x2, y2; //point due "north" 0 degrees of center point in the projection of the poSrcDS, to be transformed to the poDstDS projection, (x1,y1) to (x2,y2) becomes the 0 degree gridline of the poDstDS spatial reference

@@ -1211,10 +1211,6 @@ void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &inpu
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
             wind_uv_to_sd(uInitializationGrid(i,j), vInitializationGrid(i,j),
                     &(speedInitializationGrid)(i,j), &(dirInitializationGrid)(i,j));
-            dirInitializationGrid(i,j) = wrap0to360( dirInitializationGrid(i,j) + input.dem.getAngleFromNorth() ); //account for projection rotation from north
-            // need to recalculate the u and v initialization grids from the corrected dirInitializationGrid
-            wind_sd_to_uv(speedInitializationGrid(i,j), dirInitializationGrid(i,j),
-                    &(uInitializationGrid)(i,j), &(vInitializationGrid)(i,j));
         }
     }
 
@@ -1601,19 +1597,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
                 }
                 GDALClose(hDS);
             }*/
-            // add the angleFromNorth to each spd,dir, u,v dataset for kmz output, kmlVector requires the dirGrid to be in projected form, not lat/lon form
-            for(int i=0; i<dirInitializationGrid_wxModel.get_nRows(); i++)
-            {
-                for(int j=0; j<dirInitializationGrid_wxModel.get_nCols(); j++)
-                {
-                    dirInitializationGrid_wxModel(i,j) = wrap0to360( dirInitializationGrid_wxModel(i,j) + input.dem.getAngleFromNorth() ); //account for projection rotation from north
-                    //dirInitializationGrid_wxModel(i,j) = wrap0to360( dirInitializationGrid_wxModel(i,j) + angleFromNorth ); //account for projection rotation from north
-                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                    // however, these u and v grids are not actually being used past this point
-                    //wind_sd_to_uv(speedInitializationGrid_wxModel(i,j), dirInitializationGrid_wxModel(i,j),
-                    //        &(uGrid_wxModel)(i,j), &(vGrid_wxModel)(i,j));
-                }
-            }
 
             //wxModelKmlFiles.setAngleFromNorth(angleFromNorth);
             wxModelKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());

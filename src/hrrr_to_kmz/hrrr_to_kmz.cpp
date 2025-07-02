@@ -466,6 +466,46 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
+    //compute coordinate transformation angle, the angle between the v grid lines of the pre-warped and warped datasets,
+    //and correct the angles of the output dataset to convert from the original dataset projection angles to the warped dataset projection angles
+    double coordinateTransformationAngle = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        // need an intermediate spd and dir set of ascii grids
+        AsciiGrid<double> speedGrid;
+        AsciiGrid<double> dirGrid;
+        speedGrid.set_headerData(uGrid);
+        dirGrid.set_headerData(uGrid);
+        for(int i=0; i<uGrid.get_nRows(); i++) {
+            for(int j=0; j<uGrid.get_nCols(); j++) {
+                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+            }
+        }
+
+        // now calculate the coordinateTransformationAngle from the dataset
+        GDALDatasetH hDS = dirGrid.ascii2GDAL();
+        if(!GDALCalculateCoordinateTransformationAngle( hDS, coordinateTransformationAngle, dstWkt ))
+        {
+            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+        }
+        GDALClose(hDS);
+
+        // add the coordinateTransformationAngle to each spd,dir, u,v dataset
+        for(int i=0; i<dirGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<dirGrid.get_nCols(); j++)
+            {
+                dirGrid(i,j) = wrap0to360( dirGrid(i,j) + coordinateTransformationAngle ); //account for projection rotation
+                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+            }
+        }
+
+        // cleanup the intermediate grids
+        speedGrid.deallocate();
+        dirGrid.deallocate();
+    }
+
     GDALDestroyWarpOptions( psWarpOptions );
     GDALClose((GDALDatasetH) srcDS );
     GDALClose((GDALDatasetH) wrpDS );
@@ -546,19 +586,6 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
             printf("Warning: Unable to calculate angle departure from north for the wxModel.");
         }
         GDALClose(hDS);
-    }
-
-    // add the angleFromNorth to each spd,dir, u,v dataset for kmz output, kmlVector requires the dirGrid to be in projected form, not lat/lon form
-    for(int i=0; i<dirInitializationGrid_wxModel.get_nRows(); i++)
-    {
-        for(int j=0; j<dirInitializationGrid_wxModel.get_nCols(); j++)
-        {
-            dirInitializationGrid_wxModel(i,j) = wrap0to360( dirInitializationGrid_wxModel(i,j) + angleFromNorth ); //account for projection rotation from north
-            // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-            // however, these u and v grids are not actually being used past this point
-            //wind_sd_to_uv(speedInitializationGrid_wxModel(i,j), dirInitializationGrid_wxModel(i,j),
-            //        &(uGrid_wxModel)(i,j), &(vGrid_wxModel)(i,j));
-        }
     }
 
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
