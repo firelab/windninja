@@ -32,6 +32,7 @@ public:
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
   void loadMapKMZ(const std::vector<std::string>& input);
+  void refreshUI();
 
   // GDAL Values
   QString GDALDriverName, GDALDriverLongName;
@@ -49,7 +50,7 @@ public:
 
 private slots:
   void massSolverCheckBoxClicked();
-  void massAndMomentumSolverCheckBoxClicked();
+  void momentumSolverCheckBoxClicked();
   void elevationInputFileDownloadButtonClicked();
   void elevationInputFileOpenButtonClicked();
   void elevationInputFileLineEditTextChanged(const QString &arg1);
@@ -112,7 +113,7 @@ private:
   void submitBugReport();
 
   void connectMenuActions();
-  void onTreeItemClicked(QTreeWidgetItem *item, int column);
+  void treeItemClicked(QTreeWidgetItem *item, int column);
   QSet<QPair<int, int>> invalidDAWCells;
 
   // DEM inputs

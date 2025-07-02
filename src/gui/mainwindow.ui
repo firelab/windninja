@@ -524,7 +524,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>12</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -656,7 +656,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="massAndMomentumSolverPage">
+          <widget class="QWidget" name="momentumSolverPage">
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="leftMargin">
              <number>5</number>
@@ -671,7 +671,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="massAndMomentumSolverCheckBox">
+             <widget class="QCheckBox" name="momentumSolverCheckBox">
               <property name="cursor">
                <cursorShape>PointingHandCursor</cursorShape>
               </property>
@@ -681,7 +681,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QTextEdit" name="massAndMomentumSolverTextEdit">
+             <widget class="QTextEdit" name="momentumSolverTextEdit">
               <property name="font">
                <font>
                 <pointsize>8</pointsize>
@@ -706,7 +706,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="massAndMomentumSolverSpacer">
+             <spacer name="momentumSolverSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>

@@ -28,7 +28,7 @@
  * Helper function to refresh the ui state of the app
  * Called on every user input action
  */
-static void refreshUI(const Ui::MainWindow* ui)
+void MainWindow::refreshUI()
 {
   AppState& state = AppState::instance();
 
@@ -174,7 +174,7 @@ MainWindow::MainWindow(QWidget *parent)
   resize(1200, 700);
 
   // Immediately call a UI refresh to set initial states
-  refreshUI(ui);
+  refreshUI();
 
   ui->treeWidget->expandAll();
 
@@ -260,7 +260,7 @@ MainWindow::MainWindow(QWidget *parent)
   windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
   windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
 
-  connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::onTreeItemClicked);
+  connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
   connectMenuActions();
 
@@ -304,7 +304,7 @@ MainWindow::MainWindow(QWidget *parent)
           ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
 
   connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
-  connect(ui->massAndMomentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massAndMomentumSolverCheckBoxClicked);
+  connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
 
   connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileDownloadButtonClicked);
   connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileOpenButtonClicked);
@@ -337,7 +337,6 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->meshResolutionFeetRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionFeetRadioButtonToggled);
 
   connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadCancelButtonClicked);
-
 
 }
 
@@ -484,11 +483,8 @@ void MainWindow::connectMenuActions()
   connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
 }
 
-/*
- * Click tree item helper function
- */
 
-void MainWindow::onTreeItemClicked(QTreeWidgetItem *item, int column) {
+void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
   int pageIndex = item->data(column, Qt::UserRole).toInt();
   if (pageIndex >= 0) {
     if(pageIndex >= 6) {
@@ -545,49 +541,35 @@ void MainWindow::populateForecastDownloads() {
   ui->forecastDownloads->setExpandsOnDoubleClick(true);
 }
 
-/*
- * Signal and slot handlers
- */
 
-// Use selects Conservation of Mass
 void MainWindow::massSolverCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
-  // Only allow CoM or CoMM to be toggledGithub requies
   if (state.isMomentumSolverToggled) {
-    ui->massAndMomentumSolverCheckBox->setChecked(false);
-    state.isMomentumSolverToggled = ui->massAndMomentumSolverCheckBox->isChecked();
+    ui->momentumSolverCheckBox->setChecked(false);
+    state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
   }
-
-  // Update app states
   state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-  // Run mesh calculator
   MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
-
-  refreshUI(ui);
+  refreshUI();
 }
 
 
 // User selects Conservation of Mass and Momentum
-void MainWindow::massAndMomentumSolverCheckBoxClicked()
+void MainWindow::momentumSolverCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
-  // Only allow CoM or CoMM to be toggled
   if (state.isMassSolverToggled) {
     ui->massSolverCheckBox->setChecked(false);
     state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
   }
+  state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-  // Update app states
-  state.isMomentumSolverToggled = ui->massAndMomentumSolverCheckBox->isChecked();
-
-  // Run mesh calculator
   MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
-
-  refreshUI(ui);
+  refreshUI();
 }
 
 
@@ -633,37 +615,27 @@ void MainWindow::elevationInputFileLineEditTextChanged(const QString &arg1)
   GDALMinValue = minVal;
   GDALMaxValue = maxVal;
 
-  // Close
   GDALClose((GDALDatasetH)poInputDS);
 
-  // Run mesh calculator
   MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
-
-  refreshUI(ui);
+  refreshUI();
 }
-
 
 void MainWindow::elevationInputFileOpenButtonClicked()
 {
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-  QString filePath = QFileDialog::getOpenFileName(this,
-                                                  "Select a file",                // Window title
-                                                  downloadsPath,               // Starting directory
-                                                  "(*.tif);;All Files (*)"  // Filter
-                                                  );
+  QString filePath = QFileDialog::getOpenFileName(this, "Select a file", downloadsPath, "(*.tif);;All Files (*)");
   ui->elevationInputFileLineEdit->setText(filePath);
   ui->elevationInputFileLineEdit->setToolTip(filePath);
 }
 
-
-// User selects an elevation input file (by map import)
 void MainWindow::elevationInputFileDownloadButtonClicked()
 {
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex+1);
 }
 
-  // User changes the mesh resolution spec for surface input
+// User changes the mesh resolution spec for surface input
 void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
 {
   // Set value box enable for custom/other
@@ -688,7 +660,7 @@ void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
   }
 
 #ifdef NINJAFOAM
-  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
+  if (ui->momentumSolverCheckBox->isChecked()) {
     coarse = 25000;
     medium = 50000;
     fine = 100000;
@@ -727,7 +699,7 @@ void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
   meshResolution = (XCellSize + YCellSize) / 2;
 
 #ifdef NINJAFOAM
-  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
+  if (ui->momentumSolverCheckBox->isChecked()) {
     XLength = GDALXSize * GDALCellSize;
     YLength = GDALYSize * GDALCellSize;
 
@@ -783,7 +755,99 @@ void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
 // User selects a new time zone
 void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
-  emit timeZoneDetailsRequest();
+  QString currentTimeZone = ui->timeZoneComboBox->currentText();
+
+  QVector<QString> matchedRow;
+  QFile file(":/date_time_zonespec.csv");
+
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    qWarning() << "Failed to open date_time_zonespec.csv";
+    qDebug() << "No data found";
+  }
+
+  QTextStream in(&file);
+  bool firstLine = true;
+
+  while (!in.atEnd()) {
+    QString line = in.readLine();
+
+    if (firstLine) {
+      firstLine = false;
+      continue;  // skip header
+    }
+
+    QStringList tokens = line.split(",", Qt::KeepEmptyParts);
+    QVector<QString> row;
+
+    for (const QString& token : tokens)
+      row.append(token.trimmed().remove("\""));
+
+    QString fullZone = row.mid(0, 1).join("/");
+
+    if (fullZone == currentTimeZone) {
+      matchedRow = row;
+      break;
+    }
+  }
+
+  file.close();
+
+  if (matchedRow.isEmpty()) {
+    qDebug() << "No matching time zone found.";
+  }
+
+  QString standardName = matchedRow.value(2);
+  QString daylightName = matchedRow.value(4);
+  QString stdOffsetStr = matchedRow.value(5);  // Already in HH:MM:SS
+  QString dstAdjustStr = matchedRow.value(6);  // Already in HH:MM:SS
+
+         // Function to convert signed HH:MM:SS to total seconds
+  auto timeToSeconds = [](const QString& t) -> int {
+    QString s = t.trimmed();
+    bool negative = s.startsWith('-');
+    s = s.remove(QChar('+')).remove(QChar('-'));
+
+    QStringList parts = s.split(':');
+    if (parts.size() != 3) return 0;
+
+    int h = parts[0].toInt();
+    int m = parts[1].toInt();
+    int sec = parts[2].toInt();
+
+    int total = h * 3600 + m * 60 + sec;
+    return negative ? -total : total;
+  };
+
+         // Convert total seconds back to HH:MM:SS with sign
+  auto secondsToTime = [](int totalSec) -> QString {
+    QChar sign = totalSec < 0 ? '-' : '+';
+    totalSec = std::abs(totalSec);
+
+    int h = totalSec / 3600;
+    int m = (totalSec % 3600) / 60;
+    int s = totalSec % 60;
+
+    return QString("%1%2:%3:%4")
+        .arg(sign)
+        .arg(h, 2, 10, QChar('0'))
+        .arg(m, 2, 10, QChar('0'))
+        .arg(s, 2, 10, QChar('0'));
+  };
+
+  int stdSecs = timeToSeconds(stdOffsetStr);
+  int dstSecs = timeToSeconds(dstAdjustStr);
+  QString combinedOffsetStr = secondsToTime(stdSecs + dstSecs);
+
+    QString timeZoneDetails = QString("Standard Name:\t\t%1\n"
+                                       "Daylight Name:\t\t%2\n"
+                                       "Standard Offset from UTC:\t%3\n"
+                                       "Daylight Offset from UTC:\t%4")
+                            .arg(standardName)
+                            .arg(daylightName)
+                            .arg(stdOffsetStr)
+                            .arg(combinedOffsetStr);
+
+  ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
 }
 
 // User toggles show all time zones
@@ -794,7 +858,64 @@ void MainWindow::timeZoneAllZonesCheckBoxClicked()
   // Update show all zones state
   state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
 
-  emit timeZoneDataRequest();
+  //        // Call provider to get 2D vector with timezone data
+   bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
+  QVector<QVector<QString>> fullData;
+  QVector<QVector<QString>> americaData;
+  QVector<QVector<QString>> displayData;
+
+  QFile file(":/date_time_zonespec.csv");
+
+  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    qDebug() << "Failed to open CSV file.";
+    displayData = fullData;
+  }
+
+  QTextStream in(&file);
+  bool firstLine = true;
+
+  while (!in.atEnd()) {
+    QString line = in.readLine();
+
+    if (firstLine) {
+      firstLine = false;
+      continue;
+    }
+
+    QStringList tokens = line.split(",", Qt::KeepEmptyParts);
+    QVector<QString> row;
+    for (const QString& token : tokens)
+      row.append(token.trimmed().remove('"'));
+
+    if (!row.isEmpty())
+      fullData.append(row);
+
+    if (!row.isEmpty()) {
+      QStringList parts = row[0].split("/", Qt::KeepEmptyParts);
+      if (!parts.isEmpty() && parts[0] == "America" || row[0] == "Pacific/Honolulu") {
+        americaData.append(row);
+      }
+    }
+  }
+
+  file.close();
+
+  if (isShowAllTimeZonesSelected) {
+    displayData = fullData;
+  } else {
+    displayData = americaData;
+  }
+
+  ui->timeZoneComboBox->clear();
+
+  for (const QVector<QString>& zone : displayData) {
+    if (!zone.isEmpty()) {
+      ui->timeZoneComboBox->addItem(zone[0]);
+    }
+  }
+
+  // Default to America/Denver
+  ui->timeZoneComboBox->setCurrentText("America/Denver");
 }
 
 // User toggles show time zone details
@@ -834,7 +955,7 @@ void MainWindow::diurnalCheckBoxClicked()
     ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
   }
 
-  refreshUI(ui);
+  refreshUI();
 }
 
 // User selects Stability Input
@@ -844,7 +965,7 @@ void MainWindow::stabilityCheckBoxClicked()
 
   // Update UI state
   state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
-  refreshUI(ui);
+  refreshUI();
 }
 
 /*
@@ -870,7 +991,7 @@ void MainWindow::domainAverageCheckBoxClicked()
   }
 
   // Update app state
-  refreshUI(ui);
+  refreshUI();
 }
 
 // User changes Domain Average Wind -> Input Wind Height
@@ -907,7 +1028,7 @@ void MainWindow::clearTableButtonClicked()
   ui->domainAverageTable->clearContents();
   invalidDAWCells.clear();
   AppState::instance().isDomainAverageWindInputTableValid = true;
-  refreshUI(ui);
+  refreshUI();
 }
 
 // User changes a value in the domain average wind input table
@@ -983,7 +1104,7 @@ void MainWindow::domainAverageTableCellChanged(int row, int column)
   }
 
   AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
-  refreshUI(ui);
+  refreshUI();
 }
 
 // User selects Point Initialization wind model
@@ -1003,7 +1124,7 @@ void MainWindow::pointInitializationCheckBoxClicked()
   }
 
   // Update app state
-  refreshUI(ui);
+  refreshUI();
 }
 
 // User selects Weather Model Initialization model
@@ -1023,7 +1144,7 @@ void MainWindow::useWeatherModelInitClicked()
   }
 
   // Update app state
-  refreshUI(ui);
+  refreshUI();
 }
 
 // User selects a new output location
@@ -1051,7 +1172,30 @@ void MainWindow::numberOfProcessorsSolveButtonClicked()
 // User selects the primary solve Button
 void MainWindow::solveButtonClicked()
 {
-  emit solveRequest();
+  // // Alias app state, used to determine which type of solution to run
+  // AppState& state = AppState::instance();
+
+  //        // Determine which run to perform
+  // if (state.isDomainAverageInitializationValid) {
+  //   DomainAverageWind domainAvgWind = setDomainAverageWind();
+  //   provider.domain_average_exec(domainAvgWind);
+  // }else if(state.isPointInitializationValid){
+  //   PointInitialization pointInit = setPointInitialization();
+  //   provider.point_exec(pointInit);
+  // }else if(state.isWeatherModelInitializationValid){
+  //   WeatherModel weatherModel = setWeatherModel();
+  //   provider.wxmodel_exec(weatherModel);
+  // }
+
+
+  // vector<string> outputFileList = provider.getOutputFileNames(
+  //     view->getUi()->elevationInputFileLineEdit->text(),
+  //     view->getUi()->domainAverageTable,
+  //     view->getUi()->meshResolutionSpinBox->text(),
+  //     provider.parseDomainAvgTable(view->getUi()->domainAverageTable).size(),
+  //     view->getUi()->outputDirectoryTextEdit->toPlainText());
+
+  // view->loadMapKMZ(outputFileList);
 }
 
 // Enable double clicking on tree menu items
@@ -1060,7 +1204,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
   if (item->text(0) == "Conservation of Mass") {
     ui->massSolverCheckBox->click();
   } else if (item->text(0) == "Conservation of Mass and Momentum") {
-    ui->massAndMomentumSolverCheckBox->click();
+    ui->momentumSolverCheckBox->click();
   } else if (item->text(0) == "Diurnal Input") {
     ui->diurnalCheckBox->click();
   } else if (item->text(0) == "Stability Input") {
@@ -1130,7 +1274,6 @@ void MainWindow::checkMessages(void) {
 ** ABORT   -> There is a fundamental problem with windninja, and it should call
 **            abort() after displaying a message.
 */
-
 bool MainWindow::NinjaCheckVersions(char * mostrecentversion, char * localversion) {
   char comparemostrecentversion[256];
   char comparelocalversion[256];

@@ -123,7 +123,7 @@ BaseInput Controller::setBaseInput() {
     heightUnits = "m";
   }
 
-  bool useMomentum = view->getUi()->massAndMomentumSolverCheckBox->isChecked() ? 1 : 0;
+  bool useMomentum = view->getUi()->momentumSolverCheckBox->isChecked() ? 1 : 0;
   int numNinjas = 1;
   // Count the number of ninjas, depending on the wind method being used
   QVector<QVector<QString>> domainAvgTable = provider.parseDomainAvgTable(view->getUi()->domainAverageTable);
