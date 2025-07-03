@@ -174,6 +174,8 @@ MainWindow::MainWindow(QWidget *parent)
   checkMessages();
   resize(1200, 700);
 
+  timeZoneAllZonesCheckBoxClicked();
+
   // Immediately call a UI refresh to set initial states
   refreshUI();
 
@@ -554,7 +556,7 @@ void MainWindow::massSolverCheckBoxClicked()
   }
   state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
   refreshUI();
 }
 
@@ -568,15 +570,16 @@ void MainWindow::momentumSolverCheckBoxClicked()
   }
   state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
   refreshUI();
 }
 
 void MainWindow::elevationInputFileLineEditTextChanged(const QString &arg1)
 {
   surfaceInput.computeDEMFile(currentDemFilePath);
-  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
+  surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
 
+  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
   refreshUI();
 }
 
@@ -611,22 +614,20 @@ void MainWindow::elevationInputFileDownloadButtonClicked()
   ui->inputsStackedWidget->setCurrentIndex(currentIndex+1);
 }
 
-// User changes the mesh resolution spec for surface input
 void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
 {
-  // Set value box enable for custom/other
   if (index == 3) {
     ui->meshResolutionSpinBox->setEnabled(true);
   } else {
     ui->meshResolutionSpinBox->setEnabled(false);
   }
+  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 }
 
 void MainWindow::meshResolutionMetersRadioButtonToggled(bool checked)
 {
   if (checked) {
-//    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
   }
 }
 
@@ -637,7 +638,6 @@ void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
   }
 }
 
-// User selects a new time zone
 void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
   QString currentTimeZone = ui->timeZoneComboBox->currentText();

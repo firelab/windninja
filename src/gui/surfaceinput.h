@@ -15,15 +15,12 @@ public:
   QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
   int fetchDEMFile(double boundingBox[], std::string demFile, double resolution, std::string fetchType);
   int computeDEMFile(QString filePath);
-  double computeMeshResolution(int index);
+  double computeMeshResolution(int index, bool isMomemtumChecked);
 
 private:
-  QString GDALDriverName, GDALDriverLongName;
+  QString GDALDriverName;
   int GDALXSize, GDALYSize;
-  double GDALCellSize, GDALNoData;
-  double GDALMaxValue, GDALMinValue;
-
-
+  double GDALCellSize, GDALMaxValue, GDALMinValue;
 };
 
 #endif // SURFACEINPUT_H

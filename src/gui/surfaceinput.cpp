@@ -169,15 +169,10 @@ int SurfaceInput::computeDEMFile(QString filePath)
   GDALDataset *poInputDS;
   poInputDS = (GDALDataset*)GDALOpen(filePath.toStdString().c_str(), GA_ReadOnly);
 
-         // Set driver info
   GDALDriverName = poInputDS->GetDriver()->GetDescription();
-  GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
-
-         // get x and y dimensions
   GDALXSize = poInputDS->GetRasterXSize();
   GDALYSize = poInputDS->GetRasterYSize();
 
-         // Calculate cell size
   if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
     double c1, c2;
     c1 = adfGeoTransform[1];
@@ -189,12 +184,10 @@ int SurfaceInput::computeDEMFile(QString filePath)
     }
   }
 
-         // Get GDAL min/max values
   GDALRasterBand* band = poInputDS->GetRasterBand(1);
   int gotMin = 0, gotMax = 0;
   double minVal = band->GetMinimum(&gotMin);
   double maxVal = band->GetMaximum(&gotMax);
-
   if (!gotMin || !gotMax) {
     band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
   }
@@ -207,14 +200,13 @@ int SurfaceInput::computeDEMFile(QString filePath)
   return 0;
 }
 
-int SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
+double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
 {
   int coarse = 4000;
   int medium = 10000;
   int fine = 20000;
   double meshResolution = 200.0;
 
-         // initial run values, a dem file has not yet been selected
   if( GDALCellSize == 0.0 || GDALXSize == 0 || GDALYSize == 0 )
   {
     return meshResolution;
