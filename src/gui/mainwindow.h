@@ -9,8 +9,6 @@
 #include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include "ui_mainwindow.h"
-#include "gdal_utils.h"
-#include "gdal_priv.h"
 #include <vector>
 #include <string>
 #include "ninja_version.h"
@@ -131,6 +129,8 @@ private:
   Ui::MainWindow *ui;
   QWebEngineView *webView;
   SurfaceInput surfaceInput;
+
+  QString currentDemFilePath;
 
   bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
   char * NinjaQueryServerMessages(bool checkAbort);

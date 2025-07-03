@@ -162,3 +162,135 @@ int SurfaceInput::fetchDEMFile(double boundingBox[], std::string demFile, double
     return NINJA_SUCCESS;
   }
 }
+
+int SurfaceInput::computeDEMFile(QString filePath)
+{
+  double adfGeoTransform[6];
+  GDALDataset *poInputDS;
+  poInputDS = (GDALDataset*)GDALOpen(filePath.toStdString().c_str(), GA_ReadOnly);
+
+         // Set driver info
+  GDALDriverName = poInputDS->GetDriver()->GetDescription();
+  GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
+
+         // get x and y dimensions
+  GDALXSize = poInputDS->GetRasterXSize();
+  GDALYSize = poInputDS->GetRasterYSize();
+
+         // Calculate cell size
+  if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
+    double c1, c2;
+    c1 = adfGeoTransform[1];
+    c2 = adfGeoTransform[5];
+    if (abs(c1) == abs(c2)) {
+      GDALCellSize = abs(c1);
+    } else {
+      GDALClose((GDALDatasetH)poInputDS);
+    }
+  }
+
+         // Get GDAL min/max values
+  GDALRasterBand* band = poInputDS->GetRasterBand(1);
+  int gotMin = 0, gotMax = 0;
+  double minVal = band->GetMinimum(&gotMin);
+  double maxVal = band->GetMaximum(&gotMax);
+
+  if (!gotMin || !gotMax) {
+    band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
+  }
+
+  GDALMinValue = minVal;
+  GDALMaxValue = maxVal;
+
+  GDALClose((GDALDatasetH)poInputDS);
+
+  return 0;
+}
+
+int SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
+{
+  int coarse = 4000;
+  int medium = 10000;
+  int fine = 20000;
+  double meshResolution = 200.0;
+
+         // initial run values, a dem file has not yet been selected
+  if( GDALCellSize == 0.0 || GDALXSize == 0 || GDALYSize == 0 )
+  {
+    return meshResolution;
+  }
+
+#ifdef NINJAFOAM
+  if (isMomemtumChecked) {
+    coarse = 25000;
+    medium = 50000;
+    fine = 100000;
+  }
+#endif //NINJAFOAM
+
+  int targetNumHorizCells = fine;
+  switch (index) {
+  case 0:
+    targetNumHorizCells = coarse;
+    break;
+  case 1:
+    targetNumHorizCells = medium;
+    break;
+  case 2:
+    targetNumHorizCells = fine;
+    break;
+  case 3:
+    return 200;
+  default:
+    return 200;
+  }
+
+  double XLength = GDALXSize * GDALCellSize;
+  double YLength = GDALYSize * GDALCellSize;
+  double nXcells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
+  double nYcells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
+
+  double XCellSize = XLength / nXcells;
+  double YCellSize = YLength / nYcells;
+
+  meshResolution = (XCellSize + YCellSize) / 2;
+
+#ifdef NINJAFOAM
+  if (isMomemtumChecked) {
+    XLength = GDALXSize * GDALCellSize;
+    YLength = GDALYSize * GDALCellSize;
+
+    double dz = GDALMaxValue - GDALMinValue;
+    double ZLength = std::max((0.1 * std::max(XLength, YLength)), (dz + 0.1 * dz));
+    double zmin, zmax;
+    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+    zmax = GDALMaxValue + ZLength; //zmax
+
+    double volume;
+    double cellCount;
+    double cellVolume;
+
+    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
+    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
+    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
+    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
+
+           //determine number of rounds of refinement
+    int nCellsToAdd = 0;
+    int refinedCellCount = 0;
+    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+    int nRoundsRefinement = 0;
+    while(refinedCellCount < (0.5 * targetNumHorizCells)){
+      nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+      refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+      nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+      nRoundsRefinement += 1;
+    }
+
+    meshResolution = side/(nRoundsRefinement*2.0);
+  }
+#endif //NINJAFOAM
+
+  return meshResolution;
+
+}
