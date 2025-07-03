@@ -26,12 +26,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
         appstate.h
-        provider.cpp
-        modeldata.h provider.h
-        controller.h
-        controller.cpp
+        modeldata.h
         splashscreen.h
         splashscreen.cpp
+        surfaceinput.h
+        surfaceinput.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

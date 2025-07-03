@@ -22,6 +22,7 @@
 #include <QWebEngineSettings>
 #include <vector>
 #include <string>
+#include "../ninja/windninja.h"
 
 
 /*
@@ -337,6 +338,7 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->meshResolutionFeetRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionFeetRadioButtonToggled);
 
   connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadCancelButtonClicked);
+  connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadButtonClicked);
 
 }
 
@@ -756,97 +758,7 @@ void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
 void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
   QString currentTimeZone = ui->timeZoneComboBox->currentText();
-
-  QVector<QString> matchedRow;
-  QFile file(":/date_time_zonespec.csv");
-
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    qWarning() << "Failed to open date_time_zonespec.csv";
-    qDebug() << "No data found";
-  }
-
-  QTextStream in(&file);
-  bool firstLine = true;
-
-  while (!in.atEnd()) {
-    QString line = in.readLine();
-
-    if (firstLine) {
-      firstLine = false;
-      continue;  // skip header
-    }
-
-    QStringList tokens = line.split(",", Qt::KeepEmptyParts);
-    QVector<QString> row;
-
-    for (const QString& token : tokens)
-      row.append(token.trimmed().remove("\""));
-
-    QString fullZone = row.mid(0, 1).join("/");
-
-    if (fullZone == currentTimeZone) {
-      matchedRow = row;
-      break;
-    }
-  }
-
-  file.close();
-
-  if (matchedRow.isEmpty()) {
-    qDebug() << "No matching time zone found.";
-  }
-
-  QString standardName = matchedRow.value(2);
-  QString daylightName = matchedRow.value(4);
-  QString stdOffsetStr = matchedRow.value(5);  // Already in HH:MM:SS
-  QString dstAdjustStr = matchedRow.value(6);  // Already in HH:MM:SS
-
-         // Function to convert signed HH:MM:SS to total seconds
-  auto timeToSeconds = [](const QString& t) -> int {
-    QString s = t.trimmed();
-    bool negative = s.startsWith('-');
-    s = s.remove(QChar('+')).remove(QChar('-'));
-
-    QStringList parts = s.split(':');
-    if (parts.size() != 3) return 0;
-
-    int h = parts[0].toInt();
-    int m = parts[1].toInt();
-    int sec = parts[2].toInt();
-
-    int total = h * 3600 + m * 60 + sec;
-    return negative ? -total : total;
-  };
-
-         // Convert total seconds back to HH:MM:SS with sign
-  auto secondsToTime = [](int totalSec) -> QString {
-    QChar sign = totalSec < 0 ? '-' : '+';
-    totalSec = std::abs(totalSec);
-
-    int h = totalSec / 3600;
-    int m = (totalSec % 3600) / 60;
-    int s = totalSec % 60;
-
-    return QString("%1%2:%3:%4")
-        .arg(sign)
-        .arg(h, 2, 10, QChar('0'))
-        .arg(m, 2, 10, QChar('0'))
-        .arg(s, 2, 10, QChar('0'));
-  };
-
-  int stdSecs = timeToSeconds(stdOffsetStr);
-  int dstSecs = timeToSeconds(dstAdjustStr);
-  QString combinedOffsetStr = secondsToTime(stdSecs + dstSecs);
-
-    QString timeZoneDetails = QString("Standard Name:\t\t%1\n"
-                                       "Daylight Name:\t\t%2\n"
-                                       "Standard Offset from UTC:\t%3\n"
-                                       "Daylight Offset from UTC:\t%4")
-                            .arg(standardName)
-                            .arg(daylightName)
-                            .arg(stdOffsetStr)
-                            .arg(combinedOffsetStr);
-
+  QString timeZoneDetails = surfaceInput.fetchTimeZoneDetails(currentTimeZone);
   ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
 }
 
@@ -854,60 +766,12 @@ void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 void MainWindow::timeZoneAllZonesCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update show all zones state
   state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
 
-  //        // Call provider to get 2D vector with timezone data
-   bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
-  QVector<QVector<QString>> fullData;
-  QVector<QVector<QString>> americaData;
-  QVector<QVector<QString>> displayData;
-
-  QFile file(":/date_time_zonespec.csv");
-
-  if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    qDebug() << "Failed to open CSV file.";
-    displayData = fullData;
-  }
-
-  QTextStream in(&file);
-  bool firstLine = true;
-
-  while (!in.atEnd()) {
-    QString line = in.readLine();
-
-    if (firstLine) {
-      firstLine = false;
-      continue;
-    }
-
-    QStringList tokens = line.split(",", Qt::KeepEmptyParts);
-    QVector<QString> row;
-    for (const QString& token : tokens)
-      row.append(token.trimmed().remove('"'));
-
-    if (!row.isEmpty())
-      fullData.append(row);
-
-    if (!row.isEmpty()) {
-      QStringList parts = row[0].split("/", Qt::KeepEmptyParts);
-      if (!parts.isEmpty() && parts[0] == "America" || row[0] == "Pacific/Honolulu") {
-        americaData.append(row);
-      }
-    }
-  }
-
-  file.close();
-
-  if (isShowAllTimeZonesSelected) {
-    displayData = fullData;
-  } else {
-    displayData = americaData;
-  }
+  bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
+  QVector<QVector<QString>> displayData = surfaceInput.fetchAllTimeZones(isShowAllTimeZonesSelected);
 
   ui->timeZoneComboBox->clear();
-
   for (const QVector<QString>& zone : displayData) {
     if (!zone.isEmpty()) {
       ui->timeZoneComboBox->addItem(zone[0]);
@@ -918,28 +782,18 @@ void MainWindow::timeZoneAllZonesCheckBoxClicked()
   ui->timeZoneComboBox->setCurrentText("America/Denver");
 }
 
-// User toggles show time zone details
 void MainWindow::timeZoneDetailsCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update time zone details state
   state.isDisplayTimeZoneDetailsSelected = ui->timeZoneDetailsCheckBox->isChecked();
-
-  // Update visibility of details pane
   ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
-
 }
 
-// User selects Diurnal Input
 void MainWindow::diurnalCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update UI state
   state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
-  // Change the domain average input table based on diurnal wind
   QTableWidget* table = ui->domainAverageTable;
   if (!ui->diurnalCheckBox->isChecked()) {
     table->hideColumn(2);
@@ -958,31 +812,19 @@ void MainWindow::diurnalCheckBoxClicked()
   refreshUI();
 }
 
-// User selects Stability Input
 void MainWindow::stabilityCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update UI state
   state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
+
   refreshUI();
 }
 
-/*
- * Wind Inputs
- */
-
-// Domain Average Wind
-
-// User selects Domain Average Wind
 void MainWindow::domainAverageCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update the domain average wind state
   state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
 
-  // Only allow one wind methodology to be used
   if (state.isDomainAverageInitializationToggled) {
     ui->pointInitializationCheckBox->setChecked(false);
     ui->useWeatherModelInit->setChecked(false);
@@ -990,11 +832,9 @@ void MainWindow::domainAverageCheckBoxClicked()
     state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
   }
 
-  // Update app state
   refreshUI();
 }
 
-// User changes Domain Average Wind -> Input Wind Height
 void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
 {
   switch(index) {
@@ -1022,16 +862,17 @@ void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
   }
 }
 
-// User clears the domain average wind input table
 void MainWindow::clearTableButtonClicked()
 {
+  AppState& state = AppState::instance();
+  AppState::instance().isDomainAverageWindInputTableValid = true;
+
   ui->domainAverageTable->clearContents();
   invalidDAWCells.clear();
-  AppState::instance().isDomainAverageWindInputTableValid = true;
+
   refreshUI();
 }
 
-// User changes a value in the domain average wind input table
 void MainWindow::domainAverageTableCellChanged(int row, int column)
 {
   QTableWidget* table = ui->domainAverageTable;
@@ -1107,15 +948,11 @@ void MainWindow::domainAverageTableCellChanged(int row, int column)
   refreshUI();
 }
 
-// User selects Point Initialization wind model
 void MainWindow::pointInitializationCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update the domain average wind state
   state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
 
-  // Only allow one wind methodology to be used
   if (state.isPointInitializationToggled) {
     ui->domainAverageCheckBox->setChecked(false);
     ui->useWeatherModelInit->setChecked(false);
@@ -1123,19 +960,15 @@ void MainWindow::pointInitializationCheckBoxClicked()
     state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
   }
 
-  // Update app state
   refreshUI();
 }
 
-// User selects Weather Model Initialization model
 void MainWindow::useWeatherModelInitClicked()
 {
   AppState& state = AppState::instance();
 
-  // Update the domain average wind state
   state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
 
-  // Only allow one wind methodology to be used
   if (state.isWeatherModelInitializationToggled) {
     ui->domainAverageCheckBox->setChecked(false);
     ui->pointInitializationCheckBox->setChecked(false);
@@ -1143,11 +976,9 @@ void MainWindow::useWeatherModelInitClicked()
     state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
   }
 
-  // Update app state
   refreshUI();
 }
 
-// User selects a new output location
 void MainWindow::outputDirectoryButtonClicked()
 {
   QString currentPath = ui->outputDirectoryTextEdit->toPlainText();
@@ -1163,13 +994,11 @@ void MainWindow::outputDirectoryButtonClicked()
   }
 }
 
-// User selects the solve Button on the solver page
 void MainWindow::numberOfProcessorsSolveButtonClicked()
 {
   ui->solveButton->click();
 }
 
-// User selects the primary solve Button
 void MainWindow::solveButtonClicked()
 {
   // // Alias app state, used to determine which type of solution to run
@@ -1198,7 +1027,6 @@ void MainWindow::solveButtonClicked()
   // view->loadMapKMZ(outputFileList);
 }
 
-// Enable double clicking on tree menu items
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
   if (item->text(0) == "Conservation of Mass") {
@@ -1235,6 +1063,50 @@ void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
 
 void MainWindow::surfaceInputDownloadCancelButtonClicked()
 {
+  int currentIndex = ui->inputsStackedWidget->currentIndex();
+  ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+}
+
+void MainWindow::surfaceInputDownloadButtonClicked()
+{
+  double boundingBox[] = {  ui->boundingBoxNorthLineEdit->text().toDouble(),
+                            ui->boundingBoxEastLineEdit->text().toDouble(),
+                            ui->boundingBoxSouthLineEdit->text().toDouble(),
+                            ui->boundingBoxWestLineEdit->text().toDouble(),
+                          };
+
+  double resolution = 30;
+
+  QString defaultName = "";
+  QString filter = "TIF Files (*.tif)";
+  QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+  QDir dir(downloadsPath);
+  QString fullPath = dir.filePath(defaultName);
+  QString demFilePath = QFileDialog::getSaveFileName(this, "Save DEM File", fullPath, filter);
+
+  if (!demFilePath.endsWith(".tif", Qt::CaseInsensitive)) {
+    demFilePath += ".tif";
+  }
+
+  std::string demFile = demFilePath.toStdString();
+
+  std::string fetchType;
+  switch(ui->elevationFileTypeComboBox->currentIndex())
+  {
+  case 0:
+    fetchType = "srtm";
+    break;
+  case 1:
+    fetchType = "gmted";
+    break;
+  case 2:
+    fetchType = "lcp";
+    break;
+  }
+
+  int result = surfaceInput.fetchDEMFile(boundingBox, demFile, resolution, fetchType);
+
+  ui->elevationInputFileLineEdit->setText(demFilePath);
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
 }

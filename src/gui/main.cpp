@@ -8,7 +8,6 @@
 #include <QPropertyAnimation>
 #include <QMouseEvent>
 #include <QMessageBox>
-#include "controller.h"
 #include "splashscreen.h"
 
 
@@ -40,8 +39,6 @@ int main(int argc, char *argv[]) {
                           "dependencies. Try setting the environment variable WINDNINJA_DATA");
     return 1;
   }
-
-  Controller controller(w);
 
   // Immediately pull timezone data
   QTimer::singleShot(0, w, &MainWindow::timeZoneDataRequest);

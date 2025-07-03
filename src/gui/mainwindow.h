@@ -16,6 +16,7 @@
 #include "ninja_version.h"
 #include "cpl_http.h"
 
+#include "surfaceinput.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -24,7 +25,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
   Q_OBJECT
 
 public:
@@ -73,6 +75,7 @@ private slots:
   void meshResolutionMetersRadioButtonToggled(bool checked);
   void meshResolutionFeetRadioButtonToggled(bool checked);
   void surfaceInputDownloadCancelButtonClicked();
+  void surfaceInputDownloadButtonClicked();
 
 signals:
   void solveRequest();
@@ -127,6 +130,7 @@ private:
 
   Ui::MainWindow *ui;
   QWebEngineView *webView;
+  SurfaceInput surfaceInput;
 
   bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
   char * NinjaQueryServerMessages(bool checkAbort);

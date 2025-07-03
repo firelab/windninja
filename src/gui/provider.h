@@ -27,7 +27,7 @@ class Provider {
     QVector<QVector<QString>> parseDomainAvgTable(QTableWidget* table);
     vector<string> getOutputFileNames(QString demFile, QTableWidget* table, QString meshType, int numFiles, QString outputPath);
     QString getKmzFilePaths();
-    QString getTimeZoneDetails(const QString& currentTimeZone);
+    QString gettimeZoneDetails(const QString& currentTimeZone);
     void setMapLayers();
     int point_exec(class PointInitialization& input);
     int wxmodel_exec(class WeatherModel& input);

@@ -9,7 +9,7 @@ Controller::Controller(MainWindow* view, QObject* parent)
 {
     connect(view, &MainWindow::solveRequest, this, &Controller::onSolveRequest);
     connect(view, &MainWindow::timeZoneDataRequest, this, &Controller::onTimeZoneDataRequest);
-    connect(view, &MainWindow::timeZoneDetailsRequest, this, &Controller::onTimeZoneDetailsRequest);
+    connect(view, &MainWindow::timeZoneDetailsRequest, this, &Controller::ontimeZoneDetailsRequest);
     connect(view, &MainWindow::getDEMrequest, this, &Controller::onGetDEMrequest);
 }
 
@@ -62,9 +62,9 @@ void Controller::onTimeZoneDataRequest() {
 }
 
 // Get time zone details from provider
-void Controller::onTimeZoneDetailsRequest() {
+void Controller::ontimeZoneDetailsRequest() {
   QString currentTimeZone = view->getUi()->timeZoneComboBox->currentText();
-  QString timeZoneDetails = provider.getTimeZoneDetails(currentTimeZone);
+  QString timeZoneDetails = provider.gettimeZoneDetails(currentTimeZone);
 
   // Set value in ui
   view->getUi()->timeZoneDetailsTextEdit->setText(timeZoneDetails);

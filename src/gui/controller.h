@@ -23,7 +23,7 @@ private:
 
   void onSolveRequest();
   void onTimeZoneDataRequest();
-  void onTimeZoneDetailsRequest();
+  void ontimeZoneDetailsRequest();
   void onGetDEMrequest(std::array<double, 4> boundsBox, QString outputFile);
 };
 

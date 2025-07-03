@@ -624,7 +624,7 @@ QVector<QVector<QString>> Provider::getTimeZoneData(bool isShowAllTimeZonesSelec
 }
 
 // Provider for getting time zone details
-QString Provider::getTimeZoneDetails(const QString& currentTimeZone) {
+QString Provider::gettimeZoneDetails(const QString& currentTimeZone) {
   QVector<QString> matchedRow;
   QFile file(":/date_time_zonespec.csv");
 
