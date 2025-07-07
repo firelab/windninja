@@ -565,6 +565,17 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
+
+    double coordinateTransformationAngle = 0.0;
+    //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        if(!GDALCalculateCoordinateTransformationAngle( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
+        {
+            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+        }
+    }
+
 #ifdef NOMADS_INTERNAL_VRT
     hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                         GRA_NearestNeighbour, 1.0,
@@ -742,9 +753,8 @@ noCloudOK:
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
-    //compute coordinate transformation angle, the angle between the v grid lines of the pre-warped and warped datasets,
-    //and correct the angles of the output dataset to convert from the original dataset projection angles to the warped dataset projection angles
-    double coordinateTransformationAngle = 0.0;
+    //use the coordinate transformation angle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
         // need an intermediate spd and dir set of ascii grids
@@ -757,14 +767,6 @@ noCloudOK:
                 wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
             }
         }
-
-        // now calculate the coordinateTransformationAngle from the dataset
-        GDALDatasetH hDS = dirGrid.ascii2GDAL();
-        if(!GDALCalculateCoordinateTransformationAngle( hDS, coordinateTransformationAngle, pszDstWkt ))
-        {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
-        }
-        GDALClose(hDS);
 
         // add the coordinateTransformationAngle to each spd,dir, u,v dataset
         for(int i=0; i<dirGrid.get_nRows(); i++)

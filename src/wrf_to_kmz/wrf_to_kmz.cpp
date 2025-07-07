@@ -748,8 +748,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     velocityUnits::eVelocityUnits spd_units = velocityUnits::metersPerSecond;  // initialize to default units
     temperatureUnits::eTempUnits T_units = temperatureUnits::K;
 
-    char *u_dstWkt = NULL;
-    char *v_dstWkt = NULL;
+    double coordinateTransformationAngle = 0.0;
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
@@ -832,6 +831,20 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         // set the dataset projection
         int rc = srcDS->SetProjection( projString.c_str() );
 
+
+        //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
+        if( varList[i] == "U10" )
+        {
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+            {
+                if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt ))
+                {
+                    printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+                }
+            }
+        }
+
+
         // final setting of the datasets to ascii grids, in the past usually done using a wrp dataset
         // TODO: data must be in SI units, need to check units here and convert if necessary
         if( varList[i] == "T2" ) {
@@ -849,7 +862,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                 vGrid.set_noDataValue(-9999.0);
                 vGrid.replaceNan( -9999.0 );
             }
-            v_dstWkt = CPLStrdup(dstWkt);
         }
         else if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, uGrid );
@@ -858,7 +870,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                 uGrid.set_noDataValue(-9999.0);
                 uGrid.replaceNan( -9999.0 );
             }
-            u_dstWkt = CPLStrdup(dstWkt);
         }
         else if( varList[i] == "QCLOUD" ) {
             GDAL2AsciiGrid( srcDS, bandNum, cloudGrid );
@@ -886,9 +897,8 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
-    //compute coordinate transformation angle, the angle between the v grid lines of the pre-warped and warped datasets,
-    //and correct the angles of the output dataset to convert from the original dataset projection angles to the warped dataset projection angles
-    double coordinateTransformationAngle = 0.0;
+    //use the coordinate transformation angle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
         // need an intermediate spd and dir set of ascii grids
@@ -901,14 +911,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                 wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
             }
         }
-
-        // now calculate the coordinateTransformationAngle from the dataset
-        GDALDatasetH hDS = dirGrid.ascii2GDAL();
-        if(!GDALCalculateCoordinateTransformationAngle( hDS, coordinateTransformationAngle, u_dstWkt ))
-        {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
-        }
-        GDALClose(hDS);
 
         // add the coordinateTransformationAngle to each spd,dir, u,v dataset
         for(int i=0; i<dirGrid.get_nRows(); i++)

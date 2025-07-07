@@ -469,9 +469,9 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     return true;
 }
 
-/** Calculate the angle between the "north" 0 degree grid lines of two datasets.
+/** Calculate the angle between the y coordinate grid lines of two datasets.
  * @param poSrsDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
- * @param coordinateTransformAngle the computed angle between the 0 degree grid lines of the two datasets, to be filled
+ * @param coordinateTransformAngle the computed angle between the y coordinate grid lines of the two datasets, to be filled
 // * @param poDstDS a pointer to a valid GDAL Dataset, from which the output spatial reference is obtained
 // * @param CRS the output Coordinate Reference System to which the angle should be calculated for
  * @param pszWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
@@ -479,19 +479,19 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
  */
 bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszWkt )
 {
-    double x1, y1; //center point of the poSrcDS in the projection of the poSrcDS, to be transformed to the poDstDS projection
-    double x2, y2; //point due "north" 0 degrees of center point in the projection of the poSrcDS, to be transformed to the poDstDS projection, (x1,y1) to (x2,y2) becomes the 0 degree gridline of the poDstDS spatial reference
-    double bounds[4]; //bounds of the poSrcDS, to be calculated in the projection of the poDstDS
+    double x1, y1; //center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the poDstDS projection
+    double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the poDstDS projection
+    double bounds[4]; //bounds of the poSrcDS, used to calculate y2
 
-    if(!GDALGetCenter( poSrcDS, &x1, &y1, pszWkt ))
+    if(!GDALGetCenter( poSrcDS, &x1, &y1, NULL ))
     {
         return false;
     }
 
     x2 = x1;
 
-    //add 1/4 size of the poSrcDS extent in y direction, in the projection of the poDstDS
-    if(!GDALGetBounds( poSrcDS, bounds, pszWkt ))
+    //add 1/4 size of the poSrcDS extent in y direction, in the projection of the poSrcDS
+    if(!GDALGetBounds( poSrcDS, bounds, NULL ))
     {
         return false;
     }
@@ -515,9 +515,9 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
-    //compute angle of line formed between projected x1,y1 and x2,y2 and "north" (0 degrees gridline in the poDstDS projection coordinates)
-    //call the line parallel to "north" in the projected CRS "a", the line formed
-    //by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
+    //compute angle of line formed between the projected (x1,y1) and (x2,y2) and the y coordinate grid line (in the poDstDS projection coordinates)
+    //call the line parallel to the y coordinate grid line in the projected CRS "a", the line formed by our points (x1,y1) (x2,y2) "b"
+    //and the angle between a and b theta
     //cos(theta) = a dot b /(|a||b|)
     //a dot b = axbx + ayby
     //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
@@ -536,8 +536,8 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
 
     coordinateTransformAngle = acos(adotb/(mag_a * mag_b)); //compute angle in radians
     // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
-    // if bx is positive, then the angle is going clockwise from "north", and the dataset rotated counter clockwise, so the coordinateTransformAngle is added as a corrector
-    // if bx is negative, then the angle is going counter clockwise from "north", and the dataset rotated clockwise, so the coordinateTransformAngle is subtracted as a corrector
+    // if bx is negative, the arrow is pointed  left from a, so the final angle is negative
+    // if bx is positive, the arrow is pointed right from a, so the final angle is positive
     if( bx < 0 )
     {
         coordinateTransformAngle = -1*coordinateTransformAngle;

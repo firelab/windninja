@@ -399,6 +399,8 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
      */
     GDALWarpOptions* psWarpOptions;
 
+    double coordinateTransformationAngle = 0.0;
+
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
@@ -448,6 +450,18 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             CSLSetNameValue( psWarpOptions->papszWarpOptions,
                             "INIT_DEST", "NO_DATA" );
 
+        //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
+        if( varList[i] == "U-component_of_wind_height_above_ground" )
+        {
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+            {
+                if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))
+                {
+                    printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+                }
+            }
+        }
+
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
@@ -491,9 +505,8 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
-    //compute coordinate transformation angle, the angle between the v grid lines of the pre-warped and warped datasets,
-    //and correct the angles of the output dataset to convert from the original dataset projection angles to the warped dataset projection angles
-    double coordinateTransformationAngle = 0.0;
+    //use the coordinate transformation angle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
         // need an intermediate spd and dir set of ascii grids
@@ -506,14 +519,6 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
             }
         }
-
-        // now calculate the coordinateTransformationAngle from the dataset
-        GDALDatasetH hDS = dirGrid.ascii2GDAL();
-        if(!GDALCalculateCoordinateTransformationAngle( hDS, coordinateTransformationAngle, dstWkt.c_str() ))
-        {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
-        }
-        GDALClose(hDS);
 
         // add the coordinateTransformationAngle to each spd,dir, u,v dataset
         for(int i=0; i<dirGrid.get_nRows(); i++)
