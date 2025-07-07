@@ -8,7 +8,6 @@
 #include <QPropertyAnimation>
 #include <QMouseEvent>
 #include <QMessageBox>
-#include "controller.h"
 #include "splashscreen.h"
 
 
@@ -18,7 +17,7 @@ int main(int argc, char *argv[]) {
 
   char ** papszOptions = NULL;
   NinjaErr err = 0;
-  err = NinjaInit(papszOptions);
+  err = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
   if(err != NINJA_SUCCESS)
   {
     printf("NinjaInit: err = %d\n", err);
@@ -40,11 +39,6 @@ int main(int argc, char *argv[]) {
                           "dependencies. Try setting the environment variable WINDNINJA_DATA");
     return 1;
   }
-
-  Controller controller(w);
-
-  // Immediately pull timezone data
-  QTimer::singleShot(0, w, &MainWindow::timeZoneDataRequest);
 
   QPixmap bigSplashPixmap(":wn-splash.png");
   QSize splashSize(1200, 320);

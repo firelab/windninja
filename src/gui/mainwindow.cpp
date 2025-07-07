@@ -1,210 +1,134 @@
 #include "mainwindow.h"
-#include "appstate.h"
-#include "./ui_mainwindow.h"
-#include <QDir>
-#include <QDirIterator>
-#include <QDateTime>
-#include <QDebug>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QFileSystemModel>
-#include <QSortFilterProxyModel>
-#include <QSplitter>
-#include <QStandardItemModel>
-#include <QStandardPaths>
-#include <QTextEdit>
-#include <QTextStream>
-#include <QThread>
-#include <QTimer>
-#include <QTreeWidget>
-#include <QtWebEngineWidgets/qwebengineview.h>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <vector>
-#include <string>
-
-// Menu filtering class
-class DirectoryFilterModel : public QSortFilterProxyModel {
-protected:
-  bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const override {
-    QFileSystemModel *fsModel = qobject_cast<QFileSystemModel *>(sourceModel());
-    if (!fsModel) return false;
-
-    QModelIndex index = fsModel->index(source_row, 0, source_parent);
-    if (!index.isValid()) return false;
-
-    // Define the download path
-    QFileInfo fileInfo = fsModel->fileInfo(index);
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-
-    // Keep the Downloads root directory
-    if (fileInfo.absoluteFilePath() == downloadsPath) {
-      return true;
-    }
-
-    // Ensure filtering applies only inside Downloads
-    if (!fileInfo.absoluteFilePath().startsWith(downloadsPath)) {
-      return false;
-    }
-
-    // Allow `WXSTATIONS-*` directories
-    if (fileInfo.isDir() && fileInfo.fileName().toLower().startsWith("wxstations")) {
-      return true;
-    }
-
-    // Allow files **inside** `WXSTATIONS-*`
-    QModelIndex parentIndex = index.parent();
-    if (parentIndex.isValid()) {
-      QFileInfo parentInfo = fsModel->fileInfo(parentIndex);
-      if (parentInfo.isDir() && parentInfo.fileName().toLower().startsWith("wxstations")) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-};
-
-/*
- * Dynamic UI handling
- */
 
 /*
  * Helper function to refresh the ui state of the app
  * Called on every user input action
  */
-static void refreshUI(const Ui::MainWindow* ui)
+void MainWindow::refreshUI()
 {
-  // Alias the AppState
   AppState& state = AppState::instance();
 
-         // Define state icons
   QIcon tickIcon(":/tick.png");
   QIcon xIcon(":/cross.png");
   QIcon bulletIcon(":/bullet_blue.png");
 
-         // Enable mouse tracking on tree
   ui->treeWidget->setMouseTracking(true);
 
-         // Update Solver Methodology UI
-  if (state.useCOMtoggled != state.useCOMMtoggled) {
-    state.solverMethodologyOk = true;
+  // Update Solver Methodology UI
+  if (state.isMassSolverToggled != state.isMomentumSolverToggled) {
+    state.isSolverMethodologyValid = true;
     ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(0)->setToolTip(0, "");
-  } else if (state.useCOMtoggled && state.useCOMMtoggled) {
-    state.solverMethodologyOk = false;
+  } else if (state.isMassSolverToggled && state.isMomentumSolverToggled) {
+    state.isSolverMethodologyValid = false;
     ui->treeWidget->topLevelItem(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(0)->setToolTip(0,"Requires exactly one selection: currently too many selections.");
   } else {
-    state.solverMethodologyOk = false;
+    state.isSolverMethodologyValid = false;
     ui->treeWidget->topLevelItem(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(0)->setToolTip(0,"Requires exactly one selection: currently no selections.");
   }
 
-  if (state.useCOMtoggled) {
+  if (state.isMassSolverToggled) {
     ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
   }
 
-  if (state.useCOMMtoggled) {
+  if (state.isMomentumSolverToggled) {
     ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
   }
 
-  /*
-   * Primary state machine for inputs (surface, wind, etc.)
-   */
-
-         // Update surface input state
+  // Update surface input state
   if (ui->elevationInputFileLineEdit->text() != "") {
-    state.surfaceInputOk = true;
+    state.isSurfaceInputValid = true;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "");
   } else {
-    state.surfaceInputOk = false;
+    state.isSurfaceInputValid = false;
     ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "No DEM file detected.");
   }
 
-         // Update diurnal input state
-  if (state.diurnalInputToggled) {
+  // Update diurnal input state
+  if (state.isDiurnalInputToggled) {
     ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, bulletIcon);
   }
 
-         // Update stability input state
-  if (state.stabilityInputToggled) {
+  // Update stability input state
+  if (state.isStabilityInputToggled) {
     ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
   } else {
     ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, bulletIcon);
   }
 
-         // Update domain average wind state
-  if (state.domainAverageWindToggled && state.domainAverageWindInputTableOk) {
+  // Update domain average initialization
+  if (state.isDomainAverageInitializationToggled && state.isDomainAverageWindInputTableValid) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
-    state.domainAverageWindOk = true;
-  } else if (state.domainAverageWindToggled && !state.domainAverageWindInputTableOk){
+    state.isDomainAverageInitializationValid = true;
+  } else if (state.isDomainAverageInitializationToggled && !state.isDomainAverageWindInputTableValid){
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs; hover over red cells for explanation.");
-    state.domainAverageWindOk = false;
+    state.isDomainAverageInitializationValid = false;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
-    state.domainAverageWindOk = false;
+    state.isDomainAverageInitializationValid = false;
   }
 
-         // Update point initialization state
-  if (state.pointInitializationToggled) {
+  // Update point initialization
+  if (state.isPointInitializationToggled) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
-    state.pointInitializationOk = true;
+    state.isPointInitializationValid = true;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
-    state.pointInitializationOk = false;
+    state.isPointInitializationValid = false;
   }
 
-         // Update weather model state
-  if (state.weatherModelToggled) {
+  // Update weather model initialization
+  if (state.isWeatherModelInitializationToggled) {
     ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
-    state.weatherModelOk = true;
+    state.isWeatherModelInitializationValid = true;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, bulletIcon);
-    state.weatherModelOk = false;
+    state.isWeatherModelInitializationValid = false;
   }
 
-         //  Update wind input
-  if (state.domainAverageWindOk || state.pointInitializationOk || state.weatherModelOk) {
+  //  Update wind input
+  if (state.isDomainAverageInitializationValid || state.isPointInitializationValid || state.isWeatherModelInitializationValid) {
     ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
-    state.windInputOk = true;
+    state.isWindInputValid = true;
   } else {
     ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, xIcon);
-    state.windInputOk = false;
+    state.isWindInputValid = false;
   }
 
-         // Update overall input UI state
-  if (state.surfaceInputOk && state.windInputOk) {
-    state.inputsOk = true;
+  // Update overall input UI state
+  if (state.isSurfaceInputValid && state.isWindInputValid) {
+    state.isInputsValid = true;
     ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "");
-  } else if (!state.surfaceInputOk && !state.windInputOk) {
-    state.inputsOk = false;
+  } else if (!state.isSurfaceInputValid && !state.isWindInputValid) {
+    state.isInputsValid = false;
     ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad surface and wind inputs.");
-  } else if (!state.surfaceInputOk) {
-    state.inputsOk = false;
+  } else if (!state.isSurfaceInputValid) {
+    state.isInputsValid = false;
     ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad surface input.");
-  } else if (!state.windInputOk) {
-    state.inputsOk = false;
+  } else if (!state.isWindInputValid) {
+    state.isInputsValid = false;
     ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
     ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
   }
 
-         // Update solve state
-  if (state.solverMethodologyOk && state.inputsOk) {
+  // Update solve state
+  if (state.isSolverMethodologyValid && state.isInputsValid) {
     ui->solveButton->setEnabled(true);
     ui->numberOfProcessorsSolveButton->setEnabled(true);
     ui->solveButton->setToolTip("");
@@ -222,43 +146,32 @@ MainWindow::MainWindow(QWidget *parent)
       ui(new Ui::MainWindow)
 {
   ui->setupUi(this);
-
   checkMessages();
-
-         // Set default window size
   resize(1200, 700);
 
-         // Immediately call a UI refresh to set initial states
-  refreshUI(ui);
-  // Expand tree UI
+  timeZoneAllZonesCheckBoxClicked();
+  refreshUI();
   ui->treeWidget->expandAll();
 
   /*
    * Create file handler window for point init screen
    */
-
-         // Get the correct Downloads folder path
   QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-
-         // Enable QFileSystemModel to process directories and files
+  // Enable QFileSystemModel to process directories and files
   QFileSystemModel *model = new QFileSystemModel(this);
   model->setFilter(QDir::NoDotAndDotDot | QDir::AllDirs | QDir::AllEntries);  // Ensure files appear
   model->setRootPath(downloadsPath);
 
-         // Enable file watching so contents refresh properly
+  // Enable file watching so contents refresh properly
   model->setReadOnly(false);
   model->setResolveSymlinks(true);
 
-         // Create a filtering model
-  DirectoryFilterModel *filterModel = new DirectoryFilterModel();
-  filterModel->setSourceModel(model);
-
-         // Set the correct root index inside Downloads
+  // Set the correct root index inside Downloads
   QModelIndex rootIndex = model->index(downloadsPath);
-  ui->treeFileExplorer->setModel(filterModel);
-  ui->treeFileExplorer->setRootIndex(filterModel->mapFromSource(rootIndex));
+  ui->treeFileExplorer->setModel(model);
+  ui->treeFileExplorer->setRootIndex(rootIndex);
 
-         // Ensure folders expand and collapse correctly
+  // Ensure folders expand and collapse correctly
   ui->treeFileExplorer->setExpandsOnDoubleClick(true);
   ui->treeFileExplorer->setAnimated(true);
   ui->treeFileExplorer->setIndentation(15);
@@ -266,118 +179,119 @@ MainWindow::MainWindow(QWidget *parent)
   ui->treeFileExplorer->setItemsExpandable(true);
   ui->treeFileExplorer->setUniformRowHeights(true);
 
-         // Show only "Name" and "Date Modified" columns
+  // Show only "Name" and "Date Modified" columns
   ui->treeFileExplorer->hideColumn(1);  // Hide Size column
   ui->treeFileExplorer->hideColumn(2);  // Hide Type column
 
-         // Optional: Set column headers
+  // Optional: Set column headers
   QHeaderView *header = ui->treeFileExplorer->header();
-  header->setSectionResizeMode(0, QHeaderView::Interactive);  // Name fits content
-  header->setSectionResizeMode(3, QHeaderView::Stretch);           // Date Modified stretches
+  header->setSectionResizeMode(0, QHeaderView::Interactive);
+  header->setSectionResizeMode(3, QHeaderView::Stretch);
   model->setHeaderData(0, Qt::Horizontal, "Name");
   model->setHeaderData(3, Qt::Horizontal, "Date Modified");
 
-         // Force model to reload children
-  ui->treeFileExplorer->expandAll();  // Force expand all to check visibility
+  ui->treeFileExplorer->expandAll();
 
   /*
    * Functionality for the map widget
    */
-
-         // Enable remote content
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
-         // Resolve the map file path
   QString filePath = QString(MAP_PATH);
 
-         //Load HTML file with Leaflet
   webView = new QWebEngineView(ui->mapPanelWidget);
   QUrl url = QUrl::fromLocalFile(filePath);
   webView->setUrl(url);
 
-         // Set up layout
+  surfaceInput = new SurfaceInput();
+  menuBar = new MenuBar(ui, this);
+
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(webView);
 
-         // Apply
   ui->mapPanelWidget->setLayout(layout);
 
   /*
    * Connect tree items to stacked tab window
    */
-
-         // Top-level items
+   // Top-level items
   ui->inputsStackedWidget->setCurrentIndex(0);
   ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
   ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
   ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
 
-         // Sub-items for Solver Methodology
+  // Sub-items for Solver Methodology
   ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
   ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);  // Conservation of Mass and Momentum (Page 2)
 
-         // Sub-items for Inputs
+  // Sub-items for Inputs
   ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 6)
   ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 7)
   ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 8)
   ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 9)
 
-         // Sub-sub-items for Wind Input
+  // Sub-sub-items for Wind Input
   QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
   windInputItem->child(0)->setData(0, Qt::UserRole, 9);  // Domain Average Wind (Page 9)
   windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
   windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
 
-  connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::onTreeItemClicked);
-
-  connectMenuActions();
+  connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
   /*
    * Downloaded Forecast explorer
    */
-
   populateForecastDownloads();
 
   /*
    * Basic initial setup steps
    */
-
-         // Surface Input window
-         // Set icons
+  // Surface Input window
   ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
   ui->elevationInputFileDownloadButton->setIcon(QIcon(":/swoop_final.png"));
 
-         // Solver window
-         // Update processor count and set user input default value & upper bound
+  // Solver window
   int nCPUs = QThread::idealThreadCount();
   ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
   ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
   ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
-         // Wind Input -> Point Init window
+  // Wind Input -> Point Init window
   ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
 
-         // Populate default location for output location
+  // Populate default location for output location
   ui->outputDirectoryTextEdit->setText(downloadsPath);
   ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
 
-         // Set initial visibility of time zone details
+  // Set initial visibility of time zone details
   ui->timeZoneDetailsTextEdit->setVisible(false);
 
-         // Set initial formatting of domain average input table
+  // Set initial formatting of domain average input table
   ui->domainAverageTable->hideColumn(2);
   ui->domainAverageTable->hideColumn(3);
   ui->domainAverageTable->hideColumn(4);
   ui->domainAverageTable->hideColumn(5);
   ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+  connectSignals();
+}
+
+MainWindow::~MainWindow()
+{
+  delete surfaceInput;
+  delete menuBar;
+  delete ui;
+}
+
+void MainWindow::connectSignals()
+{
   connect(ui->elevationInputTypeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
           ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
 
   connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
-  connect(ui->massAndMomentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massAndMomentumSolverCheckBoxClicked);
+  connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
 
   connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileDownloadButtonClicked);
   connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileOpenButtonClicked);
@@ -410,158 +324,13 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->meshResolutionFeetRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionFeetRadioButtonToggled);
 
   connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadCancelButtonClicked);
+  connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadButtonClicked);
 
-
-}
-
-
-
-MainWindow::~MainWindow() { delete ui; }
-
-//// functions for Menu actions
-
-void MainWindow::newProject()
-{
-  printf("newProject clicked\n");
-}
-void MainWindow::openProject()
-{
-  printf("openProject clicked\n");
-}
-void MainWindow::exportSolution()
-{
-  printf("exportSolution clicked\n");
-}
-void MainWindow::closeProject()
-{
-  printf("closeProject clicked\n");
-}
-
-void MainWindow::enableConsoleOutput()
-{
-  printf("enableConsoleOutput clicked\n");
-}
-void MainWindow::writeConsoleOutput()
-{
-  printf("writeConsoleOutput clicked\n");
-}
-
-void MainWindow::resampleData()
-{
-  printf("resampleData clicked\n");
-}
-void MainWindow::writeBlankStationFile()
-{
-  printf("writeBlankStationFile clicked\n");
-}
-void MainWindow::setConfigurationOption()
-{
-  printf("setConfigurationOption clicked\n");
-}
-
-void MainWindow::displayArcGISProGuide()
-{
-  printf("displayArcGISProGuide clicked\n");
-}
-
-void MainWindow::displayTutorial1()
-{
-  printf("displayTutorial1 clicked\n");
-}
-void MainWindow::displayTutorial2()
-{
-  printf("displayTutorial2 clicked\n");
-}
-void MainWindow::displayTutorial3()
-{
-  printf("displayTutorial3 clicked\n");
-}
-void MainWindow::displayTutorial4()
-{
-  printf("displayTutorial4 clicked\n");
-}
-
-void MainWindow::displayDemDownloadInstructions()
-{
-  printf("displayDemDownloadInstructions clicked\n");
-}
-void MainWindow::displayFetchDemInstructions()
-{
-  printf("displayFetchDemInstructions clicked\n");
-}
-void MainWindow::displayCommandLineInterfaceInstructions()
-{
-  printf("displayCommandLineInterfaceInstructions clicked\n");
-}
-
-void MainWindow::aboutWindNinja()
-{
-  printf("aboutWindNinja clicked\n");
-}
-void MainWindow::citeWindNinja()
-{
-  printf("citeWindNinja clicked\n");
-}
-void MainWindow::supportEmail()
-{
-  printf("supportEmail clicked\n");
-}
-void MainWindow::submitBugReport()
-{
-  printf("submitBugReport clicked\n");
-}
-
-//// end functions for Menu actions
-
-void MainWindow::connectMenuActions()
-{
-  // QMenu fileMenu "File" actions
-  connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
-  connect(ui->newProjectAction, &QAction::triggered, this, &MainWindow::newProject);
-  connect(ui->openProjectAction, &QAction::triggered, this, &MainWindow::openProject);
-  connect(ui->exportSolutionAction, &QAction::triggered, this, &MainWindow::exportSolution);
-  connect(ui->closeProjectAction, &QAction::triggered, this, &MainWindow::closeProject);
-  //connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
   connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);  // just close the mainWindow (behavior of the old qt4 code)
-
-  // QMenu optionsMenu "Options" actions
-  connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MainWindow::enableConsoleOutput);
-  connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MainWindow::writeConsoleOutput);
-
-  // QMenu toolsMenu "Tools" actions
-  connect(ui->resampleDataAction, &QAction::triggered, this, &MainWindow::resampleData);
-  connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MainWindow::writeBlankStationFile);
-  connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MainWindow::setConfigurationOption);
-
-  // QMenu helpMenu "Help" actions
-
-  // sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
-  connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MainWindow::displayArcGISProGuide);
-
-  // sub QMenu tutorialsMenu "Tutorials" actions
-  connect(ui->displayTutorial1Action, &QAction::triggered, this, &MainWindow::displayTutorial1);
-  connect(ui->displayTutorial2Action, &QAction::triggered, this, &MainWindow::displayTutorial2);
-  connect(ui->displayTutorial3Action, &QAction::triggered, this, &MainWindow::displayTutorial3);
-  connect(ui->displayTutorial4Action, &QAction::triggered, this, &MainWindow::displayTutorial4);
-
-  // sub QMenu instructionsMenu "Instructions" actions
-  connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MainWindow::displayDemDownloadInstructions);
-  connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MainWindow::displayFetchDemInstructions);
-  connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MainWindow::displayCommandLineInterfaceInstructions);
-
-  // remaining non-sub QMenu actions
-  connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MainWindow::aboutWindNinja);
-  connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MainWindow::citeWindNinja);
-  connect(ui->supportEmailAction, &QAction::triggered, this, &MainWindow::supportEmail);
-  connect(ui->submitBugReportAction, &QAction::triggered, this, &MainWindow::submitBugReport);
-  connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
+  connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
 }
 
-/*
- * Click tree item helper function
- */
-
-void MainWindow::onTreeItemClicked(QTreeWidgetItem *item, int column) {
+void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
   int pageIndex = item->data(column, Qt::UserRole).toInt();
   if (pageIndex >= 0) {
     if(pageIndex >= 6) {
@@ -618,231 +387,89 @@ void MainWindow::populateForecastDownloads() {
   ui->forecastDownloads->setExpandsOnDoubleClick(true);
 }
 
-/*
- * Signal and slot handlers
- */
 
-// Use selects Conservation of Mass
 void MainWindow::massSolverCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
-  // Only allow CoM or CoMM to be toggledGithub requies
-  if (state.useCOMMtoggled) {
-    ui->massAndMomentumSolverCheckBox->setChecked(false);
-    state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
+  if (state.isMomentumSolverToggled) {
+    ui->momentumSolverCheckBox->setChecked(false);
+    state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
   }
+  state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-  // Update app states
-  state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
-
-  // Run mesh calculator
-  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
-
-  refreshUI(ui);
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  refreshUI();
 }
 
-
-// User selects Conservation of Mass and Momentum
-void MainWindow::massAndMomentumSolverCheckBoxClicked()
+void MainWindow::momentumSolverCheckBoxClicked()
 {
   AppState& state = AppState::instance();
 
-  // Only allow CoM or CoMM to be toggled
-  if (state.useCOMtoggled) {
+  if (state.isMassSolverToggled) {
     ui->massSolverCheckBox->setChecked(false);
-    state.useCOMtoggled = ui->massSolverCheckBox->isChecked();
+    state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
   }
+  state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-  // Update app states
-  state.useCOMMtoggled = ui->massAndMomentumSolverCheckBox->isChecked();
-
-  // Run mesh calculator
-  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
-
-  refreshUI(ui);
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  refreshUI();
 }
 
-
-// User selects an elevation input file (by file)
 void MainWindow::elevationInputFileLineEditTextChanged(const QString &arg1)
 {
-  // Get GDAL data information on DEM input
-  QString fileName = ui->elevationInputFileLineEdit->text();
-  double adfGeoTransform[6];
-  GDALDataset *poInputDS;
-  poInputDS = (GDALDataset*)GDALOpen(fileName.toStdString().c_str(), GA_ReadOnly);
+  surfaceInput->computeDEMFile(currentDemFilePath);
+  surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
 
-  // Set driver info
-  GDALDriverName = poInputDS->GetDriver()->GetDescription();
-  GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
-
-  // get x and y dimensions
-  GDALXSize = poInputDS->GetRasterXSize();
-  GDALYSize = poInputDS->GetRasterYSize();
-
-  // Calculate cell size
-  if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
-    double c1, c2;
-    c1 = adfGeoTransform[1];
-    c2 = adfGeoTransform[5];
-    if (abs(c1) == abs(c2)) {
-      GDALCellSize = abs(c1);
-    } else {
-      GDALClose((GDALDatasetH)poInputDS);
-    }
-  }
-
-  // Get GDAL min/max values
-  GDALRasterBand* band = poInputDS->GetRasterBand(1);
-  int gotMin = 0, gotMax = 0;
-  double minVal = band->GetMinimum(&gotMin);
-  double maxVal = band->GetMaximum(&gotMax);
-
-  if (!gotMin || !gotMax) {
-    band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
-  }
-
-  GDALMinValue = minVal;
-  GDALMaxValue = maxVal;
-
-  // Close
-  GDALClose((GDALDatasetH)poInputDS);
-
-  // Run mesh calculator
-  MainWindow::meshResolutionComboBoxCurrentIndexChanged(ui->meshResolutionComboBox->currentIndex());
-
-  refreshUI(ui);
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  refreshUI();
 }
-
 
 void MainWindow::elevationInputFileOpenButtonClicked()
 {
-  QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-  QString filePath = QFileDialog::getOpenFileName(this,
-                                                  "Select a file",                // Window title
-                                                  downloadsPath,               // Starting directory
-                                                  "(*.tif);;All Files (*)"  // Filter
-                                                  );
-  ui->elevationInputFileLineEdit->setText(filePath);
-  ui->elevationInputFileLineEdit->setToolTip(filePath);
+  QString directoryPath;
+  if(!currentDemFilePath.isEmpty())
+  {
+    directoryPath = currentDemFilePath;
+  }
+  else {
+    directoryPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+  }
+  QString demFilePath = QFileDialog::getOpenFileName(this, "Select a file", directoryPath, "(*.tif);;All Files (*)");
+
+  if (demFilePath.isEmpty()) {
+    if (!currentDemFilePath.isEmpty()) {
+      ui->elevationInputFileLineEdit->setText(QFileInfo(currentDemFilePath).fileName());
+      ui->elevationInputFileLineEdit->setToolTip(currentDemFilePath);
+    }
+    return;
+  }
+
+  currentDemFilePath = demFilePath;
+  ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
+  ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
 
-
-// User selects an elevation input file (by map import)
 void MainWindow::elevationInputFileDownloadButtonClicked()
 {
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex+1);
 }
 
-  // User changes the mesh resolution spec for surface input
 void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
 {
-  // Set value box enable for custom/other
   if (index == 3) {
     ui->meshResolutionSpinBox->setEnabled(true);
   } else {
     ui->meshResolutionSpinBox->setEnabled(false);
   }
-
-  // default values are native mesh values
-
-  int coarse = 4000;
-  int medium = 10000;
-  int fine = 20000;
-  double meshResolution = 200.0;
-
-  // initial run values, a dem file has not yet been selected
-  if( GDALCellSize == 0.0 || GDALXSize == 0 || GDALYSize == 0 )
-  {
-    ui->meshResolutionSpinBox->setValue(meshResolution);
-    return;
-  }
-
-#ifdef NINJAFOAM
-  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
-    coarse = 25000;
-    medium = 50000;
-    fine = 100000;
-  }
-#endif //NINJAFOAM
-
-  int targetNumHorizCells = fine;
-  switch (index) {
-  case 0:
-    targetNumHorizCells = coarse;
-    break;
-  case 1:
-    targetNumHorizCells = medium;
-    break;
-  case 2:
-    targetNumHorizCells = fine;
-    break;
-  case 3:
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
-    return;
-  default:
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
-    return;
-  }
-
-  // default values are native mesh values
-
-  double XLength = GDALXSize * GDALCellSize;
-  double YLength = GDALYSize * GDALCellSize;
-  double nXcells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
-  double nYcells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
-
-  double XCellSize = XLength / nXcells;
-  double YCellSize = YLength / nYcells;
-
-  meshResolution = (XCellSize + YCellSize) / 2;
-
-#ifdef NINJAFOAM
-  if (ui->massAndMomentumSolverCheckBox->isChecked()) {
-    XLength = GDALXSize * GDALCellSize;
-    YLength = GDALYSize * GDALCellSize;
-
-    double dz = GDALMaxValue - GDALMinValue;
-    double ZLength = std::max((0.1 * std::max(XLength, YLength)), (dz + 0.1 * dz));
-    double zmin, zmax;
-    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
-    zmax = GDALMaxValue + ZLength; //zmax
-
-    double volume;
-    double cellCount;
-    double cellVolume;
-
-    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
-    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
-    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
-    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
-
-    //determine number of rounds of refinement
-    int nCellsToAdd = 0;
-    int refinedCellCount = 0;
-    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
-    int nRoundsRefinement = 0;
-    while(refinedCellCount < (0.5 * targetNumHorizCells)){
-      nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
-      refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
-      nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
-      nRoundsRefinement += 1;
-    }
-
-    meshResolution = side/(nRoundsRefinement*2.0);
-  }
-#endif //NINJAFOAM
-
-  ui->meshResolutionSpinBox->setValue(meshResolution);
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 }
 
 void MainWindow::meshResolutionMetersRadioButtonToggled(bool checked)
 {
   if (checked) {
-//    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value());
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
   }
 }
 
@@ -853,45 +480,45 @@ void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
   }
 }
 
-// User selects a new time zone
 void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
-  emit timeZoneDetailsRequest();
+  QString currentTimeZone = ui->timeZoneComboBox->currentText();
+  QString timeZoneDetails = surfaceInput->fetchTimeZoneDetails(currentTimeZone);
+  ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
 }
 
 // User toggles show all time zones
 void MainWindow::timeZoneAllZonesCheckBoxClicked()
 {
   AppState& state = AppState::instance();
+  state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
 
-  // Update show all zones state
-  state.showAllZones = ui->timeZoneAllZonesCheckBox->isChecked();
+  bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
+  QVector<QVector<QString>> displayData = surfaceInput->fetchAllTimeZones(isShowAllTimeZonesSelected);
 
-  emit timeZoneDataRequest();
+  ui->timeZoneComboBox->clear();
+  for (const QVector<QString>& zone : displayData) {
+    if (!zone.isEmpty()) {
+      ui->timeZoneComboBox->addItem(zone[0]);
+    }
+  }
+
+  // Default to America/Denver
+  ui->timeZoneComboBox->setCurrentText("America/Denver");
 }
 
-// User toggles show time zone details
 void MainWindow::timeZoneDetailsCheckBoxClicked()
 {
   AppState& state = AppState::instance();
-
-  // Update time zone details state
-  state.displayTimeZoneDetails = ui->timeZoneDetailsCheckBox->isChecked();
-
-  // Update visibility of details pane
-  ui->timeZoneDetailsTextEdit->setVisible(state.displayTimeZoneDetails);
-
+  state.isDisplayTimeZoneDetailsSelected = ui->timeZoneDetailsCheckBox->isChecked();
+  ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
 }
 
-// User selects Diurnal Input
 void MainWindow::diurnalCheckBoxClicked()
 {
   AppState& state = AppState::instance();
+  state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
-  // Update UI state
-  state.diurnalInputToggled = ui->diurnalCheckBox->isChecked();
-
-  // Change the domain average input table based on diurnal wind
   QTableWidget* table = ui->domainAverageTable;
   if (!ui->diurnalCheckBox->isChecked()) {
     table->hideColumn(2);
@@ -907,46 +534,32 @@ void MainWindow::diurnalCheckBoxClicked()
     ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
   }
 
-  refreshUI(ui);
+  refreshUI();
 }
 
-// User selects Stability Input
 void MainWindow::stabilityCheckBoxClicked()
 {
   AppState& state = AppState::instance();
+  state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
-  // Update UI state
-  state.stabilityInputToggled = ui->stabilityCheckBox->isChecked();
-  refreshUI(ui);
+  refreshUI();
 }
 
-/*
- * Wind Inputs
- */
-
-// Domain Average Wind
-
-// User selects Domain Average Wind
 void MainWindow::domainAverageCheckBoxClicked()
 {
   AppState& state = AppState::instance();
+  state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
 
-  // Update the domain average wind state
-  state.domainAverageWindToggled = ui->domainAverageCheckBox->isChecked();
-
-  // Only allow one wind methodology to be used
-  if (state.domainAverageWindToggled) {
+  if (state.isDomainAverageInitializationToggled) {
     ui->pointInitializationCheckBox->setChecked(false);
     ui->useWeatherModelInit->setChecked(false);
-    state.pointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-    state.weatherModelToggled = ui->useWeatherModelInit->isChecked();
+    state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+    state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
   }
 
-  // Update app state
-  refreshUI(ui);
+  refreshUI();
 }
 
-// User changes Domain Average Wind -> Input Wind Height
 void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
 {
   switch(index) {
@@ -974,16 +587,17 @@ void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
   }
 }
 
-// User clears the domain average wind input table
 void MainWindow::clearTableButtonClicked()
 {
+  AppState& state = AppState::instance();
+  AppState::instance().isDomainAverageWindInputTableValid = true;
+
   ui->domainAverageTable->clearContents();
   invalidDAWCells.clear();
-  AppState::instance().domainAverageWindInputTableOk = true;
-  refreshUI(ui);
+
+  refreshUI();
 }
 
-// User changes a value in the domain average wind input table
 void MainWindow::domainAverageTableCellChanged(int row, int column)
 {
   QTableWidget* table = ui->domainAverageTable;
@@ -1055,51 +669,41 @@ void MainWindow::domainAverageTableCellChanged(int row, int column)
     item->setToolTip("");
   }
 
-  AppState::instance().domainAverageWindInputTableOk = invalidDAWCells.isEmpty();
-  refreshUI(ui);
+  AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
+  refreshUI();
 }
 
-// User selects Point Initialization wind model
 void MainWindow::pointInitializationCheckBoxClicked()
 {
   AppState& state = AppState::instance();
+  state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
 
-  // Update the domain average wind state
-  state.pointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-
-  // Only allow one wind methodology to be used
-  if (state.pointInitializationToggled) {
+  if (state.isPointInitializationToggled) {
     ui->domainAverageCheckBox->setChecked(false);
     ui->useWeatherModelInit->setChecked(false);
-    state.domainAverageWindToggled = ui->domainAverageCheckBox->isChecked();
-    state.weatherModelToggled = ui->useWeatherModelInit->isChecked();
+    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
   }
 
-  // Update app state
-  refreshUI(ui);
+  refreshUI();
 }
 
-// User selects Weather Model Initialization model
 void MainWindow::useWeatherModelInitClicked()
 {
   AppState& state = AppState::instance();
 
-  // Update the domain average wind state
-  state.weatherModelToggled = ui->useWeatherModelInit->isChecked();
+  state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
 
-  // Only allow one wind methodology to be used
-  if (state.weatherModelToggled) {
+  if (state.isWeatherModelInitializationToggled) {
     ui->domainAverageCheckBox->setChecked(false);
     ui->pointInitializationCheckBox->setChecked(false);
-    state.domainAverageWindToggled = ui->domainAverageCheckBox->isChecked();
-    state.pointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
   }
 
-  // Update app state
-  refreshUI(ui);
+  refreshUI();
 }
 
-// User selects a new output location
 void MainWindow::outputDirectoryButtonClicked()
 {
   QString currentPath = ui->outputDirectoryTextEdit->toPlainText();
@@ -1115,25 +719,45 @@ void MainWindow::outputDirectoryButtonClicked()
   }
 }
 
-// User selects the solve Button on the solver page
 void MainWindow::numberOfProcessorsSolveButtonClicked()
 {
   ui->solveButton->click();
 }
 
-// User selects the primary solve Button
 void MainWindow::solveButtonClicked()
 {
-  emit solveRequest();
+  // // Alias app state, used to determine which type of solution to run
+  // AppState& state = AppState::instance();
+
+  //        // Determine which run to perform
+  // if (state.isDomainAverageInitializationValid) {
+  //   DomainAverageWind domainAvgWind = setDomainAverageWind();
+  //   provider.domain_average_exec(domainAvgWind);
+  // }else if(state.isPointInitializationValid){
+  //   PointInitialization pointInit = setPointInitialization();
+  //   provider.point_exec(pointInit);
+  // }else if(state.isWeatherModelInitializationValid){
+  //   WeatherModel weatherModel = setWeatherModel();
+  //   provider.wxmodel_exec(weatherModel);
+  // }
+
+
+  // vector<string> outputFileList = provider.getOutputFileNames(
+  //     view->getUi()->elevationInputFileLineEdit->text(),
+  //     view->getUi()->domainAverageTable,
+  //     view->getUi()->meshResolutionSpinBox->text(),
+  //     provider.parseDomainAvgTable(view->getUi()->domainAverageTable).size(),
+  //     view->getUi()->outputDirectoryTextEdit->toPlainText());
+
+  // view->loadMapKMZ(outputFileList);
 }
 
-// Enable double clicking on tree menu items
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
   if (item->text(0) == "Conservation of Mass") {
     ui->massSolverCheckBox->click();
   } else if (item->text(0) == "Conservation of Mass and Momentum") {
-    ui->massAndMomentumSolverCheckBox->click();
+    ui->momentumSolverCheckBox->click();
   } else if (item->text(0) == "Diurnal Input") {
     ui->diurnalCheckBox->click();
   } else if (item->text(0) == "Stability Input") {
@@ -1164,6 +788,48 @@ void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
 
 void MainWindow::surfaceInputDownloadCancelButtonClicked()
 {
+  int currentIndex = ui->inputsStackedWidget->currentIndex();
+  ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+}
+
+void MainWindow::surfaceInputDownloadButtonClicked()
+{
+  double boundingBox[] = {  ui->boundingBoxNorthLineEdit->text().toDouble(),
+                            ui->boundingBoxEastLineEdit->text().toDouble(),
+                            ui->boundingBoxSouthLineEdit->text().toDouble(),
+                            ui->boundingBoxWestLineEdit->text().toDouble(),
+                          };
+
+  double resolution = 30;
+
+  QString defaultName = "";
+  QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+  QDir dir(downloadsPath);
+  QString fullPath = dir.filePath(defaultName);
+  QString demFilePath = QFileDialog::getSaveFileName(this, "Save DEM File", fullPath, "TIF Files (*.tif)");
+  if (!demFilePath.endsWith(".tif", Qt::CaseInsensitive)) {
+    demFilePath += ".tif";
+  }
+  currentDemFilePath = demFilePath;
+  std::string demFile = demFilePath.toStdString();
+
+  std::string fetchType;
+  switch(ui->elevationFileTypeComboBox->currentIndex())
+  {
+  case 0:
+    fetchType = "srtm";
+    break;
+  case 1:
+    fetchType = "gmted";
+    break;
+  case 2:
+    fetchType = "lcp";
+    break;
+  }
+
+  int result = surfaceInput->fetchDEMFile(boundingBox, demFile, resolution, fetchType);
+
+  ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
 }
@@ -1203,7 +869,6 @@ void MainWindow::checkMessages(void) {
 ** ABORT   -> There is a fundamental problem with windninja, and it should call
 **            abort() after displaying a message.
 */
-
 bool MainWindow::NinjaCheckVersions(char * mostrecentversion, char * localversion) {
   char comparemostrecentversion[256];
   char comparelocalversion[256];

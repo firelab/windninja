@@ -1,6 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "ninja_version.h"
+#include "surfaceinput.h"
+#include "menubar.h"
+#include "ui_mainwindow.h"
+#include "cpl_http.h"
+#include "appstate.h"
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
@@ -8,13 +14,27 @@
 #include <QMessageBox>
 #include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
-#include "ui_mainwindow.h"
-#include "gdal_utils.h"
-#include "gdal_priv.h"
+#include <QDir>
+#include <QDirIterator>
+#include <QDateTime>
+#include <QDebug>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFileSystemModel>
+#include <QSortFilterProxyModel>
+#include <QSplitter>
+#include <QStandardItemModel>
+#include <QStandardPaths>
+#include <QTextEdit>
+#include <QTextStream>
+#include <QThread>
+#include <QTimer>
+#include <QTreeWidget>
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
 #include <vector>
 #include <string>
-#include "ninja_version.h"
-#include "cpl_http.h"
 
 
 
@@ -24,7 +44,8 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow
+{
   Q_OBJECT
 
 public:
@@ -32,6 +53,7 @@ public:
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
   void loadMapKMZ(const std::vector<std::string>& input);
+  void refreshUI();
 
   // GDAL Values
   QString GDALDriverName, GDALDriverLongName;
@@ -49,92 +71,34 @@ public:
 
 private slots:
   void massSolverCheckBoxClicked();
-  void massAndMomentumSolverCheckBoxClicked();
-
+  void momentumSolverCheckBoxClicked();
   void elevationInputFileDownloadButtonClicked();
-
   void elevationInputFileOpenButtonClicked();
-
   void elevationInputFileLineEditTextChanged(const QString &arg1);
-
   void meshResolutionComboBoxCurrentIndexChanged(int index);
-
   void diurnalCheckBoxClicked();
-
   void stabilityCheckBoxClicked();
-
   void windHeightComboBoxCurrentIndexChanged(int index);
-
   void domainAverageCheckBoxClicked();
-
   void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-
   void pointInitializationCheckBoxClicked();
-
   void useWeatherModelInitClicked();
-
   void clearTableButtonClicked();
-
   void solveButtonClicked();
-
   void outputDirectoryButtonClicked();
-
   void numberOfProcessorsSolveButtonClicked();
-
   void timeZoneAllZonesCheckBoxClicked();
-
   void timeZoneDetailsCheckBoxClicked();
-
   void timeZoneComboBoxCurrentIndexChanged(int index);
-
   void domainAverageTableCellChanged(int row, int column);
-
   void meshResolutionMetersRadioButtonToggled(bool checked);
-
   void meshResolutionFeetRadioButtonToggled(bool checked);
-
   void surfaceInputDownloadCancelButtonClicked();
-
-signals:
-  void solveRequest();
-  void timeZoneDataRequest();
-  void timeZoneDetailsRequest();
-  void getDEMrequest(std::array<double, 4> boundsBox, QString outputFile);
+  void surfaceInputDownloadButtonClicked();
 
 private:
-  // functions for Menu actions
-  // functions for QMenu fileMenu "File" actions
-  void newProject();
-  void openProject();
-  void exportSolution();
-  void closeProject();
-  // functions for QMenu optionsMenu "Options" actions
-  void enableConsoleOutput();
-  void writeConsoleOutput();
-  // functions for QMenu toolsMenu "Tools" actions
-  void resampleData();
-  void writeBlankStationFile();
-  void setConfigurationOption();
-  // functions for QMenu helpMenu "Help" actions
-  // functions for sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
-  void displayArcGISProGuide();
-  // functions for sub QMenu tutorialsMenu "Tutorials" actions
-  void displayTutorial1();
-  void displayTutorial2();
-  void displayTutorial3();
-  void displayTutorial4();
-  // functions for sub QMenu instructionsMenu "Instructions" actions
-  void displayDemDownloadInstructions();
-  void displayFetchDemInstructions();
-  void displayCommandLineInterfaceInstructions();
-  // functions for remaining non-sub QMenu actions
-  void aboutWindNinja();
-  void citeWindNinja();
-  void supportEmail();
-  void submitBugReport();
-
-  void connectMenuActions();
-  void onTreeItemClicked(QTreeWidgetItem *item, int column);
+  void connectSignals();
+  void treeItemClicked(QTreeWidgetItem *item, int column);
   QSet<QPair<int, int>> invalidDAWCells;
 
   // DEM inputs
@@ -148,6 +112,10 @@ private:
 
   Ui::MainWindow *ui;
   QWebEngineView *webView;
+  SurfaceInput* surfaceInput;
+  MenuBar* menuBar;
+
+  QString currentDemFilePath;
 
   bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
   char * NinjaQueryServerMessages(bool checkAbort);
