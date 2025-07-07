@@ -1,6 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "ninja_version.h"
+#include "surfaceinput.h"
+#include "menubar.h"
+#include "ui_mainwindow.h"
+#include "cpl_http.h"
+#include "appstate.h"
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
@@ -8,14 +14,28 @@
 #include <QMessageBox>
 #include <QTreeWidgetItem>
 #include <QtWebEngineWidgets/qwebengineview.h>
-#include "ui_mainwindow.h"
+#include <QDir>
+#include <QDirIterator>
+#include <QDateTime>
+#include <QDebug>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFileSystemModel>
+#include <QSortFilterProxyModel>
+#include <QSplitter>
+#include <QStandardItemModel>
+#include <QStandardPaths>
+#include <QTextEdit>
+#include <QTextStream>
+#include <QThread>
+#include <QTimer>
+#include <QTreeWidget>
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
 #include <vector>
 #include <string>
-#include "ninja_version.h"
-#include "cpl_http.h"
 
-#include "surfaceinput.h"
-#include "menubar.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -76,14 +96,8 @@ private slots:
   void surfaceInputDownloadCancelButtonClicked();
   void surfaceInputDownloadButtonClicked();
 
-signals:
-  void solveRequest();
-  void timeZoneDataRequest();
-  void timeZoneDetailsRequest();
-  void getDEMrequest(std::array<double, 4> boundsBox, QString outputFile);
-
 private:
-  void connectMenuActions();
+  void connectSignals();
   void treeItemClicked(QTreeWidgetItem *item, int column);
   QSet<QPair<int, int>> invalidDAWCells;
 

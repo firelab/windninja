@@ -1,29 +1,4 @@
 #include "mainwindow.h"
-#include "appstate.h"
-#include "./ui_mainwindow.h"
-#include <QDir>
-#include <QDirIterator>
-#include <QDateTime>
-#include <QDebug>
-#include <QFileDialog>
-#include <QFileInfo>
-#include <QFileSystemModel>
-#include <QSortFilterProxyModel>
-#include <QSplitter>
-#include <QStandardItemModel>
-#include <QStandardPaths>
-#include <QTextEdit>
-#include <QTextStream>
-#include <QThread>
-#include <QTimer>
-#include <QTreeWidget>
-#include <QtWebEngineWidgets/qwebengineview.h>
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <vector>
-#include <string>
-#include "../ninja/windninja.h"
-
 
 /*
  * Helper function to refresh the ui state of the app
@@ -175,10 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
   resize(1200, 700);
 
   timeZoneAllZonesCheckBoxClicked();
-
-  // Immediately call a UI refresh to set initial states
   refreshUI();
-
   ui->treeWidget->expandAll();
 
   /*
@@ -233,6 +205,7 @@ MainWindow::MainWindow(QWidget *parent)
   webView->setUrl(url);
 
   surfaceInput = new SurfaceInput();
+  menuBar = new MenuBar(ui, this);
 
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
@@ -270,7 +243,6 @@ MainWindow::MainWindow(QWidget *parent)
   /*
    * Downloaded Forecast explorer
    */
-
   populateForecastDownloads();
 
   /*
@@ -303,6 +275,18 @@ MainWindow::MainWindow(QWidget *parent)
   ui->domainAverageTable->hideColumn(5);
   ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+  connectSignals();
+}
+
+MainWindow::~MainWindow()
+{
+  delete surfaceInput;
+  delete menuBar;
+  delete ui;
+}
+
+void MainWindow::connectSignals()
+{
   connect(ui->elevationInputTypeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
           ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
 
@@ -342,17 +326,9 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadCancelButtonClicked);
   connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadButtonClicked);
 
-  menuBar = new MenuBar(ui, this);
   connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);  // just close the mainWindow (behavior of the old qt4 code)
   connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
 }
-
-MainWindow::~MainWindow()
-{
-  delete menuBar;
-  delete ui;
-}
-
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
   int pageIndex = item->data(column, Qt::UserRole).toInt();
