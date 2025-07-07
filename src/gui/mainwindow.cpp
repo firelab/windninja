@@ -287,47 +287,33 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectSignals()
 {
-  connect(ui->elevationInputTypeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
-
+  connect(ui->elevationInputTypeComboBox, &QComboBox::currentIndexChanged, ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
   connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
   connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
-
   connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileDownloadButtonClicked);
   connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &MainWindow::elevationInputFileOpenButtonClicked);
   connect(ui->elevationInputFileLineEdit, &QLineEdit::textChanged, this, &MainWindow::elevationInputFileLineEditTextChanged);
-
-  connect(ui->meshResolutionComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::meshResolutionComboBoxCurrentIndexChanged);
-
+  connect(ui->meshResolutionComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::meshResolutionComboBoxCurrentIndexChanged);
+  connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::meshResolutionUnitsComboBoxCurrentIndexChanged);
   connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
   connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
-  connect(ui->windHeightComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::windHeightComboBoxCurrentIndexChanged);
+  connect(ui->windHeightComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::windHeightComboBoxCurrentIndexChanged);
   connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &MainWindow::domainAverageCheckBoxClicked);
-
   connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
-
   connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
   connect(ui->useWeatherModelInit, &QCheckBox::clicked, this, &MainWindow::useWeatherModelInitClicked);
-
   connect(ui->clearTableButton, &QPushButton::clicked, this, &MainWindow::clearTableButtonClicked);
   connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
-  connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
   connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
-
   connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneAllZonesCheckBoxClicked);
   connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneDetailsCheckBoxClicked);
-  connect(ui->timeZoneComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::timeZoneComboBoxCurrentIndexChanged);
-
+  connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::timeZoneComboBoxCurrentIndexChanged);
   connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &MainWindow::domainAverageTableCellChanged);
-
-  connect(ui->meshResolutionMetersRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionMetersRadioButtonToggled);
-  connect(ui->meshResolutionFeetRadioButton, &QRadioButton::toggled, this, &MainWindow::meshResolutionFeetRadioButtonToggled);
-
   connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadCancelButtonClicked);
   connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadButtonClicked);
-
-  connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);  // just close the mainWindow (behavior of the old qt4 code)
+  connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
   connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
+
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -466,20 +452,6 @@ void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
   ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 }
 
-void MainWindow::meshResolutionMetersRadioButtonToggled(bool checked)
-{
-  if (checked) {
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
-  }
-}
-
-void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
-{
-  if (checked) {
-    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
-  }
-}
-
 void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
   QString currentTimeZone = ui->timeZoneComboBox->currentText();
@@ -562,7 +534,8 @@ void MainWindow::domainAverageCheckBoxClicked()
 
 void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
 {
-  switch(index) {
+  switch(index)
+  {
   case 0:
     ui->windHeightValue->setValue(20.00);
     ui->windHeightValue->setEnabled(false);
@@ -951,3 +924,19 @@ char * MainWindow::NinjaQueryServerMessages(bool checkAbort)
 
   return NULL;
 }
+
+void MainWindow::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
+{
+  qDebug() << "ComboBox changed to index:" << index;
+  switch(index)
+  {
+  case 0:
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
+    break;
+
+  case 1:
+    ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
+    break;
+  }
+}
+

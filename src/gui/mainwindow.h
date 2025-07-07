@@ -91,10 +91,9 @@ private slots:
   void timeZoneDetailsCheckBoxClicked();
   void timeZoneComboBoxCurrentIndexChanged(int index);
   void domainAverageTableCellChanged(int row, int column);
-  void meshResolutionMetersRadioButtonToggled(bool checked);
-  void meshResolutionFeetRadioButtonToggled(bool checked);
   void surfaceInputDownloadCancelButtonClicked();
   void surfaceInputDownloadButtonClicked();
+  void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
 
 private:
   void connectSignals();
