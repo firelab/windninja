@@ -98,7 +98,7 @@ private:
 
   Ui::MainWindow *ui;
   QWebEngineView *webView;
-  SurfaceInput surfaceInput;
+  SurfaceInput* surfaceInput;
   MenuBar* menuBar;
 
   QString currentDemFilePath;

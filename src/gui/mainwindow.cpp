@@ -232,6 +232,8 @@ MainWindow::MainWindow(QWidget *parent)
   QUrl url = QUrl::fromLocalFile(filePath);
   webView->setUrl(url);
 
+  surfaceInput = new SurfaceInput();
+
   QVBoxLayout *layout = new QVBoxLayout();
   layout->setContentsMargins(0, 0, 0, 0);
   layout->addWidget(webView);
@@ -420,7 +422,7 @@ void MainWindow::massSolverCheckBoxClicked()
   }
   state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
   refreshUI();
 }
 
@@ -434,16 +436,16 @@ void MainWindow::momentumSolverCheckBoxClicked()
   }
   state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
   refreshUI();
 }
 
 void MainWindow::elevationInputFileLineEditTextChanged(const QString &arg1)
 {
-  surfaceInput.computeDEMFile(currentDemFilePath);
-  surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
+  surfaceInput->computeDEMFile(currentDemFilePath);
+  surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
 
-  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
   refreshUI();
 }
 
@@ -485,7 +487,7 @@ void MainWindow::meshResolutionComboBoxCurrentIndexChanged(int index)
   } else {
     ui->meshResolutionSpinBox->setEnabled(false);
   }
-  ui->meshResolutionSpinBox->setValue(surfaceInput.computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+  ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 }
 
 void MainWindow::meshResolutionMetersRadioButtonToggled(bool checked)
@@ -505,7 +507,7 @@ void MainWindow::meshResolutionFeetRadioButtonToggled(bool checked)
 void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
 {
   QString currentTimeZone = ui->timeZoneComboBox->currentText();
-  QString timeZoneDetails = surfaceInput.fetchTimeZoneDetails(currentTimeZone);
+  QString timeZoneDetails = surfaceInput->fetchTimeZoneDetails(currentTimeZone);
   ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
 }
 
@@ -516,7 +518,7 @@ void MainWindow::timeZoneAllZonesCheckBoxClicked()
   state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
 
   bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
-  QVector<QVector<QString>> displayData = surfaceInput.fetchAllTimeZones(isShowAllTimeZonesSelected);
+  QVector<QVector<QString>> displayData = surfaceInput->fetchAllTimeZones(isShowAllTimeZonesSelected);
 
   ui->timeZoneComboBox->clear();
   for (const QVector<QString>& zone : displayData) {
@@ -849,7 +851,7 @@ void MainWindow::surfaceInputDownloadButtonClicked()
     break;
   }
 
-  int result = surfaceInput.fetchDEMFile(boundingBox, demFile, resolution, fetchType);
+  int result = surfaceInput->fetchDEMFile(boundingBox, demFile, resolution, fetchType);
 
   ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
   int currentIndex = ui->inputsStackedWidget->currentIndex();
