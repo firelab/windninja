@@ -286,3 +286,24 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
   return meshResolution;
 
 }
+
+void SurfaceInput::computePointRadius(double centerLat, double centerLon, double radius, double boundingBox[4])
+{
+  const double EARTH_RADIUS_MILES = 3958.7613;
+  const double DEG_TO_RAD = M_PI / 180.0;
+
+  double deltaLat = radius / (2.0 * M_PI * EARTH_RADIUS_MILES / 360.0);
+  double latRadius = EARTH_RADIUS_MILES * std::cos(centerLat * DEG_TO_RAD);
+  double deltaLon = radius / (2.0 * M_PI * latRadius / 360.0);
+
+  boundingBox[0] = centerLat + deltaLat;  // North latitude
+  boundingBox[1] = centerLon + deltaLon;  // East longitude
+  boundingBox[2] = centerLat - deltaLat;  // South latitude
+  boundingBox[3] = centerLon - deltaLon;  // West longitude
+
+  qDebug() << "Bounding Box (N, E, S, W):"
+           << boundingBox[0]
+           << boundingBox[1]
+           << boundingBox[2]
+           << boundingBox[3];
+}

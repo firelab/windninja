@@ -313,7 +313,6 @@ void MainWindow::connectSignals()
   connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadButtonClicked);
   connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
   connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
-
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -767,11 +766,22 @@ void MainWindow::surfaceInputDownloadCancelButtonClicked()
 
 void MainWindow::surfaceInputDownloadButtonClicked()
 {
-  double boundingBox[] = {  ui->boundingBoxNorthLineEdit->text().toDouble(),
-                            ui->boundingBoxEastLineEdit->text().toDouble(),
-                            ui->boundingBoxSouthLineEdit->text().toDouble(),
-                            ui->boundingBoxWestLineEdit->text().toDouble(),
-                          };
+  double boundingBox[4];
+  switch(ui->elevationInputTypeStackedWidget->currentIndex())
+  {
+  case 0:
+    boundingBox[0] = ui->boundingBoxNorthLineEdit->text().toDouble();
+    boundingBox[1] = ui->boundingBoxEastLineEdit->text().toDouble();
+    boundingBox[2] = ui->boundingBoxSouthLineEdit->text().toDouble();
+    boundingBox[3] = ui->boundingBoxWestLineEdit->text().toDouble();
+    break;
+  case 1:
+    double centerLat = ui->pointRadiusLatLineEdit->text().toDouble();
+    double centerLon = ui->pointRadiusLonLineEdit->text().toDouble();
+    double radius = ui->pointRadiusRadiusLineEdit->text().toDouble();
+    surfaceInput->computePointRadius(centerLat, centerLon, radius, boundingBox);
+    break;
+  }
 
   double resolution = 30;
 
