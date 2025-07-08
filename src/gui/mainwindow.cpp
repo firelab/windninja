@@ -318,6 +318,7 @@ void MainWindow::connectSignals()
   connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
   connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
   connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &MainWindow::elevationInputTypePushButtonClicked);
+  connect(mapBridge, &MapBridge::boundingBoxReceived, this, &MainWindow::boundingBoxReceived);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -963,7 +964,22 @@ void MainWindow::elevationInputTypePushButtonClicked()
   if(ui->elevationInputTypePushButton->isChecked())
   {
     webView->page()->runJavaScript("startRectangleDrawing();");
-    ui->elevationInputTypePushButton->setChecked(false);
   }
+  else
+  {
+    webView->page()->runJavaScript("stopRectangleDrawing();");
+  }
+}
+
+void MainWindow::boundingBoxReceived(double north, double south, double east, double west)
+{
+  qDebug() << "MainWindow received bbox: "
+           << north << south << east << west;
+
+  ui->boundingBoxNorthLineEdit->setText(QString::number(north));
+  ui->boundingBoxEastLineEdit->setText(QString::number(east));
+  ui->boundingBoxSouthLineEdit->setText(QString::number(south));
+  ui->boundingBoxWestLineEdit->setText(QString::number(west));
+  ui->elevationInputTypePushButton->setChecked(false);
 }
 

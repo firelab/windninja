@@ -11,6 +11,10 @@ class MapBridge : public QObject {
 public:
   explicit MapBridge(QObject *parent = nullptr) : QObject(parent) {}
 
+signals:
+  void boundingBoxReceived(double north, double south, double east, double west);
+
+
 public slots:
   void receiveBoundingBox(const QString &jsonCoords);
 
