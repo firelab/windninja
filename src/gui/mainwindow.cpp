@@ -199,8 +199,11 @@ MainWindow::MainWindow(QWidget *parent)
   QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
   QString filePath = QString(MAP_PATH);
-
+  channel = new QWebChannel(this);
+  mapBridge = new MapBridge(this);
   webView = new QWebEngineView(ui->mapPanelWidget);
+  channel->registerObject(QStringLiteral("bridge"), mapBridge);
+  webView->page()->setWebChannel(channel);
   QUrl url = QUrl::fromLocalFile(filePath);
   webView->setUrl(url);
 
@@ -790,6 +793,9 @@ void MainWindow::surfaceInputDownloadButtonClicked()
   QDir dir(downloadsPath);
   QString fullPath = dir.filePath(defaultName);
   QString demFilePath = QFileDialog::getSaveFileName(this, "Save DEM File", fullPath, "TIF Files (*.tif)");
+  if (demFilePath.isEmpty()) {
+    return;
+  }
   if (!demFilePath.endsWith(".tif", Qt::CaseInsensitive)) {
     demFilePath += ".tif";
   }

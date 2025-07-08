@@ -1,5 +1,5 @@
 #include "menubar.h"
-#include "ui_mainwindow.h"    // To know about Ui::MainWindow
+#include "ui_mainwindow.h"
 #include <QDebug>
 #include <QApplication>
 

@@ -32,6 +32,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         surfaceinput.h
         surfaceinput.cpp
         menubar.h menubar.cpp
+        mapbridge.h mapbridge.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

@@ -4,9 +4,11 @@
 #include "ninja_version.h"
 #include "surfaceinput.h"
 #include "menubar.h"
+#include "mapbridge.h"
 #include "ui_mainwindow.h"
 #include "cpl_http.h"
 #include "appstate.h"
+#include <QWebChannel>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
@@ -111,6 +113,8 @@ private:
 
   Ui::MainWindow *ui;
   QWebEngineView *webView;
+  QWebChannel *channel;
+  MapBridge *mapBridge;
   SurfaceInput* surfaceInput;
   MenuBar* menuBar;
 
