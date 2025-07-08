@@ -18,6 +18,19 @@
       max-width: 100%;
       box-sizing: border-box;
     }
+    .leaflet-div-icon {
+      background: white;
+      border: 2px solid #0077ff;
+      border-radius: 50%;
+      width: 10px !important;
+      height: 10px !important;
+      margin-left: -5px !important;
+      margin-top: -5px !important;
+      box-shadow: 0 0 1px #000;
+    }
+  .leaflet-drag-target {
+    cursor: move !important;
+  }
   </style>
 
   <link rel="stylesheet" href="leaflet/leaflet.css"/>
@@ -88,6 +101,9 @@
       const layer = e.layer;
       mbrLayer.clearLayers();
       mbrLayer.addLayer(layer);
+
+      // Enable editing mode
+      layer.editing.enable();
 
       if (layer instanceof L.Rectangle) {
         const bounds = layer.getBounds();
