@@ -30,7 +30,6 @@
 #ifndef ARRAY2D_H
 #define ARRAY2D_H
 
-#include "Array2D.h"
 #include <assert.h>
 #include <string.h>
 #include <vector>
