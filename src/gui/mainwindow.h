@@ -96,6 +96,7 @@ private slots:
   void surfaceInputDownloadCancelButtonClicked();
   void surfaceInputDownloadButtonClicked();
   void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
+  void elevationInputTypePushButtonClicked();
 
 private:
   void connectSignals();

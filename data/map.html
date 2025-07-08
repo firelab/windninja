@@ -64,12 +64,6 @@
 <body>
   <div id="map" style="border: 1px solid #ccc"></div>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        new QWebChannel(qt.webChannelTransport, function (channel) {
-            window.bridge = channel.objects.bridge;
-            bridge.receiveMessage("Hello from JavaScript!");
-        });
-    });
     const apiKey = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
 
     const mbl = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' +
@@ -90,6 +84,26 @@
     const mbrLayer = new L.FeatureGroup();
     const txtboxLayer = new L.FeatureGroup();
     map.addLayer(mbrLayer);
+    map.on('draw:created', function (e) {
+      const layer = e.layer;
+      mbrLayer.clearLayers();
+      mbrLayer.addLayer(layer);
+
+      if (layer instanceof L.Rectangle) {
+        const bounds = layer.getBounds();
+        const bboxData = {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest()
+        };
+
+        // Send to Qt via QWebChannel
+        if (window.bridge && window.bridge.receiveBoundingBox) {
+          window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+        }
+      }
+    });
     map.addLayer(txtboxLayer);
 
     const drawControl = new L.Control.Draw({
@@ -103,12 +117,20 @@
         rectangle: true
       }
     });
-    map.addControl(drawControl);
+    const rectangleDrawer = new L.Draw.Rectangle(map);
+    function startRectangleDrawing() {
+      mbrLayer.clearLayers();
+      rectangleDrawer.enable();
+    }
 
     const baseMaps = {};
     const overlayMaps = {};
     const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
     L.control.scale().addTo(map);
+    new QWebChannel(qt.webChannelTransport, function (channel) {
+      window.bridge = channel.objects.bridge;
+      console.log("WebChannel connected. Bridge is ready.");
+    });
 
     async function loadKmzFromBase64(base64Data) {
       try {
@@ -149,6 +171,7 @@
         console.error('Failed to load KMZ from base64:', err);
       }
     }
+
   </script>
 </body>
 </html>

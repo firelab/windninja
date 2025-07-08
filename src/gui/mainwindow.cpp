@@ -253,7 +253,8 @@ MainWindow::MainWindow(QWidget *parent)
    */
   // Surface Input window
   ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
-  ui->elevationInputFileDownloadButton->setIcon(QIcon(":/swoop_final.png"));
+  ui->elevationInputFileDownloadButton->setIcon(QIcon(":/server_go.png"));
+  ui->elevationInputTypePushButton->setIcon(QIcon(":/swoop_final.png"));
 
   // Solver window
   int nCPUs = QThread::idealThreadCount();
@@ -316,6 +317,7 @@ void MainWindow::connectSignals()
   connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &MainWindow::surfaceInputDownloadButtonClicked);
   connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
   connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MainWindow::elevationInputFileOpenButtonClicked);
+  connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &MainWindow::elevationInputTypePushButtonClicked);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -953,6 +955,15 @@ void MainWindow::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
   case 1:
     ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
     break;
+  }
+}
+
+void MainWindow::elevationInputTypePushButtonClicked()
+{
+  if(ui->elevationInputTypePushButton->isChecked())
+  {
+    webView->page()->runJavaScript("startRectangleDrawing();");
+    ui->elevationInputTypePushButton->setChecked(false);
   }
 }
 

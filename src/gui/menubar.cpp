@@ -1,7 +1,5 @@
 #include "menubar.h"
 #include "ui_mainwindow.h"
-#include <QDebug>
-#include <QApplication>
 
 MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
