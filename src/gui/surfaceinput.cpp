@@ -287,7 +287,7 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
 
 }
 
-void SurfaceInput::computePointRadius(double centerLat, double centerLon, double radius, double boundingBox[4])
+void SurfaceInput::computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4])
 {
   const double EARTH_RADIUS_MILES = 3958.7613;
   const double DEG_TO_RAD = M_PI / 180.0;
@@ -306,4 +306,30 @@ void SurfaceInput::computePointRadius(double centerLat, double centerLon, double
            << boundingBox[1]
            << boundingBox[2]
            << boundingBox[3];
+}
+
+void SurfaceInput::computePointRadius(double north, double east, double south, double west, double pointRadius[3])
+{
+  const double EARTH_RADIUS_MILES = 3958.7613;
+  const double DEG_TO_RAD = M_PI / 180.0;
+
+  double centerLat = (north + south) / 2.0;
+  double centerLon = (east + west) / 2.0;
+
+  double deltaLat = std::abs(north - south) / 2.0;
+  double deltaLon = std::abs(east - west) / 2.0;
+
+  double latMiles = (2.0 * M_PI * EARTH_RADIUS_MILES / 360.0) * deltaLat;
+
+  double latRadius = EARTH_RADIUS_MILES * std::cos(centerLat * DEG_TO_RAD);
+  double lonMiles = (2.0 * M_PI * latRadius / 360.0) * deltaLon;
+
+  double radius = (latMiles + lonMiles) / 2.0;
+
+  pointRadius[0] = centerLat;
+  pointRadius[1] = centerLon;
+  pointRadius[2] = radius;
+
+  qDebug() << "Center (Lat, Lon):" << centerLat << centerLon;
+  qDebug() << "Estimated Radius (mi):" << radius;
 }

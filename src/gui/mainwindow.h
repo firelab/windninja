@@ -97,7 +97,7 @@ private slots:
   void surfaceInputDownloadButtonClicked();
   void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
   void elevationInputTypePushButtonClicked();
-  void onBoundingBoxReceived(double north, double south, double east, double west);
+  void boundingBoxReceived(double north, double south, double east, double west);
 
 private:
   void connectSignals();

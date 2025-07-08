@@ -284,6 +284,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+  delete webView;
+  delete channel;
+  delete mapBridge;
   delete surfaceInput;
   delete menuBar;
   delete ui;
@@ -785,7 +788,7 @@ void MainWindow::surfaceInputDownloadButtonClicked()
     double centerLat = ui->pointRadiusLatLineEdit->text().toDouble();
     double centerLon = ui->pointRadiusLonLineEdit->text().toDouble();
     double radius = ui->pointRadiusRadiusLineEdit->text().toDouble();
-    surfaceInput->computePointRadius(centerLat, centerLon, radius, boundingBox);
+    surfaceInput->computeBoundingBox(centerLat, centerLon, radius, boundingBox);
     break;
   }
 
@@ -946,7 +949,6 @@ char * MainWindow::NinjaQueryServerMessages(bool checkAbort)
 
 void MainWindow::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
 {
-  qDebug() << "ComboBox changed to index:" << index;
   switch(index)
   {
   case 0:
@@ -981,5 +983,13 @@ void MainWindow::boundingBoxReceived(double north, double south, double east, do
   ui->boundingBoxSouthLineEdit->setText(QString::number(south));
   ui->boundingBoxWestLineEdit->setText(QString::number(west));
   ui->elevationInputTypePushButton->setChecked(false);
+
+  double pointRadius[3];
+  surfaceInput->computePointRadius(north, east, south, west, pointRadius);
+
+  ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
+  ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
+  ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+
 }
 

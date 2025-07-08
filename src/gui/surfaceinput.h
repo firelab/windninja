@@ -16,7 +16,8 @@ public:
   int fetchDEMFile(double boundingBox[], std::string demFile, double resolution, std::string fetchType);
   int computeDEMFile(QString filePath);
   double computeMeshResolution(int index, bool isMomemtumChecked);
-  void computePointRadius(double centerLat, double centerLon, double radius, double boundingBox[4]);
+  void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
+  void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
 
 private:
   QString GDALDriverName;
