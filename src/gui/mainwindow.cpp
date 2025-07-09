@@ -771,6 +771,17 @@ void MainWindow::surfaceInputDownloadCancelButtonClicked()
 {
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+
+  ui->boundingBoxNorthLineEdit->clear();
+  ui->boundingBoxEastLineEdit->clear();
+  ui->boundingBoxSouthLineEdit->clear();
+  ui->boundingBoxWestLineEdit->clear();
+
+  ui->pointRadiusLatLineEdit->clear();
+  ui->pointRadiusLonLineEdit->clear();
+  ui->pointRadiusRadiusLineEdit->clear();
+
+  webView->page()->runJavaScript("stopRectangleDrawing();");
 }
 
 void MainWindow::surfaceInputDownloadButtonClicked()
