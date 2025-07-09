@@ -95,44 +95,37 @@
     });
 
     const mbrLayer = new L.FeatureGroup();
-    const txtboxLayer = new L.FeatureGroup();
     map.addLayer(mbrLayer);
     map.on('draw:created', function (e) {
       const layer = e.layer;
       mbrLayer.clearLayers();
       mbrLayer.addLayer(layer);
 
-      // Enable editing mode
-      layer.editing.enable();
-
       if (layer instanceof L.Rectangle) {
-        const bounds = layer.getBounds();
-        const bboxData = {
-          north: bounds.getNorth(),
-          south: bounds.getSouth(),
-          east: bounds.getEast(),
-          west: bounds.getWest()
-        };
+        layer.editing.enable();
 
-        // Send to Qt via QWebChannel
-        if (window.bridge && window.bridge.receiveBoundingBox) {
-          window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+        function sendBoundingBox() {
+          const bounds = layer.getBounds();
+          const bboxData = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+          };
+
+          if (window.bridge && window.bridge.receiveBoundingBox) {
+            window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+          }
         }
-      }
-    });
-    map.addLayer(txtboxLayer);
 
-    const drawControl = new L.Control.Draw({
-      position: 'topright',
-      draw: {
-        polyline: false,
-        polygon: false,
-        circle: false,
-        marker: false,
-        circlemarker: false,
-        rectangle: true
+        // Send once on creation
+        sendBoundingBox();
+
+        // Send on edit (move or resize)
+        layer.on('edit', sendBoundingBox);
       }
     });
+
     const rectangleDrawer = new L.Draw.Rectangle(map);
     function startRectangleDrawing() {
       mbrLayer.clearLayers();
