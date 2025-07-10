@@ -125,6 +125,38 @@
         layer.on('edit', sendBoundingBox);
       }
     });
+    function drawBoundingBox(north, south, east, west) {
+      // Clear any existing rectangle
+      mbrLayer.clearLayers();
+
+      const bounds = [[south, west], [north, east]];
+      const rectangle = L.rectangle(bounds, {
+        color: '#ff7800',
+        weight: 2
+      }).addTo(mbrLayer);
+
+      map.fitBounds(rectangle.getBounds());
+
+      rectangle.editing.enable(); // Enable edit mode
+
+      // Send bounding box to bridge
+      function sendBoundingBox() {
+        const bounds = rectangle.getBounds();
+        const bboxData = {
+          north: bounds.getNorth(),
+          south: bounds.getSouth(),
+          east: bounds.getEast(),
+          west: bounds.getWest()
+        };
+
+        if (window.bridge && window.bridge.receiveBoundingBox) {
+          window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+        }
+      }
+
+      sendBoundingBox(); // Send initially
+      rectangle.on('edit', sendBoundingBox); // Send on edits
+    }
 
     const rectangleDrawer = new L.Draw.Rectangle(map);
     function startRectangleDrawing() {

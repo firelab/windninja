@@ -3,6 +3,7 @@
 
 #include "ninja_version.h"
 #include "surfaceinput.h"
+#include "surfaceinputview.h"
 #include "menubar.h"
 #include "mapbridge.h"
 #include "ui_mainwindow.h"
@@ -55,7 +56,6 @@ public:
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
   void loadMapKMZ(const std::vector<std::string>& input);
-  void refreshUI();
 
   // GDAL Values
   QString GDALDriverName, GDALDriverLongName;
@@ -74,10 +74,6 @@ public:
 private slots:
   void massSolverCheckBoxClicked();
   void momentumSolverCheckBoxClicked();
-  void elevationInputFileDownloadButtonClicked();
-  void elevationInputFileOpenButtonClicked();
-  void elevationInputFileLineEditTextChanged(const QString &arg1);
-  void meshResolutionComboBoxCurrentIndexChanged(int index);
   void diurnalCheckBoxClicked();
   void stabilityCheckBoxClicked();
   void windHeightComboBoxCurrentIndexChanged(int index);
@@ -93,34 +89,21 @@ private slots:
   void timeZoneDetailsCheckBoxClicked();
   void timeZoneComboBoxCurrentIndexChanged(int index);
   void domainAverageTableCellChanged(int row, int column);
-  void surfaceInputDownloadCancelButtonClicked();
-  void surfaceInputDownloadButtonClicked();
-  void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
-  void elevationInputTypePushButtonClicked();
-  void boundingBoxReceived(double north, double south, double east, double west);
+  void refreshUI();
+
 
 private:
   void connectSignals();
   void treeItemClicked(QTreeWidgetItem *item, int column);
   QSet<QPair<int, int>> invalidDAWCells;
 
-  // DEM inputs
-  double northLat;
-  double southLat;
-  double eastLon;
-  double westLon;
-  double centerLat;
-  double centerLon;
-  double radius;
-
   Ui::MainWindow *ui;
   QWebEngineView *webView;
   QWebChannel *channel;
   MapBridge *mapBridge;
-  SurfaceInput* surfaceInput;
-  MenuBar* menuBar;
-
-  QString currentDemFilePath;
+  SurfaceInput *surfaceInput;
+  SurfaceInputView *surfaceInputView;
+  MenuBar *menuBar;
 
   bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
   char * NinjaQueryServerMessages(bool checkAbort);
