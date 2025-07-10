@@ -208,7 +208,7 @@ MainWindow::MainWindow(QWidget *parent)
   webView->setUrl(url);
 
   surfaceInput = new SurfaceInput();
-  menuBar = new MenuBar(ui, this);
+  menuBarView = new MenuBarView(ui, this);
 
   surfaceInputView = new SurfaceInputView(ui, webView, surfaceInput, this);
 
@@ -290,7 +290,7 @@ MainWindow::~MainWindow()
   delete channel;
   delete mapBridge;
   delete surfaceInput;
-  delete menuBar;
+  delete menuBarView;
   delete ui;
 }
 

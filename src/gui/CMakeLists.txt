@@ -31,7 +31,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         splashscreen.cpp
         surfaceinput.h
         surfaceinput.cpp
-        menubar.h menubar.cpp
+        menubarview.h menubarview.cpp
         mapbridge.h mapbridge.cpp
         surfaceinputview.h surfaceinputview.cpp
 

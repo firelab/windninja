@@ -4,7 +4,7 @@
 #include "ninja_version.h"
 #include "surfaceinput.h"
 #include "surfaceinputview.h"
-#include "menubar.h"
+#include "menubarview.h"
 #include "mapbridge.h"
 #include "ui_mainwindow.h"
 #include "cpl_http.h"
@@ -52,21 +52,9 @@ class MainWindow : public QMainWindow
   Q_OBJECT
 
 public:
-  Ui::MainWindow* getUi() const { return ui; }
   void populateForecastDownloads();
   void toggleExpandCollapse(const QModelIndex &index);
   void loadMapKMZ(const std::vector<std::string>& input);
-
-  // GDAL Values
-  QString GDALDriverName, GDALDriverLongName;
-  std::string GDALProjRef;
-  bool hasGDALCenter;
-  double GDALCenterLat;
-  double GDALCenterLon;
-  int GDALXSize, GDALYSize;
-  double GDALCellSize, GDALNoData;
-  double GDALMaxValue, GDALMinValue;
-
 
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
@@ -103,7 +91,7 @@ private:
   MapBridge *mapBridge;
   SurfaceInput *surfaceInput;
   SurfaceInputView *surfaceInputView;
-  MenuBar *menuBar;
+  MenuBarView *menuBarView;
 
   bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
   char * NinjaQueryServerMessages(bool checkAbort);
