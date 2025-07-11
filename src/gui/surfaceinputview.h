@@ -9,6 +9,11 @@
 #include <QStandardPaths>
 #include <QFileDialog>
 #include <QDebug>
+#include <QProgressDialog>
+#include <QFuture>
+#include <QFutureWatcher>
+#include <QProgressDialog>
+#include <QtConcurrent/QtConcurrent>
 
 namespace Ui {
 class MainWindow;
@@ -43,6 +48,8 @@ private:
   Ui::MainWindow *ui;
   QWebEngineView *webView;
   SurfaceInput *surfaceInput;
+
+  QFutureWatcher<int> futureWatcher;
 
   QString currentDemFilePath;
 };

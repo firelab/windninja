@@ -57,7 +57,6 @@ void SurfaceInputView::boundingBoxReceived(double north, double south, double ea
   qDebug() << "MainWindow received bbox: "
            << north << south << east << west;
 
-         // Block signals before updating to avoid triggering textChanged
   ui->boundingBoxNorthLineEdit->blockSignals(true);
   ui->boundingBoxEastLineEdit->blockSignals(true);
   ui->boundingBoxSouthLineEdit->blockSignals(true);
@@ -68,7 +67,6 @@ void SurfaceInputView::boundingBoxReceived(double north, double south, double ea
   ui->boundingBoxSouthLineEdit->setText(QString::number(south));
   ui->boundingBoxWestLineEdit->setText(QString::number(west));
 
-         // Re-enable signals
   ui->boundingBoxNorthLineEdit->blockSignals(false);
   ui->boundingBoxEastLineEdit->blockSignals(false);
   ui->boundingBoxSouthLineEdit->blockSignals(false);
@@ -86,14 +84,23 @@ void SurfaceInputView::boundingBoxReceived(double north, double south, double ea
 
 void SurfaceInputView::boundingBoxLineEditsTextChanged()
 {
-  QString north = ui->boundingBoxNorthLineEdit->text();
-  QString east  = ui->boundingBoxEastLineEdit->text();
-  QString south = ui->boundingBoxSouthLineEdit->text();
-  QString west  = ui->boundingBoxWestLineEdit->text();
+  bool isNorthValid, isEastValid, isSouthValid, isWestValid;
 
-  if (!north.isEmpty() && !east.isEmpty() && !south.isEmpty() && !west.isEmpty())
+  double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
+  double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
+  double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
+  double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
+
+  qDebug() << north << south << east << west;
+
+  if (isNorthValid && isEastValid && isSouthValid && isWestValid)
   {
-    QString js = QString("drawBoundingBox(%1, %2, %3, %4);").arg(north).arg(south) .arg(east).arg(west);
+    QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
+    .arg(north, 0, 'f', 10)
+        .arg(south, 0, 'f', 10)
+        .arg(east,  0, 'f', 10)
+        .arg(west,  0, 'f', 10);
+
     webView->page()->runJavaScript(js);
   }
 }
@@ -164,7 +171,27 @@ void SurfaceInputView::surfaceInputDownloadButtonClicked()
     break;
   }
 
+  QProgressDialog progress("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
+  progress.setWindowModality(Qt::WindowModal);
+  progress.setCancelButton(nullptr);
+  progress.setMinimumDuration(0);
+  progress.show();
+
+  // Start the future
+  QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, surfaceInput, boundingBox, demFile, resolution, fetchType);
+  QFutureWatcher<int> futureWatcher;
+  futureWatcher.setFuture(future);
+
+  // Use a local event loop to wait until the operation is done
+  QEventLoop loop;
+  QObject::connect(&futureWatcher, &QFutureWatcher<void>::finished, &loop, &QEventLoop::quit);
+  loop.exec();  // blocks but keeps UI responsive
+
+  progress.close();  // optional, will close automatically as it's parented to the UI
+
   int result = surfaceInput->fetchDEMFile(boundingBox, demFile, resolution, fetchType);
+
+  progress.close();
 
   ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
   int currentIndex = ui->inputsStackedWidget->currentIndex();
