@@ -385,6 +385,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
 }
 
 /** Calculate the angle between the N-S grid lines in the DS and true north for the center point of the DS.
+ *  Where the angle is defined as going FROM true north TO the y coordinate grid line of the DS.
  * @param poDS a pointer to a valid GDALDataset
  * @param angle the computed angle from north
  * @return true on success false on failure.
@@ -427,8 +428,8 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
-    //compute angle of line formed between projected x1,y1 and x2,y2 and north
-    //call the line parallel to north in the projected CRS "a", the line formed
+    //compute angle of line formed between projected x1,y1 and x2,y2 and true north
+    //call the line parallel to true north in the projected CRS "a", the line formed
     //by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
     //cos(theta) = a dot b /(|a||b|)
     //a dot b = axbx + ayby
@@ -454,6 +455,9 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     {
         angleFromNorth = -1*angleFromNorth;
     }
+    // except that the derived angles are going FROM b TO a, NOT FROM b TO a as derived above, so need to reverse the sign, for all cases
+    // need to go FROM true north TO the y coordinate grid line of the DS, FROM b TO a, not the other way around
+    angleFromNorth = -1*angleFromNorth;
     CPLDebug( "WINDNINJA", "angleFromNorth in radians = %lf", angleFromNorth );
     //convert the result from radians to degrees
     angleFromNorth *= 180.0 / PI;
@@ -463,6 +467,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 }
 
 /** Calculate the angle between the y coordinate grid lines of two datasets.
+ *  Where the angle is defined as going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference
  * @param poSrsDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
  * @param coordinateTransformAngle the computed angle between the y coordinate grid lines of the two datasets, to be filled
  * @param pszDstWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
@@ -533,6 +538,8 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     {
         coordinateTransformAngle = -1*coordinateTransformAngle;
     }
+    // angles ARE going FROM a TO b, NOT FROM b TO a, so no need to reverse the sign
+    // going FROM a TO b is already going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference
     CPLDebug( "WINDNINJA", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
     //convert the result from radians to degrees
     coordinateTransformAngle *= 180.0 / PI;

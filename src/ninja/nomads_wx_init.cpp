@@ -566,6 +566,18 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
 
+    std::cout << "\n\nnomads, pre warp" << std::endl;
+    //compute angle between N-S grid lines in the dataset and true north
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        if(!GDALCalculateAngleFromNorth( hSrcDS, angleFromNorth ))
+        {
+            printf("Warning: Unable to calculate angle departure from north for the nomads wxModelData.");
+        }
+    }
+    std::cout << std::endl;
+
     double coordinateTransformationAngle = 0.0;
     //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
@@ -575,6 +587,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
         }
     }
+    std::cout << std::endl;
 
 #ifdef NOMADS_INTERNAL_VRT
     hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
@@ -585,6 +598,18 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
 #endif
+
+    std::cout << "\nnomads, post warp" << std::endl;
+    //compute angle between N-S grid lines in the dataset and true north
+    angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        if(!GDALCalculateAngleFromNorth( hVrtDS, angleFromNorth ))
+        {
+            printf("Warning: Unable to calculate angle departure from north for the nomads wxModelData.");
+        }
+    }
+    std::cout << std::endl;
 
     const char *pszElement;
     const char *pszShortName;
@@ -768,16 +793,31 @@ noCloudOK:
             }
         }
 
+        std::cout << "\n\npre-coordTransformAngle calc" << std::endl;
+        std::cout << "dirGrid.get_meanValue() = " << dirGrid.get_meanValue() << std::endl;
+
         // add the coordinateTransformationAngle to each spd,dir, u,v dataset
         for(int i=0; i<dirGrid.get_nRows(); i++)
         {
             for(int j=0; j<dirGrid.get_nCols(); j++)
             {
-                dirGrid(i,j) = wrap0to360( dirGrid(i,j) + coordinateTransformationAngle ); //account for projection rotation
+                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //account for projection rotation
                 // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
                 wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
             }
         }
+
+        std::cout << "\npost-coordTransformAngle calc" << std::endl;
+        std::cout << "dirGrid.get_meanValue() = " << dirGrid.get_meanValue() << std::endl;
+
+        // the final true mean value that ends up getting used/passed around later on, it is KNOWN, and EXPECTED that there is a difference here
+        for(int i=0; i<uGrid.get_nRows(); i++) {
+            for(int j=0; j<uGrid.get_nCols(); j++) {
+                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+            }
+        }
+        std::cout << "\nrecalc dirGrid from uGrid vGrid, final dirGrid.get_meanValue() as seen by later parts of the run. This change occurs because the NO_DATA 270.0 valued dirGrid values get reset to their original 270.0 value, dropping the angle corrections, because spd, u, and v are set to NO_DATA 0.0 values. This is as desired and is expected, technically using dirGrid.get_meanValue() instead of wind_uv_to_sd(uGrid.get_meanValue(),vGrid.get_meanValue()) is a bad metric for comparisons." << std::endl;
+        std::cout << "dirGrid.get_meanValue() = " << dirGrid.get_meanValue() << "\n" << std::endl;
 
         // cleanup the intermediate grids
         speedGrid.deallocate();

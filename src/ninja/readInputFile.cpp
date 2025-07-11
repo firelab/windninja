@@ -91,6 +91,7 @@ void ninja::readInputFile()
     else
         importSingleBand(poDataset);
 
+    std::cout << "\n\nreadInputFile()\n" << std::endl;
     //compute angle between N-S grid lines in the dataset and true north
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
@@ -100,9 +101,41 @@ void ninja::readInputFile()
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
         }
     }
+    std::cout << std::endl;
+
+    // compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
+    // watch out though, in this case, the signs are REVERSED, we are going FROM geographic lat/lon TO dem projection coordinates,
+    // but this is calculating a coordinateTransformAngle going FROM dem projection coordinates TO geographic lat/lon coordinates,
+    // so the usual formula to use it, of prj2 = prj1 - coordinateTransformAngle_from_prj1_to_pjr2 needs to have reversed signs!
+    // but also, this coordinateTransformAngle of coordinateTransformAngle_from_dem_to_N is equal to -coordinateTransformAngle_from_N_to_dem = angleFromNorth
+    // so use setAngleFromNorth(-coordinateTransformationAngle) in place of setAngleFromNorth(angleFromNorth) if you want to use coordinateTransformationAngle instead of angleFromNorth for everything downstream in the code
+    double coordinateTransformationAngle = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        char* pszDstWkt;
+        OGRSpatialReferenceH hTargetSRS;
+
+        hTargetSRS = OSRNewSpatialReference(NULL);
+        OSRImportFromEPSG(hTargetSRS, 4326);
+        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
+
+        GDALDatasetH hSrcDS = input.dem.ascii2GDAL();
+        if(!GDALCalculateCoordinateTransformationAngle( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
+        {
+            printf("Warning: Unable to calculate coordinate transform angle for the domainAverageInitialization::setInitializationGrids().");
+        }
+        GDALClose(hSrcDS);
+        CPLFree(pszDstWkt);
+        OSRDestroySpatialReference(hTargetSRS);
+    }
+    std::cout << std::endl;
+    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. angleFromNorth = %lf, so projected direction = %lf", angleFromNorth, wrap0to360( 270.0 - angleFromNorth ));
+    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. coordinateTransformationAngle = %lf, so projected direction = %lf", -1*coordinateTransformationAngle, wrap0to360( 270.0 - (-1)*coordinateTransformationAngle ));
+    std::cout << "\n" << std::endl;
 
     //set the value for angleFromNorth member in the Elevation class
     input.dem.setAngleFromNorth(angleFromNorth);
+    //input.dem.setAngleFromNorth(-coordinateTransformationAngle);
 
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);
