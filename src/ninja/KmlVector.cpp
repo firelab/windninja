@@ -1786,7 +1786,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 			s = spd(i,j);
 			// the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2,
 			// where the coordinateTransformAngle that is passed around is always defined as coordinateTransformAngle_from_prj1_to_prj2 by convention
-            // but in this case, prj2 = kmz, prj1 = dem, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
+            // but in this case, prj2 = kmz/N, prj1 = dem, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
             // because angleFromNorth is stored as a value going FROM N TO prj, but here we are going FROM prj TO N, so we need to use a negative value of angleFromNorth rather than a positive value
             // so in this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
             // But, make sure to go back to a - sign in the formula, if using a standard coordinateTransformAngle = coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value

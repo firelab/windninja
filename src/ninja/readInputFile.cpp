@@ -104,11 +104,17 @@ void ninja::readInputFile()
     std::cout << std::endl;
 
     // compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
+    //
     // watch out though, in this case, the signs are REVERSED, we are going FROM geographic lat/lon TO dem projection coordinates,
     // but this is calculating a coordinateTransformAngle going FROM dem projection coordinates TO geographic lat/lon coordinates,
-    // so the usual formula to use it, of prj2 = prj1 - coordinateTransformAngle_from_prj1_to_pjr2 needs to have reversed signs!
-    // but also, this coordinateTransformAngle of coordinateTransformAngle_from_dem_to_N is equal to -coordinateTransformAngle_from_N_to_dem = angleFromNorth
-    // so use setAngleFromNorth(-coordinateTransformationAngle) in place of setAngleFromNorth(angleFromNorth) if you want to use coordinateTransformationAngle instead of angleFromNorth for everything downstream in the code
+    // so the usual formula of prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2 needs to be reconfigured slightly for this case,
+    // coordinateTransformAngle_from_prj1_to_prj2 = -coordinateTransformAngle_from_prj2_to_prj1,
+    // so the formula to use is actually prj2 = prj1 - (-1)*coordinateTransformAngle_from_prj2_to_prj1
+    //
+    // also, this coordinateTransformAngle is coordinateTransformAngle_from_dem_to_N = -coordinateTransformAngle_from_N_to_dem,
+    // and coordinateTransformAngle_from_N_to_dem = angleFromNorth, so coordinateTransformAngle_from_dem_to_N = -angleFromNorth,
+    // and so finally, angleFromNorth = -coordinateTransformAngle_from_dem_to_N = -coordinateTransformAngle.
+    // very important for using setAngleFromNorth() appropriately.
     double coordinateTransformationAngle = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
@@ -130,7 +136,7 @@ void ninja::readInputFile()
     }
     std::cout << std::endl;
     CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. angleFromNorth = %lf, so projected direction = %lf", angleFromNorth, wrap0to360( 270.0 - angleFromNorth ));
-    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. coordinateTransformationAngle = %lf, so projected direction = %lf", -1*coordinateTransformationAngle, wrap0to360( 270.0 - (-1)*coordinateTransformationAngle ));
+    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. coordinateTransformationAngle (dem_to_N) = %lf, angleFromNorth (N_to_dem) = -coordinateTransformationAngle (dem_to_N) = %lf, so projected direction = %lf", coordinateTransformationAngle, -1*coordinateTransformationAngle, wrap0to360( 270.0 - (-1)*coordinateTransformationAngle ));
     std::cout << "\n" << std::endl;
 
     //set the value for angleFromNorth member in the Elevation class
