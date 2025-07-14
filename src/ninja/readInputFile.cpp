@@ -91,31 +91,8 @@ void ninja::readInputFile()
     else
         importSingleBand(poDataset);
 
-    std::cout << "\n\nreadInputFile()\n" << std::endl;
-    //compute angle between N-S grid lines in the dataset and true north
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
     double angleFromNorth = 0.0;
-    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
-    {
-        if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))
-        {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
-        }
-    }
-    std::cout << std::endl;
-
-    // compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
-    //
-    // watch out though, in this case, the signs are REVERSED, we are going FROM geographic lat/lon TO dem projection coordinates,
-    // but this is calculating a coordinateTransformAngle going FROM dem projection coordinates TO geographic lat/lon coordinates,
-    // so the usual formula of prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2 needs to be reconfigured slightly for this case,
-    // coordinateTransformAngle_from_prj1_to_prj2 = -coordinateTransformAngle_from_prj2_to_prj1,
-    // so the formula to use is actually prj2 = prj1 - (-1)*coordinateTransformAngle_from_prj2_to_prj1
-    //
-    // also, this coordinateTransformAngle is coordinateTransformAngle_from_dem_to_N = -coordinateTransformAngle_from_N_to_dem,
-    // and coordinateTransformAngle_from_N_to_dem = angleFromNorth, so coordinateTransformAngle_from_dem_to_N = -angleFromNorth,
-    // and so finally, angleFromNorth = -coordinateTransformAngle_from_dem_to_N = -coordinateTransformAngle.
-    // very important for using setAngleFromNorth() appropriately.
-    double coordinateTransformationAngle = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
         char* pszDstWkt;
@@ -125,23 +102,25 @@ void ninja::readInputFile()
         OSRImportFromEPSG(hTargetSRS, 4326);
         OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
 
-        GDALDatasetH hSrcDS = input.dem.ascii2GDAL();
-        if(!GDALCalculateCoordinateTransformationAngle( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
+        double coordinateTransformationAngle = 0.0;
+        if(!GDALCalculateCoordinateTransformationAngle( poDataset, coordinateTransformationAngle, pszDstWkt ))
         {
-            printf("Warning: Unable to calculate coordinate transform angle for the domainAverageInitialization::setInitializationGrids().");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
         }
-        GDALClose(hSrcDS);
+
         CPLFree(pszDstWkt);
         OSRDestroySpatialReference(hTargetSRS);
+
+        // watch out, in this case, the signs are REVERSED, angleFromNorth is going FROM geographic lat/lon TO dem projection coordinates,
+        // but the above coordinateTransformAngle is going FROM dem projection coordinates TO geographic lat/lon coordinates,
+        // so angleFromNorth = -coordinateTransformAngle.
+        angleFromNorth = -coordinateTransformationAngle;
     }
-    std::cout << std::endl;
-    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. angleFromNorth = %lf, so projected direction = %lf", angleFromNorth, wrap0to360( 270.0 - angleFromNorth ));
-    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. coordinateTransformationAngle (dem_to_N) = %lf, angleFromNorth (N_to_dem) = -coordinateTransformationAngle (dem_to_N) = %lf, so projected direction = %lf", coordinateTransformationAngle, -1*coordinateTransformationAngle, wrap0to360( 270.0 - (-1)*coordinateTransformationAngle ));
-    std::cout << "\n" << std::endl;
+
+    CPLDebug("NINJA", "assume input.inputSpeed = 5.0, assume input.inputDirection = 270.0. angleFromNorth (N_to_dem) = %lf, theta_dem = theta_geo - alpha_N_to_dem, so projected direction = %lf", angleFromNorth, wrap0to360( 270.0 - angleFromNorth ));
 
     //set the value for angleFromNorth member in the Elevation class
     input.dem.setAngleFromNorth(angleFromNorth);
-    //input.dem.setAngleFromNorth(-coordinateTransformationAngle);
 
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);

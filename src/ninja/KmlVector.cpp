@@ -1743,38 +1743,9 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 	nR = spd.get_nRows();
 	nC = spd.get_nCols();
 
-    std::cout << "\nKmlVector::writeVectors()\n" << std::endl;
-
-    // calc coordinateTransformAngle for dir projection coordinates to kmz geographic lat/lon coordinates
-	double coordinateTransformationAngle = 0.0;
-    //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
-    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
-    {
-        char* pszDstWkt;
-        OGRSpatialReferenceH hTargetSRS;
-
-        hTargetSRS = OSRNewSpatialReference(NULL);
-        OSRImportFromEPSG(hTargetSRS, 4326);
-        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
-
-        GDALDatasetH hSrcDS = dir.ascii2GDAL();
-        ////GDALDatasetH hSrcDS = input.dem.ascii2GDAL();  // values are slightly different, but not by much
-        if(!GDALCalculateCoordinateTransformationAngle( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
-        {
-            printf("Warning: Unable to calculate coordinate transform angle for the kmz output.");
-        }
-        GDALClose(hSrcDS);
-        CPLFree(pszDstWkt);
-        OSRDestroySpatialReference(hTargetSRS);
-    }
-    std::cout << std::endl;
-
-    std::cout << "dir.get_meanValue() = " << dir.get_meanValue() << std::endl;
-    std::cout << "angleFromNorth = " << angleFromNorth << std::endl;
-    std::cout << "coordinateTransformationAngle = " << coordinateTransformationAngle << std::endl;
-    std::cout << "wrap0to360( dir.get_meanValue() + angleFromNorth ) = " << wrap0to360( dir.get_meanValue() + angleFromNorth ) << std::endl;
-    std::cout << "wrap0to360( dir.get_meanValue() - coordinateTransformationAngle ) = " << wrap0to360( dir.get_meanValue() - coordinateTransformationAngle ) << std::endl;
-    std::cout << "\n" << std::endl;
+    CPLDebug("NINJA", "dir.get_meanValue() = %lf", dir.get_meanValue());
+    CPLDebug("NINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth);
+    CPLDebug("NINJA", "wrap0to360( dir.get_meanValue() - (-1)*angleFromNorth ) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ));
 
 	//double PI = acos(-1.0);
 	geTheta = 0;
@@ -1784,15 +1755,13 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 		{
 			yScale = 0.5;
 			s = spd(i,j);
-			// the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2,
-			// where the coordinateTransformAngle that is passed around is always defined as coordinateTransformAngle_from_prj1_to_prj2 by convention
-            // but in this case, prj2 = kmz/N, prj1 = dem, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
-            // because angleFromNorth is stored as a value going FROM N TO prj, but here we are going FROM prj TO N, so we need to use a negative value of angleFromNorth rather than a positive value
-            // so in this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
-            // But, make sure to go back to a - sign in the formula, if using a standard coordinateTransformAngle = coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value
-////		geTheta = wrap0to360( dir(i,j) - angleFromNorth );  // old formula, with the old angleFromNorth as a positive value going FROM dem TO kmz, instead of as the new convention negative value going FROM kmz TO dem
+			// the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
+            // but in this case, prj1 = dem, prj2 = kmz, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
+            // this is because angleFromNorth is stored as a value going FROM N TO dem, but here we are going FROM dem TO N,
+            // so we need to use a negative value for angleFromNorth rather than a positive value
+            // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
+            // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
 			geTheta = wrap0to360( dir(i,j) + angleFromNorth );
-			//geTheta = wrap0to360( dir(i,j) - coordinateTransformationAngle );
 			theta = dir(i,j) + 180.0;
 
 			if(s <= splitValue[1])

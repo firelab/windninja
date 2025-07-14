@@ -428,9 +428,10 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
-    //compute angle of line formed between projected x1,y1 and x2,y2 and true north
-    //call the line parallel to true north in the projected CRS "a", the line formed
-    //by our points (x1,y1) (x2,y2) "b", and the angle between a and b theta
+    //compute angle of the line formed between projected (x1,y1) to (x2,y2) (projected true north)
+    //and projected (x1,y1) to (x1,y2) (y coordinate gridline of the projected CRS).
+    //call the line going from (x1,y1) to (x2,y2) in the projected CRS "b", the line formed
+    //by our points (x1,y1) to (x1,y2) "a", and the angle between a and b "theta"
     //cos(theta) = a dot b /(|a||b|)
     //a dot b = axbx + ayby
     //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
@@ -449,14 +450,15 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 
     angleFromNorth = acos(adotb/(mag_a * mag_b)); //compute angle in radians
     // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
-    // if bx is positive, then the angle is going clockwise from true north, and the dataset rotated counter clockwise, so the angleFromNorth is added as a corrector
-    // if bx is negative, then the angle is going counter clockwise from true north, and the dataset rotated clockwise, so the angleFromNorth is subtracted as a corrector
+    // if bx is positive, the arrow b is pointed right from a, so the angle is positive
+    // if bx is negative, the arrow b is pointed  left from a, so the angle is negative
     if( bx < 0 )
     {
         angleFromNorth = -1*angleFromNorth;
     }
-    // except that the derived angles are going FROM b TO a, NOT FROM b TO a as derived above, so need to reverse the sign, for all cases
-    // need to go FROM true north TO the y coordinate grid line of the DS, FROM b TO a, not the other way around
+    // except that this would define angles as going FROM a TO b, so FROM the y coordinate grid line of the DS TO true north
+    // but the convention we are using for angleFromNorth is FROM true north TO the y coordinate grid line of the DS, so FROM b TO a, the reverse
+    // so need to reverse the sign, for all cases
     angleFromNorth = -1*angleFromNorth;
     CPLDebug( "WINDNINJA", "angleFromNorth in radians = %lf", angleFromNorth );
     //convert the result from radians to degrees
@@ -485,7 +487,7 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     }
 
     x2 = x1;
-/*
+
     //add 1/4 size of the poSrcDS extent in y direction, in the projection of the poSrcDS
     if(!GDALGetBounds( poSrcDS, bounds, NULL ))
     {
@@ -493,14 +495,18 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     }
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
-*/
-    //add 1/4 size of the poSrcDS y cell size in y direction, in the projection of the poSrcDS
-    double adfGeoTransform[6];
-    poSrcDS->GetGeoTransform( adfGeoTransform );
-    double yCellSize = -adfGeoTransform[5];
-    CPLDebug( "WINDNINJA", "yCellSize = %lf", yCellSize );
 
-    y2 = y1 + 0.25*yCellSize;
+    // the resulting angle value calculated by GDALCalculateCoordinateTransformationAngle() for the dem TO geographic,
+    // does NOT match the resulting angle value calculated by (-1)*GDALCalculateAngleFromNorth() for the dem
+    // I thought that maybe it had to do with the stretch of the grid, that (x1,y1) to (x2,y2) crosses too many varyingly stretched grid cells
+    // so I tried using 1/4 the cell size instead of 1/4 the bounds, but it didn't get the values to match.
+//    //add 1/4 size of the poSrcDS y cell size in y direction, in the projection of the poSrcDS
+//    double adfGeoTransform[6];
+//    poSrcDS->GetGeoTransform( adfGeoTransform );
+//    double yCellSize = -adfGeoTransform[5];
+//    CPLDebug( "WINDNINJA", "yCellSize = %lf", yCellSize );
+//
+//    y2 = y1 + 0.25*yCellSize;
 
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
@@ -519,9 +525,10 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
-    //compute angle of line formed between the projected (x1,y1) and (x2,y2) and the y coordinate grid line (in the pszDstWkt projection coordinates)
-    //call the line parallel to the y coordinate grid line of the poSrcDS in the projected CRS "a", the line formed by our points (x1,y1) (x2,y2) "b"
-    //and the angle between a and b theta
+    //compute angle of the line formed between projected (x1,y1) to (x2,y2) (y coordinate gridline of poSrcDS, in the pszDstWkt projection coordinates)
+    //and projected (x1,y1) to (x1,y2) (y coordinate gridline of the pszDstWkt projection coordinate system, in the pszDstWkt projection coordinates).
+    //call the line going from (x1,y1) to (x2,y2) in the projected CRS "b", the line formed
+    //by our points (x1,y1) to (x1,y2) "a", and the angle between a and b "theta"
     //cos(theta) = a dot b /(|a||b|)
     //a dot b = axbx + ayby
     //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
@@ -540,17 +547,15 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
 
     coordinateTransformAngle = acos(adotb/(mag_a * mag_b)); //compute angle in radians
     // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
-    // if bx is negative, the arrow is pointed  left from a, so the final angle is negative
-    // if bx is positive, the arrow is pointed right from a, so the final angle is positive
+    // if bx is positive, the arrow b is pointed right from a, so the angle is positive
+    // if bx is negative, the arrow b is pointed  left from a, so the angle is negative
     if( bx < 0 )
     {
         coordinateTransformAngle = -1*coordinateTransformAngle;
     }
-    // angles ARE going FROM a TO b, NOT FROM b TO a, so in theory no need to reverse the sign
-    // going FROM a TO b is already going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference
-    // BUT, this draws negative a as left of b, and positive a as right of b, and when going from a to b where a is left of b should be POSITIVE,
-    // and when going from a to b where a is right of b should be NEGATIVE, by our conventions.
-    // So actually we DO want to reverse the sign, for all cases, for our convention
+    // except that this would define angles as going FROM a TO b, so FROM the y coordinate grid line of the output spatial reference TO the y coordinate grid line of the DS
+    // but the convention we are using for coordinateTransformAngle is FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference, the reverse
+    // so need to reverse the sign, for all cases
     coordinateTransformAngle = -1*coordinateTransformAngle;
     CPLDebug( "WINDNINJA", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
     //convert the result from radians to degrees
