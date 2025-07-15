@@ -1163,6 +1163,10 @@ bool KmlVector::writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut)
 
     //make bitmap
     int legendWidth = 11.25 * wxModelName.size();
+    if(legendWidth < 285)
+    {
+      legendWidth = 285;
+    }
     int legendHeight = 78;
     BMP legend;
 
