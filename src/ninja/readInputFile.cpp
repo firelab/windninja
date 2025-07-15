@@ -102,15 +102,11 @@ void ninja::readInputFile()
         OSRImportFromEPSG(hTargetSRS, 4326);
         OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
 
-        if(!GDALCalculateCoordinateTransformationAngle( poDataset, angleFromNorth, pszDstWkt ))
+        // direct calculation of FROM geo TO dem
+        if(!GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( poDataset, angleFromNorth, pszDstWkt ))
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
         }
-
-        // WATCH OUT, in this case, the signs are REVERSED, angleFromNorth is going FROM geographic lat/lon TO dem projection coordinates,
-        // but the above coordinateTransformAngle is going FROM dem projection coordinates TO geographic lat/lon coordinates,
-        // so angleFromNorth = (-1)*coordinateTransformAngle_from_dem_to_geo.
-        angleFromNorth = -angleFromNorth;
 
         CPLFree(pszDstWkt);
         OSRDestroySpatialReference(hTargetSRS);

@@ -271,7 +271,7 @@ void ncepNamGrib2SurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
-        if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))
+        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))
         {
             printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
         }

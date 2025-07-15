@@ -49,11 +49,12 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
 bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszWkt );
 bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth );
-bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszWkt );
+bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszWkt );
+bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszWkt );
 bool GDALTestSRS( GDALDataset *poDS );
 bool GDALHasNoData( GDALDataset *poDS, int band );
 bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid );
-bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszWkt );
+bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszWkt, bool from_dst_to_src=false );
 bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poDstDS,
                           const char *datum );
 bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,

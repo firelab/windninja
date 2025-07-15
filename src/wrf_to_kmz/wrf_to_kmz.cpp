@@ -837,7 +837,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         {
             if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
             {
-                if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt ))
+                if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt ))
                 {
                     printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
                 }

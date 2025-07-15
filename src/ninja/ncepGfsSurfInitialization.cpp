@@ -536,7 +536,7 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         {
             if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
             {
-                if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))
+                if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))
                 {
                     printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
                 }
