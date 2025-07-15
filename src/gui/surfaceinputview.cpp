@@ -26,6 +26,7 @@ SurfaceInputView::SurfaceInputView(Ui::MainWindow *ui,
   connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &SurfaceInputView::surfaceInputDownloadButtonClicked);
   connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &SurfaceInputView::elevationInputFileOpenButtonClicked);
   connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &SurfaceInputView::elevationInputTypePushButtonClicked);
+
 }
 
 

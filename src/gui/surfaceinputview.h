@@ -32,6 +32,7 @@ signals:
 
 public slots:
   void boundingBoxReceived(double north, double south, double east, double west);
+  void elevationInputFileOpenButtonClicked();
 
 private slots:
   void surfaceInputDownloadCancelButtonClicked();
@@ -41,7 +42,6 @@ private slots:
   void boundingBoxLineEditsTextChanged();
   void pointRadiusLineEditsTextChanged();
   void elevationInputFileDownloadButtonClicked();
-  void elevationInputFileOpenButtonClicked();
   void elevationInputFileLineEditTextChanged(const QString &arg1);
   void meshResolutionComboBoxCurrentIndexChanged(int index);
   void fetchDEMFinished();

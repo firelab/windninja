@@ -316,6 +316,7 @@ void MainWindow::connectSignals()
   connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
   connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInputView, &SurfaceInputView::boundingBoxReceived);
   connect(surfaceInputView, &SurfaceInputView::requestRefresh, this, &MainWindow::refreshUI);
+  connect(this, &MainWindow::openElevationFile, surfaceInputView, &SurfaceInputView::elevationInputFileOpenButtonClicked);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -679,20 +680,30 @@ void MainWindow::solveButtonClicked()
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
-  if (item->text(0) == "Conservation of Mass") {
+  if (item->text(0) == "Conservation of Mass")
+  {
     ui->massSolverCheckBox->click();
-  } else if (item->text(0) == "Conservation of Mass and Momentum") {
+  } else if (item->text(0) == "Conservation of Mass and Momentum")
+  {
     ui->momentumSolverCheckBox->click();
-  } else if (item->text(0) == "Diurnal Input") {
+  } else if (item->text(0) == "Diurnal Input")
+  {
     ui->diurnalCheckBox->click();
-  } else if (item->text(0) == "Stability Input") {
+  } else if (item->text(0) == "Stability Input")
+  {
     ui->stabilityCheckBox->click();
-  } else if (item->text(0) == "Domain Average Wind") {
+  } else if (item->text(0) == "Domain Average Wind")
+  {
     ui->domainAverageCheckBox->click();
-  } else if (item->text(0) == "Point Initialization") {
+  } else if (item->text(0) == "Point Initialization")
+  {
     ui->pointInitializationCheckBox->click();
-  } else if (item->text(0) == "Weather Model") {
+  } else if (item->text(0) == "Weather Model")
+  {
     ui->useWeatherModelInit->click();
+  } else if (item->text(0) == "Surface Input")
+  {
+    emit openElevationFile();
   }
 }
 

@@ -59,6 +59,9 @@ public:
   MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
+signals:
+  void openElevationFile();
+
 private slots:
   void massSolverCheckBoxClicked();
   void momentumSolverCheckBoxClicked();
