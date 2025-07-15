@@ -14,7 +14,7 @@ public:
 
   QString fetchTimeZoneDetails(QString currentTimeZone);
   QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
-  int fetchDEMFile(double boundingBox[], std::string demFile, double resolution, std::string fetchType);
+  int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
   void computeDEMFile(QString filePath);
   double computeMeshResolution(int index, bool isMomemtumChecked);
   void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);

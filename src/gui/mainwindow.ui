@@ -1079,7 +1079,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="title">
                <string>Time Zone</string>
               </property>
-              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0" columnstretch="0">
+              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0" columnstretch="0">
                <item row="0" column="0">
                 <layout class="QHBoxLayout" name="timeZoneInputLayout">
                  <item>
@@ -1196,7 +1196,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer">
+             <spacer name="sufaceInputSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>

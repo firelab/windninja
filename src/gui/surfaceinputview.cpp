@@ -139,22 +139,12 @@ void SurfaceInputView::surfaceInputDownloadCancelButtonClicked()
 
 void SurfaceInputView::surfaceInputDownloadButtonClicked()
 {
-  double boundingBox[4];
-  switch(ui->elevationInputTypeStackedWidget->currentIndex())
-  {
-  case 0:
-    boundingBox[0] = ui->boundingBoxNorthLineEdit->text().toDouble();
-    boundingBox[1] = ui->boundingBoxEastLineEdit->text().toDouble();
-    boundingBox[2] = ui->boundingBoxSouthLineEdit->text().toDouble();
-    boundingBox[3] = ui->boundingBoxWestLineEdit->text().toDouble();
-    break;
-  case 1:
-    double centerLat = ui->pointRadiusLatLineEdit->text().toDouble();
-    double centerLon = ui->pointRadiusLonLineEdit->text().toDouble();
-    double radius = ui->pointRadiusRadiusLineEdit->text().toDouble();
-    surfaceInput->computeBoundingBox(centerLat, centerLon, radius, boundingBox);
-    break;
-  }
+  QVector<double> boundingBox = {
+      ui->boundingBoxNorthLineEdit->text().toDouble(),
+      ui->boundingBoxEastLineEdit->text().toDouble(),
+      ui->boundingBoxSouthLineEdit->text().toDouble(),
+      ui->boundingBoxWestLineEdit->text().toDouble()
+  };
 
   double resolution = 30;
 
@@ -169,7 +159,7 @@ void SurfaceInputView::surfaceInputDownloadButtonClicked()
   if (!demFilePath.endsWith(".tif", Qt::CaseInsensitive)) {
     demFilePath += ".tif";
   }
-  currentDemFilePath = demFilePath;
+  currentDEMFilePath = demFilePath;
   std::string demFile = demFilePath.toStdString();
 
   std::string fetchType;
@@ -186,25 +176,7 @@ void SurfaceInputView::surfaceInputDownloadButtonClicked()
     break;
   }
 
-  QProgressDialog progress("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
-  progress.setWindowModality(Qt::WindowModal);
-  progress.setCancelButton(nullptr);
-  progress.setMinimumDuration(0);
-  progress.show();
-
-  QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, surfaceInput, boundingBox, demFile, resolution, fetchType);
-  QFutureWatcher<int> futureWatcher;
-  futureWatcher.setFuture(future);
-
-  QEventLoop loop;
-  QObject::connect(&futureWatcher, &QFutureWatcher<void>::finished, &loop, &QEventLoop::quit);
-  loop.exec();
-
-  progress.close();
-
-  ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
-  int currentIndex = ui->inputsStackedWidget->currentIndex();
-  ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+  startFetchDEM(boundingBox, demFile, resolution, fetchType);
 }
 
 void SurfaceInputView::elevationInputFileDownloadButtonClicked()
@@ -225,7 +197,7 @@ void SurfaceInputView::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInputView::elevationInputFileLineEditTextChanged(const QString &arg1)
 {
-  surfaceInput->computeDEMFile(currentDemFilePath);
+  surfaceInput->computeDEMFile(currentDEMFilePath);
   surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
 
   ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
@@ -235,9 +207,9 @@ void SurfaceInputView::elevationInputFileLineEditTextChanged(const QString &arg1
 void SurfaceInputView::elevationInputFileOpenButtonClicked()
 {
   QString directoryPath;
-  if(!currentDemFilePath.isEmpty())
+  if(!currentDEMFilePath.isEmpty())
   {
-    directoryPath = currentDemFilePath;
+    directoryPath = currentDEMFilePath;
   }
   else {
     directoryPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
@@ -245,15 +217,49 @@ void SurfaceInputView::elevationInputFileOpenButtonClicked()
   QString demFilePath = QFileDialog::getOpenFileName(ui->centralwidget, "Select a file", directoryPath, "(*.tif);;All Files (*)");
 
   if (demFilePath.isEmpty()) {
-    if (!currentDemFilePath.isEmpty()) {
-      ui->elevationInputFileLineEdit->setText(QFileInfo(currentDemFilePath).fileName());
-      ui->elevationInputFileLineEdit->setToolTip(currentDemFilePath);
+    if (!currentDEMFilePath.isEmpty()) {
+      ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
+      ui->elevationInputFileLineEdit->setToolTip(currentDEMFilePath);
     }
     return;
   }
 
-  currentDemFilePath = demFilePath;
+  currentDEMFilePath = demFilePath;
   ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
   ui->elevationInputFileLineEdit->setToolTip(demFilePath);
+}
+
+void SurfaceInputView::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
+{
+  progress = new QProgressDialog("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
+  progress->setWindowModality(Qt::WindowModal);
+  progress->setCancelButton(nullptr);
+  progress->setMinimumDuration(0);
+  progress->setAutoClose(true);
+  progress->show();
+
+  futureWatcher = new QFutureWatcher<int>(this);
+  QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, surfaceInput, boundingBox, demFile, resolution, fetchType);
+  futureWatcher->setFuture(future);
+
+  connect(futureWatcher, &QFutureWatcher<int>::finished, this, &SurfaceInputView::fetchDEMFinished);
+}
+
+void SurfaceInputView::fetchDEMFinished()
+{
+  if (progress) {
+    progress->close();
+    progress->deleteLater();
+    progress = nullptr;
+  }
+
+  if (futureWatcher) {
+    futureWatcher->deleteLater();
+    futureWatcher = nullptr;
+  }
+
+  ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
+  int currentIndex = ui->inputsStackedWidget->currentIndex();
+  ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
 }
 

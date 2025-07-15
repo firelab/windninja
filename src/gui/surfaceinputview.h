@@ -44,15 +44,19 @@ private slots:
   void elevationInputFileOpenButtonClicked();
   void elevationInputFileLineEditTextChanged(const QString &arg1);
   void meshResolutionComboBoxCurrentIndexChanged(int index);
+  void fetchDEMFinished();
 
 private:
+  void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
   Ui::MainWindow *ui;
   QWebEngineView *webView;
   SurfaceInput *surfaceInput;
 
-  QFutureWatcher<int> futureWatcher;
+  QProgressDialog *progress;
+  QFutureWatcher<int> *futureWatcher;
 
-  QString currentDemFilePath;
+
+  QString currentDEMFilePath;
 };
 
 #endif // SURFACEINPUTVIEW_H
