@@ -1,5 +1,4 @@
 #include "surfaceinput.h"
-#include <QDebug>
 
 SurfaceInput::SurfaceInput()
 {
@@ -47,10 +46,9 @@ QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
 
   QString standardName = matchedRow.value(2);
   QString daylightName = matchedRow.value(4);
-  QString stdOffsetStr = matchedRow.value(5);  // Already in HH:MM:SS
-  QString dstAdjustStr = matchedRow.value(6);  // Already in HH:MM:SS
+  QString stdOffsetStr = matchedRow.value(5);
+  QString dstAdjustStr = matchedRow.value(6);
 
-         // Function to convert signed HH:MM:SS to total seconds
   auto timeToSeconds = [](const QString& t) -> int {
     QString s = t.trimmed();
     bool negative = s.startsWith('-');
@@ -163,7 +161,7 @@ int SurfaceInput::fetchDEMFile(double boundingBox[], std::string demFile, double
   }
 }
 
-int SurfaceInput::computeDEMFile(QString filePath)
+void SurfaceInput::computeDEMFile(QString filePath)
 {
   double adfGeoTransform[6];
   GDALDataset *poInputDS;
@@ -197,7 +195,6 @@ int SurfaceInput::computeDEMFile(QString filePath)
 
   GDALClose((GDALDatasetH)poInputDS);
 
-  return 0;
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)

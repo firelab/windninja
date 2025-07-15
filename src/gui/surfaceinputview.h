@@ -39,6 +39,7 @@ private slots:
   void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
   void elevationInputTypePushButtonClicked();
   void boundingBoxLineEditsTextChanged();
+  void pointRadiusLineEditsTextChanged();
   void elevationInputFileDownloadButtonClicked();
   void elevationInputFileOpenButtonClicked();
   void elevationInputFileLineEditTextChanged(const QString &arg1);

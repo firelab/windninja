@@ -130,16 +130,10 @@
       mbrLayer.clearLayers();
 
       const bounds = [[south, west], [north, east]];
-      const rectangle = L.rectangle(bounds, {
-        color: '#ff7800',
-        weight: 2
-      }).addTo(mbrLayer);
+      const rectangle = L.rectangle(bounds).addTo(mbrLayer);
+      
+      rectangle.editing.enable(); 
 
-      map.fitBounds(rectangle.getBounds());
-
-      rectangle.editing.enable(); // Enable edit mode
-
-      // Send bounding box to bridge
       function sendBoundingBox() {
         const bounds = rectangle.getBounds();
         const bboxData = {
@@ -153,9 +147,7 @@
           window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
         }
       }
-
-      sendBoundingBox(); // Send initially
-      rectangle.on('edit', sendBoundingBox); // Send on edits
+      rectangle.on('edit', sendBoundingBox);
     }
 
     const rectangleDrawer = new L.Draw.Rectangle(map);

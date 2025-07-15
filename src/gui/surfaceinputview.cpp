@@ -14,6 +14,9 @@ SurfaceInputView::SurfaceInputView(Ui::MainWindow *ui,
   connect(ui->boundingBoxSouthLineEdit, &QLineEdit::textChanged, this, &SurfaceInputView::boundingBoxLineEditsTextChanged);
   connect(ui->boundingBoxEastLineEdit, &QLineEdit::textChanged, this, &SurfaceInputView::boundingBoxLineEditsTextChanged);
   connect(ui->boundingBoxWestLineEdit, &QLineEdit::textChanged, this, &SurfaceInputView::boundingBoxLineEditsTextChanged);
+  connect(ui->pointRadiusLatLineEdit,&QLineEdit::textChanged, this, &SurfaceInputView::pointRadiusLineEditsTextChanged);
+  connect(ui->pointRadiusLonLineEdit,&QLineEdit::textChanged, this, &SurfaceInputView::pointRadiusLineEditsTextChanged);
+  connect(ui->pointRadiusRadiusLineEdit,&QLineEdit::textChanged, this, &SurfaceInputView::pointRadiusLineEditsTextChanged);
   connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &SurfaceInputView::elevationInputFileDownloadButtonClicked);
   connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &SurfaceInputView::elevationInputFileOpenButtonClicked);
   connect(ui->elevationInputFileLineEdit, &QLineEdit::textChanged, this, &SurfaceInputView::elevationInputFileLineEditTextChanged);
@@ -54,9 +57,6 @@ void SurfaceInputView::elevationInputTypePushButtonClicked()
 
 void SurfaceInputView::boundingBoxReceived(double north, double south, double east, double west)
 {
-  qDebug() << "MainWindow received bbox: "
-           << north << south << east << west;
-
   ui->boundingBoxNorthLineEdit->blockSignals(true);
   ui->boundingBoxEastLineEdit->blockSignals(true);
   ui->boundingBoxSouthLineEdit->blockSignals(true);
@@ -72,14 +72,13 @@ void SurfaceInputView::boundingBoxReceived(double north, double south, double ea
   ui->boundingBoxSouthLineEdit->blockSignals(false);
   ui->boundingBoxWestLineEdit->blockSignals(false);
 
-  ui->elevationInputTypePushButton->setChecked(false);
-
   double pointRadius[3];
   surfaceInput->computePointRadius(north, east, south, west, pointRadius);
-
   ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
   ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
   ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+
+  ui->elevationInputTypePushButton->setChecked(false);
 }
 
 void SurfaceInputView::boundingBoxLineEditsTextChanged()
@@ -91,17 +90,33 @@ void SurfaceInputView::boundingBoxLineEditsTextChanged()
   double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
   double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
 
-  qDebug() << north << south << east << west;
-
   if (isNorthValid && isEastValid && isSouthValid && isWestValid)
   {
     QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
-    .arg(north, 0, 'f', 10)
-        .arg(south, 0, 'f', 10)
-        .arg(east,  0, 'f', 10)
-        .arg(west,  0, 'f', 10);
-
+                     .arg(north, 0, 'f', 10)
+                     .arg(south, 0, 'f', 10)
+                     .arg(east,  0, 'f', 10)
+                     .arg(west,  0, 'f', 10);
     webView->page()->runJavaScript(js);
+  }
+}
+
+void SurfaceInputView::pointRadiusLineEditsTextChanged()
+{
+  bool isLatValid, isLonValid, isRadiusValid;
+
+  double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
+  double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
+  double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
+  double boundingBox[4];
+
+  if(isLatValid && isLonValid && isRadiusValid)
+  {
+    surfaceInput->computeBoundingBox(lat, lon, radius, boundingBox);
+    ui->boundingBoxNorthLineEdit->setText(QString::number(boundingBox[0]));
+    ui->boundingBoxEastLineEdit->setText(QString::number(boundingBox[1]));
+    ui->boundingBoxSouthLineEdit->setText(QString::number(boundingBox[2]));
+    ui->boundingBoxWestLineEdit->setText(QString::number(boundingBox[3]));
   }
 }
 
@@ -177,19 +192,13 @@ void SurfaceInputView::surfaceInputDownloadButtonClicked()
   progress.setMinimumDuration(0);
   progress.show();
 
-  // Start the future
   QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, surfaceInput, boundingBox, demFile, resolution, fetchType);
   QFutureWatcher<int> futureWatcher;
   futureWatcher.setFuture(future);
 
-  // Use a local event loop to wait until the operation is done
   QEventLoop loop;
   QObject::connect(&futureWatcher, &QFutureWatcher<void>::finished, &loop, &QEventLoop::quit);
-  loop.exec();  // blocks but keeps UI responsive
-
-  progress.close();  // optional, will close automatically as it's parented to the UI
-
-  int result = surfaceInput->fetchDEMFile(boundingBox, demFile, resolution, fetchType);
+  loop.exec();
 
   progress.close();
 
