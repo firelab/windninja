@@ -1,8 +1,7 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
-#include "gdal_utils.h"
-#include "gdal_priv.h"
+#include "../ninja/gdal_util.h""
 #include "../ninja/windninja.h"
 #include <QDebug>
 #include <QFile>
@@ -19,11 +18,13 @@ public:
   double computeMeshResolution(int index, bool isMomemtumChecked);
   void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
   void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
+  void getDEMCorners(double bbox[4]);
 
 private:
   QString GDALDriverName;
   int GDALXSize, GDALYSize;
   double GDALCellSize, GDALMaxValue, GDALMinValue;
+  double DEMCorners[8];
 };
 
 #endif // SURFACEINPUT_H

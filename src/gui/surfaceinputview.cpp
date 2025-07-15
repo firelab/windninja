@@ -228,6 +228,16 @@ void SurfaceInputView::elevationInputFileOpenButtonClicked()
   currentDEMFilePath = demFilePath;
   ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
   ui->elevationInputFileLineEdit->setToolTip(demFilePath);
+
+  double boundingBox[4];
+  surfaceInput->getDEMCorners(boundingBox);
+
+  QString js = QString("drawDEM(%1, %2, %3, %4);")
+                   .arg(boundingBox[0], 0, 'f', 8)
+                   .arg(boundingBox[1], 0, 'f', 8)
+                   .arg(boundingBox[2],  0, 'f', 8)
+                   .arg(boundingBox[3],  0, 'f', 8);
+  webView->page()->runJavaScript(js);
 }
 
 void SurfaceInputView::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)

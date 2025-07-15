@@ -149,6 +149,17 @@
       }
       rectangle.on('edit', sendBoundingBox);
     }
+    
+  function drawDEM(north, south, east, west) {
+    const bounds = [[south, west], [north, east]];
+
+    const rectangle = L.rectangle(bounds, {
+      color: 'black',
+      weight: 2,
+      fill: false
+    }).addTo(mbrLayer);
+  }
+
 
     const rectangleDrawer = new L.Draw.Rectangle(map);
     function startRectangleDrawing() {

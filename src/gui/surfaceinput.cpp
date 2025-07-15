@@ -170,6 +170,7 @@ void SurfaceInput::computeDEMFile(QString filePath)
   GDALDriverName = poInputDS->GetDriver()->GetDescription();
   GDALXSize = poInputDS->GetRasterXSize();
   GDALYSize = poInputDS->GetRasterYSize();
+  GDALGetCorners(poInputDS, DEMCorners);
 
   if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None) {
     double c1, c2;
@@ -329,4 +330,17 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
 
   qDebug() << "Center (Lat, Lon):" << centerLat << centerLon;
   qDebug() << "Estimated Radius (mi):" << radius;
+}
+
+void SurfaceInput::getDEMCorners(double bbox[4])
+{
+  double west  = std::min({DEMCorners[0], DEMCorners[2], DEMCorners[4], DEMCorners[6]});
+  double east  = std::max({DEMCorners[0], DEMCorners[2], DEMCorners[4], DEMCorners[6]});
+  double south = std::min({DEMCorners[1], DEMCorners[3], DEMCorners[5], DEMCorners[7]});
+  double north = std::max({DEMCorners[1], DEMCorners[3], DEMCorners[5], DEMCorners[7]});
+
+  bbox[0] = north;
+  bbox[1] = east;
+  bbox[2] = south;
+  bbox[3] = west;
 }

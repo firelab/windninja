@@ -430,6 +430,7 @@ void MainWindow::timeZoneAllZonesCheckBoxClicked()
 
   // Default to America/Denver
   ui->timeZoneComboBox->setCurrentText("America/Denver");
+  ui->timeZoneComboBox->setMaxVisibleItems(15);
 }
 
 void MainWindow::timeZoneDetailsCheckBoxClicked()

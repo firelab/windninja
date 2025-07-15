@@ -36,6 +36,7 @@
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
+#include <QListView>
 #include <vector>
 #include <string>
 
