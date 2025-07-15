@@ -572,7 +572,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="solverMethodologyInformationSpacer">
+             <spacer name="solverMethodologyInformationPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -706,7 +706,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="momentumSolverSpacer">
+             <spacer name="momentumSolverPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -735,7 +735,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QTextEdit" name="inputInformationPageTextEdit">
+             <widget class="QTextEdit" name="inputsInformationPageTextEdit">
               <property name="font">
                <font>
                 <pointsize>8</pointsize>
@@ -766,7 +766,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="inputInformationPageSpacer">
+             <spacer name="inputsInformationPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -876,7 +876,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="elevationInputFileSpacer">
+                <spacer name="elevationInputFileGroupBoxSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -985,7 +985,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="meshResolutionSpacer">
+                <spacer name="meshResolutionGroupBoxSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -1047,7 +1047,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="vegetationSpacer">
+                <spacer name="vegetationGroupBoxSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -1079,7 +1079,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="title">
                <string>Time Zone</string>
               </property>
-              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0" columnstretch="0">
+              <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0" columnstretch="0">
                <item row="0" column="0">
                 <layout class="QHBoxLayout" name="timeZoneInputLayout">
                  <item>
@@ -1132,6 +1132,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </property>
                    <property name="text">
                     <string>Show All Zones</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -1192,16 +1195,29 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                 </widget>
                </item>
+               <item row="2" column="0">
+                <spacer name="timeZoneGroupBoxSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
               </layout>
              </widget>
             </item>
             <item>
-             <spacer name="sufaceInputSpacer">
+             <spacer name="sufaceInputPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeType">
-               <enum>QSizePolicy::Policy::MinimumExpanding</enum>
+               <enum>QSizePolicy::Policy::Expanding</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -1288,7 +1304,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <spacer name="elevationInputTypeSpacer">
+                  <spacer name="elevationInputTypeGroupBoxSpacer">
                    <property name="orientation">
                     <enum>Qt::Orientation::Horizontal</enum>
                    </property>
@@ -1452,7 +1468,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </layout>
             </item>
             <item>
-             <spacer name="surfaceInputDownloadSpacer">
+             <spacer name="surfaceInputDownloadPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1497,7 +1513,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="diurnalSpacer">
+             <spacer name="diurnalInputPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1539,7 +1555,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="stabilitySpacer">
+             <spacer name="stabilityInputPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -1594,7 +1610,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="inputWindHeight">
+             <widget class="QGroupBox" name="inputWindHeightGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -1673,7 +1689,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <spacer name="windHeightSpacer">
+                <spacer name="inputWindHeightGroupBoxSpacer">
                  <property name="orientation">
                   <enum>Qt::Orientation::Horizontal</enum>
                  </property>
@@ -2887,7 +2903,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="solverSpacer">
+             <spacer name="solverPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
