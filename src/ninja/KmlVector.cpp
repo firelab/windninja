@@ -1745,7 +1745,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 
     CPLDebug("NINJA", "dir.get_meanValue() = %lf", dir.get_meanValue());
     CPLDebug("NINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth);
-    CPLDebug("NINJA", "wrap0to360( dir.get_meanValue() - (-1)*angleFromNorth ) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ));
+    CPLDebug("NINJA", "corrected direction = wrap0to360( dir.get_meanValue() - (-1)*angleFromNorth ) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ));
 
 	//double PI = acos(-1.0);
 	geTheta = 0;

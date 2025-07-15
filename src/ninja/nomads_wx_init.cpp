@@ -566,7 +566,12 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
 
-    std::cout << "\n\nnomads, pre warp" << std::endl;
+    std::cout << "\n\nNomadsWxModel::setSurfaceGrids()\n" << std::endl;
+
+    std::cout << "pszSrcWkt = \"" << pszSrcWkt << "\"" << std::endl;
+    std::cout << "pszDstWkt = \"" << pszDstWkt << "\"" << std::endl;
+
+    std::cout << "\nnomads, pre warp" << std::endl;
     //compute angle between N-S grid lines in the dataset and true north
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )

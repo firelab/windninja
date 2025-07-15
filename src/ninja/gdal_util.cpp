@@ -439,27 +439,28 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     double ax, ay, bx, by; //denote x,y vector components of lines "a" and "b", derived from component length between startpoints and endpoints of lines "a" and "b"
     double adotb; //a dot b
     double mag_a, mag_b; //|a| and |b|
+
     ax = x1 - x1;
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
     CPLDebug( "WINDNINJA", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
     mag_b = sqrt(bx*bx + by*by);
 
     angleFromNorth = acos(adotb/(mag_a * mag_b)); //compute angle in radians
+
     // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
-    // if bx is positive, the arrow b is pointed right from a, so the angle is positive
-    // if bx is negative, the arrow b is pointed  left from a, so the angle is negative
-    if( bx < 0 )
+    // if bx is positive, the arrow b is pointed right from a, the rotation going FROM b TO a is counter clockwise, so the angle is negative
+    // if bx is negative, the arrow b is pointed  left from a, the rotation going FROM b TO a is clockwise, so the angle is positive (we don't need to do anything)
+    // also, going FROM b TO a is equivalent to going FROM true north TO the y coordinate grid line of the DS.
+    if( bx > 0 )
     {
         angleFromNorth = -1*angleFromNorth;
     }
-    // except that this would define angles as going FROM a TO b, so FROM the y coordinate grid line of the DS TO true north
-    // but the convention we are using for angleFromNorth is FROM true north TO the y coordinate grid line of the DS, so FROM b TO a, the reverse
-    // so need to reverse the sign, for all cases
-    angleFromNorth = -1*angleFromNorth;
+
     CPLDebug( "WINDNINJA", "angleFromNorth in radians = %lf", angleFromNorth );
     //convert the result from radians to degrees
     angleFromNorth *= 180.0 / PI;
@@ -536,27 +537,28 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     double ax, ay, bx, by; //denote x,y vector components of lines "a" and "b", derived from component length between startpoints and endpoints of lines "a" and "b"
     double adotb; //a dot b
     double mag_a, mag_b; //|a| and |b|
+
     ax = x1 - x1;
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
     CPLDebug( "WINDNINJA", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
     mag_b = sqrt(bx*bx + by*by);
 
     coordinateTransformAngle = acos(adotb/(mag_a * mag_b)); //compute angle in radians
+
     // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
-    // if bx is positive, the arrow b is pointed right from a, so the angle is positive
-    // if bx is negative, the arrow b is pointed  left from a, so the angle is negative
-    if( bx < 0 )
+    // if bx is positive, the arrow b is pointed right from a, the rotation going FROM b TO a is counter clockwise, so the angle is negative
+    // if bx is negative, the arrow b is pointed  left from a, the rotation going FROM b TO a is clockwise, so the angle is positive (we don't need to do anything)
+    // also, going FROM b TO a is equivalent to going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference.
+    if( bx > 0 )
     {
         coordinateTransformAngle = -1*coordinateTransformAngle;
     }
-    // except that this would define angles as going FROM a TO b, so FROM the y coordinate grid line of the output spatial reference TO the y coordinate grid line of the DS
-    // but the convention we are using for coordinateTransformAngle is FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference, the reverse
-    // so need to reverse the sign, for all cases
-    coordinateTransformAngle = -1*coordinateTransformAngle;
+
     CPLDebug( "WINDNINJA", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
     //convert the result from radians to degrees
     coordinateTransformAngle *= 180.0 / PI;
