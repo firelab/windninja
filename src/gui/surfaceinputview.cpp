@@ -214,6 +214,14 @@ void SurfaceInputView::elevationInputFileLineEditTextChanged(const QString &arg1
     surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
 
     ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+
+    double *DEMCorners = surfaceInput->getDEMCorners();
+    QStringList cornerStrs;
+    for (int i = 0; i < 8; ++i)
+        cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+    QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
+    webView->page()->runJavaScript(js);
+
     emit requestRefresh();
 }
 
@@ -240,13 +248,6 @@ void SurfaceInputView::elevationInputFileOpenButtonClicked()
     currentDEMFilePath = demFilePath;
     ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
-
-    double *DEMCorners = surfaceInput->getDEMCorners();
-    QStringList cornerStrs;
-    for (int i = 0; i < 8; ++i)
-        cornerStrs << QString::number(DEMCorners[i], 'f', 8);
-    QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
-    webView->page()->runJavaScript(js);
 }
 
 void SurfaceInputView::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
