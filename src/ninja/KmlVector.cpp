@@ -1743,9 +1743,34 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 	nR = spd.get_nRows();
 	nC = spd.get_nCols();
 
+    // calc coordinateTransformAngle for FROM dem projection coordinates TO kmz geographic lat/lon coordinates
+    double coordinateTransformationAngle = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    {
+        char* pszDstWkt;
+        OGRSpatialReferenceH hTargetSRS;
+
+        hTargetSRS = OSRNewSpatialReference(NULL);
+        OSRImportFromEPSG(hTargetSRS, 4326);
+        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
+
+        GDALDatasetH hSrcDS = dir.ascii2GDAL();
+        ////GDALDatasetH hSrcDS = input.dem.ascii2GDAL();  // values are slightly different, but not by much
+        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
+        {
+            printf("Warning: Unable to calculate coordinate transform angle for the kmz output.");
+        }
+
+        GDALClose(hSrcDS);
+        CPLFree(pszDstWkt);
+        OSRDestroySpatialReference(hTargetSRS);
+    }
+
     CPLDebug("NINJA", "dir.get_meanValue() = %lf", dir.get_meanValue());
-    CPLDebug("NINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth);
-    CPLDebug("NINJA", "corrected direction = wrap0to360( dir.get_meanValue() - (-1)*angleFromNorth ) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ));
+    //CPLDebug("NINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth);
+    //CPLDebug("NINJA", "corrected direction = wrap0to360( dir.get_meanValue() - (-1)*angleFromNorth ) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ));
+    CPLDebug("NINJA", "coordinateTransformationAngle (dem_to_N) = %lf", coordinateTransformationAngle);
+    CPLDebug("NINJA", "corrected direction = wrap0to360( dir.get_meanValue() - coordinateTransformationAngle ) = %lf", wrap0to360( dir.get_meanValue() - coordinateTransformationAngle ));
 
 	//double PI = acos(-1.0);
 	geTheta = 0;
@@ -1755,14 +1780,15 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 		{
 			yScale = 0.5;
 			s = spd(i,j);
-			// the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
+            // the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
             // but in this case, prj1 = dem, prj2 = kmz, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
             // this is because angleFromNorth is stored as a value going FROM N TO dem, but here we are going FROM dem TO N,
             // so we need to use a negative value for angleFromNorth rather than a positive value
             // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
             // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
-			geTheta = wrap0to360( dir(i,j) + angleFromNorth );
-			theta = dir(i,j) + 180.0;
+            //geTheta = wrap0to360( dir(i,j) + angleFromNorth );
+            geTheta = wrap0to360( dir(i,j) - coordinateTransformationAngle );
+            theta = dir(i,j) + 180.0;
 
 			if(s <= splitValue[1])
 				yScale *= 0.40;
