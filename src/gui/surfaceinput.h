@@ -18,7 +18,7 @@ public:
   double computeMeshResolution(int index, bool isMomemtumChecked);
   void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
   void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
-  void getDEMCorners(double bbox[4]);
+  double* getDEMCorners();
 
 private:
   QString GDALDriverName;

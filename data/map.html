@@ -150,10 +150,18 @@
       rectangle.on('edit', sendBoundingBox);
     }
     
-  function drawDEM(north, south, east, west) {
-    const bounds = [[south, west], [north, east]];
+  function drawDEM(DEMCorners) {
+    mbrLayer.clearLayers();
 
-    const rectangle = L.rectangle(bounds, {
+    const latLngCorners = [
+      [DEMCorners[1], DEMCorners[0]], // NE
+      [DEMCorners[3], DEMCorners[2]], // SE
+      [DEMCorners[5], DEMCorners[4]], // SW
+      [DEMCorners[7], DEMCorners[6]], // NW
+      [DEMCorners[1], DEMCorners[0]]  // NE
+    ];
+
+    const rectangle = L.polygon(latLngCorners, {
       color: 'black',
       weight: 2,
       fill: false

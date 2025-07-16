@@ -126,6 +126,10 @@ void SurfaceInputView::surfaceInputDownloadCancelButtonClicked()
   int currentIndex = ui->inputsStackedWidget->currentIndex();
   ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
 
+  ui->elevationInputTypeComboBox->setCurrentIndex(0);
+  ui->elevationFileTypeComboBox->setCurrentIndex(0);
+  ui->elevationInputTypePushButton->setChecked(false);
+
   ui->boundingBoxNorthLineEdit->clear();
   ui->boundingBoxEastLineEdit->clear();
   ui->boundingBoxSouthLineEdit->clear();
@@ -136,6 +140,15 @@ void SurfaceInputView::surfaceInputDownloadCancelButtonClicked()
   ui->pointRadiusRadiusLineEdit->clear();
 
   webView->page()->runJavaScript("stopRectangleDrawing();");
+  if(!currentDEMFilePath.isEmpty())
+  {
+    double *DEMCorners = surfaceInput->getDEMCorners();
+    QStringList cornerStrs;
+    for (int i = 0; i < 8; ++i)
+      cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+    QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
+    webView->page()->runJavaScript(js);
+  }
 }
 
 void SurfaceInputView::surfaceInputDownloadButtonClicked()
@@ -229,14 +242,11 @@ void SurfaceInputView::elevationInputFileOpenButtonClicked()
   ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
   ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 
-  double boundingBox[4];
-  surfaceInput->getDEMCorners(boundingBox);
-
-  QString js = QString("drawDEM(%1, %2, %3, %4);")
-                   .arg(boundingBox[0], 0, 'f', 8)
-                   .arg(boundingBox[1], 0, 'f', 8)
-                   .arg(boundingBox[2],  0, 'f', 8)
-                   .arg(boundingBox[3],  0, 'f', 8);
+  double *DEMCorners = surfaceInput->getDEMCorners();
+  QStringList cornerStrs;
+  for (int i = 0; i < 8; ++i)
+    cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+  QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
   webView->page()->runJavaScript(js);
 }
 

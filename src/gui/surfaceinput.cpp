@@ -332,15 +332,7 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
   qDebug() << "Estimated Radius (mi):" << radius;
 }
 
-void SurfaceInput::getDEMCorners(double bbox[4])
+double* SurfaceInput::getDEMCorners()
 {
-  double west  = std::min({DEMCorners[0], DEMCorners[2], DEMCorners[4], DEMCorners[6]});
-  double east  = std::max({DEMCorners[0], DEMCorners[2], DEMCorners[4], DEMCorners[6]});
-  double south = std::min({DEMCorners[1], DEMCorners[3], DEMCorners[5], DEMCorners[7]});
-  double north = std::max({DEMCorners[1], DEMCorners[3], DEMCorners[5], DEMCorners[7]});
-
-  bbox[0] = north;
-  bbox[1] = east;
-  bbox[2] = south;
-  bbox[3] = west;
+  return DEMCorners;
 }
