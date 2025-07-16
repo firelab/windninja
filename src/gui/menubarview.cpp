@@ -4,42 +4,42 @@
 MenuBarView::MenuBarView(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
 {
-  // QMenu fileMenu "File" actions
-  connect(ui->newProjectAction, &QAction::triggered, this, &MenuBarView::newProject);
-  connect(ui->openProjectAction, &QAction::triggered, this, &MenuBarView::openProject);
-  connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBarView::exportSolution);
-  connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBarView::closeProject);
-  //connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
-  // QMenu optionsMenu "Options" actions
-  connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MenuBarView::enableConsoleOutput);
-  connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBarView::writeConsoleOutput);
+    // QMenu fileMenu "File" actions
+    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBarView::newProject);
+    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBarView::openProject);
+    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBarView::exportSolution);
+    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBarView::closeProject);
+    //connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
+    // QMenu optionsMenu "Options" actions
+    connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MenuBarView::enableConsoleOutput);
+    connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBarView::writeConsoleOutput);
 
-  // QMenu toolsMenu "Tools" actions
-  connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBarView::resampleData);
-  connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBarView::writeBlankStationFile);
-  connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBarView::setConfigurationOption);
+    // QMenu toolsMenu "Tools" actions
+    connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBarView::resampleData);
+    connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBarView::writeBlankStationFile);
+    connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBarView::setConfigurationOption);
 
-  // QMenu helpMenu "Help" actions
-  // sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
-  connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MenuBarView::displayArcGISProGuide);
+    // QMenu helpMenu "Help" actions
+    // sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
+    connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MenuBarView::displayArcGISProGuide);
 
-  // sub QMenu tutorialsMenu "Tutorials" actions
-  connect(ui->displayTutorial1Action, &QAction::triggered, this, &MenuBarView::displayTutorial1);
-  connect(ui->displayTutorial2Action, &QAction::triggered, this, &MenuBarView::displayTutorial2);
-  connect(ui->displayTutorial3Action, &QAction::triggered, this, &MenuBarView::displayTutorial3);
-  connect(ui->displayTutorial4Action, &QAction::triggered, this, &MenuBarView::displayTutorial4);
+    // sub QMenu tutorialsMenu "Tutorials" actions
+    connect(ui->displayTutorial1Action, &QAction::triggered, this, &MenuBarView::displayTutorial1);
+    connect(ui->displayTutorial2Action, &QAction::triggered, this, &MenuBarView::displayTutorial2);
+    connect(ui->displayTutorial3Action, &QAction::triggered, this, &MenuBarView::displayTutorial3);
+    connect(ui->displayTutorial4Action, &QAction::triggered, this, &MenuBarView::displayTutorial4);
 
-  // sub QMenu instructionsMenu "Instructions" actions
-  connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MenuBarView::displayDemDownloadInstructions);
-  connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MenuBarView::displayFetchDemInstructions);
-  connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MenuBarView::displayCommandLineInterfaceInstructions);
+    // sub QMenu instructionsMenu "Instructions" actions
+    connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MenuBarView::displayDemDownloadInstructions);
+    connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MenuBarView::displayFetchDemInstructions);
+    connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MenuBarView::displayCommandLineInterfaceInstructions);
 
-  // remaining non-sub QMenu actions
-  connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MenuBarView::aboutWindNinja);
-  connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBarView::citeWindNinja);
-  connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBarView::supportEmail);
-  connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBarView::submitBugReport);
-  connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
+    // remaining non-sub QMenu actions
+    connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MenuBarView::aboutWindNinja);
+    connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBarView::citeWindNinja);
+    connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBarView::supportEmail);
+    connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBarView::submitBugReport);
+    connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
 }
 
 void MenuBarView::newProject()

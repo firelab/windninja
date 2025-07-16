@@ -5,32 +5,32 @@
 #include <QPropertyAnimation>
 
 class SplashScreen : public QSplashScreen {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  SplashScreen(const QPixmap &pixmap, QStringList list, int time);
-  void display();
+    SplashScreen(const QPixmap &pixmap, QStringList list, int time);
+    void display();
 
 protected:
-  void mousePressEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
 
 signals:
-  void done();
+    void done();
 
 private slots:
-  void update();
-  void fadeOut();
-  void onFadeOutFinished();
-  void onFadeInFinished();
+    void update();
+    void fadeOut();
+    void onFadeOutFinished();
+    void onFadeInFinished();
 
 private:
-  QStringList messages;
-  int messageTime, numMessages, i, j, messageFadeInterval;
-  Qt::Alignment alignment;
-  QPixmap map;
-  QTimer *messageTimer;
-  QGraphicsOpacityEffect *opacityEffect;
-  QPropertyAnimation *fadeInAnimation;
-  QPropertyAnimation *fadeOutAnimation;
-  bool SplashScreenDone;
+    QStringList messages;
+    int messageTime, numMessages, i, j, messageFadeInterval;
+    Qt::Alignment alignment;
+    QPixmap map;
+    QTimer *messageTimer;
+    QGraphicsOpacityEffect *opacityEffect;
+    QPropertyAnimation *fadeInAnimation;
+    QPropertyAnimation *fadeOutAnimation;
+    bool SplashScreenDone;
 };

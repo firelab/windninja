@@ -22,39 +22,39 @@ class MainWindow;
 class SurfaceInputView : public QObject {
   Q_OBJECT
 public:
-  explicit SurfaceInputView(Ui::MainWindow* ui,
-                            QWebEngineView* webView,
-                            SurfaceInput* surfaceInput,
-                            QObject* parent = nullptr);
+    explicit SurfaceInputView(Ui::MainWindow* ui,
+                                QWebEngineView* webView,
+                                SurfaceInput* surfaceInput,
+                                QObject* parent = nullptr);
 
 signals:
-  void requestRefresh();
+    void requestRefresh();
 
 public slots:
-  void boundingBoxReceived(double north, double south, double east, double west);
-  void elevationInputFileOpenButtonClicked();
+    void boundingBoxReceived(double north, double south, double east, double west);
+    void elevationInputFileOpenButtonClicked();
 
 private slots:
-  void surfaceInputDownloadCancelButtonClicked();
-  void surfaceInputDownloadButtonClicked();
-  void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
-  void elevationInputTypePushButtonClicked();
-  void boundingBoxLineEditsTextChanged();
-  void pointRadiusLineEditsTextChanged();
-  void elevationInputFileDownloadButtonClicked();
-  void elevationInputFileLineEditTextChanged(const QString &arg1);
-  void meshResolutionComboBoxCurrentIndexChanged(int index);
-  void fetchDEMFinished();
+    void surfaceInputDownloadCancelButtonClicked();
+    void surfaceInputDownloadButtonClicked();
+    void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
+    void elevationInputTypePushButtonClicked();
+    void boundingBoxLineEditsTextChanged();
+    void pointRadiusLineEditsTextChanged();
+    void elevationInputFileDownloadButtonClicked();
+    void elevationInputFileLineEditTextChanged(const QString &arg1);
+    void meshResolutionComboBoxCurrentIndexChanged(int index);
+    void fetchDEMFinished();
 
 private:
-  void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
-  Ui::MainWindow *ui;
-  QWebEngineView *webView;
-  SurfaceInput *surfaceInput;
+    void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    Ui::MainWindow *ui;
+    QWebEngineView *webView;
+    SurfaceInput *surfaceInput;
 
-  QProgressDialog *progress;
-  QFutureWatcher<int> *futureWatcher;
-  QString currentDEMFilePath;
+    QProgressDialog *progress;
+    QFutureWatcher<int> *futureWatcher;
+    QString currentDEMFilePath;
 };
 
 #endif // SURFACEINPUTVIEW_H

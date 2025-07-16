@@ -50,55 +50,55 @@ QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  void populateForecastDownloads();
-  void toggleExpandCollapse(const QModelIndex &index);
-  void loadMapKMZ(const std::vector<std::string>& input);
+    void populateForecastDownloads();
+    void toggleExpandCollapse(const QModelIndex &index);
+    void loadMapKMZ(const std::vector<std::string>& input);
 
-  MainWindow(QWidget *parent = nullptr);
-  ~MainWindow();
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
 
 signals:
-  void openElevationFile();
+    void openElevationFile();
 
 private slots:
-  void massSolverCheckBoxClicked();
-  void momentumSolverCheckBoxClicked();
-  void diurnalCheckBoxClicked();
-  void stabilityCheckBoxClicked();
-  void windHeightComboBoxCurrentIndexChanged(int index);
-  void domainAverageCheckBoxClicked();
-  void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-  void pointInitializationCheckBoxClicked();
-  void useWeatherModelInitClicked();
-  void clearTableButtonClicked();
-  void solveButtonClicked();
-  void outputDirectoryButtonClicked();
-  void numberOfProcessorsSolveButtonClicked();
-  void timeZoneAllZonesCheckBoxClicked();
-  void timeZoneDetailsCheckBoxClicked();
-  void timeZoneComboBoxCurrentIndexChanged(int index);
-  void domainAverageTableCellChanged(int row, int column);
-  void refreshUI();
+    void massSolverCheckBoxClicked();
+    void momentumSolverCheckBoxClicked();
+    void diurnalCheckBoxClicked();
+    void stabilityCheckBoxClicked();
+    void windHeightComboBoxCurrentIndexChanged(int index);
+    void domainAverageCheckBoxClicked();
+    void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
+    void pointInitializationCheckBoxClicked();
+    void useWeatherModelInitClicked();
+    void clearTableButtonClicked();
+    void solveButtonClicked();
+    void outputDirectoryButtonClicked();
+    void numberOfProcessorsSolveButtonClicked();
+    void timeZoneAllZonesCheckBoxClicked();
+    void timeZoneDetailsCheckBoxClicked();
+    void timeZoneComboBoxCurrentIndexChanged(int index);
+    void domainAverageTableCellChanged(int row, int column);
+    void refreshUI();
 
 
 private:
-  void connectSignals();
-  void treeItemClicked(QTreeWidgetItem *item, int column);
-  QSet<QPair<int, int>> invalidDAWCells;
+    void connectSignals();
+    void treeItemClicked(QTreeWidgetItem *item, int column);
+    QSet<QPair<int, int>> invalidDAWCells;
 
-  Ui::MainWindow *ui;
-  QWebEngineView *webView;
-  QWebChannel *channel;
-  MapBridge *mapBridge;
-  SurfaceInput *surfaceInput;
-  SurfaceInputView *surfaceInputView;
-  MenuBarView *menuBarView;
+    Ui::MainWindow *ui;
+    QWebEngineView *webView;
+    QWebChannel *channel;
+    MapBridge *mapBridge;
+    SurfaceInput *surfaceInput;
+    SurfaceInputView *surfaceInputView;
+    MenuBarView *menuBarView;
 
-  bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
-  char * NinjaQueryServerMessages(bool checkAbort);
-  void checkMessages(void);
+    bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
+    char * NinjaQueryServerMessages(bool checkAbort);
+    void checkMessages(void);
 };
 #endif // MAINWINDOW_H

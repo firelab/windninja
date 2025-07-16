@@ -7,16 +7,16 @@
 #include <QJsonObject>
 
 class MapBridge : public QObject {
-  Q_OBJECT
+    Q_OBJECT
 public:
-  explicit MapBridge(QObject *parent = nullptr) : QObject(parent) {}
+    explicit MapBridge(QObject *parent = nullptr) : QObject(parent) {}
 
 signals:
-  void boundingBoxReceived(double north, double south, double east, double west);
+    void boundingBoxReceived(double north, double south, double east, double west);
 
 
 public slots:
-  void receiveBoundingBox(const QString &jsonCoords);
+    void receiveBoundingBox(const QString &jsonCoords);
 
 };
 
