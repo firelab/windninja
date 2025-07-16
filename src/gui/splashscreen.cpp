@@ -6,6 +6,8 @@
 SplashScreen::SplashScreen(const QPixmap &pixmap, QStringList list, int time)
     : QSplashScreen(pixmap), messages(list), messageTime(time), i(0), j(0), SplashScreenDone(false)
 {
+    setWindowFlags(Qt::WindowStaysOnTopHint | Qt::SplashScreen);
+
     numMessages = messages.size();
     messageFadeInterval = time;
     alignment = Qt::AlignLeft | Qt::AlignBottom;
