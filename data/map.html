@@ -1,233 +1,229 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Leaflet.draw drawing and editing tools</title>
-  <style>
-    html, body {
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      box-sizing: border-box;
-    }
-    #map {
-      height: 100%;
-      width: 100%;
-      max-width: 100%;
-      box-sizing: border-box;
-    }
-    .leaflet-div-icon {
-      background: white;
-      border: 2px solid #0077ff;
-      border-radius: 50%;
-      width: 10px !important;
-      height: 10px !important;
-      margin-left: -5px !important;
-      margin-top: -5px !important;
-      box-shadow: 0 0 1px #000;
-    }
-  .leaflet-drag-target {
-    cursor: move !important;
-  }
-  </style>
+    <meta charset="UTF-8">
+    <title>Leaflet Map</title>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .leaflet-div-icon {
+            background: white;
+            border: 2px solid #0077ff;
+            border-radius: 50%;
+            width: 10px !important;
+            height: 10px !important;
+            margin-left: -5px !important;
+            margin-top: -5px !important;
+            box-shadow: 0 0 1px #000;
+        }
+        .leaflet-drag-target {
+            cursor: move !important;
+        }
+    </style>
 
-  <link rel="stylesheet" href="leaflet/leaflet.css"/>
-  <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  <!-- Leaflet and Draw dependencies -->
-  <script src="./leaflet/leaflet-src.js"></script>
-  <script src="./leaflet/L.KML.js"></script>
-  <script src="./leaflet/jszip.min.js"></script>
+    <!-- Leaflet and Draw dependencies -->
+    <script src="./leaflet/leaflet-src.js"></script>
+    <script src="./leaflet/L.KML.js"></script>
+    <script src="./leaflet/jszip.min.js"></script>
 
-  <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
-  <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/Edit.Poly.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/Edit.Marker.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/Edit.CircleMarker.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/Edit.Circle.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.Polyline.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.Polygon.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.Circle.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.Marker.js"></script>
-  <script src="./leaflet/draw/src/draw/handler/Draw.CircleMarker.js"></script>
-  <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
-  <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
-  <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
-  <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
-  <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
-  <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
-  <script src="./leaflet/draw/src/Control.Draw.js"></script>
-  <script src="./leaflet/draw/src/Tooltip.js"></script>
-  <script src="./leaflet/draw/src/Toolbar.js"></script>
-  <script src="./leaflet/draw/src/draw/DrawToolbar.js"></script>
-  <script src="./leaflet/draw/src/edit/EditToolbar.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
-  <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
-  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
+    <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Poly.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Marker.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.CircleMarker.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Circle.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Polyline.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Polygon.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Circle.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Marker.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.CircleMarker.js"></script>
+    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+    <script src="./leaflet/draw/src/Control.Draw.js"></script>
+    <script src="./leaflet/draw/src/Tooltip.js"></script>
+    <script src="./leaflet/draw/src/Toolbar.js"></script>
+    <script src="./leaflet/draw/src/draw/DrawToolbar.js"></script>
+    <script src="./leaflet/draw/src/edit/EditToolbar.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
-  <div id="map" style="border: 1px solid #ccc"></div>
-  <script>
-    const apiKey = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
+    <div id="map" style="border: 1px solid #ccc"></div>
+    <script>
+        const apiKey = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
 
-    const mbl = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' +
-      'pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ', {
-      tileSize: 512,
-      maxZoom: 18,
-      zoomOffset: -1,
-      // attribution: mbAtt,
-      id: 'mapbox/streets-v11'
-    });
+        const mbl = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=' +
+            'pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ', {
+            tileSize: 512,
+            maxZoom: 18,
+            zoomOffset: -1,
+            id: 'mapbox/streets-v11'
+        });
 
-    const map = new L.Map('map', {
-      layers: [mbl],
-      center: new L.LatLng(43.62455, -113.2971),
-      zoom: 8
-    });
+        const map = new L.Map('map', {
+            layers: [mbl],
+            center: new L.LatLng(43.62455, -113.2971),
+            zoom: 8
+        });
 
-    const mbrLayer = new L.FeatureGroup();
-    map.addLayer(mbrLayer);
-    map.on('draw:created', function (e) {
-      const layer = e.layer;
-      mbrLayer.clearLayers();
-      mbrLayer.addLayer(layer);
+        const mbrLayer = new L.FeatureGroup();
+        map.addLayer(mbrLayer);
 
-      if (layer instanceof L.Rectangle) {
-        layer.editing.enable();
+        map.on('draw:created', function (e) {
+            const layer = e.layer;
+            mbrLayer.clearLayers();
+            mbrLayer.addLayer(layer);
 
-        function sendBoundingBox() {
-          const bounds = layer.getBounds();
-          const bboxData = {
-            north: bounds.getNorth(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            west: bounds.getWest()
-          };
+            if (layer instanceof L.Rectangle) {
+                layer.editing.enable();
 
-          if (window.bridge && window.bridge.receiveBoundingBox) {
-            window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
-          }
+                function sendBoundingBox() {
+                    const bounds = layer.getBounds();
+                    const bboxData = {
+                        north: bounds.getNorth(),
+                        south: bounds.getSouth(),
+                        east: bounds.getEast(),
+                        west: bounds.getWest()
+                    };
+
+                    if (window.bridge && window.bridge.receiveBoundingBox) {
+                        window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+                    }
+                }
+
+                sendBoundingBox();
+                layer.on('edit', sendBoundingBox);
+            }
+        });
+
+        function drawBoundingBox(north, south, east, west) {
+            mbrLayer.clearLayers();
+            const bounds = [[south, west], [north, east]];
+            const rectangle = L.rectangle(bounds).addTo(mbrLayer);
+            rectangle.editing.enable();
+
+            function sendBoundingBox() {
+                const bounds = rectangle.getBounds();
+                const bboxData = {
+                    north: bounds.getNorth(),
+                    south: bounds.getSouth(),
+                    east: bounds.getEast(),
+                    west: bounds.getWest()
+                };
+
+                if (window.bridge && window.bridge.receiveBoundingBox) {
+                    window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+                }
+            }
+
+            rectangle.on('edit', sendBoundingBox);
         }
 
-        // Send once on creation
-        sendBoundingBox();
+        function drawDEM(DEMCorners) {
+            mbrLayer.clearLayers();
 
-        // Send on edit (move or resize)
-        layer.on('edit', sendBoundingBox);
-      }
-    });
-    function drawBoundingBox(north, south, east, west) {
-      // Clear any existing rectangle
-      mbrLayer.clearLayers();
+            const latLngCorners = [
+                [DEMCorners[1], DEMCorners[0]], // NE
+                [DEMCorners[3], DEMCorners[2]], // SE
+                [DEMCorners[5], DEMCorners[4]], // SW
+                [DEMCorners[7], DEMCorners[6]], // NW
+                [DEMCorners[1], DEMCorners[0]]  // NE
+            ];
 
-      const bounds = [[south, west], [north, east]];
-      const rectangle = L.rectangle(bounds).addTo(mbrLayer);
-      
-      rectangle.editing.enable(); 
-
-      function sendBoundingBox() {
-        const bounds = rectangle.getBounds();
-        const bboxData = {
-          north: bounds.getNorth(),
-          south: bounds.getSouth(),
-          east: bounds.getEast(),
-          west: bounds.getWest()
-        };
-
-        if (window.bridge && window.bridge.receiveBoundingBox) {
-          window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
-        }
-      }
-      rectangle.on('edit', sendBoundingBox);
-    }
-    
-  function drawDEM(DEMCorners) {
-    mbrLayer.clearLayers();
-
-    const latLngCorners = [
-      [DEMCorners[1], DEMCorners[0]], // NE
-      [DEMCorners[3], DEMCorners[2]], // SE
-      [DEMCorners[5], DEMCorners[4]], // SW
-      [DEMCorners[7], DEMCorners[6]], // NW
-      [DEMCorners[1], DEMCorners[0]]  // NE
-    ];
-
-    const rectangle = L.polygon(latLngCorners, {
-      color: 'black',
-      weight: 2,
-      fill: false
-    }).addTo(mbrLayer);
-  }
-
-
-    const rectangleDrawer = new L.Draw.Rectangle(map);
-    function startRectangleDrawing() {
-      mbrLayer.clearLayers();
-      rectangleDrawer.enable();
-    }
-    function stopRectangleDrawing() {
-      mbrLayer.clearLayers();
-      rectangleDrawer.disable();
-    }
-
-    const baseMaps = {};
-    const overlayMaps = {};
-    const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
-    L.control.scale().addTo(map);
-    new QWebChannel(qt.webChannelTransport, function (channel) {
-      window.bridge = channel.objects.bridge;
-      console.log("WebChannel connected. Bridge is ready.");
-    });
-
-    async function loadKmzFromBase64(base64Data) {
-      try {
-        const binary = atob(base64Data);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-          bytes[i] = binary.charCodeAt(i);
+            const rectangle = L.polygon(latLngCorners, {
+                color: 'black',
+                weight: 2,
+                fill: false
+            }).addTo(mbrLayer);
         }
 
-        const zip = await JSZip.loadAsync(bytes.buffer);
-        const kmlFiles = Object.values(zip.files).filter(entry =>
-          entry.name.toLowerCase().endsWith('.kml')
-        );
+        const rectangleDrawer = new L.Draw.Rectangle(map);
 
-        if (kmlFiles.length === 0) {
-          alert('No KML files found in this KMZ.');
-          return;
+        function startRectangleDrawing() {
+            mbrLayer.clearLayers();
+            rectangleDrawer.enable();
         }
 
-        const kmlGroup = L.featureGroup().addTo(map);
-        for (const entry of kmlFiles) {
-          const kmlText = await entry.async('string');
-          const parser = new DOMParser();
-          const kml = parser.parseFromString(kmlText, 'text/xml');
-          const track = new L.KML(kml);
-          kmlGroup.addLayer(track);
-          const layerName = entry.name || 'Unnamed Layer';
-          layerControl.addOverlay(track, layerName);
+        function stopRectangleDrawing() {
+            mbrLayer.clearLayers();
+            rectangleDrawer.disable();
         }
 
-        setTimeout(() => {
-          if (kmlGroup.getLayers().length > 0) {
-            map.fitBounds(kmlGroup.getBounds());
-          }
-        }, 1000);
+        const baseMaps = {};
+        const overlayMaps = {};
+        const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+        L.control.scale().addTo(map);
 
-      } catch (err) {
-        console.error('Failed to load KMZ from base64:', err);
-      }
-    }
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+            window.bridge = channel.objects.bridge;
+            console.log("WebChannel connected. Bridge is ready.");
+        });
 
-  </script>
+        async function loadKmzFromBase64(base64Data) {
+            try {
+                const binary = atob(base64Data);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+
+                const zip = await JSZip.loadAsync(bytes.buffer);
+                const kmlFiles = Object.values(zip.files).filter(entry =>
+                    entry.name.toLowerCase().endsWith('.kml')
+                );
+
+                if (kmlFiles.length === 0) {
+                    alert('No KML files found in this KMZ.');
+                    return;
+                }
+
+                const kmlGroup = L.featureGroup().addTo(map);
+                for (const entry of kmlFiles) {
+                    const kmlText = await entry.async('string');
+                    const parser = new DOMParser();
+                    const kml = parser.parseFromString(kmlText, 'text/xml');
+                    const track = new L.KML(kml);
+                    kmlGroup.addLayer(track);
+                    const layerName = entry.name || 'Unnamed Layer';
+                    layerControl.addOverlay(track, layerName);
+                }
+
+                setTimeout(() => {
+                    if (kmlGroup.getLayers().length > 0) {
+                        map.fitBounds(kmlGroup.getBounds());
+                    }
+                }, 1000);
+
+            } catch (err) {
+                console.error('Failed to load KMZ from base64:', err);
+            }
+        }
+    </script>
 </body>
 </html>

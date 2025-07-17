@@ -103,21 +103,21 @@ void SurfaceInputView::boundingBoxLineEditsTextChanged()
 
 void SurfaceInputView::pointRadiusLineEditsTextChanged()
 {
-    bool isLatValid, isLonValid, isRadiusValid;
+    // bool isLatValid, isLonValid, isRadiusValid;
 
-    double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
-    double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
-    double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
-    double boundingBox[4];
+    // double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
+    // double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
+    // double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
+    // double boundingBox[4];
 
-    if(isLatValid && isLonValid && isRadiusValid)
-    {
-        surfaceInput->computeBoundingBox(lat, lon, radius, boundingBox);
-        ui->boundingBoxNorthLineEdit->setText(QString::number(boundingBox[0]));
-        ui->boundingBoxEastLineEdit->setText(QString::number(boundingBox[1]));
-        ui->boundingBoxSouthLineEdit->setText(QString::number(boundingBox[2]));
-        ui->boundingBoxWestLineEdit->setText(QString::number(boundingBox[3]));
-    }
+    // if(isLatValid && isLonValid && isRadiusValid)
+    // {
+    //     surfaceInput->computeBoundingBox(lat, lon, radius, boundingBox);
+    //     ui->boundingBoxNorthLineEdit->setText(QString::number(boundingBox[0]));
+    //     ui->boundingBoxEastLineEdit->setText(QString::number(boundingBox[1]));
+    //     ui->boundingBoxSouthLineEdit->setText(QString::number(boundingBox[2]));
+    //     ui->boundingBoxWestLineEdit->setText(QString::number(boundingBox[3]));
+    // }
 }
 
 void SurfaceInputView::surfaceInputDownloadCancelButtonClicked()
