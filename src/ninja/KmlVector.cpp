@@ -1756,10 +1756,14 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 
         GDALDatasetH hSrcDS = dir.ascii2GDAL();
         ////GDALDatasetH hSrcDS = input.dem.ascii2GDAL();  // values are slightly different, but not by much
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
+//        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM dem TO geo
+        if(!GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM geo TO dem
         {
             printf("Warning: Unable to calculate coordinate transform angle for the kmz output.");
         }
+
+        // reverse sign. should only matter for FROM_dst_TO_src calc (FROM geo TO dem) here, but want to test a full sign calculation reversal both here and in the kmz for both cases
+        coordinateTransformationAngle = -coordinateTransformationAngle;
 
         GDALClose(hSrcDS);
         CPLFree(pszDstWkt);

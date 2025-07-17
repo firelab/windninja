@@ -164,6 +164,8 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     {
         return false;
     }
+    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     double x = adfGeoTransform[0] + adfGeoTransform[1] * (nX / 2) + adfGeoTransform[2] * (nY / 2);
     double y = adfGeoTransform[3] + adfGeoTransform[4] * (nX / 2) + adfGeoTransform[5] * (nY / 2);
