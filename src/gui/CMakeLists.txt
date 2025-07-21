@@ -10,8 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets WebEngineWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets WebEngineWidgets)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -26,12 +25,16 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
         appstate.h
-        modeldata.h
         splashscreen.h
         splashscreen.cpp
         surfaceinput.h
         surfaceinput.cpp
-        menubar.h menubar.cpp
+        menubarview.h
+        menubarview.cpp
+        mapbridge.h
+        mapbridge.cpp
+        surfaceinputview.h
+        surfaceinputview.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
