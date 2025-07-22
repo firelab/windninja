@@ -30,13 +30,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "ninja_version.h"
 #include "surfaceinput.h"
 #include "surfaceinputview.h"
 #include "menubarview.h"
 #include "mapbridge.h"
+#include "serverbridge.h"
 #include "ui_mainwindow.h"
-#include "cpl_http.h"
 #include "appstate.h"
 #include <QWebChannel>
 #include <QFutureWatcher>
@@ -125,9 +124,6 @@ private:
     SurfaceInput *surfaceInput;
     SurfaceInputView *surfaceInputView;
     MenuBarView *menuBarView;
-
-    bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
-    char * NinjaQueryServerMessages(bool checkAbort);
-    void checkMessages(void);
+    ServerBridge *serverBridge;
 };
 #endif // MAINWINDOW_H

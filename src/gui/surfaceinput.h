@@ -30,7 +30,7 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
-#include "../ninja/gdal_util.h""
+#include "../ninja/gdal_util.h"
 #include "../ninja/windninja.h"
 #include <QDebug>
 #include <QFile>
