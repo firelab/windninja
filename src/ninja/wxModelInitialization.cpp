@@ -1111,7 +1111,7 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
+    input.inputDirection = wrap0to360( meanDir + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1586,7 +1586,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
 
-            /*//compute angle between N-S grid lines in the dataset and true north
+            /*//compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
             double angleFromNorth = 0.0;
             if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
             {

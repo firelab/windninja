@@ -164,8 +164,6 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     {
         return false;
     }
-    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     double x = adfGeoTransform[0] + adfGeoTransform[1] * (nX / 2) + adfGeoTransform[2] * (nY / 2);
     double y = adfGeoTransform[3] + adfGeoTransform[4] * (nX / 2) + adfGeoTransform[5] * (nY / 2);
@@ -304,7 +302,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
  * in the coordinates of the dataset or in the coordinates of an output CRS/spatial reference
  *
  * @param poDS a pointer to a valid GDAL Dataset
- * @param bounds a pointer to a double[4] n, e, s, w order, to be filled
+ * @param bounds a pointer to a double[4], in n, e, s, w order, to be filled
  * @param pszDstWkt the output spatial reference to which the bounds of the dataset should be warped to, as an OGC well-known text representation of the spatial reference.
  *        If NULL is passed, the bounds of the dataset is not warped and is left in the coordinates of the dataset.
  * @return true on valid population of bounds in n, e, s, w order
@@ -413,6 +411,11 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 
     y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
 
+    double adfGeoTransform[6];
+    poDS->GetGeoTransform( adfGeoTransform );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
+
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
 
@@ -472,7 +475,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 }
 
 /** Calculate the angle between the y coordinate grid lines of a source dataset and an output spatial reference.
- *  Where the angle is defined and expected to be used, as going FROM the source dataset spatial reference TO the output spatial reference,
+ *  Where the angle is defined, as going FROM the source dataset spatial reference TO the output spatial reference,
  *  so, going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference.
  * @param poSrcDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
  * @param coordinateTransformAngle the computed angle between the y coordinate grid lines of the two datasets, to be filled
@@ -501,10 +504,10 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
 
-    // the resulting angle value calculated by GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst() for the dem TO geographic,
-    // does NOT match the resulting angle value calculated by (-1)*GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src() for geographic TO the dem
+    // the resulting angle value calculated by GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst() for dem TO geographic,
+    // does NOT match the resulting angle value calculated by (-1)*GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src() for geographic TO dem
     // I thought that maybe it had to do with the stretch of the grid, that (x1,y1) to (x2,y2) crosses too many varyingly stretched grid cells
-    // so I tried using 1/4 the cell size instead of 1/4 the bounds, but it didn't get the values to match.
+    // so I tried using 1/4 the cell size instead of 1/4 the bounds, but that didn't get the values to match.
 //    //add 1/4 size of the poSrcDS y cell size in y direction, in the projection of the poSrcDS
 //    double adfGeoTransform[6];
 //    poSrcDS->GetGeoTransform( adfGeoTransform );
@@ -512,6 +515,11 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
 //    CPLDebug( "WINDNINJA", "yCellSize = %lf", yCellSize );
 //
 //    y2 = y1 + 0.25*yCellSize;
+
+    double adfGeoTransform[6];
+    poSrcDS->GetGeoTransform( adfGeoTransform );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
@@ -572,9 +580,9 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
 }
 
 /** Calculate the angle between the y coordinate grid lines of a source dataset and an output spatial reference.
- *  Where the angle is defined and expected to be used, as going FROM the output spatial reference TO the source dataset spatial reference,
+ *  Where the angle is defined, as going FROM the output spatial reference TO the source dataset spatial reference,
  *  so, going FROM the y coordinate grid line of the output spatial reference TO the y coordinate grid line of the DS.
- *  So the projection information of input vs output is treated as REVERSED, this just happens to be a very common use case (FROM_geographic_TO_dem).
+ *  This is the projection information of input vs output treated as REVERSED, this just so happens to be a very common use case (FROM_geographic_TO_dem).
  * @param poSrcDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
  * @param coordinateTransformAngle the computed angle between the y coordinate grid lines of the two datasets, to be filled
  * @param pszDstWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
@@ -582,8 +590,8 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
  */
 bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt )
 {
-    double x1, y1; //center point of the poSrcDS, in the pszDstWkt projection, to be transformed to the projection of the poSrcDS
-    double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the pszDstWkt projection, to be transformed to the projection of the poSrcDS
+    double x1, y1; //center point of the poSrcDS, in the pszDstWkt projection, to be transformed back to the projection of the poSrcDS
+    double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the pszDstWkt projection, to be transformed back to the projection of the poSrcDS
     double bounds[4]; //bounds of the poSrcDS, in the pszDstWkt projection, used to calculate y2 in the pszDstWkt projection
 
     //get the center of the poSrcDS, in the pszDstWkt projection
@@ -601,6 +609,11 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
     }
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
+
+    double adfGeoTransform[6];
+    poSrcDS->GetGeoTransform( adfGeoTransform );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
+    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
@@ -826,7 +839,10 @@ bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid )
  *
  * perform a coordinate transformation on a point, from one coordinate system to another
  * where the input coordinate system is specified by a valid GDAL dataset
- * and the output coordinate system is specified by a CRS/spatial reference
+ * and the output coordinate system is specified by a CRS/spatial reference.
+ *
+ * The coordinate transformation can be done with the input and output coordinate systems reversed
+ * by using the from_dst_to_src option.
  *
  * @param dfX the X coordinate of the point to be transformed, to be filled
  * @param dfY the Y coordinate of the point to be transformed, to be filled

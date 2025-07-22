@@ -103,7 +103,7 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = wrap0to360( meanDir - input.dem.getAngleFromNorth() ); //account for projection rotation from north
+    input.inputDirection = wrap0to360( meanDir + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
     initializeBoundaryLayer(input);
 
@@ -159,7 +159,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
         for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
-            inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) + input.dem.getAngleFromNorth() ); //account for projection rotation from north
+            inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
             wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
                     &(inputUGrid)(i,j), &(inputVGrid)(i,j));
         }

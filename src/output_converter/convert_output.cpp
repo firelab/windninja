@@ -245,7 +245,7 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
         fprintf(stderr, "Failed to open DEM\n");
         return 1;
     }
-    //compute angle between N-S grid lines in the dataset and true north
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {

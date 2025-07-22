@@ -748,7 +748,8 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     velocityUnits::eVelocityUnits spd_units = velocityUnits::metersPerSecond;  // initialize to default units
     temperatureUnits::eTempUnits T_units = temperatureUnits::K;
 
-    double coordinateTransformationAngle = 0.0;
+    //double coordinateTransformationAngle = 0.0;
+    //// oh, no warp is actually done on this dataset till kmz output
 
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
@@ -832,17 +833,21 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         int rc = srcDS->SetProjection( projString.c_str() );
 
 
-        //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
-        if( varList[i] == "U10" )
-        {
-            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
-            {
-                if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt ))
-                {
-                    printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
-                }
-            }
-        }
+        //// compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+        //// going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+        //// in this case, going FROM weather model projection coordinates TO geographic lat/lon coordinates
+        //if( varList[i] == "U10" )
+        //{
+        //    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+        //    {
+        //        // direct calculation of FROM wx TO geo, already has the appropriate sign
+        //        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt ))  // this is FROM wx TO geo
+        //        {
+        //            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+        //        }
+        //    }
+        //}
+        //// oh, no warp is actually done on this dataset till kmz output
 
 
         // final setting of the datasets to ascii grids, in the past usually done using a wrp dataset
@@ -897,36 +902,37 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
-    //use the coordinate transformation angle to correct the angles of the output dataset
-    //to convert from the original dataset projection angles to the warped dataset projection angles
-    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
-    {
-        // need an intermediate spd and dir set of ascii grids
-        AsciiGrid<double> speedGrid;
-        AsciiGrid<double> dirGrid;
-        speedGrid.set_headerData(uGrid);
-        dirGrid.set_headerData(uGrid);
-        for(int i=0; i<uGrid.get_nRows(); i++) {
-            for(int j=0; j<uGrid.get_nCols(); j++) {
-                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
-            }
-        }
-
-        // add the coordinateTransformationAngle to each spd,dir, u,v dataset
-        for(int i=0; i<dirGrid.get_nRows(); i++)
-        {
-            for(int j=0; j<dirGrid.get_nCols(); j++)
-            {
-                dirGrid(i,j) = wrap0to360( dirGrid(i,j) + coordinateTransformationAngle ); //account for projection rotation
-                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
-            }
-        }
-
-        // cleanup the intermediate grids
-        speedGrid.deallocate();
-        dirGrid.deallocate();
-    }
+    ////use the coordinateTransformationAngle to correct the angles of the output dataset
+    ////to convert from the original dataset projection angles to the warped dataset projection angles
+    //if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    //{
+    //    // need an intermediate spd and dir set of ascii grids
+    //    AsciiGrid<double> speedGrid;
+    //    AsciiGrid<double> dirGrid;
+    //    speedGrid.set_headerData(uGrid);
+    //    dirGrid.set_headerData(uGrid);
+    //    for(int i=0; i<uGrid.get_nRows(); i++) {
+    //        for(int j=0; j<uGrid.get_nCols(); j++) {
+    //            wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+    //        }
+    //    }
+    //
+    //    // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
+    //    for(int i=0; i<dirGrid.get_nRows(); i++)
+    //    {
+    //        for(int j=0; j<dirGrid.get_nCols(); j++)
+    //        {
+    //            dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO geographic lat/lon coordinates
+    //            // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+    //            wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+    //        }
+    //    }
+    //
+    //    // cleanup the intermediate grids
+    //    speedGrid.deallocate();
+    //    dirGrid.deallocate();
+    //}
+    //// oh, no warp is actually done on this dataset till kmz output
 }
 
 /**
@@ -979,7 +985,7 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setKmlFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kml") );
     ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
 
-    //compute angle between N-S grid lines in the dataset and true north
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {

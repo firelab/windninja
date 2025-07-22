@@ -327,16 +327,16 @@ bool ninja::simulate_wind()
 
 if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 {
-    // update loop station data to account for projection rotation from north
-    // note that the raw station data is left alone here, it's adjusted as needed in the solve loop
+    // update loop station data to be in projected coordinates, rather than geographic coordinates
+    // note that the raw station data is left alone here, left as geographic coordinates, it's adjusted as needed in the solve loop
 
     // index for storing data back in wxstation object
     int dataIndex = input.inputsRunNumber;
     double dir;
     for(unsigned int ii=0; ii<input.stations.size(); ii++)
     {
-        CPLDebug("STATION_FETCH","input.stations[%d].get_speed() = %lf, input.stations[%d].get_direction() = %lf, input.dem.getAngleFromNorth() = %lf, corrected direction = %lf", ii,  input.stations[ii].get_speed(), ii, input.stations[ii].get_direction(), input.dem.getAngleFromNorth(), wrap0to360( input.stations[ii].get_direction() + input.dem.getAngleFromNorth() ));
-        dir = wrap0to360( input.stations[ii].get_direction() + input.dem.getAngleFromNorth() ); //account for projection rotation from north
+        CPLDebug("STATION_FETCH","input.stations[%d].get_speed() = %lf, input.stations[%d].get_direction() (geographic coordinates) = %lf, input.dem.getAngleFromNorth() = %lf, corrected direction (projected coordinates) = %lf", ii,  input.stations[ii].get_speed(), ii, input.stations[ii].get_direction(), input.dem.getAngleFromNorth(), wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ));
+        dir = wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
         input.stationsScratch[ii].update_direction(dir,dataIndex);
         input.stationsOldInput[ii].update_direction(dir,dataIndex);
         input.stationsOldOutput[ii].update_direction(dir,dataIndex);
@@ -2485,7 +2485,7 @@ bool ninja::matched(int iter)
             try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
-            wind_sd_to_uv(input.stations[i].get_speed(), wrap0to360( input.stations[i].get_direction() + input.dem.getAngleFromNorth() ), &true_u, &true_v);
+            wind_sd_to_uv(input.stations[i].get_speed(), wrap0to360( input.stations[i].get_direction() - input.dem.getAngleFromNorth() ), &true_u, &true_v); //convert FROM geographic TO projected coordinates, to match the loop station data coordinates
 			true_w = input.stations[i].get_w_speed();
 
 			//Check if we're within the tolerance

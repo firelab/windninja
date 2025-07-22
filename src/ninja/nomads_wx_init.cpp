@@ -572,7 +572,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     std::cout << "pszDstWkt = \"" << pszDstWkt << "\"" << std::endl;
 
     std::cout << "\nnomads, pre warp" << std::endl;
-    //compute angle between N-S grid lines in the dataset and true north
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
@@ -583,11 +583,14 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     }
     std::cout << std::endl;
 
+    // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+    // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+    // in this case, going FROM weather model projection coordinates TO dem projection coordinates
     double coordinateTransformationAngle = 0.0;
-    //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hSrcDS, coordinateTransformationAngle, pszDstWkt ))
+        // direct calculation of FROM wx TO dem, already has the appropriate sign
+        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM wx TO dem
         {
             printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
         }
@@ -605,7 +608,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 #endif
 
     std::cout << "\nnomads, post warp" << std::endl;
-    //compute angle between N-S grid lines in the dataset and true north
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
@@ -783,7 +786,7 @@ noCloudOK:
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
-    //use the coordinate transformation angle to correct the angles of the output dataset
+    //use the coordinateTransformationAngle to correct the angles of the output dataset
     //to convert from the original dataset projection angles to the warped dataset projection angles
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
@@ -801,12 +804,12 @@ noCloudOK:
         std::cout << "\n\npre-coordTransformAngle calc" << std::endl;
         std::cout << "dirGrid.get_meanValue() = " << dirGrid.get_meanValue() << std::endl;
 
-        // add the coordinateTransformationAngle to each spd,dir, u,v dataset
+        // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
         for(int i=0; i<dirGrid.get_nRows(); i++)
         {
             for(int j=0; j<dirGrid.get_nCols(); j++)
             {
-                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //account for projection rotation
+                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
                 // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
                 wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
             }

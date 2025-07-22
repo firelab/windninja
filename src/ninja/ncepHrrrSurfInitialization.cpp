@@ -351,11 +351,14 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     psWarpOptions->panDstBands[2] = 3;
     psWarpOptions->panDstBands[3] = 4;
 
+    // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+    // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+    // in this case, going FROM weather model projection coordinates TO dem projection coordinates
     double coordinateTransformationAngle = 0.0;
-    //compute the coordinate transformation angle, the angle between the y coordinate grid lines of the pre-warped and warped datasets
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))
+        // direct calculation of FROM wx TO dem, already has the appropriate sign
+        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
         {
             printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
         }
@@ -416,7 +419,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
-    //use the coordinate transformation angle to correct the angles of the output dataset
+    //use the coordinateTransformationAngle to correct the angles of the output dataset
     //to convert from the original dataset projection angles to the warped dataset projection angles
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
@@ -431,12 +434,12 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             }
         }
 
-        // add the coordinateTransformationAngle to each spd,dir, u,v dataset
+        // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
         for(int i=0; i<dirGrid.get_nRows(); i++)
         {
             for(int j=0; j<dirGrid.get_nCols(); j++)
             {
-                dirGrid(i,j) = wrap0to360( dirGrid(i,j) + coordinateTransformationAngle ); //account for projection rotation
+                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
                 // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
                 wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
             }

@@ -102,15 +102,11 @@ void ninja::readInputFile()
         OSRImportFromEPSG(hTargetSRS, 4326);
         OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
 
-        // direct calculation of FROM geo TO dem
+        // direct calculation of FROM geo TO dem, already has the appropriate sign
         if(!GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( poDataset, angleFromNorth, pszDstWkt ))  // this is FROM geo TO dem
-//        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( poDataset, angleFromNorth, pszDstWkt ))  // this is FROM dem TO geo
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
         }
-
-        // reverse sign. should only matter for FROM_src_TO_dst calc (FROM dem TO geo) here, but want to test a full sign calculation reversal both here and in the kmz for both cases
-//        angleFromNorth = -angleFromNorth;
 
         CPLFree(pszDstWkt);
         OSRDestroySpatialReference(hTargetSRS);

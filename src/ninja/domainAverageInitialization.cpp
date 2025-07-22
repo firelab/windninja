@@ -85,9 +85,8 @@ void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
 {
     //set initialization grids
     speedInitializationGrid = input.inputSpeed;
-    //angleFromNorth is now defined as FROM true north geographic lat/lon TO dem projection coordinates
-    dirInitializationGrid = wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ); //account for projection rotation from north
-    CPLDebug("NINJA", "input.inputSpeed = %lf, input.inputDirection = %lf, input.dem.getAngleFromNorth() = %lf, corrected direction = %lf", input.inputSpeed, input.inputDirection, input.dem.getAngleFromNorth(), wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ));
+    dirInitializationGrid = wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
+    CPLDebug("NINJA", "input.inputSpeed = %lf, input.inputDirection (geographic coordinates) = %lf, input.dem.getAngleFromNorth() = %lf, corrected direction (projected coordinates) = %lf", input.inputSpeed, input.inputDirection, input.dem.getAngleFromNorth(), wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ));
     airTempGrid = input.airTemp;
     setCloudCover(input);
 
@@ -110,8 +109,7 @@ void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input
     double inwindw=0.0;		//input w wind component
 
     //Set inwindu and inwindv
-    //angleFromNorth is now defined as FROM true north geographic lat/lon TO dem projection coordinates
-    wind_sd_to_uv(input.inputSpeed, wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ), &inwindu, &inwindv); //account for projection rotation from north
+    wind_sd_to_uv(input.inputSpeed, wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ), &inwindu, &inwindv); //convert FROM geographic TO projected coordinates
 
     if(input.diurnalWinds == true)
     {

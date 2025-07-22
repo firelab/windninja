@@ -69,7 +69,7 @@ public:
         double getAngleFromNorth();
 
 private:
-        double angleFromNorth; //N-S grid line angle departe from true north in the DEM projection
+        double angleFromNorth; //angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
 };
 
 #endif	//ELEVATION_H
