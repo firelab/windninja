@@ -524,7 +524,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>6</number>
+           <number>11</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -2571,7 +2571,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </layout>
           </widget>
           <widget class="QWidget" name="weatherModelPage">
-           <layout class="QVBoxLayout" name="verticalLayout_24">
+           <layout class="QVBoxLayout" name="verticalLayout_24" stretch="0,0,1">
             <property name="leftMargin">
              <number>5</number>
             </property>
@@ -2585,7 +2585,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>5</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="useWeatherModelInit">
+             <widget class="QCheckBox" name="weatherModelCheckBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -2613,7 +2613,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="downloadWeatherDataGroup">
+             <widget class="QGroupBox" name="weatherModelDataDownloadGroupBox">
               <property name="title">
                <string>Download Weather Data</string>
               </property>
@@ -2634,16 +2634,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <number>0</number>
                </property>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="2,1,1">
+                <layout class="QHBoxLayout" name="weatherModelDataDownloadLayout" stretch="2,1,1,0">
                  <item>
-                  <widget class="QComboBox" name="weatherDataSelector">
+                  <widget class="QComboBox" name="weatherModelDataComboBox">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QSpinBox" name="weatherDataValue">
+                  <widget class="QSpinBox" name="weatherModelDataSpinBox">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -2659,7 +2659,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="downloadWeatherData">
+                  <widget class="QPushButton" name="weatherModelDataDownloadButton">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -2668,10 +2668,23 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </property>
                   </widget>
                  </item>
+                 <item>
+                  <spacer name="weatherModelDataDownloadSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
                 </layout>
                </item>
                <item>
-                <widget class="QGroupBox" name="downloadedForecastGroup">
+                <widget class="QGroupBox" name="weatherModelDataGroupBox">
                  <property name="title">
                   <string>Downloaded Forecasts</string>
                  </property>
@@ -2692,14 +2705,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <number>0</number>
                   </property>
                   <item>
-                   <widget class="QTreeView" name="forecastDownloads">
+                   <widget class="QTreeView" name="weatherModelDataTreeView">
                     <property name="sortingEnabled">
                      <bool>true</bool>
                     </property>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QGroupBox" name="timeStepGroupbox">
+                   <widget class="QGroupBox" name="weatherModelDataTimeStepGroupBox">
                     <property name="cursor">
                      <cursorShape>PointingHandCursor</cursorShape>
                     </property>
@@ -2719,6 +2732,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </item>
               </layout>
              </widget>
+            </item>
+            <item>
+             <spacer name="weatherModelPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>

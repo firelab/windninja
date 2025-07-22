@@ -335,7 +335,6 @@ void MainWindow::connectSignals()
     connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &MainWindow::domainAverageCheckBoxClicked);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
-    connect(ui->useWeatherModelInit, &QCheckBox::clicked, this, &MainWindow::useWeatherModelInitClicked);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &MainWindow::clearTableButtonClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
@@ -377,7 +376,7 @@ void addFilesRecursively(QStandardItem *parentItem, const QString &dirPath) {
     }
 }
 
-// Function to populate forecastDownloads with .tif parent directories and all nested contents
+// Function to populate weatherModelDataTreeView with .tif parent directories and all nested contents
 void MainWindow::populateForecastDownloads() {
     QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     QDir downloadsDir(downloadsPath);
@@ -398,12 +397,12 @@ void MainWindow::populateForecastDownloads() {
         }
     }
 
-    ui->forecastDownloads->setModel(model);
-    ui->forecastDownloads->header()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->weatherModelDataTreeView->setModel(model);
+    ui->weatherModelDataTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
 
     // Disable editing and enable double-click expansion
-    ui->forecastDownloads->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->forecastDownloads->setExpandsOnDoubleClick(true);
+    ui->weatherModelDataTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->weatherModelDataTreeView->setExpandsOnDoubleClick(true);
 }
 
 
@@ -507,9 +506,9 @@ void MainWindow::domainAverageCheckBoxClicked()
 
     if (state.isDomainAverageInitializationToggled) {
         ui->pointInitializationCheckBox->setChecked(false);
-        ui->useWeatherModelInit->setChecked(false);
+        ui->weatherModelCheckBox->setChecked(false);
         state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
     }
 
     refreshUI();
@@ -640,9 +639,9 @@ void MainWindow::pointInitializationCheckBoxClicked()
 
     if (state.isPointInitializationToggled) {
         ui->domainAverageCheckBox->setChecked(false);
-        ui->useWeatherModelInit->setChecked(false);
+        ui->weatherModelCheckBox->setChecked(false);
         state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
     }
 
     refreshUI();
@@ -652,7 +651,7 @@ void MainWindow::useWeatherModelInitClicked()
 {
     AppState& state = AppState::instance();
 
-    state.isWeatherModelInitializationToggled = ui->useWeatherModelInit->isChecked();
+    state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
 
     if (state.isWeatherModelInitializationToggled) {
         ui->domainAverageCheckBox->setChecked(false);
@@ -731,7 +730,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->pointInitializationCheckBox->click();
     } else if (item->text(0) == "Weather Model")
     {
-        ui->useWeatherModelInit->click();
+        ui->weatherModelCheckBox->click();
     } else if (item->text(0) == "Surface Input")
     {
         emit openElevationFile();
