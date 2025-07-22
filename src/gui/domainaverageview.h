@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Connects the Qt GUI with the ninjastorm server
+ * Purpose:  Handles GUI related logic for the Domain Average Page
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -28,26 +28,37 @@
  *****************************************************************************/
 
 
-#ifndef SERVERBRIDGE_H
-#define SERVERBRIDGE_H
+#ifndef DOMAINAVERAGEVIEW_H
+#define DOMAINAVERAGEVIEW_H
 
-#include <QMessageBox>
-#include "ninja_version.h"
-#include <sstream>
-#include <cpl_conv.h>
-#include <cpl_http.h>
+#include "appstate.h"
+#include <QObject>
+#include <QPair>
+#include <QSet>
 
-class ServerBridge
-{
+namespace Ui {
+class MainWindow;
+}
+
+class DomainAverageView: public QObject {
+    Q_OBJECT
+
+signals:
+    void requestRefresh();
+
 public:
-    ServerBridge();
-    void checkMessages(void);
+    explicit DomainAverageView(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private:
-    QString version;
+    QSet<QPair<int, int>> invalidDAWCells;
+    Ui::MainWindow *ui;
 
-    bool NinjaCheckVersions(char * mostrecentversion, char * localversion);
-    char * NinjaQueryServerMessages(bool checkAbort);
+    void domainAverageTableCellChanged(int row, int column);
+    void clearTableButtonClicked();
+    void domainAverageCheckBoxClicked();
+    void windHeightComboBoxCurrentIndexChanged(int index);
+    void windHeightUnitsComboBoxCurrentIndexChanged(int index);
+
 };
 
-#endif // SERVERBRIDGE_H
+#endif // DOMAINAVERAGEVIEW_H

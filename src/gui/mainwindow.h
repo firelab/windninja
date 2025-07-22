@@ -33,6 +33,7 @@
 #include "surfaceinput.h"
 #include "surfaceinputview.h"
 #include "menubarview.h"
+#include "domainaverageview.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
@@ -96,26 +97,21 @@ private slots:
     void momentumSolverCheckBoxClicked();
     void diurnalCheckBoxClicked();
     void stabilityCheckBoxClicked();
-    void windHeightComboBoxCurrentIndexChanged(int index);
-    void domainAverageCheckBoxClicked();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void pointInitializationCheckBoxClicked();
     void useWeatherModelInitClicked();
-    void clearTableButtonClicked();
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void numberOfProcessorsSolveButtonClicked();
     void timeZoneAllZonesCheckBoxClicked();
     void timeZoneDetailsCheckBoxClicked();
     void timeZoneComboBoxCurrentIndexChanged(int index);
-    void domainAverageTableCellChanged(int row, int column);
     void refreshUI();
 
 
 private:
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
-    QSet<QPair<int, int>> invalidDAWCells;
 
     Ui::MainWindow *ui;
     QWebEngineView *webView;
@@ -125,5 +121,6 @@ private:
     SurfaceInputView *surfaceInputView;
     MenuBarView *menuBarView;
     ServerBridge *serverBridge;
+    DomainAverageView *domainAverageView;
 };
 #endif // MAINWINDOW_H

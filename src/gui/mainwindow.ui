@@ -524,7 +524,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>11</number>
+           <number>10</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -1633,23 +1633,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_2">
                <item>
-                <widget class="QDoubleSpinBox" name="windHeightValue">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
-                 </property>
-                 <property name="minimum">
-                  <double>0.010000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>20.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="windHeightComboBox">
+                <widget class="QComboBox" name="inputWindHeightComboBox">
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
@@ -1671,32 +1655,45 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="windHeightFeet">
+                <widget class="QDoubleSpinBox" name="inputWindHeightSpinBox">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
                  <property name="cursor">
                   <cursorShape>PointingHandCursor</cursorShape>
                  </property>
-                 <property name="text">
-                  <string>Feet</string>
+                 <property name="minimum">
+                  <double>0.010000000000000</double>
                  </property>
-                 <property name="checked">
-                  <bool>true</bool>
+                 <property name="value">
+                  <double>20.000000000000000</double>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="windHeightMeters">
+                <widget class="QComboBox" name="inputWindHeightUnitsComboBox">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
-                 <property name="cursor">
-                  <cursorShape>PointingHandCursor</cursorShape>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
                  </property>
-                 <property name="text">
-                  <string>Meters</string>
+                 <property name="editable">
+                  <bool>false</bool>
                  </property>
+                 <item>
+                  <property name="text">
+                   <string>Feet</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Meters</string>
+                  </property>
+                 </item>
                 </widget>
                </item>
                <item>

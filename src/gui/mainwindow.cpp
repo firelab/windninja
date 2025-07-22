@@ -241,6 +241,7 @@ MainWindow::MainWindow(QWidget *parent)
     menuBarView = new MenuBarView(ui, this);
 
     surfaceInputView = new SurfaceInputView(ui, webView, surfaceInput, this);
+    domainAverageView = new DomainAverageView(ui, this);
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -331,20 +332,17 @@ void MainWindow::connectSignals()
     connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
     connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
-    connect(ui->windHeightComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::windHeightComboBoxCurrentIndexChanged);
-    connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &MainWindow::domainAverageCheckBoxClicked);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
-    connect(ui->clearTableButton, &QPushButton::clicked, this, &MainWindow::clearTableButtonClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneDetailsCheckBoxClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::timeZoneComboBoxCurrentIndexChanged);
-    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &MainWindow::domainAverageTableCellChanged);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInputView, &SurfaceInputView::boundingBoxReceived);
     connect(surfaceInputView, &SurfaceInputView::requestRefresh, this, &MainWindow::refreshUI);
+    connect(domainAverageView, &DomainAverageView::requestRefresh, this, &MainWindow::refreshUI);
     connect(this, &MainWindow::openElevationFile, surfaceInputView, &SurfaceInputView::elevationInputFileOpenButtonClicked);
 }
 
@@ -441,7 +439,6 @@ void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
       ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
 }
 
-// User toggles show all time zones
 void MainWindow::timeZoneAllZonesCheckBoxClicked()
 {
     AppState& state = AppState::instance();
@@ -499,138 +496,6 @@ void MainWindow::stabilityCheckBoxClicked()
     refreshUI();
 }
 
-void MainWindow::domainAverageCheckBoxClicked()
-{
-    AppState& state = AppState::instance();
-    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-
-    if (state.isDomainAverageInitializationToggled) {
-        ui->pointInitializationCheckBox->setChecked(false);
-        ui->weatherModelCheckBox->setChecked(false);
-        state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
-    }
-
-    refreshUI();
-}
-
-void MainWindow::windHeightComboBoxCurrentIndexChanged(int index)
-{
-    switch(index)
-    {
-    case 0:
-        ui->windHeightValue->setValue(20.00);
-        ui->windHeightValue->setEnabled(false);
-        ui->windHeightFeet->setChecked(true);
-        ui->windHeightFeet->setEnabled(false);
-        ui->windHeightMeters->setEnabled(false);
-        break;
-
-    case 1:
-        ui->windHeightValue->setValue(10.00);
-        ui->windHeightValue->setEnabled(false);
-        ui->windHeightMeters->setChecked(true);
-        ui->windHeightFeet->setEnabled(false);
-        ui->windHeightMeters->setEnabled(false);
-        break;
-
-    case 2:
-        ui->windHeightValue->setEnabled(true);
-        ui->windHeightFeet->setEnabled(true);
-        ui->windHeightMeters->setEnabled(true);
-        break;
-    }
-}
-
-void MainWindow::clearTableButtonClicked()
-{
-    AppState& state = AppState::instance();
-    AppState::instance().isDomainAverageWindInputTableValid = true;
-
-    ui->domainAverageTable->clearContents();
-    invalidDAWCells.clear();
-
-    refreshUI();
-}
-
-void MainWindow::domainAverageTableCellChanged(int row, int column)
-{
-    QTableWidget* table = ui->domainAverageTable;
-    QTableWidgetItem* item = table->item(row, column);
-    if (!item) return;
-
-    QString value = item->text().trimmed();
-    bool valid = false;
-    QString errorMessage;
-
-    // Allow empty input
-    if (value.isEmpty())
-    {
-        valid = true;
-    } else
-    {
-    switch (column)
-    {
-        case 0: {
-            double d = value.toDouble(&valid);
-            if (!valid || d <= 0) {
-                valid = false;
-                errorMessage = "Must be a positive number";
-            }
-            break;
-        }
-        case 1: {
-        int i = value.toDouble(&valid);
-        if (!valid || i < 0 || i > 359.9) {
-            valid = false;
-            errorMessage = "Must be a number between 0 and 359";
-        }
-        break;
-        }
-        case 2: {
-            QTime t = QTime::fromString(value, "hh:mm");
-            valid = t.isValid();
-            if (!valid) errorMessage = "Must be a valid 24h time (hh:mm)";
-            break;
-        }
-        case 3: {
-            QDate d = QDate::fromString(value, "MM/dd/yyyy");
-            valid = d.isValid();
-            if (!valid) errorMessage = "Must be a valid date (MM/DD/YYYY)";
-            break;
-        }
-        case 4: {
-            int i = value.toDouble(&valid);
-            if (!valid || i < 0 || i > 100) {
-                valid = false;
-                errorMessage = "Must be a number between 0 and 100";
-            }
-            break;
-        }
-        case 5: {
-            value.toInt(&valid);
-            if (!valid) errorMessage = "Must be an integer";
-            break;
-        }
-        default:
-            valid = true;
-        }
-    }
-
-    QPair<int, int> cell(row, column);
-    if (!valid) {
-    invalidDAWCells.insert(cell);
-    item->setBackground(Qt::red);
-    item->setToolTip(errorMessage);
-    } else {
-    invalidDAWCells.remove(cell);
-    item->setBackground(QBrush());  // Reset to default
-    item->setToolTip("");
-    }
-
-    AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
-    refreshUI();
-}
 
 void MainWindow::pointInitializationCheckBoxClicked()
 {
