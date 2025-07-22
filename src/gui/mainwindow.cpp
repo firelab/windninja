@@ -178,8 +178,8 @@ MainWindow::MainWindow(QWidget *parent)
     serverBridge = new ServerBridge();
     serverBridge->checkMessages();
     resize(1200, 700);
-
-    timeZoneAllZonesCheckBoxClicked();
+    surfaceInputView = new SurfaceInputView(ui, webView, surfaceInput, this);
+    surfaceInputView->timeZoneAllZonesCheckBoxClicked();
     refreshUI();
     ui->treeWidget->expandAll();
 
@@ -336,14 +336,10 @@ void MainWindow::connectSignals()
     connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
-    connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneAllZonesCheckBoxClicked);
-    connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &MainWindow::timeZoneDetailsCheckBoxClicked);
-    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &MainWindow::timeZoneComboBoxCurrentIndexChanged);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInputView, &SurfaceInputView::boundingBoxReceived);
     connect(surfaceInputView, &SurfaceInputView::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageView, &DomainAverageView::requestRefresh, this, &MainWindow::refreshUI);
-    connect(this, &MainWindow::openElevationFile, surfaceInputView, &SurfaceInputView::elevationInputFileOpenButtonClicked);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -430,39 +426,6 @@ void MainWindow::momentumSolverCheckBoxClicked()
 
     ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     refreshUI();
-}
-
-void MainWindow::timeZoneComboBoxCurrentIndexChanged(int index)
-{
-      QString currentTimeZone = ui->timeZoneComboBox->currentText();
-      QString timeZoneDetails = surfaceInput->fetchTimeZoneDetails(currentTimeZone);
-      ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
-}
-
-void MainWindow::timeZoneAllZonesCheckBoxClicked()
-{
-    AppState& state = AppState::instance();
-    state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
-
-    bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
-    QVector<QVector<QString>> displayData = surfaceInput->fetchAllTimeZones(isShowAllTimeZonesSelected);
-
-    ui->timeZoneComboBox->clear();
-    for (const QVector<QString>& zone : displayData) {
-        if (!zone.isEmpty()) {
-          ui->timeZoneComboBox->addItem(zone[0]);
-        }
-    }
-
-    // Default to America/Denver
-    ui->timeZoneComboBox->setCurrentText("America/Denver");
-}
-
-void MainWindow::timeZoneDetailsCheckBoxClicked()
-{
-    AppState& state = AppState::instance();
-    state.isDisplayTimeZoneDetailsSelected = ui->timeZoneDetailsCheckBox->isChecked();
-    ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
 }
 
 void MainWindow::diurnalCheckBoxClicked()
@@ -598,7 +561,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->weatherModelCheckBox->click();
     } else if (item->text(0) == "Surface Input")
     {
-        emit openElevationFile();
+        surfaceInputView->elevationInputFileOpenButtonClicked();
     }
 }
 

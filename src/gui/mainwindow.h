@@ -89,9 +89,6 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-signals:
-    void openElevationFile();
-
 private slots:
     void massSolverCheckBoxClicked();
     void momentumSolverCheckBoxClicked();
@@ -103,9 +100,6 @@ private slots:
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void numberOfProcessorsSolveButtonClicked();
-    void timeZoneAllZonesCheckBoxClicked();
-    void timeZoneDetailsCheckBoxClicked();
-    void timeZoneComboBoxCurrentIndexChanged(int index);
     void refreshUI();
 
 

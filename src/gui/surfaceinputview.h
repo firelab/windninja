@@ -30,6 +30,7 @@
 #ifndef SURFACEINPUTVIEW_H
 #define SURFACEINPUTVIEW_H
 
+#include "appstate.h"
 #include "surfaceinput.h"
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
@@ -62,6 +63,7 @@ signals:
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);
     void elevationInputFileOpenButtonClicked();
+    void timeZoneAllZonesCheckBoxClicked();
 
 private slots:
     void surfaceInputDownloadCancelButtonClicked();
@@ -74,6 +76,8 @@ private slots:
     void elevationInputFileLineEditTextChanged(const QString &arg1);
     void meshResolutionComboBoxCurrentIndexChanged(int index);
     void fetchDEMFinished();
+    void timeZoneDetailsCheckBoxClicked();
+    void timeZoneComboBoxCurrentIndexChanged(int index);
 
 private:
     void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);

@@ -55,6 +55,9 @@ SurfaceInputView::SurfaceInputView(Ui::MainWindow *ui,
     connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &SurfaceInputView::surfaceInputDownloadButtonClicked);
     connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &SurfaceInputView::elevationInputFileOpenButtonClicked);
     connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &SurfaceInputView::elevationInputTypePushButtonClicked);
+    connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInputView::timeZoneAllZonesCheckBoxClicked);
+    connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInputView::timeZoneDetailsCheckBoxClicked);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInputView::timeZoneComboBoxCurrentIndexChanged);
 }
 
 
@@ -311,5 +314,38 @@ void SurfaceInputView::fetchDEMFinished()
     ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
     int currentIndex = ui->inputsStackedWidget->currentIndex();
     ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+}
+
+void SurfaceInputView::timeZoneComboBoxCurrentIndexChanged(int index)
+{
+    QString currentTimeZone = ui->timeZoneComboBox->currentText();
+    QString timeZoneDetails = surfaceInput->fetchTimeZoneDetails(currentTimeZone);
+    ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
+}
+
+void SurfaceInputView::timeZoneAllZonesCheckBoxClicked()
+{
+    AppState& state = AppState::instance();
+    state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
+
+    bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
+    QVector<QVector<QString>> displayData = surfaceInput->fetchAllTimeZones(isShowAllTimeZonesSelected);
+
+    ui->timeZoneComboBox->clear();
+    for (const QVector<QString>& zone : displayData) {
+        if (!zone.isEmpty()) {
+            ui->timeZoneComboBox->addItem(zone[0]);
+        }
+    }
+
+    // Default to America/Denver
+    ui->timeZoneComboBox->setCurrentText("America/Denver");
+}
+
+void SurfaceInputView::timeZoneDetailsCheckBoxClicked()
+{
+    AppState& state = AppState::instance();
+    state.isDisplayTimeZoneDetailsSelected = ui->timeZoneDetailsCheckBox->isChecked();
+    ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
 }
 
