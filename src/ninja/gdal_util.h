@@ -72,7 +72,8 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 
 bool gdalHasGeographicSRS (const char* filename);
 int gdalGetUtmZone (double latitude, double longitude);
-GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
 bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS);
+GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
+bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDALDatasetH& hDstDS, const char *pszDstWkt );
 
 #endif /* GDAL_UTIL_H */

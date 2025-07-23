@@ -1421,7 +1421,7 @@ int gdalGetUtmZone (double lat, double lon) {
  * @return true on success, false on failure
  *
  */
-bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS) 
+bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS)
 {
     /* parse options */
     GDALResampleAlg eAlg = GRA_NearestNeighbour;
@@ -1609,6 +1609,93 @@ GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS) {
     }
 
     return pDstDS;
+}
+
+/**
+ * @brief Warp a single band of a GDAL dataset into an output VRT GDAL dataset, using an output spatial reference defined by a WKT
+ * using GDALAutoCreateWarpedVRT().
+ *
+ * Warp a single band of a given source GDAL dataset into an output VRT GDAL dataset.
+ * Where the source dataset is warped FROM the source dataset spatial reference TO the output spatial reference,
+ * and the output spatial reference is defined by a WKT.
+ *
+ * note that the only pszWarpOptions used are panSrcBands as the source band number, panDstBands the destination band number of 1,
+ * and both padfDstNoDataReal and padfDstNoDataImag set to the NoDataValue of the dataset (or -9999 if no NoDataValue in the dataset).
+ *
+ * @param hSrcDS a pointer to a valid source GDAL dataset, to be warped
+ * @param band the specific band number within the source GDAL dataset to be warped
+ * @param hDstDS the destination GDAL dataset, as a VRT, to be filled
+ * @param pszDstWkt the output spatial reference to which the source GDAL dataset should be warped to, as an OGC well-known text representation of the spatial reference.
+ * @return true on success, false on failure
+ */
+bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDALDatasetH& hDstDS, const char *pszDstWkt )
+{
+    //if(hDstDS != NULL)  // this didn't work as a good checking method
+    //{
+    //    CPLError( CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input hDstDS is NOT NULL, it was input pre-filled!" );
+    //    return false;
+    //}
+
+    int nBandCount = GDALGetRasterCount( hSrcDS );
+    if( band <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input band is <= 0." );
+        return false;
+    }
+    if( band > nBandCount )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input band %i is > nBands of the dataset.", band );
+        return false;
+    }
+
+    GDALDatasetH hBand = GDALGetRasterBand( hSrcDS, band );
+    int bSuccess = false;
+    double dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
+    if( bSuccess == false )
+    {
+        dfNoData = -9999.0;
+    }
+
+    const char *pszSrcWkt;
+    pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+
+    GDALWarpOptions *psWarpOptions;
+    psWarpOptions = GDALCreateWarpOptions();
+
+    psWarpOptions->nBandCount = nBandCount;
+
+    psWarpOptions->panSrcBands =
+        (int *) CPLMalloc(sizeof(int) * nBandCount );
+    psWarpOptions->panSrcBands[0] = band;
+
+    psWarpOptions->panDstBands =
+        (int *) CPLMalloc(sizeof(int) * nBandCount );
+    psWarpOptions->panDstBands[0] = 1;
+
+    psWarpOptions->padfDstNoDataReal =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataImag =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    for( int i = 0; i < nBandCount; i++ )
+    {
+        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+    }
+
+
+    hDstDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                      GRA_NearestNeighbour, 1.0,
+                                      psWarpOptions );
+
+    if(hDstDS == NULL)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Warp operation failed!" );
+        return false;
+    }
+
+    GDALDestroyWarpOptions( psWarpOptions );
+
+    return true;
 }
 
 

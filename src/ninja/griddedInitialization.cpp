@@ -137,8 +137,8 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         throw std::runtime_error("Can't open input direction grid.");
     }
 
-    // check that the initialization grids are of the same projection as the dem
-    OGRSpatialReferenceH hSpeedSRS, hDirSRS, hDemSRS;
+    // check that the initialization grids have same projection
+    OGRSpatialReferenceH hSpeedSRS, hDirSRS;
 
     const char *pszSpeedWkt = GDALGetProjectionRef(hSpeedDS);
     if(pszSpeedWkt == NULL)
@@ -156,25 +156,109 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     hSpeedSRS = OSRNewSpatialReference(pszSpeedWkt);
     hDirSRS = OSRNewSpatialReference(pszDirWkt);
+
+    if( !OSRIsSameEx( hSpeedSRS, hDirSRS, NULL ) )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed and direction grids." );
+        throw std::runtime_error("The input speed grid does not have the same spatial reference as the input direction grid.");
+    }
+
+    GDAL2AsciiGrid( (GDALDataset *)hSpeedDS, 1, inputVelocityGrid );
+    GDAL2AsciiGrid( (GDALDataset *)hDirDS, 1, inputAngleGrid );
+
+    // if the initialization grids have a different projection than the dem, need to warp them to the dem
+    // with a corresponding coordinateTransformationAngle FROM the projection of the initialization grids TO the projection of the dem
+    OGRSpatialReferenceH hDemSRS;
     hDemSRS = OSRNewSpatialReference(input.dem.prjString.c_str());
 
-    if( !OSRIsSameEx( hSpeedSRS, hDemSRS, NULL ) )
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
-        throw std::runtime_error("The input speed grid does not have the same spatial reference as the DEM.");
-    }
     if( !OSRIsSameEx( hDirSRS, hDemSRS, NULL ) )
     {
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
-        throw std::runtime_error("The input direction grid does not have the same spatial reference as the DEM.");
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "warping the input speed and direction grids to the projection of the dem." );
+
+        const char *pszDstWkt = input.dem.prjString.c_str();
+
+        // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+        // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+        // in this case, going FROM initialization grid projection coordinates TO dem projection coordinates
+        double coordinateTransformationAngle = 0.0;
+        if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+        {
+            // direct calculation of FROM input_grid TO dem, already has the appropriate sign
+            if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hDirSRS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
+            {
+                printf("Warning: Unable to calculate coordinate transform angle for the gridded initialization input speed and direction grids to dem coordinates.");
+            }
+        }
+
+        // need an intermediate u and v set of ascii grids, for the warp
+        // always warp u and v NOT speed and dir, to avoid angle interpolation issues (angles are periodic)
+        AsciiGrid<double> uGrid;
+        AsciiGrid<double> vGrid;
+        uGrid.set_headerData(inputAngleGrid);
+        vGrid.set_headerData(inputAngleGrid);
+        for(int i=0; i<inputAngleGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<inputAngleGrid.get_nCols(); j++)
+            {
+                wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+            }
+        }
+
+        GDALDatasetH uGrid_hDS = uGrid.ascii2GDAL();
+        GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
+
+        GDALDatasetH uGrid_hVrtDS;
+        GDALDatasetH vGrid_hVrtDS;
+
+        // warp the u and v grids FROM initialization grid projection coordinates TO dem projection coordinates
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( uGrid_hDS, 1, uGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the input speed and direction grids (uGrid).");
+        }
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( vGrid_hDS, 1, vGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the input speed and direction grids (vGrid).");
+        }
+
+        AsciiGrid<double> warped_uGrid;
+        AsciiGrid<double> warped_vGrid;
+        GDAL2AsciiGrid( (GDALDataset*)uGrid_hVrtDS, 1, warped_uGrid );
+        GDAL2AsciiGrid( (GDALDataset*)vGrid_hVrtDS, 1, warped_vGrid );
+
+        // update the inputVelocityGrid and inputAngleGrid to the new warped grid size and values
+        // and use the coordinateTransformationAngle to correct each spd,dir, u,v dataset from the warp
+        inputVelocityGrid.set_headerData(warped_uGrid);
+        inputAngleGrid.set_headerData(warped_uGrid);
+        for(int i=0; i<warped_uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<warped_uGrid.get_nCols(); j++)
+            {
+                // fill the grids with the raw values before the angle correction
+                wind_uv_to_sd(warped_uGrid(i,j), warped_vGrid(i,j), &(inputVelocityGrid)(i,j), &(inputAngleGrid)(i,j));
+
+                inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) - coordinateTransformationAngle ); //convert FROM input_grid projection coordinates TO dem projected coordinates
+                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                // however, these u and v grids are not actually being used past this point
+                //wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j), &(warped_uGrid)(i,j), &(warped_vGrid)(i,j));
+            }
+        }
+
+        // close the gdal datasets
+        GDALClose(uGrid_hVrtDS);
+        GDALClose(vGrid_hVrtDS);
+        GDALClose(uGrid_hDS);
+        GDALClose(vGrid_hDS);
+
+        // cleanup the intermediate grids
+        warped_uGrid.deallocate();
+        warped_vGrid.deallocate();
+        uGrid.deallocate();
+        vGrid.deallocate();
     }
 
     OSRDestroySpatialReference(hSpeedSRS);
     OSRDestroySpatialReference(hDirSRS);
     OSRDestroySpatialReference(hDemSRS);
-
-    GDAL2AsciiGrid( (GDALDataset *)hSpeedDS, 1, inputVelocityGrid );
-    GDAL2AsciiGrid( (GDALDataset *)hDirDS, 1, inputAngleGrid );
 
     GDALClose(hSpeedDS);
     GDALClose(hDirDS);
