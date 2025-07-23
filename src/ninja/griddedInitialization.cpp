@@ -104,6 +104,7 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
 
     //set average direction
     input.inputDirection = wrap0to360( meanDir + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
+    CPLDebug("NINJA", "input.inputSpeed = %lf, input.inputDirection (geographic coordinates) = %lf, input.dem.getAngleFromNorth() = %lf, corrected direction (projected coordinates) = %lf", input.inputSpeed, input.inputDirection, input.dem.getAngleFromNorth(), wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ));
 
     initializeBoundaryLayer(input);
 
@@ -119,9 +120,9 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     CPLDebug("NINJA", "input.speedInitGridFilename = %s", input.speedInitGridFilename.c_str());
     CPLDebug("NINJA", "input.dirInitGridFilename = %s", input.dirInitGridFilename.c_str());
-        
+
     AsciiGrid<double> inputVelocityGrid, inputAngleGrid;
-        
+
     GDALDatasetH hSpeedDS, hDirDS;
     hSpeedDS = GDALOpen( input.speedInitGridFilename.c_str(), GA_ReadOnly );
     if( hSpeedDS == NULL )
@@ -136,9 +137,45 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         throw std::runtime_error("Can't open input direction grid.");
     }
 
+    // check that the initialization grids are of the same projection as the dem
+    OGRSpatialReferenceH hSpeedSRS, hDirSRS, hDemSRS;
+
+    const char *pszSpeedWkt = GDALGetProjectionRef(hSpeedDS);
+    if(pszSpeedWkt == NULL)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
+        throw std::runtime_error("The input speed grid does not have a projection reference!");
+    }
+
+    const char *pszDirWkt = GDALGetProjectionRef(hDirDS);
+    if(pszDirWkt == NULL)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
+        throw std::runtime_error("The input direction grid does not have a projection reference!");
+    }
+
+    hSpeedSRS = OSRNewSpatialReference(pszSpeedWkt);
+    hDirSRS = OSRNewSpatialReference(pszDirWkt);
+    hDemSRS = OSRNewSpatialReference(input.dem.prjString.c_str());
+
+    if( !OSRIsSameEx( hSpeedSRS, hDemSRS, NULL ) )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
+        throw std::runtime_error("The input speed grid does not have the same spatial reference as the DEM.");
+    }
+    if( !OSRIsSameEx( hDirSRS, hDemSRS, NULL ) )
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
+        throw std::runtime_error("The input direction grid does not have the same spatial reference as the DEM.");
+    }
+
+    OSRDestroySpatialReference(hSpeedSRS);
+    OSRDestroySpatialReference(hDirSRS);
+    OSRDestroySpatialReference(hDemSRS);
+
     GDAL2AsciiGrid( (GDALDataset *)hSpeedDS, 1, inputVelocityGrid );
     GDAL2AsciiGrid( (GDALDataset *)hDirDS, 1, inputAngleGrid );
-        
+
     GDALClose(hSpeedDS);
     GDALClose(hDirDS);
 
@@ -159,7 +196,6 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
         for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
-            inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
             wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
                     &(inputUGrid)(i,j), &(inputVGrid)(i,j));
         }
