@@ -123,32 +123,24 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     AsciiGrid<double> inputVelocityGrid, inputAngleGrid;
 
-    GDALDatasetH hSpeedDS, hDirDS;
-    hSpeedDS = GDALOpen( input.speedInitGridFilename.c_str(), GA_ReadOnly );
-    if( hSpeedDS == NULL )
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
-        throw std::runtime_error("Can't open input speed grid.");
-    }
-    hDirDS = GDALOpen( input.dirInitGridFilename.c_str(), GA_ReadOnly );
-    if( hDirDS == NULL )
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
-        throw std::runtime_error("Can't open input direction grid.");
-    }
+    inputVelocityGrid.GDALReadGrid( input.speedInitGridFilename.c_str() );
+    inputAngleGrid.GDALReadGrid( input.dirInitGridFilename.c_str() );
+
+    GDALDatasetH hSpeedDS = inputVelocityGrid.ascii2GDAL();
+    GDALDatasetH hDirDS = inputAngleGrid.ascii2GDAL();
 
     // check that the initialization grids have same projection
     OGRSpatialReferenceH hSpeedSRS, hDirSRS;
 
     const char *pszSpeedWkt = GDALGetProjectionRef(hSpeedDS);
-    if(pszSpeedWkt == NULL)
+    if(pszSpeedWkt == NULL || pszSpeedWkt[0] == '\0')
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
         throw std::runtime_error("The input speed grid does not have a projection reference!");
     }
 
     const char *pszDirWkt = GDALGetProjectionRef(hDirDS);
-    if(pszDirWkt == NULL)
+    if(pszDirWkt == NULL || pszDirWkt[0] == '\0')
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
         throw std::runtime_error("The input direction grid does not have a projection reference!");
@@ -184,7 +176,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
         {
             // direct calculation of FROM input_grid TO dem, already has the appropriate sign
-            if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hDirSRS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
+            if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hDirDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
             {
                 printf("Warning: Unable to calculate coordinate transform angle for the gridded initialization input speed and direction grids to dem coordinates.");
             }
