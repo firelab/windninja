@@ -126,28 +126,20 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
     inputVelocityGrid.GDALReadGrid( input.speedInitGridFilename.c_str() );
     inputAngleGrid.GDALReadGrid( input.dirInitGridFilename.c_str() );
 
-    GDALDatasetH hSpeedDS = inputVelocityGrid.ascii2GDAL();
-    GDALDatasetH hDirDS = inputAngleGrid.ascii2GDAL();
-
     // check that the initialization grids have same projection
     OGRSpatialReferenceH hSpeedSRS, hDirSRS;
-
-    const char *pszSpeedWkt = GDALGetProjectionRef(hSpeedDS);
-    if(pszSpeedWkt == NULL || pszSpeedWkt[0] == '\0')
+    hSpeedSRS = OSRNewSpatialReference(inputVelocityGrid.prjString.c_str());
+    hDirSRS = OSRNewSpatialReference(inputAngleGrid.prjString.c_str());
+    if( hSpeedSRS == NULL )
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed grid." );
-        throw std::runtime_error("The input speed grid does not have a projection reference!");
+        throw std::runtime_error("Could not make a spatial reference for input speed grid.");
     }
-
-    const char *pszDirWkt = GDALGetProjectionRef(hDirDS);
-    if(pszDirWkt == NULL || pszDirWkt[0] == '\0')
+    if( hDirSRS == NULL )
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input direction grid." );
-        throw std::runtime_error("The input direction grid does not have a projection reference!");
+        throw std::runtime_error("Could not make a spatial reference for input direction grid.");
     }
-
-    hSpeedSRS = OSRNewSpatialReference(pszSpeedWkt);
-    hDirSRS = OSRNewSpatialReference(pszDirWkt);
 
     if( !OSRIsSameEx( hSpeedSRS, hDirSRS, NULL ) )
     {
@@ -155,13 +147,14 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         throw std::runtime_error("The input speed grid does not have the same spatial reference as the input direction grid.");
     }
 
-    GDAL2AsciiGrid( (GDALDataset *)hSpeedDS, 1, inputVelocityGrid );
-    GDAL2AsciiGrid( (GDALDataset *)hDirDS, 1, inputAngleGrid );
-
     // if the initialization grids have a different projection than the dem, need to warp them to the dem
     // with a corresponding coordinateTransformationAngle FROM the projection of the initialization grids TO the projection of the dem
     OGRSpatialReferenceH hDemSRS;
     hDemSRS = OSRNewSpatialReference(input.dem.prjString.c_str());
+    if( hDemSRS == NULL )
+    {
+        throw std::runtime_error("Could not make a spatial reference for the dem.");
+    }
 
     if( !OSRIsSameEx( hDirSRS, hDemSRS, NULL ) )
     {
@@ -175,11 +168,13 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         double coordinateTransformationAngle = 0.0;
         if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
         {
+            GDALDatasetH hDirDS = inputAngleGrid.ascii2GDAL();
             // direct calculation of FROM input_grid TO dem, already has the appropriate sign
             if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hDirDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
             {
                 printf("Warning: Unable to calculate coordinate transform angle for the gridded initialization input speed and direction grids to dem coordinates.");
             }
+            GDALClose(hDirDS);
         }
 
         // need an intermediate u and v set of ascii grids, for the warp
@@ -251,9 +246,6 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
     OSRDestroySpatialReference(hSpeedSRS);
     OSRDestroySpatialReference(hDirSRS);
     OSRDestroySpatialReference(hDemSRS);
-
-    GDALClose(hSpeedDS);
-    GDALClose(hDirDS);
 
     //Check that the initialization grids completely overlap the DEM
     if(!inputVelocityGrid.CheckForGridOverlap(input.dem) || !inputAngleGrid.CheckForGridOverlap(input.dem))
