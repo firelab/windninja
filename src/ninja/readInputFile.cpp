@@ -95,6 +95,8 @@ void ninja::readInputFile()
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
     {
+        CPLDebug( "WINDNINJA", "calculating angleFromNorth val, for the dem, in ninja::readInputFile()");
+
         char* pszDstWkt;
         OGRSpatialReferenceH hTargetSRS;
 

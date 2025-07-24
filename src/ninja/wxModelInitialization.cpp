@@ -1113,6 +1113,12 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     //set average direction
     input.inputDirection = wrap0to360( meanDir + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
+    CPLDebug( "WINDNINJA", "wxModelInitialization::ninjaFoamInitializeFields()" );
+    CPLDebug( "WINDNINJA", "input.inputSpeed = %lf", input.inputSpeed );
+    CPLDebug( "WINDNINJA", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection );
+    CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
+    CPLDebug( "WINDNINJA", "input.inputDirection (projection coordinates) = %lf", meanDir );
+
     //write wx model grids
     writeWxModelGrids(input);
 
@@ -1590,6 +1596,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             double angleFromNorth = 0.0;
             if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
             {
+                CPLDebug( "WINDNINJA", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
                 GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
                 if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
                 {

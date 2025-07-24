@@ -396,6 +396,9 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     double x2, y2; //point due north of center point in lat/lon
     double boundsLonLat[4]; //bounds of the DS in lat/lon
 
+    CPLDebug( "WINDNINJA", "GDALCalculateAngleFromNorth()");
+    CPLDebug( "WINDNINJA", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poDS ) );
+
     if(!GDALGetCenter( poDS, &x1, &y1 ))
     {
         return false;
@@ -410,11 +413,6 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     }
 
     y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
-
-    double adfGeoTransform[6];
-    poDS->GetGeoTransform( adfGeoTransform );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
@@ -488,6 +486,10 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
     double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the pszDstWkt projection
     double bounds[4]; //bounds of the poSrcDS, used to calculate y2
 
+    CPLDebug( "WINDNINJA", "GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst()");
+    CPLDebug( "WINDNINJA", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
+    CPLDebug( "WINDNINJA", "pszDstWkt = \"%s\"", pszDstWkt );
+
     //get the center of the poSrcDS, in the projection of the poSrcDS
     if(!GDALGetCenter( poSrcDS, &x1, &y1, NULL ))
     {
@@ -503,23 +505,6 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
     }
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
-
-    // the resulting angle value calculated by GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst() for dem TO geographic,
-    // does NOT match the resulting angle value calculated by (-1)*GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src() for geographic TO dem
-    // I thought that maybe it had to do with the stretch of the grid, that (x1,y1) to (x2,y2) crosses too many varyingly stretched grid cells
-    // so I tried using 1/4 the cell size instead of 1/4 the bounds, but that didn't get the values to match.
-//    //add 1/4 size of the poSrcDS y cell size in y direction, in the projection of the poSrcDS
-//    double adfGeoTransform[6];
-//    poSrcDS->GetGeoTransform( adfGeoTransform );
-//    double yCellSize = -adfGeoTransform[5];
-//    CPLDebug( "WINDNINJA", "yCellSize = %lf", yCellSize );
-//
-//    y2 = y1 + 0.25*yCellSize;
-
-    double adfGeoTransform[6];
-    poSrcDS->GetGeoTransform( adfGeoTransform );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
@@ -594,6 +579,10 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
     double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the pszDstWkt projection, to be transformed back to the projection of the poSrcDS
     double bounds[4]; //bounds of the poSrcDS, in the pszDstWkt projection, used to calculate y2 in the pszDstWkt projection
 
+    CPLDebug( "WINDNINJA", "GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src()");
+    CPLDebug( "WINDNINJA", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
+    CPLDebug( "WINDNINJA", "pszDstWkt = \"%s\"", pszDstWkt );
+
     //get the center of the poSrcDS, in the pszDstWkt projection
     if(!GDALGetCenter( poSrcDS, &x1, &y1, pszDstWkt ))
     {
@@ -609,11 +598,6 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
     }
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
-
-    double adfGeoTransform[6];
-    poSrcDS->GetGeoTransform( adfGeoTransform );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[0], [1], [2] = %lf, %lf, %lf", adfGeoTransform[0], adfGeoTransform[1], adfGeoTransform[2] );
-    CPLDebug( "WINDNINJA", "adfGeoTransform[3], [4], [5] = %lf, %lf, %lf", adfGeoTransform[3], adfGeoTransform[4], adfGeoTransform[5] );
 
     CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
     CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );

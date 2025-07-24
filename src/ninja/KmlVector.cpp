@@ -1743,43 +1743,10 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 	nR = spd.get_nRows();
 	nC = spd.get_nCols();
 
-    // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
-    // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
-    // in this case, going FROM dem projection coordinates TO kmz geographic lat/lon coordinates
-    double coordinateTransformationAngle = 0.0;
-    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
-    {
-        char* pszDstWkt;
-        OGRSpatialReferenceH hTargetSRS;
-
-        hTargetSRS = OSRNewSpatialReference(NULL);
-        OSRImportFromEPSG(hTargetSRS, 4326);
-        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
-
-        GDALDatasetH hSrcDS = dir.ascii2GDAL();
-        ////GDALDatasetH hSrcDS = input.dem.ascii2GDAL();  // values are slightly different, but not by much
-
-        // calculate FROM geo TO dem, THEN REVERSE THE SIGN to get FROM dem TO geo for the kmz calculations
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM geo TO dem
-        {
-            printf("Warning: Unable to calculate coordinate transform angle for the kmz output.");
-        }
-
-        // WATCH OUT, the signs are REVERSED for this case, the above coordinateTransformAngle is going FROM geographic lat/lon TO dem projection coordinates,
-        // but the calculation below requires coordinateTransformAngle going FROM dem projection coordinates TO geographic lat/lon coordinates,
-        // so need to reverse the sign, because coordinateTransformAngle_from_dem_to_geo = (-1)*coordinateTransformAngle_from_geo_to_dem.
-        coordinateTransformationAngle = -coordinateTransformationAngle;
-
-        GDALClose(hSrcDS);
-        CPLFree(pszDstWkt);
-        OSRDestroySpatialReference(hTargetSRS);
-    }
-
-    CPLDebug("NINJA", "dir.get_meanValue() = %lf", dir.get_meanValue());
-    CPLDebug("NINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth);
-    CPLDebug("NINJA", "corrected direction = wrap0to360( dir.get_meanValue() - (-1)*angleFromNorth ) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ));
-    CPLDebug("NINJA", "coordinateTransformationAngle (dem_to_N) = %lf", coordinateTransformationAngle);
-    CPLDebug("NINJA", "corrected direction = wrap0to360( dir.get_meanValue() - coordinateTransformationAngle ) = %lf", wrap0to360( dir.get_meanValue() - coordinateTransformationAngle ));
+    CPLDebug( "WINDNINJA", "KmlVector::writeVectors()" );
+    CPLDebug( "WINDNINJA", "dirGrid.get_meanValue() (projection coordinates) = %lf", dir.get_meanValue() );
+    CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth );
+    CPLDebug( "WINDNINJA", "dirGrid.get_meanValue() (geographic coordinates) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ) );  // see below for the calculation formula
 
 	//double PI = acos(-1.0);
 	geTheta = 0;
@@ -1796,8 +1763,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
             // so we need to use a negative value for angleFromNorth rather than a positive value
             // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
             // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
-            //geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM geographic TO projected coordinates
-            geTheta = wrap0to360( dir(i,j) - coordinateTransformationAngle ); //convert FROM geographic TO projected coordinates
+            geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM geographic TO projected coordinates
             theta = dir(i,j) + 180.0;
 
 			if(s <= splitValue[1])
