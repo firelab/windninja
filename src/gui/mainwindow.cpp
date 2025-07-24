@@ -514,12 +514,12 @@ void MainWindow::solveButtonClicked()
     NinjaArmyH *ninjaArmy;
     char **papszOptions;
     const char *initializationMethod;
+    QList<double> speeds;
+    QList<double> directions;
 
     if (state.isDomainAverageInitializationValid)
     {
         initializationMethod = "domain_average";
-        QList<double> speeds;
-        QList<double> directions;
 
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row) {
@@ -632,16 +632,31 @@ void MainWindow::solveButtonClicked()
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
 
+    vector<string> outputFiles;
+    QDir outDir(ui->outputDirectoryLineEdit->text());
+    QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
+    int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
+    QString meshSize = QString::number(meshInt) + "m";
 
+    for (int i = 0; i < numNinjas; i++) {
+        QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
+                                               .arg(demName)
+                                               .arg(directions[i])
+                                               .arg(speeds[i])
+                                               .arg(meshSize));
+        outputFiles.push_back(filePath.toStdString());
+    }
 
-  // vector<string> outputFileList = provider.getOutputFileNames(
-  //     view->getUi()->elevationInputFileLineEdit->text(),
-  //     view->getUi()->domainAverageTable,
-  //     view->getUi()->meshResolutionSpinBox->text(),
-  //     provider.parseDomainAvgTable(view->getUi()->domainAverageTable).size(),
-  //     view->getUi()->outputDirectoryLineEdit->toPlainText());
+    for (const auto& dir : outputFiles) {
+        QString qDir = QString::fromStdString(dir);
 
-  // view->loadMapKMZ(outputFileList);
+        QFile f(qDir);
+        f.open(QIODevice::ReadOnly);
+        QByteArray data = f.readAll();
+        QString base64 = data.toBase64();
+
+        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+    }
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
