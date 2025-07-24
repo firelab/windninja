@@ -32,7 +32,7 @@
 
 #include "surfaceinput.h"
 #include "menubar.h"
-#include "domainaverage.h"
+#include "domainaverageinput.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
@@ -109,7 +109,7 @@ private:
     SurfaceInput *surfaceInput;
     MenuBar *menuBar;
     ServerBridge *serverBridge;
-    DomainAverage *domainAverage;
+    DomainAverageInput *domainAverageInput;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);

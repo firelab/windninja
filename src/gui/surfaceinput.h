@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Handles non-GUI related logic and API calls for Surface Input
+ * Purpose:  Hands GUI related logic for the Surface Input Page
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -30,31 +30,79 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
-#include "../ninja/gdal_util.h"
+#include "appstate.h"
 #include "../ninja/windninja.h"
+#include "../ninja/gdal_util.h"
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
+#include <QObject>
+#include <QStandardPaths>
+#include <QFileDialog>
 #include <QDebug>
-#include <QFile>
+#include <QProgressDialog>
+#include <QFuture>
+#include <QFutureWatcher>
+#include <QProgressDialog>
+#include <QtConcurrent/QtConcurrent>
 
-class SurfaceInput
+namespace Ui {
+class MainWindow;
+}
+
+class SurfaceInput : public QObject
 {
+  Q_OBJECT
 public:
-    SurfaceInput();
+    explicit SurfaceInput(Ui::MainWindow* ui,
+                                QWebEngineView* webView,
+                                QObject* parent = nullptr);
+    double computeMeshResolution(int index, bool isMomemtumChecked);
+
+signals:
+    void requestRefresh();
+
+public slots:
+    void boundingBoxReceived(double north, double south, double east, double west);
+    void elevationInputFileOpenButtonClicked();
+    void timeZoneAllZonesCheckBoxClicked();
+
+private slots:
+    void surfaceInputDownloadCancelButtonClicked();
+    void surfaceInputDownloadButtonClicked();
+    void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
+    void elevationInputTypePushButtonClicked();
+    void boundingBoxLineEditsTextChanged();
+    void pointRadiusLineEditsTextChanged();
+    void elevationInputFileDownloadButtonClicked();
+    void elevationInputFileLineEditTextChanged(const QString &arg1);
+    void meshResolutionComboBoxCurrentIndexChanged(int index);
+    void fetchDEMFinished();
+    void timeZoneDetailsCheckBoxClicked();
+    void timeZoneComboBoxCurrentIndexChanged(int index);
+
+private:
+    Ui::MainWindow *ui;
+    QWebEngineView *webView;
+    SurfaceInput *surfaceInput;
+
+    QProgressDialog *progress;
+    QFutureWatcher<int> *futureWatcher;
+    QString currentDEMFilePath;
+
+    QString GDALDriverName;
+    int GDALXSize, GDALYSize;
+    double GDALCellSize, GDALMaxValue, GDALMinValue;
+    double DEMCorners[8];
 
     QString fetchTimeZoneDetails(QString currentTimeZone);
     QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
     int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
     void computeDEMFile(QString filePath);
-    double computeMeshResolution(int index, bool isMomemtumChecked);
     void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
     void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
-    double* getDEMCorners();
+    void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
 
-private:
-    QString GDALDriverName;
-    int GDALXSize, GDALYSize;
-    double GDALCellSize, GDALMaxValue, GDALMinValue;
-    double DEMCorners[8];
 };
 
 #endif // SURFACEINPUT_H
-

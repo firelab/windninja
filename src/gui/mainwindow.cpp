@@ -178,8 +178,6 @@ MainWindow::MainWindow(QWidget *parent)
     serverBridge = new ServerBridge();
     serverBridge->checkMessages();
     resize(1200, 700);
-    surfaceInputView = new SurfaceInputView(ui, webView, surfaceInput, this);
-    surfaceInputView->timeZoneAllZonesCheckBoxClicked();
     refreshUI();
     ui->treeWidget->expandAll();
 
@@ -237,11 +235,11 @@ MainWindow::MainWindow(QWidget *parent)
     QUrl url = QUrl::fromLocalFile(filePath);
     webView->setUrl(url);
 
-    surfaceInput = new SurfaceInput();
     menuBar = new MenuBar(ui, this);
 
-    surfaceInputView = new SurfaceInputView(ui, webView, surfaceInput, this);
-    domainAverage = new DomainAverage(ui, this);
+    surfaceInput = new SurfaceInput(ui, webView, this);
+    surfaceInput->timeZoneAllZonesCheckBoxClicked();
+    domainAverageInput = new DomainAverageInput(ui, this);
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -337,9 +335,9 @@ void MainWindow::connectSignals()
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
-    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInputView, &SurfaceInputView::boundingBoxReceived);
-    connect(surfaceInputView, &SurfaceInputView::requestRefresh, this, &MainWindow::refreshUI);
-    connect(domainAverage, &DomainAverage::requestRefresh, this, &MainWindow::refreshUI);
+    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
+    connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -410,7 +408,7 @@ void MainWindow::massSolverCheckBoxClicked()
     }
     state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-    ui->meshResolutionSpinBox->setValue(surfaceInputView->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     refreshUI();
 }
 
@@ -424,7 +422,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     }
     state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-    ui->meshResolutionSpinBox->setValue(surfaceInputView->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     refreshUI();
 }
 
@@ -561,7 +559,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->weatherModelCheckBox->click();
     } else if (item->text(0) == "Surface Input")
     {
-        surfaceInputView->elevationInputFileOpenButtonClicked();
+        surfaceInput->elevationInputFileOpenButtonClicked();
     }
 }
 

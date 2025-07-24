@@ -28,8 +28,8 @@
  *****************************************************************************/
 
 
-#ifndef DOMAINAVERAGE_H
-#define DOMAINAVERAGE_H
+#ifndef DOMAINAVERAGEINPUT_H
+#define DOMAINAVERAGEINPUT_H
 
 #include "appstate.h"
 #include <QObject>
@@ -40,21 +40,20 @@ namespace Ui {
 class MainWindow;
 }
 
-class DomainAverage: public QObject {
+class DomainAverageInput: public QObject {
     Q_OBJECT
 
 signals:
     void requestRefresh();
 
 public:
-    explicit DomainAverage(Ui::MainWindow* ui, QObject* parent = nullptr);
+    explicit DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private slots:
     void domainAverageTableCellChanged(int row, int column);
     void clearTableButtonClicked();
     void domainAverageCheckBoxClicked();
     void windHeightComboBoxCurrentIndexChanged(int index);
-    void windHeightUnitsComboBoxCurrentIndexChanged(int index);
 
 private:
     QSet<QPair<int, int>> invalidDAWCells;
@@ -62,4 +61,4 @@ private:
 
 };
 
-#endif // DOMAINAVERAGE_H
+#endif // DOMAINAVERAGEINPUT_H
