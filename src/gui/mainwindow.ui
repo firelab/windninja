@@ -524,7 +524,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>5</number>
+           <number>13</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -2886,25 +2886,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_18">
                <item>
-                <widget class="QTextEdit" name="outputDirectoryTextEdit">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>300</width>
-                   <height>30</height>
-                  </size>
-                 </property>
-                 <property name="verticalScrollBarPolicy">
-                  <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-                 </property>
-                 <property name="horizontalScrollBarPolicy">
-                  <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-                 </property>
+                <widget class="QLineEdit" name="outputDirectoryLineEdit">
                  <property name="readOnly">
                   <bool>true</bool>
                  </property>

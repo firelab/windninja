@@ -58,6 +58,7 @@ public:
                                 QWebEngineView* webView,
                                 QObject* parent = nullptr);
     double computeMeshResolution(int index, bool isMomemtumChecked);
+    QString getDEMFilePath();
 
 signals:
     void requestRefresh();
@@ -102,7 +103,6 @@ private:
     void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
     void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
     void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
-
 };
 
 #endif // SURFACEINPUT_H

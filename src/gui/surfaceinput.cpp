@@ -665,4 +665,9 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
     pointRadius[2] = radius;
 }
 
+QString SurfaceInput::getDEMFilePath()
+{
+    return currentDEMFilePath;
+}
+
 

@@ -37,6 +37,7 @@
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
 #include "appstate.h"
+#include "../ninja/windninja.h"
 #include <QWebChannel>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
