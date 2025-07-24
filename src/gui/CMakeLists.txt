@@ -29,14 +29,14 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         splashscreen.cpp
         surfaceinput.h
         surfaceinput.cpp
-        menubarview.h
-        menubarview.cpp
+        menubar.h
+        menubar.cpp
         mapbridge.h
         mapbridge.cpp
         surfaceinputview.h
         surfaceinputview.cpp
         serverbridge.h serverbridge.cpp
-        domainaverageview.h domainaverageview.cpp
+        domainaverage.h domainaverage.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

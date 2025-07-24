@@ -49,13 +49,15 @@ namespace Ui {
 class MainWindow;
 }
 
-class SurfaceInputView : public QObject {
+class SurfaceInputView : public QObject
+{
   Q_OBJECT
 public:
     explicit SurfaceInputView(Ui::MainWindow* ui,
                                 QWebEngineView* webView,
                                 SurfaceInput* surfaceInput,
                                 QObject* parent = nullptr);
+    double computeMeshResolution(int index, bool isMomemtumChecked);
 
 signals:
     void requestRefresh();
@@ -80,7 +82,6 @@ private slots:
     void timeZoneComboBoxCurrentIndexChanged(int index);
 
 private:
-    void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
     Ui::MainWindow *ui;
     QWebEngineView *webView;
     SurfaceInput *surfaceInput;
@@ -88,6 +89,20 @@ private:
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
     QString currentDEMFilePath;
+
+    QString GDALDriverName;
+    int GDALXSize, GDALYSize;
+    double GDALCellSize, GDALMaxValue, GDALMinValue;
+    double DEMCorners[8];
+
+    QString fetchTimeZoneDetails(QString currentTimeZone);
+    QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
+    int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    void computeDEMFile(QString filePath);
+    void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
+    void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
+    void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+
 };
 
 #endif // SURFACEINPUTVIEW_H

@@ -31,9 +31,8 @@
 #define MAINWINDOW_H
 
 #include "surfaceinput.h"
-#include "surfaceinputview.h"
-#include "menubarview.h"
-#include "domainaverageview.h"
+#include "menubar.h"
+#include "domainaverage.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
@@ -102,19 +101,19 @@ private slots:
     void numberOfProcessorsSolveButtonClicked();
     void refreshUI();
 
-
 private:
-    void connectSignals();
-    void treeItemClicked(QTreeWidgetItem *item, int column);
-
     Ui::MainWindow *ui;
     QWebEngineView *webView;
     QWebChannel *channel;
     MapBridge *mapBridge;
     SurfaceInput *surfaceInput;
-    SurfaceInputView *surfaceInputView;
-    MenuBarView *menuBarView;
+    MenuBar *menuBar;
     ServerBridge *serverBridge;
-    DomainAverageView *domainAverageView;
+    DomainAverage *domainAverage;
+
+    void connectSignals();
+    void treeItemClicked(QTreeWidgetItem *item, int column);
+
+
 };
 #endif // MAINWINDOW_H

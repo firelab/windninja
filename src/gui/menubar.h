@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#ifndef MENUBARVIEW_H
-#define MENUBARVIEW_H
+#ifndef MENUBAR_H
+#define MENUBAR_H
 
 #include <QObject>
 
@@ -36,11 +36,11 @@ namespace Ui {
 class MainWindow;
 }
 
-class MenuBarView : public QObject
+class MenuBar : public QObject
 {
     Q_OBJECT
 public:
-    explicit MenuBarView(Ui::MainWindow* ui, QObject* parent = nullptr);
+    explicit MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private slots:
     // functions for Menu actions
@@ -78,4 +78,4 @@ private:
     Ui::MainWindow* ui;
 };
 
-#endif // MENUBARVIEW_H
+#endif // MENUBAR_H

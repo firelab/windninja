@@ -238,10 +238,10 @@ MainWindow::MainWindow(QWidget *parent)
     webView->setUrl(url);
 
     surfaceInput = new SurfaceInput();
-    menuBarView = new MenuBarView(ui, this);
+    menuBar = new MenuBar(ui, this);
 
     surfaceInputView = new SurfaceInputView(ui, webView, surfaceInput, this);
-    domainAverageView = new DomainAverageView(ui, this);
+    domainAverage = new DomainAverage(ui, this);
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -321,7 +321,7 @@ MainWindow::~MainWindow()
   delete channel;
   delete mapBridge;
   delete surfaceInput;
-  delete menuBarView;
+  delete menuBar;
   delete ui;
 }
 
@@ -339,7 +339,7 @@ void MainWindow::connectSignals()
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInputView, &SurfaceInputView::boundingBoxReceived);
     connect(surfaceInputView, &SurfaceInputView::requestRefresh, this, &MainWindow::refreshUI);
-    connect(domainAverageView, &DomainAverageView::requestRefresh, this, &MainWindow::refreshUI);
+    connect(domainAverage, &DomainAverage::requestRefresh, this, &MainWindow::refreshUI);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -410,7 +410,7 @@ void MainWindow::massSolverCheckBoxClicked()
     }
     state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-    ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    ui->meshResolutionSpinBox->setValue(surfaceInputView->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     refreshUI();
 }
 
@@ -424,7 +424,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     }
     state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-    ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    ui->meshResolutionSpinBox->setValue(surfaceInputView->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     refreshUI();
 }
 

@@ -27,20 +27,20 @@
  *
  *****************************************************************************/
 
-#include "domainaverageview.h"
+#include "domainaverage.h"
 #include "ui_mainwindow.h"
 
-DomainAverageView::DomainAverageView(Ui::MainWindow* ui, QObject* parent)
+DomainAverage::DomainAverage(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
-    connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageView::windHeightComboBoxCurrentIndexChanged);
-    connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageView::clearTableButtonClicked);
-    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageView::domainAverageTableCellChanged);
-    connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &DomainAverageView::domainAverageCheckBoxClicked);
+    connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverage::windHeightComboBoxCurrentIndexChanged);
+    connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverage::clearTableButtonClicked);
+    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverage::domainAverageTableCellChanged);
+    connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &DomainAverage::domainAverageCheckBoxClicked);
 }
 
-void DomainAverageView::domainAverageTableCellChanged(int row, int column)
+void DomainAverage::domainAverageTableCellChanged(int row, int column)
 {
     QTableWidget* table = ui->domainAverageTable;
     QTableWidgetItem* item = table->item(row, column);
@@ -120,7 +120,7 @@ void DomainAverageView::domainAverageTableCellChanged(int row, int column)
 }
 
 
-void DomainAverageView::clearTableButtonClicked()
+void DomainAverage::clearTableButtonClicked()
 {
     AppState& state = AppState::instance();
     AppState::instance().isDomainAverageWindInputTableValid = true;
@@ -131,7 +131,7 @@ void DomainAverageView::clearTableButtonClicked()
     emit requestRefresh();
 }
 
-void DomainAverageView::windHeightComboBoxCurrentIndexChanged(int index)
+void DomainAverage::windHeightComboBoxCurrentIndexChanged(int index)
 {
     switch(index)
     {
@@ -156,7 +156,7 @@ void DomainAverageView::windHeightComboBoxCurrentIndexChanged(int index)
     }
 }
 
-void DomainAverageView::domainAverageCheckBoxClicked()
+void DomainAverage::domainAverageCheckBoxClicked()
 {
     AppState& state = AppState::instance();
     state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
