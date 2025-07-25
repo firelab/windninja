@@ -252,9 +252,10 @@ MainWindow::MainWindow(QWidget *parent)
     */
     // Top-level items
     ui->inputsStackedWidget->setCurrentIndex(0);
-    ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
-    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
-    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
+    ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
+    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
+    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
 
     // Sub-items for Solver Methodology
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
@@ -271,6 +272,14 @@ MainWindow::MainWindow(QWidget *parent)
     windInputItem->child(0)->setData(0, Qt::UserRole, 9);  // Domain Average Wind (Page 9)
     windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
     windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
+
+    // Sub-items for Outputs
+    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);  // Surface Input (Page 6)
+    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);  // Dirunal Input (Page 7)
+    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 15);  // Stability Input (Page 8)
+    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);  // Wind Input (Page 9)
+    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);  // Wind Input (Page 9)
+
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
@@ -344,7 +353,7 @@ void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
     int pageIndex = item->data(column, Qt::UserRole).toInt();
     if (pageIndex >= 0) {
     if(pageIndex >= 6) {
-        ui->inputsStackedWidget->setCurrentIndex(pageIndex+1);
+        ui->inputsStackedWidget->setCurrentIndex(pageIndex);
     }
     else {
         ui->inputsStackedWidget->setCurrentIndex(pageIndex);
