@@ -114,7 +114,7 @@ private:
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
-
+    void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
 
 };
 #endif // MAINWINDOW_H

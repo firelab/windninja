@@ -523,8 +523,8 @@ void MainWindow::solveButtonClicked()
 
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row) {
-            QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0); // speed
-            QTableWidgetItem* directionItem = ui->domainAverageTable->item(row, 1); // direction
+            QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
+            QTableWidgetItem* directionItem = ui->domainAverageTable->item(row, 1);
 
             if (speedItem && directionItem) {
                 speeds << speedItem->text().toDouble();
@@ -537,6 +537,79 @@ void MainWindow::solveButtonClicked()
         ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
     }
 
+    prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+
+    int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+    if(err != 1) //NinjaStartRuns returns 1 on success
+    {
+        printf("NinjaStartRuns: err = %d\n", err);
+    }
+
+    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaDestroyRuns: err = %d\n", err);
+    }
+
+    vector<string> outputFiles;
+    QDir outDir(ui->outputDirectoryLineEdit->text());
+    QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
+    int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
+    QString meshSize = QString::number(meshInt) + "m";
+
+    for (int i = 0; i < numNinjas; i++) {
+        QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
+                                               .arg(demName)
+                                               .arg(directions[i])
+                                               .arg(speeds[i])
+                                               .arg(meshSize));
+        outputFiles.push_back(filePath.toStdString());
+    }
+
+    for (const auto& dir : outputFiles) {
+        QString qDir = QString::fromStdString(dir);
+
+        QFile f(qDir);
+        f.open(QIODevice::ReadOnly);
+        QByteArray data = f.readAll();
+        QString base64 = data.toBase64();
+
+        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+    }
+}
+
+void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+    if (item->text(0) == "Conservation of Mass")
+    {
+        ui->massSolverCheckBox->click();
+    } else if (item->text(0) == "Conservation of Mass and Momentum")
+    {
+        ui->momentumSolverCheckBox->click();
+    } else if (item->text(0) == "Diurnal Input")
+    {
+        ui->diurnalCheckBox->click();
+    } else if (item->text(0) == "Stability Input")
+    {
+        ui->stabilityCheckBox->click();
+    } else if (item->text(0) == "Domain Average Wind")
+    {
+        ui->domainAverageCheckBox->click();
+    } else if (item->text(0) == "Point Initialization")
+    {
+        ui->pointInitializationCheckBox->click();
+    } else if (item->text(0) == "Weather Model")
+    {
+        ui->weatherModelCheckBox->click();
+    } else if (item->text(0) == "Surface Input")
+    {
+        surfaceInput->elevationInputFileOpenButtonClicked();
+    }
+}
+
+void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
+{
+    char **papszOptions = nullptr;
     int err;
     for(unsigned int i=0; i<numNinjas; i++)
     {
@@ -616,90 +689,17 @@ void MainWindow::solveButtonClicked()
         }
 
         err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetOutputPath: err = %d\n", err);
+        }
 
         err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
-    }
-
-    err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
-    if(err != 1) //NinjaStartRuns returns 1 on success
-    {
-        printf("NinjaStartRuns: err = %d\n", err);
-    }
-
-    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-    if(err != NINJA_SUCCESS)
-    {
-        printf("NinjaDestroyRuns: err = %d\n", err);
-    }
-
-    vector<string> outputFiles;
-    QDir outDir(ui->outputDirectoryLineEdit->text());
-    QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
-    int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
-    QString meshSize = QString::number(meshInt) + "m";
-
-    for (int i = 0; i < numNinjas; i++) {
-        QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
-                                               .arg(demName)
-                                               .arg(directions[i])
-                                               .arg(speeds[i])
-                                               .arg(meshSize));
-        outputFiles.push_back(filePath.toStdString());
-    }
-
-    for (const auto& dir : outputFiles) {
-        QString qDir = QString::fromStdString(dir);
-
-        QFile f(qDir);
-        f.open(QIODevice::ReadOnly);
-        QByteArray data = f.readAll();
-        QString base64 = data.toBase64();
-
-        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetGoogOutFlag: err = %d\n", err);
+        }
     }
 }
-
-void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
-{
-    if (item->text(0) == "Conservation of Mass")
-    {
-        ui->massSolverCheckBox->click();
-    } else if (item->text(0) == "Conservation of Mass and Momentum")
-    {
-        ui->momentumSolverCheckBox->click();
-    } else if (item->text(0) == "Diurnal Input")
-    {
-        ui->diurnalCheckBox->click();
-    } else if (item->text(0) == "Stability Input")
-    {
-        ui->stabilityCheckBox->click();
-    } else if (item->text(0) == "Domain Average Wind")
-    {
-        ui->domainAverageCheckBox->click();
-    } else if (item->text(0) == "Point Initialization")
-    {
-        ui->pointInitializationCheckBox->click();
-    } else if (item->text(0) == "Weather Model")
-    {
-        ui->weatherModelCheckBox->click();
-    } else if (item->text(0) == "Surface Input")
-    {
-        surfaceInput->elevationInputFileOpenButtonClicked();
-    }
-}
-
-void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
-    for (const auto& dir : input) {
-        QString qDir = QString::fromStdString(dir);
-
-        QFile f(qDir);
-        f.open(QIODevice::ReadOnly);
-        QByteArray data = f.readAll();
-        QString base64 = data.toBase64();
-
-        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-    }
-}
-
 
 
