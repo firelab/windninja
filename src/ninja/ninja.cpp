@@ -4118,7 +4118,9 @@ void ninja::set_inputDirection(double direction)
     if(direction<0.0 || direction>360.0)	//error checking
         throw std::range_error("Wind direction is less than zero or greater than 360 in ninja::set_inputDirection().");
 
-    input.inputDirection = direction;
+    input.inputDirection_geog = direction;
+    // the angleFromNorth value is not calculated/stored yet, so can't calculate/set input.inputDirection_proj yet,
+    // so do it in the various initialize functions, where/when input.inputDirection_geog/_proj are set/used for the first time
 }
 
 void ninja::set_inputWindHeight(double height, lengthUnits::eLengthUnits units)
@@ -4983,11 +4985,11 @@ void ninja::set_outputFilenames(double& meshResolution,
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_kmz << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
@@ -5268,7 +5270,7 @@ void ninja::checkInputs()
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag )	//single domain-averaged input speed and direction
     {	if( input.inputSpeed < 0.0 )
             throw std::out_of_range("The input speed should be greater than 0.");
-        if( input.inputDirection < 0.0 || input.inputDirection > 360.0 )
+        if( input.inputDirection_geog < 0.0 || input.inputDirection_geog > 360.0 )
             throw std::out_of_range("The input direction is less than 0 or greater than 360.");
         if( input.inputWindHeight < 0.0 )
             throw std::out_of_range("The input wind height should be greater than 0.");

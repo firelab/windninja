@@ -234,9 +234,9 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
     CPLDebug("NINJAFOAM", "input wind height = %lf", input.inputWindHeight);
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
-    CPLDebug("NINJAFOAM", "input direction (geographic coordinates) = %lf", input.inputDirection);
+    CPLDebug("NINJAFOAM", "input direction (geographic coordinates) = %lf", input.inputDirection_geog);
     CPLDebug("NINJAFOAM", "angleFromNorth = %lf", input.dem.getAngleFromNorth());
-    CPLDebug("NINJAFOAM", "input direction (projection coordinates) = %lf", wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() )); //convert FROM geographic TO projected coordinates
+    CPLDebug("NINJAFOAM", "input direction (projection coordinates) = %lf", input.inputDirection_proj);
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
     CPLDebug("NINJAFOAM", "Roughness = %f", input.surface.Roughness.get_meanValue());
@@ -758,7 +758,7 @@ void NinjaFoam::SetBcs()
 
 void NinjaFoam::SetInlets()
 {
-    double d = wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
+    double d = input.inputDirection_proj;
     if(d == 0 || d == 360){
         inlets.push_back("north_face");
     }
@@ -793,7 +793,7 @@ void NinjaFoam::ComputeDirection()
 {
     double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
 
-    d = wrap0to360( input.inputDirection - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
+    d = input.inputDirection_proj;
     d = d - 180; //convert wind direction from --> wind direction to
     if(d < 0){
         d += 360;
@@ -3162,11 +3162,11 @@ void NinjaFoam::SetOutputFilenames()
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_kmz << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
 
     double meshResolutionTemp = input.dem.get_cellSize();

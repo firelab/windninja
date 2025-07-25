@@ -103,13 +103,14 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = wrap0to360( meanDir + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
+    input.inputDirection_proj = meanDir;
+    input.inputDirection_geog = wrap0to360( input.inputDirection_proj + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
     CPLDebug( "WINDNINJA", "griddedInitialization::ninjaFoamInitializeFields()" );
     CPLDebug( "WINDNINJA", "input.inputSpeed = %lf", input.inputSpeed );
-    CPLDebug( "WINDNINJA", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection );
+    CPLDebug( "WINDNINJA", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
     CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
-    CPLDebug( "WINDNINJA", "input.inputDirection (projection coordinates) = %lf", meanDir );
+    CPLDebug( "WINDNINJA", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
 
     initializeBoundaryLayer(input);
 

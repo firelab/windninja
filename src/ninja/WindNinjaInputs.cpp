@@ -42,7 +42,8 @@ WindNinjaInputs::WindNinjaInputs()
     inputSpeedUnits = velocityUnits::milesPerHour;
     outputSpeedUnits = velocityUnits::milesPerHour;
     inputSpeed = -1.0;
-    inputDirection = -1.0;
+    inputDirection_geog = -1.0;
+    inputDirection_proj = -1.0;
     inputWindHeightUnits = lengthUnits::meters;
     inputWindHeight = -1.0;
     outputWindHeightUnits = lengthUnits::meters;
@@ -198,7 +199,8 @@ bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs)
 {
     if( inputSpeed == rhs.inputSpeed &&
         inputSpeedUnits == rhs.inputSpeedUnits &&
-        inputDirection == rhs.inputDirection &&
+        inputDirection_geog == rhs.inputDirection_geog &&
+        inputDirection_proj == rhs.inputDirection_proj &&
         airTemp == rhs.airTemp &&
         airTempUnits == rhs.airTempUnits &&
         cloudCover == rhs.cloudCover &&
@@ -236,7 +238,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       inputSpeedUnits = rhs.inputSpeedUnits;
       outputSpeedUnits = rhs.outputSpeedUnits;
       inputSpeed = rhs.inputSpeed;
-      inputDirection = rhs.inputDirection;
+      inputDirection_geog = rhs.inputDirection_geog;
+      inputDirection_proj = rhs.inputDirection_proj;
       inputWindHeightUnits = rhs.inputWindHeightUnits;
       inputWindHeight = rhs.inputWindHeight;
       outputWindHeightUnits = rhs.outputWindHeightUnits;

@@ -130,7 +130,8 @@ public:
     velocityUnits::eVelocityUnits inputSpeedUnits;			//units of input windspeed (0=>m/s, 1=>mph, 2=>kph, 3=>kts) (note that inputSpeed is always stored as m/s, and converted to and from the other units)
     velocityUnits::eVelocityUnits outputSpeedUnits;			//units of output windspeed (0=>m/s, 1=>mph, 2=>kph, 3=>kts)
     double inputSpeed;			//input wind speed in m/s
-    double inputDirection;		//input wind direction (measured in degrees clockwise from North; DIRECTION WIND COMES FROM)
+    double inputDirection_geog;  //input wind direction, in geographic coordinates (measured in degrees clockwise from true North; DIRECTION WIND COMES FROM)
+    double inputDirection_proj;  //input wind direction, in dem projection coordinates (measured in degrees clockwise from the y grid line of the dem; DIRECTION WIND COMES FROM)
     lengthUnits::eLengthUnits inputWindHeightUnits;	//units of inputWindHeight when read in (always stored in meters!)
     double inputWindHeight;		//height of input wind above the top of the vegetation (always stored in meters!)
     lengthUnits::eLengthUnits outputWindHeightUnits;	//units of outputWindHeight when read in (always stored in meters!)
