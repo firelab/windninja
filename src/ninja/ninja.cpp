@@ -2542,7 +2542,22 @@ bool ninja::matched(int iter)
             wind_uv_to_sd(try_input_u, try_input_v, &try_input_spd, &try_input_dir);
             wind_uv_to_sd(try_output_u, try_output_v, &try_output_spd, &try_output_dir);
             wind_uv_to_sd(true_u, true_v, &true_spd, &true_dir);
-            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\t%s\tspd_diff = %lf\tdir_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_spd - try_output_spd, true_dir - try_output_dir );
+            // angle diff method, to get the shortest signed angle difference
+            // if (360.0 - fabs(dir_diff)) is smaller than fabs(dir_diff), then the dir_diff value should actually be
+            //  the value of (360.0 - fabs(dir_diff)) but with the opposite sign of the original dir_diff
+            // if (360.0 - fabs(dir_diff)) is  bigger than fabs(dir_diff), then the dir_diff value and sign are already good to go
+            double dir_diff = true_dir - try_output_dir;
+            if( (360.0 - fabs(dir_diff)) < fabs(dir_diff) )
+            {
+                if( dir_diff < 0.0 )
+                {
+                    dir_diff = (360.0 - fabs(dir_diff));
+                } else // dir_diff > 0.0
+                {
+                    dir_diff = -1*(360.0 - fabs(dir_diff));
+                }
+            }
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\t%s\tspd_diff = %lf\tdir_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_spd - try_output_spd, dir_diff );
             CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\ttry_input_spd = %lf\tspd_solve = %lf\tspd_true = %lf", i, try_input_spd, try_output_spd, true_spd );
             CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\ttry_input_dir = %lf\tdir_solve = %lf\tdir_true = %lf", i, try_input_dir, try_output_dir, true_dir );
 
