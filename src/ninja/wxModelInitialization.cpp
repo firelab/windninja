@@ -1114,11 +1114,11 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     input.inputDirection_proj = meanDir;
     input.inputDirection_geog = wrap0to360( input.inputDirection_proj + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
-    CPLDebug( "WINDNINJA", "wxModelInitialization::ninjaFoamInitializeFields()" );
-    CPLDebug( "WINDNINJA", "input.inputSpeed = %lf", input.inputSpeed );
-    CPLDebug( "WINDNINJA", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
-    CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
-    CPLDebug( "WINDNINJA", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "wxModelInitialization::ninjaFoamInitializeFields()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1595,9 +1595,9 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
             /*//compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
             double angleFromNorth = 0.0;
-            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
             {
-                CPLDebug( "WINDNINJA", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
+                CPLDebug( "COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
                 GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
                 if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
                 {

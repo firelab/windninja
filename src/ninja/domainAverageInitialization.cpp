@@ -93,11 +93,11 @@ void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
     airTempGrid = input.airTemp;
     setCloudCover(input);
 
-    CPLDebug( "WINDNINJA", "domainAverageInitialization::setInitializationGrids()" );
-    CPLDebug( "WINDNINJA", "input.inputSpeed = %lf", input.inputSpeed );
-    CPLDebug( "WINDNINJA", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
-    CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
-    CPLDebug( "WINDNINJA", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "domainAverageInitialization::setInitializationGrids()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
 
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {

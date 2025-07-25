@@ -329,17 +329,17 @@ if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 {
     // update loop station data to be in projected coordinates, rather than geographic coordinates
     // note that the raw station data is left alone here, left as geographic coordinates, it's adjusted as needed in the solve loop
-    CPLDebug( "WINDNINJA", "doing angleFromNorth correction of initial station data" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "doing angleFromNorth correction of initial station data" );
 
     // index for storing data back in wxstation object
     int dataIndex = input.inputsRunNumber;
     double dir;
     for(unsigned int ii=0; ii<input.stations.size(); ii++)
     {
-        CPLDebug( "WINDNINJA", "input.stations[%d].get_speed() = %lf", ii, input.stations[ii].get_speed() );
-        CPLDebug( "WINDNINJA", "input.stations[%d].get_direction() (geographic coordinates) = %lf", ii, input.stations[ii].get_direction() );
-        CPLDebug( "WINDNINJA", "input.dem.getAngleFromNorth() = %lf", input.dem.getAngleFromNorth() );
-        CPLDebug( "WINDNINJA", "input.stations[%d].get_direction() (projection coordinates) = %lf", ii, wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ) );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.stations[%d].get_speed() = %lf", ii, input.stations[ii].get_speed() );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.stations[%d].get_direction() (geographic coordinates) = %lf", ii, input.stations[ii].get_direction() );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.dem.getAngleFromNorth() = %lf", input.dem.getAngleFromNorth() );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.stations[%d].get_direction() (projection coordinates) = %lf", ii, wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ) );
         dir = wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
         input.stationsScratch[ii].update_direction(dir,dataIndex);
         input.stationsOldInput[ii].update_direction(dir,dataIndex);
@@ -2447,7 +2447,7 @@ bool ninja::matched(int iter)
 {
 	if(input.matchWxStations == true)
 	{
-        CPLDebug( "WINDNINJA", "matched() iter = %d", iter );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "matched() iter = %d", iter );
 
 		element elem(&mesh);
 		double x, y, z;
@@ -2542,9 +2542,9 @@ bool ninja::matched(int iter)
             wind_uv_to_sd(try_input_u, try_input_v, &try_input_spd, &try_input_dir);
             wind_uv_to_sd(try_output_u, try_output_v, &try_output_spd, &try_output_dir);
             wind_uv_to_sd(true_u, true_v, &true_spd, &true_dir);
-            CPLDebug( "WINDNINJA", "%i\t%s\tspd_diff = %lf\tdir_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_spd - try_output_spd, true_dir - try_output_dir );
-            CPLDebug( "WINDNINJA", "%i\ttry_input_spd = %lf\tspd_solve = %lf\tspd_true = %lf", i, try_input_spd, try_output_spd, true_spd );
-            CPLDebug( "WINDNINJA", "%i\ttry_input_dir = %lf\tdir_solve = %lf\tdir_true = %lf", i, try_input_dir, try_output_dir, true_dir );
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\t%s\tspd_diff = %lf\tdir_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_spd - try_output_spd, true_dir - try_output_dir );
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\ttry_input_spd = %lf\tspd_solve = %lf\tspd_true = %lf", i, try_input_spd, try_output_spd, true_spd );
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\ttry_input_dir = %lf\tdir_solve = %lf\tdir_true = %lf", i, try_input_dir, try_output_dir, true_dir );
 
 			//Compute new values using formula (from Lopes (2003)):
 			//

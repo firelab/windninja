@@ -396,8 +396,8 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     double x2, y2; //point due north of center point in lat/lon
     double boundsLonLat[4]; //bounds of the DS in lat/lon
 
-    CPLDebug( "WINDNINJA", "GDALCalculateAngleFromNorth()");
-    CPLDebug( "WINDNINJA", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poDS ) );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateAngleFromNorth()");
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poDS ) );
 
     if(!GDALGetCenter( poDS, &x1, &y1 ))
     {
@@ -414,8 +414,8 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 
     y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
 
-    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
 
     //project the two lat/lon points to projected DEM coordinates
     if(!GDALPointFromLatLon(x1, y1, poDS, "WGS84"))
@@ -428,8 +428,8 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
         return false;
     }
 
-    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
 
     //compute angle of the line formed between projected (x1,y1) to (x2,y2) (projected true north)
     //and projected (x1,y1) to (x1,y2) (y coordinate gridline of the projected CRS).
@@ -447,7 +447,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
-    CPLDebug( "WINDNINJA", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
 
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
@@ -464,10 +464,10 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
         angleFromNorth = -1*angleFromNorth;
     }
 
-    CPLDebug( "WINDNINJA", "angleFromNorth in radians = %lf", angleFromNorth );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth in radians = %lf", angleFromNorth );
     //convert the result from radians to degrees
     angleFromNorth *= 180.0 / PI;
-    CPLDebug( "WINDNINJA", "angleFromNorth in degrees = %lf", angleFromNorth );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth in degrees = %lf", angleFromNorth );
 
     return true;
 }
@@ -486,9 +486,9 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
     double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the pszDstWkt projection
     double bounds[4]; //bounds of the poSrcDS, used to calculate y2
 
-    CPLDebug( "WINDNINJA", "GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst()");
-    CPLDebug( "WINDNINJA", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
-    CPLDebug( "WINDNINJA", "pszDstWkt = \"%s\"", pszDstWkt );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst()");
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszDstWkt = \"%s\"", pszDstWkt );
 
     //get the center of the poSrcDS, in the projection of the poSrcDS
     if(!GDALGetCenter( poSrcDS, &x1, &y1, NULL ))
@@ -506,8 +506,8 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
 
-    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
 
     //project the two points FROM the projection of the poSrcDS TO the pszDstWkt projection
     if(!GDALTransformPoint(x1, y1, poSrcDS, pszDstWkt))
@@ -520,8 +520,8 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
         return false;
     }
 
-    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
 
     //compute angle of the line formed between projected (x1,y1) to (x2,y2) (y coordinate gridline of poSrcDS, in the pszDstWkt projection coordinates)
     //and projected (x1,y1) to (x1,y2) (y coordinate gridline of the pszDstWkt projection coordinate system, in the pszDstWkt projection coordinates).
@@ -539,7 +539,7 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
-    CPLDebug( "WINDNINJA", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
 
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
@@ -556,10 +556,10 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
         coordinateTransformAngle = -1*coordinateTransformAngle;
     }
 
-    CPLDebug( "WINDNINJA", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
     //convert the result from radians to degrees
     coordinateTransformAngle *= 180.0 / PI;
-    CPLDebug( "WINDNINJA", "coordinateTransformAngle in degrees = %lf", coordinateTransformAngle );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in degrees = %lf", coordinateTransformAngle );
 
     return true;
 }
@@ -579,9 +579,9 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
     double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the pszDstWkt projection, to be transformed back to the projection of the poSrcDS
     double bounds[4]; //bounds of the poSrcDS, in the pszDstWkt projection, used to calculate y2 in the pszDstWkt projection
 
-    CPLDebug( "WINDNINJA", "GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src()");
-    CPLDebug( "WINDNINJA", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
-    CPLDebug( "WINDNINJA", "pszDstWkt = \"%s\"", pszDstWkt );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src()");
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszDstWkt = \"%s\"", pszDstWkt );
 
     //get the center of the poSrcDS, in the pszDstWkt projection
     if(!GDALGetCenter( poSrcDS, &x1, &y1, pszDstWkt ))
@@ -599,8 +599,8 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
 
     y2 = y1 + 0.25*(bounds[0] - bounds[2]);
 
-    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
 
     //project the two points FROM the pszDstWkt projection, back TO the projection of the poSrcDS
     if(!GDALTransformPoint(x1, y1, poSrcDS, pszDstWkt, true))
@@ -613,8 +613,8 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
         return false;
     }
 
-    CPLDebug( "WINDNINJA", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "WINDNINJA", "x2, y2 = %lf, %lf", x2, y2 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
 
     //compute angle of the line formed between projected (x1,y1) to (x2,y2) (y coordinate gridline of the pszDstWkt projection coordinate system, in the projection of the poSrcDS)
     //and projected (x1,y1) to (x1,y2) (y coordinate gridline of poSrcDS, in the projection of the poSrcDS).
@@ -632,7 +632,7 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
     ay = y2 - y1;
     bx = x2 - x1;
     by = y2 - y1;
-    CPLDebug( "WINDNINJA", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
 
     adotb = ax*bx + ay*by;
     mag_a = sqrt(ax*ax + ay*ay);
@@ -649,10 +649,10 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *po
         coordinateTransformAngle = -1*coordinateTransformAngle;
     }
 
-    CPLDebug( "WINDNINJA", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
     //convert the result from radians to degrees
     coordinateTransformAngle *= 180.0 / PI;
-    CPLDebug( "WINDNINJA", "coordinateTransformAngle in degrees = %lf", coordinateTransformAngle );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in degrees = %lf", coordinateTransformAngle );
 
     return true;
 }

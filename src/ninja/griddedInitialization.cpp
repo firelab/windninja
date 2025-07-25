@@ -106,11 +106,11 @@ void griddedInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     input.inputDirection_proj = meanDir;
     input.inputDirection_geog = wrap0to360( input.inputDirection_proj + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
-    CPLDebug( "WINDNINJA", "griddedInitialization::ninjaFoamInitializeFields()" );
-    CPLDebug( "WINDNINJA", "input.inputSpeed = %lf", input.inputSpeed );
-    CPLDebug( "WINDNINJA", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
-    CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
-    CPLDebug( "WINDNINJA", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "griddedInitialization::ninjaFoamInitializeFields()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
 
     initializeBoundaryLayer(input);
 
@@ -172,7 +172,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
         // in this case, going FROM initialization grid projection coordinates TO dem projection coordinates
         double coordinateTransformationAngle = 0.0;
-        if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+        if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
         {
             GDALDatasetH hDirDS = inputAngleGrid.ascii2GDAL();
             // direct calculation of FROM input_grid TO dem, already has the appropriate sign

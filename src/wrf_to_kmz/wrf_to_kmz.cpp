@@ -838,7 +838,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         //// in this case, going FROM weather model projection coordinates TO geographic lat/lon coordinates
         //if( varList[i] == "U10" )
         //{
-        //    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+        //    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
         //    {
         //        // direct calculation of FROM wx TO geo, already has the appropriate sign
         //        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt ))  // this is FROM wx TO geo
@@ -904,7 +904,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
     ////use the coordinateTransformationAngle to correct the angles of the output dataset
     ////to convert from the original dataset projection angles to the warped dataset projection angles
-    //if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    //if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     //{
     //    // need an intermediate spd and dir set of ascii grids
     //    AsciiGrid<double> speedGrid;
@@ -987,7 +987,7 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
 
     //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     double angleFromNorth = 0.0;
-    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_ANGLE_FROM_NORTH_CALCULATION", "FALSE")) == false )
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
         if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))

@@ -1743,10 +1743,10 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
 	nR = spd.get_nRows();
 	nC = spd.get_nCols();
 
-    CPLDebug( "WINDNINJA", "KmlVector::writeVectors()" );
-    CPLDebug( "WINDNINJA", "dirGrid.get_meanValue() (projection coordinates) = %lf", dir.get_meanValue() );
-    CPLDebug( "WINDNINJA", "angleFromNorth (N_to_dem) = %lf", angleFromNorth );
-    CPLDebug( "WINDNINJA", "dirGrid.get_meanValue() (geographic coordinates) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ) );  // see below for the calculation formula
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "KmlVector::writeVectors()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() (projection coordinates) = %lf", dir.get_meanValue() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", angleFromNorth );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() (geographic coordinates) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ) );  // see below for the calculation formula
 
 	//double PI = acos(-1.0);
 	geTheta = 0;
