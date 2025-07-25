@@ -174,44 +174,66 @@
             rectangleDrawer.disable();
         }
 
-        async function loadKmzFromBase64(base64Data) {
-            try {
-                const binary = atob(base64Data);
-                const bytes = new Uint8Array(binary.length);
-                for (let i = 0; i < binary.length; i++) {
-                    bytes[i] = binary.charCodeAt(i);
-                }
+        async function loadKmzFromBase64(kmlData) {
+            const binary = atob(kmlData);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const zip = await JSZip.loadAsync(bytes.buffer);
 
-                const zip = await JSZip.loadAsync(bytes.buffer);
-                const kmlFiles = Object.values(zip.files).filter(entry =>
-                    entry.name.toLowerCase().endsWith('.kml')
-                );
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+            const legendEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.bmp')
+            );
 
-                if (kmlFiles.length === 0) {
-                    alert('No KML files found in this KMZ.');
-                    return;
-                }
+            if (kmlEntries.length === 0) {
+                alert('No KML files found in this KMZ.');
+                return;
+            }
 
-                const kmlGroup = L.featureGroup().addTo(map);
-                for (const entry of kmlFiles) {
-                    const kmlText = await entry.async('string');
-                    const parser = new DOMParser();
-                    const kml = parser.parseFromString(kmlText, 'text/xml');
-                    const track = new L.KML(kml);
-                    kmlGroup.addLayer(track);
-                    const layerName = entry.name || 'Unnamed Layer';
-                    layerControl.addOverlay(track, layerName);
-                }
+            for (const entry of kmlEntries) {
+                const kmlText = await entry.async('string');
+                const parser = new DOMParser();
+                const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+                const kmlLayer = new L.KML(kmlDoc);
 
-                setTimeout(() => {
-                    if (kmlGroup.getLayers().length > 0) {
-                        map.fitBounds(kmlGroup.getBounds());
-                    }
-                }, 1000);
-            } catch (err) {
-                console.error('Failed to load KMZ from base64:', err);
+                const kmlLegendLayer = L.layerGroup([kmlLayer]);
+
+                const layerName = entry.name;
+
+                const legendControl = L.control({ position: 'bottomright' });
+                legendControl.onAdd = function () {
+                    const container = L.DomUtil.create('div', 'kmz-legend');
+                    container.style.background = 'white';
+                    container.style.padding = '4px';
+                    container.style.borderRadius = '6px';
+                    container.style.maxWidth = '250px';
+                    container.innerHTML = `<strong>${layerName}</strong><br>`;
+
+                    legendEntries.forEach(async (legendEntry) => {
+                        const blob = await legendEntry.async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.src = url;
+                        img.style.maxWidth = '80%';
+                        img.style.marginTop = '6px';
+                        container.appendChild(img);
+                    });
+
+                    return container;
+                };
+
+                kmlLegendLayer.on('add', () => legendControl.addTo(map));
+                kmlLegendLayer.on('remove', () => legendControl.remove());
+
+                layerControl.addOverlay(kmlLegendLayer, layerName);
+                kmlLegendLayer.addTo(map);
             }
         }
+
 
         map.on('draw:created', ({ layer }) => {
             mapRectangleLayer.clearLayers();

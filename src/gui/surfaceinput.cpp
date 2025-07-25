@@ -239,9 +239,10 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
 {
-    computeDEMFile(currentDEMFilePath);
-    computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked());
+    QFileInfo file(currentDEMFilePath);
+    ui->outputDirectoryLineEdit->setText(file.absolutePath());
 
+    computeDEMFile(currentDEMFilePath);
     ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 
     QStringList cornerStrs;
@@ -663,6 +664,11 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
     pointRadius[0] = centerLat;
     pointRadius[1] = centerLon;
     pointRadius[2] = radius;
+}
+
+QString SurfaceInput::getDEMFilePath()
+{
+    return currentDEMFilePath;
 }
 
 

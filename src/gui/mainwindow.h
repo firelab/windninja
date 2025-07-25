@@ -37,6 +37,7 @@
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
 #include "appstate.h"
+#include "../ninja/windninja.h"
 #include <QWebChannel>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
@@ -113,7 +114,7 @@ private:
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
-
+    void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
 
 };
 #endif // MAINWINDOW_H

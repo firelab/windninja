@@ -297,7 +297,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
 
     // Populate default location for output location
-    ui->outputDirectoryTextEdit->setText(downloadsPath);
+    ui->outputDirectoryLineEdit->setText(downloadsPath);
     ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
 
     // Set initial visibility of time zone details
@@ -491,14 +491,14 @@ void MainWindow::useWeatherModelInitClicked()
 
 void MainWindow::outputDirectoryButtonClicked()
 {
-    QString currentPath = ui->outputDirectoryTextEdit->toPlainText();
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    // QString currentPath = ui->outputDirectoryLineEdit->toPlainText();
+    // QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    // QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-    if (!dirPath.isEmpty()) {
-        ui->outputDirectoryTextEdit->setText(dirPath);
-        ui->outputDirectoryTextEdit->setToolTip(dirPath);
-    }
+    // if (!dirPath.isEmpty()) {
+    //     ui->outputDirectoryLineEdit->setText(dirPath);
+    //     ui->outputDirectoryLineEdit->setToolTip(dirPath);
+    // }
 }
 
 void MainWindow::numberOfProcessorsSolveButtonClicked()
@@ -508,30 +508,74 @@ void MainWindow::numberOfProcessorsSolveButtonClicked()
 
 void MainWindow::solveButtonClicked()
 {
-  // // Alias app state, used to determine which type of solution to run
-  // AppState& state = AppState::instance();
+    AppState& state = AppState::instance();
 
-  //        // Determine which run to perform
-  // if (state.isDomainAverageInitializationValid) {
-  //   DomainAverageWind domainAvgWind = setDomainAverageWind();
-  //   provider.domain_average_exec(domainAvgWind);
-  // }else if(state.isPointInitializationValid){
-  //   PointInitialization pointInit = setPointInitialization();
-  //   provider.point_exec(pointInit);
-  // }else if(state.isWeatherModelInitializationValid){
-  //   WeatherModel weatherModel = setWeatherModel();
-  //   provider.wxmodel_exec(weatherModel);
-  // }
+    int numNinjas;
+    NinjaArmyH *ninjaArmy;
+    char **papszOptions;
+    const char *initializationMethod;
+    QList<double> speeds;
+    QList<double> directions;
 
+    if (state.isDomainAverageInitializationValid)
+    {
+        initializationMethod = "domain_average";
 
-  // vector<string> outputFileList = provider.getOutputFileNames(
-  //     view->getUi()->elevationInputFileLineEdit->text(),
-  //     view->getUi()->domainAverageTable,
-  //     view->getUi()->meshResolutionSpinBox->text(),
-  //     provider.parseDomainAvgTable(view->getUi()->domainAverageTable).size(),
-  //     view->getUi()->outputDirectoryTextEdit->toPlainText());
+        int rowCount = ui->domainAverageTable->rowCount();
+        for (int row = 0; row < rowCount; ++row) {
+            QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
+            QTableWidgetItem* directionItem = ui->domainAverageTable->item(row, 1);
 
-  // view->loadMapKMZ(outputFileList);
+            if (speedItem && directionItem) {
+                speeds << speedItem->text().toDouble();
+                directions << directionItem->text().toDouble();
+            }
+        }
+        numNinjas = speeds.size();
+        bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
+        QString speedUnits =  ui->tableSpeedUnits->currentText();
+        ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
+    }
+
+    prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+
+    int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+    if(err != 1) //NinjaStartRuns returns 1 on success
+    {
+        printf("NinjaStartRuns: err = %d\n", err);
+    }
+
+    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaDestroyRuns: err = %d\n", err);
+    }
+
+    vector<string> outputFiles;
+    QDir outDir(ui->outputDirectoryLineEdit->text());
+    QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
+    int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
+    QString meshSize = QString::number(meshInt) + "m";
+
+    for (int i = 0; i < numNinjas; i++) {
+        QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
+                                               .arg(demName)
+                                               .arg(directions[i])
+                                               .arg(speeds[i])
+                                               .arg(meshSize));
+        outputFiles.push_back(filePath.toStdString());
+    }
+
+    for (const auto& dir : outputFiles) {
+        QString qDir = QString::fromStdString(dir);
+
+        QFile f(qDir);
+        f.open(QIODevice::ReadOnly);
+        QByteArray data = f.readAll();
+        QString base64 = data.toBase64();
+
+        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+    }
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -563,18 +607,99 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
 }
 
-void MainWindow::loadMapKMZ(const std::vector<std::string>&  input){
-    for (const auto& dir : input) {
-        QString qDir = QString::fromStdString(dir);
+void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
+{
+    char **papszOptions = nullptr;
+    int err;
+    for(unsigned int i=0; i<numNinjas; i++)
+    {
+        /*
+       * Sets Simulation Variables
+       */
+        err = NinjaSetCommunication(ninjaArmy, i, "cli", papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetCommunication: err = %d\n", err);
+        }
 
-        QFile f(qDir);
-        f.open(QIODevice::ReadOnly);
-        QByteArray data = f.readAll();
-        QString base64 = data.toBase64();
+        err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetNumberCPUs: err = %d\n", err);
+        }
 
-        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetInitializationMethod: err = %d\n", err);
+        }
+
+        err = NinjaSetDem(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetDem: err = %d\n", err);
+        }
+
+        err = NinjaSetPosition(ninjaArmy, i, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetPosition: err = %d\n", err);
+        }
+
+        err = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetInputWindHeight: err = %d\n", err);
+        }
+
+        err = NinjaSetOutputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "ft", papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetOutputWindHeight: err = %d\n", err);
+        }
+
+        err = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->tableSpeedUnits->currentText().toUtf8().constData(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
+        }
+
+        err = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetDiurnalWinds: err = %d\n", err);
+        }
+
+        err = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetUniVegetation: err = %d\n", err);
+        }
+
+        err = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+        }
+
+        err = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetNumVertLayers: err = %d\n", err);
+        }
+
+        err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetOutputPath: err = %d\n", err);
+        }
+
+        err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaSetGoogOutFlag: err = %d\n", err);
+        }
     }
 }
-
 
 
