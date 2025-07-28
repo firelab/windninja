@@ -737,6 +737,57 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     } else if (item->text(0) == "Surface Input")
     {
         surfaceInput->elevationInputFileOpenButtonClicked();
+    } else if (item->text(0) == "Google Earth")
+    {
+        if(!ui->googleEarthGroupBox->isChecked())
+        {
+            ui->googleEarthGroupBox->setChecked(true);
+        }else
+        {
+            ui->googleEarthGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Surface Input")
+    {
+        surfaceInput->elevationInputFileOpenButtonClicked();
+    } else if (item->text(0) == "Google Earth")
+    {
+        if(!ui->googleEarthGroupBox->isChecked())
+        {
+            ui->googleEarthGroupBox->setChecked(true);
+        }else
+        {
+            ui->googleEarthGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Fire Behavior")
+    {
+        if(!ui->fireBehaviorGroupBox->isChecked())
+        {
+            ui->fireBehaviorGroupBox->setChecked(true);
+        }else
+        {
+            ui->fireBehaviorGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Shape Files")
+    {
+        if(!ui->shapeFilesGroupBox->isChecked())
+        {
+            ui->shapeFilesGroupBox->setChecked(true);
+        }else
+        {
+            ui->shapeFilesGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Geospatial PDF Files")
+    {
+        if(!ui->geospatialPDFFilesGroupBox->isChecked())
+        {
+            ui->geospatialPDFFilesGroupBox->setChecked(true);
+        }else
+        {
+            ui->geospatialPDFFilesGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "VTK Files")
+    {
+        ui->VTKFilesCheckBox->click();
     }
 }
 
