@@ -152,8 +152,7 @@ void SurfaceInput::pointRadiusLineEditsTextChanged()
 
 void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
 {
-    int currentIndex = ui->inputsStackedWidget->currentIndex();
-    ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+    ui->inputsStackedWidget->setCurrentIndex(5);
 
     ui->elevationInputTypeComboBox->setCurrentIndex(0);
     ui->elevationFileTypeComboBox->setCurrentIndex(0);
@@ -223,8 +222,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
 
 void SurfaceInput::elevationInputFileDownloadButtonClicked()
 {
-    int currentIndex = ui->inputsStackedWidget->currentIndex();
-    ui->inputsStackedWidget->setCurrentIndex(currentIndex+1);
+    ui->inputsStackedWidget->setCurrentIndex(19);
 }
 
 void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)

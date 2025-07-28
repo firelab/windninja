@@ -253,26 +253,24 @@ MainWindow::MainWindow(QWidget *parent)
     // Top-level items
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
-    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
-    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
-
     // Sub-items for Solver Methodology
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
     ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);  // Conservation of Mass and Momentum (Page 2)
 
+    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
     // Sub-items for Inputs
     ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 6)
     ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 7)
+
     ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 8)
     ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 9)
-
     // Sub-sub-items for Wind Input
     QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
     windInputItem->child(0)->setData(0, Qt::UserRole, 9);  // Domain Average Wind (Page 9)
     windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
     windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
 
+    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
     // Sub-items for Outputs
     ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);  // Surface Input (Page 6)
     ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);  // Dirunal Input (Page 7)
@@ -280,6 +278,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);  // Wind Input (Page 9)
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);  // Wind Input (Page 9)
 
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
 
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
