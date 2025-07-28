@@ -557,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>12</number>
+           <number>16</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -2643,7 +2643,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </item>
                 <item>
                  <property name="text">
-                  <string>m/s</string>
+                  <string>mps</string>
                  </property>
                 </item>
                 <item>
@@ -2841,7 +2841,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
-                   <widget class="QComboBox" name="legendRangeComboBox">
+                   <widget class="QComboBox" name="legendComboBox">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                       <horstretch>0</horstretch>
@@ -2906,11 +2906,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <property name="title">
                   <string>Resolution</string>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_26">
+                 <layout class="QVBoxLayout" name="verticalLayout_37">
                   <item>
                    <widget class="QGroupBox" name="googleEarthMeshResolutionGroupBox">
-                    <property name="enabled">
-                     <bool>false</bool>
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
                     </property>
                     <property name="title">
                      <string>Use Mesh Resolution</string>
@@ -2918,12 +2927,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <property name="checkable">
                      <bool>true</bool>
                     </property>
-                    <property name="checked">
-                     <bool>true</bool>
-                    </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_9">
+                    <layout class="QHBoxLayout" name="horizontalLayout_16">
                      <item>
                       <widget class="QDoubleSpinBox" name="googleEarthMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="maximum">
                         <double>5000.000000000000000</double>
                        </property>
@@ -2934,11 +2943,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <widget class="QComboBox" name="googleEarthMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
                        </property>
                        <item>
                         <property name="text">
@@ -2959,7 +2983,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <property name="sizeHint" stdset="0">
                         <size>
-                         <width>40</width>
+                         <width>302</width>
                          <height>20</height>
                         </size>
                        </property>
@@ -3108,7 +3132,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <item>
                 <widget class="QGroupBox" name="fireBehaviorResolutionGroupBox">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -3116,24 +3140,39 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
-                   <height>142</height>
+                   <height>114</height>
                   </size>
                  </property>
                  <property name="title">
                   <string>Resolution</string>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_29">
+                 <layout class="QVBoxLayout" name="verticalLayout_38">
                   <item>
                    <widget class="QGroupBox" name="fireBehaviorMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
                     <property name="title">
                      <string>Use Mesh Resolution</string>
                     </property>
                     <property name="checkable">
                      <bool>true</bool>
                     </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_10">
+                    <layout class="QHBoxLayout" name="horizontalLayout_19">
                      <item>
                       <widget class="QDoubleSpinBox" name="fireBehaviorMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="maximum">
                         <double>5000.000000000000000</double>
                        </property>
@@ -3144,6 +3183,27 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <widget class="QComboBox" name="fireBehaviorMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -3163,7 +3223,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <property name="sizeHint" stdset="0">
                         <size>
-                         <width>40</width>
+                         <width>302</width>
                          <height>20</height>
                         </size>
                        </property>
@@ -3243,18 +3303,33 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <property name="title">
                   <string>Resolution</string>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_31">
+                 <layout class="QVBoxLayout" name="verticalLayout_39">
                   <item>
                    <widget class="QGroupBox" name="shapeFilesMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
                     <property name="title">
                      <string>Use Mesh Resolution</string>
                     </property>
                     <property name="checkable">
                      <bool>true</bool>
                     </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_12">
+                    <layout class="QHBoxLayout" name="horizontalLayout_20">
                      <item>
                       <widget class="QDoubleSpinBox" name="shapeFilesMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="maximum">
                         <double>5000.000000000000000</double>
                        </property>
@@ -3265,6 +3340,27 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <widget class="QComboBox" name="shapeFilesMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -3284,7 +3380,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <property name="sizeHint" stdset="0">
                         <size>
-                         <width>40</width>
+                         <width>302</width>
                          <height>20</height>
                         </size>
                        </property>
@@ -3537,24 +3633,39 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
-                   <height>70</height>
+                   <height>114</height>
                   </size>
                  </property>
                  <property name="title">
                   <string>Resolution</string>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_33">
+                 <layout class="QVBoxLayout" name="verticalLayout_40">
                   <item>
                    <widget class="QGroupBox" name="geospatialPDFFilesMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
                     <property name="title">
                      <string>Use Mesh Resolution</string>
                     </property>
                     <property name="checkable">
                      <bool>true</bool>
                     </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_17">
+                    <layout class="QHBoxLayout" name="horizontalLayout_21">
                      <item>
                       <widget class="QDoubleSpinBox" name="geospatialPDFFilesMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
                        <property name="maximum">
                         <double>5000.000000000000000</double>
                        </property>
@@ -3565,6 +3676,27 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <widget class="QComboBox" name="geospatialPDFFilesMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -3584,7 +3716,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <property name="sizeHint" stdset="0">
                         <size>
-                         <width>40</width>
+                         <width>302</width>
                          <height>20</height>
                         </size>
                        </property>
