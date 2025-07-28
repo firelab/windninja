@@ -97,21 +97,11 @@ void ninja::readInputFile()
     {
         CPLDebug( "COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the dem, in ninja::readInputFile()");
 
-        char* pszDstWkt;
-        OGRSpatialReferenceH hTargetSRS;
-
-        hTargetSRS = OSRNewSpatialReference(NULL);
-        OSRImportFromEPSG(hTargetSRS, 4326);
-        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
-
         // direct calculation of FROM geo TO dem, already has the appropriate sign
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( poDataset, angleFromNorth, pszDstWkt ))  // this is FROM geo TO dem
+        if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))  // this is FROM geo TO dem
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
         }
-
-        CPLFree(pszDstWkt);
-        OSRDestroySpatialReference(hTargetSRS);
     }
 
     //set the value for angleFromNorth member in the Elevation class

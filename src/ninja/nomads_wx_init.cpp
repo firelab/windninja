@@ -584,7 +584,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         // direct calculation of FROM wx TO dem, already has the appropriate sign
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM wx TO dem
+        if(!GDALCalculateCoordinateTransformationAngle( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM wx TO dem
         {
             printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
         }

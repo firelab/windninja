@@ -411,7 +411,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         // direct calculation of FROM wx TO geo, already has the appropriate sign
-        if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( srcDS, coordinateTransformationAngle, dstWkt ))  // this is FROM wx TO geo
+        if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt ))  // this is FROM wx TO geo
         {
             printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
         }

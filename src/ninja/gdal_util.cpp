@@ -480,13 +480,13 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
  * @param pszDstWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
  * @return true on success false on failure.
  */
-bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt )
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt )
 {
     double x1, y1; //center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the pszDstWkt projection
     double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the pszDstWkt projection
     double bounds[4]; //bounds of the poSrcDS, used to calculate y2
 
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst()");
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateCoordinateTransformationAngle()");
     CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
     CPLDebug( "COORD_TRANSFORM_ANGLES", "pszDstWkt = \"%s\"", pszDstWkt );
 
@@ -551,99 +551,6 @@ bool GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( GDALDataset *po
     // if bx is positive, the arrow b is pointed right from a, the rotation going FROM b TO a is counter clockwise, so the angle is negative
     // if bx is negative, the arrow b is pointed  left from a, the rotation going FROM b TO a is clockwise, so the angle is positive (we don't need to do anything)
     // also, going FROM b TO a is equivalent to going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference.
-    if( bx > 0 )
-    {
-        coordinateTransformAngle = -1*coordinateTransformAngle;
-    }
-
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
-    //convert the result from radians to degrees
-    coordinateTransformAngle *= 180.0 / PI;
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in degrees = %lf", coordinateTransformAngle );
-
-    return true;
-}
-
-/** Calculate the angle between the y coordinate grid lines of a source dataset and an output spatial reference.
- *  Where the angle is defined, as going FROM the output spatial reference TO the source dataset spatial reference,
- *  so, going FROM the y coordinate grid line of the output spatial reference TO the y coordinate grid line of the DS.
- *  This is the projection information of input vs output treated as REVERSED, this just so happens to be a very common use case (FROM_geographic_TO_dem).
- * @param poSrcDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
- * @param coordinateTransformAngle the computed angle between the y coordinate grid lines of the two datasets, to be filled
- * @param pszDstWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
- * @return true on success false on failure.
- */
-bool GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt )
-{
-    double x1, y1; //center point of the poSrcDS, in the pszDstWkt projection, to be transformed back to the projection of the poSrcDS
-    double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the pszDstWkt projection, to be transformed back to the projection of the poSrcDS
-    double bounds[4]; //bounds of the poSrcDS, in the pszDstWkt projection, used to calculate y2 in the pszDstWkt projection
-
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateCoordinateTransformationAngle_FROM_dst_TO_src()");
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszDstWkt = \"%s\"", pszDstWkt );
-
-    //get the center of the poSrcDS, in the pszDstWkt projection
-    if(!GDALGetCenter( poSrcDS, &x1, &y1, pszDstWkt ))
-    {
-        return false;
-    }
-
-    x2 = x1;
-
-    //add 1/4 size of the poSrcDS extent in y direction, in the pszDstWkt projection
-    if(!GDALGetBounds( poSrcDS, bounds, pszDstWkt ))
-    {
-        return false;
-    }
-
-    y2 = y1 + 0.25*(bounds[0] - bounds[2]);
-
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
-
-    //project the two points FROM the pszDstWkt projection, back TO the projection of the poSrcDS
-    if(!GDALTransformPoint(x1, y1, poSrcDS, pszDstWkt, true))
-    {
-        return false;
-    }
-
-    if(!GDALTransformPoint(x2, y2, poSrcDS, pszDstWkt, true))
-    {
-        return false;
-    }
-
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
-
-    //compute angle of the line formed between projected (x1,y1) to (x2,y2) (y coordinate gridline of the pszDstWkt projection coordinate system, in the projection of the poSrcDS)
-    //and projected (x1,y1) to (x1,y2) (y coordinate gridline of poSrcDS, in the projection of the poSrcDS).
-    //call the line going from (x1,y1) to (x2,y2) in the projected CRS "b", the line formed
-    //by our points (x1,y1) to (x1,y2) "a", and the angle between a and b "theta"
-    //cos(theta) = a dot b /(|a||b|)
-    //a dot b = axbx + ayby
-    //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
-
-    double ax, ay, bx, by; //denote x,y vector components of lines "a" and "b", derived from component length between startpoints and endpoints of lines "a" and "b"
-    double adotb; //a dot b
-    double mag_a, mag_b; //|a| and |b|
-
-    ax = x1 - x1;
-    ay = y2 - y1;
-    bx = x2 - x1;
-    by = y2 - y1;
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
-
-    adotb = ax*bx + ay*by;
-    mag_a = sqrt(ax*ax + ay*ay);
-    mag_b = sqrt(bx*bx + by*by);
-
-    coordinateTransformAngle = acos(adotb/(mag_a * mag_b)); //compute angle in radians
-
-    // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
-    // if bx is positive, the arrow b is pointed right from a, the rotation going FROM b TO a is counter clockwise, so the angle is negative
-    // if bx is negative, the arrow b is pointed  left from a, the rotation going FROM b TO a is clockwise, so the angle is positive (we don't need to do anything)
-    // also, going FROM b TO a is equivalent to going FROM the y coordinate grid line of the output spatial reference TO the y coordinate grid line of the DS.
     if( bx > 0 )
     {
         coordinateTransformAngle = -1*coordinateTransformAngle;
@@ -825,17 +732,13 @@ bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid )
  * where the input coordinate system is specified by a valid GDAL dataset
  * and the output coordinate system is specified by a CRS/spatial reference.
  *
- * The coordinate transformation can be done with the input and output coordinate systems reversed
- * by using the from_dst_to_src option.
- *
  * @param dfX the X coordinate of the point to be transformed, to be filled
  * @param dfY the Y coordinate of the point to be transformed, to be filled
  * @param poSrcDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
  * @param pszDstWkt the output spatial reference to which the point of interest should be warped to, as an OGC well-known text representation of the spatial reference.
- * @param from_dst_to_src, default value is FALSE, do the standard calculation of going FROM the input coordinate system TO the output coordinate system (FROM src TO dst). But can be set to TRUE to do the reverse calculation, of going FROM the output coordinate system TO the input coordinate system (FROM dst TO src), without needing to specify a poDstDS instead of the poSrcDS for the calculation.
  * @return true on valid population of the transformed point
  */
-bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszDstWkt, bool from_dst_to_src )
+bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszDstWkt )
 {
     if( poSrcDS == NULL )
     {
@@ -851,15 +754,8 @@ bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const c
 
     OGRSpatialReference oSourceSRS, oTargetSRS;
 
-    if( from_dst_to_src == false )
-    {
-        oSourceSRS.importFromWkt( &pszSrcWkt );
-        oTargetSRS.importFromWkt( &pszDstWkt );
-    } else
-    {
-        oSourceSRS.importFromWkt( &pszDstWkt );
-        oTargetSRS.importFromWkt( &pszSrcWkt );
-    }
+    oSourceSRS.importFromWkt( &pszSrcWkt );
+    oTargetSRS.importFromWkt( &pszDstWkt );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)

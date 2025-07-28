@@ -176,7 +176,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         {
             GDALDatasetH hDirDS = inputAngleGrid.ascii2GDAL();
             // direct calculation of FROM input_grid TO dem, already has the appropriate sign
-            if(!GDALCalculateCoordinateTransformationAngle_FROM_src_TO_dst( hDirDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
+            if(!GDALCalculateCoordinateTransformationAngle( hDirDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
             {
                 printf("Warning: Unable to calculate coordinate transform angle for the gridded initialization input speed and direction grids to dem coordinates.");
             }
