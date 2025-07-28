@@ -486,6 +486,7 @@ void MainWindow::connectSignals()
     connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorMeshResolutionGroupBoxToggled);
     connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesMeshResolutionGroupBoxToggled);
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
+    connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 }
 
@@ -640,14 +641,18 @@ void MainWindow::useWeatherModelInitClicked()
 
 void MainWindow::outputDirectoryButtonClicked()
 {
-    // QString currentPath = ui->outputDirectoryLineEdit->toPlainText();
-    // QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    // QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString currentPath = ui->outputDirectoryLineEdit->text();
+    QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-    // if (!dirPath.isEmpty()) {
-    //     ui->outputDirectoryLineEdit->setText(dirPath);
-    //     ui->outputDirectoryLineEdit->setToolTip(dirPath);
-    // }
+    if (!dirPath.isEmpty())
+    {
+        ui->outputDirectoryLineEdit->setText(dirPath);
+        ui->outputDirectoryLineEdit->setToolTip(dirPath);
+    } else
+    {
+        ui->outputDirectoryLineEdit->setText(currentPath);
+        ui->outputDirectoryLineEdit->setToolTip(currentPath);
+    }
 }
 
 void MainWindow::numberOfProcessorsSolveButtonClicked()
