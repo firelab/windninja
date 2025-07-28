@@ -175,6 +175,7 @@ void MainWindow::refreshUI()
     }
     else
     {
+        state.isGoogleEarthValid = false;
         ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, bulletIcon);
     }
     if(state.isFireBehaviorToggled)
@@ -196,6 +197,7 @@ void MainWindow::refreshUI()
     }
     else
     {
+        state.isFireBehaviorValid = false;
         ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, bulletIcon);
     }
     if(state.isShapeFilesToggled)
@@ -217,6 +219,7 @@ void MainWindow::refreshUI()
     }
     else
     {
+        state.isShapeFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
     }
     if(state.isGeoSpatialPDFFilesToggled)
@@ -238,6 +241,7 @@ void MainWindow::refreshUI()
     }
     else
     {
+        state.isGeoSpatialPDFFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
     }
     if(state.isVTKFilesToggled)
@@ -259,6 +263,7 @@ void MainWindow::refreshUI()
     }
     else
     {
+        state.isVTKFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
     }
 
@@ -275,17 +280,20 @@ void MainWindow::refreshUI()
         ui->treeWidget->topLevelItem(2)->setToolTip(0, "No Output Selected");
     }
 
-    // Update solve state
-    if (state.isSolverMethodologyValid && state.isInputsValid) {
+    if (state.isSolverMethodologyValid && state.isInputsValid && state.isOutputsValid) {
         ui->solveButton->setEnabled(true);
         ui->numberOfProcessorsSolveButton->setEnabled(true);
         ui->solveButton->setToolTip("");
         ui->numberOfProcessorsSolveButton->setToolTip("");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "");
     } else {
         ui->solveButton->setEnabled(false);
         ui->numberOfProcessorsSolveButton->setEnabled(false);
         ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
         ui->numberOfProcessorsSolveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "There are errors in the inputs or outputs");
     }
 }
 
@@ -871,18 +879,6 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetInputWindHeight: err = %d\n", err);
         }
 
-        err = NinjaSetOutputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "ft", papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetOutputWindHeight: err = %d\n", err);
-        }
-
-        err = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->tableSpeedUnits->currentText().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
-        }
-
         err = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
@@ -907,17 +903,121 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetNumVertLayers: err = %d\n", err);
         }
 
-        err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetOutputPath: err = %d\n", err);
-        }
+        setOutputFlags(ninjaArmy, i);
+    }
+}
 
-        err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetGoogOutFlag: err = %d\n", err);
-        }
+void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
+{
+    char **papszOptions = nullptr;
+    int err;
+
+    err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputPath: err =" << err;
+    }
+
+    err = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), "ft", papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputWindHeight: err =" << err;
+    }
+
+    err = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputSpeedUnits: err =" << err;
+    }
+
+    err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogOutFlag: err =" << err;
+    }
+
+    err = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), "m", papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogResolution: err =" << err;
+    }
+
+    err = NinjaSetGoogSpeedScaling(ninjaArmy, i, "equal_color", papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogSpeedScaling: err =" << err;
+    }
+
+    err = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogLineWidth: err =" << err;
+    }
+
+    err = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiOutFlag: err =" << err;
+    }
+
+    err = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), "m", papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiResolution: err =" << err;
+    }
+
+    err = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetShpOutFlag: err =" << err;
+    }
+
+    err = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), "m", papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetShpResolution: err =" << err;
+    }
+
+    err = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFOutFlag: err =" << err;
+    }
+
+    err = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFLineWidth: err =" << err;
+    }
+
+    err = NinjaSetPDFBaseMap(ninjaArmy, i, 0, papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFBaseMap: err =" << err;
+    }
+
+    err = NinjaSetPDFDEM(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFDEM: err =" << err;
+    }
+
+    err = NinjaSetPDFSize(ninjaArmy, i, 1, 1, 1, papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFSize: err =" << err;
+    }
+
+    err = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), "m", papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFResolution: err =" << err;
+    }
+
+    err = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetVtkOutFlag: err =" << err;
     }
 }
 

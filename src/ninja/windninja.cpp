@@ -1615,7 +1615,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param scaling The scaling at which to write the Google Earth output.
+ * \param scaling The scaling at which to write the Google Earth output. ("equal_color", "color", "equal_interval", "interval")
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
@@ -1730,6 +1730,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
         return NINJA_E_NULL_PTR;
     }
 }
+
 
 /**
  * \brief Set the resolution of the raster output for a simulation.
