@@ -61,6 +61,19 @@ public:
     bool isShowAllTimeZonesSelected = false;
     bool isDisplayTimeZoneDetailsSelected = false;
 
+    //Output States
+    bool isOutputsValid = false;
+    bool isGoogleEarthToggled = false;
+    bool isGoogleEarthValid = false;
+    bool isFireBehaviorToggled = false;
+    bool isFireBehaviorValid = false;
+    bool isShapeFilesToggled = false;
+    bool isShapeFilesValid = false;
+    bool isGeoSpatialPDFFilesToggled = false;
+    bool isGeoSpatialPDFFilesValid = false;
+    bool isVTKFilesToggled = false;
+    bool isVTKFilesValid = false;
+
     // All Inputs Ok
     bool isSolverReady = false;
 

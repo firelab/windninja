@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -554,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>13</number>
+           <number>16</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -2749,7 +2752,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <bool>true</bool>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_18">
                <item>
@@ -2881,7 +2884,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <widget class="QGroupBox" name="resolutionGroupBox">
+                <widget class="QGroupBox" name="googleEarthResolutionGroupBox">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -2899,7 +2902,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_26">
                   <item>
-                   <widget class="QGroupBox" name="useMeshResolutionGroupBox">
+                   <widget class="QGroupBox" name="googleEarthMeshResolutionGroupBox">
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
@@ -2914,10 +2917,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_9">
                      <item>
-                      <widget class="QDoubleSpinBox" name="useMeshResolutionSpinBox"/>
+                      <widget class="QDoubleSpinBox" name="googleEarthMeshResolutionSpinBox"/>
                      </item>
                      <item>
-                      <widget class="QComboBox" name="userMeshResolutionComboBox">
+                      <widget class="QComboBox" name="googleEarthMeshResolutionComboBox">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -2931,7 +2940,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </widget>
                      </item>
                      <item>
-                      <spacer name="horizontalSpacer_8">
+                      <spacer name="googleEarthMeshResolutionSpacer">
                        <property name="orientation">
                         <enum>Qt::Orientation::Horizontal</enum>
                        </property>
@@ -2975,9 +2984,50 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <layout class="QHBoxLayout" name="horizontalLayout_8">
                   <item>
                    <widget class="QComboBox" name="alternativeColorSchemeComboBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <item>
                      <property name="text">
                       <string>Default</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>ROPGW (Red Orange Pink Green White)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Oranges</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Blues</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Pinks</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Greens</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Magic Beans</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Pink to Green</string>
                      </property>
                     </item>
                    </widget>
@@ -3019,7 +3069,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <widget class="QWidget" name="fireBehaviorPage">
            <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0,1">
             <item>
-             <widget class="QGroupBox" name="groupBox_5">
+             <widget class="QGroupBox" name="fireBehaviorGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -3038,9 +3088,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="checkable">
                <bool>true</bool>
               </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
               <layout class="QVBoxLayout" name="verticalLayout_28">
                <item>
-                <widget class="QGroupBox" name="groupBox_6">
+                <widget class="QGroupBox" name="fireBehaviorResolutionGroupBox">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -3058,7 +3111,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_29">
                   <item>
-                   <widget class="QGroupBox" name="useMeshResolutionGroupBox_2">
+                   <widget class="QGroupBox" name="fireBehaviorMeshResolutionGroupBox">
                     <property name="title">
                      <string>Use Mesh Resolution</string>
                     </property>
@@ -3067,10 +3120,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_10">
                      <item>
-                      <widget class="QDoubleSpinBox" name="useMeshResolutionSpinBox_2"/>
+                      <widget class="QDoubleSpinBox" name="fireBehaviorMeshResolutionSpinBox"/>
                      </item>
                      <item>
-                      <widget class="QComboBox" name="userMeshResolutionComboBox_2">
+                      <widget class="QComboBox" name="fireBehaviorMeshResolutionComboBox">
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -3084,7 +3137,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </widget>
                      </item>
                      <item>
-                      <spacer name="horizontalSpacer_6">
+                      <spacer name="fireBehaviorMeshResolutionSpacer">
                        <property name="orientation">
                         <enum>Qt::Orientation::Horizontal</enum>
                        </property>
@@ -3100,7 +3153,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QCheckBox" name="checkBox_2">
+                   <widget class="QCheckBox" name="createATMFilesCheckBox">
                     <property name="text">
                      <string>Create *.atm file(s)</string>
                     </property>
@@ -3130,7 +3183,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <widget class="QWidget" name="shapeFilesPage">
            <layout class="QVBoxLayout" name="verticalLayout_35" stretch="0,1">
             <item>
-             <widget class="QGroupBox" name="groupBox_7">
+             <widget class="QGroupBox" name="shapeFilesGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -3149,9 +3202,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="checkable">
                <bool>true</bool>
               </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
               <layout class="QVBoxLayout" name="verticalLayout_30">
                <item>
-                <widget class="QGroupBox" name="groupBox_8">
+                <widget class="QGroupBox" name="shapeFilesResolutionGroupBox">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -3169,7 +3225,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_31">
                   <item>
-                   <widget class="QGroupBox" name="useMeshResolutionGroupBox_3">
+                   <widget class="QGroupBox" name="shapeFilesMeshResolutionGroupBox">
                     <property name="title">
                      <string>Use Mesh Resolution</string>
                     </property>
@@ -3178,10 +3234,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_12">
                      <item>
-                      <widget class="QDoubleSpinBox" name="useMeshResolutionSpinBox_3"/>
+                      <widget class="QDoubleSpinBox" name="shapeFilesMeshResolutionSpinBox"/>
                      </item>
                      <item>
-                      <widget class="QComboBox" name="userMeshResolutionComboBox_3">
+                      <widget class="QComboBox" name="shapeFilesMeshResolutionComboBox">
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -3195,7 +3251,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </widget>
                      </item>
                      <item>
-                      <spacer name="horizontalSpacer_9">
+                      <spacer name="shapeFilesMeshResolutionSpacer">
                        <property name="orientation">
                         <enum>Qt::Orientation::Horizontal</enum>
                        </property>
@@ -3217,7 +3273,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer_4">
+             <spacer name="shapeFilesPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>
@@ -3234,7 +3290,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <widget class="QWidget" name="geospatialPDFFilesPage">
            <layout class="QVBoxLayout" name="verticalLayout_34" stretch="0,1">
             <item>
-             <widget class="QGroupBox" name="googleEarthPage_2">
+             <widget class="QGroupBox" name="geospatialPDFFilesGroupBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -3254,7 +3310,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <bool>true</bool>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_32" stretch="0,0,0,0">
                <item>
@@ -3313,16 +3369,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </widget>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_16">
+                <layout class="QHBoxLayout" name="basemapLayout" stretch="0,0,0">
                  <item>
-                  <widget class="QLabel" name="label_3">
+                  <widget class="QLabel" name="basemapLabel">
                    <property name="text">
                     <string>Basemap:</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QComboBox" name="comboBox">
+                  <widget class="QComboBox" name="basemapComboBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -3333,6 +3389,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <size>
                      <width>86</width>
                      <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>170</width>
+                     <height>16777215</height>
                     </size>
                    </property>
                    <item>
@@ -3348,7 +3410,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <spacer name="horizontalSpacer_3">
+                  <spacer name="basemapSpacer">
                    <property name="orientation">
                     <enum>Qt::Orientation::Horizontal</enum>
                    </property>
@@ -3363,7 +3425,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_20">
+                <layout class="QHBoxLayout" name="sizeLayout">
                  <item>
                   <widget class="QLabel" name="label_4">
                    <property name="text">
@@ -3372,12 +3434,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QComboBox" name="comboBox_2">
+                  <widget class="QComboBox" name="sizeComboBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>160</width>
+                     <height>16777215</height>
+                    </size>
                    </property>
                    <item>
                     <property name="text">
@@ -3397,7 +3465,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </widget>
                  </item>
                  <item>
-                  <widget class="QComboBox" name="comboBox_3">
+                  <widget class="QComboBox" name="comboBox">
                    <item>
                     <property name="text">
                      <string>Portrait</string>
@@ -3426,7 +3494,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </item>
                <item>
-                <widget class="QGroupBox" name="resolutionGroupBox_2">
+                <widget class="QGroupBox" name="geospatialPDFFilesResolutionGroupBox">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -3444,7 +3512,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_33">
                   <item>
-                   <widget class="QGroupBox" name="useMeshResolutionGroupBox_4">
+                   <widget class="QGroupBox" name="geospatialPDFFilesMeshResolutionGroupBox">
                     <property name="title">
                      <string>Use Mesh Resolution</string>
                     </property>
@@ -3453,10 +3521,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_17">
                      <item>
-                      <widget class="QDoubleSpinBox" name="useMeshResolutionSpinBox_4"/>
+                      <widget class="QDoubleSpinBox" name="geospatialPDFFilesMeshResolutionSpinBox"/>
                      </item>
                      <item>
-                      <widget class="QComboBox" name="userMeshResolutionComboBox_4">
+                      <widget class="QComboBox" name="geospatialPDFFilesMeshResolutionComboBox">
                        <item>
                         <property name="text">
                          <string>Meters</string>
@@ -3470,7 +3538,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </widget>
                      </item>
                      <item>
-                      <spacer name="horizontalSpacer_5">
+                      <spacer name="geospatialPDFFilesMeshResolutionSpacer">
                        <property name="orientation">
                         <enum>Qt::Orientation::Horizontal</enum>
                        </property>
@@ -3509,7 +3577,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <widget class="QWidget" name="VTKFilesPage">
            <layout class="QVBoxLayout" name="verticalLayout_36" stretch="0,0,1">
             <item>
-             <widget class="QCheckBox" name="checkBox_4">
+             <widget class="QCheckBox" name="VTKFilesCheckBox">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -3522,7 +3590,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <widget class="QTextBrowser" name="textBrowser">
+             <widget class="QTextEdit" name="VTKFilesTextEdit">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -3544,7 +3612,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </widget>
             </item>
             <item>
-             <spacer name="verticalSpacer_8">
+             <spacer name="VTKFilesPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
               </property>

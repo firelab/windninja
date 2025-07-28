@@ -156,6 +156,125 @@ void MainWindow::refreshUI()
         ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
     }
 
+    if(state.isGoogleEarthToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isGoogleEarthValid = true;
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isGoogleEarthValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, bulletIcon);
+    }
+    if(state.isFireBehaviorToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isFireBehaviorValid = true;
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isFireBehaviorValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, bulletIcon);
+    }
+    if(state.isShapeFilesToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isShapeFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isShapeFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
+    }
+    if(state.isGeoSpatialPDFFilesToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isGeoSpatialPDFFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isGeoSpatialPDFFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
+    }
+    if(state.isVTKFilesToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isVTKFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isVTKFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
+    }
+
+
+    if(state.isGoogleEarthValid || state.isFireBehaviorValid || state.isShapeFilesValid || state.isGeoSpatialPDFFilesValid || state.isVTKFilesValid)
+    {
+        state.isOutputsValid = true;
+        ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "No Output Selected");
+    }
+
     // Update solve state
     if (state.isSolverMethodologyValid && state.isInputsValid) {
         ui->solveButton->setEnabled(true);
@@ -346,6 +465,12 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxCheckBoxClicked);
+    connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxCheckBoxClicked);
+    connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxCheckBoxClicked);
+    connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesGroupBoxCheckBoxClicked);
+    connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &MainWindow::VTKFilesCheckBoxClicked);
+
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
@@ -613,6 +738,41 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     {
         surfaceInput->elevationInputFileOpenButtonClicked();
     }
+}
+
+void MainWindow::googleEarthGroupBoxCheckBoxClicked(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isGoogleEarthToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::fireBehaviorGroupBoxCheckBoxClicked(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isFireBehaviorToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::shapeFilesGroupBoxCheckBoxClicked(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isShapeFilesToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::geospatialPDFFilesGroupBoxCheckBoxClicked(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isGeoSpatialPDFFilesToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::VTKFilesCheckBoxClicked(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isVTKFilesToggled = checked;
+    refreshUI();
 }
 
 void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
