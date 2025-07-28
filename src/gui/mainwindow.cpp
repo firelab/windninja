@@ -477,11 +477,15 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxCheckBoxClicked);
-    connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxCheckBoxClicked);
-    connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxCheckBoxClicked);
-    connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesGroupBoxCheckBoxClicked);
+    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxToggled);
+    connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxToggled);
+    connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxToggled);
+    connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesGroupBoxToggled);
     connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &MainWindow::VTKFilesCheckBoxClicked);
+    connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthMeshResolutionGroupBoxToggled);
+    connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorMeshResolutionGroupBoxToggled);
+    connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesMeshResolutionGroupBoxToggled);
+    connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 }
 
@@ -803,28 +807,28 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
 }
 
-void MainWindow::googleEarthGroupBoxCheckBoxClicked(bool checked)
+void MainWindow::googleEarthGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGoogleEarthToggled = checked;
     refreshUI();
 }
 
-void MainWindow::fireBehaviorGroupBoxCheckBoxClicked(bool checked)
+void MainWindow::fireBehaviorGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isFireBehaviorToggled = checked;
     refreshUI();
 }
 
-void MainWindow::shapeFilesGroupBoxCheckBoxClicked(bool checked)
+void MainWindow::shapeFilesGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isShapeFilesToggled = checked;
     refreshUI();
 }
 
-void MainWindow::geospatialPDFFilesGroupBoxCheckBoxClicked(bool checked)
+void MainWindow::geospatialPDFFilesGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGeoSpatialPDFFilesToggled = checked;
@@ -836,6 +840,30 @@ void MainWindow::VTKFilesCheckBoxClicked(bool checked)
     AppState& state = AppState::instance();
     state.isVTKFilesToggled = checked;
     refreshUI();
+}
+
+void MainWindow::googleEarthMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->googleEarthMeshResolutionSpinBox->setEnabled(!checked);
+    ui->googleEarthMeshResolutionComboBox->setEnabled(!checked);
+}
+
+void MainWindow::fireBehaviorMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->fireBehaviorMeshResolutionSpinBox->setEnabled(!checked);
+    ui->fireBehaviorMeshResolutionComboBox->setEnabled(!checked);
+}
+
+void MainWindow::shapeFilesMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->shapeFilesMeshResolutionSpinBox->setEnabled(!checked);
+    ui->shapeFilesMeshResolutionComboBox->setEnabled(!checked);
+}
+
+void MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->geospatialPDFFilesMeshResolutionSpinBox->setEnabled(!checked);
+    ui->geospatialPDFFilesMeshResolutionComboBox->setEnabled(!checked);
 }
 
 void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)

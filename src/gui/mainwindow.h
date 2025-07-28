@@ -100,11 +100,16 @@ private slots:
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void numberOfProcessorsSolveButtonClicked();
-    void googleEarthGroupBoxCheckBoxClicked(bool checked);
-    void fireBehaviorGroupBoxCheckBoxClicked(bool checked);
-    void shapeFilesGroupBoxCheckBoxClicked(bool checked);
-    void geospatialPDFFilesGroupBoxCheckBoxClicked(bool checked);
+    void googleEarthGroupBoxToggled(bool checked);
+    void fireBehaviorGroupBoxToggled(bool checked);
+    void shapeFilesGroupBoxToggled(bool checked);
+    void geospatialPDFFilesGroupBoxToggled(bool checked);
     void VTKFilesCheckBoxClicked(bool checked);
+    void googleEarthMeshResolutionGroupBoxToggled(bool checked);
+    void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
+    void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
+    void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
+
 
     void refreshUI();
 
