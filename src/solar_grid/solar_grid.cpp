@@ -38,6 +38,7 @@
 #include "Slope.h"
 #include "ninja_conv.h"
 #include "ninja_init.h"
+#include "gdal_util.h"
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
@@ -190,6 +191,20 @@ int main(int argc, char *argv[])
     if(dfCellSize > 0)
         elev.resample_Grid_in_place(dfCellSize, AsciiGrid<double>::order1);
 
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        GDALDatasetH hDS = elev.ascii2GDAL();
+        if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+        {
+            printf("warning: Unable to calculate angle departure from north for the DEM.\n");
+        }
+        GDALClose(hDS);
+    }
+    //set the value for angleFromNorth member in the Elevation class
+    elev.setAngleFromNorth(angleFromNorth);
+
     //Compute lat/lon of domain center
     double latitude, longitude;
     elev.get_gridCenter(&longitude, &latitude);
@@ -239,7 +254,7 @@ int main(int argc, char *argv[])
     //make aspect, slope, and shade grids
     Aspect asp(&elev,nNumThreads);
     Slope slp(&elev,nNumThreads);
-    Shade shd(&elev, solar.get_theta(), solar.get_phi(), nNumThreads);
+    Shade shd(&elev, solar.get_theta(), solar.get_phi(), elev.getAngleFromNorth(), nNumThreads);
     AsciiGrid<double> CloudCover((AsciiGrid<double>&)elev);
     if(pszCloudFile != NULL) {
         CloudCover.GDALReadGrid(pszCloudFile, 1);

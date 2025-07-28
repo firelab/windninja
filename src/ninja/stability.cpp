@@ -277,7 +277,7 @@ void Stability::SetDomainAverageAlpha(WindNinjaInputs &input,
 	//solar.print_allSolarPosData();
 	Aspect aspect(&input.dem, input.numberCPUs);
 	Slope slope(&input.dem, input.numberCPUs);
-	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
+	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
 	cellDiurnal cDiurnal(&input.dem, &shade, &solar, 
                     input.downDragCoeff, input.downEntrainmentCoeff,
                     input.upDragCoeff, input.upEntrainmentCoeff);
@@ -357,7 +357,7 @@ void Stability::SetPointInitializationAlpha(WindNinjaInputs &input,
     //solar.print_allSolarPosData();
 	Aspect aspect(&input.dem, input.numberCPUs);
     Slope slope(&input.dem, input.numberCPUs);
-	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
+	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
 	cellDiurnal cDiurnal(&input.dem, &shade, &solar,
                         input.downDragCoeff, input.downEntrainmentCoeff,
                         input.upDragCoeff, input.upEntrainmentCoeff);
@@ -424,7 +424,7 @@ void Stability::Set2dWxInitializationAlpha(WindNinjaInputs &input,
     //solar.print_allSolarPosData();
 	Aspect aspect(&input.dem, input.numberCPUs);
     Slope slope(&input.dem, input.numberCPUs);
-	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
+	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
 	cellDiurnal cDiurnal(&input.dem, &shade, &solar,
                         input.downDragCoeff, input.downEntrainmentCoeff,
                         input.upDragCoeff, input.upEntrainmentCoeff);

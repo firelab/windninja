@@ -40,7 +40,8 @@ set(SOLAR_GRID_SRC solar_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Aspect.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Shade.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
-                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp)
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
 add_executable(solar_grid ${SOLAR_GRID_SRC})
 

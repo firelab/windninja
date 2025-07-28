@@ -125,7 +125,7 @@ void initialize::initializeBoundaryLayer(WindNinjaInputs& input)
         Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
         Aspect aspect(&input.dem, input.numberCPUs);
         Slope slope(&input.dem, input.numberCPUs);
-        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
+        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
 
         addDiurnal(input, &aspect, &slope, &shade, &solar);
 

@@ -48,14 +48,19 @@ class Shade : public AsciiGrid<short>
 {
 public:
 	Shade();
-	Shade(Elevation const* elev, double Theta, double Phi, int number_CPUs);
+	Shade(Elevation const* elev, double Theta, double Phi, double angleFromNorth, int number_CPUs);
 	~Shade();
 	bool read_shade(std::string filename);
-	inline bool set_theta(double sunAngle){theta = sunAngle; return true;}
+    inline bool set_theta(double sunAngle, double angleFromNorth)
+    {
+        theta = sunAngle;  // expects the raw input value to be in geographic coordinates
+        theta = wrap0to360( theta - angleFromNorth ); //convert FROM geographic TO projected coordinates
+        return true;
+    }
 	inline bool set_phi(double sunElev){phi = sunElev; return true;}
 	bool set_num_threads(int t){number_CPUs = t; return true;}
 
-	bool compute_gridShade(Elevation const* elev, double Theta, double Phi, int number_threads);
+	bool compute_gridShade(Elevation const* elev, double Theta, double Phi, double angleFromNorth, int number_threads);
 
 	static const short shaded = 1;
 	static const short unshaded = 0;
@@ -82,7 +87,7 @@ private:
 	int sizeiX;		//size of array for outer loop
 	int sizeiY;		//size of array for inner loop
 	double phi;	//sun elevation	
-	double theta;	//sun angle
+	double theta;	//sun angle, in dem projected coordinates
 	long inner_loop_num;
 	long outer_loop_num;
 

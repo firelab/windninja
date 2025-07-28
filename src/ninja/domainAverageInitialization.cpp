@@ -129,7 +129,7 @@ void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input
 
         Aspect aspect(&input.dem, input.numberCPUs);
         Slope slope(&input.dem, input.numberCPUs);
-        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
+        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
 
         addDiurnal(input, &aspect, &slope, &shade, &solar);  
 
