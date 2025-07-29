@@ -323,29 +323,29 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Set the correct root index inside Downloads
     QModelIndex rootIndex = model->index(downloadsPath);
-    ui->treeFileExplorer->setModel(model);
-    ui->treeFileExplorer->setRootIndex(rootIndex);
+    ui->pointInitializationTreeView->setModel(model);
+    ui->pointInitializationTreeView->setRootIndex(rootIndex);
 
     // Ensure folders expand and collapse correctly
-    ui->treeFileExplorer->setExpandsOnDoubleClick(true);
-    ui->treeFileExplorer->setAnimated(true);
-    ui->treeFileExplorer->setIndentation(15);
-    ui->treeFileExplorer->setSortingEnabled(true);
-    ui->treeFileExplorer->setItemsExpandable(true);
-    ui->treeFileExplorer->setUniformRowHeights(true);
+    ui->pointInitializationTreeView->setExpandsOnDoubleClick(true);
+    ui->pointInitializationTreeView->setAnimated(true);
+    ui->pointInitializationTreeView->setIndentation(15);
+    ui->pointInitializationTreeView->setSortingEnabled(true);
+    ui->pointInitializationTreeView->setItemsExpandable(true);
+    ui->pointInitializationTreeView->setUniformRowHeights(true);
 
     // Show only "Name" and "Date Modified" columns
-    ui->treeFileExplorer->hideColumn(1);  // Hide Size column
-    ui->treeFileExplorer->hideColumn(2);  // Hide Type column
+    ui->pointInitializationTreeView->hideColumn(1);  // Hide Size column
+    ui->pointInitializationTreeView->hideColumn(2);  // Hide Type column
 
     // Optional: Set column headers
-    QHeaderView *header = ui->treeFileExplorer->header();
+    QHeaderView *header = ui->pointInitializationTreeView->header();
     header->setSectionResizeMode(0, QHeaderView::Interactive);
     header->setSectionResizeMode(3, QHeaderView::Stretch);
     model->setHeaderData(0, Qt::Horizontal, "Name");
     model->setHeaderData(3, Qt::Horizontal, "Date Modified");
 
-    ui->treeFileExplorer->expandAll();
+    ui->pointInitializationTreeView->expandAll();
 
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
@@ -419,7 +419,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
     // Wind Input -> Point Init window
-    ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
+    ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/application_get"));
 
     // Populate default location for output location
     ui->outputDirectoryLineEdit->setText(downloadsPath);
@@ -472,7 +472,7 @@ void MainWindow::connectSignals()
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
     connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
-    connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
+    //connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
@@ -613,7 +613,7 @@ void MainWindow::stabilityCheckBoxClicked()
 void MainWindow::pointInitializationCheckBoxClicked()
 {
     AppState& state = AppState::instance();
-    state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+    state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
 
     if (state.isPointInitializationToggled) {
         ui->domainAverageCheckBox->setChecked(false);
@@ -633,9 +633,9 @@ void MainWindow::useWeatherModelInitClicked()
 
     if (state.isWeatherModelInitializationToggled) {
         ui->domainAverageCheckBox->setChecked(false);
-        ui->pointInitializationCheckBox->setChecked(false);
+        ui->pointInitializationGroupBox->setChecked(false);
         state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-        state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
+        state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
     }
 
     refreshUI();
@@ -753,7 +753,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->domainAverageCheckBox->click();
     } else if (item->text(0) == "Point Initialization")
     {
-        ui->pointInitializationCheckBox->click();
+        //ui->pointInitializationCheckBox->click();
     } else if (item->text(0) == "Weather Model")
     {
         ui->weatherModelCheckBox->click();
