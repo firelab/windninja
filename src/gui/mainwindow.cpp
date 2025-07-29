@@ -437,6 +437,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->outputWindHeightUnitsComboBox->setItemData(0, "ft");
     ui->outputWindHeightUnitsComboBox->setItemData(1, "m");
+    ui->meshResolutionUnitsComboBox->setItemData(0, "m");
+    ui->meshResolutionUnitsComboBox->setItemData(1, "ft");
     ui->googleEarthMeshResolutionComboBox->setItemData(0, "m");
     ui->googleEarthMeshResolutionComboBox->setItemData(1, "ft");
     ui->fireBehaviorMeshResolutionComboBox->setItemData(0, "m");
@@ -949,6 +951,99 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
     char **papszOptions = nullptr;
     int err;
 
+    double googleEarthMeshResolution;
+    QByteArray googleEarthMeshResolutionUnits;
+    if (!ui->googleEarthMeshResolutionGroupBox->isChecked())
+    {
+        googleEarthMeshResolution = ui->googleEarthMeshResolutionSpinBox->value();
+        googleEarthMeshResolutionUnits = ui->googleEarthMeshResolutionComboBox
+                                             ->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex())
+                                             .toString().toUtf8();
+    }
+    else
+    {
+        googleEarthMeshResolution = ui->meshResolutionSpinBox->value();
+        googleEarthMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                             ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                             .toString().toUtf8();
+    }
+
+    double fireBehaviorMeshResolution;
+    QByteArray fireBehaviorMeshResolutionUnits;
+    if (!ui->fireBehaviorMeshResolutionGroupBox->isChecked())
+    {
+        fireBehaviorMeshResolution = ui->fireBehaviorMeshResolutionSpinBox->value();
+        fireBehaviorMeshResolutionUnits = ui->fireBehaviorMeshResolutionComboBox
+                                              ->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex())
+                                              .toString().toUtf8();
+    }
+    else
+    {
+        fireBehaviorMeshResolution = ui->meshResolutionSpinBox->value();
+        fireBehaviorMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                              ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                              .toString().toUtf8();
+    }
+
+    double shapeFilesMeshResolution;
+    QByteArray shapeFilesMeshResolutionUnits;
+    if (!ui->shapeFilesMeshResolutionGroupBox->isChecked())
+    {
+        shapeFilesMeshResolution = ui->shapeFilesMeshResolutionSpinBox->value();
+        shapeFilesMeshResolutionUnits = ui->shapeFilesMeshResolutionComboBox
+                                            ->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex())
+                                            .toString().toUtf8();
+    }
+    else
+    {
+        shapeFilesMeshResolution = ui->meshResolutionSpinBox->value();
+        shapeFilesMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                            ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                            .toString().toUtf8();
+    }
+
+    double geospatialPDFFilesMeshResolution;
+    QByteArray geospatialPDFFilesMeshResolutionUnits;
+    if (!ui->geospatialPDFFilesGroupBox->isChecked())
+    {
+        geospatialPDFFilesMeshResolution = ui->geospatialPDFFilesMeshResolutionSpinBox->value();
+        geospatialPDFFilesMeshResolutionUnits = ui->geospatialPDFFilesMeshResolutionComboBox
+                                                    ->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex())
+                                                    .toString().toUtf8();
+    }
+    else
+    {
+        geospatialPDFFilesMeshResolution = ui->meshResolutionSpinBox->value();
+        geospatialPDFFilesMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                                    ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                                    .toString().toUtf8();
+    }
+
+    double PDFHeight, PDFWidth, PDFDpi;
+    switch(ui->sizeDimensionsComboBox->currentIndex())
+    {
+    case 0:
+        PDFHeight = 11.0;
+        PDFWidth = 8.5;
+        PDFDpi = 150;
+        break;
+    case 1:
+        PDFHeight = 14.0;
+        PDFWidth = 8.5;
+        PDFDpi = 150;
+        break;
+    case 2:
+        PDFHeight = 17.0;
+        PDFWidth = 11.0;
+        PDFDpi = 150;
+        break;
+    }
+    if (ui->sizeOrientationComboBox->currentIndex() == 1)
+    {
+        std::swap(PDFHeight, PDFWidth);
+    }
+
+
     err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
@@ -973,7 +1068,7 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
         qDebug() << "NinjaSetGoogOutFlag: err =" << err;
     }
 
-    err = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    err = NinjaSetGoogResolution(ninjaArmy, i, googleEarthMeshResolution, googleEarthMeshResolutionUnits.constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogResolution: err =" << err;
@@ -997,7 +1092,7 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
         qDebug() << "NinjaSetAsciiOutFlag: err =" << err;
     }
 
-    err = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    err = NinjaSetAsciiResolution(ninjaArmy, i, fireBehaviorMeshResolution, fireBehaviorMeshResolutionUnits.constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: err =" << err;
@@ -1009,7 +1104,7 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
         qDebug() << "NinjaSetShpOutFlag: err =" << err;
     }
 
-    err = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    err = NinjaSetShpResolution(ninjaArmy, i, shapeFilesMeshResolution, shapeFilesMeshResolutionUnits.constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpResolution: err =" << err;
@@ -1039,13 +1134,13 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
         qDebug() << "NinjaSetPDFDEM: err =" << err;
     }
 
-    err = NinjaSetPDFSize(ninjaArmy, i, 11, 8.5, 150, papszOptions);
+    err = NinjaSetPDFSize(ninjaArmy, i, PDFHeight, PDFWidth, PDFDpi, papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFSize: err =" << err;
     }
 
-    err = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    err = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFFilesMeshResolution, geospatialPDFFilesMeshResolutionUnits.constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFResolution: err =" << err;
