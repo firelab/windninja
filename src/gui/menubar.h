@@ -30,6 +30,7 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
 
+#include "ui_mainwindow.h"
 #include <QObject>
 
 namespace Ui {

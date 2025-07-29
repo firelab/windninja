@@ -364,6 +364,7 @@ MainWindow::MainWindow(QWidget *parent)
     surfaceInput = new SurfaceInput(ui, webView, this);
     surfaceInput->timeZoneAllZonesCheckBoxClicked();
     domainAverageInput = new DomainAverageInput(ui, this);
+    pointInitializationInput = new PointInitializationInput(ui, this);
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -461,6 +462,8 @@ MainWindow::~MainWindow()
   delete mapBridge;
   delete surfaceInput;
   delete menuBar;
+  delete domainAverageInput;
+  delete pointInitializationInput;
   delete ui;
 }
 
@@ -472,13 +475,13 @@ void MainWindow::connectSignals()
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
     connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
-    //connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxToggled);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxToggled);
@@ -605,22 +608,6 @@ void MainWindow::stabilityCheckBoxClicked()
 {
     AppState& state = AppState::instance();
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
-
-    refreshUI();
-}
-
-
-void MainWindow::pointInitializationCheckBoxClicked()
-{
-    AppState& state = AppState::instance();
-    state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
-
-    if (state.isPointInitializationToggled) {
-        ui->domainAverageCheckBox->setChecked(false);
-        ui->weatherModelCheckBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
-    }
 
     refreshUI();
 }

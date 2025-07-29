@@ -33,6 +33,7 @@
 #include "surfaceinput.h"
 #include "menubar.h"
 #include "domainaverageinput.h"
+#include "pointinitializationinput.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
@@ -69,8 +70,6 @@
 #include <vector>
 #include <string>
 
-
-
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -95,7 +94,6 @@ private slots:
     void diurnalCheckBoxClicked();
     void stabilityCheckBoxClicked();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-    void pointInitializationCheckBoxClicked();
     void useWeatherModelInitClicked();
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
@@ -109,8 +107,6 @@ private slots:
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
-
-
     void refreshUI();
 
 private:
@@ -122,6 +118,7 @@ private:
     MenuBar *menuBar;
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
+    PointInitializationInput *pointInitializationInput;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);

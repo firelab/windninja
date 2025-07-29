@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 #include "surfaceinput.h"
-#include "ui_mainwindow.h"
 
 SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
                                    QWebEngineView *webView,

@@ -32,6 +32,7 @@
 #define DOMAINAVERAGEINPUT_H
 
 #include "appstate.h"
+#include "ui_mainwindow.h"
 #include <QObject>
 #include <QPair>
 #include <QSet>

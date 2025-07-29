@@ -31,6 +31,7 @@
 #define SURFACEINPUT_H
 
 #include "appstate.h"
+#include "ui_mainwindow.h"
 #include "../ninja/windninja.h"
 #include "../ninja/gdal_util.h"
 #include <QtWebEngineWidgets/qwebengineview.h>

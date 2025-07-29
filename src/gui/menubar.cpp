@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 #include "menubar.h"
-#include "ui_mainwindow.h"
 
 MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
