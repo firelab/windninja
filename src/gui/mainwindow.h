@@ -100,6 +100,17 @@ private slots:
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void numberOfProcessorsSolveButtonClicked();
+    void googleEarthGroupBoxToggled(bool checked);
+    void fireBehaviorGroupBoxToggled(bool checked);
+    void shapeFilesGroupBoxToggled(bool checked);
+    void geospatialPDFFilesGroupBoxToggled(bool checked);
+    void VTKFilesCheckBoxClicked(bool checked);
+    void googleEarthMeshResolutionGroupBoxToggled(bool checked);
+    void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
+    void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
+    void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
+
+
     void refreshUI();
 
 private:
@@ -115,6 +126,7 @@ private:
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
     void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
+    void setOutputFlags(NinjaArmyH *ninjaArmy, int i);
 
 };
 #endif // MAINWINDOW_H

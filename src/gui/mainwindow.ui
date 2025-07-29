@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -470,6 +473,36 @@
           </item>
           <item>
            <property name="text">
+            <string>Outputs</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Google Earth</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Fire Behavior</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Shape Files</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Geospatial PDF Files</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>VTK Files</string>
+            </property>
+           </item>
+          </item>
+          <item>
+           <property name="text">
             <string>Solver</string>
            </property>
           </item>
@@ -524,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>13</number>
+           <number>12</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -1222,262 +1255,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="surfaceInputDownloadPage">
-           <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0,0,1">
-            <item>
-             <widget class="QGroupBox" name="elevationInputTypeGroupBox">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="title">
-               <string>Elevation Input Type</string>
-              </property>
-              <layout class="QGridLayout" name="gridLayout">
-               <item row="0" column="0">
-                <layout class="QHBoxLayout" name="elevationInputTypeLayout">
-                 <item>
-                  <widget class="QComboBox" name="elevationInputTypeComboBox">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string notr="true">Bounding Box</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Point Radius</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QComboBox" name="elevationFileTypeComboBox">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>WORLD SRTM (30m)</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>WORLD GMTED (250m)</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Landscape File</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="elevationInputTypePushButton">
-                   <property name="text">
-                    <string>Draw</string>
-                   </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <property name="checked">
-                    <bool>false</bool>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="elevationInputTypeGroupBoxSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </item>
-               <item row="1" column="0">
-                <widget class="QStackedWidget" name="elevationInputTypeStackedWidget">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="currentIndex">
-                  <number>0</number>
-                 </property>
-                 <widget class="QWidget" name="boundingBoxPage">
-                  <layout class="QGridLayout" name="gridLayout_3">
-                   <item row="0" column="0">
-                    <widget class="QLabel" name="boundingBoxNorthLabel">
-                     <property name="text">
-                      <string>North</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QLineEdit" name="boundingBoxNorthLineEdit"/>
-                   </item>
-                   <item row="0" column="2">
-                    <widget class="QLabel" name="boundingBoxSouthLabel">
-                     <property name="text">
-                      <string>South</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="3">
-                    <widget class="QLineEdit" name="boundingBoxSouthLineEdit"/>
-                   </item>
-                   <item row="1" column="0">
-                    <widget class="QLabel" name="boundingBoxEastLabel">
-                     <property name="text">
-                      <string>East</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="1">
-                    <widget class="QLineEdit" name="boundingBoxEastLineEdit"/>
-                   </item>
-                   <item row="1" column="2">
-                    <widget class="QLabel" name="boundingBoxWestLabel">
-                     <property name="text">
-                      <string>West</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="3">
-                    <widget class="QLineEdit" name="boundingBoxWestLineEdit"/>
-                   </item>
-                  </layout>
-                 </widget>
-                 <widget class="QWidget" name="pointRadiusPage">
-                  <layout class="QGridLayout" name="gridLayout_4">
-                   <item row="0" column="0">
-                    <widget class="QLabel" name="pointRadiusLatLabel">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>Center Lat</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="1">
-                    <widget class="QLineEdit" name="pointRadiusLatLineEdit"/>
-                   </item>
-                   <item row="0" column="2">
-                    <widget class="QLabel" name="pointRadiusLonLabel">
-                     <property name="text">
-                      <string>Center Lon</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="0" column="3">
-                    <widget class="QLineEdit" name="pointRadiusLonLineEdit"/>
-                   </item>
-                   <item row="1" column="0">
-                    <widget class="QLabel" name="pointRadiusRadiusLabel">
-                     <property name="sizePolicy">
-                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                       <horstretch>0</horstretch>
-                       <verstretch>0</verstretch>
-                      </sizepolicy>
-                     </property>
-                     <property name="text">
-                      <string>Radius (miles)</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item row="1" column="1">
-                    <widget class="QLineEdit" name="pointRadiusRadiusLineEdit"/>
-                   </item>
-                  </layout>
-                 </widget>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="surfaceInputDownloadButtonsLayout">
-              <item>
-               <widget class="QPushButton" name="surfaceInputDownloadButton">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Download File</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="surfaceInputDownloadCancelButton">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Cancel</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="surfaceinputDownloadButtonsSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <spacer name="surfaceInputDownloadPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Policy::Expanding</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
           <widget class="QWidget" name="diurnalInputPage">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1623,7 +1400,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <item>
              <widget class="QGroupBox" name="inputWindHeightGroupBox">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
                 <verstretch>100</verstretch>
                </sizepolicy>
@@ -2745,6 +2522,1282 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="outputsPage">
+           <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,1">
+            <item>
+             <widget class="QGroupBox" name="outputWindHeightGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>100</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>70</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Output Wind Height</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <item>
+                <widget class="QComboBox" name="outputWindHeightComboBox">
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>20ft-US</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>10m-SI</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Custom</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <widget class="QDoubleSpinBox" name="outputWindHeightSpinBox">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="cursor">
+                  <cursorShape>PointingHandCursor</cursorShape>
+                 </property>
+                 <property name="minimum">
+                  <double>0.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>10000.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>20.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QComboBox" name="outputWindHeightUnitsComboBox">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="editable">
+                  <bool>false</bool>
+                 </property>
+                 <item>
+                  <property name="text">
+                   <string>Feet</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Meters</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <spacer name="outputWindHeightGroupBoxSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Orientation::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="outputSpeedUnitsLayout">
+              <item>
+               <widget class="QLabel" name="outputSpeedUnitsLabel">
+                <property name="text">
+                 <string>Output Speed Units:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="outputSpeedUnitsComboBox">
+                <item>
+                 <property name="text">
+                  <string>mph</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>mps</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kph</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>kts</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <spacer name="outputSpeedUnitsSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="clipOutputLayout">
+              <item>
+               <widget class="QLabel" name="clipOutputLabel">
+                <property name="text">
+                 <string>Clip output by:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="clipOutputSpinBox">
+                <property name="suffix">
+                 <string>%</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="clipOutputSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="rawWeatherModelOutputCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Write Raw Weather Model Output</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="outputsPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="googleEarthPage">
+           <layout class="QVBoxLayout" name="verticalLayout_13" stretch="0,1">
+            <item>
+             <widget class="QGroupBox" name="googleEarthGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>384</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Create Google Earth Files (*.kmz)</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_18">
+               <item>
+                <widget class="QGroupBox" name="googleEarthVectorsGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>70</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Vectors</string>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                  <property name="sizeConstraint">
+                   <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+                  </property>
+                  <item>
+                   <widget class="QLabel" name="googleEarthVectorsLabel">
+                    <property name="text">
+                     <string>Line Width:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="googleEarthVectorsSpinBox">
+                    <property name="decimals">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <double>10.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>1.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="googleEarthVectorScalingCheckBox">
+                    <property name="text">
+                     <string>Apply Vector Scaling</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="googleEarthVectorsGroupBoxSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="legendGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>69</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Legend</string>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                  <item>
+                   <widget class="QComboBox" name="legendComboBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>131</width>
+                      <height>0</height>
+                     </size>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Uniform Range</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Equal Count</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="legendCheckBox">
+                    <property name="text">
+                     <string>Use Consistent Color Scale</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="legendSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>153</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="googleEarthResolutionGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>114</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Resolution</string>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_37">
+                  <item>
+                   <widget class="QGroupBox" name="googleEarthMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
+                    <property name="title">
+                     <string>Use Mesh Resolution</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_16">
+                     <item>
+                      <widget class="QDoubleSpinBox" name="googleEarthMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="maximum">
+                        <double>5000.000000000000000</double>
+                       </property>
+                       <property name="value">
+                        <double>200.000000000000000</double>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QComboBox" name="googleEarthMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>Meters</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>Feet</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="googleEarthMeshResolutionSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>302</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="alternativeColorSchemeGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>69</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Alternative Color Schemes</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="checked">
+                  <bool>false</bool>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_8">
+                  <item>
+                   <widget class="QComboBox" name="alternativeColorSchemeComboBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>Default</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>ROPGW (Red Orange Pink Green White)</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Oranges</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Blues</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Pinks</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Greens</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Magic Beans</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Pink to Green</string>
+                     </property>
+                    </item>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="alternativeColorSchemeSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="googleEarthPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="fireBehaviorPage">
+           <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0,1">
+            <item>
+             <widget class="QGroupBox" name="fireBehaviorGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>186</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Create Fire Behavior Files (*.asc)</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_28">
+               <item>
+                <widget class="QGroupBox" name="fireBehaviorResolutionGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>114</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Resolution</string>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_38">
+                  <item>
+                   <widget class="QGroupBox" name="fireBehaviorMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
+                    <property name="title">
+                     <string>Use Mesh Resolution</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_19">
+                     <item>
+                      <widget class="QDoubleSpinBox" name="fireBehaviorMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="maximum">
+                        <double>5000.000000000000000</double>
+                       </property>
+                       <property name="value">
+                        <double>200.000000000000000</double>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QComboBox" name="fireBehaviorMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>Meters</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>Feet</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="fireBehaviorMeshResolutionSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>302</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="fireBehaviorResolutionCheckBox">
+                    <property name="text">
+                     <string>Create *.atm file(s)</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="fireBehaviorPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="shapeFilesPage">
+           <layout class="QVBoxLayout" name="verticalLayout_35" stretch="0,1">
+            <item>
+             <widget class="QGroupBox" name="shapeFilesGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>158</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Create Shape Files (*.sph)</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_30">
+               <item>
+                <widget class="QGroupBox" name="shapeFilesResolutionGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>114</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Resolution</string>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_39">
+                  <item>
+                   <widget class="QGroupBox" name="shapeFilesMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
+                    <property name="title">
+                     <string>Use Mesh Resolution</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_20">
+                     <item>
+                      <widget class="QDoubleSpinBox" name="shapeFilesMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="maximum">
+                        <double>5000.000000000000000</double>
+                       </property>
+                       <property name="value">
+                        <double>200.000000000000000</double>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QComboBox" name="shapeFilesMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>Meters</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>Feet</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="shapeFilesMeshResolutionSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>302</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="shapeFilesPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="geospatialPDFFilesPage">
+           <layout class="QVBoxLayout" name="verticalLayout_34" stretch="0,1">
+            <item>
+             <widget class="QGroupBox" name="geospatialPDFFilesGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>300</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Create Geospatial PDF Files (*.pdf)</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_32" stretch="0,0,0,0">
+               <item>
+                <widget class="QGroupBox" name="geospatialPDFFilesVectorsGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>70</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Vectors</string>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_13">
+                  <item>
+                   <widget class="QLabel" name="geospatialPDFfilesVectorsLabel">
+                    <property name="text">
+                     <string>Line Width:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QDoubleSpinBox" name="geospatialPDFFilesVectorsSpinBox">
+                    <property name="decimals">
+                     <number>1</number>
+                    </property>
+                    <property name="maximum">
+                     <double>10.000000000000000</double>
+                    </property>
+                    <property name="value">
+                     <double>1.000000000000000</double>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="geospatialPDFFilesVectorsCheckBox">
+                    <property name="text">
+                     <string>Apply Vector Scaling</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <spacer name="geospatialPDFFilesVectorsSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Orientation::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="basemapLayout" stretch="0,0,0">
+                 <item>
+                  <widget class="QLabel" name="basemapLabel">
+                   <property name="text">
+                    <string>Basemap:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="basemapComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>86</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>170</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>TopoFire topo maps</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Hillshade</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="basemapLayoutSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="sizeLayout">
+                 <item>
+                  <widget class="QLabel" name="sizeLabel">
+                   <property name="text">
+                    <string>Size:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="sizeDimensionsComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>160</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>Letter-8 1/2 x 11</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Legal-8 1/2 x 14</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Tabloid-7 11 x 17</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="sizeOrientationComboBox">
+                   <item>
+                    <property name="text">
+                     <string>Portrait</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Landscape</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="sizeLayoutSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QGroupBox" name="geospatialPDFFilesResolutionGroupBox">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>114</height>
+                  </size>
+                 </property>
+                 <property name="title">
+                  <string>Resolution</string>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_40">
+                  <item>
+                   <widget class="QGroupBox" name="geospatialPDFFilesMeshResolutionGroupBox">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>70</height>
+                     </size>
+                    </property>
+                    <property name="title">
+                     <string>Use Mesh Resolution</string>
+                    </property>
+                    <property name="checkable">
+                     <bool>true</bool>
+                    </property>
+                    <layout class="QHBoxLayout" name="horizontalLayout_21">
+                     <item>
+                      <widget class="QDoubleSpinBox" name="geospatialPDFFilesMeshResolutionSpinBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="maximum">
+                        <double>5000.000000000000000</double>
+                       </property>
+                       <property name="value">
+                        <double>200.000000000000000</double>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QComboBox" name="geospatialPDFFilesMeshResolutionComboBox">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>80</width>
+                         <height>0</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>80</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>Meters</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>Feet</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="geospatialPDFFilesMeshResolutionSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>302</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="VTKFilesPage">
+           <layout class="QVBoxLayout" name="verticalLayout_36" stretch="0,0,1">
+            <item>
+             <widget class="QCheckBox" name="VTKFilesCheckBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Create VTK Files (*.vtk)</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextEdit" name="VTKFilesTextEdit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="html">
+               <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Write VTK surface and volume files&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note that *vtk files are for advanced users and are rarely used by fire managers/modelers&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="VTKFilesPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="solverPage">
            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,1">
             <property name="sizeConstraint">
@@ -2881,6 +3934,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <widget class="QGroupBox" name="outputDirectoryGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="title">
                <string>Output Directory</string>
               </property>
@@ -2922,6 +3981,262 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <spacer name="solverPageSpacer">
               <property name="orientation">
                <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="surfaceInputDownloadPage">
+           <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0,0,1">
+            <item>
+             <widget class="QGroupBox" name="elevationInputTypeGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="title">
+               <string>Elevation Input Type</string>
+              </property>
+              <layout class="QGridLayout" name="gridLayout">
+               <item row="0" column="0">
+                <layout class="QHBoxLayout" name="elevationInputTypeLayout">
+                 <item>
+                  <widget class="QComboBox" name="elevationInputTypeComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string notr="true">Bounding Box</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Point Radius</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="elevationFileTypeComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>WORLD SRTM (30m)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>WORLD GMTED (250m)</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Landscape File</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="elevationInputTypePushButton">
+                   <property name="text">
+                    <string>Draw</string>
+                   </property>
+                   <property name="checkable">
+                    <bool>true</bool>
+                   </property>
+                   <property name="checked">
+                    <bool>false</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="elevationInputTypeGroupBoxSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item row="1" column="0">
+                <widget class="QStackedWidget" name="elevationInputTypeStackedWidget">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="currentIndex">
+                  <number>0</number>
+                 </property>
+                 <widget class="QWidget" name="boundingBoxPage">
+                  <layout class="QGridLayout" name="gridLayout_3">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="boundingBoxNorthLabel">
+                     <property name="text">
+                      <string>North</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="boundingBoxNorthLineEdit"/>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="boundingBoxSouthLabel">
+                     <property name="text">
+                      <string>South</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLineEdit" name="boundingBoxSouthLineEdit"/>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="boundingBoxEastLabel">
+                     <property name="text">
+                      <string>East</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="boundingBoxEastLineEdit"/>
+                   </item>
+                   <item row="1" column="2">
+                    <widget class="QLabel" name="boundingBoxWestLabel">
+                     <property name="text">
+                      <string>West</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3">
+                    <widget class="QLineEdit" name="boundingBoxWestLineEdit"/>
+                   </item>
+                  </layout>
+                 </widget>
+                 <widget class="QWidget" name="pointRadiusPage">
+                  <layout class="QGridLayout" name="gridLayout_4">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="pointRadiusLatLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Center Lat</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="pointRadiusLatLineEdit"/>
+                   </item>
+                   <item row="0" column="2">
+                    <widget class="QLabel" name="pointRadiusLonLabel">
+                     <property name="text">
+                      <string>Center Lon</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="3">
+                    <widget class="QLineEdit" name="pointRadiusLonLineEdit"/>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="pointRadiusRadiusLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Radius (miles)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QLineEdit" name="pointRadiusRadiusLineEdit"/>
+                   </item>
+                  </layout>
+                 </widget>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="surfaceInputDownloadButtonsLayout">
+              <item>
+               <widget class="QPushButton" name="surfaceInputDownloadButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Download File</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="surfaceInputDownloadCancelButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Cancel</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="surfaceinputDownloadButtonsSpacer">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="surfaceInputDownloadPageSpacer">
+              <property name="orientation">
+               <enum>Qt::Orientation::Vertical</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Policy::Expanding</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>

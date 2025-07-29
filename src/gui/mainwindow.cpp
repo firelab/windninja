@@ -156,17 +156,144 @@ void MainWindow::refreshUI()
         ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
     }
 
-    // Update solve state
-    if (state.isSolverMethodologyValid && state.isInputsValid) {
+    if(state.isGoogleEarthToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isGoogleEarthValid = true;
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isGoogleEarthValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        state.isGoogleEarthValid = false;
+        ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, bulletIcon);
+    }
+    if(state.isFireBehaviorToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isFireBehaviorValid = true;
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isFireBehaviorValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        state.isFireBehaviorValid = false;
+        ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, bulletIcon);
+    }
+    if(state.isShapeFilesToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isShapeFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isShapeFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        state.isShapeFilesValid = false;
+        ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
+    }
+    if(state.isGeoSpatialPDFFilesToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isGeoSpatialPDFFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isGeoSpatialPDFFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        state.isGeoSpatialPDFFilesValid = false;
+        ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
+    }
+    if(state.isVTKFilesToggled)
+    {
+        if(state.isSurfaceInputValid)
+        {
+            state.isVTKFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+        }
+        else
+        {
+            state.isVTKFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, xIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Cannot read DEM File");
+        }
+    }
+    else
+    {
+        state.isVTKFilesValid = false;
+        ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
+    }
+
+
+    if(state.isGoogleEarthValid || state.isFireBehaviorValid || state.isShapeFilesValid || state.isGeoSpatialPDFFilesValid || state.isVTKFilesValid)
+    {
+        state.isOutputsValid = true;
+        ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+    }
+    else
+    {
+        ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "No Output Selected");
+    }
+
+    if (state.isSolverMethodologyValid && state.isInputsValid && state.isOutputsValid) {
         ui->solveButton->setEnabled(true);
         ui->numberOfProcessorsSolveButton->setEnabled(true);
         ui->solveButton->setToolTip("");
         ui->numberOfProcessorsSolveButton->setToolTip("");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "");
     } else {
         ui->solveButton->setEnabled(false);
         ui->numberOfProcessorsSolveButton->setEnabled(false);
         ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
         ui->numberOfProcessorsSolveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "There are errors in the inputs or outputs");
     }
 }
 
@@ -220,9 +347,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->treeFileExplorer->expandAll();
 
-    /*
-    * Functionality for the map widget
-    */
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
@@ -252,32 +376,33 @@ MainWindow::MainWindow(QWidget *parent)
     */
     // Top-level items
     ui->inputsStackedWidget->setCurrentIndex(0);
-    ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);  // Solver Methodology (Page 0)
-    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);  // Inputs (Page 5)
-    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12); // Inputs (Page 13)
-
+    ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
     // Sub-items for Solver Methodology
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
     ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);  // Conservation of Mass and Momentum (Page 2)
 
+    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
     // Sub-items for Inputs
     ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 6)
     ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 7)
+
     ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 8)
     ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 9)
-
     // Sub-sub-items for Wind Input
     QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
     windInputItem->child(0)->setData(0, Qt::UserRole, 9);  // Domain Average Wind (Page 9)
     windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
     windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
 
-    connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
+    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
+    // Sub-items for Outputs
+    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);  // Surface Input (Page 6)
+    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);  // Dirunal Input (Page 7)
+    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 15);  // Stability Input (Page 8)
+    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);  // Wind Input (Page 9)
+    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);  // Wind Input (Page 9)
 
-    /*
-    * Downloaded Forecast explorer
-    */
-    populateForecastDownloads();
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
 
     /*
     * Basic initial setup steps
@@ -310,6 +435,22 @@ MainWindow::MainWindow(QWidget *parent)
     ui->domainAverageTable->hideColumn(5);
     ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+    ui->outputWindHeightUnitsComboBox->setItemData(0, "ft");
+    ui->outputWindHeightUnitsComboBox->setItemData(1, "m");
+    ui->meshResolutionUnitsComboBox->setItemData(0, "m");
+    ui->meshResolutionUnitsComboBox->setItemData(1, "ft");
+    ui->googleEarthMeshResolutionComboBox->setItemData(0, "m");
+    ui->googleEarthMeshResolutionComboBox->setItemData(1, "ft");
+    ui->fireBehaviorMeshResolutionComboBox->setItemData(0, "m");
+    ui->fireBehaviorMeshResolutionComboBox->setItemData(1, "ft");
+    ui->shapeFilesMeshResolutionComboBox->setItemData(0, "m");
+    ui->shapeFilesMeshResolutionComboBox->setItemData(1, "ft");
+    ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(0, "m");
+    ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(1, "ft");
+
+    ui->legendComboBox->setItemData(0, "equal_interval");
+    ui->legendComboBox->setItemData(0, "equal_color");
+
     connectSignals();
 }
 
@@ -338,13 +479,24 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxToggled);
+    connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxToggled);
+    connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxToggled);
+    connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesGroupBoxToggled);
+    connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &MainWindow::VTKFilesCheckBoxClicked);
+    connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthMeshResolutionGroupBoxToggled);
+    connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorMeshResolutionGroupBoxToggled);
+    connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesMeshResolutionGroupBoxToggled);
+    connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
+    connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
+    connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
     int pageIndex = item->data(column, Qt::UserRole).toInt();
     if (pageIndex >= 0) {
     if(pageIndex >= 6) {
-        ui->inputsStackedWidget->setCurrentIndex(pageIndex+1);
+        ui->inputsStackedWidget->setCurrentIndex(pageIndex);
     }
     else {
         ui->inputsStackedWidget->setCurrentIndex(pageIndex);
@@ -491,14 +643,18 @@ void MainWindow::useWeatherModelInitClicked()
 
 void MainWindow::outputDirectoryButtonClicked()
 {
-    // QString currentPath = ui->outputDirectoryLineEdit->toPlainText();
-    // QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    // QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+    QString currentPath = ui->outputDirectoryLineEdit->text();
+    QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-    // if (!dirPath.isEmpty()) {
-    //     ui->outputDirectoryLineEdit->setText(dirPath);
-    //     ui->outputDirectoryLineEdit->setToolTip(dirPath);
-    // }
+    if (!dirPath.isEmpty())
+    {
+        ui->outputDirectoryLineEdit->setText(dirPath);
+        ui->outputDirectoryLineEdit->setToolTip(dirPath);
+    } else
+    {
+        ui->outputDirectoryLineEdit->setText(currentPath);
+        ui->outputDirectoryLineEdit->setToolTip(currentPath);
+    }
 }
 
 void MainWindow::numberOfProcessorsSolveButtonClicked()
@@ -604,7 +760,117 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     } else if (item->text(0) == "Surface Input")
     {
         surfaceInput->elevationInputFileOpenButtonClicked();
+    } else if (item->text(0) == "Google Earth")
+    {
+        if(!ui->googleEarthGroupBox->isChecked())
+        {
+            ui->googleEarthGroupBox->setChecked(true);
+        }else
+        {
+            ui->googleEarthGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Surface Input")
+    {
+        surfaceInput->elevationInputFileOpenButtonClicked();
+    } else if (item->text(0) == "Google Earth")
+    {
+        if(!ui->googleEarthGroupBox->isChecked())
+        {
+            ui->googleEarthGroupBox->setChecked(true);
+        }else
+        {
+            ui->googleEarthGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Fire Behavior")
+    {
+        if(!ui->fireBehaviorGroupBox->isChecked())
+        {
+            ui->fireBehaviorGroupBox->setChecked(true);
+        }else
+        {
+            ui->fireBehaviorGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Shape Files")
+    {
+        if(!ui->shapeFilesGroupBox->isChecked())
+        {
+            ui->shapeFilesGroupBox->setChecked(true);
+        }else
+        {
+            ui->shapeFilesGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "Geospatial PDF Files")
+    {
+        if(!ui->geospatialPDFFilesGroupBox->isChecked())
+        {
+            ui->geospatialPDFFilesGroupBox->setChecked(true);
+        }else
+        {
+            ui->geospatialPDFFilesGroupBox->setChecked(false);
+        }
+    } else if (item->text(0) == "VTK Files")
+    {
+        ui->VTKFilesCheckBox->click();
     }
+}
+
+void MainWindow::googleEarthGroupBoxToggled(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isGoogleEarthToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::fireBehaviorGroupBoxToggled(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isFireBehaviorToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::shapeFilesGroupBoxToggled(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isShapeFilesToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::geospatialPDFFilesGroupBoxToggled(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isGeoSpatialPDFFilesToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::VTKFilesCheckBoxClicked(bool checked)
+{
+    AppState& state = AppState::instance();
+    state.isVTKFilesToggled = checked;
+    refreshUI();
+}
+
+void MainWindow::googleEarthMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->googleEarthMeshResolutionSpinBox->setEnabled(!checked);
+    ui->googleEarthMeshResolutionComboBox->setEnabled(!checked);
+}
+
+void MainWindow::fireBehaviorMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->fireBehaviorMeshResolutionSpinBox->setEnabled(!checked);
+    ui->fireBehaviorMeshResolutionComboBox->setEnabled(!checked);
+}
+
+void MainWindow::shapeFilesMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->shapeFilesMeshResolutionSpinBox->setEnabled(!checked);
+    ui->shapeFilesMeshResolutionComboBox->setEnabled(!checked);
+}
+
+void MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->geospatialPDFFilesMeshResolutionSpinBox->setEnabled(!checked);
+    ui->geospatialPDFFilesMeshResolutionComboBox->setEnabled(!checked);
 }
 
 void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
@@ -652,18 +918,6 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetInputWindHeight: err = %d\n", err);
         }
 
-        err = NinjaSetOutputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "ft", papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetOutputWindHeight: err = %d\n", err);
-        }
-
-        err = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->tableSpeedUnits->currentText().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
-        }
-
         err = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
@@ -688,17 +942,214 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetNumVertLayers: err = %d\n", err);
         }
 
-        err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetOutputPath: err = %d\n", err);
-        }
+        setOutputFlags(ninjaArmy, i);
+    }
+}
 
-        err = NinjaSetGoogOutFlag(ninjaArmy, i, true, papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            printf("NinjaSetGoogOutFlag: err = %d\n", err);
-        }
+void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
+{
+    char **papszOptions = nullptr;
+    int err;
+
+    double googleEarthMeshResolution;
+    QByteArray googleEarthMeshResolutionUnits;
+    if (!ui->googleEarthMeshResolutionGroupBox->isChecked())
+    {
+        googleEarthMeshResolution = ui->googleEarthMeshResolutionSpinBox->value();
+        googleEarthMeshResolutionUnits = ui->googleEarthMeshResolutionComboBox
+                                             ->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex())
+                                             .toString().toUtf8();
+    }
+    else
+    {
+        googleEarthMeshResolution = ui->meshResolutionSpinBox->value();
+        googleEarthMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                             ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                             .toString().toUtf8();
+    }
+
+    double fireBehaviorMeshResolution;
+    QByteArray fireBehaviorMeshResolutionUnits;
+    if (!ui->fireBehaviorMeshResolutionGroupBox->isChecked())
+    {
+        fireBehaviorMeshResolution = ui->fireBehaviorMeshResolutionSpinBox->value();
+        fireBehaviorMeshResolutionUnits = ui->fireBehaviorMeshResolutionComboBox
+                                              ->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex())
+                                              .toString().toUtf8();
+    }
+    else
+    {
+        fireBehaviorMeshResolution = ui->meshResolutionSpinBox->value();
+        fireBehaviorMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                              ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                              .toString().toUtf8();
+    }
+
+    double shapeFilesMeshResolution;
+    QByteArray shapeFilesMeshResolutionUnits;
+    if (!ui->shapeFilesMeshResolutionGroupBox->isChecked())
+    {
+        shapeFilesMeshResolution = ui->shapeFilesMeshResolutionSpinBox->value();
+        shapeFilesMeshResolutionUnits = ui->shapeFilesMeshResolutionComboBox
+                                            ->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex())
+                                            .toString().toUtf8();
+    }
+    else
+    {
+        shapeFilesMeshResolution = ui->meshResolutionSpinBox->value();
+        shapeFilesMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                            ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                            .toString().toUtf8();
+    }
+
+    double geospatialPDFFilesMeshResolution;
+    QByteArray geospatialPDFFilesMeshResolutionUnits;
+    if (!ui->geospatialPDFFilesGroupBox->isChecked())
+    {
+        geospatialPDFFilesMeshResolution = ui->geospatialPDFFilesMeshResolutionSpinBox->value();
+        geospatialPDFFilesMeshResolutionUnits = ui->geospatialPDFFilesMeshResolutionComboBox
+                                                    ->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex())
+                                                    .toString().toUtf8();
+    }
+    else
+    {
+        geospatialPDFFilesMeshResolution = ui->meshResolutionSpinBox->value();
+        geospatialPDFFilesMeshResolutionUnits = ui->meshResolutionUnitsComboBox
+                                                    ->itemData(ui->meshResolutionUnitsComboBox->currentIndex())
+                                                    .toString().toUtf8();
+    }
+
+    double PDFHeight, PDFWidth, PDFDpi;
+    switch(ui->sizeDimensionsComboBox->currentIndex())
+    {
+    case 0:
+        PDFHeight = 11.0;
+        PDFWidth = 8.5;
+        PDFDpi = 150;
+        break;
+    case 1:
+        PDFHeight = 14.0;
+        PDFWidth = 8.5;
+        PDFDpi = 150;
+        break;
+    case 2:
+        PDFHeight = 17.0;
+        PDFWidth = 11.0;
+        PDFDpi = 150;
+        break;
+    }
+    if (ui->sizeOrientationComboBox->currentIndex() == 1)
+    {
+        std::swap(PDFHeight, PDFWidth);
+    }
+
+
+    err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputPath: err =" << err;
+    }
+
+    err = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputWindHeight: err =" << err;
+    }
+
+    err = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputSpeedUnits: err =" << err;
+    }
+
+    err = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogOutFlag: err =" << err;
+    }
+
+    err = NinjaSetGoogResolution(ninjaArmy, i, googleEarthMeshResolution, googleEarthMeshResolutionUnits.constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogResolution: err =" << err;
+    }
+
+    err = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogSpeedScaling: err =" << err;
+    }
+
+    err = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogLineWidth: err =" << err;
+    }
+
+    err = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiOutFlag: err =" << err;
+    }
+
+    err = NinjaSetAsciiResolution(ninjaArmy, i, fireBehaviorMeshResolution, fireBehaviorMeshResolutionUnits.constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiResolution: err =" << err;
+    }
+
+    err = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetShpOutFlag: err =" << err;
+    }
+
+    err = NinjaSetShpResolution(ninjaArmy, i, shapeFilesMeshResolution, shapeFilesMeshResolutionUnits.constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetShpResolution: err =" << err;
+    }
+
+    err = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFOutFlag: err =" << err;
+    }
+
+    err = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFLineWidth: err =" << err;
+    }
+
+    err = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFBaseMap: err =" << err;
+    }
+
+    err = NinjaSetPDFDEM(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFDEM: err =" << err;
+    }
+
+    err = NinjaSetPDFSize(ninjaArmy, i, PDFHeight, PDFWidth, PDFDpi, papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFSize: err =" << err;
+    }
+
+    err = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFFilesMeshResolution, geospatialPDFFilesMeshResolutionUnits.constData(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFResolution: err =" << err;
+    }
+
+    err = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetVtkOutFlag: err =" << err;
     }
 }
 
