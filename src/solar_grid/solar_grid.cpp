@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
         throw std::runtime_error("Time could not be properly set in "
                                  "WindNinjaInputs::set_date_time().");
     }
-    Solar solar(ninjaTime, latitude, longitude, aspect_temp, slope_temp);
+    Solar solar(ninjaTime, latitude, longitude, aspect_temp, slope_temp, elev.getAngleFromNorth());
 
 #ifdef _OPENMP
     omp_set_num_threads(nNumThreads);
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
         for(j = 0; j < elev.get_nCols(); j++)
         {
 
-            solar.set_aspect(asp(i,j));
+            solar.set_aspect(asp(i,j), elev.getAngleFromNorth());
             solar.set_slope(slp(i,j));
             solar.call_solPos();
             

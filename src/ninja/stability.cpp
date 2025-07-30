@@ -273,12 +273,12 @@ void Stability::SetDomainAverageAlpha(WindNinjaInputs &input,
     double aspect_temp = 0;	//just placeholder, basically
 	double slope_temp = 0;	//just placeholder, basically
 	    
-    Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
+    Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp, input.dem.getAngleFromNorth());
 	//solar.print_allSolarPosData();
 	Aspect aspect(&input.dem, input.numberCPUs);
 	Slope slope(&input.dem, input.numberCPUs);
 	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
-	cellDiurnal cDiurnal(&input.dem, &shade, &solar, 
+	cellDiurnal cDiurnal(&input.dem, &shade, &solar, input.dem.getAngleFromNorth(),
                     input.downDragCoeff, input.downEntrainmentCoeff,
                     input.upDragCoeff, input.upEntrainmentCoeff);
 	cDiurnal.CloudCover = input.cloudCover;  //set CloudCover in cellDiurnal bfore computing Qsw
@@ -353,12 +353,12 @@ void Stability::SetPointInitializationAlpha(WindNinjaInputs &input,
     double aspect_temp = 0;	//just placeholder, basically
     double slope_temp = 0;	//just placeholder, basically
 	    
-    Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
+    Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp, input.dem.getAngleFromNorth());
     //solar.print_allSolarPosData();
 	Aspect aspect(&input.dem, input.numberCPUs);
     Slope slope(&input.dem, input.numberCPUs);
 	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
-	cellDiurnal cDiurnal(&input.dem, &shade, &solar,
+	cellDiurnal cDiurnal(&input.dem, &shade, &solar, input.dem.getAngleFromNorth(),
                         input.downDragCoeff, input.downEntrainmentCoeff,
                         input.upDragCoeff, input.upEntrainmentCoeff);
 		
@@ -420,12 +420,12 @@ void Stability::Set2dWxInitializationAlpha(WindNinjaInputs &input,
     double aspect_temp = 0;	//just placeholder, basically
     double slope_temp = 0;	//just placeholder, basically
 	    
-    Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
+    Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp, input.dem.getAngleFromNorth());
     //solar.print_allSolarPosData();
 	Aspect aspect(&input.dem, input.numberCPUs);
     Slope slope(&input.dem, input.numberCPUs);
 	Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
-	cellDiurnal cDiurnal(&input.dem, &shade, &solar,
+	cellDiurnal cDiurnal(&input.dem, &shade, &solar, input.dem.getAngleFromNorth(),
                         input.downDragCoeff, input.downEntrainmentCoeff,
                         input.upDragCoeff, input.upEntrainmentCoeff);
 		

@@ -39,6 +39,7 @@
 #endif
 
 #include "ninja_conv.h"
+#include "ninjaMathUtility.h"
 
 class Solar
 {
@@ -48,10 +49,10 @@ public:
 //	Solar(int day_in, int month_in, int year_in,
 //		int second_in, int minute_in, int hour_in,
 //		double latitude_in, double longitude_in,
-//		double timeZone_in, double aspect_in, double slope_in);
+//		double timeZone_in, double aspect_in, double slope_in, double angleFromNorth);
 	Solar(const boost::local_time::local_date_time& time_in,
 		double latitude_in, double longitude_in, 
-		double aspect_in, double slope_in);
+		double aspect_in, double slope_in, double angleFromNorth);
 	Solar(Solar &s);
 	~Solar();
 
@@ -71,7 +72,15 @@ public:
 
 	inline int get_errorCode(){return errorCode;}
 	
-	inline bool set_aspect(double a){aspect = a;return true;}
+    inline bool set_aspect(double a, double angleFromNorth)
+    {
+        // the raw input value is expected to be in projected coordinates, except for the flat terrain case (slope and aspect have a value of 0.0),
+        // in which case the raw input value is still treated as projected coordinates even though it is technically a geographic value,
+        // the code still works despite this value difference because the aspect value is ignored when slope has a value of 0.0
+        aspect = a;
+        aspect = wrap0to360( aspect + angleFromNorth ); //convert FROM projected coordinates TO geographic
+        return true;
+    }
 	inline bool set_latitude(double lat){latitude = lat;return true;}
 	inline bool set_longitude(double lon){longitude = lon;return true;}
 	inline bool set_interval(int i){interval = i;return true;}
@@ -80,11 +89,11 @@ public:
 //	bool compute_solar(int day_in, int month_in, int year_in,
 //		int second_in, int minute_in, int hour_in,
 //		double latitude_in, double longitude_in,
-//		double timeZone_in, double aspect_in, double slope_in);
+//		double timeZone_in, double aspect_in, double slope_in, double angleFromNorth);
 	
 	bool compute_solar(boost::local_time::local_date_time time_in,
 		double latitude_in, double longitude_in, 
-		double aspect_in, double slope_in);
+		double aspect_in, double slope_in, double angleFromNorth);
 
 	bool print_allSolarPosData();
 
@@ -95,7 +104,7 @@ public:
 //	bool call_solPos(int day_in, int month_in, int year_in,
 //		int second_in, int minute_in, int hour_in,
 //		double latitude_in, double longitude_in,
-//		double timeZone_in, double aspect_in, double slope_in);
+//		double timeZone_in, double aspect_in, double slope_in, double angleFromNorth);
 
 	Solar &operator=(Solar &S);
 

@@ -2250,8 +2250,10 @@ vector<double> pointInitialization::Irradiate(vector<string> solar_radiation, st
         double zero=0.000000;
         double one=1.0000000;
 
-
-        solar_opt=sol.compute_solar(startLocal,lat,lon,zero,zero);
+        // a conundrum, the dem has not been read in yet, and the angleFromNorth has not yet been calculated
+        // however, this use case of solar is assuming flat terrain, the angleFromNorth value would be ignored anyways
+        // so just feed in a 0.0 value for angleFromNorth (NOT RECOMMENDED FOR OTHER USE CASES, THIS IS AN EXTREMELY ONE OFF CASE)
+        solar_opt=sol.compute_solar(startLocal,lat,lon,zero,zero,zero);
 
         double solar_intensity=sol.get_solarIntensity();
         double solFrac;

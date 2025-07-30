@@ -54,13 +54,17 @@ Solar::Solar()
 
 Solar::Solar(const boost::local_time::local_date_time& time_in,
 		double latitude_in, double longitude_in, 
-		double aspect_in, double slope_in)
+		double aspect_in, double slope_in, double angleFromNorth)
 : solarTime(time_in)
 {
     latitude = latitude_in;
     longitude = longitude_in;
     interval = 0;
+    // the raw input aspect value is expected to be in projected coordinates, except for the flat terrain case (slope and aspect have a value of 0.0),
+    // in which case the raw input value is still treated as projected coordinates even though it is technically a geographic value,
+    // the code still works despite this value difference because the aspect value is ignored when slope has a value of 0.0
     aspect = aspect_in;
+    aspect = wrap0to360( aspect + angleFromNorth ); //convert FROM projected coordinates TO geographic
     slope = slope_in;
     theta = noDataValue;
     phi = noDataValue;
@@ -124,12 +128,16 @@ Solar::~Solar()
 //bool Solar::compute_solar(int day_in, int month_in, int year_in,
 //	int second_in, int minute_in, int hour_in,
 //	double latitude_in, double longitude_in,
-//	double timeZone_in, double aspect_in, double slope_in)
+//	double timeZone_in, double aspect_in, double slope_in, double angleFromNorth)
 //{
 //  latitude = latitude_in;
 //  longitude = longitude_in;
 //  interval = 0;
+//  // the raw input aspect value is expected to be in projected coordinates, except for the flat terrain case (slope and aspect have a value of 0.0),
+//  // in which case the raw input value is still treated as projected coordinates even though it is technically a geographic value,
+//  // the code still works despite this value difference because the aspect value is ignored when slope has a value of 0.0
 //  aspect = aspect_in;
+//  aspect = wrap0to360( aspect + angleFromNorth ); //convert FROM projected coordinates TO geographic
 //  slope = slope_in;
 //  theta = noDataValue;
 //  phi = noDataValue;
@@ -168,12 +176,16 @@ Solar::~Solar()
 	
 bool Solar::compute_solar(boost::local_time::local_date_time time_in,
 	double latitude_in, double longitude_in, 
-	double aspect_in, double slope_in)
+	double aspect_in, double slope_in, double angleFromNorth)
 {
     latitude = latitude_in;
     longitude = longitude_in;
     interval = 0;
+    // the raw input aspect value is expected to be in projected coordinates, except for the flat terrain case (slope and aspect have a value of 0.0),
+    // in which case the raw input value is still treated as projected coordinates even though it is technically a geographic value,
+    // the code still works despite this value difference because the aspect value is ignored when slope has a value of 0.0
     aspect = aspect_in;
+    aspect = wrap0to360( aspect + angleFromNorth ); //convert FROM projected coordinates TO geographic
     slope = slope_in;
     theta = noDataValue;
     phi = noDataValue;
