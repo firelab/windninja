@@ -203,10 +203,16 @@ bool Solar::call_solPos()
 
 	solarPosData->function = (S_ALL & ~S_DOY);
 	errorCode = S_solpos(solarPosData);
+    if( errorCode != 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Solar::call_solPos() call failed with error %d!", errorCode );
+        return false;
+    }
+
 	theta = solarPosData->azim;
 	phi = solarPosData->elevref;
 	solarIntensity = solarPosData->etrtilt;
-	
+
 	return true;
 }
 
@@ -267,6 +273,14 @@ Solar &Solar::operator=(Solar &S)
 		longitude = S.longitude;
 		slope = S.slope;
 		solarIntensity = S.solarIntensity;
+
+        second = S.second;
+        minute = S.minute;
+        hour = S.hour;
+        day = S.day;
+        month = S.month;
+        year = S.year;
+        offset = S.offset;
 
           if(solarPosData)
                delete solarPosData;
