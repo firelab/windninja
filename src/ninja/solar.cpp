@@ -31,24 +31,24 @@
 Solar::Solar()
 : solarTime(boost::local_time::not_a_date_time)
 {
-	aspect = noDataValue;
-	theta = noDataValue;
-	phi = noDataValue;
-	interval = noDataValue;
-	latitude = noDataValue;
-	longitude = noDataValue;
-	slope = noDataValue;
-	solarIntensity = noDataValue;
-        second = -1;
-        minute = -1;
-        hour = -1;
-        day = -1;
-        month = -1;
-        year = -1;
-        offset = -1.0;
+    latitude = noDataValue;
+    longitude = noDataValue;
+    interval = noDataValue;
+    aspect = noDataValue;
+    slope = noDataValue;
+    theta = noDataValue;
+    phi = noDataValue;
+    solarIntensity = noDataValue;
+    year = -1;
+    month = -1;
+    day = -1;
+    hour = -1;
+    minute = -1;
+    second = -1;
+    offset = -1.0;
 
 	solarPosData = new posdata;
-        
+
 	S_init(solarPosData);
 }
 
@@ -57,29 +57,30 @@ Solar::Solar(const boost::local_time::local_date_time& time_in,
 		double aspect_in, double slope_in)
 : solarTime(time_in)
 {
-	aspect = aspect_in;
-	theta = noDataValue;
-	phi = noDataValue;
-	interval = 0;
-	latitude = latitude_in;
-	longitude = longitude_in;
-	slope = slope_in;
-	solarIntensity = noDataValue;
+    latitude = latitude_in;
+    longitude = longitude_in;
+    interval = 0;
+    aspect = aspect_in;
+    slope = slope_in;
+    theta = noDataValue;
+    phi = noDataValue;
+    solarIntensity = noDataValue;
 
-	solarPosData = new posdata;
+    year = solarTime.local_time().date().year();
+    month = solarTime.local_time().date().month();
+    day = solarTime.local_time().date().day();
+    hour = solarTime.local_time().time_of_day().hours();
+    minute = solarTime.local_time().time_of_day().minutes();
+    second = solarTime.local_time().time_of_day().seconds();
 
-	second = solarTime.local_time().time_of_day().seconds();
-	minute = solarTime.local_time().time_of_day().minutes();
-	hour = solarTime.local_time().time_of_day().hours();
-	day = solarTime.local_time().date().day();
-	month = solarTime.local_time().date().month();
-	year = solarTime.local_time().date().year();
-        //Compute offset from UTC, including if in daylight savings or not
-        boost::posix_time::ptime UTC_time(solarTime.utc_time());
-        boost::posix_time::ptime Local_time(solarTime.local_time());
+    //Compute offset from UTC, including if in daylight savings or not
+    boost::posix_time::ptime UTC_time(solarTime.utc_time());
+    boost::posix_time::ptime Local_time(solarTime.local_time());
 
-	//Get offset from UTC in decimal hours
-	offset = ((double) (Local_time - UTC_time).total_seconds())/3600.0;
+    //Get offset from UTC in decimal hours
+    offset = ((double) (Local_time - UTC_time).total_seconds())/3600.0;
+
+    solarPosData = new posdata;
 
 	set_allSolarPosData();
 
@@ -89,26 +90,28 @@ Solar::Solar(const boost::local_time::local_date_time& time_in,
 Solar::Solar(Solar &s)
 : solarTime(s.solarTime)
 {
-	aspect = s.aspect;
-	theta = s.theta;
-	phi = s.phi;
-	interval = s.interval;
-	latitude = s.latitude;
-	longitude = s.longitude;
-	slope = s.slope;
-	solarIntensity = s.solarIntensity;
+    latitude = s.latitude;
+    longitude = s.longitude;
+    interval = s.interval;
+    aspect = s.aspect;
+    slope = s.slope;
+    theta = s.theta;
+    phi = s.phi;
+    solarIntensity = s.solarIntensity;
 
-	solarPosData = new posdata;
+    year = s.year;
+    month = s.month;
+    day = s.day;
+    hour = s.hour;
+    minute = s.minute;
+    second = s.second;
+    offset = s.offset;
 
-	second = s.second;
-	minute = s.minute;
-	hour = s.hour;
-	day = s.day;
-	month = s.month;
-	year = s.year;
-        offset = s.offset;
+    solarPosData = new posdata;
 
-	set_allSolarPosData();
+    set_allSolarPosData();
+
+    call_solPos();
 }
 
 
@@ -123,14 +126,14 @@ Solar::~Solar()
 //	double latitude_in, double longitude_in,
 //	double timeZone_in, double aspect_in, double slope_in)
 //{
-//	aspect = aspect_in;
-//	theta = noDataValue;
-//	phi = noDataValue;
-//	interval = 0;
-//	latitude = latitude_in;
-//	longitude = longitude_in;
-//	slope = slope_in;
-//	solarIntensity = noDataValue;
+//  latitude = latitude_in;
+//  longitude = longitude_in;
+//  interval = 0;
+//  aspect = aspect_in;
+//  slope = slope_in;
+//  theta = noDataValue;
+//  phi = noDataValue;
+//  solarIntensity = noDataValue;
 //  
 //  //note that this time constructor expects input times in UTC, not local time
 //  solarTime = boost::local_time::local_date_time( boost::gregorian::date(year_in, month_in, day_in),
@@ -138,12 +141,12 @@ Solar::~Solar()
 //                                                  timeZone_in,  // <-- um, this usually is NOT a double, is a pointer constructed from a string
 //                                                  boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
 //  
-//  second = second_in;
-//  minute = minute_in;
-//  hour = hour_in;
-//  day = day_in;
-//  month = month_in;
 //  year = year_in;
+//  month = month_in;
+//  day = day_in;
+//  hour = hour_in;
+//  minute = minute_in;
+//  second = second_in;
 //  
 //  //Compute offset from UTC, including if in daylight savings or not
 //  boost::posix_time::ptime UTC_time(solarTime.utc_time());
@@ -167,26 +170,23 @@ bool Solar::compute_solar(boost::local_time::local_date_time time_in,
 	double latitude_in, double longitude_in, 
 	double aspect_in, double slope_in)
 {
-	aspect = aspect_in;
-	theta = noDataValue;
-	solarTime = time_in;
-	phi = noDataValue;
-	interval = 0;
-	latitude = latitude_in;
-	longitude = longitude_in;
-	slope = slope_in;
-	solarIntensity = noDataValue;
+    latitude = latitude_in;
+    longitude = longitude_in;
+    interval = 0;
+    aspect = aspect_in;
+    slope = slope_in;
+    theta = noDataValue;
+    phi = noDataValue;
+    solarIntensity = noDataValue;
 
-	if(solarPosData)
-		delete solarPosData;
-	solarPosData = new posdata;
+    solarTime = time_in;
 
-    second = solarTime.local_time().time_of_day().seconds();
-    minute = solarTime.local_time().time_of_day().minutes();
-    hour = solarTime.local_time().time_of_day().hours();
-    day = solarTime.local_time().date().day();
-    month = solarTime.local_time().date().month();
     year = solarTime.local_time().date().year();
+    month = solarTime.local_time().date().month();
+    day = solarTime.local_time().date().day();
+    hour = solarTime.local_time().time_of_day().hours();
+    minute = solarTime.local_time().time_of_day().minutes();
+    second = solarTime.local_time().time_of_day().seconds();
 
     //Compute offset from UTC, including if in daylight savings or not
     boost::posix_time::ptime UTC_time(solarTime.utc_time());
@@ -194,6 +194,10 @@ bool Solar::compute_solar(boost::local_time::local_date_time time_in,
 
     //Get offset from UTC in decimal hours
     offset = ((double) (Local_time - UTC_time).total_seconds())/3600.0;
+
+    if(solarPosData)
+        delete solarPosData;
+    solarPosData = new posdata;
 
 	set_allSolarPosData();
 
@@ -252,17 +256,17 @@ bool Solar::print_allSolarPosData()
 	if(offset.is_negative())
 		offset = offset.invert_sign();
 
-	std::cout << "Solar class data:" << std::endl
-		<< "aspect = " << aspect << std::endl
-		<< "theta = " << theta << std::endl
-		<< "solarTime = " << solarTime.local_time() << std::endl
-		<< "phi = " << phi << std::endl
-		<< "interval = " << interval << std::endl
-		<< "latitude = " << latitude << std::endl
-		<< "longitude = " << longitude << std::endl
-		<< "slope = " << slope << std::endl
-		<< "timeZone = " << offset.hours() << std::endl
-		<< std::endl << "solarIntensity = " << solarIntensity;
+    std::cout << "Solar class data:" << std::endl
+        << "latitude = " << latitude << std::endl
+        << "longitude = " << longitude << std::endl
+        << "interval = " << interval << std::endl
+        << "aspect = " << aspect << std::endl
+        << "slope = " << slope << std::endl
+        << "theta = " << theta << std::endl
+        << "phi = " << phi << std::endl
+        << "solarTime = " << solarTime.local_time() << std::endl
+        << "timeZone = " << offset.hours() << std::endl
+        << std::endl << "solarIntensity = " << solarIntensity;
 
 	std::cout << std::endl << std::endl;
 
@@ -290,29 +294,32 @@ Solar &Solar::operator=(Solar &S)
 {
 	if(&S != this)
 	{
-		aspect = S.aspect;
-		theta = S.theta;
-		phi = S.phi;
-		solarTime = S.solarTime;
-		interval = S.interval;
-		latitude = S.latitude;
-		longitude = S.longitude;
-		slope = S.slope;
-		solarIntensity = S.solarIntensity;
+        latitude = S.latitude;
+        longitude = S.longitude;
+        interval = S.interval;
+        aspect = S.aspect;
+        slope = S.slope;
+        theta = S.theta;
+        phi = S.phi;
+        solarIntensity = S.solarIntensity;
 
-        second = S.second;
-        minute = S.minute;
-        hour = S.hour;
-        day = S.day;
-        month = S.month;
+        solarTime = S.solarTime;
+
         year = S.year;
+        month = S.month;
+        day = S.day;
+        hour = S.hour;
+        minute = S.minute;
+        second = S.second;
         offset = S.offset;
 
-          if(solarPosData)
-               delete solarPosData;
-		solarPosData = new posdata;
+        if(solarPosData)
+            delete solarPosData;
+        solarPosData = new posdata;
 
-		set_allSolarPosData();
+        set_allSolarPosData();
+
+        call_solPos();
 	}
 	return *this;
 }

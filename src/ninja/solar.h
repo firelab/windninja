@@ -103,23 +103,23 @@ private:
 	
 	int errorCode;
 
-	double aspect;
-	double theta;
-	double phi;
-	double slope;	//tilt
-	double latitude;
-	double longitude;
-	int interval;
-	double solarIntensity;
-        int second;
-        int minute;
-        int hour;
-        int day;
-        int month;
-        int year;
-        double offset; //offset from UTC
+    double latitude;
+    double longitude;
+    int interval;
+    double aspect;
+    double slope;   //tilt
+    double theta;
+    double phi;
+    double solarIntensity;
 
-	
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+    double offset;  //offset from UTC
+
     posdata* solarPosData;
     friend class pointInitialization;
     friend class Stability;
