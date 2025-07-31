@@ -2786,7 +2786,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
     // fill the u,v grids, for uv output in dem projection coordinates, or for warping to geographic coordinates
     // always warp u,v NOT angGrid, to avoid angle interpolation issues with gdal
-    if(input.ascii4326OutFlag == true || input.asciiUvOutFlag == true)
+    if(input.asciiGeogOutFlag == true || input.asciiUvOutFlag == true)
     {
         uGrid.set_headerData(angGrid);
         vGrid.set_headerData(angGrid);
@@ -2801,7 +2801,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
     // warp the u,v grids to geographic coordinates, calculate geographic spd,dir grids from warped u,v grids
     // adjusting u,v and spd,dir grids by the corresponding coordinateTransformAngle
-    if(input.ascii4326OutFlag == true)
+    if(input.asciiGeogOutFlag == true)
     {
         GDALDatasetH uGrid_hDS = uGrid.ascii2GDAL();
         GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
@@ -2840,11 +2840,11 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
         // attempt to crop NO_DATA off the warped datasets before continuing on, if required
         int asciiOutputNoDataCropThreshold = 0;
-        std::string found_asciiOutputNoDataCropThreshold_str = CPLGetConfigOption("ASCII_OUTPUT_4326_NO_DATA_CROP_THRESHOLD", "");
+        std::string found_asciiOutputNoDataCropThreshold_str = CPLGetConfigOption("ASCII_OUTPUT_GEOG_NO_DATA_CROP_THRESHOLD", "");
         if( found_asciiOutputNoDataCropThreshold_str != "" )
         {
             asciiOutputNoDataCropThreshold = atoi(found_asciiOutputNoDataCropThreshold_str.c_str());
-            std::cout << "set ASCII_OUTPUT_4326_NO_DATA_CROP_THRESHOLD to " << asciiOutputNoDataCropThreshold << std::endl;
+            std::cout << "set ASCII_OUTPUT_GEOG_NO_DATA_CROP_THRESHOLD to " << asciiOutputNoDataCropThreshold << std::endl;
         }
         if( asciiOutputNoDataCropThreshold > 0 )
         {
@@ -2897,7 +2897,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     }
 
     if (input.asciiAaigridOutFlag) {
-        if (input.asciiUtmOutFlag) {
+        if (input.asciiProjOutFlag) {
             cldGrid.write_Grid( input.cldFile.c_str(), 1);
             angGrid.write_Grid( input.angFile.c_str(), 0);
             velGrid.write_Grid( input.velFile.c_str(), 2);
@@ -2906,7 +2906,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
                 vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
             }
         }
-        if (input.ascii4326OutFlag){
+        if (input.asciiGeogOutFlag){
             cldGrid_latlon.write_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
             angGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
             velGrid_latlon.write_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
@@ -2918,7 +2918,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     }
 
     if (input.asciiJsonOutFlag) {
-        if (input.asciiUtmOutFlag) {
+        if (input.asciiProjOutFlag) {
             cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
             angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
             velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
@@ -2927,7 +2927,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
                 vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
             }
         }
-        if (input.ascii4326OutFlag){
+        if (input.asciiGeogOutFlag){
             cldGrid_latlon.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
             angGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
             velGrid_latlon.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);

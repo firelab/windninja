@@ -336,8 +336,8 @@ public:
     void set_asciiOutFlag(bool flag);
     inline void set_asciiAaigridOutFlag(bool flag) { input.asciiAaigridOutFlag = flag; }
     inline void set_asciiJsonOutFlag(bool flag) { input.asciiJsonOutFlag = flag; }
-    inline void set_asciiUtmOutFlag(bool flag) { input.asciiUtmOutFlag = flag; }
-    inline void set_ascii4326OutFlag(bool flag) { input.ascii4326OutFlag = flag; }
+    inline void set_asciiProjOutFlag(bool flag) { input.asciiProjOutFlag = flag; }
+    inline void set_asciiGeogOutFlag(bool flag) { input.asciiGeogOutFlag = flag; }
     inline void set_asciiUvOutFlag(bool flag) { input.asciiUvOutFlag = flag; }
 
     void set_wxModelAsciiOutFlag(bool flag);

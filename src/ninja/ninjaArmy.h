@@ -1135,7 +1135,7 @@ public:
     int setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
-    * \brief Enable/disable AAIGRID (*.asc) output for a ninja
+    * \brief Enable/disable standard AAIGRID (*.asc) output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   enable if true, disable if false
@@ -1153,22 +1153,22 @@ public:
     int setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
-    * \brief Enable/disable output in UTM projection for a ninja
+    * \brief Enable/disable output in dem projection coordinates for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   enable if true, disable if false
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setAsciiUtmOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    int setAsciiProjOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
-    * \brief Enable/disable output in EPSG:4326 projection for a ninja
+    * \brief Enable/disable output in geographic coordinates (EPSG:4326) for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   enable if true, disable if false
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    int setAsciiGeogOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
     * \brief Enable/disable output of u,v wind fields for a ninja

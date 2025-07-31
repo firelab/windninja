@@ -190,11 +190,11 @@ public:
     double wxModelGoogLineWidth;		//drawing line width for google output vectors
     bool shpOutFlag;			//flag specifying if a shapefile (*.shp, *.shx, *.dbf) should be written
     
-    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc, *_cld.asc) should be 
-    bool asciiAaigridOutFlag;   // write ascii output in AAIGRID (*.asc) format
+    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc, *_cld.asc) should be written
+    bool asciiAaigridOutFlag;   // write ascii output in standard AAIGRID (*.asc) format
     bool asciiJsonOutFlag;      // write ascii output in JSON (*.json) format
-    bool asciiUtmOutFlag;       // write ascii output as UTM (northing,easting) grids
-    bool ascii4326OutFlag;      // write ascii output as EPSG:4326 (lat,lon) grids
+    bool asciiProjOutFlag;       // write ascii files using dem projection coordinates (standard output), this is UTM (northing,easting) grids for WindNinja downloaded dems
+    bool asciiGeogOutFlag;      // write ascii files using geographic coordinates, EPSG:4326 (lat,lon) grids
     bool asciiUvOutFlag;        // write ascii output as u,v wind vector data
     
     bool txtOutFlag;			//flag specifying if a text file (*.txt) comparing measured to simulated data at specified points should be written (filenames here are hard-coded into the write_compare_output() function in ninja.cpp)

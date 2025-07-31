@@ -78,8 +78,8 @@ WindNinjaInputs::WindNinjaInputs()
     asciiOutFlag = false;
     asciiAaigridOutFlag = false;
     asciiJsonOutFlag = false;
-    ascii4326OutFlag = false;
-    asciiUtmOutFlag = false;
+    asciiProjOutFlag = false;
+    asciiGeogOutFlag = false;
     asciiUvOutFlag = false;
     
     wxModelShpOutFlag = false;
@@ -310,8 +310,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       asciiOutFlag = rhs.asciiOutFlag;
       asciiAaigridOutFlag = rhs.asciiAaigridOutFlag;
       asciiJsonOutFlag = rhs.asciiJsonOutFlag;
-      asciiUtmOutFlag = rhs.asciiUtmOutFlag;
-      ascii4326OutFlag = rhs.ascii4326OutFlag;
+      asciiProjOutFlag = rhs.asciiProjOutFlag;
+      asciiGeogOutFlag = rhs.asciiGeogOutFlag;
       asciiUvOutFlag = rhs.asciiUvOutFlag;
       
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
