@@ -4923,6 +4923,26 @@ void ninja::set_asciiOutFlag(bool flag)
 {
     input.asciiOutFlag = flag;
 }
+void ninja::set_asciiAaigridOutFlag(bool flag)
+{
+    input.asciiAaigridOutFlag = flag;
+}
+void ninja::set_asciiJsonOutFlag(bool flag)
+{
+    input.asciiJsonOutFlag = flag;
+}
+void ninja::set_asciiProjOutFlag(bool flag)
+{
+    input.asciiProjOutFlag = flag;
+}
+void ninja::set_asciiGeogOutFlag(bool flag)
+{
+    input.asciiGeogOutFlag = flag;
+}
+void ninja::set_asciiUvOutFlag(bool flag)
+{
+    input.asciiUvOutFlag = flag;
+}
 
 void ninja::set_wxModelAsciiOutFlag(bool flag)
 {

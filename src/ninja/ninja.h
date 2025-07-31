@@ -334,11 +334,11 @@ public:
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
 
     void set_asciiOutFlag(bool flag);
-    inline void set_asciiAaigridOutFlag(bool flag) { input.asciiAaigridOutFlag = flag; }
-    inline void set_asciiJsonOutFlag(bool flag) { input.asciiJsonOutFlag = flag; }
-    inline void set_asciiProjOutFlag(bool flag) { input.asciiProjOutFlag = flag; }
-    inline void set_asciiGeogOutFlag(bool flag) { input.asciiGeogOutFlag = flag; }
-    inline void set_asciiUvOutFlag(bool flag) { input.asciiUvOutFlag = flag; }
+    void set_asciiAaigridOutFlag(bool flag);
+    void set_asciiJsonOutFlag(bool flag);
+    void set_asciiProjOutFlag(bool flag);
+    void set_asciiGeogOutFlag(bool flag);
+    void set_asciiUvOutFlag(bool flag);
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
