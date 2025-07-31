@@ -3300,9 +3300,7 @@ void NinjaFoam::WriteOutputFiles()
                             velTempGrid->BufferToOverlapGrid(demGrid);
                         }
 
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+			ninja::writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
 
 			if(angTempGrid)
 			{

@@ -369,6 +369,7 @@ protected:
     void checkCancel();
     void write_compare_output();
     boost::shared_ptr<initialize> init;
+    void writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 
 private:
 
@@ -485,8 +486,6 @@ private:
     void writeOutputFiles(); 
     void deleteDynamicMemory();
 
-private:
-    void writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 };
 
 std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement);
