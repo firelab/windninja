@@ -76,10 +76,10 @@ WindNinjaInputs::WindNinjaInputs()
     shpOutFlag = false;
     
     asciiOutFlag = false;
-    asciiAaigridOutFlag = true;
+    asciiAaigridOutFlag = false;
     asciiJsonOutFlag = false;
     ascii4326OutFlag = false;
-    asciiUtmOutFlag = true;
+    asciiUtmOutFlag = false;
     asciiUvOutFlag = false;
     
     wxModelShpOutFlag = false;

@@ -1830,15 +1830,47 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setShpResolution( i_, vm["shape_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_shape_out_resolution"].as<std::string>()));
             }
-            // those are all AAIGRID variants (in different projections and text formats)
-            if(option_val<bool>(vm,"write_ascii_output"))
+            option_dependency(vm, "ascii_out_aaigrid", "write_ascii_output");
+            option_dependency(vm, "ascii_out_json", "write_ascii_output");
+            option_dependency(vm, "ascii_out_4326", "write_ascii_output");
+            option_dependency(vm, "ascii_out_utm", "write_ascii_output");
+            option_dependency(vm, "ascii_out_uv", "write_ascii_output");
+            if(vm["write_ascii_output"].as<bool>())
             {
                 windsim.setAsciiOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_aaigrid")) windsim.setAsciiAaigridOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_json")) windsim.setAsciiJsonOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_4326")) windsim.setAscii4326OutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_utm")) windsim.setAsciiUtmOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_uv")) windsim.setAsciiUvOutFlag( i_, true );
+
+                // those are all AAIGRID variants (in different projections and text formats)
+                if(vm["ascii_out_aaigrid"].as<bool>())
+                {
+                    windsim.setAsciiAaigridOutFlag( i_, true );
+                }
+                if(vm["ascii_out_json"].as<bool>())
+                {
+                    windsim.setAsciiJsonOutFlag( i_, true );
+                }
+                if(vm["ascii_out_4326"].as<bool>())
+                {
+                    windsim.setAscii4326OutFlag( i_, true );
+                }
+                if(vm["ascii_out_utm"].as<bool>())
+                {
+                    windsim.setAsciiUtmOutFlag( i_, true );
+                }
+                if(vm["ascii_out_uv"].as<bool>())
+                {
+                    windsim.setAsciiUvOutFlag( i_, true );
+                }
+
+                if(vm["ascii_out_aaigrid"].as<bool>() == false && vm["ascii_out_json"].as<bool>() == false)
+                {
+                    cout << "both 'ascii_out_aaigrid' and 'ascii_out_json' set to 'false', setting 'ascii_out_aaigrid' to 'true'" << std::endl;
+                    windsim.setAsciiAaigridOutFlag( i_, true );
+                }
+                if(vm["ascii_out_utm"].as<bool>() == false && vm["ascii_out_4326"].as<bool>() == false)
+                {
+                    cout << "both 'ascii_out_utm' and 'ascii_out_4326' set to 'false', setting 'ascii_out_utm' to 'true'" << std::endl;
+                    windsim.setAsciiUtmOutFlag( i_, true );
+                }
 
                 option_dependency(vm, "ascii_out_resolution", "units_ascii_out_resolution");
                 windsim.setAsciiResolution( i_, vm["ascii_out_resolution"].as<double>(),
