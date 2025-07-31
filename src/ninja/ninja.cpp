@@ -2960,10 +2960,10 @@ void ninja::writeOutputFiles()
 	if(input.volVTKOutFlag)
 	{
 		try{
-            bool vtk_out_as_utm = false;
-		    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+            bool vtk_out_as_ninja_mesh_coordinates = false;
+		    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE")))
             {
-                vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
+                vtk_out_as_ninja_mesh_coordinates = CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE");
             }
             // can pick between "ascii" and "binary" format for the vtk write format
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
@@ -2972,7 +2972,7 @@ void ninja::writeOutputFiles()
             {
                 vtkWriteFormat = found_vtkWriteFormat;
             }
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
+			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_ninja_mesh_coordinates);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());

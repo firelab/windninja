@@ -1706,16 +1706,16 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     if(pos != -1)
 	    base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
     //std::cout << "base_outFilename = " << base_outFilename.c_str() << std::endl;
-    std::string tiff_utm_fileout = base_outFilename + "_utm.tif";
-    std::string tiff_latlon_fileout = base_outFilename + "_latlon.tif";
-    std::string rawTiff_utm_fileout = base_outFilename + "_raw_utm.tif";
-    std::string rawTiff_latlon_fileout = base_outFilename + ".tif";
+    std::string tiff_fileout_proj = base_outFilename + "_proj.tif";
+    std::string tiff_fileout_geog = base_outFilename + "_geog.tif";
+    std::string rawTiff_fileout_proj = base_outFilename + "_raw_proj.tif";
+    std::string rawTiff_fileout_geog = base_outFilename + ".tif";
 
     GDALDataset *poDS;
     GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
     char** papszOptions = NULL;
 
-    poDS = tiffDriver->Create(tiff_utm_fileout.c_str(), get_nCols(), get_nRows(), 1,
+    poDS = tiffDriver->Create(tiff_fileout_proj.c_str(), get_nCols(), get_nRows(), 1,
                    GDT_Byte, papszOptions);
 
     double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
@@ -2089,7 +2089,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALDataset *poDstDS_tiff;
     
     CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF dirver data type error
-    poDstDS_tiff = tiffDriver->CreateCopy(tiff_latlon_fileout.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
+    poDstDS_tiff = tiffDriver->CreateCopy(tiff_fileout_geog.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
     CPLPopErrorHandler();
     
     /* -------------------------------------------------------------------- */
@@ -2137,8 +2137,8 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     }
     GDALClose((GDALDatasetH) wrpDS);
 
-    VSIUnlink(tiff_utm_fileout.c_str());
-    VSIUnlink(tiff_latlon_fileout.c_str());
+    VSIUnlink(tiff_fileout_proj.c_str());
+    VSIUnlink(tiff_fileout_geog.c_str());
 
 
     /* -------------------------------------------------------------------- */
@@ -2149,7 +2149,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALDriver *raw_tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
     char** raw_papszOptions = NULL;
 
-    raw_poDS = tiffDriver->Create(rawTiff_utm_fileout.c_str(), get_nCols(), get_nRows(), 1,
+    raw_poDS = tiffDriver->Create(rawTiff_fileout_proj.c_str(), get_nCols(), get_nRows(), 1,
                                     GDT_Float64, papszOptions);
 
     double raw_adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
@@ -2203,7 +2203,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALDataset *poDstDS_rawTiff;
 
     CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF driver data type error
-    poDstDS_rawTiff = raw_tiffDriver->CreateCopy(rawTiff_latlon_fileout.c_str(), raw_wrpDS, FALSE, NULL, NULL, NULL);
+    poDstDS_rawTiff = raw_tiffDriver->CreateCopy(rawTiff_fileout_geog.c_str(), raw_wrpDS, FALSE, NULL, NULL, NULL);
     CPLPopErrorHandler();
 
     /* -------------------------------------------------------------------- */
@@ -2221,9 +2221,9 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     }
     GDALClose((GDALDatasetH) raw_wrpDS);
 
-    VSIUnlink(rawTiff_utm_fileout.c_str());
+    VSIUnlink(rawTiff_fileout_proj.c_str());
     if( keepTiff == false )
-        VSIUnlink(rawTiff_latlon_fileout.c_str());
+        VSIUnlink(rawTiff_fileout_geog.c_str());
 
 }
 
