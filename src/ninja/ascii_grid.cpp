@@ -1661,7 +1661,7 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
     
     GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
     
-    GDALSetRasterNoDataValue(hBand, -9999.0);
+    GDALSetRasterNoDataValue(hBand, get_noDataValue());
 
     for(int i=nYSize-1; i>=0; i--)
     {
