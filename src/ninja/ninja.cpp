@@ -2878,12 +2878,19 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         {
             for(int j=0; j<uGrid_latlon.get_nCols(); j++)
             {
-                // fill the grids with the raw values before the angle correction
-                wind_uv_to_sd(uGrid_latlon(i,j), vGrid_latlon(i,j), &(velGrid_latlon)(i,j), &(angGrid_latlon)(i,j));
+                if( uGrid_latlon(i,j) == uGrid_latlon.get_NoDataValue() || vGrid_latlon(i,j) == vGrid_latlon.get_NoDataValue() )
+                {
+                    velGrid_latlon(i,j) = velGrid_latlon.get_NoDataValue();
+                    angGrid_latlon(i,j) = angGrid_latlon.get_NoDataValue();
+                } else
+                {
+                    // fill the grids with the raw values before the angle correction
+                    wind_uv_to_sd(uGrid_latlon(i,j), vGrid_latlon(i,j), &(velGrid_latlon)(i,j), &(angGrid_latlon)(i,j));
 
-                angGrid_latlon(i,j) = wrap0to360( angGrid_latlon(i,j) - coordinateTransformationAngle ); //convert FROM dem projection coordinates TO geographic coordinates
-                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                wind_sd_to_uv(velGrid_latlon(i,j), angGrid_latlon(i,j), &(uGrid_latlon)(i,j), &(vGrid_latlon)(i,j));
+                    angGrid_latlon(i,j) = wrap0to360( angGrid_latlon(i,j) - coordinateTransformationAngle ); //convert FROM dem projection coordinates TO geographic coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(velGrid_latlon(i,j), angGrid_latlon(i,j), &(uGrid_latlon)(i,j), &(vGrid_latlon)(i,j));
+                }
             }
         }
 
