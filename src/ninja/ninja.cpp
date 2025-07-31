@@ -2807,24 +2807,14 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
         GDALDatasetH cldGrid_hDS = cldGrid.ascii2GDAL();
 
+        // no need to calculate the coordinateTransformAngle FROM projected TO geographic, already have the angleFromNorth value
+        // still need the pszDstWkt for warping the datasets though
+
         char* pszDstWkt;
         OGRSpatialReferenceH hTargetSRS;
         hTargetSRS = OSRNewSpatialReference(NULL);
         OSRImportFromEPSG(hTargetSRS, 4326);
         OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
-
-        // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
-        // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
-        // in this case, going FROM dem projection coordinates TO geographic coordinates
-        double coordinateTransformationAngle = 0.0;
-        if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
-        {
-            // direct calculation of FROM dem TO geo, already has the appropriate sign
-            if(!GDALCalculateCoordinateTransformationAngle( uGrid_hDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM dem TO geo
-            {
-                printf("Warning: Unable to calculate coordinate transform angle for the output velocity and angle grids to geographic coordinates.");
-            }
-        }
 
         GDALDatasetH uGrid_hVrtDS;
         GDALDatasetH vGrid_hVrtDS;
@@ -2887,7 +2877,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
                     // fill the grids with the raw values before the angle correction
                     wind_uv_to_sd(uGrid_latlon(i,j), vGrid_latlon(i,j), &(velGrid_latlon)(i,j), &(angGrid_latlon)(i,j));
 
-                    angGrid_latlon(i,j) = wrap0to360( angGrid_latlon(i,j) - coordinateTransformationAngle ); //convert FROM dem projection coordinates TO geographic coordinates
+                    angGrid_latlon(i,j) = wrap0to360( angGrid_latlon(i,j) + input.dem.getAngleFromNorth() ); //convert FROM dem projection coordinates TO geographic coordinates
                     // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
                     wind_sd_to_uv(velGrid_latlon(i,j), angGrid_latlon(i,j), &(uGrid_latlon)(i,j), &(vGrid_latlon)(i,j));
                 }

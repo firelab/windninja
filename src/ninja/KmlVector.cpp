@@ -1763,7 +1763,7 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
             // so we need to use a negative value for angleFromNorth rather than a positive value
             // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
             // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
-            geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM geographic TO projected coordinates
+            geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM projected TO geographic coordinates
             theta = dir(i,j) + 180.0;
 
 			if(s <= splitValue[1])
