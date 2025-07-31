@@ -35,6 +35,7 @@
 #include "domainaverageinput.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
+#include "weathermodelinput.h"
 #include "ui_mainwindow.h"
 #include "appstate.h"
 #include "../ninja/windninja.h"
@@ -122,6 +123,7 @@ private:
     MenuBar *menuBar;
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
+    WeatherModelInput *weatherModelInput;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);

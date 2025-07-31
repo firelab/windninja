@@ -163,9 +163,9 @@ void DomainAverageInput::domainAverageCheckBoxClicked()
 
     if (state.isDomainAverageInitializationToggled) {
         ui->pointInitializationCheckBox->setChecked(false);
-        ui->weatherModelCheckBox->setChecked(false);
+        ui->weatherModelGroupBox->setChecked(false);
         state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
     emit requestRefresh();

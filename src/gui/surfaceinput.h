@@ -52,7 +52,7 @@ class MainWindow;
 
 class SurfaceInput : public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 public:
     explicit SurfaceInput(Ui::MainWindow* ui,
                                 QWebEngineView* webView,

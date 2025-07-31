@@ -364,6 +364,7 @@ MainWindow::MainWindow(QWidget *parent)
     surfaceInput = new SurfaceInput(ui, webView, this);
     surfaceInput->timeZoneAllZonesCheckBoxClicked();
     domainAverageInput = new DomainAverageInput(ui, this);
+    weatherModelInput = new WeatherModelInput(ui, this);
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -617,9 +618,9 @@ void MainWindow::pointInitializationCheckBoxClicked()
 
     if (state.isPointInitializationToggled) {
         ui->domainAverageCheckBox->setChecked(false);
-        ui->weatherModelCheckBox->setChecked(false);
+        ui->weatherModelGroupBox->setChecked(false);
         state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
     refreshUI();
@@ -629,7 +630,7 @@ void MainWindow::useWeatherModelInitClicked()
 {
     AppState& state = AppState::instance();
 
-    state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
+    state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
 
     if (state.isWeatherModelInitializationToggled) {
         ui->domainAverageCheckBox->setChecked(false);
@@ -756,7 +757,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->pointInitializationCheckBox->click();
     } else if (item->text(0) == "Weather Model")
     {
-        ui->weatherModelCheckBox->click();
+        //ui->weatherModelGroupBox->click();
     } else if (item->text(0) == "Surface Input")
     {
         surfaceInput->elevationInputFileOpenButtonClicked();
