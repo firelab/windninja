@@ -486,9 +486,7 @@ private:
     void deleteDynamicMemory();
 
 private:
-    void setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid);
-    void writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
-    void writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
+    void writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 };
 
 std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement);

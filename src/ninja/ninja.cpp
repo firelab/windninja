@@ -2774,19 +2774,149 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
-
-void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
 {
+    AsciiGrid<double> uGrid;
+    AsciiGrid<double> vGrid;
+    AsciiGrid<double> uGrid_latlon;
+    AsciiGrid<double> vGrid_latlon;
+    AsciiGrid<double> velGrid_latlon;
+    AsciiGrid<double> angGrid_latlon;
+    AsciiGrid<double> cldGrid_latlon;
+
+    // fill the u,v grids, for uv output in dem projection coordinates, or for warping to geographic coordinates
+    // always warp u,v NOT angGrid, to avoid angle interpolation issues with gdal
+    if(input.ascii4326OutFlag == true || input.asciiUvOutFlag == true)
+    {
+        uGrid.set_headerData(angGrid);
+        vGrid.set_headerData(angGrid);
+        for(int i=0; i<angGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<angGrid.get_nCols(); j++)
+            {
+                wind_sd_to_uv(velGrid(i,j), angGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+            }
+        }
+    }
+
+    // warp the u,v grids to geographic coordinates, calculate geographic spd,dir grids from warped u,v grids
+    // adjusting u,v and spd,dir grids by the corresponding coordinateTransformAngle
+    if(input.ascii4326OutFlag == true)
+    {
+        GDALDatasetH uGrid_hDS = uGrid.ascii2GDAL();
+        GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
+        GDALDatasetH cldGrid_hDS = cldGrid.ascii2GDAL();
+
+        char* pszDstWkt;
+        OGRSpatialReferenceH hTargetSRS;
+        hTargetSRS = OSRNewSpatialReference(NULL);
+        OSRImportFromEPSG(hTargetSRS, 4326);
+        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
+
+        // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+        // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+        // in this case, going FROM dem projection coordinates TO geographic coordinates
+        double coordinateTransformationAngle = 0.0;
+        if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+        {
+            // direct calculation of FROM dem TO geo, already has the appropriate sign
+            if(!GDALCalculateCoordinateTransformationAngle( uGrid_hDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM dem TO geo
+            {
+                printf("Warning: Unable to calculate coordinate transform angle for the output velocity and angle grids to geographic coordinates.");
+            }
+        }
+
+        GDALDatasetH uGrid_hVrtDS;
+        GDALDatasetH vGrid_hVrtDS;
+        GDALDatasetH cldGrid_hVrtDS;
+
+        // warp the u and v grids FROM dem projection coordinates TO geographic coordinates
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( uGrid_hDS, 1, uGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the output velocity and angle grids (uGrid).");
+        }
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( vGrid_hDS, 1, vGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the output velocity and angle grids (vGrid).");
+        }
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( cldGrid_hDS, 1, cldGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the output cloud grid.");
+        }
+
+        GDAL2AsciiGrid( (GDALDataset*)uGrid_hVrtDS, 1, uGrid_latlon );
+        GDAL2AsciiGrid( (GDALDataset*)vGrid_hVrtDS, 1, vGrid_latlon );
+        GDAL2AsciiGrid( (GDALDataset*)cldGrid_hVrtDS, 1, cldGrid_latlon );
+
+        // attempt to crop NO_DATA off the warped datasets before continuing on, if required
+        int asciiOutputNoDataCropThreshold = 0;
+        std::string found_asciiOutputNoDataCropThreshold_str = CPLGetConfigOption("ASCII_OUTPUT_4326_NO_DATA_CROP_THRESHOLD", "");
+        if( found_asciiOutputNoDataCropThreshold_str != "" )
+        {
+            asciiOutputNoDataCropThreshold = atoi(found_asciiOutputNoDataCropThreshold_str.c_str());
+            std::cout << "set ASCII_OUTPUT_4326_NO_DATA_CROP_THRESHOLD to " << asciiOutputNoDataCropThreshold << std::endl;
+        }
+        if( asciiOutputNoDataCropThreshold > 0 )
+        {
+            if(!uGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
+            {
+                std::cerr << "failed to crop the warped output velocity and angle grids (uGrid)." << std::endl;
+            }
+            if(!vGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
+            {
+                std::cerr << "failed to crop the warped output velocity and angle grids (vGrid)." << std::endl;
+            }
+            if(!cldGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
+            {
+                std::cerr << "warning, failed to crop the warped output cloud grid." << std::endl;
+            }
+        }
+
+        velGrid_latlon.set_headerData(uGrid_latlon);
+        angGrid_latlon.set_headerData(uGrid_latlon);
+        for(int i=0; i<uGrid_latlon.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid_latlon.get_nCols(); j++)
+            {
+                // fill the grids with the raw values before the angle correction
+                wind_uv_to_sd(uGrid_latlon(i,j), vGrid_latlon(i,j), &(velGrid_latlon)(i,j), &(angGrid_latlon)(i,j));
+
+                angGrid_latlon(i,j) = wrap0to360( angGrid_latlon(i,j) - coordinateTransformationAngle ); //convert FROM dem projection coordinates TO geographic coordinates
+                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                wind_sd_to_uv(velGrid_latlon(i,j), angGrid_latlon(i,j), &(uGrid_latlon)(i,j), &(vGrid_latlon)(i,j));
+            }
+        }
+
+        // close the gdal datasets
+        GDALClose(cldGrid_hVrtDS);
+        GDALClose(uGrid_hVrtDS);
+        GDALClose(vGrid_hVrtDS);
+        GDALClose(uGrid_hDS);
+        GDALClose(vGrid_hDS);
+
+        // cleanup the spatial references
+        CPLFree(pszDstWkt);
+        OSRDestroySpatialReference(hTargetSRS);
+    }
+
     if (input.asciiAaigridOutFlag) {
         if (input.asciiUtmOutFlag) {
             cldGrid.write_Grid( input.cldFile.c_str(), 1);
             angGrid.write_Grid( input.angFile.c_str(), 0);
             velGrid.write_Grid( input.velFile.c_str(), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
+                vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
+            }
         }
         if (input.ascii4326OutFlag){
-            cldGrid.write_ascii_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
-            angGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
-            velGrid.write_ascii_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+            cldGrid_latlon.write_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
+            angGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
+            velGrid_latlon.write_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
+                vGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
+            }
         }
     }
 
@@ -2795,71 +2925,30 @@ void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>
             cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
             angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
             velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
+                vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
+            }
         }
         if (input.ascii4326OutFlag){
-            cldGrid.write_json_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
-            angGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
-            velGrid.write_json_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
+            cldGrid_latlon.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
+            angGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
+            velGrid_latlon.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
+                vGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
+            }
         }
     }
 
-    if (input.asciiUvOutFlag) {
-        writeAsciiUvOutputFiles( angGrid, velGrid);
-    }
-}
-
-// write u,v wind vector output files
-void ninja::writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
-{
-    AsciiGrid<double> uGrid(angGrid);
-    AsciiGrid<double> vGrid(angGrid);
-    setUvGrids( angGrid, velGrid, uGrid, vGrid);
-
-    if (input.asciiAaigridOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
-            vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            uGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
-            vGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
-        }
-    }
-
-    if (input.asciiJsonOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
-            vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            uGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
-            vGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
-        }
-    }
-}
-
-void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid)
-{
-    int nRows = angGrid.get_nRows();
-    int nCols = angGrid.get_nCols();
-    double pi180 = M_PI / 180;
-
-    for (int m=0; m<nRows; m++){
-        for (int n=0; n<nCols; n++) {
-            double vel = velGrid.get_cellValue(m,n);
-            double ang = angGrid.get_cellValue(m,n);
-
-            double deg = 270.0 - ang;  // uv angle is ccw from W
-            if (deg < 0) deg += 360;
-            double rad = deg * pi180;
-
-            double u = cos(rad) * vel;
-            double v = sin(rad) * vel;
-
-            uGrid.set_cellValue(m,n,u);
-            vGrid.set_cellValue(m,n,v);
-        }
-    }
+    // cleanup the finished use ascii grids
+    cldGrid_latlon.deallocate();
+    velGrid_latlon.deallocate();
+    angGrid_latlon.deallocate();
+    uGrid_latlon.deallocate();
+    vGrid_latlon.deallocate();
+    uGrid.deallocate();
+    vGrid.deallocate();
 }
 
 /**Writes output files.

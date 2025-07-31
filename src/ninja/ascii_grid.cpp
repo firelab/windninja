@@ -2724,58 +2724,6 @@ bool AsciiGrid<T>::operator*=(AsciiGrid<T> &A)
     return true;
 }
 
-//--- these functions convert the grid to EPSG:4326 (lat/lon) before writing
-
-template <class T>
-void AsciiGrid<T>::write_4326_Grid (std::string& filename, int precision, void (AsciiGrid<T>::*write_grid)(std::string,int))
-{
-    GDALDatasetH hSrcDS = ascii2GDAL();
-    if (hSrcDS) {
-        const char *pszSrcWKT = GDALGetProjectionRef( hSrcDS );
-        if (pszSrcWKT && strlen(pszSrcWKT) > 0) {
-            OGRSpatialReference oSRS;
-            oSRS.SetWellKnownGeogCS( "EPSG:4326" );
-
-            char* pszDstWKT = NULL;
-            oSRS.exportToWkt( &pszDstWKT );
-
-            GDALDatasetH hTmpDS = GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, GRA_NearestNeighbour, 1.0, NULL);
-            if (hTmpDS) {
-                AsciiGrid<T> geoAsciiGrid( (GDALDataset*) hTmpDS, 1);
-                
-                if (!geoAsciiGrid.crop_noData( 10)){
-                    cerr << "failed to crop EPSG:4326 grid to defined data\n";
-                }
-                
-
-                (geoAsciiGrid.*(write_grid))( filename, precision);
-
-                GDALClose(hTmpDS);
-
-            } else {
-                cerr << "failed to warp " << filename << "to EPSG:4326 (geo)\n";
-            }
-        }
-
-        GDALClose(hSrcDS);
-
-    } else {
-        cerr << "failed to convert AsciiGrid to GDAL data set\n";
-    }
-}
-
-template <class T>
-void AsciiGrid<T>::write_ascii_4326_Grid (std::string filename, int precision) 
-{
-    write_4326_Grid(filename, precision, &AsciiGrid<T>::write_Grid);
-}
-
-template <class T>
-void AsciiGrid<T>::write_json_4326_Grid (std::string filename, int precision) 
-{
-    write_4326_Grid(filename, precision, &AsciiGrid<T>::write_json_Grid);
-}
-
 template<class T>
 bool AsciiGrid<T>::crop_noData (int noDataThreshold)
 {
