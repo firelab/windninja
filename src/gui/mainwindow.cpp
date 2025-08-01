@@ -805,76 +805,101 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         ui->geospatialPDFFilesMeshResolutionSpinBox,
         ui->geospatialPDFFilesMeshResolutionComboBox);
 
+    OutputPDFSize PDFSize;
+    switch(ui->sizeDimensionsComboBox->currentIndex())
+    {
+    case 0:
+        PDFSize.PDFHeight = 11.0;
+        PDFSize.PDFWidth = 8.5;
+        PDFSize.PDFDpi = 150;
+        break;
+    case 1:
+        PDFSize.PDFHeight = 14.0;
+        PDFSize.PDFWidth = 8.5;
+        PDFSize.PDFDpi = 150;
+        break;
+    case 2:
+        PDFSize.PDFHeight = 17.0;
+        PDFSize.PDFWidth = 11.0;
+        PDFSize.PDFDpi = 150;
+        break;
+    }
+    if (ui->sizeOrientationComboBox->currentIndex() == 1)
+    {
+        std::swap(PDFSize.PDFHeight, PDFSize.PDFWidth);
+    }
+
     char **papszOptions = nullptr;
     int err;
     err = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiAtmFile: err =" << err;
+    }
 
     for(unsigned int i=0; i<numNinjas; i++)
     {
-        /*
-       * Sets Simulation Variables
-       */
         err = NinjaSetCommunication(ninjaArmy, i, "cli", papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetCommunication: err = %d\n", err);
+            qDebug() << "NinjaSetCommunication: err =" << err;
         }
 
         err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetNumberCPUs: err = %d\n", err);
+            qDebug() << "NinjaSetNumberCPUs: err =" << err;
         }
 
         err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetInitializationMethod: err = %d\n", err);
+            qDebug() << "NinjaSetInitializationMethod: err =" << err;
         }
 
         err = NinjaSetDem(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetDem: err = %d\n", err);
+            qDebug() << "NinjaSetDem: err =" << err;
         }
 
         err = NinjaSetPosition(ninjaArmy, i, papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetPosition: err = %d\n", err);
+            qDebug() << "NinjaSetPosition: err =" << err;
         }
 
         err = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetInputWindHeight: err = %d\n", err);
+            qDebug() << "NinjaSetInputWindHeight: err =" << err;
         }
 
         err = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetDiurnalWinds: err = %d\n", err);
+            qDebug() << "NinjaSetDiurnalWinds: err =" << err;
         }
 
         err = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetUniVegetation: err = %d\n", err);
+            qDebug() << "NinjaSetUniVegetation: err =" << err;
         }
 
         err = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+            qDebug() << "NinjaSetMeshResolutionChoice: err =" << err;
         }
 
         err = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
         if(err != NINJA_SUCCESS)
         {
-            printf("NinjaSetNumVertLayers: err = %d\n", err);
+            qDebug() << "NinjaSetNumVertLayers: err =" << err;
         }
 
-        setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs);
+        setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
     }
 }
 
@@ -884,35 +909,11 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
                                 OutputMeshResolution googleEarth,
                                 OutputMeshResolution fireBehavior,
                                 OutputMeshResolution shapeFiles,
-                                OutputMeshResolution geospatialPDFs)
+                                OutputMeshResolution geospatialPDFs,
+                                OutputPDFSize PDFSize)
 {
     char **papszOptions = nullptr;
     int err;
-
-    double PDFHeight, PDFWidth, PDFDpi;
-    switch(ui->sizeDimensionsComboBox->currentIndex())
-    {
-    case 0:
-        PDFHeight = 11.0;
-        PDFWidth = 8.5;
-        PDFDpi = 150;
-        break;
-    case 1:
-        PDFHeight = 14.0;
-        PDFWidth = 8.5;
-        PDFDpi = 150;
-        break;
-    case 2:
-        PDFHeight = 17.0;
-        PDFWidth = 11.0;
-        PDFDpi = 150;
-        break;
-    }
-    if (ui->sizeOrientationComboBox->currentIndex() == 1)
-    {
-        std::swap(PDFHeight, PDFWidth);
-    }
-
 
     err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
     if (err != NINJA_SUCCESS)
@@ -1016,7 +1017,7 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         qDebug() << "NinjaSetPDFDEM: err =" << err;
     }
 
-    err = NinjaSetPDFSize(ninjaArmy, i, PDFHeight, PDFWidth, PDFDpi, papszOptions);
+    err = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFSize: err =" << err;

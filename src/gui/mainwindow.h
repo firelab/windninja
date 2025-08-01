@@ -81,6 +81,12 @@ struct OutputMeshResolution {
     QByteArray units;
 };
 
+struct OutputPDFSize {
+    double PDFHeight;
+    double PDFWidth;
+    double PDFDpi;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -133,7 +139,8 @@ private:
                         OutputMeshResolution googleEarth,
                         OutputMeshResolution fireBehavior,
                         OutputMeshResolution shapeFiles,
-                        OutputMeshResolution geospatialPDFs);
+                        OutputMeshResolution geospatialPDFs,
+                        OutputPDFSize PDFSize);
     OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
                                            QDoubleSpinBox* outputMeshResolutionSpinBox,
                                            QComboBox* outputMeshResolutionComboBox);
