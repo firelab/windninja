@@ -76,6 +76,11 @@ namespace Ui
 }
 QT_END_NAMESPACE
 
+struct OutputMeshResolution {
+    double resolution;
+    QByteArray units;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -122,7 +127,17 @@ private:
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
     void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
-    void setOutputFlags(NinjaArmyH *ninjaArmy, int i, int numNinjas);
-
+    void setOutputFlags(NinjaArmyH* ninjaArmy,
+                        int i,
+                        int numNinjas,
+                        OutputMeshResolution googleEarth,
+                        OutputMeshResolution fireBehavior,
+                        OutputMeshResolution shapeFiles,
+                        OutputMeshResolution geospatialPDFs);
+    OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
+                                           QDoubleSpinBox* outputMeshResolutionSpinBox,
+                                           QComboBox* outputMeshResolutionComboBox,
+                                           QDoubleSpinBox* surfaceInputMeshResolutionSpinBox,
+                                           QComboBox* surfaceInputMeshResolutionComboBox);
 };
 #endif // MAINWINDOW_H
