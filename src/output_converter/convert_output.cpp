@@ -337,7 +337,14 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
     {
         for(int j=0; j<foamU.get_nCols(); j++)
         {
-            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+            if( foamU(i,j) == foamU.get_NoDataValue() || foamV(i,j) == foamV.get_NoDataValue() )
+            {
+                foamSpd(i,j) = foamSpd.get_NoDataValue();
+                foamDir(i,j) = foamDir.get_NoDataValue();
+            } else
+            {
+                wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+            }
         }
     }
 

@@ -787,9 +787,18 @@ noCloudOK:
         AsciiGrid<double> dirGrid;
         speedGrid.set_headerData(uGrid);
         dirGrid.set_headerData(uGrid);
-        for(int i=0; i<uGrid.get_nRows(); i++) {
-            for(int j=0; j<uGrid.get_nCols(); j++) {
-                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedGrid(i,j) = speedGrid.get_NoDataValue();
+                    dirGrid(i,j) = dirGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+                }
             }
         }
 
@@ -800,9 +809,12 @@ noCloudOK:
         {
             for(int j=0; j<dirGrid.get_nCols(); j++)
             {
-                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
-                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                if( speedGrid(i,j) != speedGrid.get_NoDataValue() && dirGrid(i,j) != dirGrid.get_NoDataValue() )
+                {
+                    dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
             }
         }
         CPLDebug( "COORD_TRANSFORM_ANGLES", "post coordTransformAngle calc" );
@@ -812,9 +824,18 @@ noCloudOK:
         // This change occurs because the NO_DATA 270.0 valued dirGrid values get reset to their original 270.0 value, dropping the angle corrections,
         // because spd, u, and v are set to NO_DATA 0.0 values. This is as desired and is expected, technically using dirGrid.get_meanValue()
         // instead of wind_uv_to_sd(uGrid.get_meanValue(),vGrid.get_meanValue()) is a bad metric for comparisons.
-        for(int i=0; i<uGrid.get_nRows(); i++) {
-            for(int j=0; j<uGrid.get_nCols(); j++) {
-                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedGrid(i,j) = speedGrid.get_NoDataValue();
+                    dirGrid(i,j) = dirGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+                }
             }
         }
         CPLDebug( "COORD_TRANSFORM_ANGLES", "true post coordTransformAngle calc value (NO_DATA spd, u, v vals (0.0) and NO_DATA dir vals (270.0) now dropped)" );

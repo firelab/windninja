@@ -428,9 +428,18 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         AsciiGrid<double> dirGrid;
         speedGrid.set_headerData(uGrid);
         dirGrid.set_headerData(uGrid);
-        for(int i=0; i<uGrid.get_nRows(); i++) {
-            for(int j=0; j<uGrid.get_nCols(); j++) {
-                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedGrid(i,j) = speedGrid.get_NoDataValue();
+                    dirGrid(i,j) = dirGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+                }
             }
         }
 
@@ -439,9 +448,12 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         {
             for(int j=0; j<dirGrid.get_nCols(); j++)
             {
-                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
-                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                if( speedGrid(i,j) != speedGrid.get_NoDataValue() && dirGrid(i,j) != dirGrid.get_NoDataValue() )
+                {
+                    dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
             }
         }
 

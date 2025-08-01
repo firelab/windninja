@@ -193,7 +193,14 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         {
             for(int j=0; j<inputAngleGrid.get_nCols(); j++)
             {
-                wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                if( inputVelocityGrid(i,j) == inputVelocityGrid.get_NoDataValue() || inputAngleGrid(i,j) == inputAngleGrid.get_NoDataValue() )
+                {
+                    uGrid(i,j) = uGrid.get_NoDataValue();
+                    vGrid(i,j) = vGrid.get_NoDataValue();
+                } else
+                {
+                    wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
             }
         }
 
@@ -226,13 +233,20 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         {
             for(int j=0; j<warped_uGrid.get_nCols(); j++)
             {
-                // fill the grids with the raw values before the angle correction
-                wind_uv_to_sd(warped_uGrid(i,j), warped_vGrid(i,j), &(inputVelocityGrid)(i,j), &(inputAngleGrid)(i,j));
+                if( warped_uGrid(i,j) == warped_uGrid.get_NoDataValue() || warped_vGrid(i,j) == warped_vGrid.get_NoDataValue() )
+                {
+                    inputVelocityGrid(i,j) = inputVelocityGrid.get_NoDataValue();
+                    inputAngleGrid(i,j) = inputAngleGrid.get_NoDataValue();
+                } else
+                {
+                    // fill the grids with the raw values before the angle correction
+                    wind_uv_to_sd(warped_uGrid(i,j), warped_vGrid(i,j), &(inputVelocityGrid)(i,j), &(inputAngleGrid)(i,j));
 
-                inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) - coordinateTransformationAngle ); //convert FROM input_grid projection coordinates TO dem projected coordinates
-                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
-                // however, these u and v grids are not actually being used past this point
-                //wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j), &(warped_uGrid)(i,j), &(warped_vGrid)(i,j));
+                    inputAngleGrid(i,j) = wrap0to360( inputAngleGrid(i,j) - coordinateTransformationAngle ); //convert FROM input_grid projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    // however, these u and v grids are not actually being used past this point
+                    //wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j), &(warped_uGrid)(i,j), &(warped_vGrid)(i,j));
+                }
             }
         }
 
@@ -270,8 +284,15 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
 
     for(int i=0; i<inputVelocityGrid.get_nRows(); i++) {
         for(int j=0; j<inputVelocityGrid.get_nCols(); j++) {
-            wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
-                    &(inputUGrid)(i,j), &(inputVGrid)(i,j));
+            if( inputVelocityGrid(i,j) == inputVelocityGrid.get_NoDataValue() || inputAngleGrid(i,j) == inputAngleGrid.get_NoDataValue() )
+            {
+                inputUGrid(i,j) = inputUGrid.get_NoDataValue();
+                inputVGrid(i,j) = inputVGrid.get_NoDataValue();
+            } else
+            {
+                wind_sd_to_uv(inputVelocityGrid(i,j), inputAngleGrid(i,j),
+                        &(inputUGrid)(i,j), &(inputVGrid)(i,j));
+            }
         }
     }
 
