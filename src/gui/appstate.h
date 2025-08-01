@@ -33,7 +33,8 @@
 class AppState
 {
 public:
-    static AppState& instance() {
+    static AppState& instance()
+    {
         static AppState s;
         return s;
     }

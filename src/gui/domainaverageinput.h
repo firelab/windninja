@@ -27,7 +27,6 @@
  *
  *****************************************************************************/
 
-
 #ifndef DOMAINAVERAGEINPUT_H
 #define DOMAINAVERAGEINPUT_H
 
@@ -36,18 +35,20 @@
 #include <QPair>
 #include <QSet>
 
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 
-class DomainAverageInput: public QObject {
+class DomainAverageInput: public QObject
+{
     Q_OBJECT
 
 signals:
     void requestRefresh();
 
 public:
-    explicit DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
+    DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private slots:
     void domainAverageTableCellChanged(int row, int column);

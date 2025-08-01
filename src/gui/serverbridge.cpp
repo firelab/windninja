@@ -34,20 +34,23 @@ ServerBridge::ServerBridge() {}
 /*
 ** Check for version updates, or messages from the server.
 */
-void ServerBridge::checkMessages(void) {
+void ServerBridge::checkMessages(void)
+{
     QMessageBox mbox;
     char *papszMsg = NinjaQueryServerMessages(true);
     if (papszMsg != NULL) {
-        if (strcmp(papszMsg, "TRUE\n") == 0) {
+        if (strcmp(papszMsg, "TRUE\n") == 0)
+        {
             mbox.setText("There is a fatal flaw in Windninja, it must close.");
             mbox.exec();
             delete[] papszMsg;
             abort();
         }
-
-        else {
+        else
+        {
             char *papszMsg = NinjaQueryServerMessages(false);
-            if (papszMsg != NULL) {
+            if (papszMsg != NULL)
+            {
                 mbox.setText(papszMsg);
 
                 mbox.exec();
@@ -66,7 +69,8 @@ void ServerBridge::checkMessages(void) {
 ** ABORT   -> There is a fundamental problem with windninja, and it should call
 **            abort() after displaying a message.
 */
-bool ServerBridge::NinjaCheckVersions(char * mostrecentversion, char * localversion) {
+bool ServerBridge::NinjaCheckVersions(char * mostrecentversion, char * localversion)
+{
     char comparemostrecentversion[256];
     char comparelocalversion[256];
     int mostrecentversionIndex = 0;
@@ -109,28 +113,37 @@ char * ServerBridge::NinjaQueryServerMessages(bool checkAbort)
     std::string message;
 
     // Read all lines into the vector
-    while (std::getline(iss, message)) {
+    while (std::getline(iss, message))
+    {
         messages.push_back(message);
     }
 
     // Process all lines except the last two
     std::ostringstream oss;
-    if (checkAbort) {
-        for (size_t i = 0; i < messages.size(); ++i) {
-            if (i == messages.size()-1) { // check final line
+    if (checkAbort)
+    {
+        for (size_t i = 0; i < messages.size(); ++i)
+        {
+            if (i == messages.size()-1)
+            {
                 oss << messages[i] << "\n";
             }
         }
     }
-    else {
+    else
+    {
         bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING));
-        if (!versionisuptodate) {
+        if (!versionisuptodate)
+        {
             oss << messages[0] << "\n";
             oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
         }
-        if (messages[4].empty() == false) {
-            for (size_t i = 3; i < messages.size() - 2; ++i) {
-                if (!messages[i].empty()) {
+        if (messages[4].empty() == false)
+        {
+            for (size_t i = 3; i < messages.size() - 2; ++i)
+            {
+                if (!messages[i].empty())
+                {
                     oss << messages[i] << "\n";
                 }
             }

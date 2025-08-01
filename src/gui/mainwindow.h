@@ -69,11 +69,10 @@
 #include <vector>
 #include <string>
 
-
-
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 QT_END_NAMESPACE
 
@@ -82,7 +81,6 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    void populateForecastDownloads();
     void toggleExpandCollapse(const QModelIndex &index);
     void loadMapKMZ(const std::vector<std::string>& input);
 
@@ -109,14 +107,12 @@ private slots:
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
-
-
     void refreshUI();
 
 private:
     Ui::MainWindow *ui;
-    QWebEngineView *webView;
-    QWebChannel *channel;
+    QWebEngineView *webEngineView;
+    QWebChannel *webChannel;
     MapBridge *mapBridge;
     SurfaceInput *surfaceInput;
     MenuBar *menuBar;

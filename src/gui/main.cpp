@@ -37,6 +37,7 @@
 #include <QPropertyAnimation>
 #include <QMouseEvent>
 #include <QMessageBox>
+#include <QDebug>
 #include "splashscreen.h"
 
 
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
     err = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
     if(err != NINJA_SUCCESS)
     {
-    printf("NinjaInit: err = %d\n", err);
+        qDebug() << "NinjaInit: err =" << err;
     }
 
     QApplication a(argc, argv);
@@ -62,13 +63,16 @@ int main(int argc, char *argv[])
     a.setApplicationVersion(ver);
 
     MainWindow* w = nullptr;
-    try {
-    w = new MainWindow;
-    } catch (...) {
-    QMessageBox::critical(nullptr, "Initialization Error",
-                          "WindNinja failed to initialize. Most likely cause is failure to find data "
-                          "dependencies. Try setting the environment variable WINDNINJA_DATA");
-    return 1;
+    try
+    {
+        w = new MainWindow;
+    }
+    catch (...)
+    {
+        QMessageBox::critical(nullptr, "Initialization Error",
+                              "WindNinja failed to initialize. Most likely cause is failure to find data "
+                              "dependencies. Try setting the environment variable WINDNINJA_DATA");
+        return 1;
     }
 
     QPixmap bigSplashPixmap(":wn-splash.png");

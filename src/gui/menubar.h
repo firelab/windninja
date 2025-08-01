@@ -39,8 +39,9 @@ class MainWindow;
 class MenuBar : public QObject
 {
     Q_OBJECT
+
 public:
-    explicit MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
+    MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private slots:
     // functions for Menu actions

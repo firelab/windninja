@@ -310,24 +310,24 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->expandAll();
     ui->treeFileExplorer->expandAll();
 
-    menuBar = new MenuBar(ui, this);
-    surfaceInput = new SurfaceInput(ui, webView, this);
-    domainAverageInput = new DomainAverageInput(ui, this);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
     QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
     QString mapPath = QDir(dataPath).filePath("map.html");
-    channel = new QWebChannel(this);
+    webChannel = new QWebChannel(this);
     mapBridge = new MapBridge(this);
-    webView = new QWebEngineView(ui->mapPanelWidget);
-    channel->registerObject(QStringLiteral("bridge"), mapBridge);
-    webView->page()->setWebChannel(channel);
+    webEngineView = new QWebEngineView(ui->mapPanelWidget);
+    webChannel->registerObject(QStringLiteral("bridge"), mapBridge);
+    webEngineView->page()->setWebChannel(webChannel);
     QUrl url = QUrl::fromLocalFile(mapPath);
-    webView->setUrl(url);
+    webEngineView->setUrl(url);
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addWidget(webView);
+    layout->addWidget(webEngineView);
     ui->mapPanelWidget->setLayout(layout);
+    menuBar = new MenuBar(ui, this);
+    surfaceInput = new SurfaceInput(ui, webEngineView, this);
+    domainAverageInput = new DomainAverageInput(ui, this);
 
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
@@ -350,16 +350,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);
     ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
 
-    // Solver window
     int nCPUs = QThread::idealThreadCount();
     ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
-
-    // Wind Input -> Point Init window
     ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
 
-    // Populate default location for output location
     QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     ui->outputDirectoryLineEdit->setText(downloadsPath);
     ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
@@ -376,7 +372,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->shapeFilesMeshResolutionComboBox->setItemData(1, "ft");
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(0, "m");
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(1, "ft");
-
     ui->alternativeColorSchemeComboBox->setItemData(0, "default");
     ui->alternativeColorSchemeComboBox->setItemData(1, "ROPGW");
     ui->alternativeColorSchemeComboBox->setItemData(2, "oranges");
@@ -385,21 +380,20 @@ MainWindow::MainWindow(QWidget *parent)
     ui->alternativeColorSchemeComboBox->setItemData(5, "greens");
     ui->alternativeColorSchemeComboBox->setItemData(6, "magic_beans");
     ui->alternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
-
     ui->legendComboBox->setItemData(0, "equal_interval");
-    ui->legendComboBox->setItemData(0, "equal_color");
+    ui->legendComboBox->setItemData(1, "equal_color");
 
     connectSignals();
 }
 
 MainWindow::~MainWindow()
 {
-  delete webView;
-  delete channel;
-  delete mapBridge;
-  delete surfaceInput;
-  delete menuBar;
-  delete ui;
+    delete webEngineView;
+    delete webChannel;
+    delete mapBridge;
+    delete surfaceInput;
+    delete menuBar;
+    delete ui;
 }
 
 void MainWindow::connectSignals()
@@ -430,75 +424,27 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 }
 
-void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
+void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
+{
     int pageIndex = item->data(column, Qt::UserRole).toInt();
-    if (pageIndex >= 0) {
-    if(pageIndex >= 6) {
-        ui->inputsStackedWidget->setCurrentIndex(pageIndex);
-    }
-    else {
-        ui->inputsStackedWidget->setCurrentIndex(pageIndex);
-    }
-    }
+    ui->inputsStackedWidget->setCurrentIndex(pageIndex);
 }
-
-// Recursive function to add files and directories correctly with Name and Date columns
-void addFilesRecursively(QStandardItem *parentItem, const QString &dirPath) {
-    QDir dir(dirPath);
-    QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &entry : entries) {
-        QStandardItem *nameItem = new QStandardItem(entry.fileName());
-        QStandardItem *dateItem = new QStandardItem(entry.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-        nameItem->setEditable(false);
-        dateItem->setEditable(false);
-        parentItem->appendRow({nameItem, dateItem});
-        if (entry.isDir()) {
-            addFilesRecursively(nameItem, entry.absoluteFilePath());
-        }
-    }
-}
-
-// Function to populate weatherModelDataTreeView with .tif parent directories and all nested contents
-void MainWindow::populateForecastDownloads() {
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    QDir downloadsDir(downloadsPath);
-
-    if (!downloadsDir.exists()) return;
-
-    QStandardItemModel *model = new QStandardItemModel(this);
-    model->setHorizontalHeaderLabels({"Name", "Date Modified"});
-
-    QDirIterator it(downloadsPath, QDir::Dirs | QDir::NoDotAndDotDot);
-    while (it.hasNext()) {
-        QString dirPath = it.next();
-        if (dirPath.endsWith(".tif", Qt::CaseInsensitive)) {
-            QStandardItem *parentItem = new QStandardItem(QFileInfo(dirPath).fileName());
-            parentItem->setEditable(false);
-            addFilesRecursively(parentItem, dirPath);
-            model->appendRow(parentItem);
-        }
-    }
-
-    ui->weatherModelDataTreeView->setModel(model);
-    ui->weatherModelDataTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
-
-    // Disable editing and enable double-click expansion
-    ui->weatherModelDataTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->weatherModelDataTreeView->setExpandsOnDoubleClick(true);
-}
-
 
 void MainWindow::massSolverCheckBoxClicked()
 {
     AppState& state = AppState::instance();
 
-    if (state.isMomentumSolverToggled) {
+    if (state.isMomentumSolverToggled)
+    {
         ui->momentumSolverCheckBox->setChecked(false);
         state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
     }
     state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
-    ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    if(!ui->elevationInputFileLineEdit->text().isEmpty())
+    {
+        ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    }
     refreshUI();
 }
 
@@ -506,13 +452,17 @@ void MainWindow::momentumSolverCheckBoxClicked()
 {
     AppState& state = AppState::instance();
 
-    if (state.isMassSolverToggled) {
+    if (state.isMassSolverToggled)
+    {
         ui->massSolverCheckBox->setChecked(false);
         state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
     }
     state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
-    ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    if(!ui->elevationInputFileLineEdit->text().isEmpty())
+    {
+        ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    }
     refreshUI();
 }
 
@@ -522,13 +472,16 @@ void MainWindow::diurnalCheckBoxClicked()
     state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
     QTableWidget* table = ui->domainAverageTable;
-    if(!ui->diurnalCheckBox->isChecked()) {
+    if(!ui->diurnalCheckBox->isChecked())
+    {
         table->hideColumn(2);
         table->hideColumn(3);
         table->hideColumn(4);
         table->hideColumn(5);
         ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    } else {
+    }
+    else
+    {
         table->showColumn(2);
         table->showColumn(3);
         table->showColumn(4);
@@ -553,7 +506,8 @@ void MainWindow::pointInitializationCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
 
-    if (state.isPointInitializationToggled) {
+    if (state.isPointInitializationToggled)
+    {
         ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelCheckBox->setChecked(false);
         state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
@@ -569,7 +523,8 @@ void MainWindow::useWeatherModelInitClicked()
 
     state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
 
-    if (state.isWeatherModelInitializationToggled) {
+    if (state.isWeatherModelInitializationToggled)
+    {
         ui->domainAverageGroupBox->setChecked(false);
         ui->pointInitializationCheckBox->setChecked(false);
         state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
@@ -616,7 +571,8 @@ void MainWindow::solveButtonClicked()
         initializationMethod = "domain_average";
 
         int rowCount = ui->domainAverageTable->rowCount();
-        for (int row = 0; row < rowCount; ++row) {
+        for (int row = 0; row < rowCount; ++row)
+        {
             QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
             QTableWidgetItem* directionItem = ui->domainAverageTable->item(row, 1);
 
@@ -651,7 +607,8 @@ void MainWindow::solveButtonClicked()
     int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
     QString meshSize = QString::number(meshInt) + "m";
 
-    for (int i = 0; i < numNinjas; i++) {
+    for (int i = 0; i < numNinjas; i++)
+    {
         QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
                                                .arg(demName)
                                                .arg(directions[i])
@@ -660,7 +617,8 @@ void MainWindow::solveButtonClicked()
         outputFiles.push_back(filePath.toStdString());
     }
 
-    for (const auto& dir : outputFiles) {
+    for (const auto& dir : outputFiles)
+    {
         QString qDir = QString::fromStdString(dir);
 
         QFile f(qDir);
@@ -668,7 +626,7 @@ void MainWindow::solveButtonClicked()
         QByteArray data = f.readAll();
         QString base64 = data.toBase64();
 
-        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+        webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
     }
 }
 
@@ -677,82 +635,87 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     if (item->text(0) == "Conservation of Mass")
     {
         ui->massSolverCheckBox->click();
-    } else if (item->text(0) == "Conservation of Mass and Momentum")
+    }
+    else if (item->text(0) == "Conservation of Mass and Momentum")
     {
         ui->momentumSolverCheckBox->click();
-    } else if (item->text(0) == "Diurnal Input")
+    }
+    else if (item->text(0) == "Diurnal Input")
     {
         ui->diurnalCheckBox->click();
-    } else if (item->text(0) == "Stability Input")
+    }
+    else if (item->text(0) == "Stability Input")
     {
         ui->stabilityCheckBox->click();
-    } else if (item->text(0) == "Domain Average Wind")
+    }
+    else if (item->text(0) == "Domain Average Wind")
     {
         if(!ui->domainAverageGroupBox->isChecked())
         {
             ui->domainAverageGroupBox->setChecked(true);
-        }else
+        }
+        else
         {
             ui->domainAverageGroupBox->setChecked(false);
         }
-    } else if (item->text(0) == "Point Initialization")
+    }
+    else if (item->text(0) == "Point Initialization")
     {
         ui->pointInitializationCheckBox->click();
-    } else if (item->text(0) == "Weather Model")
+    }
+    else if (item->text(0) == "Weather Model")
     {
         ui->weatherModelCheckBox->click();
-    } else if (item->text(0) == "Surface Input")
+    }
+    else if (item->text(0) == "Surface Input")
     {
-        surfaceInput->elevationInputFileOpenButtonClicked();
-    } else if (item->text(0) == "Google Earth")
-    {
-        if(!ui->googleEarthGroupBox->isChecked())
-        {
-            ui->googleEarthGroupBox->setChecked(true);
-        }else
-        {
-            ui->googleEarthGroupBox->setChecked(false);
-        }
-    } else if (item->text(0) == "Surface Input")
-    {
-        surfaceInput->elevationInputFileOpenButtonClicked();
-    } else if (item->text(0) == "Google Earth")
+        ui->elevationInputFileOpenButton->click();
+    }
+    else if (item->text(0) == "Google Earth")
     {
         if(!ui->googleEarthGroupBox->isChecked())
         {
             ui->googleEarthGroupBox->setChecked(true);
-        }else
+        }
+        else
         {
             ui->googleEarthGroupBox->setChecked(false);
         }
-    } else if (item->text(0) == "Fire Behavior")
+    }
+    else if (item->text(0) == "Fire Behavior")
     {
         if(!ui->fireBehaviorGroupBox->isChecked())
         {
             ui->fireBehaviorGroupBox->setChecked(true);
-        }else
+        }
+        else
         {
             ui->fireBehaviorGroupBox->setChecked(false);
         }
-    } else if (item->text(0) == "Shape Files")
+    }
+    else if (item->text(0) == "Shape Files")
     {
         if(!ui->shapeFilesGroupBox->isChecked())
         {
             ui->shapeFilesGroupBox->setChecked(true);
-        }else
+        }
+        else
         {
             ui->shapeFilesGroupBox->setChecked(false);
         }
-    } else if (item->text(0) == "Geospatial PDF Files")
+    }
+    else if (item->text(0) == "Geospatial PDF Files")
     {
         if(!ui->geospatialPDFFilesGroupBox->isChecked())
         {
             ui->geospatialPDFFilesGroupBox->setChecked(true);
-        }else
+        }
+        else
         {
             ui->geospatialPDFFilesGroupBox->setChecked(false);
         }
-    } else if (item->text(0) == "VTK Files")
+    }
+    else if (item->text(0) == "VTK Files")
     {
         ui->VTKFilesCheckBox->click();
     }
