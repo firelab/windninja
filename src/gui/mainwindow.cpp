@@ -448,6 +448,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(0, "m");
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(1, "ft");
 
+    ui->alternativeColorSchemeComboBox->setItemData(0, "default");
+    ui->alternativeColorSchemeComboBox->setItemData(1, "ROPGW");
+    ui->alternativeColorSchemeComboBox->setItemData(2, "oranges");
+    ui->alternativeColorSchemeComboBox->setItemData(3, "blues");
+    ui->alternativeColorSchemeComboBox->setItemData(4, "pinks");
+    ui->alternativeColorSchemeComboBox->setItemData(5, "greens");
+    ui->alternativeColorSchemeComboBox->setItemData(6, "magic_beans");
+    ui->alternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
+
     ui->legendComboBox->setItemData(0, "equal_interval");
     ui->legendComboBox->setItemData(0, "equal_color");
 
@@ -883,6 +892,9 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 {
     char **papszOptions = nullptr;
     int err;
+
+    err = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
+
     for(unsigned int i=0; i<numNinjas; i++)
     {
         /*
@@ -948,11 +960,11 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetNumVertLayers: err = %d\n", err);
         }
 
-        setOutputFlags(ninjaArmy, i);
+        setOutputFlags(ninjaArmy, i, numNinjas);
     }
 }
 
-void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
+void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i, int numNinjas)
 {
     char **papszOptions = nullptr;
     int err;
@@ -1090,6 +1102,18 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogLineWidth: err =" << err;
+    }
+
+    err = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogColor: err =" << err;
+    }
+
+    err = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogConsistentColorScale: err =" << err;
     }
 
     err = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
