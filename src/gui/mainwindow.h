@@ -136,8 +136,6 @@ private:
                         OutputMeshResolution geospatialPDFs);
     OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
                                            QDoubleSpinBox* outputMeshResolutionSpinBox,
-                                           QComboBox* outputMeshResolutionComboBox,
-                                           QDoubleSpinBox* surfaceInputMeshResolutionSpinBox,
-                                           QComboBox* surfaceInputMeshResolutionComboBox);
+                                           QComboBox* outputMeshResolutionComboBox);
 };
 #endif // MAINWINDOW_H

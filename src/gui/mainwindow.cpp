@@ -788,34 +788,22 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     OutputMeshResolution googleEarth = getMeshResolution(
         ui->googleEarthMeshResolutionGroupBox->isChecked(),
         ui->googleEarthMeshResolutionSpinBox,
-        ui->googleEarthMeshResolutionComboBox,
-        ui->meshResolutionSpinBox,
-        ui->meshResolutionUnitsComboBox
-        );
+        ui->googleEarthMeshResolutionComboBox);
 
     OutputMeshResolution fireBehavior = getMeshResolution(
         ui->fireBehaviorMeshResolutionGroupBox->isChecked(),
         ui->fireBehaviorMeshResolutionSpinBox,
-        ui->fireBehaviorMeshResolutionComboBox,
-        ui->meshResolutionSpinBox,
-        ui->meshResolutionUnitsComboBox
-        );
+        ui->fireBehaviorMeshResolutionComboBox);
 
     OutputMeshResolution shapeFiles = getMeshResolution(
         ui->shapeFilesMeshResolutionGroupBox->isChecked(),
         ui->shapeFilesMeshResolutionSpinBox,
-        ui->shapeFilesMeshResolutionComboBox,
-        ui->meshResolutionSpinBox,
-        ui->meshResolutionUnitsComboBox
-        );
+        ui->shapeFilesMeshResolutionComboBox);
 
     OutputMeshResolution geospatialPDFs = getMeshResolution(
-        ui->geospatialPDFFilesGroupBox->isChecked(),
+        ui->geospatialPDFFilesMeshResolutionGroupBox->isChecked(),
         ui->geospatialPDFFilesMeshResolutionSpinBox,
-        ui->geospatialPDFFilesMeshResolutionComboBox,
-        ui->meshResolutionSpinBox,
-        ui->meshResolutionUnitsComboBox
-        );
+        ui->geospatialPDFFilesMeshResolutionComboBox);
 
     char **papszOptions = nullptr;
     int err;
@@ -891,12 +879,12 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 }
 
 void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
-                    int i,
-                    int numNinjas,
-                    OutputMeshResolution googleEarth,
-                    OutputMeshResolution fireBehavior,
-                    OutputMeshResolution shapeFiles,
-                    OutputMeshResolution geospatialPDFs)
+                                int i,
+                                int numNinjas,
+                                OutputMeshResolution googleEarth,
+                                OutputMeshResolution fireBehavior,
+                                OutputMeshResolution shapeFiles,
+                                OutputMeshResolution geospatialPDFs)
 {
     char **papszOptions = nullptr;
     int err;
@@ -1047,31 +1035,26 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 }
 
-OutputMeshResolution getMeshResolution(
+OutputMeshResolution MainWindow::getMeshResolution(
     bool useOutputMeshResolution,
     QDoubleSpinBox* outputMeshResolutionSpinBox,
-    QComboBox* outputMeshResolutionComboBox,
-    QDoubleSpinBox* surfaceInputMeshResolutionSpinBox,
-    QComboBox* surfaceInputMeshResolutionComboBox)
+    QComboBox* outputMeshResolutionComboBox)
 {
     OutputMeshResolution result;
 
     if (!useOutputMeshResolution)
     {
         result.resolution = outputMeshResolutionSpinBox->value();
-        result.units = outputMeshResolutionComboBox
-                           ->itemData(outputMeshResolutionComboBox->currentIndex())
-                           .toString().toUtf8();
+        result.units = outputMeshResolutionComboBox->itemData(outputMeshResolutionComboBox->currentIndex()).toString().toUtf8();
     }
     else
     {
-        result.resolution = surfaceInputMeshResolutionSpinBox->value();
-        result.units = surfaceInputMeshResolutionComboBox
-                           ->itemData(surfaceInputMeshResolutionComboBox->currentIndex())
-                           .toString().toUtf8();
+        result.resolution = ui->meshResolutionSpinBox->value();
+        result.units = ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionComboBox->currentIndex()).toString().toUtf8();
     }
 
     return result;
 }
+
 
 
