@@ -37,7 +37,7 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
-    connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::domainAverageCheckBoxClicked);
+    connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
 }
 
 void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
@@ -156,10 +156,10 @@ void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)
     }
 }
 
-void DomainAverageInput::domainAverageCheckBoxClicked()
+void DomainAverageInput::domainAverageGroupBoxToggled()
 {
     AppState& state = AppState::instance();
-    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
 
     if (state.isDomainAverageInitializationToggled) {
         ui->pointInitializationCheckBox->setChecked(false);

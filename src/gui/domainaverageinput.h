@@ -52,7 +52,7 @@ public:
 private slots:
     void domainAverageTableCellChanged(int row, int column);
     void clearTableButtonClicked();
-    void domainAverageCheckBoxClicked();
+    void domainAverageGroupBoxToggled();
     void windHeightComboBoxCurrentIndexChanged(int index);
 
 private:

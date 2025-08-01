@@ -616,9 +616,9 @@ void MainWindow::pointInitializationCheckBoxClicked()
     state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
 
     if (state.isPointInitializationToggled) {
-        ui->domainAverageCheckBox->setChecked(false);
+        ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelCheckBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
         state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
     }
 
@@ -632,9 +632,9 @@ void MainWindow::useWeatherModelInitClicked()
     state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
 
     if (state.isWeatherModelInitializationToggled) {
-        ui->domainAverageCheckBox->setChecked(false);
+        ui->domainAverageGroupBox->setChecked(false);
         ui->pointInitializationCheckBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
         state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
     }
 
@@ -750,7 +750,13 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->stabilityCheckBox->click();
     } else if (item->text(0) == "Domain Average Wind")
     {
-        ui->domainAverageCheckBox->click();
+        if(!ui->domainAverageGroupBox->isChecked())
+        {
+            ui->domainAverageGroupBox->setChecked(true);
+        }else
+        {
+            ui->domainAverageGroupBox->setChecked(false);
+        }
     } else if (item->text(0) == "Point Initialization")
     {
         ui->pointInitializationCheckBox->click();
