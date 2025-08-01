@@ -37,6 +37,13 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       ui(ui),
       webView(webView)
 {
+    ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
+    ui->elevationInputFileDownloadButton->setIcon(QIcon(":/server_go.png"));
+    ui->elevationInputTypePushButton->setIcon(QIcon(":/swoop_final.png"));
+    ui->timeZoneDetailsTextEdit->setVisible(false);
+
+    timeZoneAllZonesCheckBoxClicked();
+
     connect(ui->boundingBoxNorthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
     connect(ui->boundingBoxSouthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
     connect(ui->boundingBoxEastLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);

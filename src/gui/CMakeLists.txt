@@ -61,9 +61,6 @@ target_include_directories(WindNinja PRIVATE /usr/local/include)
 
 add_dependencies(WindNinja ninja)
 
-add_definitions(-DMAP_PATH="${CMAKE_SOURCE_DIR}/data/map.html")
-
-
 target_link_libraries(WindNinja PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

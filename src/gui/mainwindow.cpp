@@ -301,116 +301,54 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
     serverBridge = new ServerBridge();
     serverBridge->checkMessages();
+
+    ui->setupUi(this);    
     resize(1200, 700);
     refreshUI();
     ui->treeWidget->expandAll();
-
-    /*
-    * Create file handler window for point init screen
-    */
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    // Enable QFileSystemModel to process directories and files
-    QFileSystemModel *model = new QFileSystemModel(this);
-    model->setFilter(QDir::NoDotAndDotDot | QDir::AllDirs | QDir::AllEntries);  // Ensure files appear
-    model->setRootPath(downloadsPath);
-
-    // Enable file watching so contents refresh properly
-    model->setReadOnly(false);
-    model->setResolveSymlinks(true);
-
-    // Set the correct root index inside Downloads
-    QModelIndex rootIndex = model->index(downloadsPath);
-    ui->treeFileExplorer->setModel(model);
-    ui->treeFileExplorer->setRootIndex(rootIndex);
-
-    // Ensure folders expand and collapse correctly
-    ui->treeFileExplorer->setExpandsOnDoubleClick(true);
-    ui->treeFileExplorer->setAnimated(true);
-    ui->treeFileExplorer->setIndentation(15);
-    ui->treeFileExplorer->setSortingEnabled(true);
-    ui->treeFileExplorer->setItemsExpandable(true);
-    ui->treeFileExplorer->setUniformRowHeights(true);
-
-    // Show only "Name" and "Date Modified" columns
-    ui->treeFileExplorer->hideColumn(1);  // Hide Size column
-    ui->treeFileExplorer->hideColumn(2);  // Hide Type column
-
-    // Optional: Set column headers
-    QHeaderView *header = ui->treeFileExplorer->header();
-    header->setSectionResizeMode(0, QHeaderView::Interactive);
-    header->setSectionResizeMode(3, QHeaderView::Stretch);
-    model->setHeaderData(0, Qt::Horizontal, "Name");
-    model->setHeaderData(3, Qt::Horizontal, "Date Modified");
-
     ui->treeFileExplorer->expandAll();
 
+    menuBar = new MenuBar(ui, this);
+    surfaceInput = new SurfaceInput(ui, webView, this);
+    domainAverageInput = new DomainAverageInput(ui, this);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
-
-    QString filePath = QString(MAP_PATH);
+    QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
+    QString mapPath = QDir(dataPath).filePath("map.html");
     channel = new QWebChannel(this);
     mapBridge = new MapBridge(this);
     webView = new QWebEngineView(ui->mapPanelWidget);
     channel->registerObject(QStringLiteral("bridge"), mapBridge);
     webView->page()->setWebChannel(channel);
-    QUrl url = QUrl::fromLocalFile(filePath);
+    QUrl url = QUrl::fromLocalFile(mapPath);
     webView->setUrl(url);
-
-    menuBar = new MenuBar(ui, this);
-
-    surfaceInput = new SurfaceInput(ui, webView, this);
-    surfaceInput->timeZoneAllZonesCheckBoxClicked();
-    domainAverageInput = new DomainAverageInput(ui, this);
-
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(webView);
-
     ui->mapPanelWidget->setLayout(layout);
 
-    /*
-    * Connect tree items to stacked tab window
-    */
-    // Top-level items
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
-    // Sub-items for Solver Methodology
-    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);  // Conservation of Mass (Page 1)
-    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);  // Conservation of Mass and Momentum (Page 2)
-
+    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);
+    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);
     ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
-    // Sub-items for Inputs
-    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);  // Surface Input (Page 6)
-    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);  // Dirunal Input (Page 7)
-
-    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);  // Stability Input (Page 8)
-    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);  // Wind Input (Page 9)
-    // Sub-sub-items for Wind Input
+    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);
+    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);
+    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);
+    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);
     QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
-    windInputItem->child(0)->setData(0, Qt::UserRole, 9);  // Domain Average Wind (Page 9)
-    windInputItem->child(1)->setData(0, Qt::UserRole, 10); // Point Init (Page 10)
-    windInputItem->child(2)->setData(0, Qt::UserRole, 11); // Weather Model (Page 11)
-
+    windInputItem->child(0)->setData(0, Qt::UserRole, 9);
+    windInputItem->child(1)->setData(0, Qt::UserRole, 10);
+    windInputItem->child(2)->setData(0, Qt::UserRole, 11);
     ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
-    // Sub-items for Outputs
-    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);  // Surface Input (Page 6)
-    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);  // Dirunal Input (Page 7)
-    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 15);  // Stability Input (Page 8)
-    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);  // Wind Input (Page 9)
-    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);  // Wind Input (Page 9)
-
+    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);
+    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);
+    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 15);
+    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);
+    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);
     ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
-
-    /*
-    * Basic initial setup steps
-    */
-    // Surface Input window
-    ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
-    ui->elevationInputFileDownloadButton->setIcon(QIcon(":/server_go.png"));
-    ui->elevationInputTypePushButton->setIcon(QIcon(":/swoop_final.png"));
 
     // Solver window
     int nCPUs = QThread::idealThreadCount();
@@ -422,18 +360,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
 
     // Populate default location for output location
+    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     ui->outputDirectoryLineEdit->setText(downloadsPath);
     ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
-
-    // Set initial visibility of time zone details
-    ui->timeZoneDetailsTextEdit->setVisible(false);
-
-    // Set initial formatting of domain average input table
-    ui->domainAverageTable->hideColumn(2);
-    ui->domainAverageTable->hideColumn(3);
-    ui->domainAverageTable->hideColumn(4);
-    ui->domainAverageTable->hideColumn(5);
-    ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->outputWindHeightUnitsComboBox->setItemData(0, "ft");
     ui->outputWindHeightUnitsComboBox->setItemData(1, "m");
