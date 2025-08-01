@@ -45,6 +45,7 @@ ADD . /opt/src/windninja/
 SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
 ENV WM_PROJECT_INST_DIR /opt
+ENV WINDNINJA_DATA=/opt/src/windninja/data
 RUN dpkg-reconfigure debconf --frontend=noninteractive && \
     apt-get update &&  \
     apt-get install -y wget gnupg2 cmake git apt-transport-https ca-certificates \
