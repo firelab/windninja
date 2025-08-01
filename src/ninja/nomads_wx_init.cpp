@@ -563,6 +563,15 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
     }
 
+// this fix works to finally properly add NO_DATA values instead of 0.0 values to the dataset,
+// and surprisingly, the code runs fine to completion. The main difference I saw was that the kmz output
+// dropped all the bands of zeroes around the edges of the dataset.
+//    psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA" );
+//    if( bSuccess == false )  // if GDALGetRasterNoDataValue( hBand, &bSuccess ) fails to return that a NO_DATA value is in the source dataset
+//    {
+//        psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str() );
+//    }
+
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
 
@@ -820,6 +829,8 @@ noCloudOK:
         CPLDebug( "COORD_TRANSFORM_ANGLES", "post coordTransformAngle calc" );
         CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirGrid.get_meanValue() );
 
+// this whole little section is no longer needed, if we properly set the NO_DATA values, as above, with NO_DATA values properly set and detected,
+// the .get_meanValue() returns the right result every time now.
         // the final true mean value that ends up getting used/passed around later on, it is KNOWN, and EXPECTED that there is a difference here
         // This change occurs because the NO_DATA 270.0 valued dirGrid values get reset to their original 270.0 value, dropping the angle corrections,
         // because spd, u, and v are set to NO_DATA 0.0 values. This is as desired and is expected, technically using dirGrid.get_meanValue()

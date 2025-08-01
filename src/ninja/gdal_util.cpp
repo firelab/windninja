@@ -1562,6 +1562,12 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
     }
 
+    psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA" );
+    if( bSuccess == false )  // if GDALGetRasterNoDataValue( hBand, &bSuccess ) fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str() );
+    }
+
 
     hDstDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                       GRA_NearestNeighbour, 1.0,
