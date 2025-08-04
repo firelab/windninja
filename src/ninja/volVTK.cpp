@@ -36,7 +36,7 @@ volVTK::volVTK()
 
 volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalarField const& w, 
                wn_3dArray& x, wn_3dArray& y, wn_3dArray& z, double dem_xllCorner, double dem_yllCorner, 
-               int i, int j, int k, std::string filename, std::string vtkWriteFormat, bool vtk_out_as_utm)
+               int i, int j, int k, std::string filename, std::string vtkWriteFormat, bool vtk_out_as_ninja_mesh_coordinates)
 {
     // determine byte order of this machine only once
     // sets value of isBigEndian for binary output
@@ -46,9 +46,9 @@ volVTK::volVTK(wn_3dScalarField const& u, wn_3dScalarField const& v, wn_3dScalar
     wn_3dArray y_array;
     x_array = x;
     y_array = y;
-    if ( vtk_out_as_utm == true )
+    if ( vtk_out_as_ninja_mesh_coordinates == false )
     {
-        volVTK::convertPointsToUtm( x_array, y_array, dem_xllCorner, dem_yllCorner, i, j, k );
+        volVTK::convertPointsFromNinjaMeshCoordinates( x_array, y_array, dem_xllCorner, dem_yllCorner, i, j, k );
     }
     
     if ( vtkWriteFormat == "ascii" )
@@ -68,9 +68,9 @@ volVTK::~volVTK()
 
 }
 
-void volVTK::convertPointsToUtm( wn_3dArray& x_to_utm, wn_3dArray& y_to_utm, 
-                                 const double dem_xllCorner, const double dem_yllCorner, 
-                                 const int i, const int j, const int k )
+void volVTK::convertPointsFromNinjaMeshCoordinates( wn_3dArray& x_array, wn_3dArray& y_array,
+                                                    const double dem_xllCorner, const double dem_yllCorner,
+                                                    const int i, const int j, const int k )
 {
     for(int kk=0; kk<k; kk++)
     {
@@ -78,8 +78,8 @@ void volVTK::convertPointsToUtm( wn_3dArray& x_to_utm, wn_3dArray& y_to_utm,
         {
             for(int jj=0; jj<j; jj++)
             {
-                x_to_utm(kk*i*j + ii*j + jj) = x_to_utm(kk*i*j + ii*j + jj) + dem_xllCorner;
-                y_to_utm(kk*i*j + ii*j + jj) = y_to_utm(kk*i*j + ii*j + jj) + dem_yllCorner;
+                x_array(kk*i*j + ii*j + jj) = x_array(kk*i*j + ii*j + jj) + dem_xllCorner;
+                y_array(kk*i*j + ii*j + jj) = y_array(kk*i*j + ii*j + jj) + dem_yllCorner;
             }
         }
     }

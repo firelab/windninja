@@ -143,6 +143,8 @@ public:
     void setInputDirFile(std::string fileName){inputDirFile = fileName;}
 
     void setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units);
+    double angleFromNorth;
+	  void setAngleFromNorth(const double angFromNorth);
     void setDirGrid(AsciiGrid<double> &d);
     void setTurbulenceGrid(AsciiGrid<double> &turb, velocityUnits::eVelocityUnits units);
     double colMax_colHeightAGL;
@@ -166,7 +168,6 @@ public:
     bool setOGR();
     OGRSpatialReference oSourceSRS, oTargetSRS;
     OGRCoordinateTransformation *coordTransform;
-
 
 private:
     double resolution;

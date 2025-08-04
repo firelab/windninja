@@ -221,15 +221,27 @@ double Array2D<T>::mean() const
 {
     double mean = 0;
     T sum = 0;
+    unsigned trueSize = 0;
     for(int i = rows - 1; i >= 0; i--)
     {
         for (int j = 0; j < cols; j++)
         {
-            sum += matrix[i * cols + j];
+            if( matrix[i * cols + j] != noDataValue )
+            {
+                sum += matrix[i * cols + j];
+                trueSize++;
+            }
         }
     }
 
-    mean = sum / matrix.size();
+    if( trueSize > 0 )
+    {
+        mean = sum / trueSize;
+    } else
+    {
+        mean = noDataValue;
+    }
+
     return mean;
 }
 

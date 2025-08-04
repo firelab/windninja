@@ -748,6 +748,9 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     velocityUnits::eVelocityUnits spd_units = velocityUnits::metersPerSecond;  // initialize to default units
     temperatureUnits::eTempUnits T_units = temperatureUnits::K;
 
+    //double coordinateTransformationAngle = 0.0;
+    //// oh, no warp is actually done on this dataset till kmz output
+
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
@@ -829,6 +832,24 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         // set the dataset projection
         int rc = srcDS->SetProjection( projString.c_str() );
 
+
+        //// compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+        //// going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+        //// in this case, going FROM weather model projection coordinates TO geographic lat/lon coordinates
+        //if( varList[i] == "U10" )
+        //{
+        //    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+        //    {
+        //        // direct calculation of FROM wx TO geo, already has the appropriate sign
+        //        if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt ))  // this is FROM wx TO geo
+        //        {
+        //            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+        //        }
+        //    }
+        //}
+        //// oh, no warp is actually done on this dataset till kmz output
+
+
         // final setting of the datasets to ascii grids, in the past usually done using a wrp dataset
         // TODO: data must be in SI units, need to check units here and convert if necessary
         if( varList[i] == "T2" ) {
@@ -880,6 +901,50 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
+
+    ////use the coordinateTransformationAngle to correct the angles of the output dataset
+    ////to convert from the original dataset projection angles to the warped dataset projection angles
+    //if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    //{
+    //    // need an intermediate spd and dir set of ascii grids
+    //    AsciiGrid<double> speedGrid;
+    //    AsciiGrid<double> dirGrid;
+    //    speedGrid.set_headerData(uGrid);
+    //    dirGrid.set_headerData(uGrid);
+    //    for(int i=0; i<uGrid.get_nRows(); i++)
+    //    {
+    //        for(int j=0; j<uGrid.get_nCols(); j++)
+    //        {
+    //            if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+    //            {
+    //                speedGrid(i,j) = speedGrid.get_NoDataValue();
+    //                dirGrid(i,j) = dirGrid.get_NoDataValue();
+    //            } else
+    //            {
+    //                wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+    //            }
+    //        }
+    //    }
+    //
+    //    // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
+    //    for(int i=0; i<dirGrid.get_nRows(); i++)
+    //    {
+    //        for(int j=0; j<dirGrid.get_nCols(); j++)
+    //        {
+    //            if( speedGrid(i,j) != speedGrid.get_NoDataValue() && dirGrid(i,j) != dirGrid.get_NoDataValue() )
+    //            {
+    //                dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO geographic lat/lon coordinates
+    //                // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+    //                wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+    //            }
+    //        }
+    //    }
+    //
+    //    // cleanup the intermediate grids
+    //    speedGrid.deallocate();
+    //    dirGrid.deallocate();
+    //}
+    //// oh, no warp is actually done on this dataset till kmz output
 }
 
 /**
@@ -926,13 +991,27 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     velocityUnits::fromBaseUnits(speedInitializationGrid_wxModel, outputSpeedUnits);
 
     // now do the kmz preparation and writing stuff
+
     KmlVector ninjaKmlFiles;
 
     ninjaKmlFiles.setKmlFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kml") );
     ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
 
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
+        if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+        {
+            printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+        }
+        GDALClose(hDS);
+    }
+
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
+	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value

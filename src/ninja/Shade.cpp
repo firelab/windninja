@@ -36,10 +36,11 @@ Shade::Shade():AsciiGrid<short>()
 	smalll = 1.0e-013;
 }
 
-Shade::Shade(Elevation const* elev, double Theta, double Phi, int number_threads):AsciiGrid<short>(elev->get_nCols(), elev->get_nRows(), elev->get_xllCorner(), elev->get_yllCorner(), elev->get_cellSize(), elev->get_noDataValue())
+Shade::Shade(Elevation const* elev, double Theta, double Phi, double angleFromNorth, int number_threads):AsciiGrid<short>(elev->get_nCols(), elev->get_nRows(), elev->get_xllCorner(), elev->get_yllCorner(), elev->get_cellSize(), elev->get_noDataValue())
 {	
 	elevation = elev;
-	theta = Theta;
+    theta = Theta;  // expects the raw input value to be in geographic coordinates
+    theta = wrap0to360( theta - angleFromNorth ); //convert FROM geographic TO projected coordinates
 	phi = Phi;
 	number_CPUs = number_threads;
 	grid_made = false;
@@ -265,10 +266,11 @@ bool Shade::compute_gridShade()
 	}
 }
 
-bool Shade::compute_gridShade(Elevation const* elev, double Theta, double Phi, int number_threads)
+bool Shade::compute_gridShade(Elevation const* elev, double Theta, double Phi, double angleFromNorth, int number_threads)
 {	
 	elevation = elev;
-	theta = Theta;
+    theta = Theta;  // expects the raw input value to be in geographic coordinates
+    theta = wrap0to360( theta - angleFromNorth ); //convert FROM geographic TO projected coordinates
 	phi = Phi;
 	number_CPUs = number_threads;
 	grid_made = false;

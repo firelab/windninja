@@ -1137,7 +1137,14 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = meanDir;
+    input.inputDirection_proj = meanDir;
+    input.inputDirection_geog = wrap0to360( input.inputDirection_proj + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "wxModelInitialization::ninjaFoamInitializeFields()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1280,7 +1287,8 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0)
-{ 
+{
+//TODO: account for projection rotation from north for 3d data
     int kk;
     int i, j, k;
     double tempGradient;
@@ -1607,7 +1615,24 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+
+            /*//compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
+            double angleFromNorth = 0.0;
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+            {
+                CPLDebug( "COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
+                GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
+                if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+                {
+                    printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+                }
+                GDALClose(hDS);
+            }*/
+
+            //wxModelKmlFiles.setAngleFromNorth(angleFromNorth);
+            wxModelKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
             wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
+
             wxModelKmlFiles.setLineWidth(input.wxModelGoogLineWidth);
             wxModelKmlFiles.setTime(input.ninjaTime);
             std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));

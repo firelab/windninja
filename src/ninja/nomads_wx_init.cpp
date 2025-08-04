@@ -586,8 +586,42 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
     }
 
+// this fix works to finally properly add NO_DATA values instead of 0.0 values to the dataset,
+// and surprisingly, the code runs fine to completion. The main difference I saw was that the kmz output
+// dropped all the bands of zeroes around the edges of the dataset.
+//    psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA" );
+//    if( bSuccess == false )  // if GDALGetRasterNoDataValue( hBand, &bSuccess ) fails to return that a NO_DATA value is in the source dataset
+//    {
+//        psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str() );
+//    }
+
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     pszDstWkt = input.dem.prjString.c_str();
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "nomads, pre warp");
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        if(!GDALCalculateAngleFromNorth( hSrcDS, angleFromNorth ))
+        {
+            printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+        }
+    }
+
+    // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+    // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+    // in this case, going FROM weather model projection coordinates TO dem projection coordinates
+    double coordinateTransformationAngle = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        // direct calculation of FROM wx TO dem, already has the appropriate sign
+        if(!GDALCalculateCoordinateTransformationAngle( hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM wx TO dem
+        {
+            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+        }
+    }
+
 #ifdef NOMADS_INTERNAL_VRT
     hVrtDS = NomadsAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
                                         GRA_NearestNeighbour, 1.0,
@@ -597,6 +631,17 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
 #endif
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "nomads, post warp");
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
+    angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        if(!GDALCalculateAngleFromNorth( hVrtDS, angleFromNorth ))
+        {
+            printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+        }
+    }
 
     const char *pszElement;
     const char *pszComment;
@@ -812,7 +857,6 @@ noCloudOK:
     if(EQUAL(pszKey, "nbm_conus")) {
       uGrid.set_headerData(speedGrid);
       vGrid.set_headerData(speedGrid);
-      wGrid.set_headerData(speedGrid);
 
       for(int i=0; i<speedGrid.get_nRows(); i++)
       {
@@ -827,11 +871,82 @@ noCloudOK:
         }
       }
     }
-
-    wGrid = 0.0;
-
     speedGrid.deallocate();
     directionGrid.deallocate();
+
+    wGrid.set_headerData( uGrid );
+    wGrid = 0.0;
+
+    //use the coordinateTransformationAngle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        // need an intermediate spd and dir set of ascii grids
+        AsciiGrid<double> speedTmpGrid;
+        AsciiGrid<double> dirTmpGrid;
+        speedTmpGrid.set_headerData(uGrid);
+        dirTmpGrid.set_headerData(uGrid);
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedTmpGrid(i,j) = speedTmpGrid.get_NoDataValue();
+                    dirTmpGrid(i,j) = dirTmpGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedTmpGrid)(i,j), &(dirTmpGrid)(i,j));
+                }
+            }
+        }
+
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "pre coordTransformAngle calc" );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue() );
+        // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
+        for(int i=0; i<dirTmpGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<dirTmpGrid.get_nCols(); j++)
+            {
+                if( speedTmpGrid(i,j) != speedTmpGrid.get_NoDataValue() && dirTmpGrid(i,j) != dirTmpGrid.get_NoDataValue() )
+                {
+                    dirTmpGrid(i,j) = wrap0to360( dirTmpGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(speedTmpGrid(i,j), dirTmpGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
+            }
+        }
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "post coordTransformAngle calc" );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue() );
+
+// this whole little section is no longer needed, if we properly set the NO_DATA values, as above, with NO_DATA values properly set and detected,
+// the .get_meanValue() returns the right result every time now.
+        // the final true mean value that ends up getting used/passed around later on, it is KNOWN, and EXPECTED that there is a difference here
+        // This change occurs because the NO_DATA 270.0 valued dirGrid values get reset to their original 270.0 value, dropping the angle corrections,
+        // because spd, u, and v are set to NO_DATA 0.0 values. This is as desired and is expected, technically using dirGrid.get_meanValue()
+        // instead of wind_uv_to_sd(uGrid.get_meanValue(),vGrid.get_meanValue()) is a bad metric for comparisons.
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedTmpGrid(i,j) = speedTmpGrid.get_NoDataValue();
+                    dirTmpGrid(i,j) = dirTmpGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedTmpGrid)(i,j), &(dirTmpGrid)(i,j));
+                }
+            }
+        }
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "true post coordTransformAngle calc value (NO_DATA spd, u, v vals (0.0) and NO_DATA dir vals (270.0) now dropped)" );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue() );
+
+        // cleanup the intermediate grids
+        speedTmpGrid.deallocate();
+        dirTmpGrid.deallocate();
+    }
+
     GDALDestroyWarpOptions( psWarpOptions );
 }
 

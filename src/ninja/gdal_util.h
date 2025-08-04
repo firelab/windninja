@@ -45,10 +45,15 @@
 double GDALGetMax( GDALDataset *poDS );
 double GDALGetMin( GDALDataset *poDS );
 bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude );
+bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *pszWkt );
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
+bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszWkt );
+bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth );
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt );
 bool GDALTestSRS( GDALDataset *poDS );
 bool GDALHasNoData( GDALDataset *poDS, int band );
 bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid );
+bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszDstWkt );
 bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poDstDS,
                           const char *datum );
 bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
@@ -66,7 +71,8 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 
 bool gdalHasGeographicSRS (const char* filename);
 int gdalGetUtmZone (double latitude, double longitude);
-GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
 bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS);
+GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
+bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDALDatasetH& hDstDS, const char *pszDstWkt );
 
 #endif /* GDAL_UTIL_H */

@@ -32,7 +32,7 @@
 
 void Usage()
 { 
-    printf("convert_output input_file output_file dem_file\n");
+    printf("convert_output input_foam_U_file input_foam_k_file output_file_base dem_file\n");
     exit(1);
 }
 
@@ -74,7 +74,7 @@ static int TransformGeoToPixelSpace( double *adfInvGeoTransform, double dfX,
     return NINJA_SUCCESS;
 }
 
-int WriteOutputFiles(std::string inputFile, std::string outFile, std::string dem_filename)
+int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_file, std::string output_file_base, std::string dem_filename)
 {
     /*-------------------------------------------------------------------*/
     /* convert output from xyz to speed and direction                    */
@@ -86,57 +86,124 @@ int WriteOutputFiles(std::string inputFile, std::string outFile, std::string dem
     ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
     ** the VSIFGets functions.
     */
-    FILE *fin;
+    FILE *fin, *fin2;
+    //VSILFILE *fin, *fin2;
+    //FILE *fout, *fvrt;
     VSILFILE *fout, *fvrt;
     char buf[512];
+    char buf2[512];
     int rc;
     const char *pszVrtFile;
     const char *pszVrt;
     const char *pszVrtMem;
     const char *pszMem;
-    std::string s;
+    std::string s, s2;
 
+    /*-------------------------------------------------------------------*/
+    /* sanitize the u, v, and k output                                   */
+    /*-------------------------------------------------------------------*/
     pszMem = CPLSPrintf( "output.raw" );
     pszVrtMem = CPLStrdup( CPLSPrintf( "output.vrt") );
 
-    fin = VSIFOpen( inputFile.c_str(), "r" ); 
-    fout = VSIFOpenL( pszMem, "w" ); 
-    fvrt = VSIFOpenL( pszVrtMem, "w" ); 
+    fin = VSIFOpen( input_foam_U_file.c_str(), "r" );
+    fin2 = VSIFOpen( input_foam_k_file.c_str(), "r" );
+    fout = VSIFOpenL( pszMem, "w" );
+    fvrt = VSIFOpenL( pszVrtMem, "w" );
+
+    if( !fin )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open input_foam_U_file for reading." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fin2 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open input_foam_k_file for reading." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fout )
+    {
+        VSIFClose( fin );
+        VSIFClose( fin2 );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open intermediate output .raw file for writing." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fvrt )
+    {
+        VSIFClose( fin );
+        VSIFClose( fin2 );
+        VSIFCloseL( fout );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open intermediate vrt file for writing." );
+        return NINJA_E_FILE_IO;
+    }
     pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
 
     pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output" );
 
     VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
     VSIFCloseL( fvrt );
-    
+
     buf[0] = '\0';
+    buf2[0] = '\0';
     /*
     ** eat the first line
     */
     VSIFGets( buf, 512, fin );
+    VSIFGets( buf2, 512, fin2 );
     /*
     ** fix the header
     */
     VSIFGets( buf, 512, fin );
-    s = buf;
+    buf[ strcspn( buf, "\n" ) ] = '\0';
+    VSIFGets( buf2, 512, fin2 );
 
+    s = buf;
+    s2 = buf2;
     ReplaceKeys( s, "#", "", 1 );
     ReplaceKeys( s, "  ", "", 1 );
     ReplaceKeys( s, "  ", ",", 5 );
     ReplaceKeys( s, "  ", "", 1 );
+    s = s + ",k\n";
     VSIFWriteL( s.c_str(), s.size(), 1, fout );
     
     /*
     ** sanitize the data.
+    ** also get cell size
     */
+    double x1, x2, y1, y2;
+    int count = -1;
+    char **papszTokens = NULL;
     while( VSIFGets( buf, 512, fin ) != NULL )
     {
+        buf[ strcspn( buf, "\n" ) ] = '\0';
         s = buf;
+        VSIFGets( buf2, 512, fin2 );
+        s2 = buf2;
         ReplaceKeys( s, " ", ",", 5 );
+        ReplaceKeys( s2, " ", ",", 5 );
+        papszTokens = CSLTokenizeString2( s2.c_str(), ",", 0);
+        s = s + "," + std::string(papszTokens[CSLCount( papszTokens )-1]);
         VSIFWriteL( s.c_str(), s.size(), 1, fout );
+        count++;
+        if( count == 0 )
+        {
+            x1 = std::atof(papszTokens[0]);
+            y1 = std::atof(papszTokens[1]);
+        }
+        if( count == 1 )
+        {
+            x2 = std::atof(papszTokens[0]);
+            y2 = std::atof(papszTokens[1]);
+        }
     }
+    CSLDestroy( papszTokens );
     VSIFClose( fin );
+    VSIFClose( fin2 );
     VSIFCloseL( fout );
+    double meshResolution = std::abs(x2 - x1);
+    if( meshResolution == 0.0 )
+    {
+        meshResolution = std::abs(y2 - y1);
+    }
     
     /*-------------------------------------------------------------------*/
     /* sample cloud                                                      */
@@ -178,9 +245,28 @@ int WriteOutputFiles(std::string inputFile, std::string outFile, std::string dem
         fprintf(stderr, "Failed to open DEM\n");
         return 1;
     }
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        if(!GDALCalculateAngleFromNorth( hDem, angleFromNorth ))
+        {
+            printf("warning: Unable to calculate angle departure from north for the DEM.\n");
+        }
+    }
     AsciiGrid<double> dem; 
     GDAL2AsciiGrid( (GDALDataset *)hDem, 1, dem );
     GDALClose(hDem);
+
+    // resample the dem to the mesh resolution and then buffer, to match outputSampleGrid in cell size, extent, and nrows/ncols
+    if(meshResolution < dem.get_cellSize())
+    {
+        dem.resample_Grid_in_place(meshResolution, Elevation::order1); //make the grid finer
+    }else if(meshResolution > dem.get_cellSize())
+    {
+        dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
+    }
+    dem.BufferAroundGridInPlace(-1, -1);
 
     dfXMin = dem.get_xllCorner();
     dfXMax = dem.get_xllCorner() + dem.get_xDimension();
@@ -251,7 +337,14 @@ int WriteOutputFiles(std::string inputFile, std::string outFile, std::string dem
     {
         for(int j=0; j<foamU.get_nCols(); j++)
         {
-            wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+            if( foamU(i,j) == foamU.get_NoDataValue() || foamV(i,j) == foamV.get_NoDataValue() )
+            {
+                foamSpd(i,j) = foamSpd.get_NoDataValue();
+                foamDir(i,j) = foamDir.get_NoDataValue();
+            } else
+            {
+                wind_uv_to_sd(foamU(i,j), foamV(i,j), &(foamSpd)(i,j), &(foamDir)(i,j));
+            }
         }
     }
 
@@ -260,19 +353,21 @@ int WriteOutputFiles(std::string inputFile, std::string outFile, std::string dem
     /*-------------------------------------------------------------------*/
     
     /* write asc files */
-	foamDir.write_Grid(outFile, 0);
-	foamSpd.write_Grid(outFile, 2);
+	foamDir.write_Grid(output_file_base + "_ang.asc", 0);
+	foamSpd.write_Grid(output_file_base + "_vel.asc", 2);
 
 	/* write kmz files */
+
     KmlVector ninjaKmlFiles;
     
-    ninjaKmlFiles.setKmlFile(outFile + ".kml");
-	ninjaKmlFiles.setKmzFile(outFile + ".kmz");
-	ninjaKmlFiles.setDemFile(dem_filename);
+    ninjaKmlFiles.setKmlFile(output_file_base + ".kml");
+	ninjaKmlFiles.setKmzFile(output_file_base + ".kmz");
+	//ninjaKmlFiles.setDemFile(dem_filename);
 
-	ninjaKmlFiles.setLegendFile(outFile + ".bmp");
+	ninjaKmlFiles.setLegendFile(output_file_base + ".bmp");
 	//ninjaKmlFiles.setDateTimeLegendFile("out_kml_time.bmp", "ninjatime.bmp");
 	ninjaKmlFiles.setSpeedGrid(foamSpd, velocityUnits::metersPerSecond);
+	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(foamDir);
 
     ninjaKmlFiles.setLineWidth(1.0);
@@ -305,23 +400,25 @@ int main( int argc, char* argv[] )
 {
     NinjaInitialize();
     /*  parse input arguments  */
-    if( argc != 4 )
+    if( argc != 5 )
     {
         cout << "Invalid arguments!" << endl;
-        cout << "convert_output [input filename] [output filename] [dem filename]" << endl;
+        cout << "convert_output [input_foam_U_file] [input_foam_k_file] [output_file_base] [dem_filename]" << endl;
         return 1;
     }
-    std::string input_file = std::string( argv[1] );
-    std::string output_file = std::string( argv[2] );
-    std::string dem_filename = std::string( argv[3] );
+    std::string input_foam_U_file = std::string( argv[1] );
+    std::string input_foam_k_file = std::string( argv[2] );
+    std::string output_file_base = std::string( argv[3] );
+    std::string dem_filename = std::string( argv[4] );
     
-    cout<<"input filename = "<<input_file<<endl;
-    cout<<"output filename = "<<output_file<<endl;
-    cout<<"dem filename = "<<dem_filename<<endl;
-    cout<<"Writing files..."<<endl;
+    cout << "input_foam_U_file = " << input_foam_U_file << endl;
+    cout << "input_foam_k_file = " << input_foam_k_file << endl;
+    cout << "output_file_base = " << output_file_base << endl;
+    cout << "dem_filename = " << dem_filename << endl;
+    cout << "Writing files..." << endl;
 
     //Convert an xyz output file from OpenFOAM and convert to kmz AND raster with name 'output_file'
-    WriteOutputFiles( input_file, output_file, dem_filename );
+    WriteOutputFiles( input_foam_U_file, input_foam_k_file, output_file_base, dem_filename );
     
     return 0;
 }

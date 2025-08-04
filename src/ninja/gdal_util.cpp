@@ -28,8 +28,11 @@
  *****************************************************************************/
 
 #include "gdal_util.h"
-
 #include "ninja_conv.h"
+
+#ifndef PI
+#define PI 3.14159
+#endif
 
 /** Fetch the max value of a dataset.
  * Fetch the max value from any valid GDAL dataset
@@ -133,6 +136,101 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     return rc;
 }
 
+/** Fetch the center of a domain.
+ *
+ * Fetch the center of a domain from any valid GDAL dataset
+ * in the coordinates of the dataset or in the coordinates of an output CRS/spatial reference
+ *
+ * @param poDS a pointer to a valid GDAL Dataset
+ * @param dfX the X coordinate of the center point, to be filled
+ * @param dfY the Y coordinate of the center point, to be filled
+ * @param pszDstWkt the output spatial reference to which the center point of the dataset should be warped to, as an OGC well-known text representation of the spatial reference.
+ *        If NULL is passed, the center point of the dataset is not warped and is left in the coordinates of the dataset.
+ * @return true on valid population of the double* center point dfX and dfY values
+ */
+bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *pszDstWkt )
+{
+    GDALDatasetH hDS = (GDALDatasetH)poDS;
+    assert(hDS);
+    assert(dfX);
+    assert(dfY);
+    bool rc = true;
+
+    int nX = GDALGetRasterXSize(hDS);
+    int nY = GDALGetRasterYSize(hDS);
+
+    double adfGeoTransform[6];
+    if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None)
+    {
+        return false;
+    }
+
+    double x = adfGeoTransform[0] + adfGeoTransform[1] * (nX / 2) + adfGeoTransform[2] * (nY / 2);
+    double y = adfGeoTransform[3] + adfGeoTransform[4] * (nX / 2) + adfGeoTransform[5] * (nY / 2);
+
+    // pszDstWkt == NULL, return the center point in the coordinates of the input dataset
+    if(pszDstWkt == NULL)
+    {
+        *dfX = x;
+        *dfY = y;
+        return true;
+    }
+
+    // pszDstWkt != NULL, attempt to reproject the center point to the output spatial reference
+
+    const char *pszSrcWkt = GDALGetProjectionRef(hDS);
+    if(pszSrcWkt == NULL)
+    {
+        return false;
+    }
+
+    OGRSpatialReferenceH hSrcSRS, hTargetSRS;
+
+    hSrcSRS = OSRNewSpatialReference(pszSrcWkt);
+    hTargetSRS = OSRNewSpatialReference(NULL);
+    if(hSrcSRS == NULL || hTargetSRS == NULL)
+    {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+
+    OSRImportFromWkt( hTargetSRS, (char**)&pszDstWkt );
+    if(hTargetSRS == NULL)
+    {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    OSRSetAxisMappingStrategy(hTargetSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+    OGRCoordinateTransformationH hCT;
+    hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
+    if(hCT == NULL)
+    {
+        OSRDestroySpatialReference(hSrcSRS);
+        OSRDestroySpatialReference(hTargetSRS);
+        return false;
+    }
+
+    rc = OCTTransform(hCT, 1, &x, &y, 0);
+    if(rc)
+    {
+        *dfX = x;
+        *dfY = y;
+    }
+    OCTDestroyCoordinateTransformation(hCT);
+    OSRDestroySpatialReference(hSrcSRS);
+    OSRDestroySpatialReference(hTargetSRS);
+    return rc;
+}
+
 /** Fetch the longitude/latitude bounds of an image
  * @param poDS a pointer to a valid GDAL Dataset
  * @param boundsLonLat a pointer to a double[4] n, e, s, w order
@@ -195,6 +293,274 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
     boundsLonLat[3] = wLon;
 
     OGRCoordinateTransformation::DestroyCT( poCT );
+    return true;
+}
+
+/** Fetch the bounds of an image
+ *
+ * Fetch the bounds of an image from any valid GDAL dataset
+ * in the coordinates of the dataset or in the coordinates of an output CRS/spatial reference
+ *
+ * @param poDS a pointer to a valid GDAL Dataset
+ * @param bounds a pointer to a double[4], in n, e, s, w order, to be filled
+ * @param pszDstWkt the output spatial reference to which the bounds of the dataset should be warped to, as an OGC well-known text representation of the spatial reference.
+ *        If NULL is passed, the bounds of the dataset is not warped and is left in the coordinates of the dataset.
+ * @return true on valid population of bounds in n, e, s, w order
+ */
+bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
+{
+    if( poDS == NULL )
+    {
+        return false;
+    }
+
+    int xSize = poDS->GetRasterXSize();
+    int ySize = poDS->GetRasterYSize();
+
+    double adfGeoTransform[6];
+    poDS->GetGeoTransform( adfGeoTransform );
+
+    double north = adfGeoTransform[3] + adfGeoTransform[4] * 0     + adfGeoTransform[5] * 0;
+    double east  = adfGeoTransform[0] + adfGeoTransform[1] * xSize + adfGeoTransform[2] * 0;
+    double south = adfGeoTransform[3] + adfGeoTransform[4] * 0     + adfGeoTransform[5] * ySize;
+    double west  = adfGeoTransform[0] + adfGeoTransform[1] * 0     + adfGeoTransform[2] * 0;
+
+    // pszDstWkt == NULL, return the bounds in the coordinates of the input dataset
+    if(pszDstWkt == NULL)
+    {
+        bounds[0] = north;
+        bounds[1] = east;
+        bounds[2] = south;
+        bounds[3] = west;
+        return true;
+    }
+
+    // pszDstWkt != NULL, attempt to reproject the bounds to the output spatial reference
+
+    char* pszSrcWkt;
+    if( poDS->GetProjectionRef() == NULL )
+    {
+        return false;
+    }
+    pszSrcWkt = (char*)poDS->GetProjectionRef();
+
+    OGRSpatialReference oSourceSRS, oTargetSRS;
+
+    oSourceSRS.importFromWkt( &pszSrcWkt );
+    oTargetSRS.importFromWkt( &pszDstWkt );
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+    OGRCoordinateTransformation *poCT;
+    poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
+    if( poCT == NULL )
+    {
+        return false;
+    }
+
+    if( !poCT->Transform( 1, &east, &north ) )
+    {
+        OGRCoordinateTransformation::DestroyCT( poCT );
+        return false;
+    }
+    if( !poCT->Transform( 1, &west, &south ) )
+    {
+        OGRCoordinateTransformation::DestroyCT( poCT );
+        return false;
+    }
+
+    // note, by only warping and tracking two of the four points, this is truncating or expanding the bounds in the new coordinate system
+    bounds[0] = north;
+    bounds[1] = east;
+    bounds[2] = south;
+    bounds[3] = west;
+
+    OGRCoordinateTransformation::DestroyCT( poCT );
+    return true;
+}
+
+/** Calculate the angle between the N-S grid lines in the DS and true north for the center point of the DS.
+ *  Where the angle is defined as going FROM true north TO the y coordinate grid line of the DS.
+ * @param poDS a pointer to a valid GDALDataset
+ * @param angle the computed angle from north
+ * @return true on success false on failure.
+ */
+bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
+{
+    double x1, y1; //center point of DEM in lat/lon
+    double x2, y2; //point due north of center point in lat/lon
+    double boundsLonLat[4]; //bounds of the DS in lat/lon
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateAngleFromNorth()");
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poDS ) );
+
+    if(!GDALGetCenter( poDS, &x1, &y1 ))
+    {
+        return false;
+    }
+
+    x2 = x1;
+
+    //add 1/4 size of the DEM extent in y direction
+    if(!GDALGetBounds( poDS, boundsLonLat ))
+    {
+        return false;
+    }
+
+    y2 = y1 + 0.25*(boundsLonLat[0] - boundsLonLat[2]);
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
+
+    //project the two lat/lon points to projected DEM coordinates
+    if(!GDALPointFromLatLon(x1, y1, poDS, "WGS84"))
+    {
+        return false;
+    }
+
+    if(!GDALPointFromLatLon(x2, y2, poDS, "WGS84"))
+    {
+        return false;
+    }
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
+
+    //compute angle of the line formed between projected (x1,y1) to (x2,y2) (projected true north)
+    //and projected (x1,y1) to (x1,y2) (y coordinate gridline of the projected CRS).
+    //call the line going from (x1,y1) to (x2,y2) in the projected CRS "b", the line formed
+    //by our points (x1,y1) to (x1,y2) "a", and the angle between a and b "theta"
+    //cos(theta) = a dot b /(|a||b|)
+    //a dot b = axbx + ayby
+    //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
+
+    double ax, ay, bx, by; //denote x,y vector components of lines "a" and "b", derived from component length between startpoints and endpoints of lines "a" and "b"
+    double adotb; //a dot b
+    double mag_a, mag_b; //|a| and |b|
+
+    ax = x1 - x1;
+    ay = y2 - y1;
+    bx = x2 - x1;
+    by = y2 - y1;
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+
+    adotb = ax*bx + ay*by;
+    mag_a = sqrt(ax*ax + ay*ay);
+    mag_b = sqrt(bx*bx + by*by);
+
+    angleFromNorth = acos(adotb/(mag_a * mag_b)); //compute angle in radians
+
+    // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
+    // if bx is positive, the arrow b is pointed right from a, the rotation going FROM b TO a is counter clockwise, so the angle is negative
+    // if bx is negative, the arrow b is pointed  left from a, the rotation going FROM b TO a is clockwise, so the angle is positive (we don't need to do anything)
+    // also, going FROM b TO a is equivalent to going FROM true north TO the y coordinate grid line of the DS.
+    if( bx > 0 )
+    {
+        angleFromNorth = -1*angleFromNorth;
+    }
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth in radians = %lf", angleFromNorth );
+    //convert the result from radians to degrees
+    angleFromNorth *= 180.0 / PI;
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth in degrees = %lf", angleFromNorth );
+
+    return true;
+}
+
+/** Calculate the angle between the y coordinate grid lines of a source dataset and an output spatial reference.
+ *  Where the angle is defined, as going FROM the source dataset spatial reference TO the output spatial reference,
+ *  so, going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference.
+ * @param poSrcDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
+ * @param coordinateTransformAngle the computed angle between the y coordinate grid lines of the two datasets, to be filled
+ * @param pszDstWkt the output spatial reference to which the angle should be calculated for, as an OGC well-known text representation of the spatial reference.
+ * @return true on success false on failure.
+ */
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt )
+{
+    double x1, y1; //center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the pszDstWkt projection
+    double x2, y2; //point straight out in the direction of the y coordinate grid line from the center point of the poSrcDS, in the projection of the poSrcDS, to be transformed to the pszDstWkt projection
+    double bounds[4]; //bounds of the poSrcDS, used to calculate y2
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "GDALCalculateCoordinateTransformationAngle()");
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszSrcWkt = \"%s\"", GDALGetProjectionRef( poSrcDS ) );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "pszDstWkt = \"%s\"", pszDstWkt );
+
+    //get the center of the poSrcDS, in the projection of the poSrcDS
+    if(!GDALGetCenter( poSrcDS, &x1, &y1, NULL ))
+    {
+        return false;
+    }
+
+    x2 = x1;
+
+    //add 1/4 size of the poSrcDS extent in y direction, in the projection of the poSrcDS
+    if(!GDALGetBounds( poSrcDS, bounds, NULL ))
+    {
+        return false;
+    }
+
+    y2 = y1 + 0.25*(bounds[0] - bounds[2]);
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
+
+    //project the two points FROM the projection of the poSrcDS TO the pszDstWkt projection
+    if(!GDALTransformPoint(x1, y1, poSrcDS, pszDstWkt))
+    {
+        return false;
+    }
+
+    if(!GDALTransformPoint(x2, y2, poSrcDS, pszDstWkt))
+    {
+        return false;
+    }
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x1, y1 = %lf, %lf", x1, y1 );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "x2, y2 = %lf, %lf", x2, y2 );
+
+    //compute angle of the line formed between projected (x1,y1) to (x2,y2) (y coordinate gridline of poSrcDS, in the pszDstWkt projection coordinates)
+    //and projected (x1,y1) to (x1,y2) (y coordinate gridline of the pszDstWkt projection coordinate system, in the pszDstWkt projection coordinates).
+    //call the line going from (x1,y1) to (x2,y2) in the projected CRS "b", the line formed
+    //by our points (x1,y1) to (x1,y2) "a", and the angle between a and b "theta"
+    //cos(theta) = a dot b /(|a||b|)
+    //a dot b = axbx + ayby
+    //|a| = sqrt(ax^2 + ay^2) and |b| = sqrt(bx^2 + by^2)
+
+    double ax, ay, bx, by; //denote x,y vector components of lines "a" and "b", derived from component length between startpoints and endpoints of lines "a" and "b"
+    double adotb; //a dot b
+    double mag_a, mag_b; //|a| and |b|
+
+    ax = x1 - x1;
+    ay = y2 - y1;
+    bx = x2 - x1;
+    by = y2 - y1;
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "a = (%lf,%lf), b = (%lf,%lf)", ax, ay, bx, by );
+
+    adotb = ax*bx + ay*by;
+    mag_a = sqrt(ax*ax + ay*ay);
+    mag_b = sqrt(bx*bx + by*by);
+
+    coordinateTransformAngle = acos(adotb/(mag_a * mag_b)); //compute angle in radians
+
+    // add sign to the angle, ax should equal 0, ay should equal by, so should just be checking the sign of bx
+    // if bx is positive, the arrow b is pointed right from a, the rotation going FROM b TO a is counter clockwise, so the angle is negative
+    // if bx is negative, the arrow b is pointed  left from a, the rotation going FROM b TO a is clockwise, so the angle is positive (we don't need to do anything)
+    // also, going FROM b TO a is equivalent to going FROM the y coordinate grid line of the DS TO the y coordinate grid line of the output spatial reference.
+    if( bx > 0 )
+    {
+        coordinateTransformAngle = -1*coordinateTransformAngle;
+    }
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in radians = %lf", coordinateTransformAngle );
+    //convert the result from radians to degrees
+    coordinateTransformAngle *= 180.0 / PI;
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "coordinateTransformAngle in degrees = %lf", coordinateTransformAngle );
+
     return true;
 }
 
@@ -360,6 +726,61 @@ bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid )
 
 }
 
+/** perform a coordinate transformation on a point, from one coordinate system to another
+ *
+ * perform a coordinate transformation on a point, from one coordinate system to another
+ * where the input coordinate system is specified by a valid GDAL dataset
+ * and the output coordinate system is specified by a CRS/spatial reference.
+ *
+ * @param dfX the X coordinate of the point to be transformed, to be filled
+ * @param dfY the Y coordinate of the point to be transformed, to be filled
+ * @param poSrcDS a pointer to a valid GDAL Dataset, from which the input spatial reference is obtained
+ * @param pszDstWkt the output spatial reference to which the point of interest should be warped to, as an OGC well-known text representation of the spatial reference.
+ * @return true on valid population of the transformed point
+ */
+bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszDstWkt )
+{
+    if( poSrcDS == NULL )
+    {
+        return false;
+    }
+
+    char* pszSrcWkt;
+    if( poSrcDS->GetProjectionRef() == NULL )
+    {
+        return false;
+    }
+    pszSrcWkt = (char*)poSrcDS->GetProjectionRef();
+
+    OGRSpatialReference oSourceSRS, oTargetSRS;
+
+    oSourceSRS.importFromWkt( &pszSrcWkt );
+    oTargetSRS.importFromWkt( &pszDstWkt );
+
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+    oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+#endif /* GDAL_COMPUTE_VERSION */
+
+    OGRCoordinateTransformation *poCT;
+    poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
+    if( poCT == NULL )
+    {
+        return false;
+    }
+
+    if( !poCT->Transform( 1, &dfX, &dfY ) )
+    {
+        OGRCoordinateTransformation::DestroyCT( poCT );
+        return false;
+    }
+
+    OGRCoordinateTransformation::DestroyCT( poCT );
+    return true;
+}
+
 bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poSrcDS,
 			  const char *datum )
 {
@@ -497,8 +918,7 @@ int GDALGetUtmZone( GDALDataset *poDS )
 
     double longitude = 0;
     double latitude = 0;
-    if( !GDALGetCenter( poDS, &longitude, &latitude ) )
-        return 0;
+    if( !GDALGetCenter( poDS, &longitude, &latitude ) ) return 0;
 
     return GetUTMZoneInEPSG( longitude, latitude );
 }
@@ -879,7 +1299,7 @@ int gdalGetUtmZone (double lat, double lon) {
  * @return true on success, false on failure
  *
  */
-bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS) 
+bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS)
 {
     /* parse options */
     GDALResampleAlg eAlg = GRA_NearestNeighbour;
@@ -1067,6 +1487,99 @@ GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS) {
     }
 
     return pDstDS;
+}
+
+/**
+ * @brief Warp a single band of a GDAL dataset into an output VRT GDAL dataset, using an output spatial reference defined by a WKT
+ * using GDALAutoCreateWarpedVRT().
+ *
+ * Warp a single band of a given source GDAL dataset into an output VRT GDAL dataset.
+ * Where the source dataset is warped FROM the source dataset spatial reference TO the output spatial reference,
+ * and the output spatial reference is defined by a WKT.
+ *
+ * note that the only pszWarpOptions used are panSrcBands as the source band number, panDstBands the destination band number of 1,
+ * and both padfDstNoDataReal and padfDstNoDataImag set to the NoDataValue of the dataset (or -9999 if no NoDataValue in the dataset).
+ *
+ * @param hSrcDS a pointer to a valid source GDAL dataset, to be warped
+ * @param band the specific band number within the source GDAL dataset to be warped
+ * @param hDstDS the destination GDAL dataset, as a VRT, to be filled
+ * @param pszDstWkt the output spatial reference to which the source GDAL dataset should be warped to, as an OGC well-known text representation of the spatial reference.
+ * @return true on success, false on failure
+ */
+bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDALDatasetH& hDstDS, const char *pszDstWkt )
+{
+    //if(hDstDS != NULL)  // this didn't work as a good checking method
+    //{
+    //    CPLError( CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input hDstDS is NOT NULL, it was input pre-filled!" );
+    //    return false;
+    //}
+
+    int nBandCount = GDALGetRasterCount( hSrcDS );
+    if( band <= 0 )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input band is <= 0." );
+        return false;
+    }
+    if( band > nBandCount )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input band %i is > nBands of the dataset.", band );
+        return false;
+    }
+
+    GDALDatasetH hBand = GDALGetRasterBand( hSrcDS, band );
+    int bSuccess = false;
+    double dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
+    if( bSuccess == false )
+    {
+        dfNoData = -9999.0;
+    }
+
+    const char *pszSrcWkt;
+    pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+
+    GDALWarpOptions *psWarpOptions;
+    psWarpOptions = GDALCreateWarpOptions();
+
+    psWarpOptions->nBandCount = nBandCount;
+
+    psWarpOptions->panSrcBands =
+        (int *) CPLMalloc(sizeof(int) * nBandCount );
+    psWarpOptions->panSrcBands[0] = band;
+
+    psWarpOptions->panDstBands =
+        (int *) CPLMalloc(sizeof(int) * nBandCount );
+    psWarpOptions->panDstBands[0] = 1;
+
+    psWarpOptions->padfDstNoDataReal =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->padfDstNoDataImag =
+        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    for( int i = 0; i < nBandCount; i++ )
+    {
+        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+    }
+
+    psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA" );
+    if( bSuccess == false )  // if GDALGetRasterNoDataValue( hBand, &bSuccess ) fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str() );
+    }
+
+
+    hDstDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
+                                      GRA_NearestNeighbour, 1.0,
+                                      psWarpOptions );
+
+    if(hDstDS == NULL)
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Warp operation failed!" );
+        return false;
+    }
+
+    GDALDestroyWarpOptions( psWarpOptions );
+
+    return true;
 }
 
 

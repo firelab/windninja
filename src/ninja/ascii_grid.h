@@ -195,9 +195,6 @@ public:
     void write_Grid(std::string outputFile, int numDecimals);
     void write_json_Grid(std::string outputFile, int numDecimals);
 
-    void write_ascii_4326_Grid (std::string outputFile, int numDecimals);
-    void write_json_4326_Grid(std::string outputFile, int numDecimals);
-
     bool crop_noData(int noDataThreshold);
 
     void sort_grid();
@@ -272,7 +269,6 @@ private:
     //at some point.  *sigh* leave it in.  My bad -kss.
     static const int magicNumber = 0x3634af3;
 
-    void write_4326_Grid (std::string& filename, int precision, void (AsciiGrid<T>::*write_grid)(std::string,int));
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
