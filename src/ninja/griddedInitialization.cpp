@@ -147,7 +147,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         throw std::runtime_error("Could not make a spatial reference for input direction grid.");
     }
 
-    if( !OSRIsSameEx( hSpeedSRS, hDirSRS, NULL ) )
+    if( !OSRIsSame( hSpeedSRS, hDirSRS ) )
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Error reading the input speed and direction grids." );
         throw std::runtime_error("The input speed grid does not have the same spatial reference as the input direction grid.");
@@ -162,7 +162,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         throw std::runtime_error("Could not make a spatial reference for the dem.");
     }
 
-    if( !OSRIsSameEx( hDirSRS, hDemSRS, NULL ) )
+    if( !OSRIsSame( hDirSRS, hDemSRS ) )
     {
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "warping the input speed and direction grids to the projection of the dem." );
 
@@ -176,7 +176,7 @@ void griddedInitialization::setInitializationGrids(WindNinjaInputs &input)
         {
             GDALDatasetH hDirDS = inputAngleGrid.ascii2GDAL();
             // direct calculation of FROM input_grid TO dem, already has the appropriate sign
-            if(!GDALCalculateCoordinateTransformationAngle( hDirDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
+            if(!GDALCalculateCoordinateTransformationAngle( (GDALDataset*)hDirDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM input_grid TO dem
             {
                 printf("Warning: Unable to calculate coordinate transform angle for the gridded initialization input speed and direction grids to dem coordinates.");
             }

@@ -347,7 +347,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
     OGRSpatialReference oSourceSRS, oTargetSRS;
 
     oSourceSRS.importFromWkt( &pszSrcWkt );
-    oTargetSRS.importFromWkt( &pszDstWkt );
+    oTargetSRS.importFromWkt( (char**)&pszDstWkt );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
@@ -755,7 +755,7 @@ bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const c
     OGRSpatialReference oSourceSRS, oTargetSRS;
 
     oSourceSRS.importFromWkt( &pszSrcWkt );
-    oTargetSRS.importFromWkt( &pszDstWkt );
+    oTargetSRS.importFromWkt( (char**)&pszDstWkt );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)

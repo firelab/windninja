@@ -600,11 +600,11 @@ int main(int argc, char *argv[])
         // but we also want to reject filling if there are more than 8 bands, need the exact specific order and count if there is vegetation in the dataset
         if( nBands < 8)
         {
-            throw std::runtime_error("\nToo few bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + std::to_string(nBands) + " bands");
+            throw std::runtime_error("\nToo few bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + boost::lexical_cast<std::string>(nBands) + " bands");
         }
         if( nBands > 8)
         {
-            throw std::runtime_error("\nToo many bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + std::to_string(nBands) + " bands");
+            throw std::runtime_error("\nToo many bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + boost::lexical_cast<std::string>(nBands) + " bands");
         }
     }
 

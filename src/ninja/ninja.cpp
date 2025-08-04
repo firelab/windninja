@@ -2849,7 +2849,7 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         OGRSpatialReferenceH hTargetSRS;
         hTargetSRS = OSRNewSpatialReference(NULL);
         OSRImportFromEPSG(hTargetSRS, 4326);
-        OSRExportToWktEx(hTargetSRS, &pszDstWkt, NULL);
+        OSRExportToWkt( hTargetSRS, (char**)&pszDstWkt );
 
         GDALDatasetH uGrid_hVrtDS;
         GDALDatasetH vGrid_hVrtDS;
