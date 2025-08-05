@@ -2495,7 +2495,9 @@ int mainWindow::solve()
         army->setPDFLineWidth    (i,pdfLineWidth);
         army->setPDFBaseMap      (i,pdfBase);
         army->setPDFSize         (i,pdfHeight,pdfWidth,150);
-        army->setAsciiOutFlag    (i,writeFb);    
+        army->setAsciiOutFlag    (i,writeFb);
+        army->setAsciiAaigridOutFlag(i,writeFb);
+        army->setAsciiProjOutFlag(i,writeFb);
         army->setAsciiResolution (i,fbRes,fbUnits);
         //army->setWriteAtmFile  (i,writeAtm );  
         army->setVtkOutFlag      (i,writeVTK);  
