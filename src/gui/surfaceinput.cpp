@@ -323,8 +323,7 @@ void SurfaceInput::fetchDEMFinished()
     }
 
     ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
-    int currentIndex = ui->inputsStackedWidget->currentIndex();
-    ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+    ui->inputsStackedWidget->setCurrentIndex(5);
 }
 
 void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
