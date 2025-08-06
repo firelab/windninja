@@ -36,6 +36,11 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
+    ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/server_go.png"));
+    ui->pointInitializationRefreshButton->setIcon(QIcon(":/arrow_rotate_clockwise.png"));
+    ui->pointInitializationWriteStationKMLCheckBox->setIcon(QIcon(":/weather_cloudy.png"));
+    ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
+    ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);

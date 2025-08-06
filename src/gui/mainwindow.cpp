@@ -321,32 +321,6 @@ MainWindow::MainWindow(QWidget *parent)
     model->setReadOnly(false);
     model->setResolveSymlinks(true);
 
-    // Set the correct root index inside Downloads
-    QModelIndex rootIndex = model->index(downloadsPath);
-    ui->pointInitializationTreeView->setModel(model);
-    ui->pointInitializationTreeView->setRootIndex(rootIndex);
-
-    // Ensure folders expand and collapse correctly
-    ui->pointInitializationTreeView->setExpandsOnDoubleClick(true);
-    ui->pointInitializationTreeView->setAnimated(true);
-    ui->pointInitializationTreeView->setIndentation(15);
-    ui->pointInitializationTreeView->setSortingEnabled(true);
-    ui->pointInitializationTreeView->setItemsExpandable(true);
-    ui->pointInitializationTreeView->setUniformRowHeights(true);
-
-    // Show only "Name" and "Date Modified" columns
-    ui->pointInitializationTreeView->hideColumn(1);  // Hide Size column
-    ui->pointInitializationTreeView->hideColumn(2);  // Hide Type column
-
-    // Optional: Set column headers
-    QHeaderView *header = ui->pointInitializationTreeView->header();
-    header->setSectionResizeMode(0, QHeaderView::Interactive);
-    header->setSectionResizeMode(3, QHeaderView::Stretch);
-    model->setHeaderData(0, Qt::Horizontal, "Name");
-    model->setHeaderData(3, Qt::Horizontal, "Date Modified");
-
-    ui->pointInitializationTreeView->expandAll();
-
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
@@ -418,9 +392,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
-
-    // Wind Input -> Point Init window
-    ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/application_get"));
 
     // Populate default location for output location
     ui->outputDirectoryLineEdit->setText(downloadsPath);
@@ -505,51 +476,6 @@ void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column) {
         ui->inputsStackedWidget->setCurrentIndex(pageIndex);
     }
     }
-}
-
-// Recursive function to add files and directories correctly with Name and Date columns
-void addFilesRecursively(QStandardItem *parentItem, const QString &dirPath) {
-    QDir dir(dirPath);
-    QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo &entry : entries) {
-        QStandardItem *nameItem = new QStandardItem(entry.fileName());
-        QStandardItem *dateItem = new QStandardItem(entry.lastModified().toString("yyyy-MM-dd HH:mm:ss"));
-        nameItem->setEditable(false);
-        dateItem->setEditable(false);
-        parentItem->appendRow({nameItem, dateItem});
-        if (entry.isDir()) {
-            addFilesRecursively(nameItem, entry.absoluteFilePath());
-        }
-    }
-}
-
-// Function to populate weatherModelDataTreeView with .tif parent directories and all nested contents
-void MainWindow::populateForecastDownloads() {
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    QDir downloadsDir(downloadsPath);
-
-    if (!downloadsDir.exists()) return;
-
-    QStandardItemModel *model = new QStandardItemModel(this);
-    model->setHorizontalHeaderLabels({"Name", "Date Modified"});
-
-    QDirIterator it(downloadsPath, QDir::Dirs | QDir::NoDotAndDotDot);
-    while (it.hasNext()) {
-        QString dirPath = it.next();
-        if (dirPath.endsWith(".tif", Qt::CaseInsensitive)) {
-            QStandardItem *parentItem = new QStandardItem(QFileInfo(dirPath).fileName());
-            parentItem->setEditable(false);
-            addFilesRecursively(parentItem, dirPath);
-            model->appendRow(parentItem);
-        }
-    }
-
-    ui->weatherModelDataTreeView->setModel(model);
-    ui->weatherModelDataTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
-
-    // Disable editing and enable double-click expansion
-    ui->weatherModelDataTreeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui->weatherModelDataTreeView->setExpandsOnDoubleClick(true);
 }
 
 
