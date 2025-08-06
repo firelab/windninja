@@ -51,8 +51,11 @@ void ServerBridge::checkMessages(void)
             char *papszMsg = NinjaQueryServerMessages(false);
             if (papszMsg != NULL)
             {
+                mbox.setTextFormat(Qt::RichText);
                 mbox.setText(papszMsg);
-
+                mbox.setTextInteractionFlags(Qt::TextBrowserInteraction);
+                mbox.setStandardButtons(QMessageBox::Ok);
+                mbox.setWindowModality(Qt::ApplicationModal);
                 mbox.exec();
                 delete[] papszMsg;
             }
@@ -136,7 +139,13 @@ char * ServerBridge::NinjaQueryServerMessages(bool checkAbort)
         if (!versionisuptodate)
         {
             oss << messages[0] << "\n";
-            oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "\n" << "\n";
+            oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "<br><br>";
+
+            oss << "Windows: Download the new " << messages[1]
+                << " installer <a href=\"https://research.fs.usda.gov/firelab/products/dataandtools/windninja\">here</a><br><br>";
+
+            oss << "Linux: See the <a href=\"https://github.com/firelab/windninja/tree/" << messages[1] << "\">" << messages[1] << "</a> tag in our GitHub repo<br>";
+
         }
         if (messages[4].empty() == false)
         {
