@@ -138,7 +138,6 @@ char * ServerBridge::NinjaQueryServerMessages(bool checkAbort)
         bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING));
         if (!versionisuptodate)
         {
-            oss << messages[0] << "\n";
             oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "<br><br>";
 
             oss << "Windows: Download the new " << messages[1]
