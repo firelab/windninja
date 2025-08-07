@@ -557,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>10</number>
+           <number>20</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -3998,7 +3998,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <number>0</number>
                  </property>
                  <property name="currentIndex">
-                  <number>0</number>
+                  <number>1</number>
                  </property>
                  <widget class="QWidget" name="downloadFromDEMPage">
                   <layout class="QHBoxLayout" name="horizontalLayout_17">
@@ -4128,7 +4128,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </size>
                  </property>
                  <property name="currentIndex">
-                  <number>1</number>
+                  <number>0</number>
                  </property>
                  <widget class="QWidget" name="downloadMostRecentPage">
                   <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -4296,7 +4296,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
          </spacer>
         </item>
-        <item alignment="Qt::AlignmentFlag::AlignHCenter">
+        <item>
          <widget class="QPushButton" name="solveButton">
           <property name="enabled">
            <bool>false</bool>
