@@ -38,7 +38,8 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProject);
     connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolution);
     connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProject);
-    //connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
+    connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
+
     // QMenu optionsMenu "Options" actions
     connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MenuBar::enableConsoleOutput);
     connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutput);
