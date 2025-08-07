@@ -39,6 +39,7 @@
 #include <QFutureWatcher>
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
+#include <QFileSystemModel>
 
 
 namespace Ui {
@@ -61,6 +62,7 @@ private slots:
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);
     void weatherStationDataDownloadButtonClicked();
+    void pointInitialziationRefreshButtonClicked();
 
 private:
     Ui::MainWindow *ui;

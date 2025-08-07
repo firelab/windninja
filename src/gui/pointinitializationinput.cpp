@@ -50,6 +50,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataSourceComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataTimeComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataDownloadButton, &QPushButton::clicked, this, &PointInitializationInput::weatherStationDataDownloadButtonClicked);
+    connect(ui->pointInitializationRefreshButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitialziationRefreshButtonClicked);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -87,7 +88,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> day    = {start.date().day(),    end.date().day()};
     QVector<int> hour   = {start.time().hour(),   end.time().hour()};
     QVector<int> minute = {start.time().minute(), end.time().minute()};
-    bool fetchLatestFlag = true; // or based on combo box if needed
+    bool fetchLatestFlag = true;
 
     QString outputPath = ui->outputDirectoryLineEdit->text();
     QString units = ui->downloadFromDEMComboBox->currentText();
@@ -96,7 +97,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 
     double buffer = ui->downloadFromDEMSpinBox->value();
 
-    progress = new QProgressDialog("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
@@ -166,4 +167,15 @@ void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChang
 void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged(int index)
 {
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(index);
+}
+
+void PointInitializationInput::pointInitialziationRefreshButtonClicked()
+{
+    QFileSystemModel *model = new QFileSystemModel;
+    QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo fileInfo(path);
+    model->setRootPath(fileInfo.absolutePath());
+
+    ui->pointInitializationTreeView->setModel(model);
+    ui->pointInitializationTreeView->setRootIndex(model->index(fileInfo.absolutePath()));
 }
