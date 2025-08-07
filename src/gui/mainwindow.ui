@@ -3998,7 +3998,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <number>0</number>
                  </property>
                  <property name="currentIndex">
-                  <number>1</number>
+                  <number>0</number>
                  </property>
                  <widget class="QWidget" name="downloadFromDEMPage">
                   <layout class="QHBoxLayout" name="horizontalLayout_17">
@@ -4128,7 +4128,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </size>
                  </property>
                  <property name="currentIndex">
-                  <number>0</number>
+                  <number>1</number>
                  </property>
                  <widget class="QWidget" name="downloadMostRecentPage">
                   <layout class="QHBoxLayout" name="horizontalLayout_9">

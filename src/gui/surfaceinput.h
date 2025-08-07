@@ -59,7 +59,6 @@ public:
                                 QWebEngineView* webView,
                                 QObject* parent = nullptr);
     double computeMeshResolution(int index, bool isMomemtumChecked);
-    QString getDEMFilePath();
 
 signals:
     void requestRefresh();
@@ -90,8 +89,8 @@ private:
 
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
-    QString currentDEMFilePath;
 
+    QString currentDEMFilePath;
     QString GDALDriverName;
     int GDALXSize, GDALYSize;
     double GDALCellSize, GDALMaxValue, GDALMinValue;

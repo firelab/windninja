@@ -200,6 +200,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
         demFilePath += ".tif";
     }
     currentDEMFilePath = demFilePath;
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     std::string demFile = demFilePath.toStdString();
 
     std::string fetchType;
@@ -272,6 +273,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     }
 
     currentDEMFilePath = demFilePath;
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
@@ -662,10 +664,4 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
     pointRadius[1] = centerLon;
     pointRadius[2] = radius;
 }
-
-QString SurfaceInput::getDEMFilePath()
-{
-    return currentDEMFilePath;
-}
-
 

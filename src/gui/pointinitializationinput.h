@@ -31,8 +31,14 @@
 #define POINTINITIALIZATIONINPUT_H
 
 #include "appstate.h"
+#include "../ninja/windninja.h"
 #include "ui_mainwindow.h"
 #include <QObject>
+#include <QTimeZone>
+#include <QFuture>
+#include <QFutureWatcher>
+#include <QProgressDialog>
+#include <QtConcurrent/QtConcurrent>
 
 
 namespace Ui {
@@ -54,9 +60,30 @@ private slots:
     void weatherStationDataDownloadCancelButtonClicked();
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);
+    void weatherStationDataDownloadButtonClicked();
 
 private:
     Ui::MainWindow *ui;
+    PointInitializationInput *pointInitializationInput;
+
+    QProgressDialog *progress;
+    QFutureWatcher<int> *futureWatcher;
+
+    QString currentDEMFilePath;
+
+    int fetchStationData(QVector<int> year,
+                         QVector<int> month,
+                         QVector<int> day,
+                         QVector<int> hour,
+                         QVector<int> minute,
+                         QString elevationFile,
+                         double buffer,
+                         QString units,
+                         QString osTimeZone,
+                         bool fetchLatestFlag,
+                         QString outputPath);
+    void fetchStationDataFinished();
+
 };
 
 #endif // POINTINITIALIZATIONINPUT_H

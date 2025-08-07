@@ -119,6 +119,7 @@ private:
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
     PointInitializationInput *pointInitializationInput;
+    QString currentDEMFilePath;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);

@@ -813,7 +813,7 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetInitializationMethod: err = %d\n", err);
         }
 
-        err = NinjaSetDem(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+        err = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
             printf("NinjaSetDem: err = %d\n", err);
@@ -1041,7 +1041,7 @@ void MainWindow::setOutputFlags(NinjaArmyH *ninjaArmy, int i)
         qDebug() << "NinjaSetPDFBaseMap: err =" << err;
     }
 
-    err = NinjaSetPDFDEM(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+    err = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFDEM: err =" << err;
