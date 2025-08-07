@@ -670,8 +670,9 @@ int windNinjaCLI(int argc, char* argv[])
                     fprintf(stderr, "Invalid DEM Source\n");
                     exit(1);
                 }
-            
-                int nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
+
+                double srtmRes = fetch->GetXRes();
+                int nSrtmError = fetch->FetchBoundingBox(bbox, srtmRes,
                                                      new_elev.c_str(), NULL);
                 delete fetch;
                                                      
@@ -761,7 +762,14 @@ int windNinjaCLI(int argc, char* argv[])
                 bbox[2] = south;
                 bbox[3] = west;
 
-                nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
+                double elevRes = fetch->GetXRes();
+                #ifdef HAVE_GMTED
+                if( EQUAL( source.c_str(), FetchFactory::WORLD_GMTED_STR.c_str() ) )
+                {
+                    elevRes = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+                }
+                #endif //HAVE_GMTED
+                nSrtmError = fetch->FetchBoundingBox(bbox, elevRes,
                                                      new_elev.c_str(), NULL);
                                                      
                 if(nSrtmError < 0)
@@ -812,8 +820,15 @@ int windNinjaCLI(int argc, char* argv[])
                 else
                     buffer_units = lengthUnits::kilometers;
 
+                double elevRes = fetch->GetXRes();
+                #ifdef HAVE_GMTED
+                if( EQUAL( source.c_str(), FetchFactory::WORLD_GMTED_STR.c_str() ) )
+                {
+                    elevRes = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+                }
+                #endif //HAVE_GMTED
                 nSrtmError = fetch->FetchPoint(center, buffer, buffer_units,
-                                               30.0, new_elev.c_str(), NULL);
+                                               elevRes, new_elev.c_str(), NULL);
             }
             delete fetch;
 

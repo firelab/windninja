@@ -389,7 +389,7 @@ void WidgetDownloadDEM::updateDEMSource(int index)
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED, FindDataPath("/data"));
         northDEMBound = world_gmted_northBound;
         southDEMBound = world_gmted_southBound;
-        currentResolution = (fetcher->GetXRes() * 111325);
+        currentResolution = (fetcher->GetXRes() * 111325);  // convert from lat/lon to m
         currentSuffix = "tif";
         currentSaveAsDesc = "Elevation files (*.tif)";
         break;

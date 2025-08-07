@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     double adfPoint[2];
     double adfBuff[2];
     const char *pszUnits = "miles";
-    double dfCellSize = 30.0;
+    double dfCellSize = -1;
     const char *pszResample = "near";
     const char *pszSource = NULL;
     const char *pszGeocodeName = NULL;
@@ -206,6 +206,11 @@ int main(int argc, char *argv[])
         else if(EQUAL(argv[i], "--out_res"))
         {
             dfCellSize = CPLAtof(argv[++i]);
+            if(dfCellSize <= 0.0)
+            {
+                fprintf(stderr, "Cell size must be positive\n");
+                Usage();
+            }
         }
         else if(EQUAL(argv[i], "--r"))
         {
@@ -314,12 +319,6 @@ int main(int argc, char *argv[])
     else
     {
         fprintf(stderr, "Units must be 'miles' or 'kilometers'\n");
-        Usage();
-    }
-
-    if(dfCellSize <= 0.0)
-    {
-        fprintf(stderr, "Cell size must be positive\n");
         Usage();
     }
 
@@ -455,11 +454,31 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Invalid bounding box, inverted values\n");
             Usage();
         }
+        if(dfCellSize <= 0.0)
+        {
+            dfCellSize = fetch->GetXRes();
+            #ifdef HAVE_GMTED
+            if( EQUAL( pszSource, FetchFactory::WORLD_GMTED_STR.c_str() ) )
+            {
+                dfCellSize = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+            }
+            #endif //HAVE_GMTED
+        }
         nSrtmError = fetch->FetchBoundingBox(adfBbox, dfCellSize, pszDstFile,
                                              papszOptions);
     }
     else
     {
+        if(dfCellSize <= 0.0)
+        {
+            dfCellSize = fetch->GetXRes();
+            #ifdef HAVE_GMTED
+            if( EQUAL( pszSource, FetchFactory::WORLD_GMTED_STR.c_str() ) )
+            {
+                dfCellSize = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+            }
+            #endif //HAVE_GMTED
+        }
         nSrtmError = fetch->FetchPoint(adfPoint, adfBuff, units, dfCellSize,
                                        pszDstFile, papszOptions);
     }
