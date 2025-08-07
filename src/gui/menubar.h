@@ -43,6 +43,9 @@ class MenuBar : public QObject
 public:
     MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
 
+signals:
+    void openElevationInputFileMenuActionTriggered();
+
 private slots:
     // functions for Menu actions
     // functions for QMenu fileMenu "File" actions
