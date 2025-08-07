@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     double adfPoint[2];
     double adfBuff[2];
     const char *pszUnits = "miles";
-    double dfCellSize = 90.0;
+    double dfCellSize = 30.0;
     const char *pszResample = "near";
     const char *pszSource = NULL;
     const char *pszGeocodeName = NULL;

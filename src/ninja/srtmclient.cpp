@@ -68,7 +68,6 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
                                                const char *filename,
                                                char **options )
 {
-    (void)resolution;
     if( NULL == filename )
     {
         return SURF_FETCH_E_BAD_INPUT;
