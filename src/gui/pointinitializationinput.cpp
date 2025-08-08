@@ -157,6 +157,7 @@ void PointInitializationInput::fetchStationDataFinished()
     }
 
     ui->inputsStackedWidget->setCurrentIndex(10);
+    ui->pointInitializationRefreshButton->click();
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
@@ -177,17 +178,17 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
     model->setRootPath(fileInfo.absolutePath());
 
     QStringList filters;
-    filters<<"*.csv"; //Only show CSV
-    filters<<"WXSTATIONS-*"; //Add downloadable directories to filters
+    filters<<"*.csv";
+    filters<<"WXSTATIONS-*";
     model->setNameFilters(filters);
-    model->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot); //QDir::Dir specifies to add filters to directories
+    model->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     model->setNameFilterDisables(false);
 
     ui->pointInitializationTreeView->setModel(model);
     ui->pointInitializationTreeView->setRootIndex(model->index(fileInfo.absolutePath()));
     ui->pointInitializationTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
-    ui->pointInitializationTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch); // Name column
-    ui->pointInitializationTreeView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents); // Date Modified column
+    ui->pointInitializationTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    ui->pointInitializationTreeView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     ui->pointInitializationTreeView->hideColumn(1);
     ui->pointInitializationTreeView->hideColumn(2);
 }

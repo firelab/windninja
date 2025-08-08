@@ -250,6 +250,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
     webView->page()->runJavaScript(js);
 
     emit requestRefresh();
+    emit ui->pointInitializationRefreshButton->clicked();
 }
 
 void SurfaceInput::elevationInputFileOpenButtonClicked()
