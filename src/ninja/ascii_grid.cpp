@@ -27,7 +27,7 @@ template<> inline short epsClr<short>() { return 1; }
 
 template <class T>
 inline bool cplIsNan(T t) {
-    return CPLIsNan((double)t); // we need to disambiguate
+    return std::isnan(static_cast<double>(t)); // we need to disambiguate
 }
 
 
