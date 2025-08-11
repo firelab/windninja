@@ -88,6 +88,15 @@
        </color>
       </brush>
      </colorrole>
+     <colorrole role="PlaceholderText">
+      <brush brushstyle="NoBrush">
+       <color alpha="128">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
     </active>
     <inactive>
      <colorrole role="WindowText">
@@ -144,14 +153,50 @@
        </color>
       </brush>
      </colorrole>
+     <colorrole role="PlaceholderText">
+      <brush brushstyle="NoBrush">
+       <color alpha="128">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
     </inactive>
     <disabled>
+     <colorrole role="WindowText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>190</red>
+        <green>190</green>
+        <blue>190</blue>
+       </color>
+      </brush>
+     </colorrole>
      <colorrole role="Button">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
         <red>60</red>
         <green>60</green>
         <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Text">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>190</red>
+        <green>190</green>
+        <blue>190</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="ButtonText">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>190</red>
+        <green>190</green>
+        <blue>190</blue>
        </color>
       </brush>
      </colorrole>
@@ -170,6 +215,15 @@
         <red>60</red>
         <green>60</green>
         <blue>60</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="PlaceholderText">
+      <brush brushstyle="NoBrush">
+       <color alpha="128">
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
        </color>
       </brush>
      </colorrole>
@@ -261,14 +315,21 @@
           </brush>
          </colorrole>
         </inactive>
-        <disabled/>
+        <disabled>
+         <colorrole role="ButtonText">
+          <brush brushstyle="SolidPattern">
+           <color alpha="255">
+            <red>190</red>
+            <green>190</green>
+            <blue>190</blue>
+           </color>
+          </brush>
+         </colorrole>
+        </disabled>
        </palette>
       </property>
       <property name="frameShape">
-       <enum>QFrame::Shape::NoFrame</enum>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>QFrame::NoFrame</enum>
       </property>
       <property name="handleWidth">
        <number>15</number>
@@ -282,7 +343,7 @@
          <number>0</number>
         </property>
         <property name="sizeConstraint">
-         <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+         <enum>QLayout::SetDefaultConstraint</enum>
         </property>
         <property name="leftMargin">
          <number>5</number>
@@ -340,7 +401,17 @@
               </brush>
              </colorrole>
             </inactive>
-            <disabled/>
+            <disabled>
+             <colorrole role="Base">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>239</red>
+                <green>239</green>
+                <blue>239</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </disabled>
            </palette>
           </property>
           <property name="font">
@@ -355,7 +426,7 @@
            <string notr="true"/>
           </property>
           <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="autoExpandDelay">
            <number>0</number>
@@ -510,11 +581,8 @@
         </item>
         <item>
          <spacer name="inputSpacer1">
-          <property name="orientation">
-           <enum>Qt::Orientation::Vertical</enum>
-          </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Policy::Fixed</enum>
+           <enum>QSizePolicy::Fixed</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -551,10 +619,7 @@
            </size>
           </property>
           <property name="frameShape">
-           <enum>QFrame::Shape::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Shadow::Sunken</enum>
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="currentIndex">
            <number>5</number>
@@ -586,11 +651,8 @@
               </property>
               <property name="html">
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif';&quot;&gt;A solution requires the selection of one (1) Solver Methodology:&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
@@ -600,15 +662,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif';&quot;&gt;Select either option for more detail.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="textInteractionFlags">
-               <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+               <set>Qt::NoTextInteraction</set>
               </property>
              </widget>
             </item>
             <item>
              <spacer name="solverMethodologyInformationPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -661,24 +720,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <property name="html">
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:9pt;&quot;&gt;This is the native WindNinja solver. It solves a conservation of mass equation, but not a conservation of momentum equation. This solver is fast-running, but may give less accurate wind predictions in regions where momentum effects are important, for example on the lee side of terrain obstacles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="textInteractionFlags">
-               <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+               <set>Qt::NoTextInteraction</set>
               </property>
              </widget>
             </item>
             <item>
              <spacer name="massSolverPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -727,28 +780,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="frameShape">
-               <enum>QFrame::Shape::NoFrame</enum>
+               <enum>QFrame::NoFrame</enum>
               </property>
               <property name="html">
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:9pt;&quot;&gt;This solver conserves both mass and momentum. It is based on the OpenFOAM CFD toolbox. This solver should give more accurate wind predictions in regions where momentum effects are important, such as on the lee side of terrain obstacles. Because this solver is more computationally intensive than the conservation of mass solver, simulation times will be longer. Typical simulation times for this solver range from 10-30 minutes, but will depend on your domain, resolution, and computational resources. Note that some options (e.g., point initialization and non-neutral stability) are not available for this solver at this time. We plan to make these options available in future releases.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="textInteractionFlags">
-               <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+               <set>Qt::NoTextInteraction</set>
               </property>
              </widget>
             </item>
             <item>
              <spacer name="momentumSolverPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -781,15 +828,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </font>
               </property>
               <property name="frameShape">
-               <enum>QFrame::Shape::NoFrame</enum>
+               <enum>QFrame::NoFrame</enum>
               </property>
               <property name="html">
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This is where input parameters are defined. Analysis requires:&lt;/span&gt;  &lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;      &lt;/p&gt;
@@ -800,15 +844,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:30px; margin-right:0px; -qt-block-indent:1; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:10pt;&quot;&gt;- Requires one (1) of the three (3) options available: Domain Average Wind, Point Initialization, or Weather Model&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="textInteractionFlags">
-               <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+               <set>Qt::NoTextInteraction</set>
               </property>
              </widget>
             </item>
             <item>
              <spacer name="inputsInformationPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -843,8 +884,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>550</width>
-                 <height>646</height>
+                 <width>580</width>
+                 <height>570</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,1">
@@ -916,9 +957,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <spacer name="elevationInputFileGroupBoxSpacer">
-                     <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
-                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>40</width>
@@ -1025,9 +1063,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <spacer name="meshResolutionGroupBoxSpacer">
-                     <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
-                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>40</width>
@@ -1087,9 +1122,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <spacer name="vegetationGroupBoxSpacer">
-                     <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
-                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
                        <width>40</width>
@@ -1129,11 +1161,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </property>
                      <property name="html">
                       <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Standard Name:		Mountain Standard Time&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Daylight Name:		Mountain Daylight Time&lt;/p&gt;
@@ -1141,7 +1170,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Daylight Offset from UTC:	-06:00:00&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="textInteractionFlags">
-                      <set>Qt::TextInteractionFlag::NoTextInteraction</set>
+                      <set>Qt::NoTextInteraction</set>
                      </property>
                     </widget>
                    </item>
@@ -1180,7 +1209,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <number>10</number>
                        </property>
                        <property name="sizeAdjustPolicy">
-                        <enum>QComboBox::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
+                        <enum>QComboBox::AdjustToContents</enum>
                        </property>
                       </widget>
                      </item>
@@ -1221,9 +1250,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="timeZoneLayoutSpacer">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>40</width>
@@ -1239,9 +1265,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </item>
                 <item>
                  <spacer name="verticalSpacer_2">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Vertical</enum>
-                  </property>
                   <property name="sizeHint" stdset="0">
                    <size>
                     <width>20</width>
@@ -1268,7 +1291,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <number>0</number>
             </property>
             <property name="sizeConstraint">
-             <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+             <enum>QLayout::SetDefaultConstraint</enum>
             </property>
             <property name="leftMargin">
              <number>5</number>
@@ -1294,11 +1317,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="diurnalInputPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeType">
-               <enum>QSizePolicy::Policy::Expanding</enum>
+               <enum>QSizePolicy::Fixed</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -1345,9 +1365,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="stabilityInputPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -1385,8 +1402,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="geometry">
                 <rect>
                  <x>0</x>
-                 <y>-7</y>
-                 <width>544</width>
+                 <y>0</y>
+                 <width>340</width>
                  <height>661</height>
                 </rect>
                </property>
@@ -1487,9 +1504,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </item>
                       <item>
                        <spacer name="inputWindHeightGroupBoxSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Orientation::Horizontal</enum>
-                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
@@ -1579,7 +1593,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
                        <property name="layoutDirection">
-                        <enum>Qt::LayoutDirection::LeftToRight</enum>
+                        <enum>Qt::LeftToRight</enum>
                        </property>
                        <item>
                         <property name="text">
@@ -1611,9 +1625,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="tableLayoutSpacer">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>40</width>
@@ -1642,10 +1653,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <bool>true</bool>
                      </property>
                      <property name="dragDropMode">
-                      <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
+                      <enum>QAbstractItemView::NoDragDrop</enum>
                      </property>
                      <property name="defaultDropAction">
-                      <enum>Qt::DropAction::MoveAction</enum>
+                      <enum>Qt::IgnoreAction</enum>
                      </property>
                      <property name="wordWrap">
                       <bool>true</bool>
@@ -1921,9 +1932,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <spacer name="horizontalSpacer_13">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
                      <width>40</width>
@@ -2047,9 +2055,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="verticalSpacer_5">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Vertical</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>20</width>
@@ -2149,9 +2154,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </item>
                        <item>
                         <spacer name="verticalSpacer_6">
-                         <property name="orientation">
-                          <enum>Qt::Orientation::Vertical</enum>
-                         </property>
                          <property name="sizeHint" stdset="0">
                           <size>
                            <width>20</width>
@@ -2184,9 +2186,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <spacer name="horizontalSpacer_7">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
                      <width>40</width>
@@ -2312,9 +2311,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="verticalSpacer_7">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Vertical</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>20</width>
@@ -2463,9 +2459,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <spacer name="weatherModelDataDownloadSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
                      <width>40</width>
@@ -2528,9 +2521,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="weatherModelPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -2630,9 +2620,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </item>
                <item>
                 <spacer name="outputWindHeightGroupBoxSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>40</width>
@@ -2679,9 +2666,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </item>
               <item>
                <spacer name="outputSpeedUnitsSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>40</width>
@@ -2710,9 +2694,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </item>
               <item>
                <spacer name="clipOutputSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>40</width>
@@ -2738,9 +2719,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="outputsPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -2763,7 +2741,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>536</width>
+                 <width>415</width>
                  <height>402</height>
                 </rect>
                </property>
@@ -2811,7 +2789,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </property>
                      <layout class="QHBoxLayout" name="horizontalLayout_6">
                       <property name="sizeConstraint">
-                       <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+                       <enum>QLayout::SetDefaultConstraint</enum>
                       </property>
                       <item>
                        <widget class="QLabel" name="googleEarthVectorsLabel">
@@ -2842,9 +2820,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </item>
                       <item>
                        <spacer name="googleEarthVectorsGroupBoxSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Orientation::Horizontal</enum>
-                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
@@ -2909,9 +2884,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </item>
                       <item>
                        <spacer name="legendSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Orientation::Horizontal</enum>
-                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>153</width>
@@ -3012,9 +2984,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </item>
                          <item>
                           <spacer name="googleEarthMeshResolutionSpacer">
-                           <property name="orientation">
-                            <enum>Qt::Orientation::Horizontal</enum>
-                           </property>
                            <property name="sizeHint" stdset="0">
                             <size>
                              <width>302</width>
@@ -3105,9 +3074,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </item>
                       <item>
                        <spacer name="alternativeColorSchemeSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Orientation::Horizontal</enum>
-                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
@@ -3128,9 +3094,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -3256,9 +3219,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="fireBehaviorMeshResolutionSpacer">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>302</width>
@@ -3285,9 +3245,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="fireBehaviorPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -3413,9 +3370,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="shapeFilesMeshResolutionSpacer">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>302</width>
@@ -3435,9 +3389,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="shapeFilesPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -3460,7 +3411,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>536</width>
+                 <width>382</width>
                  <height>318</height>
                 </rect>
                </property>
@@ -3536,9 +3487,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </item>
                       <item>
                        <spacer name="geospatialPDFFilesVectorsSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Orientation::Horizontal</enum>
-                        </property>
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
@@ -3593,9 +3541,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="basemapLayoutSpacer">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>40</width>
@@ -3662,9 +3607,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item>
                       <spacer name="sizeLayoutSpacer">
-                       <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
-                       </property>
                        <property name="sizeHint" stdset="0">
                         <size>
                          <width>40</width>
@@ -3764,9 +3706,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </item>
                          <item>
                           <spacer name="geospatialPDFFilesMeshResolutionSpacer">
-                           <property name="orientation">
-                            <enum>Qt::Orientation::Horizontal</enum>
-                           </property>
                            <property name="sizeHint" stdset="0">
                             <size>
                              <width>302</width>
@@ -3790,9 +3729,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="verticalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -3828,11 +3764,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </property>
               <property name="html">
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Write VTK surface and volume files&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
@@ -3842,9 +3775,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="VTKFilesPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -3858,7 +3788,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <widget class="QWidget" name="solverPage">
            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,1">
             <property name="sizeConstraint">
-             <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+             <enum>QLayout::SetDefaultConstraint</enum>
             </property>
             <property name="leftMargin">
              <number>5</number>
@@ -3893,13 +3823,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </size>
               </property>
               <property name="frameShape">
-               <enum>QFrame::Shape::NoFrame</enum>
+               <enum>QFrame::NoFrame</enum>
               </property>
               <property name="verticalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAsNeeded</enum>
               </property>
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAsNeeded</enum>
               </property>
               <property name="readOnly">
                <bool>true</bool>
@@ -3929,13 +3859,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="frameShape">
-                 <enum>QFrame::Shape::NoFrame</enum>
+                 <enum>QFrame::NoFrame</enum>
                 </property>
                 <property name="verticalScrollBarPolicy">
-                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+                 <enum>Qt::ScrollBarAsNeeded</enum>
                 </property>
                 <property name="horizontalScrollBarPolicy">
-                 <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+                 <enum>Qt::ScrollBarAsNeeded</enum>
                 </property>
                 <property name="readOnly">
                  <bool>true</bool>
@@ -3976,9 +3906,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </item>
               <item>
                <spacer name="numberOfProcessorsSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>40</width>
@@ -4020,9 +3947,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </item>
                <item>
                 <spacer name="outputDirectorySpacer">
-                 <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
-                 </property>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>40</width>
@@ -4036,9 +3960,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="solverPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeHint" stdset="0">
                <size>
                 <width>20</width>
@@ -4125,9 +4046,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <spacer name="elevationInputTypeGroupBoxSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
                    <property name="sizeHint" stdset="0">
                     <size>
                      <width>40</width>
@@ -4274,9 +4192,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </item>
               <item>
                <spacer name="surfaceinputDownloadButtonsSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
                 <property name="sizeHint" stdset="0">
                  <size>
                   <width>40</width>
@@ -4289,11 +4204,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </item>
             <item>
              <spacer name="surfaceInputDownloadPageSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
               <property name="sizeType">
-               <enum>QSizePolicy::Policy::Expanding</enum>
+               <enum>QSizePolicy::Fixed</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -4309,21 +4221,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </item>
         <item>
          <spacer name="inputSpacer2">
-          <property name="orientation">
-           <enum>Qt::Orientation::Vertical</enum>
-          </property>
           <property name="sizeType">
-           <enum>QSizePolicy::Policy::Fixed</enum>
+           <enum>QSizePolicy::Fixed</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
             <width>20</width>
-            <height>10</height>
+            <height>40</height>
            </size>
           </property>
          </spacer>
         </item>
-        <item alignment="Qt::AlignmentFlag::AlignHCenter">
+        <item>
          <widget class="QPushButton" name="solveButton">
           <property name="enabled">
            <bool>false</bool>
@@ -4344,7 +4253,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::LayoutDirection::LeftToRight</enum>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">#solveButton {
@@ -4404,7 +4313,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </brush>
           </colorrole>
          </inactive>
-         <disabled/>
+         <disabled>
+          <colorrole role="ButtonText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>190</red>
+             <green>190</green>
+             <blue>190</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
         </palette>
        </property>
        <property name="styleSheet">
