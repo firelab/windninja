@@ -365,10 +365,14 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  * \param dayList A pointer to an array of days.
  * \param hourList A pointer to an array of hours.
  * \param minuteList A pointer to an array of minutes.
+ * \param size The size of time arrays
  * \param elevation_file A valid path to an elevation file.
+ * \param buffer The buffer around the elevation file
+ * \param units The units of the buffer
  * \param osTimeZone A string representing a valid timezone.
  * \param fetchLatestFlag An integer representing whether to fetch the latest forecast.
- * \param output_path An optional valid path to a custom output directory, can be NULL.
+ * \param outputPath An optional valid path to a custom output directory, can be NULL.
+ * \param locationFileFlag An integer representing whether to write location file for station data
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
  * \return Station file name on success, "exception" otherwise.
@@ -382,8 +386,8 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
  *             
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBbox(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
-                                               const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
+                                               const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
     std::vector <boost::posix_time::ptime> timeList;
     for(size_t i=0; i<size; i++){
@@ -400,12 +404,45 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBbox(const int* yearList, cons
     if(!success){
         return NINJA_E_INVALID;
     }
-    pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+    if(locationFileFlag) {
+        pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+    }
     return NINJA_SUCCESS;
 }
 
+/**
+ * \brief Fetch Station forecast files using station ID
+ *
+ * Avaliable Creation Options:
+ *                             None
+ *
+ * \param yearList A pointer to an array of years.
+ * \param monthList A pointer to an array of months.
+ * \param dayList A pointer to an array of days.
+ * \param hourList A pointer to an array of hours.
+ * \param minuteList A pointer to an array of minutes.
+ * \param size The size of time arrays
+ * \param elevation_file A valid path to an elevation file.
+ * \param stationList A string containing station IDs in the format of "KMSO,PNTM8,..."
+ * \param osTimeZone A string representing a valid timezone.
+ * \param fetchLatestFlag An integer representing whether to fetch the latest forecast.
+ * \param outputPath An optional valid path to a custom output directory, can be NULL.
+ * \param locationFileFlag An integer representing whether to write location file for station data
+ * \param options Key, value option pairs from the options listed above, can be NULL.
+ *
+ * \return Station file name on success, "exception" otherwise.
+ * TODO: This function currently doesn't return a the path to a station file, need to determine what the proper behavior is
+ *       Note: the pointInitialization class currently only has static public functions. We should consider if this is the best
+ *             approach or if the class should be refactored. For example, I was going to add a function to return a path to
+ *             the stationLocationFilename (the path on disk to the list of station files that the user will need). But right
+ *             now this isn't possible since that path is created by a static function, writeStationLocationFile. If we change
+ *             these functions to non-static to enhance functionality, we'll need to add accessor functions in ninja/ninjaArmy to access
+ *             functions on the pointInitialziation object. Another option for this immediate use case is to just change writeStationLocationFile
+ *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
+ *
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
-                                                       const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
+                                                       const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
     std::vector <boost::posix_time::ptime> timeList;
     for(size_t i=0; i<size; i++){
@@ -421,7 +458,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const 
     if(!success){
         return NINJA_E_INVALID;
     }
-    pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+    if(locationFileFlag) {
+        pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+    }
     return NINJA_SUCCESS;
 }
 

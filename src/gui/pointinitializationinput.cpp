@@ -83,12 +83,12 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
     QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
     QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
-
     QVector<int> year   = {start.date().year(),   end.date().year()};
     QVector<int> month  = {start.date().month(),  end.date().month()};
     QVector<int> day    = {start.date().day(),    end.date().day()};
     QVector<int> hour   = {start.time().hour(),   end.time().hour()};
     QVector<int> minute = {start.time().minute(), end.time().minute()};
+
     bool fetchLatestFlag = false;
     if(ui->weatherStationDataTimeComboBox->currentIndex() == 0)
     {
@@ -147,7 +147,7 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
     char ** papszOptions = NULL;
     NinjaErr err = 0;
 
-    err = NinjaFetchStationFromBbox(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), papszOptions);
+    err = NinjaFetchStationFromBBox(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, papszOptions);
     if (err != NINJA_SUCCESS){
         qDebug() << "NinjaFetchStationFromBbox: err =" << err;
         return err;
@@ -172,7 +172,7 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
     char ** papszOptions = NULL;
     NinjaErr err = 0;
 
-    err = NinjaFetchStationByName(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), stationList.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), papszOptions);
+    err = NinjaFetchStationByName(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), stationList.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, papszOptions);
     if (err != NINJA_SUCCESS){
         qDebug() << "NinjaFetchFetchStationByName: err =" << err;
         return err;
@@ -185,13 +185,15 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
 
 void PointInitializationInput::fetchStationDataFinished()
 {
-    if (progress) {
+    if (progress)
+    {
         progress->close();
         progress->deleteLater();
         progress = nullptr;
     }
 
-    if (futureWatcher) {
+    if (futureWatcher)
+    {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;
     }

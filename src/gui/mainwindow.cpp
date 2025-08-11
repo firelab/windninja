@@ -588,8 +588,6 @@ void MainWindow::solveButtonClicked()
 
     if (state.isDomainAverageInitializationValid)
     {
-        initializationMethod = "domain_average";
-
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row) {
             QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
@@ -604,6 +602,29 @@ void MainWindow::solveButtonClicked()
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
         QString speedUnits =  ui->tableSpeedUnits->currentText();
         ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
+    }
+    else if (state.isPointInitializationValid)
+    {
+        QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
+        QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
+        QVector<int> year   = {start.date().year(),   end.date().year()};
+        QVector<int> month  = {start.date().month(),  end.date().month()};
+        QVector<int> day    = {start.date().day(),    end.date().day()};
+        QVector<int> hour   = {start.time().hour(),   end.time().hour()};
+        QVector<int> minute = {start.time().minute(), end.time().minute()};
+
+        QString osTimeZone = "UTC";
+
+        QModelIndex index = ui->pointInitializationTreeView->currentIndex();
+        QFileSystemModel *model = qobject_cast<QFileSystemModel*>(ui->pointInitializationTreeView->model());
+        QString stationPath = model->filePath(index);
+        QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+
+        initializationMethod = "point";
+        numNinjas = 2;
+        int size = 2;
+        bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
+        ninjaArmy = NinjaMakePointArmy(year.data(), month.data(), day.data(), hour.data(), minute.data(), size, osTimeZone.toUtf8().data(), stationPath.toUtf8().data(), DEMPath.toUtf8().data(), true, momentumFlag, papszOptions);
     }
 
     prepareArmy(ninjaArmy, numNinjas, initializationMethod);
