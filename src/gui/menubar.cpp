@@ -75,105 +75,126 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
 
 void MenuBar::newProject()
 {
-  qDebug() << "MenuBar: newProject() triggered";
+    qDebug() << "MenuBar: newProject() triggered";
+    ui->consoleTextEdit->append("MenuBar: newProject() triggered");
 }
 
 void MenuBar::openProject()
 {
-  qDebug() << "MenuBar: openProject() triggered";
+    qDebug() << "MenuBar: openProject() triggered";
+    ui->consoleTextEdit->append("MenuBar: openProject() triggered");
 }
 
 void MenuBar::exportSolution()
 {
-  qDebug() << "MenuBar: exportSolution() triggered";
+    qDebug() << "MenuBar: exportSolution() triggered";
+    ui->consoleTextEdit->append("MenuBar: exportSolution() triggered");
 }
 
 void MenuBar::closeProject()
 {
-  qDebug() << "MenuBar: closeProject() triggered";
+    qDebug() << "MenuBar: closeProject() triggered";
+    ui->consoleTextEdit->append("MenuBar: closeProject() triggered");
 }
 
 void MenuBar::enableConsoleOutput()
 {
-  qDebug() << "MenuBar: enableConsoleOutput() triggered";
+    qDebug() << "MenuBar: enableConsoleOutput() triggered";
+    ui->consoleTextEdit->append("MenuBar: enableConsoleOutput() triggered");
 }
 
 void MenuBar::writeConsoleOutput()
 {
-  qDebug() << "MenuBar: writeConsoleOutput() triggered";
+    qDebug() << "MenuBar: writeConsoleOutput() triggered";
+    ui->consoleTextEdit->append("MenuBar: writeConsoleOutput() triggered");
 }
 
 void MenuBar::resampleData()
 {
-  qDebug() << "MenuBar: resampleData() triggered";
+    qDebug() << "MenuBar: resampleData() triggered";
+    ui->consoleTextEdit->append("MenuBar: resampleData() triggered");
 }
 
 void MenuBar::writeBlankStationFile()
 {
-  qDebug() << "MenuBar: writeBlankStationFile() triggered";
+    qDebug() << "MenuBar: writeBlankStationFile() triggered";
+    ui->consoleTextEdit->append("MenuBar: writeBlankStationFile() triggered");
 }
 
 void MenuBar::setConfigurationOption()
 {
-  qDebug() << "MenuBar: setConfigurationOption() triggered";
+    qDebug() << "MenuBar: setConfigurationOption() triggered";
+    ui->consoleTextEdit->append("MenuBar: setConfigurationOption() triggered");
 }
 
 void MenuBar::displayArcGISProGuide()
 {
-  qDebug() << "MenuBar: displayArcGISProGuide() triggered";
+    qDebug() << "MenuBar: displayArcGISProGuide() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayArcGISProGuide() triggered");
 }
 
 void MenuBar::displayTutorial1()
 {
-  qDebug() << "MenuBar: displayTutorial1() triggered";
+    qDebug() << "MenuBar: displayTutorial1() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayTutorial1() triggered");
 }
 
 void MenuBar::displayTutorial2()
 {
-  qDebug() << "MenuBar: displayTutorial2() triggered";
+    qDebug() << "MenuBar: displayTutorial2() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayTutorial2() triggered");
 }
 
 void MenuBar::displayTutorial3()
 {
-  qDebug() << "MenuBar: displayTutorial3() triggered";
+    qDebug() << "MenuBar: displayTutorial3() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayTutorial3() triggered");
 }
 
 void MenuBar::displayTutorial4()
 {
-  qDebug() << "MenuBar: displayTutorial4() triggered";
+    qDebug() << "MenuBar: displayTutorial4() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayTutorial4() triggered");
 }
 
 void MenuBar::displayDemDownloadInstructions()
 {
-  qDebug() << "MenuBar: displayDemDownloadInstructions() triggered";
+    qDebug() << "MenuBar: displayDemDownloadInstructions() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayDemDownloadInstructions() triggered");
 }
 
 void MenuBar::displayFetchDemInstructions()
 {
-  qDebug() << "MenuBar: displayFetchDemInstructions() triggered";
+    qDebug() << "MenuBar: displayFetchDemInstructions() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayFetchDemInstructions() triggered");
 }
 
 void MenuBar::displayCommandLineInterfaceInstructions()
 {
-  qDebug() << "MenuBar: displayCommandLineInterfaceInstructions() triggered";
+    qDebug() << "MenuBar: displayCommandLineInterfaceInstructions() triggered";
+    ui->consoleTextEdit->append("MenuBar: displayCommandLineInterfaceInstructions() triggered");
 }
 
 void MenuBar::aboutWindNinja()
 {
-  qDebug() << "MenuBar: aboutWindNinja() triggered";
+    qDebug() << "MenuBar: aboutWindNinja() triggered";
+    ui->consoleTextEdit->append("MenuBar: aboutWindNinja() triggered");
 }
 
 void MenuBar::citeWindNinja()
 {
-  qDebug() << "MenuBar: citeWindNinja() triggered";
+    qDebug() << "MenuBar: citeWindNinja() triggered";
+    ui->consoleTextEdit->append("MenuBar: citeWindNinja() triggered");
 }
 
 void MenuBar::supportEmail()
 {
-  qDebug() << "MenuBar: supportEmail() triggered";
+    qDebug() << "MenuBar: supportEmail() triggered";
+    ui->consoleTextEdit->append("MenuBar: supportEmail() triggered");
 }
 
 void MenuBar::submitBugReport()
 {
-  qDebug() << "MenuBar: submitBugReport() triggered";
+    qDebug() << "MenuBar: submitBugReport() triggered";
+    ui->consoleTextEdit->append("MenuBar: submitBugReport() triggered");
 }

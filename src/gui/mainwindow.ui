@@ -277,7 +277,7 @@
        <bool>false</bool>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
-       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,0,0">
+       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,0,0,0">
         <property name="spacing">
          <number>0</number>
         </property>
@@ -4357,6 +4357,52 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <property name="text">
            <string>Solve</string>
           </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDockWidget" name="consoleDockWidget">
+          <property name="windowTitle">
+           <string>Console Output</string>
+          </property>
+          <widget class="QWidget" name="dockWidgetContents">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>600</width>
+             <height>100</height>
+            </size>
+           </property>
+           <widget class="QTextEdit" name="consoleTextEdit">
+            <property name="readOnly">
+             <bool>true</bool>
+            </property>
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>600</width>
+              <height>100</height>
+             </rect>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>600</width>
+              <height>100</height>
+             </size>
+            </property>
+           </widget>
+          </widget>
          </widget>
         </item>
        </layout>
