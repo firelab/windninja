@@ -93,8 +93,11 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeWeatherModelArmy
         ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBbox
         (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, double buffer, const char* units, const char * timeZone, bool fetchLatestFlag, const char * outputPath, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName
+        (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, const char* stationList, const char * timeZone, bool fetchLatestFlag, const char * outputPath, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
         (NinjaArmyH * ninjaArmy, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options );

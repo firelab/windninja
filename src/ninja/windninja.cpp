@@ -382,7 +382,7 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
  *             
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBbox(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
                                                const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
 {
     std::vector <boost::posix_time::ptime> timeList;
@@ -403,6 +403,28 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * 
     pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
     return NINJA_SUCCESS;
 }
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
+                                                       const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
+{
+    std::vector <boost::posix_time::ptime> timeList;
+    for(size_t i=0; i<size; i++){
+        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
+    }
+
+    wxStation::SetStationFormat(wxStation::newFormat);
+
+    //Generate a directory to store downloaded station data
+    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
+    pointInitialization::SetRawStationFilename(stationPathName);
+    bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
+    if(!success){
+        return NINJA_E_INVALID;
+    }
+    pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+    return NINJA_SUCCESS;
+}
+
 
 /**
  * \brief Start the simulations.

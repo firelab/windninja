@@ -51,6 +51,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataTimeComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataDownloadButton, &QPushButton::clicked, this, &PointInitializationInput::weatherStationDataDownloadButtonClicked);
     connect(ui->pointInitializationRefreshButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitialziationRefreshButtonClicked);
+    connect(ui->pointInitializationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PointInitializationInput::pointInitializationTreeViewItemSelectionChanged);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -88,14 +89,16 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> day    = {start.date().day(),    end.date().day()};
     QVector<int> hour   = {start.time().hour(),   end.time().hour()};
     QVector<int> minute = {start.time().minute(), end.time().minute()};
-    bool fetchLatestFlag = true;
+    bool fetchLatestFlag = false;
+    if(ui->weatherStationDataTimeComboBox->currentIndex() == 0)
+    {
+        fetchLatestFlag = true;
+    }
 
     QString outputPath = ui->outputDirectoryLineEdit->text();
-    QString units = ui->downloadFromDEMComboBox->currentText();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QString osTimeZone = "UTC";
 
-    double buffer = ui->downloadFromDEMSpinBox->value();
 
     progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
@@ -105,36 +108,73 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     progress->show();
 
     futureWatcher = new QFutureWatcher<int>(this);
-    QFuture<int> future = QtConcurrent::run([=]() {
-        return fetchStationData(year, month, day, hour, minute,
-                                elevationFile, buffer, units,
-                                osTimeZone, fetchLatestFlag, outputPath);
-    });
+    QFuture<int> future;
+    if(ui->weatherStationDataSourceComboBox->currentIndex() == 0)
+    {
+        QString units = ui->downloadFromDEMComboBox->currentText();
+        double buffer = ui->downloadFromDEMSpinBox->value();
+        future = QtConcurrent::run(&PointInitializationInput::fetchStationFromBbox,
+                                   year, month, day, hour, minute,
+                                   elevationFile, buffer, units,
+                                   osTimeZone, fetchLatestFlag, outputPath);
+    }
+    else
+    {
+        QString stationList = ui->downloadFromStationIDLineEdit->text();
+        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,
+                                   year, month, day, hour, minute,
+                                   elevationFile, stationList,
+                                   osTimeZone, fetchLatestFlag, outputPath);
+    }
     futureWatcher->setFuture(future);
 
     connect(futureWatcher, &QFutureWatcher<int>::finished,
             this, &PointInitializationInput::fetchStationDataFinished);
 }
 
-int PointInitializationInput::fetchStationData(QVector<int> year,
-                                               QVector<int> month,
-                                               QVector<int> day,
-                                               QVector<int> hour,
-                                               QVector<int> minute,
-                                               QString elevationFile,
-                                               double buffer,
-                                               QString units,
-                                               QString osTimeZone,
-                                               bool fetchLatestFlag,
-                                               QString outputPath)
+int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
+                                                   QVector<int> month,
+                                                   QVector<int> day,
+                                                   QVector<int> hour,
+                                                   QVector<int> minute,
+                                                   QString elevationFile,
+                                                   double buffer,
+                                                   QString units,
+                                                   QString osTimeZone,
+                                                   bool fetchLatestFlag,
+                                                   QString outputPath)
 {
-    NinjaArmyH* ninjaArmy = NULL;
     char ** papszOptions = NULL;
     NinjaErr err = 0;
 
-    err = NinjaFetchStation(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), papszOptions);
+    err = NinjaFetchStationFromBbox(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), papszOptions);
     if (err != NINJA_SUCCESS){
-        qDebug() << "NinjaFetchDEMBBox: err =" << err;
+        qDebug() << "NinjaFetchStationFromBbox: err =" << err;
+        return err;
+    }
+    else
+    {
+        return NINJA_SUCCESS;
+    }
+}
+
+int PointInitializationInput::fetchStationByName(QVector<int> year,
+                                                 QVector<int> month,
+                                                 QVector<int> day,
+                                                 QVector<int> hour,
+                                                 QVector<int> minute,
+                                                 QString elevationFile,
+                                                 QString stationList,
+                                                 QString osTimeZone,
+                                                 bool fetchLatestFlag,
+                                                 QString outputPath)
+{
+    char ** papszOptions = NULL;
+    NinjaErr err = 0;
+
+    err = NinjaFetchStationByName(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), stationList.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), papszOptions);
+    if (err != NINJA_SUCCESS){
+        qDebug() << "NinjaFetchFetchStationByName: err =" << err;
         return err;
     }
     else
@@ -174,6 +214,11 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
 {
     QFileSystemModel *model = new QFileSystemModel;
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    if(path.isEmpty())
+    {
+        delete model;
+        return;
+    }
     QFileInfo fileInfo(path);
     model->setRootPath(fileInfo.absolutePath());
 
@@ -191,4 +236,9 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
     ui->pointInitializationTreeView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     ui->pointInitializationTreeView->hideColumn(1);
     ui->pointInitializationTreeView->hideColumn(2);
+}
+
+void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
+{
+
 }

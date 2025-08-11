@@ -63,27 +63,37 @@ private slots:
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);
     void weatherStationDataDownloadButtonClicked();
     void pointInitialziationRefreshButtonClicked();
+    void pointInitializationTreeViewItemSelectionChanged();
 
 private:
     Ui::MainWindow *ui;
-    PointInitializationInput *pointInitializationInput;
 
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
 
     QString currentDEMFilePath;
 
-    int fetchStationData(QVector<int> year,
-                         QVector<int> month,
-                         QVector<int> day,
-                         QVector<int> hour,
-                         QVector<int> minute,
-                         QString elevationFile,
-                         double buffer,
-                         QString units,
-                         QString osTimeZone,
-                         bool fetchLatestFlag,
-                         QString outputPath);
+    static int fetchStationFromBbox(QVector<int> year,
+                                    QVector<int> month,
+                                    QVector<int> day,
+                                    QVector<int> hour,
+                                    QVector<int> minute,
+                                    QString elevationFile,
+                                    double buffer,
+                                    QString units,
+                                    QString osTimeZone,
+                                    bool fetchLatestFlag,
+                                    QString outputPath);
+    static int fetchStationByName(QVector<int> year,
+                                  QVector<int> month,
+                                  QVector<int> day,
+                                  QVector<int> hour,
+                                  QVector<int> minute,
+                                  QString elevationFile,
+                                  QString stationList,
+                                  QString osTimeZone,
+                                  bool fetchLatestFlag,
+                                  QString outputPath);
     void fetchStationDataFinished();
 
 };

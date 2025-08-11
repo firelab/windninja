@@ -1832,16 +1832,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="geometry">
                 <rect>
                  <x>0</x>
-                 <y>-28</y>
-                 <width>565</width>
-                 <height>434</height>
+                 <y>0</y>
+                 <width>579</width>
+                 <height>406</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_19">
                 <item>
                  <widget class="QGroupBox" name="pointInitializationGroupBox">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -1849,7 +1849,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
-                    <height>416</height>
+                    <height>0</height>
                    </size>
                   </property>
                   <property name="title">
