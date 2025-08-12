@@ -396,6 +396,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox(const int* yearList, cons
 
     wxStation::SetStationFormat(wxStation::newFormat);
 
+    if(!fetchLatestFlag)
+    {
+        boost::local_time::time_zone_ptr tz(new boost::local_time::posix_time_zone(timeZone));
+
+        boost::local_time::local_date_time start(timeList[0], tz);
+        boost::local_time::local_date_time stop(timeList[1], tz);
+
+        pointInitialization::setLocalStartAndStopTimes(start, stop);
+    }
+
     //Generate a directory to store downloaded station data
     std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
     pointInitialization::SetRawStationFilename(stationPathName);
@@ -450,6 +460,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const 
     }
 
     wxStation::SetStationFormat(wxStation::newFormat);
+
+    if(!fetchLatestFlag)
+    {
+        boost::local_time::time_zone_ptr tz(new boost::local_time::posix_time_zone(timeZone));
+
+        boost::local_time::local_date_time start(timeList[0], tz);
+        boost::local_time::local_date_time stop(timeList[1], tz);
+
+        pointInitialization::setLocalStartAndStopTimes(start, stop);
+    }
 
     //Generate a directory to store downloaded station data
     std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
@@ -2104,6 +2124,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** pap
     {
         return NINJA_E_NULL_PTR;
     }
+}
+
+/*-----------------------------------------------------------------------------
+*  Helper Methods
+*-----------------------------------------------------------------------------*/
+WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** papszOptions)
+{
+    return wxStation::GetHeaderVersion(filePath);
 }
 
 }

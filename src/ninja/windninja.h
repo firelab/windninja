@@ -341,4 +341,9 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaArmyH * ninjaArmy, char ** options );
     WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * ninjaArmy, char ** options );
 
+    /*-----------------------------------------------------------------------------
+     *  Helper Methods
+     *-----------------------------------------------------------------------------*/
+    WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** papszOptions);
+
 WN_C_END
