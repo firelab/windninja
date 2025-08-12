@@ -33,6 +33,9 @@
 MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
 {
+    QString dataFolder = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
+    dataPath = QDir(dataFolder);
+
     // QMenu fileMenu "File" actions
     connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProject);
     connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProject);
@@ -129,50 +132,122 @@ void MenuBar::setConfigurationOption()
 
 void MenuBar::displayArcGISProGuide()
 {
-    qDebug() << "MenuBar: displayArcGISProGuide() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayArcGISProGuide() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayTutorial1()
 {
-    qDebug() << "MenuBar: displayTutorial1() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayTutorial1() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial1.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayTutorial2()
 {
-    qDebug() << "MenuBar: displayTutorial2() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayTutorial2() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial2.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayTutorial3()
 {
-    qDebug() << "MenuBar: displayTutorial3() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayTutorial3() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial3.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayTutorial4()
 {
-    qDebug() << "MenuBar: displayTutorial4() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayTutorial4() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial4.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayDemDownloadInstructions()
 {
-    qDebug() << "MenuBar: displayDemDownloadInstructions() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayDemDownloadInstructions() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/download_elevation_file.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayFetchDemInstructions()
 {
-    qDebug() << "MenuBar: displayFetchDemInstructions() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayFetchDemInstructions() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/fetch_dem_instructions.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::displayCommandLineInterfaceInstructions()
 {
-    qDebug() << "MenuBar: displayCommandLineInterfaceInstructions() triggered";
-    ui->consoleTextEdit->append("MenuBar: displayCommandLineInterfaceInstructions() triggered");
+    QString displayFile = dataPath.absoluteFilePath("../doc/CLI_instructions.pdf");
+    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
+    qDebug() << "Opening" << displayFile;
+    ui->consoleTextEdit->append("Opening " + displayFile);
+
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
+                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+                QMessageBox::Ok);
+    }
 }
 
 void MenuBar::aboutWindNinja()

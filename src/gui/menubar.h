@@ -30,7 +30,11 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
 
+#include "../ninja/gdal_util.h"
 #include <QObject>
+#include <QDir>
+#include <QMessageBox>
+#include <QDesktopServices>
 
 namespace Ui {
 class MainWindow;
@@ -80,6 +84,7 @@ private slots:
 
 private:
     Ui::MainWindow* ui;
+    QDir dataPath;
 };
 
 #endif // MENUBAR_H
