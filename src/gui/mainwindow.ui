@@ -4576,6 +4576,12 @@ QMenu::item:selected {
    </property>
   </action>
   <action name="enableConsoleOutputAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Enable Console Output</string>
    </property>

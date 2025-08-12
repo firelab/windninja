@@ -45,7 +45,8 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
 
     // QMenu optionsMenu "Options" actions
-    connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MenuBar::enableConsoleOutput);
+    connect(ui->enableConsoleOutputAction, &QAction::toggled, ui->consoleDockWidget, &QDockWidget::setVisible);
+    connect(ui->consoleDockWidget, &QDockWidget::visibilityChanged, ui->enableConsoleOutputAction, &QAction::setChecked);  // if closed from the QDockWidget itself, unchecks the menuAction
     connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutput);
 
     // QMenu toolsMenu "Tools" actions
@@ -98,12 +99,6 @@ void MenuBar::closeProject()
 {
     qDebug() << "MenuBar: closeProject() triggered";
     ui->consoleTextEdit->append("MenuBar: closeProject() triggered");
-}
-
-void MenuBar::enableConsoleOutput()
-{
-    qDebug() << "MenuBar: enableConsoleOutput() triggered";
-    ui->consoleTextEdit->append("MenuBar: enableConsoleOutput() triggered");
 }
 
 void MenuBar::writeConsoleOutput()

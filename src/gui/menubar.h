@@ -58,7 +58,6 @@ private slots:
     void exportSolution();
     void closeProject();
     // functions for QMenu optionsMenu "Options" actions
-    void enableConsoleOutput();
     void writeConsoleOutput();
     // functions for QMenu toolsMenu "Tools" actions
     void resampleData();
