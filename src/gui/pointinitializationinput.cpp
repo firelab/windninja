@@ -294,64 +294,56 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
         }
     }
 
-
-    if(stationHeader == 2 && timeSeriesFlag)
+    if (stationHeader == 2)
     {
-        ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
-    }
+        ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(timeSeriesFlag ? 0 : 1);
 
-
-    if(stationHeader == 2 && !timeSeriesFlag)
-    {
-        ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(1);
-        QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
-        //updateSingleTime()
-        QString simulationTimeText = "Simulation time set to: " + dateModified.toString();
-        ui->weatherStationDataTextEdit->setText(simulationTimeText);
+        if (!timeSeriesFlag)
+        {
+            QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
+            //updateSingleTime()
+            ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
+        }
     }
 }
 
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
 {
     QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
+    QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+
+    QTimeZone timeZone(DEMTimeZone.toUtf8());
+    if (!timeZone.isValid()) {
+        qWarning() << "[STATION FETCH] Invalid time zone:" << DEMTimeZone;
+        timeZone = QTimeZone::systemTimeZone();
+    }
 
     QDateTime startTimeUTC = QDateTime::fromString(startDateTime, stationTimeFormat);
-    QDateTime endTimeUTC  = QDateTime::fromString(stopDateTime, stationTimeFormat);
+    QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, stationTimeFormat);
     startTimeUTC.setTimeSpec(Qt::UTC);
     endTimeUTC.setTimeSpec(Qt::UTC);
 
-    QDateTime startTimeLocal = startTimeUTC.toLocalTime();
-    QDateTime endTimeLocal  = endTimeUTC.toLocalTime();
-    qDebug() << "[STATION FETCH] Start Time (local):" << startTimeLocal.toString();
-    qDebug() << "[STATION FETCH] Stop Time (local):"  << endTimeLocal.toString();
+    QDateTime startTimeDEMTimeZone = startTimeUTC.toTimeZone(timeZone);
+    QDateTime endTimeDEMTimeZone  = endTimeUTC.toTimeZone(timeZone);
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(startTimeLocal);
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(endTimeLocal);
+    qDebug() << "[STATION FETCH] Start Time (" << DEMTimeZone << "):" << startTimeDEMTimeZone.toString();
+    qDebug() << "[STATION FETCH] Stop Time ("  << DEMTimeZone << "):"  << endTimeDEMTimeZone.toString();
+
+    ui->weatherStationDataStartTimeLabel->setText("Start Time (" + DEMTimeZone + "):");
+    ui->weatherStationDataEndTimeLabel->setText("End Time (" + DEMTimeZone + "):");
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(startTimeDEMTimeZone);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(endTimeDEMTimeZone);
 
     updateTimeSteps();
 }
 
 void PointInitializationInput::updateTimeSteps()
 {
-    qDebug() << "[STATION FETCH] Updating Suggested Time steps...";
-
-    QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
-    QDateTime stop  = ui->weatherStationDataEndDateTimeEdit->dateTime();
-
-    qint64 diffSecs = start.secsTo(stop); // difference in seconds
-
-    int timesteps;
-    if (diffSecs <= 0)
-    {
-        timesteps = 1;
-    }
-    else
-    {
-        timesteps = static_cast<int>(diffSecs / 3600); // convert seconds to hours
-        if (timesteps < 2)
-            timesteps = 2;
-    }
-
-    qDebug() << "[STATION FETCH] Suggested Timesteps:" << timesteps;
+    int timesteps = qMax(2, static_cast<int>(
+                                ui->weatherStationDataStartDateTimeEdit->dateTime().secsTo(
+                                    ui->weatherStationDataEndDateTimeEdit->dateTime()
+                                    ) / 3600
+                                ));
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
+    qDebug() << "[STATION FETCH] Suggested Timesteps:" << timesteps;
 }
