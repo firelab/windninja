@@ -72,7 +72,7 @@ private:
 
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
-
+    QFileSystemModel *stationFileSystemModel;
     QString currentDEMFilePath;
 
     static int fetchStationFromBbox(QVector<int> year,

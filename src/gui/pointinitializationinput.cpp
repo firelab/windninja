@@ -213,25 +213,25 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
 
 void PointInitializationInput::pointInitialziationRefreshButtonClicked()
 {
-    QFileSystemModel *model = new QFileSystemModel;
+    stationFileSystemModel = new QFileSystemModel;
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
     if(path.isEmpty())
     {
-        delete model;
+        delete stationFileSystemModel;
         return;
     }
     QFileInfo fileInfo(path);
-    model->setRootPath(fileInfo.absolutePath());
+    stationFileSystemModel->setRootPath(fileInfo.absolutePath());
 
     QStringList filters;
     filters<<"*.csv";
     filters<<"WXSTATIONS-*";
-    model->setNameFilters(filters);
-    model->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    model->setNameFilterDisables(false);
+    stationFileSystemModel->setNameFilters(filters);
+    stationFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    stationFileSystemModel->setNameFilterDisables(false);
 
-    ui->pointInitializationTreeView->setModel(model);
-    ui->pointInitializationTreeView->setRootIndex(model->index(fileInfo.absolutePath()));
+    ui->pointInitializationTreeView->setModel(stationFileSystemModel);
+    ui->pointInitializationTreeView->setRootIndex(stationFileSystemModel->index(fileInfo.absolutePath()));
     ui->pointInitializationTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
@@ -244,79 +244,59 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
 
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
 {
-    const char* xFileName = "/home/mason/Downloads/testfolder/WXSTATIONS-2025-08-10-1537-2025-08-11-1537-test/CBFI1-2025-08-10_1537-2025-08-11_1537-1.csv";
+    QModelIndexList selectedIndexes = ui->pointInitializationTreeView->selectionModel()->selectedIndexes();
+    QModelIndex index = selectedIndexes.first();
+    if (index.column() != 0)
+        index = index.sibling(index.row(), 0);
+
+    QString recentFileSelected = stationFileSystemModel->filePath(index);
+    qDebug() << "Selected file path:" << recentFileSelected;
+
+    QByteArray filePathBytes = recentFileSelected.toUtf8();
+    const char* filePath = filePathBytes.constData();
     char** papszOptions = nullptr;
-    int stationHeader = NinjaGetHeaderVersion(xFileName, papszOptions);
-    int instant = 0;
-    qDebug() << "Station Header is: " << stationHeader;
-    std::string idx3;
-    stringstream ssidx;
+    int stationHeader = NinjaGetHeaderVersion(filePath, papszOptions);
+    qDebug() << "[STATION_FETCH] STATION HEADER: " << stationHeader;
 
-    if(stationHeader != 1)
+    bool timeSeriesFlag = true;
+    if (stationHeader != 1)
     {
-        OGRDataSourceH hDS;
-        OGRLayer *poLayer;
-        OGRFeature *poFeature;
-        OGRFeatureDefn *poFeatureDefn;
-        OGRFieldDefn *poFieldDefn;
-        OGRLayerH hLayer;
+        GDALDataset* hDS = (GDALDataset*) GDALOpenEx(
+            filePath,
+            GDAL_OF_VECTOR | GDAL_OF_READONLY,
+            NULL,
+            NULL,
+            NULL
+        );
 
-        hDS = OGROpen( xFileName, FALSE, NULL );
-
-        poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
-        hLayer=OGR_DS_GetLayer(hDS,0);
-        OGR_L_ResetReading(hLayer);
+        OGRLayer* poLayer = hDS->GetLayer(0);
         poLayer->ResetReading();
+        qint64 lastIndex = poLayer->GetFeatureCount();
+        qDebug() << "[STATION_FETCH] Number of Time Entries:" << lastIndex;
 
-        GIntBig iBig = 1;
-        GIntBig idx0 = poLayer->GetFeatureCount();
-        GIntBig idx1 = idx0-iBig;
-        GIntBig idx2;
+        OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, first time in series
+        QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-15)
+        qDebug() << "[STATION_FETCH] STATION START TIME:" << startDateTime;
 
-        idx2 = poLayer->GetFeatureCount();
+        poFeature = poLayer->GetFeature(lastIndex);             // last time in series
+        QString stopDateTime(poFeature->GetFieldAsString(15));
+        qDebug() << "[STATION_FETCH] STATION END TIME:" << stopDateTime;
 
-        CPLDebug("STATION_FETCH","Number of Time Entries: %llu",idx2); //How many lines are on disk
-        QString qFileName = QFileInfo(xFileName).fileName();
-        const char* emptyChair; //Muy Importante!
-
-        poFeature = poLayer->GetFeature(iBig);
-
-        //    startTime = poFeature->GetFieldAsString(15);
-        std::string start_datetime(poFeature->GetFieldAsString(15));
-        poFeature = poLayer->GetFeature(idx2);
-        std::string stop_datetime(poFeature->GetFieldAsString(15));
-
-        CPLDebug("STATION_FETCH","STATION START TIME: %s",start_datetime.c_str());
-        CPLDebug("STATION_FETCH","STATION END TIME: %s",stop_datetime.c_str());
-
-        if (start_datetime.empty()==true && stop_datetime.empty()==true)
+        if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
         {
-            //Means that there is not a time series
-            CPLDebug("STATION_FETCH", "File cannot be used for Time Series");
-            instant = 1;
+            qDebug() << "[STATION_FETCH] File cannot be used for Time Series";
+            timeSeriesFlag = false;
         }
-        if (start_datetime.empty()==false && stop_datetime.empty()==false) //Definately some sort of time series
+        else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
         {
-            CPLDebug("STATION_FETCH","File can be used for Times Series");
-            CPLDebug("STATION_FETCH","Suggesting Potentially Reasonable Time Series Parameters...");
+            qDebug() << "[STATION_FETCH] File can be used for Time Series, suggesting time series parameters...";
 
-            QString q_time_format = "yyyy-MM-ddTHH:mm:ssZ";
-            QString start_utcX = QString::fromStdString(start_datetime);
-            QString end_utcX = QString::fromStdString(stop_datetime);
-
-            QDateTime start_qat = QDateTime::fromString(start_utcX,q_time_format);
-            QDateTime end_qat = QDateTime::fromString(end_utcX,q_time_format);
-
-            start_qat.setTimeSpec(Qt::UTC);
-            end_qat.setTimeSpec(Qt::UTC);
-
-            //readStationTime(start_datetime,stop_datetime,idx2); //Turns the Start and Stop times into local timess......
-            ssidx<<idx2;
-            idx3=ssidx.str();
+            // readStationTime(start_datetime, stop_datetime, idx2);
         }
     }
 
-    if(stationHeader == 2 && instant == 0)
+
+    if(stationHeader == 2 && timeSeriesFlag)
     {
         ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
         ui->weatherStationDataStartDateTimeEdit->setDateTime(ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime());
@@ -324,14 +304,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     }
 
 
-    if(stationHeader == 2 && instant == 1)
+    if(stationHeader == 2 && !timeSeriesFlag)
     {
         ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(1);
-        QDateTime time = QFileInfo(xFileName).birthTime();
+        QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
         //updateSingleTime()
-        QString text = "Simulation time set to: " + time.toString();
-        ui->weatherStationDataTextEdit->setText(text);
-
+        QString simulationTimeText = "Simulation time set to: " + dateModified.toString();
+        ui->weatherStationDataTextEdit->setText(simulationTimeText);
     }
 
 }
