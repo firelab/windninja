@@ -31,9 +31,11 @@
 #define MENUBAR_H
 
 #include "../ninja/gdal_util.h"
+#include "ninja_version.h"
 #include <QObject>
 #include <QDir>
 #include <QMessageBox>
+#include <QFileDialog>
 #include <QDesktopServices>
 
 namespace Ui {

@@ -103,8 +103,22 @@ void MenuBar::closeProject()
 
 void MenuBar::writeConsoleOutput()
 {
-    qDebug() << "MenuBar: writeConsoleOutput() triggered";
-    ui->consoleTextEdit->append("MenuBar: writeConsoleOutput() triggered");
+    QString fileName = QFileDialog::getSaveFileName(ui->centralwidget,
+                tr("Save Console Output"),
+                "console-output.txt",
+                tr("Text Files (*.txt)"));
+
+    if(!fileName.isEmpty())
+    {
+        QDateTime currentTime(QDateTime::currentDateTime());
+        ui->consoleTextEdit->append("writing WindNinja console output to " + fileName);
+        ui->consoleTextEdit->append("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"));
+
+        std::ofstream fout(fileName.toStdString().c_str(), std::ios::out);
+        QString text = ui->consoleTextEdit->toPlainText();
+        fout << text.toStdString();
+        fout.close();
+    }
 }
 
 void MenuBar::resampleData()
@@ -247,24 +261,63 @@ void MenuBar::displayCommandLineInterfaceInstructions()
 
 void MenuBar::aboutWindNinja()
 {
-    qDebug() << "MenuBar: aboutWindNinja() triggered";
-    ui->consoleTextEdit->append("MenuBar: aboutWindNinja() triggered");
+    QString aboutText = "<h2>WindNinja</h2>\n";
+
+    aboutText.append("<p><h4>Version:</h4>" + QString(NINJA_VERSION_STRING) + "</p>");
+
+    aboutText.append("<p><h4>Git Commit:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
+
+    aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
+
+    aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
+                                                 "Natalie Wagenbrenner<br/>" \
+                                                 "Kyle Shannon<br/>" \
+                                                 "Loren Atwood<br/>" \
+                                                 "Mason Willman"); \
+
+    aboutText.append("<p>Missoula Fire Sciences Laboratory<br/>");
+    aboutText.append("Rocky Mountain Research Station<br/>");
+    aboutText.append("USDA Forest Service<br/>");
+    aboutText.append("5775 Highway 10 W.<br/>");
+    aboutText.append("Missoula, MT 59808</p>");
+
+    aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CONTRIBUTORS\">Contributors</a></p>");
+    aboutText.append("<h4>Sponsored By:</h4>");
+    aboutText.append("USDA Forest Service<br/>");
+    aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br/>");
+    aboutText.append("Joint Fire Sciences Program<br/>");
+    aboutText.append("Washington State University</p>");
+    aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
+    aboutText.append("<br/>");
+
+    QMessageBox::about(ui->centralwidget, tr("About WindNinja"),
+                aboutText);
 }
 
 void MenuBar::citeWindNinja()
 {
-    qDebug() << "MenuBar: citeWindNinja() triggered";
-    ui->consoleTextEdit->append("MenuBar: citeWindNinja() triggered");
+    QString citeText = "<h4>To cite WindNinja in a publication use:</h4>";
+
+    citeText.append("Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison ");
+    citeText.append("of three approaches for simulating fine-scale surface winds in ");
+    citeText.append("support of wildland fire management. Part I. Model formulation and ");
+    citeText.append("comparison against measurements. International Journal of Wildland ");
+    citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
+
+    citeText.append("<h4>For additional WindNinja publications visit:</h4>");
+
+    citeText.append("<p><a href=\"https://ninjastorm.firelab.org/windninja/publications/\">https://ninjastorm.firelab.org/windninja/publications</a></p>");
+
+    QMessageBox::about(ui->centralwidget, tr("Cite WindNinja"),
+            citeText);
 }
 
 void MenuBar::supportEmail()
 {
-    qDebug() << "MenuBar: supportEmail() triggered";
-    ui->consoleTextEdit->append("MenuBar: supportEmail() triggered");
+    QDesktopServices::openUrl(QUrl("mailto:wind.ninja.support@gmail.com?subject=[windninja-support]"));
 }
 
 void MenuBar::submitBugReport()
 {
-    qDebug() << "MenuBar: submitBugReport() triggered";
-    ui->consoleTextEdit->append("MenuBar: submitBugReport() triggered");
+    QDesktopServices::openUrl(QUrl("https://github.com/firelab/windninja/issues/new"));
 }
