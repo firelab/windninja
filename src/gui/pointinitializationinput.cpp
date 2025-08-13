@@ -250,13 +250,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
         index = index.sibling(index.row(), 0);
 
     QString recentFileSelected = stationFileSystemModel->filePath(index);
-    qDebug() << "Selected file path:" << recentFileSelected;
+    qDebug() << "[STATION FETCH] Selected file path:" << recentFileSelected;
 
     QByteArray filePathBytes = recentFileSelected.toUtf8();
     const char* filePath = filePathBytes.constData();
     char** papszOptions = nullptr;
     int stationHeader = NinjaGetHeaderVersion(filePath, papszOptions);
-    qDebug() << "[STATION_FETCH] STATION HEADER: " << stationHeader;
+    qDebug() << "[STATION FETCH] Station Header: " << stationHeader;
 
     bool timeSeriesFlag = true;
     if (stationHeader != 1)
@@ -272,26 +272,25 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
         OGRLayer* poLayer = hDS->GetLayer(0);
         poLayer->ResetReading();
         qint64 lastIndex = poLayer->GetFeatureCount();
-        qDebug() << "[STATION_FETCH] Number of Time Entries:" << lastIndex;
+        qDebug() << "[STATION FETCH] Number of Time Entries:" << lastIndex;
 
         OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, first time in series
-        QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-15)
-        qDebug() << "[STATION_FETCH] STATION START TIME:" << startDateTime;
+        QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-14)
+        qDebug() << "[STATION FETCH] Station start time:" << startDateTime;
 
         poFeature = poLayer->GetFeature(lastIndex);             // last time in series
         QString stopDateTime(poFeature->GetFieldAsString(15));
-        qDebug() << "[STATION_FETCH] STATION END TIME:" << stopDateTime;
+        qDebug() << "[STATION FETCH] Station end Time:" << stopDateTime;
 
         if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
         {
-            qDebug() << "[STATION_FETCH] File cannot be used for Time Series";
+            qDebug() << "[STATION FETCH] File cannot be used for Time Series";
             timeSeriesFlag = false;
         }
         else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
         {
-            qDebug() << "[STATION_FETCH] File can be used for Time Series, suggesting time series parameters...";
-
-            // readStationTime(start_datetime, stop_datetime, idx2);
+            qDebug() << "[STATION FETCH] File can be used for Time Series, suggesting time series parameters...";
+            readStationTime(startDateTime, stopDateTime);
         }
     }
 
@@ -299,8 +298,6 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     if(stationHeader == 2 && timeSeriesFlag)
     {
         ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
-        ui->weatherStationDataStartDateTimeEdit->setDateTime(ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime());
-        ui->weatherStationDataEndDateTimeEdit->setDateTime(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime());
     }
 
 
@@ -312,5 +309,49 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
         QString simulationTimeText = "Simulation time set to: " + dateModified.toString();
         ui->weatherStationDataTextEdit->setText(simulationTimeText);
     }
+}
 
+void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
+{
+    QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
+
+    QDateTime startTimeUTC = QDateTime::fromString(startDateTime, stationTimeFormat);
+    QDateTime endTimeUTC  = QDateTime::fromString(stopDateTime, stationTimeFormat);
+    startTimeUTC.setTimeSpec(Qt::UTC);
+    endTimeUTC.setTimeSpec(Qt::UTC);
+
+    QDateTime startTimeLocal = startTimeUTC.toLocalTime();
+    QDateTime endTimeLocal  = endTimeUTC.toLocalTime();
+    qDebug() << "[STATION FETCH] Start Time (local):" << startTimeLocal.toString();
+    qDebug() << "[STATION FETCH] Stop Time (local):"  << endTimeLocal.toString();
+
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(startTimeLocal);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(endTimeLocal);
+
+    updateTimeSteps();
+}
+
+void PointInitializationInput::updateTimeSteps()
+{
+    qDebug() << "[STATION FETCH] Updating Suggested Time steps...";
+
+    QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
+    QDateTime stop  = ui->weatherStationDataEndDateTimeEdit->dateTime();
+
+    qint64 diffSecs = start.secsTo(stop); // difference in seconds
+
+    int timesteps;
+    if (diffSecs <= 0)
+    {
+        timesteps = 1;
+    }
+    else
+    {
+        timesteps = static_cast<int>(diffSecs / 3600); // convert seconds to hours
+        if (timesteps < 2)
+            timesteps = 2;
+    }
+
+    qDebug() << "[STATION FETCH] Suggested Timesteps:" << timesteps;
+    ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
 }

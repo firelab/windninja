@@ -34,7 +34,6 @@
 #include "../ninja/windninja.h"
 #include "ui_mainwindow.h"
 #include "../ninja/gdal_util.h"
-#include "cpl_config.h"
 #include <QObject>
 #include <QTimeZone>
 #include <QFuture>
@@ -97,6 +96,8 @@ private:
                                   bool fetchLatestFlag,
                                   QString outputPath);
     void fetchStationDataFinished();
+    void readStationTime(QString startDateTime, QString stopDateTime);
+    void updateTimeSteps();
 
 };
 
