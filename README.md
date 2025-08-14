@@ -14,9 +14,6 @@ https://github.com/firelab/windninja
 FAQ:
 https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions
 
-IRC:
-irc://irc.freenode.net/#windninja
-
 [Linux build – Ubuntu 20.04](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-20.04)
 
 [Linux build – Ubuntu 22.04 (no GUI)](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-22.04)
