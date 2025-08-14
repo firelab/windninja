@@ -12,7 +12,7 @@ Source & wiki:
 https://github.com/firelab/windninja
 
 FAQ:
-https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions
+[https://ninjastorm.firelab.org/windninja/faq.html](https://ninjastorm.firelab.org/windninja/faq.html)
 
 [Linux build – Ubuntu 20.04](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-20.04)
 
