@@ -43,6 +43,9 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
     ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
+    ui->weatherStationDataTimestepsSpinBox->setValue(24);
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
@@ -232,6 +235,9 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
 
     ui->pointInitializationTreeView->setModel(stationFileSystemModel);
     ui->pointInitializationTreeView->setRootIndex(stationFileSystemModel->index(fileInfo.absolutePath()));
+    ui->pointInitializationTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
+    ui->pointInitializationTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->pointInitializationTreeView->setAnimated(true);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
@@ -244,65 +250,71 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
 
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
 {
-    QModelIndexList selectedIndexes = ui->pointInitializationTreeView->selectionModel()->selectedIndexes();
-    QModelIndex index = selectedIndexes.first();
-    if (index.column() != 0)
-        index = index.sibling(index.row(), 0);
+    QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
 
-    QString recentFileSelected = stationFileSystemModel->filePath(index);
-    qDebug() << "[STATION FETCH] Selected file path:" << recentFileSelected;
-
-    QByteArray filePathBytes = recentFileSelected.toUtf8();
-    const char* filePath = filePathBytes.constData();
-    char** papszOptions = nullptr;
-    int stationHeader = NinjaGetHeaderVersion(filePath, papszOptions);
-    qDebug() << "[STATION FETCH] Station Header: " << stationHeader;
-
-    bool timeSeriesFlag = true;
-    if (stationHeader != 1)
+    for(int i = 0; i < selectedRows.count(); i++)
     {
-        GDALDataset* hDS = (GDALDataset*) GDALOpenEx(
-            filePath,
-            GDAL_OF_VECTOR | GDAL_OF_READONLY,
-            NULL,
-            NULL,
-            NULL
-        );
-
-        OGRLayer* poLayer = hDS->GetLayer(0);
-        poLayer->ResetReading();
-        qint64 lastIndex = poLayer->GetFeatureCount();
-        qDebug() << "[STATION FETCH] Number of Time Entries:" << lastIndex;
-
-        OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, first time in series
-        QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-14)
-        qDebug() << "[STATION FETCH] Station start time:" << startDateTime;
-
-        poFeature = poLayer->GetFeature(lastIndex);             // last time in series
-        QString stopDateTime(poFeature->GetFieldAsString(15));
-        qDebug() << "[STATION FETCH] Station end Time:" << stopDateTime;
-
-        if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
+        if(stationFileSystemModel->isDir(selectedRows[i]))
         {
-            qDebug() << "[STATION FETCH] File cannot be used for Time Series";
-            timeSeriesFlag = false;
+            ui->pointInitializationTreeView->selectionModel()->select(selectedRows[i], QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+            return;
         }
-        else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
+
+        QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
+        qDebug() << "[STATION FETCH] Selected file path:" << recentFileSelected;
+
+        QByteArray filePathBytes = recentFileSelected.toUtf8();
+        const char* filePath = filePathBytes.constData();
+        char** papszOptions = nullptr;
+        int stationHeader = NinjaGetHeaderVersion(filePath, papszOptions);
+        qDebug() << "[STATION FETCH] Station Header: " << stationHeader;
+
+        bool timeSeriesFlag = true;
+        if (stationHeader != 1)
         {
-            qDebug() << "[STATION FETCH] File can be used for Time Series, suggesting time series parameters...";
-            readStationTime(startDateTime, stopDateTime);
+            GDALDataset* hDS = (GDALDataset*) GDALOpenEx(
+                filePath,
+                GDAL_OF_VECTOR | GDAL_OF_READONLY,
+                NULL,
+                NULL,
+                NULL
+                );
+
+            OGRLayer* poLayer = hDS->GetLayer(0);
+            poLayer->ResetReading();
+            qint64 lastIndex = poLayer->GetFeatureCount();
+            qDebug() << "[STATION FETCH] Number of Time Entries:" << lastIndex;
+
+            OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, first time in series
+            QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-14)
+            qDebug() << "[STATION FETCH] Station start time:" << startDateTime;
+
+            poFeature = poLayer->GetFeature(lastIndex);             // last time in series
+            QString stopDateTime(poFeature->GetFieldAsString(15));
+            qDebug() << "[STATION FETCH] Station end Time:" << stopDateTime;
+
+            if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
+            {
+                qDebug() << "[STATION FETCH] File cannot be used for Time Series";
+                timeSeriesFlag = false;
+            }
+            else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
+            {
+                qDebug() << "[STATION FETCH] File can be used for Time Series, suggesting time series parameters...";
+                readStationTime(startDateTime, stopDateTime);
+            }
         }
-    }
 
-    if (stationHeader == 2)
-    {
-        ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(timeSeriesFlag ? 0 : 1);
-
-        if (!timeSeriesFlag)
+        if (stationHeader == 2)
         {
-            QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
-            //updateSingleTime()
-            ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
+            ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(timeSeriesFlag ? 0 : 1);
+
+            if (!timeSeriesFlag)
+            {
+                QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
+                //updateSingleTime()
+                ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
+            }
         }
     }
 }
@@ -333,6 +345,9 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     ui->weatherStationDataEndTimeLabel->setText("End Time (" + DEMTimeZone + "):");
     ui->weatherStationDataStartDateTimeEdit->setDateTime(startTimeDEMTimeZone);
     ui->weatherStationDataEndDateTimeEdit->setDateTime(endTimeDEMTimeZone);
+    ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
+    ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
+    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
 
     updateTimeSteps();
 }

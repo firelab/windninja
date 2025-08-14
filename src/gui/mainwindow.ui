@@ -557,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>20</number>
+           <number>10</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -1966,7 +1966,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </size>
                      </property>
                      <property name="currentIndex">
-                      <number>1</number>
+                      <number>0</number>
                      </property>
                      <widget class="QWidget" name="weatherStationDataTimeDatesPage">
                       <layout class="QGridLayout" name="gridLayout_5">
@@ -1993,8 +1993,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </item>
                        <item row="1" column="0">
                         <widget class="QDateTimeEdit" name="weatherStationDataStartDateTimeEdit">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
                          <property name="cursor">
                           <cursorShape>PointingHandCursor</cursorShape>
+                         </property>
+                         <property name="displayFormat">
+                          <string>M/d/yy h:mm</string>
                          </property>
                          <property name="calendarPopup">
                           <bool>true</bool>
@@ -2003,13 +2009,33 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </item>
                        <item row="1" column="1">
                         <widget class="QDateTimeEdit" name="weatherStationDataEndDateTimeEdit">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="dateTime">
+                          <datetime>
+                           <hour>0</hour>
+                           <minute>0</minute>
+                           <second>0</second>
+                           <year>2000</year>
+                           <month>1</month>
+                           <day>1</day>
+                          </datetime>
+                         </property>
+                         <property name="displayFormat">
+                          <string>M/d/yy h:mm</string>
+                         </property>
                          <property name="calendarPopup">
                           <bool>true</bool>
                          </property>
                         </widget>
                        </item>
                        <item row="1" column="2">
-                        <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox"/>
+                        <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
                        </item>
                       </layout>
                      </widget>
