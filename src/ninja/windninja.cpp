@@ -2126,3 +2126,30 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** pap
 }
 
 }
+
+/*-----------------------------------------------------------------------------
+ *  Helper Methods
+ *-----------------------------------------------------------------------------*/
+
+/**
+ * \brief calls wxStation::writeBlankStationFile(), which writes a weather station csv file with no data, just a header.
+ *
+ * \param outputStationFilename A csv file to write a blank weather station file to.
+ * \param papszOptions options
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions )
+{
+    wxStation::writeBlankStationFile(outputStationFilename);
+
+    bool doesOutputFileExist = CPLCheckForFile((char*)outputStationFilename, NULL);
+    if( doesOutputFileExist )
+    {
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}

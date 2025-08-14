@@ -30,6 +30,7 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
 
+#include "windninja.h"
 #include "../ninja/gdal_util.h"
 #include "ninja_version.h"
 #include <QObject>

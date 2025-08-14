@@ -129,8 +129,22 @@ void MenuBar::resampleData()
 
 void MenuBar::writeBlankStationFile()
 {
-    qDebug() << "MenuBar: writeBlankStationFile() triggered";
-    ui->consoleTextEdit->append("MenuBar: writeBlankStationFile() triggered");
+    QString fileName = QFileDialog::getSaveFileName(ui->centralwidget,
+                tr("Save Blank Station File"),
+                "stations.csv",
+                tr("Text Files (*.csv)"));
+
+    if(!fileName.isEmpty())
+    {
+        ui->consoleTextEdit->append("writing blank station file to " + fileName);
+
+        char** papszOptions = nullptr;
+        int err = NinjaWriteBlankWxStationFile( fileName.toStdString().c_str(), papszOptions );
+        if( err != NINJA_SUCCESS )
+        {
+            ui->consoleTextEdit->append("failed to write blank station file!");
+        }
+    }
 }
 
 void MenuBar::setConfigurationOption()
