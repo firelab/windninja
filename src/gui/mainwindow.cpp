@@ -111,11 +111,21 @@ void MainWindow::refreshUI()
     }
 
     // Update point initialization
-    if (state.isPointInitializationToggled) {
+    if (state.isPointInitializationToggled && state.isStationFileSelectionValid && state.isStationFileSelected) {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
         state.isPointInitializationValid = true;
+    } else if(state.isPointInitializationToggled && !state.isStationFileSelected) {
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No station file selected.");
+        state.isPointInitializationValid = false;
+    } else if(state.isPointInitializationToggled && !state.isStationFileSelectionValid){
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Conflicting files selected.");
+        state.isPointInitializationValid = false;
     } else {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
         state.isPointInitializationValid = false;
     }
 
@@ -687,7 +697,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
         ui->domainAverageCheckBox->click();
     } else if (item->text(0) == "Point Initialization")
     {
-        //ui->pointInitializationCheckBox->click();
+        ui->pointInitializationGroupBox->setChecked(!ui->pointInitializationGroupBox->isChecked());
     } else if (item->text(0) == "Weather Model")
     {
         ui->weatherModelCheckBox->click();

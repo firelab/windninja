@@ -55,6 +55,8 @@ public:
     bool isDomainAverageWindInputTableValid = true;
     bool isDomainAverageInitializationValid = false;
     bool isPointInitializationToggled = false;
+    bool isStationFileSelected = false;
+    bool isStationFileSelectionValid = false;
     bool isPointInitializationValid = false;
     bool isWeatherModelInitializationToggled = false;
     bool isWeatherModelInitializationValid = false;

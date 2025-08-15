@@ -250,7 +250,17 @@ void PointInitializationInput::pointInitialziationRefreshButtonClicked()
 
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
 {
+    AppState& state = AppState::instance();
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
+
+    vector<QString> stationFiles;
+    vector<int> stationFileTypes;
+
+    state.isStationFileSelected = false;
+    if (selectedRows.count() > 0)
+    {
+        state.isStationFileSelected = true;
+    }
 
     for(int i = 0; i < selectedRows.count(); i++)
     {
@@ -261,6 +271,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
         }
 
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
+        stationFiles.push_back(recentFileSelected);
         qDebug() << "[STATION FETCH] Selected file path:" << recentFileSelected;
 
         QByteArray filePathBytes = recentFileSelected.toUtf8();
@@ -278,7 +289,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
                 NULL,
                 NULL,
                 NULL
-                );
+            );
 
             OGRLayer* poLayer = hDS->GetLayer(0);
             poLayer->ResetReading();
@@ -297,11 +308,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
             {
                 qDebug() << "[STATION FETCH] File cannot be used for Time Series";
                 timeSeriesFlag = false;
+                stationFileTypes.push_back(0);
             }
             else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
             {
                 qDebug() << "[STATION FETCH] File can be used for Time Series, suggesting time series parameters...";
                 readStationTime(startDateTime, stopDateTime);
+                stationFileTypes.push_back(1);
             }
         }
 
@@ -317,6 +330,14 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
             }
         }
     }
+    state.isStationFileSelectionValid = true;
+    for (int type : stationFileTypes) {
+        if (type != stationFileTypes[0]) {
+            state.isStationFileSelectionValid = false;
+            break;
+        }
+    }
+    emit requestRefresh();
 }
 
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
