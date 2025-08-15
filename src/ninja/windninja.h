@@ -345,5 +345,14 @@ typedef int  NinjaErr;
      *  Helper Methods
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** papszOptions);
+    WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
+        const int* inputYearList, const int* inputMonthList, const int* inputDayList,
+        const int* inputHourList, const int* inputMinuteList,
+        int* outputYearList, int* outputMonthList, int* outputDayList,
+        int* outputHourList, int* outputMinuteList,
+        int nTimeSteps, const char* timeZone);
+    WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
+        int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char* timeZone,
+        int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute);
 
 WN_C_END

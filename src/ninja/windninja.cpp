@@ -2134,4 +2134,61 @@ WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** pap
     return wxStation::GetHeaderVersion(filePath);
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
+    const int* inputYearList, const int* inputMonthList, const int* inputDayList,
+    const int* inputHourList, const int* inputMinuteList,
+    int* outputYearList, int* outputMonthList, int* outputDayList,
+    int* outputHourList, int* outputMinuteList,
+    int nTimeSteps, const char* timeZone)
+{
+    std::vector<boost::posix_time::ptime> timeList =
+        pointInitialization::getTimeList(
+            inputYearList[0], inputMonthList[0], inputDayList[0],
+            inputHourList[0], inputMinuteList[0],
+            inputYearList[1], inputMonthList[1], inputDayList[1],
+            inputHourList[1], inputMinuteList[1],
+            nTimeSteps, std::string(timeZone)
+            );
+
+    for (int i = 0; i < nTimeSteps; ++i)
+    {
+        const boost::posix_time::ptime& time = timeList[i];
+        boost::gregorian::date date = time.date();
+        boost::posix_time::time_duration timeDuration = time.time_of_day();
+
+        outputYearList[i]   = static_cast<int>(date.year());
+        outputMonthList[i]  = static_cast<int>(date.month());
+        outputDayList[i]    = static_cast<int>(date.day());
+        outputHourList[i]   = timeDuration.hours();
+        outputMinuteList[i] = timeDuration.minutes();
+    }
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
+    int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char* timeZone,
+    int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute)
+{
+    if (!outYear || !outMonth || !outDay || !outHour || !outMinute)
+        return NINJA_ERR_INVALID_ARGUMENT; // or appropriate error
+
+    boost::posix_time::ptime timeObject =
+        pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
+
+    const boost::gregorian::date& date = timeObject.date();
+    const boost::posix_time::time_duration& td = timeObject.time_of_day();
+
+    *outYear   = static_cast<int>(date.year());
+    *outMonth  = static_cast<int>(date.month());
+    *outDay    = static_cast<int>(date.day());
+    *outHour   = td.hours();
+    *outMinute = td.minutes();
+
+    return NINJA_SUCCESS;
+}
+
+
+
+
 }
