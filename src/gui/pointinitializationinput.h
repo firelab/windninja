@@ -73,6 +73,7 @@ private:
     QFutureWatcher<int> *futureWatcher;
     QFileSystemModel *stationFileSystemModel;
     QString currentDEMFilePath;
+    QDateTime maxStationTime, minStationTime;
 
     static int fetchStationFromBbox(QVector<int> year,
                                     QVector<int> month,

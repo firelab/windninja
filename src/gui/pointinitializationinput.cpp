@@ -256,6 +256,9 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     vector<QString> stationFiles;
     vector<int> stationFileTypes;
 
+    maxStationTime = QDateTime();
+    minStationTime = QDateTime();
+
     state.isStationFileSelected = false;
     if (selectedRows.count() > 0)
     {
@@ -359,13 +362,23 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     QDateTime startTimeDEMTimeZone = startTimeUTC.toTimeZone(timeZone);
     QDateTime endTimeDEMTimeZone  = endTimeUTC.toTimeZone(timeZone);
 
-    qDebug() << "[STATION FETCH] Start Time (" << DEMTimeZone << "):" << startTimeDEMTimeZone.toString();
-    qDebug() << "[STATION FETCH] Stop Time ("  << DEMTimeZone << "):"  << endTimeDEMTimeZone.toString();
+    if(startTimeDEMTimeZone > minStationTime)
+    {
+        minStationTime = startTimeDEMTimeZone;
+    }
+
+    if(endTimeDEMTimeZone > maxStationTime)
+    {
+        maxStationTime = endTimeDEMTimeZone;
+    }
+
+    qDebug() << "[STATION FETCH] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
+    qDebug() << "[STATION FETCH] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
 
     ui->weatherStationDataStartTimeLabel->setText("Start Time (" + DEMTimeZone + "):");
     ui->weatherStationDataEndTimeLabel->setText("End Time (" + DEMTimeZone + "):");
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(startTimeDEMTimeZone);
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(endTimeDEMTimeZone);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(minStationTime);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxStationTime);
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
     ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
