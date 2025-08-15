@@ -4480,7 +4480,7 @@ QMenu::item:selected {
    </property>
    <widget class="QMenu" name="fileMenu">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
     <addaction name="newProjectAction"/>
     <addaction name="openProjectAction"/>
@@ -4491,14 +4491,14 @@ QMenu::item:selected {
    </widget>
    <widget class="QMenu" name="optionsMenu">
     <property name="title">
-     <string>Options</string>
+     <string>&amp;Options</string>
     </property>
     <addaction name="enableConsoleOutputAction"/>
     <addaction name="writeConsoleOutputAction"/>
    </widget>
    <widget class="QMenu" name="toolsMenu">
     <property name="title">
-     <string>Tools</string>
+     <string>&amp;Tools</string>
     </property>
     <addaction name="resampleDataAction"/>
     <addaction name="writeBlankStationFileAction"/>
@@ -4506,17 +4506,17 @@ QMenu::item:selected {
    </widget>
    <widget class="QMenu" name="helpMenu">
     <property name="title">
-     <string>Help</string>
+     <string>&amp;Help</string>
     </property>
     <widget class="QMenu" name="displayingShapeFilesMenu">
      <property name="title">
-      <string>Displaying Shapefiles</string>
+      <string>&amp;Displaying Shapefiles</string>
      </property>
      <addaction name="displayArcGISProGuideAction"/>
     </widget>
     <widget class="QMenu" name="tutorialsMenu">
      <property name="title">
-      <string>Tutorials</string>
+      <string>&amp;Tutorials</string>
      </property>
      <addaction name="displayTutorial1Action"/>
      <addaction name="displayTutorial2Action"/>
@@ -4525,7 +4525,7 @@ QMenu::item:selected {
     </widget>
     <widget class="QMenu" name="instructionsMenu">
      <property name="title">
-      <string>Instructions</string>
+      <string>&amp;Instructions</string>
      </property>
      <addaction name="displayDemDownloadInstructionsAction"/>
      <addaction name="displayFetchDemInstructionsAction"/>
@@ -4547,32 +4547,55 @@ QMenu::item:selected {
   </widget>
   <action name="newProjectAction">
    <property name="text">
-    <string>New Project</string>
+    <string>&amp;New Project</string>
    </property>
   </action>
   <action name="openProjectAction">
    <property name="text">
-    <string>Open Project</string>
+    <string>&amp;Open Project</string>
    </property>
   </action>
   <action name="exportSolutionAction">
    <property name="text">
-    <string>Export Solution</string>
+    <string>&amp;Export Solution</string>
    </property>
   </action>
   <action name="closeProjectAction">
    <property name="text">
-    <string>Close Project</string>
+    <string>&amp;Close Project</string>
    </property>
   </action>
   <action name="openElevationInputFileMenuAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
+   </property>
    <property name="text">
-    <string>Open Elevation Input File</string>
+    <string>Open &amp;Elevation Input File</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Surface Input  File</string>
+   </property>
+   <property name="statusTip">
+    <string>Open Surface Input  File</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
   <action name="exitWindNinjaAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
+   </property>
    <property name="text">
+    <string>E&amp;xit WindNinja</string>
+   </property>
+   <property name="statusTip">
     <string>Exit WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F4</string>
    </property>
   </action>
   <action name="enableConsoleOutputAction">
@@ -4583,95 +4606,248 @@ QMenu::item:selected {
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Enable Console Output</string>
+    <string>&amp;Enable Console Output</string>
    </property>
   </action>
   <action name="writeConsoleOutputAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/disk.png</normaloff>:/disk.png</iconset>
+   </property>
    <property name="text">
-    <string>Write console output to file...</string>
+    <string>&amp;Write Console Output</string>
+   </property>
+   <property name="statusTip">
+    <string>Write the console text to disk</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
    </property>
   </action>
   <action name="resampleDataAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/resample.png</normaloff>:/resample.png</iconset>
+   </property>
    <property name="text">
+    <string>&amp;Resample Data</string>
+   </property>
+   <property name="statusTip">
     <string>Resample Existing Data</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
   <action name="writeBlankStationFileAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/disk.png</normaloff>:/disk.png</iconset>
+   </property>
    <property name="text">
-    <string>Write blank station file</string>
+    <string>&amp;Write Blank Station File</string>
+   </property>
+   <property name="statusTip">
+    <string>Write a blank station file for point initialization</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+W</string>
    </property>
   </action>
   <action name="setConfigurationOptionAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/cog_go.png</normaloff>:/cog_go.png</iconset>
+   </property>
    <property name="text">
-    <string>Set configuration option</string>
+    <string>Set &amp;Configuration Option</string>
+   </property>
+   <property name="statusTip">
+    <string>Set advanced runtime configuration options</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+O</string>
    </property>
   </action>
   <action name="displayArcGISProGuideAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>How to Display Shapefiles in ArcGIS Pro</string>
+    <string>&amp;How to Display Shapefiles in ArcGIS Pro</string>
    </property>
   </action>
   <action name="displayTutorial1Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>Tutorial 1: The Basics</string>
+    <string>Tutorial &amp;1: The Basics</string>
+   </property>
+   <property name="statusTip">
+    <string>Get started using WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
    </property>
   </action>
   <action name="displayTutorial2Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>Tutorial 2: Diurnal Winds and Non-Neutral Stability</string>
+    <string>Tutorial &amp;2: Diurnal Winds and Non-Neutral Stability</string>
+   </property>
+   <property name="statusTip">
+    <string>Using Diurnal Winds in WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
    </property>
   </action>
   <action name="displayTutorial3Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>Tutorial 3: Point Initialization</string>
+    <string>Tutorial &amp;3: Point Initialization</string>
+   </property>
+   <property name="statusTip">
+    <string>Using Point Initialization in WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
    </property>
   </action>
   <action name="displayTutorial4Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>Tutorial 4: Weather Model Initialization</string>
+    <string>Tutorial &amp;4: Weather Model Initialization</string>
+   </property>
+   <property name="statusTip">
+    <string>Using Weather Model Initialization in WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+4</string>
    </property>
   </action>
   <action name="displayDemDownloadInstructionsAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>DEM Download Instructions</string>
+    <string>&amp;DEM Download Instructions</string>
+   </property>
+   <property name="statusTip">
+    <string>How to download DEM data with WindNinja</string>
    </property>
   </action>
   <action name="displayFetchDemInstructionsAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>fetch_dem Instructions</string>
+    <string>&amp;fetch_dem Instructions</string>
+   </property>
+   <property name="statusTip">
+    <string>How to download DEM data with fetch_dem</string>
    </property>
   </action>
   <action name="displayCommandLineInterfaceInstructionsAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
    <property name="text">
-    <string>Command Line Interface Instructions</string>
+    <string>&amp;Command Line Interface Instructions</string>
+   </property>
+   <property name="statusTip">
+    <string>Using the Command Line Interface</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="aboutWindNinjaAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/help.png</normaloff>:/help.png</iconset>
+   </property>
    <property name="text">
+    <string>&amp;About WindNinja</string>
+   </property>
+   <property name="statusTip">
     <string>About WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
    </property>
   </action>
   <action name="citeWindNinjaAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/citation.png</normaloff>:/citation.png</iconset>
+   </property>
    <property name="text">
-    <string>Citation</string>
+    <string>&amp;Citation</string>
+   </property>
+   <property name="statusTip">
+    <string>How to cite WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
   <action name="supportEmailAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/email.png</normaloff>:/email.png</iconset>
+   </property>
    <property name="text">
-    <string>Email Us</string>
+    <string>&amp;Email Us</string>
+   </property>
+   <property name="statusTip">
+    <string>Email bugs/comments/questions to the WindNinja team</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="submitBugReportAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/bug_link.png</normaloff>:/bug_link.png</iconset>
+   </property>
    <property name="text">
-    <string>Submit Bug Report</string>
+    <string>Submit &amp;Bug Report</string>
+   </property>
+   <property name="statusTip">
+    <string>Submit a bug report via GitHub (requires GitHub ID)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
    </property>
   </action>
   <action name="aboutQtAction">
    <property name="text">
-    <string>About Qt</string>
+    <string>About &amp;Qt</string>
+   </property>
+   <property name="statusTip">
+    <string>Show the Qt library's About box</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../wn-resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
