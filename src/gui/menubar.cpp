@@ -149,8 +149,35 @@ void MenuBar::writeBlankStationFile()
 
 void MenuBar::setConfigurationOption()
 {
-    qDebug() << "MenuBar: setConfigurationOption() triggered";
-    ui->consoleTextEdit->append("MenuBar: setConfigurationOption() triggered");
+    setConfigurationOptionDialog configDialog;
+
+    int rc = configDialog.exec();
+    if( rc == QDialog::Rejected )
+    {
+        return;
+    }
+
+    const char *pszKey, *pszVal;
+    QString key = configDialog.GetKey();
+    QString val = configDialog.GetValue();
+    if( key == "" )
+    {
+        return;
+    }
+    if( val == "" )
+    {
+        pszVal = NULL;
+    }
+    else
+    {
+        pszVal = CPLSPrintf( "%s", (char*)val.toLocal8Bit().data() );
+    }
+
+    qDebug() << "Setting configuration option " << key << "to" << val;
+    ui->consoleTextEdit->append("Setting configuration option " + key + " to " + val);
+
+    pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
+    CPLSetConfigOption( pszKey, pszVal );
 }
 
 void MenuBar::displayArcGISProGuide()

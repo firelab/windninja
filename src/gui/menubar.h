@@ -30,6 +30,8 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
 
+#include "setconfigurationoptiondialog.h"
+
 #include "windninja.h"
 #include "../ninja/gdal_util.h"
 #include "ninja_version.h"
