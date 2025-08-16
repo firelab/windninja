@@ -4482,6 +4482,9 @@ QMenu::item:selected {
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
+    </property>
     <addaction name="newProjectAction"/>
     <addaction name="openProjectAction"/>
     <addaction name="exportSolutionAction"/>
@@ -4493,12 +4496,18 @@ QMenu::item:selected {
     <property name="title">
      <string>&amp;Options</string>
     </property>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
+    </property>
     <addaction name="enableConsoleOutputAction"/>
     <addaction name="writeConsoleOutputAction"/>
    </widget>
    <widget class="QMenu" name="toolsMenu">
     <property name="title">
      <string>&amp;Tools</string>
+    </property>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
     </property>
     <addaction name="resampleDataAction"/>
     <addaction name="writeBlankStationFileAction"/>
@@ -4508,15 +4517,24 @@ QMenu::item:selected {
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
+    </property>
     <widget class="QMenu" name="displayingShapeFilesMenu">
      <property name="title">
       <string>&amp;Displaying Shapefiles</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="displayArcGISProGuideAction"/>
     </widget>
     <widget class="QMenu" name="tutorialsMenu">
      <property name="title">
       <string>&amp;Tutorials</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="displayTutorial1Action"/>
      <addaction name="displayTutorial2Action"/>
@@ -4526,6 +4544,9 @@ QMenu::item:selected {
     <widget class="QMenu" name="instructionsMenu">
      <property name="title">
       <string>&amp;Instructions</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="displayDemDownloadInstructionsAction"/>
      <addaction name="displayFetchDemInstructionsAction"/>
@@ -4549,20 +4570,32 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;New Project</string>
    </property>
+   <property name="toolTip">
+    <string>Open New Project</string>
+   </property>
   </action>
   <action name="openProjectAction">
    <property name="text">
     <string>&amp;Open Project</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Existing Project</string>
    </property>
   </action>
   <action name="exportSolutionAction">
    <property name="text">
     <string>&amp;Export Solution</string>
    </property>
+   <property name="toolTip">
+    <string>Save Output From Current Project</string>
+   </property>
   </action>
   <action name="closeProjectAction">
    <property name="text">
     <string>&amp;Close Project</string>
+   </property>
+   <property name="toolTip">
+    <string>Close Current Project</string>
    </property>
   </action>
   <action name="openElevationInputFileMenuAction">
@@ -4574,10 +4607,7 @@ QMenu::item:selected {
     <string>Open &amp;Elevation Input File</string>
    </property>
    <property name="toolTip">
-    <string>Open Surface Input  File</string>
-   </property>
-   <property name="statusTip">
-    <string>Open Surface Input  File</string>
+    <string>Open Surface Input File</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
@@ -4591,7 +4621,7 @@ QMenu::item:selected {
    <property name="text">
     <string>E&amp;xit WindNinja</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Exit WindNinja</string>
    </property>
    <property name="shortcut">
@@ -4608,6 +4638,9 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Enable Console Output</string>
    </property>
+   <property name="toolTip">
+    <string>Show or Hide the Console Output Window</string>
+   </property>
   </action>
   <action name="writeConsoleOutputAction">
    <property name="icon">
@@ -4617,7 +4650,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Write Console Output</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Write the console text to disk</string>
    </property>
    <property name="shortcut">
@@ -4632,7 +4665,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Resample Data</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Resample Existing Data</string>
    </property>
    <property name="shortcut">
@@ -4647,7 +4680,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Write Blank Station File</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Write a blank station file for point initialization</string>
    </property>
    <property name="shortcut">
@@ -4662,7 +4695,7 @@ QMenu::item:selected {
    <property name="text">
     <string>Set &amp;Configuration Option</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Set advanced runtime configuration options</string>
    </property>
    <property name="shortcut">
@@ -4677,6 +4710,9 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;How to Display Shapefiles in ArcGIS Pro</string>
    </property>
+   <property name="toolTip">
+    <string>Open ArcGIS Pro Tutorial</string>
+   </property>
   </action>
   <action name="displayTutorial1Action">
    <property name="icon">
@@ -4686,7 +4722,7 @@ QMenu::item:selected {
    <property name="text">
     <string>Tutorial &amp;1: The Basics</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Get started using WindNinja</string>
    </property>
    <property name="shortcut">
@@ -4701,7 +4737,7 @@ QMenu::item:selected {
    <property name="text">
     <string>Tutorial &amp;2: Diurnal Winds and Non-Neutral Stability</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Using Diurnal Winds in WindNinja</string>
    </property>
    <property name="shortcut">
@@ -4716,7 +4752,7 @@ QMenu::item:selected {
    <property name="text">
     <string>Tutorial &amp;3: Point Initialization</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Using Point Initialization in WindNinja</string>
    </property>
    <property name="shortcut">
@@ -4731,7 +4767,7 @@ QMenu::item:selected {
    <property name="text">
     <string>Tutorial &amp;4: Weather Model Initialization</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Using Weather Model Initialization in WindNinja</string>
    </property>
    <property name="shortcut">
@@ -4746,7 +4782,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;DEM Download Instructions</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>How to download DEM data with WindNinja</string>
    </property>
   </action>
@@ -4758,7 +4794,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;fetch_dem Instructions</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>How to download DEM data with fetch_dem</string>
    </property>
   </action>
@@ -4770,7 +4806,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Command Line Interface Instructions</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Using the Command Line Interface</string>
    </property>
    <property name="shortcut">
@@ -4785,8 +4821,8 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;About WindNinja</string>
    </property>
-   <property name="statusTip">
-    <string>About WindNinja</string>
+   <property name="toolTip">
+    <string>Show About WindNinja Info</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+A</string>
@@ -4800,7 +4836,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Citation</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>How to cite WindNinja</string>
    </property>
    <property name="shortcut">
@@ -4815,7 +4851,7 @@ QMenu::item:selected {
    <property name="text">
     <string>&amp;Email Us</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Email bugs/comments/questions to the WindNinja team</string>
    </property>
    <property name="shortcut">
@@ -4830,7 +4866,7 @@ QMenu::item:selected {
    <property name="text">
     <string>Submit &amp;Bug Report</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Submit a bug report via GitHub (requires GitHub ID)</string>
    </property>
    <property name="shortcut">
@@ -4841,7 +4877,7 @@ QMenu::item:selected {
    <property name="text">
     <string>About &amp;Qt</string>
    </property>
-   <property name="statusTip">
+   <property name="toolTip">
     <string>Show the Qt library's About box</string>
    </property>
   </action>
