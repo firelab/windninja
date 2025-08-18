@@ -843,8 +843,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>550</width>
-                 <height>646</height>
+                 <width>578</width>
+                 <height>503</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,1">
@@ -1385,8 +1385,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="geometry">
                 <rect>
                  <x>0</x>
-                 <y>-7</y>
-                 <width>544</width>
+                 <y>0</y>
+                 <width>346</width>
                  <height>661</height>
                 </rect>
                </property>
@@ -2763,7 +2763,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>536</width>
+                 <width>414</width>
                  <height>402</height>
                 </rect>
                </property>
@@ -3460,7 +3460,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>536</width>
+                 <width>381</width>
                  <height>318</height>
                 </rect>
                </property>
@@ -4378,9 +4378,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             </size>
            </property>
            <widget class="QTextEdit" name="consoleTextEdit">
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
             <property name="geometry">
              <rect>
               <x>0</x>
@@ -4400,6 +4397,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <width>600</width>
               <height>100</height>
              </size>
+            </property>
+            <property name="readOnly">
+             <bool>true</bool>
             </property>
            </widget>
           </widget>
@@ -4858,6 +4858,9 @@ QMenu::item:selected {
    </property>
   </action>
   <action name="aboutQtAction">
+   <property name="icon">
+    <iconset theme="dialog-information"/>
+   </property>
    <property name="text">
     <string>About &amp;Qt</string>
    </property>
