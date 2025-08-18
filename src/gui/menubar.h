@@ -53,6 +53,7 @@ public:
     MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 signals:
+    void writeToConsole(QString message, QColor color = Qt::white);
     void openElevationInputFileMenuActionTriggered();
 
 private slots:

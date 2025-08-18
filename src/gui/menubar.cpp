@@ -79,26 +79,22 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
 
 void MenuBar::newProject()
 {
-    qDebug() << "MenuBar: newProject() triggered";
-    ui->consoleTextEdit->append("MenuBar: newProject() triggered");
+    writeToConsole("MenuBar: newProject() triggered");
 }
 
 void MenuBar::openProject()
 {
-    qDebug() << "MenuBar: openProject() triggered";
-    ui->consoleTextEdit->append("MenuBar: openProject() triggered");
+    writeToConsole("MenuBar: openProject() triggered");
 }
 
 void MenuBar::exportSolution()
 {
-    qDebug() << "MenuBar: exportSolution() triggered";
-    ui->consoleTextEdit->append("MenuBar: exportSolution() triggered");
+    writeToConsole("MenuBar: exportSolution() triggered");
 }
 
 void MenuBar::closeProject()
 {
-    qDebug() << "MenuBar: closeProject() triggered";
-    ui->consoleTextEdit->append("MenuBar: closeProject() triggered");
+    writeToConsole("MenuBar: closeProject() triggered");
 }
 
 void MenuBar::writeConsoleOutput()
@@ -111,8 +107,8 @@ void MenuBar::writeConsoleOutput()
     if(!fileName.isEmpty())
     {
         QDateTime currentTime(QDateTime::currentDateTime());
-        ui->consoleTextEdit->append("writing WindNinja console output to " + fileName);
-        ui->consoleTextEdit->append("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"));
+        writeToConsole("writing console output to " + fileName, Qt::darkGreen);
+        writeToConsole("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
 
         std::ofstream fout(fileName.toStdString().c_str(), std::ios::out);
         QString text = ui->consoleTextEdit->toPlainText();
@@ -123,8 +119,7 @@ void MenuBar::writeConsoleOutput()
 
 void MenuBar::resampleData()
 {
-    qDebug() << "MenuBar: resampleData() triggered";
-    ui->consoleTextEdit->append("MenuBar: resampleData() triggered");
+    writeToConsole("MenuBar: resampleData() triggered");
 }
 
 void MenuBar::writeBlankStationFile()
@@ -136,13 +131,13 @@ void MenuBar::writeBlankStationFile()
 
     if(!fileName.isEmpty())
     {
-        ui->consoleTextEdit->append("writing blank station file to " + fileName);
+        writeToConsole("writing blank station file to " + fileName, Qt::darkGreen);
 
         char** papszOptions = nullptr;
         int err = NinjaWriteBlankWxStationFile( fileName.toStdString().c_str(), papszOptions );
         if( err != NINJA_SUCCESS )
         {
-            ui->consoleTextEdit->append("failed to write blank station file!");
+            writeToConsole("failed to write blank station file!", Qt::red);
         }
     }
 }
@@ -174,7 +169,7 @@ void MenuBar::setConfigurationOption()
     }
 
     qDebug() << "Setting configuration option " << key << "to" << val;
-    ui->consoleTextEdit->append("Setting configuration option " + key + " to " + val);
+    writeToConsole("Setting configuration option " + key + " to " + val);
 
     pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
     CPLSetConfigOption( pszKey, pszVal );
@@ -184,8 +179,7 @@ void MenuBar::displayArcGISProGuide()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -199,8 +193,7 @@ void MenuBar::displayTutorial1()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial1.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -214,8 +207,7 @@ void MenuBar::displayTutorial2()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial2.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -229,8 +221,7 @@ void MenuBar::displayTutorial3()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial3.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -244,8 +235,7 @@ void MenuBar::displayTutorial4()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial4.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -259,8 +249,7 @@ void MenuBar::displayDemDownloadInstructions()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/download_elevation_file.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -274,8 +263,7 @@ void MenuBar::displayFetchDemInstructions()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/fetch_dem_instructions.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
@@ -289,8 +277,7 @@ void MenuBar::displayCommandLineInterfaceInstructions()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/CLI_instructions.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    qDebug() << "Opening" << displayFile;
-    ui->consoleTextEdit->append("Opening " + displayFile);
+    writeToConsole("Opening " + displayFile);
 
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
