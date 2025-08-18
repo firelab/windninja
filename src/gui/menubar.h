@@ -56,7 +56,6 @@ public:
 
 signals:
     void writeToConsole(QString message, QColor color = Qt::white);
-    void openElevationInputFileActionTriggered();
 
 private slots:
     // functions for Menu actions
@@ -68,7 +67,7 @@ private slots:
     // functions for QMenu optionsMenu "Options" actions
     void writeConsoleOutputActionTriggered();
     // functions for QMenu toolsMenu "Tools" actions
-    void resampleDataActionTriggered();
+    //void resampleDataActionTriggered();
     void writeBlankStationFileActionTriggered();
     void setConfigurationOptionActionTriggered();
     // functions for QMenu helpMenu "Help" actions

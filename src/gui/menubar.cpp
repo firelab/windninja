@@ -41,7 +41,6 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
     connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
     connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
-    connect(ui->openElevationInputFileAction, &QAction::triggered, this, &MenuBar::openElevationInputFileActionTriggered);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
 
     // QMenu optionsMenu "Options" actions
@@ -50,7 +49,7 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutputActionTriggered);
 
     // QMenu toolsMenu "Tools" actions
-    connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBar::resampleDataActionTriggered);
+    //connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBar::resampleDataActionTriggered);
     connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBar::writeBlankStationFileActionTriggered);
     connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBar::setConfigurationOptionActionTriggered);
 
@@ -128,10 +127,10 @@ void MenuBar::writeConsoleOutputActionTriggered()
     }
 }
 
-void MenuBar::resampleDataActionTriggered()
-{
-    writeToConsole("MenuBar: resampleData() triggered");
-}
+//void MenuBar::resampleDataActionTriggered()
+//{
+//    writeToConsole("MenuBar: resampleData() triggered");
+//}
 
 void MenuBar::writeBlankStationFileActionTriggered()
 {

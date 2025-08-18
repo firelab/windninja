@@ -4489,7 +4489,6 @@ QMenu::item:selected {
     <addaction name="openProjectAction"/>
     <addaction name="exportSolutionAction"/>
     <addaction name="closeProjectAction"/>
-    <addaction name="openElevationInputFileAction"/>
     <addaction name="exitWindNinjaAction"/>
    </widget>
    <widget class="QMenu" name="optionsMenu">
@@ -4509,7 +4508,7 @@ QMenu::item:selected {
     <property name="toolTipsVisible">
      <bool>true</bool>
     </property>
-    <addaction name="resampleDataAction"/>
+    <!--<addaction name="resampleDataAction"/>-->
     <addaction name="writeBlankStationFileAction"/>
     <addaction name="setConfigurationOptionAction"/>
    </widget>
@@ -4598,21 +4597,6 @@ QMenu::item:selected {
     <string>Close Current Project</string>
    </property>
   </action>
-  <action name="openElevationInputFileAction">
-   <property name="icon">
-    <iconset resource="../../wn-resources.qrc">
-     <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
-   </property>
-   <property name="text">
-    <string>Open &amp;Elevation Input File</string>
-   </property>
-   <property name="toolTip">
-    <string>Open Surface Input File</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+D</string>
-   </property>
-  </action>
   <action name="exitWindNinjaAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
@@ -4657,7 +4641,7 @@ QMenu::item:selected {
     <string>Ctrl+W</string>
    </property>
   </action>
-  <action name="resampleDataAction">
+  <!--<action name="resampleDataAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
      <normaloff>:/resample.png</normaloff>:/resample.png</iconset>
@@ -4671,7 +4655,7 @@ QMenu::item:selected {
    <property name="shortcut">
     <string>Ctrl+R</string>
    </property>
-  </action>
+  </action>-->
   <action name="writeBlankStationFileAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
