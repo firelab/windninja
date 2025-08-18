@@ -111,8 +111,19 @@ void MenuBar::writeConsoleOutput()
         writeToConsole("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
 
         std::ofstream fout(fileName.toStdString().c_str(), std::ios::out);
-        QString text = ui->consoleTextEdit->toPlainText();
-        fout << text.toStdString();
+        if(!fout)
+        {
+            writeToConsole("Cannot open " + fileName + " for writing.", Qt::red);
+            return;
+        }
+
+        QTextDocument *doc = ui->consoleTextEdit->document();
+        QTextBlock block = doc->begin();
+        while( block.isValid() )
+        {
+            fout << block.text().toStdString() << "\n";
+            block = block.next();
+        }
         fout.close();
     }
 }

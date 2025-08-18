@@ -39,6 +39,8 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QTextDocument>
+#include <QTextBlock>
 #include <QDesktopServices>
 
 namespace Ui {
