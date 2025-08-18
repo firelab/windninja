@@ -56,38 +56,38 @@ public:
 
 signals:
     void writeToConsole(QString message, QColor color = Qt::white);
-    void openElevationInputFileMenuActionTriggered();
+    void openElevationInputFileActionTriggered();
 
 private slots:
     // functions for Menu actions
     // functions for QMenu fileMenu "File" actions
-    void newProject();
-    void openProject();
-    void exportSolution();
-    void closeProject();
+    void newProjectActionTriggered();
+    void openProjectActionTriggered();
+    void exportSolutionActionTriggered();
+    void closeProjectActionTriggered();
     // functions for QMenu optionsMenu "Options" actions
-    void writeConsoleOutput();
+    void writeConsoleOutputActionTriggered();
     // functions for QMenu toolsMenu "Tools" actions
-    void resampleData();
-    void writeBlankStationFile();
-    void setConfigurationOption();
+    void resampleDataActionTriggered();
+    void writeBlankStationFileActionTriggered();
+    void setConfigurationOptionActionTriggered();
     // functions for QMenu helpMenu "Help" actions
     // functions for sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
-    void displayArcGISProGuide();
+    void displayArcGISProGuideActionTriggered();
     // functions for sub QMenu tutorialsMenu "Tutorials" actions
-    void displayTutorial1();
-    void displayTutorial2();
-    void displayTutorial3();
-    void displayTutorial4();
+    void displayTutorial1ActionTriggered();
+    void displayTutorial2ActionTriggered();
+    void displayTutorial3ActionTriggered();
+    void displayTutorial4ActionTriggered();
     // functions for sub QMenu instructionsMenu "Instructions" actions
-    void displayDemDownloadInstructions();
-    void displayFetchDemInstructions();
-    void displayCommandLineInterfaceInstructions();
+    void displayDemDownloadInstructionsActionTriggered();
+    void displayFetchDemInstructionsActionTriggered();
+    void displayCommandLineInterfaceInstructionsActionTriggered();
     // functions for remaining non-sub QMenu actions
-    void aboutWindNinja();
-    void citeWindNinja();
-    void supportEmail();
-    void submitBugReport();
+    void aboutWindNinjaActionTriggered();
+    void citeWindNinjaActionTriggered();
+    void supportEmailActionTriggered();
+    void submitBugReportActionTriggered();
 
 private:
     Ui::MainWindow* ui;

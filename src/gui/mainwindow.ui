@@ -4489,7 +4489,7 @@ QMenu::item:selected {
     <addaction name="openProjectAction"/>
     <addaction name="exportSolutionAction"/>
     <addaction name="closeProjectAction"/>
-    <addaction name="openElevationInputFileMenuAction"/>
+    <addaction name="openElevationInputFileAction"/>
     <addaction name="exitWindNinjaAction"/>
    </widget>
    <widget class="QMenu" name="optionsMenu">
@@ -4598,7 +4598,7 @@ QMenu::item:selected {
     <string>Close Current Project</string>
    </property>
   </action>
-  <action name="openElevationInputFileMenuAction">
+  <action name="openElevationInputFileAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
      <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>

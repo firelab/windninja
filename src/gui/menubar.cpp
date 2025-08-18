@@ -37,67 +37,67 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     dataPath = QDir(dataFolder);
 
     // QMenu fileMenu "File" actions
-    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProject);
-    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProject);
-    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolution);
-    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProject);
-    connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &MenuBar::openElevationInputFileMenuActionTriggered);
+    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
+    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
+    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
+    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
+    connect(ui->openElevationInputFileAction, &QAction::triggered, this, &MenuBar::openElevationInputFileActionTriggered);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
 
     // QMenu optionsMenu "Options" actions
     connect(ui->enableConsoleOutputAction, &QAction::toggled, ui->consoleDockWidget, &QDockWidget::setVisible);
     connect(ui->consoleDockWidget, &QDockWidget::visibilityChanged, ui->enableConsoleOutputAction, &QAction::setChecked);  // if closed from the QDockWidget itself, unchecks the menuAction
-    connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutput);
+    connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutputActionTriggered);
 
     // QMenu toolsMenu "Tools" actions
-    connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBar::resampleData);
-    connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBar::writeBlankStationFile);
-    connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBar::setConfigurationOption);
+    connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBar::resampleDataActionTriggered);
+    connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBar::writeBlankStationFileActionTriggered);
+    connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBar::setConfigurationOptionActionTriggered);
 
     // QMenu helpMenu "Help" actions
     // sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
-    connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MenuBar::displayArcGISProGuide);
+    connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MenuBar::displayArcGISProGuideActionTriggered);
 
     // sub QMenu tutorialsMenu "Tutorials" actions
-    connect(ui->displayTutorial1Action, &QAction::triggered, this, &MenuBar::displayTutorial1);
-    connect(ui->displayTutorial2Action, &QAction::triggered, this, &MenuBar::displayTutorial2);
-    connect(ui->displayTutorial3Action, &QAction::triggered, this, &MenuBar::displayTutorial3);
-    connect(ui->displayTutorial4Action, &QAction::triggered, this, &MenuBar::displayTutorial4);
+    connect(ui->displayTutorial1Action, &QAction::triggered, this, &MenuBar::displayTutorial1ActionTriggered);
+    connect(ui->displayTutorial2Action, &QAction::triggered, this, &MenuBar::displayTutorial2ActionTriggered);
+    connect(ui->displayTutorial3Action, &QAction::triggered, this, &MenuBar::displayTutorial3ActionTriggered);
+    connect(ui->displayTutorial4Action, &QAction::triggered, this, &MenuBar::displayTutorial4ActionTriggered);
 
     // sub QMenu instructionsMenu "Instructions" actions
-    connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MenuBar::displayDemDownloadInstructions);
-    connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MenuBar::displayFetchDemInstructions);
-    connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MenuBar::displayCommandLineInterfaceInstructions);
+    connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MenuBar::displayDemDownloadInstructionsActionTriggered);
+    connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MenuBar::displayFetchDemInstructionsActionTriggered);
+    connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MenuBar::displayCommandLineInterfaceInstructionsActionTriggered);
 
     // remaining non-sub QMenu actions
-    connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MenuBar::aboutWindNinja);
-    connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBar::citeWindNinja);
-    connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBar::supportEmail);
-    connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReport);
+    connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MenuBar::aboutWindNinjaActionTriggered);
+    connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBar::citeWindNinjaActionTriggered);
+    connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBar::supportEmailActionTriggered);
+    connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReportActionTriggered);
     connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
 }
 
-void MenuBar::newProject()
+void MenuBar::newProjectActionTriggered()
 {
     writeToConsole("MenuBar: newProject() triggered");
 }
 
-void MenuBar::openProject()
+void MenuBar::openProjectActionTriggered()
 {
     writeToConsole("MenuBar: openProject() triggered");
 }
 
-void MenuBar::exportSolution()
+void MenuBar::exportSolutionActionTriggered()
 {
     writeToConsole("MenuBar: exportSolution() triggered");
 }
 
-void MenuBar::closeProject()
+void MenuBar::closeProjectActionTriggered()
 {
     writeToConsole("MenuBar: closeProject() triggered");
 }
 
-void MenuBar::writeConsoleOutput()
+void MenuBar::writeConsoleOutputActionTriggered()
 {
     QString fileName = QFileDialog::getSaveFileName(ui->centralwidget,
                 tr("Save Console Output"),
@@ -128,12 +128,12 @@ void MenuBar::writeConsoleOutput()
     }
 }
 
-void MenuBar::resampleData()
+void MenuBar::resampleDataActionTriggered()
 {
     writeToConsole("MenuBar: resampleData() triggered");
 }
 
-void MenuBar::writeBlankStationFile()
+void MenuBar::writeBlankStationFileActionTriggered()
 {
     QString fileName = QFileDialog::getSaveFileName(ui->centralwidget,
                 tr("Save Blank Station File"),
@@ -153,7 +153,7 @@ void MenuBar::writeBlankStationFile()
     }
 }
 
-void MenuBar::setConfigurationOption()
+void MenuBar::setConfigurationOptionActionTriggered()
 {
     setConfigurationOptionDialog configDialog;
 
@@ -186,7 +186,7 @@ void MenuBar::setConfigurationOption()
     CPLSetConfigOption( pszKey, pszVal );
 }
 
-void MenuBar::displayArcGISProGuide()
+void MenuBar::displayArcGISProGuideActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -200,7 +200,7 @@ void MenuBar::displayArcGISProGuide()
     }
 }
 
-void MenuBar::displayTutorial1()
+void MenuBar::displayTutorial1ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial1.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -214,7 +214,7 @@ void MenuBar::displayTutorial1()
     }
 }
 
-void MenuBar::displayTutorial2()
+void MenuBar::displayTutorial2ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial2.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -228,7 +228,7 @@ void MenuBar::displayTutorial2()
     }
 }
 
-void MenuBar::displayTutorial3()
+void MenuBar::displayTutorial3ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial3.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -242,7 +242,7 @@ void MenuBar::displayTutorial3()
     }
 }
 
-void MenuBar::displayTutorial4()
+void MenuBar::displayTutorial4ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial4.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -256,7 +256,7 @@ void MenuBar::displayTutorial4()
     }
 }
 
-void MenuBar::displayDemDownloadInstructions()
+void MenuBar::displayDemDownloadInstructionsActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/download_elevation_file.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -270,7 +270,7 @@ void MenuBar::displayDemDownloadInstructions()
     }
 }
 
-void MenuBar::displayFetchDemInstructions()
+void MenuBar::displayFetchDemInstructionsActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/fetch_dem_instructions.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -284,7 +284,7 @@ void MenuBar::displayFetchDemInstructions()
     }
 }
 
-void MenuBar::displayCommandLineInterfaceInstructions()
+void MenuBar::displayCommandLineInterfaceInstructionsActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/CLI_instructions.pdf");
     displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
@@ -298,7 +298,7 @@ void MenuBar::displayCommandLineInterfaceInstructions()
     }
 }
 
-void MenuBar::aboutWindNinja()
+void MenuBar::aboutWindNinjaActionTriggered()
 {
     QString aboutText = "<h2>WindNinja</h2>\n";
 
@@ -333,7 +333,7 @@ void MenuBar::aboutWindNinja()
                 aboutText);
 }
 
-void MenuBar::citeWindNinja()
+void MenuBar::citeWindNinjaActionTriggered()
 {
     QString citeText = "<h4>To cite WindNinja in a publication use:</h4>";
 
@@ -351,12 +351,12 @@ void MenuBar::citeWindNinja()
             citeText);
 }
 
-void MenuBar::supportEmail()
+void MenuBar::supportEmailActionTriggered()
 {
     QDesktopServices::openUrl(QUrl("mailto:wind.ninja.support@gmail.com?subject=[windninja-support]"));
 }
 
-void MenuBar::submitBugReport()
+void MenuBar::submitBugReportActionTriggered()
 {
     QDesktopServices::openUrl(QUrl("https://github.com/firelab/windninja/issues/new"));
 }

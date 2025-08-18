@@ -430,7 +430,7 @@ void MainWindow::connectSignals()
     connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
-    connect(menuBar, &MenuBar::openElevationInputFileMenuActionTriggered, surfaceInput, &SurfaceInput::elevationInputFileOpenButtonClicked);
+    connect(menuBar, &MenuBar::openElevationInputFileActionTriggered, surfaceInput, &SurfaceInput::elevationInputFileOpenButtonClicked);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
