@@ -306,6 +306,7 @@ void MainWindow::writeToConsole(QString message, QColor color)
 
     ui->consoleTextEdit->setTextColor(color);
     ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
+    ui->consoleTextEdit->repaint();
     lineNumber++;
 }
 
@@ -611,9 +612,11 @@ void MainWindow::solveButtonClicked()
         QString speedUnits =  ui->tableSpeedUnits->currentText();
         ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
     }
+    writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
     prepareArmy(ninjaArmy, numNinjas, initializationMethod);
 
+    writeToConsole( "Initializing runs..." );
     int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
@@ -625,9 +628,11 @@ void MainWindow::solveButtonClicked()
     {
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
+    writeToConsole("Finished with simulations", Qt::darkGreen);
 
     if(ui->googleEarthGroupBox->isChecked())
     {
+        writeToConsole( "Loading kmz output onto map..." );
         vector<string> outputFiles;
         QDir outDir(ui->outputDirectoryLineEdit->text());
         QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
