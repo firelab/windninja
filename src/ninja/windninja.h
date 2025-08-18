@@ -85,7 +85,7 @@ typedef int  NinjaErr;
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakePointArmy
-        ( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int size, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options );
+        (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options);
 
     //TODO: add helper function to get first and last timesteps in a forecast file
     //TODO: add helper function to get list of times in a forecast file

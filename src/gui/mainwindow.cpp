@@ -590,7 +590,7 @@ void MainWindow::solveButtonClicked()
     AppState& state = AppState::instance();
 
     int numNinjas;
-    NinjaArmyH *ninjaArmy;
+    NinjaArmyH *ninjaArmy = nullptr;
     char **papszOptions;
     const char *initializationMethod;
     QList<double> speeds;
@@ -598,6 +598,7 @@ void MainWindow::solveButtonClicked()
 
     if (state.isDomainAverageInitializationValid)
     {
+        initializationMethod = "domain_average";
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row) {
             QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
@@ -615,26 +616,36 @@ void MainWindow::solveButtonClicked()
     }
     else if (state.isPointInitializationValid)
     {
-        QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
-        QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
+        initializationMethod = "point";
+
+        QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
+        QDateTime end = ui->weatherStationDataEndDateTimeEdit->dateTime();
         QVector<int> year   = {start.date().year(),   end.date().year()};
         QVector<int> month  = {start.date().month(),  end.date().month()};
         QVector<int> day    = {start.date().day(),    end.date().day()};
         QVector<int> hour   = {start.time().hour(),   end.time().hour()};
         QVector<int> minute = {start.time().minute(), end.time().minute()};
 
-        QString osTimeZone = "UTC";
+        QString DEMTimeZone = ui->timeZoneComboBox->currentText();
 
-        QModelIndex index = ui->pointInitializationTreeView->currentIndex();
-        QFileSystemModel *model = qobject_cast<QFileSystemModel*>(ui->pointInitializationTreeView->model());
-        QString stationPath = model->filePath(index);
+        std::vector<QString> stationFiles = pointInitializationInput->getStationFiles();
+
+        std::vector<QByteArray> stationFilesBytes;
+        stationFilesBytes.reserve(stationFiles.size());
+        std::vector<const char*> stationFileNames;
+        stationFileNames.reserve(stationFiles.size());
+        for (const auto& file : stationFiles) {
+            stationFilesBytes.push_back(file.toUtf8());
+            stationFileNames.push_back(stationFilesBytes.back().constData());
+        }
+
         QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
 
-        initializationMethod = "point";
-        numNinjas = 2;
-        int size = 2;
+        numNinjas = 25;
+        int timeListSize = 2;
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
-        ninjaArmy = NinjaMakePointArmy(year.data(), month.data(), day.data(), hour.data(), minute.data(), size, osTimeZone.toUtf8().data(), stationPath.toUtf8().data(), DEMPath.toUtf8().data(), true, momentumFlag, papszOptions);
+        ninjaArmy = NinjaMakePointArmy
+            (year.data(), month.data(), day.data(), hour.data(), minute.data(), timeListSize, DEMTimeZone.toUtf8().data(), stationFileNames.data(), stationFileNames.size(), DEMPath.toUtf8().data(), true, momentumFlag, papszOptions);
     }
 
     prepareArmy(ninjaArmy, numNinjas, initializationMethod);
@@ -651,31 +662,31 @@ void MainWindow::solveButtonClicked()
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
 
-    vector<string> outputFiles;
-    QDir outDir(ui->outputDirectoryLineEdit->text());
-    QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
-    int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
-    QString meshSize = QString::number(meshInt) + "m";
+    // vector<string> outputFiles;
+    // QDir outDir(ui->outputDirectoryLineEdit->text());
+    // QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
+    // int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
+    // QString meshSize = QString::number(meshInt) + "m";
 
-    for (int i = 0; i < numNinjas; i++) {
-        QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
-                                               .arg(demName)
-                                               .arg(directions[i])
-                                               .arg(speeds[i])
-                                               .arg(meshSize));
-        outputFiles.push_back(filePath.toStdString());
-    }
+    // for (int i = 0; i < numNinjas; i++) {
+    //     QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
+    //                                            .arg(demName)
+    //                                            .arg(directions[i])
+    //                                            .arg(speeds[i])
+    //                                            .arg(meshSize));
+    //     outputFiles.push_back(filePath.toStdString());
+    // }
 
-    for (const auto& dir : outputFiles) {
-        QString qDir = QString::fromStdString(dir);
+    // for (const auto& dir : outputFiles) {
+    //     QString qDir = QString::fromStdString(dir);
 
-        QFile f(qDir);
-        f.open(QIODevice::ReadOnly);
-        QByteArray data = f.readAll();
-        QString base64 = data.toBase64();
+    //     QFile f(qDir);
+    //     f.open(QIODevice::ReadOnly);
+    //     QByteArray data = f.readAll();
+    //     QString base64 = data.toBase64();
 
-        webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-    }
+    //     webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+    // }
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)

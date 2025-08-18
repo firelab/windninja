@@ -253,7 +253,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     AppState& state = AppState::instance();
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
 
-    vector<QString> stationFiles;
+    stationFiles.clear();
     vector<int> stationFileTypes;
 
     maxStationTime = QDateTime();
@@ -362,12 +362,11 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     QDateTime startTimeDEMTimeZone = startTimeUTC.toTimeZone(timeZone);
     QDateTime endTimeDEMTimeZone  = endTimeUTC.toTimeZone(timeZone);
 
-    if(startTimeDEMTimeZone > minStationTime)
+    if (minStationTime.isNull() || startTimeDEMTimeZone < minStationTime)
     {
         minStationTime = startTimeDEMTimeZone;
     }
-
-    if(endTimeDEMTimeZone > maxStationTime)
+    if(maxStationTime.isNull() || endTimeDEMTimeZone > maxStationTime)
     {
         maxStationTime = endTimeDEMTimeZone;
     }
@@ -396,3 +395,9 @@ void PointInitializationInput::updateTimeSteps()
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
     qDebug() << "[STATION FETCH] Suggested Timesteps:" << timesteps;
 }
+
+vector<QString> PointInitializationInput::getStationFiles()
+{
+    return stationFiles;
+}
+

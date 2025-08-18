@@ -52,6 +52,8 @@ class PointInitializationInput : public QObject
     Q_OBJECT
 public:
     PointInitializationInput(Ui::MainWindow* ui, QObject* parent = nullptr);
+    vector<QString> getStationFiles();
+
 
 signals:
     void requestRefresh();
@@ -74,6 +76,7 @@ private:
     QFileSystemModel *stationFileSystemModel;
     QString currentDEMFilePath;
     QDateTime maxStationTime, minStationTime;
+    vector<QString> stationFiles;
 
     static int fetchStationFromBbox(QVector<int> year,
                                     QVector<int> month,
@@ -99,7 +102,6 @@ private:
     void fetchStationDataFinished();
     void readStationTime(QString startDateTime, QString stopDateTime);
     void updateTimeSteps();
-
 };
 
 #endif // POINTINITIALIZATIONINPUT_H

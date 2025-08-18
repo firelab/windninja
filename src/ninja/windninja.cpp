@@ -184,43 +184,49 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
-    (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int size, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
+    (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
 {
+    wxStation::SetStationFormat(wxStation::newFormat);
     if(momentumFlag == true)
     {
         throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
     }
 
-    //Get the number of elements in the arrays
-
     NinjaArmyH* army;
-    try{
-        std::vector <boost::posix_time::ptime> timeList;
-        for(size_t i=0; i<size; i++){
-            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
-        }
+    try
+    {
+        std::vector <boost::posix_time::ptime> timeList = pointInitialization::getTimeList(
+            yearList[0], monthList[0], dayList[0],
+            hourList[0], minuteList[0],
+            yearList[1], monthList[1], dayList[1],
+            hourList[1], minuteList[1],
+            25, std::string(timeZone)
+        );
 
-        pointInitialization::SetRawStationFilename(stationFileName);
+        // for(size_t i=0; i < timeListSize; i++){
+        //     timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        // }
 
         std::vector<std::string> sFiles;
-        sFiles.push_back(stationFileName);
+        for (int i = 0; i < numStationFiles; i++)
+        {
+            sFiles.emplace_back(stationFileNames[i]);
+        }
         pointInitialization::storeFileNames(sFiles);
 
-        // TODO: Include check for using multiple .csv files
-        //sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
-        //pointInitialization::storeFileNames(sFiles);
         
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makePointArmy
         (   timeList,
             std::string(timeZone),
-            std::string(stationFileName),
+            sFiles[0],
             std::string(elevationFile),
             matchPointsFlag,
             momentumFlag);
         return army;
     }
-    catch( armyException & e ){
+    catch( armyException & e )
+    {
         return NULL;
     }
     return NULL;
@@ -2171,7 +2177,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
     int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute)
 {
     if (!outYear || !outMonth || !outDay || !outHour || !outMinute)
-        return NINJA_ERR_INVALID_ARGUMENT; // or appropriate error
+        return NINJA_E_OTHER; // or appropriate error
 
     boost::posix_time::ptime timeObject =
         pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
