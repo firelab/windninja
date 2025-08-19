@@ -195,17 +195,10 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
     NinjaArmyH* army;
     try
     {
-        std::vector <boost::posix_time::ptime> timeList = pointInitialization::getTimeList(
-            yearList[0], monthList[0], dayList[0],
-            hourList[0], minuteList[0],
-            yearList[1], monthList[1], dayList[1],
-            hourList[1], minuteList[1],
-            25, std::string(timeZone)
-        );
-
-        // for(size_t i=0; i < timeListSize; i++){
-        //     timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
-        // }
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i < timeListSize; i++){
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        }
 
         std::vector<std::string> sFiles;
         for (int i = 0; i < numStationFiles; i++)
@@ -214,7 +207,6 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
         }
         pointInitialization::storeFileNames(sFiles);
 
-        
         army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makePointArmy
         (   timeList,

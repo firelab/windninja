@@ -328,11 +328,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
             if (!timeSeriesFlag)
             {
                 QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
-                //updateSingleTime()
                 ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
+                ui->weatherStationDataTextEdit->setProperty("simulationTime", dateModified);
             }
         }
+        ui->pointInitializationTreeView->setProperty("timeSeriesFlag", timeSeriesFlag);
     }
+
     state.isStationFileSelectionValid = true;
     for (int type : stationFileTypes) {
         if (type != stationFileTypes[0]) {

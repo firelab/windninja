@@ -105,7 +105,8 @@ set(NINJA_SOURCES air.cpp
                   wxStation.cpp
                   windninja.cpp
                   gcp_wx_init.cpp
-                  ninjaArmy.h)
+                  ninjaArmy.h
+                  windninja.h)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp
