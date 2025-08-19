@@ -32,7 +32,7 @@
 
 #include "setconfigurationoptiondialog.h"
 
-#include "windninja.h"
+#include "../ninja/windninja.h"
 #include "../ninja/gdal_util.h"
 #include "ninja_version.h"
 #include <QObject>
