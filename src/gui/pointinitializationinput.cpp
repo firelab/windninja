@@ -55,7 +55,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationSelectAllButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectAllButtonClicked);
     connect(ui->pointInitializationSelectNoneButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectNoneButtonClicked);
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
-
+    connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -387,7 +387,8 @@ void PointInitializationInput::folderExpanded(const QModelIndex &index)
 
 void PointInitializationInput::folderCollapsed(const QModelIndex &index)
 {
-    openStationFolders.pop_back();
+    QString path = stationFileSystemModel->filePath(index);
+    openStationFolders.removeOne(path);
 }
 
 
