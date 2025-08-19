@@ -62,6 +62,7 @@ public:
 
 signals:
     void requestRefresh();
+    void setupTreeView();
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);

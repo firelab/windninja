@@ -37,7 +37,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
     ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/server_go.png"));
-    ui->pointInitializationRefreshButton->setIcon(QIcon(":/arrow_rotate_clockwise.png"));
     ui->pointInitializationWriteStationKMLCheckBox->setIcon(QIcon(":/weather_cloudy.png"));
     ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
     ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
@@ -53,7 +52,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataSourceComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataTimeComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataDownloadButton, &QPushButton::clicked, this, &PointInitializationInput::weatherStationDataDownloadButtonClicked);
-    connect(ui->pointInitializationRefreshButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitialziationRefreshButtonClicked);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -201,7 +199,6 @@ void PointInitializationInput::fetchStationDataFinished()
     }
 
     ui->inputsStackedWidget->setCurrentIndex(10);
-    ui->pointInitializationRefreshButton->click();
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
@@ -214,7 +211,7 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(index);
 }
 
-void PointInitializationInput::pointInitialziationRefreshButtonClicked()
+void PointInitializationInput::setupTreeView()
 {
     stationFileSystemModel = new QFileSystemModel;
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();

@@ -65,7 +65,7 @@ private slots:
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);
     void weatherStationDataDownloadButtonClicked();
-    void pointInitialziationRefreshButtonClicked();
+    void setupTreeView();
     void pointInitializationTreeViewItemSelectionChanged();
 
 private:
