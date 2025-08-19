@@ -36,15 +36,16 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
+
     ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/server_go.png"));
     ui->pointInitializationWriteStationKMLCheckBox->setIcon(QIcon(":/weather_cloudy.png"));
     ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
     ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
+
     ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
-    ui->weatherStationDataTimestepsSpinBox->setValue(24);
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
@@ -56,6 +57,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationSelectNoneButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectNoneButtonClicked);
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
+    connect(ui->pointInitializationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PointInitializationInput::pointInitializationTreeViewItemSelectionChanged);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -93,16 +95,11 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> hour   = {start.time().hour(),   end.time().hour()};
     QVector<int> minute = {start.time().minute(), end.time().minute()};
 
-    bool fetchLatestFlag = false;
-    if(ui->weatherStationDataTimeComboBox->currentIndex() == 0)
-    {
-        fetchLatestFlag = true;
-    }
+    bool fetchLatestFlag = ui->weatherStationDataTimeComboBox->currentIndex() ? 0 : 1;
 
     QString outputPath = ui->outputDirectoryLineEdit->text();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
-    QString osTimeZone = "UTC";
-
+    QString DEMTimeZone = ui->timeZoneComboBox->currentText();
 
     progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
@@ -120,7 +117,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         future = QtConcurrent::run(&PointInitializationInput::fetchStationFromBbox,
                                    year, month, day, hour, minute,
                                    elevationFile, buffer, units,
-                                   osTimeZone, fetchLatestFlag, outputPath);
+                                   DEMTimeZone, fetchLatestFlag, outputPath);
     }
     else
     {
@@ -128,7 +125,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,
                                    year, month, day, hour, minute,
                                    elevationFile, stationList,
-                                   osTimeZone, fetchLatestFlag, outputPath);
+                                   DEMTimeZone, fetchLatestFlag, outputPath);
     }
     futureWatcher->setFuture(future);
 
@@ -203,6 +200,8 @@ void PointInitializationInput::fetchStationDataFinished()
     }
 
     ui->inputsStackedWidget->setCurrentIndex(10);
+    disconnect(futureWatcher, &QFutureWatcher<int>::finished,
+            this, &PointInitializationInput::fetchStationDataFinished);
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
@@ -217,20 +216,12 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
 
 void PointInitializationInput::setupTreeView()
 {
-    stationFileSystemModel = new QFileSystemModel;
+    stationFileSystemModel = new QFileSystemModel(this);
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
-    if(path.isEmpty())
-    {
-        delete stationFileSystemModel;
-        return;
-    }
     QFileInfo fileInfo(path);
-    stationFileSystemModel->setRootPath(fileInfo.absolutePath());
 
-    QStringList filters;
-    filters<<"*.csv";
-    filters<<"WXSTATIONS-*";
-    stationFileSystemModel->setNameFilters(filters);
+    stationFileSystemModel->setRootPath(fileInfo.absolutePath());
+    stationFileSystemModel->setNameFilters({"*.csv", "WXSTATIONS-*"});
     stationFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     stationFileSystemModel->setNameFilterDisables(false);
 
@@ -242,11 +233,9 @@ void PointInitializationInput::setupTreeView()
     ui->pointInitializationTreeView->header()->setSectionResizeMode(QHeaderView::Stretch);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
     ui->pointInitializationTreeView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    ui->pointInitializationTreeView->setUniformRowHeights(true);
     ui->pointInitializationTreeView->hideColumn(1);
     ui->pointInitializationTreeView->hideColumn(2);
-
-    connect(ui->pointInitializationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PointInitializationInput::pointInitializationTreeViewItemSelectionChanged);
-
 }
 
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
@@ -255,7 +244,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
 
     stationFiles.clear();
-    vector<int> stationFileTypes;
+    QVector<int> stationFileTypes;
 
     maxStationTime = QDateTime();
     minStationTime = QDateTime();
@@ -276,13 +265,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
 
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
         stationFiles.push_back(recentFileSelected);
-        qDebug() << "[STATION FETCH] Selected file path:" << recentFileSelected;
+        qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
 
         QByteArray filePathBytes = recentFileSelected.toUtf8();
         const char* filePath = filePathBytes.constData();
         char** papszOptions = nullptr;
         int stationHeader = NinjaGetHeaderVersion(filePath, papszOptions);
-        qDebug() << "[STATION FETCH] Station Header: " << stationHeader;
+        qDebug() << "[GUI-Point] Station Header: " << stationHeader;
 
         bool timeSeriesFlag = true;
         if (stationHeader != 1)
@@ -298,25 +287,25 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
             OGRLayer* poLayer = hDS->GetLayer(0);
             poLayer->ResetReading();
             qint64 lastIndex = poLayer->GetFeatureCount();
-            qDebug() << "[STATION FETCH] Number of Time Entries:" << lastIndex;
+            qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
 
             OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, first time in series
             QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-14)
-            qDebug() << "[STATION FETCH] Station start time:" << startDateTime;
+            qDebug() << "[GUI-Point] Station start time:" << startDateTime;
 
             poFeature = poLayer->GetFeature(lastIndex);             // last time in series
             QString stopDateTime(poFeature->GetFieldAsString(15));
-            qDebug() << "[STATION FETCH] Station end Time:" << stopDateTime;
+            qDebug() << "[GUI-Point] Station end Time:" << stopDateTime;
 
             if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
             {
-                qDebug() << "[STATION FETCH] File cannot be used for Time Series";
+                qDebug() << "[GUI-Point] File cannot be used for Time Series";
                 timeSeriesFlag = false;
                 stationFileTypes.push_back(0);
             }
             else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
             {
-                qDebug() << "[STATION FETCH] File can be used for Time Series, suggesting time series parameters...";
+                qDebug() << "[GUI-Point] File can be used for Time Series, suggesting time series parameters...";
                 readStationTime(startDateTime, stopDateTime);
                 stationFileTypes.push_back(1);
             }
@@ -391,8 +380,6 @@ void PointInitializationInput::folderCollapsed(const QModelIndex &index)
     openStationFolders.removeOne(path);
 }
 
-
-
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
 {
     QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
@@ -400,7 +387,7 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
 
     QTimeZone timeZone(DEMTimeZone.toUtf8());
     if (!timeZone.isValid()) {
-        qWarning() << "[STATION FETCH] Invalid time zone:" << DEMTimeZone;
+        qWarning() << "[GUI-Point] Invalid time zone:" << DEMTimeZone;
         timeZone = QTimeZone::systemTimeZone();
     }
 
@@ -421,8 +408,8 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
         maxStationTime = endTimeDEMTimeZone;
     }
 
-    qDebug() << "[STATION FETCH] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
-    qDebug() << "[STATION FETCH] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
+    qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
+    qDebug() << "[GUI-Point] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
 
     ui->weatherStationDataStartTimeLabel->setText("Start Time (" + DEMTimeZone + "):");
     ui->weatherStationDataEndTimeLabel->setText("End Time (" + DEMTimeZone + "):");
@@ -432,20 +419,10 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
     ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
 
-    updateTimeSteps();
-}
-
-void PointInitializationInput::updateTimeSteps()
-{
-    int timesteps = qMax(2, static_cast<int>(
-                                ui->weatherStationDataStartDateTimeEdit->dateTime().secsTo(
-                                    ui->weatherStationDataEndDateTimeEdit->dateTime()
-                                    ) / 3600
-                                ));
+    int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
-    qDebug() << "[STATION FETCH] Suggested Timesteps:" << timesteps;
+    qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
 }
-
 
 QVector<QString> PointInitializationInput::getStationFiles()
 {

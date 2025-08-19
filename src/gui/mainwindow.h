@@ -125,6 +125,5 @@ private:
     void treeItemClicked(QTreeWidgetItem *item, int column);
     void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
     void setOutputFlags(NinjaArmyH *ninjaArmy, int i);
-
 };
 #endif // MAINWINDOW_H

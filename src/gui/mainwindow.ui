@@ -1801,7 +1801,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <height>16777215</height>
             </size>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_15" stretch="0,1">
+           <layout class="QVBoxLayout" name="verticalLayout_15" stretch="0">
             <property name="leftMargin">
              <number>5</number>
             </property>
@@ -1817,7 +1817,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <item>
              <widget class="QScrollArea" name="pointInitializationScrollArea">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
@@ -1834,22 +1834,34 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <x>0</x>
                  <y>0</y>
                  <width>579</width>
-                 <height>406</height>
+                 <height>654</height>
                 </rect>
                </property>
-               <layout class="QVBoxLayout" name="verticalLayout_19">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_19" stretch="0">
                 <item>
                  <widget class="QGroupBox" name="pointInitializationGroupBox">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                     <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
+                    <verstretch>1</verstretch>
                    </sizepolicy>
                   </property>
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
                     <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>16777215</height>
                    </size>
                   </property>
                   <property name="title">
@@ -1904,6 +1916,33 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <widget class="QTreeView" name="pointInitializationTreeView">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <property name="baseSize">
+                      <size>
+                       <width>0</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Shadow::Sunken</enum>
+                     </property>
                      <property name="sortingEnabled">
                       <bool>true</bool>
                      </property>
@@ -1922,9 +1961,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </widget>
                    </item>
                    <item>
-                    <layout class="QHBoxLayout" name="pointInitializationRefreshLayout">
+                    <layout class="QHBoxLayout" name="pointInitializationSelectLayout">
                      <item>
-                      <spacer name="pointInitializationRefreshLayoutSpacer">
+                      <spacer name="pointInitializationSelectLayoutSpacer">
                        <property name="orientation">
                         <enum>Qt::Orientation::Horizontal</enum>
                        </property>
@@ -2042,6 +2081,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
+                         <property name="minimum">
+                          <number>1</number>
+                         </property>
+                         <property name="maximum">
+                          <number>99999</number>
+                         </property>
+                         <property name="singleStep">
+                          <number>1</number>
+                         </property>
+                         <property name="value">
+                          <number>24</number>
+                         </property>
                         </widget>
                        </item>
                       </layout>
@@ -2084,19 +2135,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </layout>
               </widget>
              </widget>
-            </item>
-            <item>
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Orientation::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </widget>

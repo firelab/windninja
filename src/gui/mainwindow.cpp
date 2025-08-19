@@ -593,13 +593,14 @@ void MainWindow::solveButtonClicked()
     int numNinjas = 0;
     NinjaArmyH *ninjaArmy = nullptr;
     char **papszOptions = nullptr;
-    const char *initializationMethod;
-    QList<double> speeds;
-    QList<double> directions;
+    const char *initializationMethod = nullptr;
 
     if (state.isDomainAverageInitializationValid)
     {
         initializationMethod = "domain_average";
+        QList<double> speeds;
+        QList<double> directions;
+
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row) {
             QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
@@ -634,7 +635,7 @@ void MainWindow::solveButtonClicked()
 
         QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
 
-        numNinjas = 25;
+        numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
 
         if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
