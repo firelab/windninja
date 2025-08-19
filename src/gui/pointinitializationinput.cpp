@@ -52,6 +52,10 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataSourceComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataTimeComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataDownloadButton, &QPushButton::clicked, this, &PointInitializationInput::weatherStationDataDownloadButtonClicked);
+    connect(ui->pointInitializationSelectAllButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectAllButtonClicked);
+    connect(ui->pointInitializationSelectNoneButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectNoneButtonClicked);
+    connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
+
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -342,6 +346,52 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     emit requestRefresh();
 }
 
+void PointInitializationInput::pointInitializationSelectAllButtonClicked()
+{
+    QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
+
+    QModelIndex folderIndex;
+    if (openStationFolders.isEmpty())
+    {
+        QFileInfo fileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString());
+        folderIndex = stationFileSystemModel->index(fileInfo.absolutePath());
+    }
+    else
+    {
+        folderIndex = stationFileSystemModel->index(openStationFolders.back());
+    }
+
+    int rowCount = stationFileSystemModel->rowCount(folderIndex);
+    QItemSelection selection;
+    for (int i = 0; i < rowCount; i++) {
+        QModelIndex stationFile = stationFileSystemModel->index(i, 0, folderIndex);
+
+        if (stationFileSystemModel->isDir(stationFile))
+            continue;
+
+        selection.select(stationFile, stationFile);
+    }
+
+    selectionModel->select(selection, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+}
+
+void PointInitializationInput::pointInitializationSelectNoneButtonClicked()
+{
+    ui->pointInitializationTreeView->selectionModel()->clearSelection();
+}
+
+void PointInitializationInput::folderExpanded(const QModelIndex &index)
+{
+    openStationFolders.push_back(stationFileSystemModel->filePath(index));
+}
+
+void PointInitializationInput::folderCollapsed(const QModelIndex &index)
+{
+    openStationFolders.pop_back();
+}
+
+
+
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
 {
     QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
@@ -395,7 +445,8 @@ void PointInitializationInput::updateTimeSteps()
     qDebug() << "[STATION FETCH] Suggested Timesteps:" << timesteps;
 }
 
-vector<QString> PointInitializationInput::getStationFiles()
+
+QVector<QString> PointInitializationInput::getStationFiles()
 {
     return stationFiles;
 }

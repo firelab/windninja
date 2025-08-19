@@ -619,7 +619,7 @@ void MainWindow::solveButtonClicked()
     {
         initializationMethod = "point";
 
-        std::vector<QString> stationFiles = pointInitializationInput->getStationFiles();
+        QVector<QString> stationFiles = pointInitializationInput->getStationFiles();
         QString DEMTimeZone = ui->timeZoneComboBox->currentText();
         QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
 

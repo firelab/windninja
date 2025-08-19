@@ -52,7 +52,7 @@ class PointInitializationInput : public QObject
     Q_OBJECT
 public:
     PointInitializationInput(Ui::MainWindow* ui, QObject* parent = nullptr);
-    vector<QString> getStationFiles();
+    QVector<QString> getStationFiles();
 
 
 signals:
@@ -65,8 +65,12 @@ private slots:
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);
     void weatherStationDataDownloadButtonClicked();
-    void setupTreeView();
     void pointInitializationTreeViewItemSelectionChanged();
+    void pointInitializationSelectAllButtonClicked();
+    void pointInitializationSelectNoneButtonClicked();
+    void setupTreeView();
+    void folderExpanded(const QModelIndex &index);
+    void folderCollapsed(const QModelIndex &index);
 
 private:
     Ui::MainWindow *ui;
@@ -74,9 +78,9 @@ private:
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
     QFileSystemModel *stationFileSystemModel;
-    QString currentDEMFilePath;
     QDateTime maxStationTime, minStationTime;
-    vector<QString> stationFiles;
+    QVector<QString> stationFiles;
+    QVector<QString> openStationFolders;
 
     static int fetchStationFromBbox(QVector<int> year,
                                     QVector<int> month,

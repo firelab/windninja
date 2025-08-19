@@ -1937,14 +1937,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </spacer>
                      </item>
                      <item>
-                      <widget class="QPushButton" name="pushButton">
+                      <widget class="QPushButton" name="pointInitializationSelectAllButton">
                        <property name="text">
                         <string>Select All</string>
                        </property>
                       </widget>
                      </item>
                      <item>
-                      <widget class="QPushButton" name="pushButton_2">
+                      <widget class="QPushButton" name="pointInitializationSelectNoneButton">
                        <property name="text">
                         <string>Select None</string>
                        </property>
