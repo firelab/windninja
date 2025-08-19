@@ -1551,6 +1551,33 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
 }
 
 /**
+ * \brief Set station kml output for a point initialization simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param demFileName The filepath of the simulation DEM.
+ * \param outputDirectory The outputDirectory location for this file.
+ * \param outputSpeedUnits The output speed units ("mph", "mps", "kph", "kts")
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetStationKML
+    ( NinjaArmyH * army, const int nIndex, const char * demFileName, const char * outputDirectory, const char * outputSpeedUnits, char ** papszOptions)
+{
+
+    if( NULL != army )
+    {
+        wxStation::writeKmlFile( reinterpret_cast<ninjaArmy*>( army )->getWxStations(nIndex), demFileName, outputDirectory, velocityUnits::getUnit(outputSpeedUnits));
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+
+/**
  * \brief Set the flag to write the weather model winds used for initialzation as
  *        a Google Earth file.
  *
@@ -2185,8 +2212,5 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
 
     return NINJA_SUCCESS;
 }
-
-
-
 
 }

@@ -902,6 +902,14 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         /*
        * Sets Simulation Variables
        */
+        if(ui->pointInitializationGroupBox->isChecked())
+        {
+            err = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+            if(err != NINJA_SUCCESS)
+            {
+                printf("NinjaSetStationKML: err = %d\n", err);
+            }
+        }
         err = NinjaSetCommunication(ninjaArmy, i, "cli", papszOptions);
         if(err != NINJA_SUCCESS)
         {

@@ -192,6 +192,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT const char * NinjaGetInitializationMethod
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
 
+
+
     /*-----------------------------------------------------------------------------
      *  Dust Methods
      *-----------------------------------------------------------------------------*/
@@ -268,6 +270,9 @@ typedef int  NinjaErr;
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double percent, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetStationKML
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const char * demFileName, const char * outputDirectory, const char * outputSpeedUnits, char ** papszOptions);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGoogOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
