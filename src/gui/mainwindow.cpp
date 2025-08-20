@@ -635,7 +635,6 @@ void MainWindow::solveButtonClicked()
 
         QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
 
-        numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
 
         if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
@@ -668,6 +667,9 @@ void MainWindow::solveButtonClicked()
             {
                 printf("NinjaGetTimeList: err = %d\n", err);
             }
+
+            numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
+
             ninjaArmy = NinjaMakePointArmy
                 (outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), nTimeSteps, DEMTimeZone.toUtf8().data(), stationFileNames.data(), stationFileNames.size(), DEMPath.toUtf8().data(), true, momentumFlag, papszOptions);
         }
@@ -698,6 +700,8 @@ void MainWindow::solveButtonClicked()
             QVector<int> dayVec    = { outDay };
             QVector<int> hourVec   = { outHour };
             QVector<int> minuteVec = { outMinute };
+
+            numNinjas = 1;
 
             ninjaArmy = NinjaMakePointArmy(
                 yearVec.data(), monthVec.data(), dayVec.data(),
@@ -905,10 +909,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
        */
         if(ui->pointInitializationGroupBox->isChecked())
         {
-            err = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
-            if(err != NINJA_SUCCESS)
+            if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-                printf("NinjaSetStationKML: err = %d\n", err);
+                err = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+                if(err != NINJA_SUCCESS)
+                {
+                    printf("NinjaSetStationKML: err = %d\n", err);
+                }
             }
         }
         err = NinjaSetCommunication(ninjaArmy, i, "cli", papszOptions);
