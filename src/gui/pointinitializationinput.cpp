@@ -57,7 +57,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationSelectNoneButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectNoneButtonClicked);
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
-    connect(ui->pointInitializationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PointInitializationInput::pointInitializationTreeViewItemSelectionChanged);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -236,6 +235,8 @@ void PointInitializationInput::setupTreeView()
     ui->pointInitializationTreeView->setUniformRowHeights(true);
     ui->pointInitializationTreeView->hideColumn(1);
     ui->pointInitializationTreeView->hideColumn(2);
+
+    connect(ui->pointInitializationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PointInitializationInput::pointInitializationTreeViewItemSelectionChanged);
 }
 
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
