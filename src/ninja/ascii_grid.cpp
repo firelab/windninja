@@ -26,10 +26,14 @@ template<> inline int epsClr<int>() { return 1; }
 template<> inline short epsClr<short>() { return 1; }
 
 template <class T>
-inline bool cplIsNan(T t) {
-    return std::isnan(static_cast<double>(t)); // we need to disambiguate
+inline bool cplIsNan(T t)
+{
+    #ifdef WIN32
+        return CPLIsNan((double)t); // we need to disambiguate
+    #else
+        return std::isnan(static_cast<double>(t)); // we need to disambiguate
+    #endif
 }
-
 
 /**
  * @brief Create an empty grid
