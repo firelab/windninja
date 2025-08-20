@@ -277,7 +277,7 @@
        <bool>false</bool>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
-       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,0,0">
+       <layout class="QVBoxLayout" name="inputLayout" stretch="0,0,0,0,0,0">
         <property name="spacing">
          <number>0</number>
         </property>
@@ -843,8 +843,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>550</width>
-                 <height>646</height>
+                 <width>578</width>
+                 <height>478</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,1">
@@ -1385,8 +1385,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="geometry">
                 <rect>
                  <x>0</x>
-                 <y>-7</y>
-                 <width>544</width>
+                 <y>0</y>
+                 <width>346</width>
                  <height>661</height>
                 </rect>
                </property>
@@ -2763,7 +2763,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>536</width>
+                 <width>414</width>
                  <height>402</height>
                 </rect>
                </property>
@@ -3460,7 +3460,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>536</width>
+                 <width>381</width>
                  <height>318</height>
                 </rect>
                </property>
@@ -4359,6 +4359,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QTextEdit" name="consoleTextEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>600</width>
+            <height>100</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="mapPanelWidget" native="true">
@@ -4434,9 +4453,11 @@ QMenu::item:selected {
    </property>
    <widget class="QMenu" name="fileMenu">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
-    <addaction name="openElevationInputFileMenuAction"/>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
+    </property>
     <addaction name="newProjectAction"/>
     <addaction name="openProjectAction"/>
     <addaction name="exportSolutionAction"/>
@@ -4445,32 +4466,46 @@ QMenu::item:selected {
    </widget>
    <widget class="QMenu" name="optionsMenu">
     <property name="title">
-     <string>Options</string>
+     <string>&amp;Options</string>
+    </property>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
     </property>
     <addaction name="enableConsoleOutputAction"/>
     <addaction name="writeConsoleOutputAction"/>
    </widget>
    <widget class="QMenu" name="toolsMenu">
     <property name="title">
-     <string>Tools</string>
+     <string>&amp;Tools</string>
     </property>
-    <addaction name="resampleDataAction"/>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
+    </property>
     <addaction name="writeBlankStationFileAction"/>
     <addaction name="setConfigurationOptionAction"/>
    </widget>
    <widget class="QMenu" name="helpMenu">
     <property name="title">
-     <string>Help</string>
+     <string>&amp;Help</string>
+    </property>
+    <property name="toolTipsVisible">
+     <bool>true</bool>
     </property>
     <widget class="QMenu" name="displayingShapeFilesMenu">
      <property name="title">
-      <string>Displaying Shapefiles</string>
+      <string>&amp;Displaying Shapefiles</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="displayArcGISProGuideAction"/>
     </widget>
     <widget class="QMenu" name="tutorialsMenu">
      <property name="title">
-      <string>Tutorials</string>
+      <string>&amp;Tutorials</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="displayTutorial1Action"/>
      <addaction name="displayTutorial2Action"/>
@@ -4479,7 +4514,10 @@ QMenu::item:selected {
     </widget>
     <widget class="QMenu" name="instructionsMenu">
      <property name="title">
-      <string>Instructions</string>
+      <string>&amp;Instructions</string>
+     </property>
+     <property name="toolTipsVisible">
+      <bool>true</bool>
      </property>
      <addaction name="displayDemDownloadInstructionsAction"/>
      <addaction name="displayFetchDemInstructionsAction"/>
@@ -4499,132 +4537,297 @@ QMenu::item:selected {
    <addaction name="toolsMenu"/>
    <addaction name="helpMenu"/>
   </widget>
-  <action name="enableConsoleOutputAction">
-   <property name="text">
-    <string>Enable Console Output</string>
-   </property>
-  </action>
-  <action name="writeConsoleOutputAction">
-   <property name="text">
-    <string>Write console output to file...</string>
-   </property>
-  </action>
-  <action name="resampleDataAction">
-   <property name="text">
-    <string>Resample Existing Data</string>
-   </property>
-  </action>
-  <action name="writeBlankStationFileAction">
-   <property name="text">
-    <string>Write blank station file</string>
-   </property>
-  </action>
-  <action name="setConfigurationOptionAction">
-   <property name="text">
-    <string>Set configuration option</string>
-   </property>
-  </action>
-  <action name="actionDEM_Download_Instructions">
-   <property name="text">
-    <string>Displaying Shapefiles</string>
-   </property>
-  </action>
-  <action name="displayArcGISProGuideAction">
-   <property name="text">
-    <string>How to Display Shapefiles in ArcGIS Pro</string>
-   </property>
-  </action>
-  <action name="displayTutorial1Action">
-   <property name="text">
-    <string>Tutorial 1: The Basics</string>
-   </property>
-  </action>
-  <action name="displayTutorial2Action">
-   <property name="text">
-    <string>Tutorial 2: Diurnal Winds and Non-Neutral Stability</string>
-   </property>
-  </action>
-  <action name="displayTutorial3Action">
-   <property name="text">
-    <string>Tutorial 3: Point Initialization</string>
-   </property>
-  </action>
-  <action name="displayTutorial4Action">
-   <property name="text">
-    <string>Tutorial 4: Weather Model Initialization</string>
-   </property>
-  </action>
-  <action name="displayDemDownloadInstructionsAction">
-   <property name="text">
-    <string>DEM Download Instructions</string>
-   </property>
-  </action>
-  <action name="displayFetchDemInstructionsAction">
-   <property name="text">
-    <string>fetch_dem Instructions</string>
-   </property>
-  </action>
-  <action name="displayCommandLineInterfaceInstructionsAction">
-   <property name="text">
-    <string>Command Line Interface Instructions</string>
-   </property>
-  </action>
-  <action name="aboutWindNinjaAction">
-   <property name="text">
-    <string>About WindNinja</string>
-   </property>
-  </action>
-  <action name="citeWindNinjaAction">
-   <property name="text">
-    <string>Citation</string>
-   </property>
-  </action>
-  <action name="supportEmailAction">
-   <property name="text">
-    <string>Email Us</string>
-   </property>
-  </action>
-  <action name="submitBugReportAction">
-   <property name="text">
-    <string>Submit Bug Report</string>
-   </property>
-  </action>
-  <action name="aboutQtAction">
-   <property name="text">
-    <string>About Qt</string>
-   </property>
-  </action>
-  <action name="openElevationInputFileMenuAction">
-   <property name="text">
-    <string>Open Elevation Input File</string>
-   </property>
-  </action>
   <action name="newProjectAction">
    <property name="text">
-    <string>New Project</string>
+    <string>&amp;New Project</string>
+   </property>
+   <property name="toolTip">
+    <string>Open New Project</string>
    </property>
   </action>
   <action name="openProjectAction">
    <property name="text">
-    <string>Open Project</string>
+    <string>&amp;Open Project</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Existing Project</string>
    </property>
   </action>
   <action name="exportSolutionAction">
    <property name="text">
-    <string>Export Solution</string>
+    <string>&amp;Export Solution</string>
+   </property>
+   <property name="toolTip">
+    <string>Save Output From Current Project</string>
    </property>
   </action>
   <action name="closeProjectAction">
    <property name="text">
-    <string>Close Project</string>
+    <string>&amp;Close Project</string>
+   </property>
+   <property name="toolTip">
+    <string>Close Current Project</string>
    </property>
   </action>
   <action name="exitWindNinjaAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
+   </property>
    <property name="text">
+    <string>E&amp;xit WindNinja</string>
+   </property>
+   <property name="toolTip">
     <string>Exit WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F4</string>
+   </property>
+  </action>
+  <action name="enableConsoleOutputAction">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Enable Console Output</string>
+   </property>
+   <property name="toolTip">
+    <string>Show or Hide the Console Output Window</string>
+   </property>
+  </action>
+  <action name="writeConsoleOutputAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/disk.png</normaloff>:/disk.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Write Console Output</string>
+   </property>
+   <property name="toolTip">
+    <string>Write the console text to disk</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="writeBlankStationFileAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/disk.png</normaloff>:/disk.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Write Blank Station File</string>
+   </property>
+   <property name="toolTip">
+    <string>Write a blank station file for point initialization</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+W</string>
+   </property>
+  </action>
+  <action name="setConfigurationOptionAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/cog_go.png</normaloff>:/cog_go.png</iconset>
+   </property>
+   <property name="text">
+    <string>Set &amp;Configuration Option</string>
+   </property>
+   <property name="toolTip">
+    <string>Set advanced runtime configuration options</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+O</string>
+   </property>
+  </action>
+  <action name="displayArcGISProGuideAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;How to Display Shapefiles in ArcGIS Pro</string>
+   </property>
+   <property name="toolTip">
+    <string>Open ArcGIS Pro Tutorial</string>
+   </property>
+  </action>
+  <action name="displayTutorial1Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tutorial &amp;1: The Basics</string>
+   </property>
+   <property name="toolTip">
+    <string>Get started using WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+1</string>
+   </property>
+  </action>
+  <action name="displayTutorial2Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tutorial &amp;2: Diurnal Winds and Non-Neutral Stability</string>
+   </property>
+   <property name="toolTip">
+    <string>Using Diurnal Winds in WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+2</string>
+   </property>
+  </action>
+  <action name="displayTutorial3Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tutorial &amp;3: Point Initialization</string>
+   </property>
+   <property name="toolTip">
+    <string>Using Point Initialization in WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+3</string>
+   </property>
+  </action>
+  <action name="displayTutorial4Action">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>Tutorial &amp;4: Weather Model Initialization</string>
+   </property>
+   <property name="toolTip">
+    <string>Using Weather Model Initialization in WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+4</string>
+   </property>
+  </action>
+  <action name="displayDemDownloadInstructionsAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;DEM Download Instructions</string>
+   </property>
+   <property name="toolTip">
+    <string>How to download DEM data with WindNinja</string>
+   </property>
+  </action>
+  <action name="displayFetchDemInstructionsAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;fetch_dem Instructions</string>
+   </property>
+   <property name="toolTip">
+    <string>How to download DEM data with fetch_dem</string>
+   </property>
+  </action>
+  <action name="displayCommandLineInterfaceInstructionsAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/page_white_acrobat.png</normaloff>:/page_white_acrobat.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Command Line Interface Instructions</string>
+   </property>
+   <property name="toolTip">
+    <string>Using the Command Line Interface</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="aboutWindNinjaAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/help.png</normaloff>:/help.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;About WindNinja</string>
+   </property>
+   <property name="toolTip">
+    <string>Show About WindNinja Info</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+A</string>
+   </property>
+  </action>
+  <action name="citeWindNinjaAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/citation.png</normaloff>:/citation.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Citation</string>
+   </property>
+   <property name="toolTip">
+    <string>How to cite WindNinja</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="supportEmailAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/email.png</normaloff>:/email.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Email Us</string>
+   </property>
+   <property name="toolTip">
+    <string>Email bugs/comments/questions to the WindNinja team</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
+   </property>
+  </action>
+  <action name="submitBugReportAction">
+   <property name="icon">
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/bug_link.png</normaloff>:/bug_link.png</iconset>
+   </property>
+   <property name="text">
+    <string>Submit &amp;Bug Report</string>
+   </property>
+   <property name="toolTip">
+    <string>Submit a bug report via GitHub (requires GitHub ID)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+B</string>
+   </property>
+  </action>
+  <action name="aboutQtAction">
+   <property name="icon">
+    <iconset theme="dialog-information"/>
+   </property>
+   <property name="text">
+    <string>About &amp;Qt</string>
+   </property>
+   <property name="toolTip">
+    <string>Show the Qt library's About box</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../wn-resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

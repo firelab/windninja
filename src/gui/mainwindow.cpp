@@ -297,10 +297,25 @@ void MainWindow::refreshUI()
     }
 }
 
+void MainWindow::writeToConsole(QString message, QColor color)
+{
+    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
+    // {
+    //     color = Qt::black;
+    // }
+
+    ui->consoleTextEdit->setTextColor(color);
+    ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
+    ui->consoleTextEdit->repaint();
+    lineNumber++;
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
 {
+    lineNumber = 1;
+
     serverBridge = new ServerBridge();
     serverBridge->checkMessages();
 
@@ -384,6 +399,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->legendComboBox->setItemData(1, "equal_color");
 
     connectSignals();
+
+
+    QString version(NINJA_VERSION_STRING);
+    version = "Welcome to WindNinja " + version;
+
+    writeToConsole(version, Qt::blue);
+
+    writeToConsole("WINDNINJA_DATA=" + dataPath);
 }
 
 MainWindow::~MainWindow()
@@ -407,7 +430,6 @@ void MainWindow::connectSignals()
     connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
-    connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QMainWindow::close);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
@@ -422,6 +444,9 @@ void MainWindow::connectSignals()
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
+
+    //connect other writeToConsoles to the main writeToConsole
+    connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
@@ -586,9 +611,11 @@ void MainWindow::solveButtonClicked()
         QString speedUnits =  ui->tableSpeedUnits->currentText();
         ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
     }
+    writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
     prepareArmy(ninjaArmy, numNinjas, initializationMethod);
 
+    writeToConsole( "Initializing runs..." );
     int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
@@ -600,9 +627,11 @@ void MainWindow::solveButtonClicked()
     {
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
+    writeToConsole("Finished with simulations", Qt::darkGreen);
 
     if(ui->googleEarthGroupBox->isChecked())
     {
+        writeToConsole( "Loading kmz output onto map..." );
         vector<string> outputFiles;
         QDir outDir(ui->outputDirectoryLineEdit->text());
         QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();

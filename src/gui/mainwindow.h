@@ -119,6 +119,7 @@ private slots:
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void refreshUI();
+    void writeToConsole(QString message, QColor color = Qt::white);
 
 private:
     Ui::MainWindow *ui;
@@ -144,5 +145,8 @@ private:
     OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
                                            QDoubleSpinBox* outputMeshResolutionSpinBox,
                                            QComboBox* outputMeshResolutionComboBox);
+
+    int lineNumber;
+
 };
 #endif // MAINWINDOW_H

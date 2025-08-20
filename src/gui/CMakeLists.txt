@@ -29,6 +29,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         splashscreen.cpp
         surfaceinput.h
         surfaceinput.cpp
+        setconfigurationoptiondialog.h
+        setconfigurationoptiondialog.cpp
+        setconfigurationoptiondialog.ui
         menubar.h
         menubar.cpp
         mapbridge.h

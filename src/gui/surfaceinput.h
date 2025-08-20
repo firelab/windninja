@@ -67,6 +67,7 @@ signals:
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);
+    void elevationInputFileOpenButtonClicked();
 
 private slots:
     void surfaceInputDownloadCancelButtonClicked();
@@ -82,8 +83,6 @@ private slots:
     void timeZoneDetailsCheckBoxClicked();
     void timeZoneComboBoxCurrentIndexChanged(int index);
     void timeZoneAllZonesCheckBoxClicked();
-    void elevationInputFileOpenButtonClicked();
-
 
 private:
     Ui::MainWindow *ui;

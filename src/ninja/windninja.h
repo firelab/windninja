@@ -348,4 +348,10 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaArmyH * ninjaArmy, char ** options );
     WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * ninjaArmy, char ** options );
 
+    /*-----------------------------------------------------------------------------
+     *  Helper Methods
+     *-----------------------------------------------------------------------------*/
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions );
+
 WN_C_END
