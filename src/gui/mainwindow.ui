@@ -844,7 +844,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <x>0</x>
                  <y>0</y>
                  <width>578</width>
-                 <height>503</height>
+                 <height>478</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,1">
@@ -4360,49 +4360,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </widget>
         </item>
         <item>
-         <widget class="QDockWidget" name="consoleDockWidget">
-          <property name="windowTitle">
-           <string>Console Output</string>
+         <widget class="QTextEdit" name="consoleTextEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <widget class="QWidget" name="dockWidgetContents">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>600</width>
-             <height>100</height>
-            </size>
-           </property>
-           <widget class="QTextEdit" name="consoleTextEdit">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>600</width>
-              <height>100</height>
-             </rect>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>600</width>
-              <height>100</height>
-             </size>
-            </property>
-            <property name="readOnly">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </widget>
+          <property name="minimumSize">
+           <size>
+            <width>600</width>
+            <height>100</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
@@ -4508,7 +4481,6 @@ QMenu::item:selected {
     <property name="toolTipsVisible">
      <bool>true</bool>
     </property>
-    <!--<addaction name="resampleDataAction"/>-->
     <addaction name="writeBlankStationFileAction"/>
     <addaction name="setConfigurationOptionAction"/>
    </widget>
@@ -4641,21 +4613,6 @@ QMenu::item:selected {
     <string>Ctrl+W</string>
    </property>
   </action>
-  <!--<action name="resampleDataAction">
-   <property name="icon">
-    <iconset resource="../../wn-resources.qrc">
-     <normaloff>:/resample.png</normaloff>:/resample.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Resample Data</string>
-   </property>
-   <property name="toolTip">
-    <string>Resample Existing Data</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+R</string>
-   </property>
-  </action>-->
   <action name="writeBlankStationFileAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">

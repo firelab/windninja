@@ -299,10 +299,10 @@ void MainWindow::refreshUI()
 
 void MainWindow::writeToConsole(QString message, QColor color)
 {
-    if( ui->consoleDockWidget->isFloating() && color == Qt::white )
-    {
-        color = Qt::black;
-    }
+    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
+    // {
+    //     color = Qt::black;
+    // }
 
     ui->consoleTextEdit->setTextColor(color);
     ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
