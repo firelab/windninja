@@ -199,8 +199,6 @@ void PointInitializationInput::fetchStationDataFinished()
     }
 
     ui->inputsStackedWidget->setCurrentIndex(10);
-    disconnect(futureWatcher, &QFutureWatcher<int>::finished,
-            this, &PointInitializationInput::fetchStationDataFinished);
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)

@@ -396,10 +396,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox(const int* yearList, cons
 
     if(!fetchLatestFlag)
     {
-        boost::local_time::time_zone_ptr tz(new boost::local_time::posix_time_zone(timeZone));
+        boost::local_time::tz_database tz_db;
+        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+        boost::local_time::time_zone_ptr timeZonePtr;
+        timeZonePtr = tz_db.time_zone_from_region(timeZone);
 
-        boost::local_time::local_date_time start(timeList[0], tz);
-        boost::local_time::local_date_time stop(timeList[1], tz);
+        boost::local_time::local_date_time start(timeList[0], timeZonePtr);
+        boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
 
         pointInitialization::setLocalStartAndStopTimes(start, stop);
     }
@@ -461,10 +464,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const 
 
     if(!fetchLatestFlag)
     {
-        boost::local_time::time_zone_ptr tz(new boost::local_time::posix_time_zone(timeZone));
+        boost::local_time::tz_database tz_db;
+        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+        boost::local_time::time_zone_ptr timeZonePtr;
+        timeZonePtr = tz_db.time_zone_from_region(timeZone);
 
-        boost::local_time::local_date_time start(timeList[0], tz);
-        boost::local_time::local_date_time stop(timeList[1], tz);
+        boost::local_time::local_date_time start(timeList[0], timeZonePtr);
+        boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
 
         pointInitialization::setLocalStartAndStopTimes(start, stop);
     }
