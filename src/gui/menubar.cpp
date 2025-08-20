@@ -28,13 +28,11 @@
  *****************************************************************************/
 
 #include "menubar.h"
-#include "ui_mainwindow.h"
 
 MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
 {
-    QString dataFolder = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
-    dataPath = QDir(dataFolder);
+    dataPath = QDir(QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", "")));
 
     // QMenu fileMenu "File" actions
     connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
@@ -78,76 +76,70 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
 
 void MenuBar::newProjectActionTriggered()
 {
-    writeToConsole("MenuBar: newProject() triggered");
+    emit writeToConsole("MenuBar: newProject() triggered");
 }
 
 void MenuBar::openProjectActionTriggered()
 {
-    writeToConsole("MenuBar: openProject() triggered");
+    emit writeToConsole("MenuBar: openProject() triggered");
 }
 
 void MenuBar::exportSolutionActionTriggered()
 {
-    writeToConsole("MenuBar: exportSolution() triggered");
+    emit writeToConsole("MenuBar: exportSolution() triggered");
 }
 
 void MenuBar::closeProjectActionTriggered()
 {
-    writeToConsole("MenuBar: closeProject() triggered");
+    emit writeToConsole("MenuBar: closeProject() triggered");
 }
 
 void MenuBar::writeConsoleOutputActionTriggered()
 {
-    QString fileName = QFileDialog::getSaveFileName(ui->centralwidget,
-                tr("Save Console Output"),
-                "console-output.txt",
-                tr("Text Files (*.txt)"));
+    QString fileName = QFileDialog::getSaveFileName(
+        ui->centralwidget,
+        tr("Save Console Output"),
+        "console-output.txt",
+        tr("Text Files (*.txt)")
+        );
 
-    if(!fileName.isEmpty())
+    if (!fileName.isEmpty())
     {
-        QDateTime currentTime(QDateTime::currentDateTime());
-        writeToConsole("writing console output to " + fileName, Qt::darkGreen);
-        writeToConsole("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
+        QDateTime currentTime = QDateTime::currentDateTime();
+        emit writeToConsole("writing console output to " + fileName, Qt::darkGreen);
+        emit writeToConsole("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
 
-        std::ofstream fout(fileName.toStdString().c_str(), std::ios::out);
-        if(!fout)
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
-            writeToConsole("Cannot open " + fileName + " for writing.", Qt::red);
+            emit writeToConsole("Cannot open " + fileName + " for writing.", Qt::red);
             return;
         }
 
-        QTextDocument *doc = ui->consoleTextEdit->document();
-        QTextBlock block = doc->begin();
-        while( block.isValid() )
-        {
-            fout << block.text().toStdString() << "\n";
-            block = block.next();
-        }
-        fout.close();
+        QTextStream out(&file);
+        out << ui->consoleTextEdit->toPlainText();
     }
 }
 
-//void MenuBar::resampleDataActionTriggered()
-//{
-//    writeToConsole("MenuBar: resampleData() triggered");
-//}
-
 void MenuBar::writeBlankStationFileActionTriggered()
 {
-    QString fileName = QFileDialog::getSaveFileName(ui->centralwidget,
-                tr("Save Blank Station File"),
-                "stations.csv",
-                tr("Text Files (*.csv)"));
+    QString fileName = QFileDialog::getSaveFileName(
+        ui->centralwidget,
+        tr("Save Blank Station File"),
+        "stations.csv",
+        tr("Text Files (*.csv)")
+        );
 
     if(!fileName.isEmpty())
     {
-        writeToConsole("writing blank station file to " + fileName, Qt::darkGreen);
+        emit writeToConsole("writing blank station file to " + fileName, Qt::darkGreen);
 
         char** papszOptions = nullptr;
-        int err = NinjaWriteBlankWxStationFile( fileName.toStdString().c_str(), papszOptions );
-        if( err != NINJA_SUCCESS )
+        int err = NinjaWriteBlankWxStationFile(fileName.toStdString().c_str(), papszOptions);
+        if(err != NINJA_SUCCESS)
         {
-            writeToConsole("failed to write blank station file!", Qt::red);
+            qDebug() << "NinjaWriteBlankWxStationFile: err=" << err;
+            emit writeToConsole("failed to write blank station file!", Qt::red);
         }
     }
 }
@@ -156,144 +148,156 @@ void MenuBar::setConfigurationOptionActionTriggered()
 {
     setConfigurationOptionDialog configDialog;
 
-    int rc = configDialog.exec();
-    if( rc == QDialog::Rejected )
-    {
+    if (configDialog.exec() == QDialog::Rejected)
         return;
-    }
 
-    const char *pszKey, *pszVal;
-    QString key = configDialog.GetKey();
-    QString val = configDialog.GetValue();
-    if( key == "" )
-    {
+    QString key = configDialog.getKey();
+    QString val = configDialog.getValue();
+
+    if (key.isEmpty())
         return;
-    }
-    if( val == "" )
-    {
-        pszVal = NULL;
-    }
-    else
-    {
-        pszVal = CPLSPrintf( "%s", (char*)val.toLocal8Bit().data() );
-    }
 
-    qDebug() << "Setting configuration option " << key << "to" << val;
-    writeToConsole("Setting configuration option " + key + " to " + val);
+    qDebug() << "Setting configuration option" << key << "to" << val;
+    emit writeToConsole("Setting configuration option " + key + " to " + val);
 
-    pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
-    CPLSetConfigOption( pszKey, pszVal );
+    CPLSetConfigOption(
+        key.toUtf8().constData(),
+        val.isEmpty() ? nullptr : val.toUtf8().constData()
+        );
 }
 
 void MenuBar::displayArcGISProGuideActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
+    emit writeToConsole("Opening " + displayFile);
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link."),
+            tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
-
 void MenuBar::displayTutorial1ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial1.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
 void MenuBar::displayTutorial2ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial2.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
 void MenuBar::displayTutorial3ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial3.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
 void MenuBar::displayTutorial4ActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial4.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
 void MenuBar::displayDemDownloadInstructionsActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/download_elevation_file.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
 void MenuBar::displayFetchDemInstructionsActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/fetch_dem_instructions.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
 void MenuBar::displayCommandLineInterfaceInstructionsActionTriggered()
 {
     QString displayFile = dataPath.absoluteFilePath("../doc/CLI_instructions.pdf");
-    displayFile = QDir().cleanPath(displayFile);  // cleanup the file path, make it a truly absolute path
-    writeToConsole("Opening " + displayFile);
+    displayFile = QDir::cleanPath(displayFile);
 
-    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
-        QMessageBox::warning(ui->centralwidget, tr("Broken Link."),
-                tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                QMessageBox::Ok);
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
     }
 }
 
@@ -328,8 +332,11 @@ void MenuBar::aboutWindNinjaActionTriggered()
     aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
     aboutText.append("<br/>");
 
-    QMessageBox::about(ui->centralwidget, tr("About WindNinja"),
-                aboutText);
+    QMessageBox::about(
+        ui->centralwidget,
+        tr("About WindNinja"),
+        aboutText
+        );
 }
 
 void MenuBar::citeWindNinjaActionTriggered()
@@ -346,16 +353,35 @@ void MenuBar::citeWindNinjaActionTriggered()
 
     citeText.append("<p><a href=\"https://ninjastorm.firelab.org/windninja/publications/\">https://ninjastorm.firelab.org/windninja/publications</a></p>");
 
-    QMessageBox::about(ui->centralwidget, tr("Cite WindNinja"),
-            citeText);
+    QMessageBox::about(
+        ui->centralwidget,
+        tr("Cite WindNinja"),
+        citeText
+        );
 }
 
 void MenuBar::supportEmailActionTriggered()
 {
-    QDesktopServices::openUrl(QUrl("mailto:wind.ninja.support@gmail.com?subject=[windninja-support]"));
-}
+    QUrl mailto("mailto:wind.ninja.support@gmail.com?subject=[windninja-support]");
+    if (!QDesktopServices::openUrl(mailto)) {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Email Error"),
+            tr("Unable to open your default email client."),
+            QMessageBox::Ok
+            );
+    }}
 
 void MenuBar::submitBugReportActionTriggered()
 {
-    QDesktopServices::openUrl(QUrl("https://github.com/firelab/windninja/issues/new"));
+    QUrl bugUrl("https://github.com/firelab/windninja/issues/new");
+    if (!QDesktopServices::openUrl(bugUrl))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Network Error"),
+            tr("Unable to open the bug report page. Please check your internet connection."),
+            QMessageBox::Ok
+            );
+    }
 }

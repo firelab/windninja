@@ -15,8 +15,8 @@ public:
     explicit setConfigurationOptionDialog(QWidget *parent = nullptr);
     ~setConfigurationOptionDialog();
 
-    QString GetKey();
-    QString GetValue();
+    QString getKey();
+    QString getValue();
 
 private:
     Ui::setConfigurationOptionDialog *ui;

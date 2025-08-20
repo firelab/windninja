@@ -16,7 +16,7 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
+  <widget class="QDialogButtonBox" name="setConfigurationButtonBox">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -41,7 +41,7 @@
      <height>80</height>
     </rect>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout">
+   <layout class="QHBoxLayout" name="setConfigurationLayout">
     <item>
      <widget class="QLabel" name="keyLabel">
       <property name="text">
@@ -68,7 +68,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>buttonBox</sender>
+   <sender>setConfigurationButtonBox</sender>
    <signal>rejected()</signal>
    <receiver>setConfigurationOptionDialog</receiver>
    <slot>reject()</slot>
@@ -84,7 +84,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>buttonBox</sender>
+   <sender>setConfigurationButtonBox</sender>
    <signal>accepted()</signal>
    <receiver>setConfigurationOptionDialog</receiver>
    <slot>accept()</slot>

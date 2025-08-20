@@ -13,12 +13,12 @@ setConfigurationOptionDialog::~setConfigurationOptionDialog()
     delete ui;
 }
 
-QString setConfigurationOptionDialog::GetKey()
+QString setConfigurationOptionDialog::getKey()
 {
     return ui->keyLineEdit->text();
 }
 
-QString setConfigurationOptionDialog::GetValue()
+QString setConfigurationOptionDialog::getValue()
 {
     return ui->valueLineEdit->text();
 }
