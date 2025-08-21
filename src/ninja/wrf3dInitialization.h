@@ -31,6 +31,7 @@
 #define WRF_3D_SURFACE_INITIALIZATION_H
 
 #include "wrfSurfInitialization.h"
+#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from a WRF 3-D forecast file.

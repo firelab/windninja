@@ -31,6 +31,7 @@
 #define NCEP_NDFD_INITILIZATION_H 
 
 #include "wxModelInitialization.h"
+#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from an NCEP NDFD forecast file.

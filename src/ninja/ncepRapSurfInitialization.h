@@ -31,6 +31,7 @@
 #define NCEP_RAP_SURFACE_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
+#include "cplIsNan.h"
 #include <cmath>
 
 /**

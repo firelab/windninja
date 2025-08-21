@@ -31,6 +31,7 @@
 #define WRF_SURFACE_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
+#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from a WRF Surface forecast file.
@@ -67,4 +68,3 @@ class wrfSurfInitialization : public wxModelInitialization
 };
 
 #endif //WRF_SURFACE_INIITALIZATION_H
-

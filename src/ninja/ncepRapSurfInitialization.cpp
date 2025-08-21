@@ -202,7 +202,7 @@ void ncepRapSurfInitialization::checkForValidData()
                 else
                 {
                     noDataValueExists = true;
-                    noDataIsNan = CPLIsNan(dfNoData);
+                    noDataIsNan = cplIsNan(dfNoData);
                 }
 
                 //set the data
@@ -221,7 +221,7 @@ void ncepRapSurfInitialization::checkForValidData()
                     {
                         if(noDataIsNan)
                         {
-                            if(CPLIsNan(padfScanline[k]))
+                            if(cplIsNan(padfScanline[k]))
                                 throw badForecastFile("Forecast file contains no_data values.");
                         }else
                         {
@@ -504,28 +504,28 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
 
         if( varList[i] == "Temperature_height_above_ground" ) {
           GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
-          if( CPLIsNan( dfNoData ) ) {
+          if( cplIsNan( dfNoData ) ) {
               airGrid.set_noDataValue(-9999.0);
               airGrid.replaceNan( -9999.0 );
           }
         }
         else if( varList[i] == "v-component_of_wind_height_above_ground" ) {
           GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
-          if( CPLIsNan( dfNoData ) ) {
+          if( cplIsNan( dfNoData ) ) {
               vGrid.set_noDataValue(-9999.0);
               vGrid.replaceNan( -9999.0 );
           }
         }
         else if( varList[i] == "u-component_of_wind_height_above_ground" ) {
           GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
-          if( CPLIsNan( dfNoData ) ) {
+          if( cplIsNan( dfNoData ) ) {
               uGrid.set_noDataValue(-9999.0);
               uGrid.replaceNan( -9999.0 );
           }
         }
         else if( varList[i] == "Geopotential_height_cloud_tops" ) {
           GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-          if( CPLIsNan( dfNoData ) ) {
+          if( cplIsNan( dfNoData ) ) {
               cloudGrid.set_noDataValue(-9999.0);
               cloudGrid.replaceNan( -99999.0 );
           }

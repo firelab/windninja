@@ -37,6 +37,7 @@
 
 #include "ninjaUnits.h"
 #include "KmlVector.h"
+#include "cplIsNan.h"
 
 
 /**
@@ -239,7 +240,7 @@ void checkForValidData( std::string wxModelFileName )
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = CPLIsNan(dfNoData);
+                noDataIsNan = cplIsNan(dfNoData);
             }
 
             const char * poBand_units = poBand->GetUnitType();
@@ -264,7 +265,7 @@ void checkForValidData( std::string wxModelFileName )
                 {
                     if(noDataIsNan)
                     {
-                        if(CPLIsNan(current_val))
+                        if(cplIsNan(current_val))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -855,7 +856,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
             temperatureUnits::toBaseUnits( airGrid, T_units );
-            if( CPLIsNan( dfNoData ) ) {
+            if( cplIsNan( dfNoData ) ) {
                 airGrid.set_noDataValue(-9999.0);
                 airGrid.replaceNan( -9999.0 );
             }
@@ -863,7 +864,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         else if( varList[i] == "V10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, vGrid );
             velocityUnits::toBaseUnits( vGrid, spd_units );
-            if( CPLIsNan( dfNoData ) ) {
+            if( cplIsNan( dfNoData ) ) {
                 vGrid.set_noDataValue(-9999.0);
                 vGrid.replaceNan( -9999.0 );
             }
@@ -871,14 +872,14 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         else if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, uGrid );
             velocityUnits::toBaseUnits( uGrid, spd_units );
-            if( CPLIsNan( dfNoData ) ) {
+            if( cplIsNan( dfNoData ) ) {
                 uGrid.set_noDataValue(-9999.0);
                 uGrid.replaceNan( -9999.0 );
             }
         }
         else if( varList[i] == "QCLOUD" ) {
             GDAL2AsciiGrid( srcDS, bandNum, cloudGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( cplIsNan( dfNoData ) ) {
                 cloudGrid.set_noDataValue(-9999.0);
                 cloudGrid.replaceNan( -9999.0 );
             }

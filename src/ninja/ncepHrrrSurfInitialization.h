@@ -31,6 +31,7 @@
 #define NCEP_HRRR_SURFACE_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
+#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from an NCEP HRRR Surface forecast file
@@ -69,4 +70,3 @@ class ncepHrrrSurfInitialization : public wxModelInitialization
 };
 
 #endif //NCEP_HRRR_SURFACE_INITIALIZATION_H
-

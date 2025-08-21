@@ -59,6 +59,7 @@
 #include "iostream"
 #include "numeric"
 #include "math.h"
+#include "cplIsNan.h"
 
 static const char *apszValidHeader1[] = {
     "Station_Name", "Coord_Sys(PROJCS,GEOGCS)", "Datum(WGS84,NAD83,NAD27)",
