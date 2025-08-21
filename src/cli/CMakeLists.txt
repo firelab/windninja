@@ -49,8 +49,7 @@ endif()
 
 add_executable(WindNinja_cli cmake_cli.cpp)
 
-target_link_libraries(WindNinja_cli ${LINK_LIBS})
+target_link_libraries(WindNinja_cli ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(WindNinja_cli ninja)
 
 install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
-

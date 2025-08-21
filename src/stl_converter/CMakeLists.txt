@@ -32,7 +32,7 @@ set(STL_SOURCES converter.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp)
 
 add_executable(stl_converter ${STL_SOURCES})
-target_link_libraries(stl_converter ${LINK_LIBS})
+target_link_libraries(stl_converter ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS stl_converter DESTINATION bin COMPONENT apps)
 

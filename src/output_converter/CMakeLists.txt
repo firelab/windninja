@@ -43,7 +43,7 @@ set(STL_SOURCES convert_output.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
 add_executable(convert_output ${STL_SOURCES})
-target_link_libraries(convert_output ${LINK_LIBS})
+target_link_libraries(convert_output ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS convert_output DESTINATION bin COMPONENT apps)
 

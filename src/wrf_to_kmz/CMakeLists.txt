@@ -43,7 +43,7 @@ set(WRF_TO_KMZ_SRC wrf_to_kmz.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninjaUnits.cpp)
 
 add_executable(wrf_to_kmz ${WRF_TO_KMZ_SRC})
-target_link_libraries(wrf_to_kmz ${LINK_LIBS})
+target_link_libraries(wrf_to_kmz ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS wrf_to_kmz DESTINATION bin COMPONENT apps)
 

@@ -36,7 +36,6 @@ set(FLOW_SEPARATION_GRID_SRC flow_separation_grid.cpp
 
 add_executable(flow_separation_grid ${FLOW_SEPARATION_GRID_SRC})
 
-target_link_libraries(flow_separation_grid ${LINK_LIBS})
+target_link_libraries(flow_separation_grid ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS flow_separation_grid DESTINATION bin COMPONENT apps)
-

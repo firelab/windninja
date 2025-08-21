@@ -127,7 +127,7 @@ add_executable(WindNinja ${GUI_TYPE}
                          ${NINJA_GUI_RESOURCES}
                          ${NINJA_GUI_SOURCES})
 
-target_link_libraries(WindNinja ${LINK_LIBS})
+target_link_libraries(WindNinja ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(WindNinja ninja)
 install(TARGETS WindNinja DESTINATION bin COMPONENT apps)
 

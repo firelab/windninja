@@ -46,7 +46,6 @@ set(SOLAR_GRID_SRC solar_grid.cpp
 
 add_executable(solar_grid ${SOLAR_GRID_SRC})
 
-target_link_libraries(solar_grid ${LINK_LIBS})
+target_link_libraries(solar_grid ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS solar_grid DESTINATION bin COMPONENT apps)
-

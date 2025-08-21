@@ -37,7 +37,6 @@ set(SURFACE_INPUT_NODATA_FILLER_SRC surface_input_nodata_filler.cpp
 
 add_executable(surface_input_nodata_filler ${SURFACE_INPUT_NODATA_FILLER_SRC})
 
-target_link_libraries(surface_input_nodata_filler ${LINK_LIBS})
+target_link_libraries(surface_input_nodata_filler ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS surface_input_nodata_filler DESTINATION bin COMPONENT apps)
-
