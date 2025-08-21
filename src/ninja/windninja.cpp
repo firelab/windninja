@@ -568,7 +568,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     if( NULL != army && NULL != initializationMethod )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setInitializationMethod
-            ( nIndex, std::string( initializationMethod ) );
+            ( nIndex, std::string( initializationMethod ), true);
     }
     else
     {
