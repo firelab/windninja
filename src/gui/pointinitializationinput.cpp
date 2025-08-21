@@ -97,6 +97,16 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> hour   = {startUtc.time().hour(),   endUtc.time().hour()};
     QVector<int> minute = {startUtc.time().minute(), endUtc.time().minute()};
 
+    if(ui->weatherStationDataTimeComboBox->currentIndex() == 1)
+    {
+        char ** options = nullptr;
+        int err = NinjaCheckTimeDuration(year.data(), month.data(), day.data(), hour.data(), minute.data(), 2, options);
+        if(err != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaCheckTimeDuration err=" << err;
+        }
+    }
+
     bool fetchLatestFlag = ui->weatherStationDataTimeComboBox->currentIndex() ? 0 : 1;
 
     QString outputPath = ui->outputDirectoryLineEdit->text();
@@ -124,8 +134,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     else
     {
         QString stationList = ui->downloadFromStationIDLineEdit->text();
-        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,
-                                   year, month, day, hour, minute,
+        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,year, month, day, hour, minute,
                                    elevationFile, stationList,
                                    DEMTimeZone, fetchLatestFlag, outputPath);
     }

@@ -2166,10 +2166,10 @@ WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** pap
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
-    const int* inputYearList, const int* inputMonthList, const int* inputDayList,
-    const int* inputHourList, const int* inputMinuteList,
-    int* outputYearList, int* outputMonthList, int* outputDayList,
-    int* outputHourList, int* outputMinuteList,
+    const int * inputYearList, const int * inputMonthList, const int * inputDayList,
+    const int * inputHourList, const int * inputMinuteList,
+    int * outputYearList, int* outputMonthList, int * outputDayList,
+    int * outputHourList, int* outputMinuteList,
     int nTimeSteps, const char* timeZone)
 {
     std::vector<boost::posix_time::ptime> timeList =
@@ -2198,8 +2198,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
-    int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char* timeZone,
-    int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute)
+    int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone,
+    int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute)
 {
     if (!outYear || !outMonth || !outDay || !outHour || !outMinute)
         return NINJA_E_OTHER; // or appropriate error
@@ -2218,5 +2218,27 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
 
     return NINJA_SUCCESS;
 }
+
+WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
+    (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
+{
+    std::vector <boost::posix_time::ptime> timeList;
+    for(size_t i=0; i < listSize; i++)
+    {
+        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+    }
+
+    int isValid = pointInitialization::checkFetchTimeDuration(timeList);
+
+    if(isValid == -2)
+    {
+        return NINJA_E_OTHER;
+    }
+    else
+    {
+        return NINJA_SUCCESS;
+    }
+}
+
 
 }

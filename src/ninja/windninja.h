@@ -359,5 +359,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
         int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char* timeZone,
         int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute);
+    WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
+        (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions);
 
 WN_C_END
