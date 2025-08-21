@@ -88,11 +88,14 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
     QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
     QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
-    QVector<int> year   = {start.date().year(),   end.date().year()};
-    QVector<int> month  = {start.date().month(),  end.date().month()};
-    QVector<int> day    = {start.date().day(),    end.date().day()};
-    QVector<int> hour   = {start.time().hour(),   end.time().hour()};
-    QVector<int> minute = {start.time().minute(), end.time().minute()};
+    QDateTime startUtc = start.toUTC();
+    QDateTime endUtc   = end.toUTC();
+
+    QVector<int> year   = {startUtc.date().year(),   endUtc.date().year()};
+    QVector<int> month  = {startUtc.date().month(),  endUtc.date().month()};
+    QVector<int> day    = {startUtc.date().day(),    endUtc.date().day()};
+    QVector<int> hour   = {startUtc.time().hour(),   endUtc.time().hour()};
+    QVector<int> minute = {startUtc.time().minute(), endUtc.time().minute()};
 
     bool fetchLatestFlag = ui->weatherStationDataTimeComboBox->currentIndex() ? 0 : 1;
 
@@ -395,16 +398,16 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     startTimeUTC.setTimeSpec(Qt::UTC);
     endTimeUTC.setTimeSpec(Qt::UTC);
 
-    QDateTime startTimeDEMTimeZone = startTimeUTC.toTimeZone(timeZone);
-    QDateTime endTimeDEMTimeZone  = endTimeUTC.toTimeZone(timeZone);
+    QDateTime DEMStartTime = startTimeUTC.toTimeZone(timeZone);
+    QDateTime DEMEndTime  = endTimeUTC.toTimeZone(timeZone);
 
-    if (minStationTime.isNull() || startTimeDEMTimeZone < minStationTime)
+    if (minStationTime.isNull() || DEMStartTime < minStationTime)
     {
-        minStationTime = startTimeDEMTimeZone;
+        minStationTime = DEMStartTime;
     }
-    if(maxStationTime.isNull() || endTimeDEMTimeZone > maxStationTime)
+    if(maxStationTime.isNull() || DEMEndTime > maxStationTime)
     {
-        maxStationTime = endTimeDEMTimeZone;
+        maxStationTime = DEMEndTime;
     }
 
     qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();

@@ -557,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>10</number>
+           <number>20</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -4281,7 +4281,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit"/>
+                    <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
+                     <property name="displayFormat">
+                      <string>M/d/yy h:mm </string>
+                     </property>
+                    </widget>
                    </item>
                    <item>
                     <widget class="QLabel" name="downloadBetweenDatesEndTimeLabel">
@@ -4291,7 +4295,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit"/>
+                    <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
+                     <property name="displayFormat">
+                      <string>M/d/yy h:mm </string>
+                     </property>
+                    </widget>
                    </item>
                    <item>
                     <spacer name="downloadBetweenDatesPageSpacer">
