@@ -15,7 +15,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 3.16)
+
+if(NINJA_GUI)
+    find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets)
+endif(NINJA_GUI)
 
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -29,13 +34,13 @@ set(LINK_LIBS ${Boost_LIBRARIES}
               ${NETCDF_LIBRARIES_C}
               ${CURL_LIBRARIES})
 
-if(NINJA_GUI AND NINJA_CLI)
+if(NINJA_GUI)
     set(LINK_LIBS ${LINK_LIBS}
-                  ${QT_LIBRARIES})
+                  Qt${QT_VERSION_MAJOR}::Widgets)
     if(PACKAGE_DEBUG)
         message("CLI Linking to Qt Libraries")
     endif(PACKAGE_DEBUG)
-endif(NINJA_GUI AND NINJA_CLI)
+endif(NINJA_GUI)
 
 if(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
@@ -49,8 +54,9 @@ endif()
 
 add_executable(WindNinja_cli cmake_cli.cpp)
 
-target_link_libraries(WindNinja_cli ${LINK_LIBS})
 add_dependencies(WindNinja_cli ninja)
+
+target_link_libraries(WindNinja_cli ${LINK_LIBS})
 
 install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
 

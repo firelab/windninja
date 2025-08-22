@@ -42,7 +42,7 @@
 #include "omp.h"
 #endif
 
-#ifdef NINJA_QTGUI
+#ifdef NINJA_GUI
 #include <QObject>
 #include <QString>
 #include <QColor>
@@ -52,7 +52,7 @@
 #define NINJA_MSG_SIZE 1000
 
 class ninjaComClass //virtual base class
-#ifdef NINJA_QTGUI
+#ifdef NINJA_GUI
   : public QObject
 #endif
 {
@@ -132,7 +132,7 @@ public:
     virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };
 
-#ifndef NINJA_QTGUI
+#ifndef NINJA_GUI
 class ninjaGUIComHandler : public ninjaComClass	//concrete class
 {
 public:
@@ -153,7 +153,7 @@ class ninjaGUIComHandler : public ninjaComClass //concrete class
   void sendMessage(QString message, QColor color = Qt::white);
 
 };
-#endif // NINJA_QTGUI
+#endif // NINJA_GUI
 
 class ninjaWFDSSComHandler : public ninjaComClass	//concrete class
 {
