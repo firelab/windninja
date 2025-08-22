@@ -37,4 +37,5 @@ target_link_libraries(windninja5
     ${Qt5Widgets_LIBRARIES}
     ${Qt5Gui_LIBRARIES}
     ${GDAL_LIBRARIES}
+    $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>
     )
