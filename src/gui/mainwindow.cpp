@@ -874,6 +874,16 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             qDebug() << "NinjaSetCommunication: err =" << err;
         }
 
+        int comRunNumber = *NinjaGetCommunication( ninjaArmy, i, papszOptions )->runNumber;  // * dereferences the pointer to get the raw value, what a weird thing to store, an int*.
+        qDebug() << QString::number( comRunNumber );
+        qDebug() << comRunNumber;
+        NinjaGetCommunication( ninjaArmy, i, papszOptions )->ninjaCom(ninjaComClass::ninjaNone, "testing...");
+        ninjaComClass * comPtr = NinjaGetCommunication( ninjaArmy, i, papszOptions );
+        comPtr->ninjaCom(ninjaComClass::ninjaNone, "testing1...");
+
+        NinjaGetCommunication( ninjaArmy, i, papszOptions )->ninjaComHandler(ninjaComClass::ninjaNone, "fudge");  // woo hoo!! compiles and RUNS, printed the message
+        NinjaGetCommunication( ninjaArmy, i, papszOptions )->ninjaCom(ninjaComClass::ninjaNone, "fudge1");  // more correct form, I guess it picks the ninjaComHandler by virtual type
+
         err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
         if(err != NINJA_SUCCESS)
         {

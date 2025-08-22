@@ -150,7 +150,7 @@ class ninjaGUIComHandler : public ninjaComClass //concrete class
 
  signals:
   void sendProgress(int run, int progress);
-  void sendMessage(QString message, QColor color = Qt::black);
+  void sendMessage(QString message, QColor color = Qt::white);
 
 };
 #endif // NINJA_GUI

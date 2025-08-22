@@ -159,5 +159,5 @@ install(TARGETS ninja DESTINATION lib COMPONENT libs)
 if(WIN32)
     install(TARGETS WindNinjadll DESTINATION ${lib_dest})
 endif(WIN32)
-install(FILES WindNinjaInputs.h ninja.h gdal_util.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
+install(FILES WindNinjaInputs.h ninja.h gdal_util.h ninjaCom.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 
