@@ -563,12 +563,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
-    (NinjaArmyH * army, const int nIndex, const char * initializationMethod, char ** papszOptions )
+    (NinjaArmyH * army, const int nIndex, const char * initializationMethod, bool matchedPoints, char ** papszOptions )
 {
     if( NULL != army && NULL != initializationMethod )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setInitializationMethod
-            ( nIndex, std::string( initializationMethod ), true);
+            ( nIndex, std::string( initializationMethod ), matchedPoints);
     }
     else
     {

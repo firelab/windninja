@@ -931,7 +931,7 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             printf("NinjaSetNumberCPUs: err = %d\n", err);
         }
 
-        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
             printf("NinjaSetInitializationMethod: err = %d\n", err);

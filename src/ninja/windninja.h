@@ -134,7 +134,7 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const char * initializationMethod, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const char * initializationMethod, bool matchedPoints, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
