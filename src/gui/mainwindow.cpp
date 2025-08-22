@@ -621,6 +621,7 @@ void MainWindow::solveButtonClicked()
         initializationMethod = "point";
 
         QVector<QString> stationFiles = pointInitializationInput->getStationFiles();
+
         QString DEMTimeZone = ui->timeZoneComboBox->currentText();
         QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
 

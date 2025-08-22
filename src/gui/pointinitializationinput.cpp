@@ -42,8 +42,11 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
     ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
 
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime());
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
+
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
@@ -85,21 +88,39 @@ void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
+    QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+    QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
     QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
     QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
-    QDateTime startUtc = start.toUTC();
-    QDateTime endUtc   = end.toUTC();
 
-    QVector<int> year   = {startUtc.date().year(),   endUtc.date().year()};
-    QVector<int> month  = {startUtc.date().month(),  endUtc.date().month()};
-    QVector<int> day    = {startUtc.date().day(),    endUtc.date().day()};
-    QVector<int> hour   = {startUtc.time().hour(),   endUtc.time().hour()};
-    QVector<int> minute = {startUtc.time().minute(), endUtc.time().minute()};
+    QVector<int> year   = {start.date().year(),   end.date().year()};
+    QVector<int> month  = {start.date().month(),  end.date().month()};
+    QVector<int> day    = {start.date().day(),    end.date().day()};
+    QVector<int> hour   = {start.time().hour(),   end.time().hour()};
+    QVector<int> minute = {start.time().minute(), end.time().minute()};
+
+    QVector<int> outYear(2);
+    QVector<int> outMonth(2);
+    QVector<int> outDay(2);
+    QVector<int> outHour(2);
+    QVector<int> outMinute(2);
+
+    NinjaErr err = NinjaGetTimeList(
+        year.data(), month.data(), day.data(),
+        hour.data(), minute.data(),
+        outYear.data(), outMonth.data(), outDay.data(),
+        outHour.data(), outMinute.data(),
+        2, timeZoneBytes.data()
+        );
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaGetTimeList: err = %d\n", err);
+    }
 
     if(ui->weatherStationDataTimeComboBox->currentIndex() == 1)
     {
         char ** options = nullptr;
-        int err = NinjaCheckTimeDuration(year.data(), month.data(), day.data(), hour.data(), minute.data(), 2, options);
+        int err = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
         if(err != NINJA_SUCCESS)
         {
             qDebug() << "NinjaCheckTimeDuration err=" << err;
@@ -110,7 +131,6 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 
     QString outputPath = ui->outputDirectoryLineEdit->text();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
-    QString DEMTimeZone = ui->timeZoneComboBox->currentText();
 
     progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
@@ -126,14 +146,14 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         QString units = ui->downloadFromDEMComboBox->currentText();
         double buffer = ui->downloadFromDEMSpinBox->value();
         future = QtConcurrent::run(&PointInitializationInput::fetchStationFromBbox,
-                                   year, month, day, hour, minute,
+                                   outYear, outMonth, outDay, outHour, outMinute,
                                    elevationFile, buffer, units,
                                    DEMTimeZone, fetchLatestFlag, outputPath);
     }
     else
     {
         QString stationList = ui->downloadFromStationIDLineEdit->text();
-        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,year, month, day, hour, minute,
+        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,outYear, outMonth, outDay, outHour, outMinute,
                                    elevationFile, stationList,
                                    DEMTimeZone, fetchLatestFlag, outputPath);
     }
@@ -420,8 +440,8 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
 
     ui->weatherStationDataStartTimeLabel->setText("Start Time (" + DEMTimeZone + "):");
     ui->weatherStationDataEndTimeLabel->setText("End Time (" + DEMTimeZone + "):");
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(minStationTime);
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxStationTime);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime(minStationTime.date(), minStationTime.time(), Qt::LocalTime));
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime(maxStationTime.date(), maxStationTime.time(), Qt::LocalTime));
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
     ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
