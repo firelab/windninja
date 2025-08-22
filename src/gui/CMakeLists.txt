@@ -60,11 +60,9 @@ else()
     endif()
 endif()
 
-target_include_directories(WindNinja PRIVATE /usr/local/include)
-
-add_dependencies(WindNinja ninja)
 
 target_link_libraries(WindNinja PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
+
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

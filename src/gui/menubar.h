@@ -31,8 +31,8 @@
 #define MENUBAR_H
 
 #include "setconfigurationoptiondialog.h"
-#include "../ninja/windninja.h"
-#include "../ninja/gdal_util.h"
+#include "windninja.h"
+#include "gdal_util.h"
 #include "ninja_version.h"
 #include "ui_mainwindow.h"
 #include <QObject>
