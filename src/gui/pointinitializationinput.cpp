@@ -33,8 +33,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     : QObject(parent),
     ui(ui)
 {
-    ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
+    ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
 
     ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/server_go.png"));
@@ -42,8 +42,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
     ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
 
-    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
-    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime());
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
@@ -77,6 +75,14 @@ void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
 
 void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
 {
+    ui->weatherStationDataSourceComboBox->setCurrentIndex(0);
+    ui->weatherStationDataTimeComboBox->setCurrentIndex(0);
+
+    ui->downloadFromStationIDLineEdit->clear();
+    ui->downloadFromDEMSpinBox->setValue(0);
+
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
     ui->inputsStackedWidget->setCurrentIndex(20);
 }
@@ -89,7 +95,7 @@ void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
     QString DEMTimeZone = ui->timeZoneComboBox->currentText();
-    QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
+    QByteArray DEMTimeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
     QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
     QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
 
@@ -98,26 +104,21 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> day    = {start.date().day(),    end.date().day()};
     QVector<int> hour   = {start.time().hour(),   end.time().hour()};
     QVector<int> minute = {start.time().minute(), end.time().minute()};
-
-    QVector<int> outYear(2);
-    QVector<int> outMonth(2);
-    QVector<int> outDay(2);
-    QVector<int> outHour(2);
-    QVector<int> outMinute(2);
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);
 
     NinjaErr err = NinjaGetTimeList(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(),
         outYear.data(), outMonth.data(), outDay.data(),
         outHour.data(), outMinute.data(),
-        2, timeZoneBytes.data()
+        2, DEMTimeZoneBytes.data()
         );
     if(err != NINJA_SUCCESS)
     {
         printf("NinjaGetTimeList: err = %d\n", err);
     }
 
-    if(ui->weatherStationDataTimeComboBox->currentIndex() == 1)
+    if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration
     {
         char ** options = nullptr;
         int err = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
@@ -128,7 +129,6 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     }
 
     bool fetchLatestFlag = ui->weatherStationDataTimeComboBox->currentIndex() ? 0 : 1;
-
     QString outputPath = ui->outputDirectoryLineEdit->text();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
 
@@ -159,8 +159,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     }
     futureWatcher->setFuture(future);
 
-    connect(futureWatcher, &QFutureWatcher<int>::finished,
-            this, &PointInitializationInput::fetchStationDataFinished);
+    connect(futureWatcher, &QFutureWatcher<int>::finished,this, &PointInitializationInput::fetchStationDataFinished);
 }
 
 int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
@@ -175,10 +174,8 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
                                                    bool fetchLatestFlag,
                                                    QString outputPath)
 {
-    char ** papszOptions = NULL;
-    NinjaErr err = 0;
-
-    err = NinjaFetchStationFromBBox(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, papszOptions);
+    char ** options = NULL;
+    NinjaErr err = NinjaFetchStationFromBBox(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, options);
     if (err != NINJA_SUCCESS){
         qDebug() << "NinjaFetchStationFromBbox: err =" << err;
         return err;
@@ -200,10 +197,8 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
                                                  bool fetchLatestFlag,
                                                  QString outputPath)
 {
-    char ** papszOptions = NULL;
-    NinjaErr err = 0;
-
-    err = NinjaFetchStationByName(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), stationList.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, papszOptions);
+    char ** options = NULL;
+    NinjaErr err = NinjaFetchStationByName(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), stationList.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, options);
     if (err != NINJA_SUCCESS){
         qDebug() << "NinjaFetchFetchStationByName: err =" << err;
         return err;
