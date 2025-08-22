@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 3.16)
 
 if (APPLE)
     set(CMAKE_MACOSX_RPATH OFF)
@@ -131,13 +131,13 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${Boost_LIBRARIES})
 
 
-if(NINJA_QTGUI)
+if(NINJA_GUI)
     include_directories(${NINJA_INCLUDES} ${QT_INCLUDES})
     set(NINJA_SOURCES ${NINJA_SOURCES} ${NINJA_LIB_INCLUDES_MOC})
     set(LINK_LIBS ${LINK_LIBS} ${QT_LIBRARIES})
-else(NINJA_QTGUI)
+else(NINJA_GUI)
     include_directories(${NINJA_INCLUDES})
-endif(NINJA_QTGUI)
+endif(NINJA_GUI)
 
 if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
@@ -146,8 +146,8 @@ if(WIN32)
 else()
     if(APPLE)
         add_library(ninja STATIC ${NINJA_SOURCES})
-    else()
-        add_library(ninja SHARED ${NINJA_SOURCES})  # Linux
+    else()  # Linux
+        add_library(ninja SHARED ${NINJA_SOURCES})
     endif()
 endif()
 

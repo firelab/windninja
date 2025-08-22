@@ -90,7 +90,7 @@ export CXXFLAGS=-std=c++11
 ccmake -DCMAKE_LIBRARY_PATH=$PREFIX/lib \
     -DCMAKE_INCLUDE_DIR=$PREFIX/include \
     -DCMAKE_INSTALL_PREFIX=$PREFIX \
-    -DNINJA_QTGUI=OFF \
+    -DNINJA_GUI=OFF \
     -DNINJAFOAM=OFF \
     -DGDAL_CONFIG=$PREFIX/bin/gdal-config \
     -DGDAL_INCLUDE_DIR=$PREFIX/include \
