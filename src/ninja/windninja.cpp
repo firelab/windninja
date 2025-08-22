@@ -556,7 +556,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
  *
  * \return a pointer to the ninjaComClass of the given ninja on success, a NULL pointer otherwise.
  */
-//#ifdef NINJA_GUI
+#ifdef NINJA_GUI
 WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
     ( NinjaArmyH * army, const int nIndex, char ** papszOptions )
 {
@@ -569,7 +569,7 @@ WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
         return NINJA_E_NULL_PTR;
     }
 }
-//#endif //NINJA_GUI
+#endif //NINJA_GUI
 
 /**
  * \brief Set the DEM to use for the simulations.

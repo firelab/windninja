@@ -142,10 +142,10 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * comType, char ** options );
 
-//#ifdef NINJA_GUI
+#ifdef NINJA_GUI
     WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
-//#endif //NINJA_GUI
+#endif //NINJA_GUI
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed

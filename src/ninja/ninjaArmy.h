@@ -185,7 +185,7 @@ public:
     */
     int setNinjaComNumRuns( const int nIndex, const int RunNumber,
                             char ** papszOptions=NULL );
-#endif //NINJA_GUI
+
     /**
     * \brief Returns the ninjaCom for a ninja
     *
@@ -193,7 +193,7 @@ public:
     * \return com the ninjaComClass of a ninja
     */
     ninjaComClass * getNinjaCom( const int nIndex, char ** papszOptions=NULL );
-//#endif //NINJA_GUI
+#endif //NINJA_GUI
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods

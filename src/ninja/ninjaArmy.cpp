@@ -1349,7 +1349,7 @@ int ninjaArmy::setNinjaComNumRuns( const int nIndex, const int RunNumber,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_ComNumRuns( RunNumber ) );
 }
-#endif //NINJA-GUI
+
 ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
@@ -1358,7 +1358,7 @@ ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
     }
     return NULL; //if not valid index
 }
-//#endif //NINJA-GUI
+#endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------
  *  Ninja Speed Testing Methods

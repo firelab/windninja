@@ -276,7 +276,7 @@ void ninjaLoggingComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComM
         fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
 }
 
-#ifdef NINJA_GUI
+#ifdef NINJA_QTGUI
 //**********************************************************************
 //                        ninjaGUIComHandler()
 //**********************************************************************
@@ -445,7 +445,7 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
 {
 
 }
-#endif // NINJA_GUI
+#endif // NINJA_QTGUI
 
 //**********************************************************************
 //                        ninjaWFDSSComHandler()
