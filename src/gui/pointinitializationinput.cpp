@@ -391,22 +391,6 @@ void PointInitializationInput::pointInitializationSelectAllButtonClicked()
     selectionModel->select(selection, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 }
 
-void PointInitializationInput::pointInitializationSelectNoneButtonClicked()
-{
-    ui->pointInitializationTreeView->selectionModel()->clearSelection();
-}
-
-void PointInitializationInput::folderExpanded(const QModelIndex &index)
-{
-    openStationFolders.push_back(stationFileSystemModel->filePath(index));
-}
-
-void PointInitializationInput::folderCollapsed(const QModelIndex &index)
-{
-    QString path = stationFileSystemModel->filePath(index);
-    openStationFolders.removeOne(path);
-}
-
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
 {
     QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
@@ -438,8 +422,8 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
     qDebug() << "[GUI-Point] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
 
-    ui->weatherStationDataStartTimeLabel->setText("Start Time (" + DEMTimeZone + "):");
-    ui->weatherStationDataEndTimeLabel->setText("End Time (" + DEMTimeZone + "):");
+    ui->weatherStationMinTimeLabel->setText("Current Min Time: " + minStationTime.toString());
+    ui->weatherStationMaxTimeLabel->setText("Current Min Time: " + maxStationTime.toString());
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime(minStationTime.date(), minStationTime.time(), Qt::LocalTime));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime(maxStationTime.date(), maxStationTime.time(), Qt::LocalTime));
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
@@ -449,6 +433,22 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
     qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
+}
+
+void PointInitializationInput::pointInitializationSelectNoneButtonClicked()
+{
+    ui->pointInitializationTreeView->selectionModel()->clearSelection();
+}
+
+void PointInitializationInput::folderExpanded(const QModelIndex &index)
+{
+    openStationFolders.push_back(stationFileSystemModel->filePath(index));
+}
+
+void PointInitializationInput::folderCollapsed(const QModelIndex &index)
+{
+    QString path = stationFileSystemModel->filePath(index);
+    openStationFolders.removeOne(path);
 }
 
 QVector<QString> PointInitializationInput::getStationFiles()

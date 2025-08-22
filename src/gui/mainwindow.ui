@@ -1873,7 +1873,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <property name="checked">
                    <bool>false</bool>
                   </property>
-                  <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,0,0,0">
+                  <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,0,0,0,0,0,0">
                    <item>
                     <layout class="QHBoxLayout" name="pointInitializationDownloadLayout">
                      <item>
@@ -2016,44 +2016,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </property>
                      <widget class="QWidget" name="weatherStationDataTimeDatesPage">
                       <layout class="QGridLayout" name="gridLayout_5">
-                       <item row="0" column="0">
-                        <widget class="QLabel" name="weatherStationDataStartTimeLabel">
-                         <property name="text">
-                          <string>Start Time</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="1">
-                        <widget class="QLabel" name="weatherStationDataEndTimeLabel">
-                         <property name="text">
-                          <string>Stop Time</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="0" column="2">
-                        <widget class="QLabel" name="weatherStationDataTimestepsLabel">
-                         <property name="text">
-                          <string>Number of Time Steps</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item row="1" column="0">
-                        <widget class="QDateTimeEdit" name="weatherStationDataStartDateTimeEdit">
+                       <item row="2" column="2">
+                        <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
-                         <property name="cursor">
-                          <cursorShape>PointingHandCursor</cursorShape>
+                         <property name="minimum">
+                          <number>1</number>
                          </property>
-                         <property name="displayFormat">
-                          <string>M/d/yy h:mm</string>
+                         <property name="maximum">
+                          <number>99999</number>
                          </property>
-                         <property name="calendarPopup">
-                          <bool>true</bool>
+                         <property name="singleStep">
+                          <number>1</number>
+                         </property>
+                         <property name="value">
+                          <number>24</number>
                          </property>
                         </widget>
                        </item>
-                       <item row="1" column="1">
+                       <item row="2" column="1">
                         <widget class="QDateTimeEdit" name="weatherStationDataEndDateTimeEdit">
                          <property name="enabled">
                           <bool>false</bool>
@@ -2076,22 +2058,40 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </property>
                         </widget>
                        </item>
+                       <item row="1" column="1">
+                        <widget class="QLabel" name="weatherStationDataEndTimeLabel">
+                         <property name="text">
+                          <string>Stop Time</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="1" column="0">
+                        <widget class="QLabel" name="weatherStationDataStartTimeLabel">
+                         <property name="text">
+                          <string>Start Time</string>
+                         </property>
+                        </widget>
+                       </item>
                        <item row="1" column="2">
-                        <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
+                        <widget class="QLabel" name="weatherStationDataTimestepsLabel">
+                         <property name="text">
+                          <string>Number of Time Steps</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="2" column="0">
+                        <widget class="QDateTimeEdit" name="weatherStationDataStartDateTimeEdit">
                          <property name="enabled">
                           <bool>false</bool>
                          </property>
-                         <property name="minimum">
-                          <number>1</number>
+                         <property name="cursor">
+                          <cursorShape>PointingHandCursor</cursorShape>
                          </property>
-                         <property name="maximum">
-                          <number>99999</number>
+                         <property name="displayFormat">
+                          <string>M/d/yy h:mm</string>
                          </property>
-                         <property name="singleStep">
-                          <number>1</number>
-                         </property>
-                         <property name="value">
-                          <number>24</number>
+                         <property name="calendarPopup">
+                          <bool>true</bool>
                          </property>
                         </widget>
                        </item>
@@ -2117,6 +2117,27 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </item>
                       </layout>
                      </widget>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="weatherStationTimeZoneLabel">
+                     <property name="text">
+                      <string>Current Time Zone:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="weatherStationMinTimeLabel">
+                     <property name="text">
+                      <string>Current Min Time:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="weatherStationMaxTimeLabel">
+                     <property name="text">
+                      <string>Current Max Time: </string>
+                     </property>
                     </widget>
                    </item>
                    <item>
