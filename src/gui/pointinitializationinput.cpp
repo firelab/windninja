@@ -42,8 +42,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
     ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
 
-    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
-    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
@@ -76,6 +74,7 @@ void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
 
 void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
 {
+
     ui->inputsStackedWidget->setCurrentIndex(20);
 }
 
@@ -255,7 +254,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
 
     stationFiles.clear();
-    QVector<int> stationFileTypes;
+    stationFileTypes.clear();
 
     maxStationTime = QDateTime();
     minStationTime = QDateTime();
@@ -280,8 +279,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
 
         QByteArray filePathBytes = recentFileSelected.toUtf8();
         const char* filePath = filePathBytes.constData();
-        char** papszOptions = nullptr;
-        int stationHeader = NinjaGetHeaderVersion(filePath, papszOptions);
+        char** options = nullptr;
+        int stationHeader = NinjaGetWxStationHeaderVersion(filePath, options);
         qDebug() << "[GUI-Point] Station Header: " << stationHeader;
 
         bool timeSeriesFlag = true;
@@ -322,16 +321,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
             }
         }
 
-        if (stationHeader == 2)
-        {
-            ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(timeSeriesFlag ? 0 : 1);
+        ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(timeSeriesFlag ? 0 : 1);
 
-            if (!timeSeriesFlag)
-            {
-                QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
-                ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
-                ui->weatherStationDataTextEdit->setProperty("simulationTime", dateModified);
-            }
+        if (!timeSeriesFlag)
+        {
+            QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
+            ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
+            ui->weatherStationDataTextEdit->setProperty("simulationTime", dateModified);
         }
         ui->pointInitializationTreeView->setProperty("timeSeriesFlag", timeSeriesFlag);
     }

@@ -80,6 +80,7 @@ private:
     QFileSystemModel *stationFileSystemModel;
     QDateTime maxStationTime, minStationTime;
     QVector<QString> stationFiles;
+    QVector<int> stationFileTypes;
     QVector<QString> openStationFolders;
 
     static int fetchStationFromBbox(QVector<int> year,
@@ -104,6 +105,7 @@ private:
                                   bool fetchLatestFlag,
                                   QString outputPath);
     void fetchStationDataFinished();
+    bool readTimeSeries(QModelIndex row);
     void readStationTime(QString startDateTime, QString stopDateTime);
     void updateTimeSteps();
 };

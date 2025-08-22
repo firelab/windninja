@@ -349,7 +349,7 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Helper Methods
      *-----------------------------------------------------------------------------*/
-    WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** papszOptions);
+    WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * filePath, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
         const int* inputYearList, const int* inputMonthList, const int* inputDayList,
         const int* inputHourList, const int* inputMinuteList,

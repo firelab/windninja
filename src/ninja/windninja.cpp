@@ -2159,12 +2159,37 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** pap
 
 /*-----------------------------------------------------------------------------
 *  Helper Methods
-*-----------------------------------------------------------------------------*/
-WINDNINJADLL_EXPORT int NinjaGetHeaderVersion(const char * filePath, char ** papszOptions)
+*-----------------------------------------------------------------------------*/  
+/**
+ * \brief Get the header version for a weather station file.
+ *
+ * \param stationPath The file path for the weather station file.
+ *
+ * \return Header version number (1 = Old Format, 2 = New Format, 3 = csv list for time series, 4 = csv list for non time series)
+ */
+WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * stationPath, char ** options)
 {
-    return wxStation::GetHeaderVersion(filePath);
+    return wxStation::GetHeaderVersion(stationPath);
 }
 
+/**
+ * \brief Get a time series in UTC with a specific number time steps between the inputted start and stop times.
+ *
+ * \param inputYearList    A pointer to an array of input years.
+ * \param inputMonthList   A pointer to an array of input months.
+ * \param inputDayList     A pointer to an array of input days.
+ * \param inputHourList    A pointer to an array of input hours.
+ * \param inputMinuteList  A pointer to an array of input minutes.
+ * \param outputYearList   A pointer to an array of output years in UTC.
+ * \param outputMonthList  A pointer to an array of output months in UTC.
+ * \param outputDayList    A pointer to an array of output days.
+ * \param outputHourList   A pointer to an array of output hours.
+ * \param outputMinuteList A pointer to an array of output minutes.
+ * \param nTimeSteps       Number of time steps wanted between output date times.
+ * \param timeZone         The time zone of input date times.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
     const int * inputYearList, const int * inputMonthList, const int * inputDayList,
     const int * inputHourList, const int * inputMinuteList,
@@ -2197,12 +2222,31 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
     return NINJA_SUCCESS;
 }
 
+/**
+ * \brief Get a date time in UTC from an inpute date time in a specified timezone.
+ *
+ * \param inputYear    An input year.
+ * \param inputMonth   An input month.
+ * \param inputDay     An input day.
+ * \param inputHour    An hour.
+ * \param inputMinute  An input minute.
+ * \param timeZone     The time zone of input date times.
+ * \param outputYear   A pointer to an output year in UTC.
+ * \param outputMonth  A pointer to an output month in UTC.
+ * \param outputDay    A pointer to an output day in UTC.
+ * \param outputHour   A pointer to an output hour in UTC.
+ * \param outputMinute A pointer to an output minute in UTC.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
     int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone,
     int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute)
 {
     if (!outYear || !outMonth || !outDay || !outHour || !outMinute)
-        return NINJA_E_OTHER; // or appropriate error
+    {
+        return NINJA_E_OTHER;
+    }
 
     boost::posix_time::ptime timeObject =
         pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
@@ -2219,6 +2263,18 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
     return NINJA_SUCCESS;
 }
 
+/**
+ * \brief Get a time series in UTC with a specific number of time steps between the inputted start and stop times.
+ *
+ * \param yearList   A pointer to an array of years.
+ * \param monthList  A pointer to an array of months.
+ * \param dayList    A pointer to an array of days.
+ * \param hourList   A pointer to an array of hours.
+ * \param minuteList A pointer to an array of minutes.
+ * \param listSize   The number of elements in the input arrays.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
     (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
 {
