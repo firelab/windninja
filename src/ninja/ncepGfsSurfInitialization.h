@@ -31,6 +31,7 @@
 #define NCEP_GFS_SURFACE_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
+#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from an NCEP GFS forecast file.
@@ -67,4 +68,3 @@ class ncepGfsSurfInitialization : public wxModelInitialization
 };
 
 #endif //NCEP_GFS_SURFACE_INITIALIZATION_H
-

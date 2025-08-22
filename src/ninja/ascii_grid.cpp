@@ -25,10 +25,6 @@ template<> inline double epsClr<double>() { return 0.001; }
 template<> inline int epsClr<int>() { return 1; }
 template<> inline short epsClr<short>() { return 1; }
 
-template <class T>
-inline bool cplIsNan(T t) {
-    return CPLIsNan((double)t); // we need to disambiguate
-}
 
 
 /**

@@ -577,32 +577,32 @@ bool wxStation::check_station(wxStation station)
 
     for (int i=0;i<station.heightList.size();i++)
     {        
-        //Changing all isnan() to CPLIsNan() for MSVC2010
-        if(station.heightList[i] < 0.0|| CPLIsNan(station.heightList[i]))
+        //Changing all isnan() to cplIsNan() for MSVC2010
+        if(station.heightList[i] < 0.0|| cplIsNan(station.heightList[i]))
         {
             cout<<"failed height Check on "<<i<<endl;
             cout<<station.heightList[i]<<endl;
             return false;
         }
-        if(station.speedList[i] < 0.0 || CPLIsNan(station.speedList[i]) || station.speedList[i]>105.0)
+        if(station.speedList[i] < 0.0 || cplIsNan(station.speedList[i]) || station.speedList[i]>105.0)
         {
             cout<<"failed speed Check on "<<i<<endl;
             cout<<station.speedList[i]<<endl;
             return false;
         }
-        if(station.directionList[i] < 0.0 || station.directionList[i] > 360.0 || CPLIsNan(station.directionList[i]))
+        if(station.directionList[i] < 0.0 || station.directionList[i] > 360.0 || cplIsNan(station.directionList[i]))
         {
             cout<<"failed direction Check on "<<i<<endl;
             cout<<station.directionList[i]<<endl;
             return false;
         }
-        if(station.temperatureList[i]< 173.15 || station.temperatureList[i] > 330.00 || CPLIsNan(station.temperatureList[i]))
+        if(station.temperatureList[i]< 173.15 || station.temperatureList[i] > 330.00 || cplIsNan(station.temperatureList[i]))
         {
             cout<<"failed temperature Check on "<<i<<endl;
             cout<<station.temperatureList[i]<<endl;
             return false;
         }
-        if(station.cloudCoverList[i]<0.0||station.cloudCoverList[i]>1.10 || CPLIsNan(station.cloudCoverList[i]))
+        if(station.cloudCoverList[i]<0.0||station.cloudCoverList[i]>1.10 || cplIsNan(station.cloudCoverList[i]))
         {
             cout<<"failed cloud check on "<<i<<endl;
             cout<<station.cloudCoverList[i]<<endl;
@@ -611,7 +611,7 @@ bool wxStation::check_station(wxStation station)
         }
     }
 
-    if(station.w_speed < 0.0 || CPLIsNan(station.w_speed))
+    if(station.w_speed < 0.0 || cplIsNan(station.w_speed))
     {
         cout<<"failed vert_speed Check"<<endl;
         return false;
@@ -1050,4 +1050,3 @@ void wxStation::writeKMZFile(std::vector<wxStation> stations, string basePath, s
 
 
 }
-

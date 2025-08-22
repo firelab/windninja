@@ -31,6 +31,7 @@
 #define NCEP_NAM_GRIB2SURF_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
+#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from an NCEP NAM Surface forecast file
@@ -71,6 +72,5 @@ class ncepNamGrib2SurfInitialization : public wxModelInitialization
 
 
 #endif //NCEP_NAM_GRIB2SURF_INITIALIZATION_H
-
 
 

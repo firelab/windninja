@@ -61,6 +61,8 @@
 #include "EasyBMP_DataStructures.h"  //nsw
 #include "EasyBMP_Geometry.h"  //nsw
 
+#include "cplIsNan.h"
+
 
 /**
  * Class that stores 2-dimensional arrays of data for mostly spatial
