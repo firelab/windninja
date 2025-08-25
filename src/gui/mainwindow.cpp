@@ -629,8 +629,9 @@ void MainWindow::solveButtonClicked()
         stationFilesBytes.reserve(stationFiles.size());
         std::vector<const char*> stationFileNames;
         stationFileNames.reserve(stationFiles.size());
-        for (const auto& file : stationFiles) {
-            stationFilesBytes.push_back(file.toUtf8());
+        for (int i; i < stationFiles.size(); i++)
+        {
+            stationFilesBytes.push_back(stationFiles[i].toUtf8());
             stationFileNames.push_back(stationFilesBytes.back().constData());
         }
 

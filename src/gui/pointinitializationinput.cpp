@@ -36,12 +36,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
-
-    ui->pointInitializationDownloadDataButton->setIcon(QIcon(":/server_go.png"));
-    ui->pointInitializationWriteStationKMLCheckBox->setIcon(QIcon(":/weather_cloudy.png"));
-    ui->weatherStationDataDownloadButton->setIcon(QIcon(":/server_go.png"));
-    ui->weatherStationDataDownloadCancelButton->setIcon(QIcon(":/cancel.png"));
-
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
@@ -58,17 +52,19 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
 }
 
-void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
+void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
 {
     AppState& state = AppState::instance();
-    state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
 
-    if (state.isPointInitializationToggled) {
+    state.isPointInitializationToggled = toggled;
+    if (toggled)
+    {
         ui->domainAverageCheckBox->setChecked(false);
         ui->weatherModelCheckBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
     }
+
+    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
 
     emit requestRefresh();
 }
@@ -89,6 +85,7 @@ void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
 
 void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 {
+    ui->pointInitializationTreeView->collapseAll();
     ui->inputsStackedWidget->setCurrentIndex(10);
 }
 
@@ -118,7 +115,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         printf("NinjaGetTimeList: err = %d\n", err);
     }
 
-    if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration
+    if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration (someone downloads too much data)
     {
         char ** options = nullptr;
         int err = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
@@ -175,15 +172,19 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
                                                    QString outputPath)
 {
     char ** options = NULL;
-    NinjaErr err = NinjaFetchStationFromBBox(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), buffer, units.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, options);
-    if (err != NINJA_SUCCESS){
+    NinjaErr err = NinjaFetchStationFromBBox(
+        year.data(), month.data(), day.data(),
+        hour.data(), minute.data(), year.size(),
+        elevationFile.toUtf8().constData(), buffer,
+        units.toUtf8().constData(), osTimeZone.toUtf8().constData(),
+        fetchLatestFlag, outputPath.toUtf8().constData(),
+        false, options
+        );
+
+    if (err != NINJA_SUCCESS)
         qDebug() << "NinjaFetchStationFromBbox: err =" << err;
-        return err;
-    }
-    else
-    {
-        return NINJA_SUCCESS;
-    }
+
+    return err;
 }
 
 int PointInitializationInput::fetchStationByName(QVector<int> year,
@@ -198,15 +199,18 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
                                                  QString outputPath)
 {
     char ** options = NULL;
-    NinjaErr err = NinjaFetchStationByName(year.data(), month.data(), day.data(), hour.data(), minute.data(), year.size(), elevationFile.toUtf8().constData(), stationList.toUtf8().constData(), osTimeZone.toUtf8().constData(), fetchLatestFlag, outputPath.toUtf8().constData(), false, options);
-    if (err != NINJA_SUCCESS){
-        qDebug() << "NinjaFetchFetchStationByName: err =" << err;
-        return err;
-    }
-    else
-    {
-        return NINJA_SUCCESS;
-    }
+    NinjaErr err = NinjaFetchStationByName(
+        year.data(), month.data(), day.data(),
+        hour.data(), minute.data(), year.size(),
+        elevationFile.toUtf8().constData(), stationList.toUtf8().constData(),
+        osTimeZone.toUtf8().constData(), fetchLatestFlag,
+        outputPath.toUtf8().constData(), false, options
+        );
+
+    if (err != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchStationFromBbox: err =" << err;
+
+    return err;
 }
 
 void PointInitializationInput::fetchStationDataFinished()
@@ -217,7 +221,6 @@ void PointInitializationInput::fetchStationDataFinished()
         progress->deleteLater();
         progress = nullptr;
     }
-
     if (futureWatcher)
     {
         futureWatcher->deleteLater();
@@ -314,8 +317,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
             qint64 lastIndex = poLayer->GetFeatureCount();
             qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
 
-            OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, first time in series
-            QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th column (0-14)
+            OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, row 1 is first time in series
+            QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th (last) column (0-14)
             qDebug() << "[GUI-Point] Station start time:" << startDateTime;
 
             poFeature = poLayer->GetFeature(lastIndex);             // last time in series
@@ -348,8 +351,9 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     }
 
     state.isStationFileSelectionValid = true;
-    for (int type : stationFileTypes) {
-        if (type != stationFileTypes[0]) {
+    for (int i; i < stationFileTypes.size(); i++)
+    {
+        if (stationFileTypes[i] != stationFileTypes[0]) {
             state.isStationFileSelectionValid = false;
             break;
         }

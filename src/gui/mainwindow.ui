@@ -1873,7 +1873,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <property name="checked">
                    <bool>false</bool>
                   </property>
-                  <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,0,0,0,0,0,0">
+                  <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,0,0,0,0,0,0,0,0">
                    <item>
                     <layout class="QHBoxLayout" name="pointInitializationDownloadLayout">
                      <item>
@@ -1909,6 +1909,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <property name="text">
                         <string>Download Data</string>
+                       </property>
+                       <property name="icon">
+                        <iconset resource="../../wn-resources.qrc">
+                         <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
                        </property>
                       </widget>
                      </item>
@@ -1992,6 +1996,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </layout>
                    </item>
                    <item>
+                    <widget class="Line" name="line">
+                     <property name="orientation">
+                      <enum>Qt::Orientation::Horizontal</enum>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
                     <widget class="QStackedWidget" name="pointInitializationDataTimeStackedWidget">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -2016,22 +2027,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </property>
                      <widget class="QWidget" name="weatherStationDataTimeDatesPage">
                       <layout class="QGridLayout" name="gridLayout_5">
-                       <item row="2" column="2">
-                        <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
-                         <property name="enabled">
-                          <bool>false</bool>
-                         </property>
-                         <property name="minimum">
-                          <number>1</number>
-                         </property>
-                         <property name="maximum">
-                          <number>99999</number>
-                         </property>
-                         <property name="singleStep">
-                          <number>1</number>
-                         </property>
-                         <property name="value">
-                          <number>24</number>
+                       <item row="1" column="1">
+                        <widget class="QLabel" name="weatherStationDataEndTimeLabel">
+                         <property name="text">
+                          <string>Stop Time</string>
                          </property>
                         </widget>
                        </item>
@@ -2058,10 +2057,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </property>
                         </widget>
                        </item>
-                       <item row="1" column="1">
-                        <widget class="QLabel" name="weatherStationDataEndTimeLabel">
+                       <item row="1" column="2">
+                        <widget class="QLabel" name="weatherStationDataTimestepsLabel">
                          <property name="text">
-                          <string>Stop Time</string>
+                          <string>Number of Time Steps</string>
                          </property>
                         </widget>
                        </item>
@@ -2072,10 +2071,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </property>
                         </widget>
                        </item>
-                       <item row="1" column="2">
-                        <widget class="QLabel" name="weatherStationDataTimestepsLabel">
-                         <property name="text">
-                          <string>Number of Time Steps</string>
+                       <item row="2" column="2">
+                        <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="minimum">
+                          <number>1</number>
+                         </property>
+                         <property name="maximum">
+                          <number>99999</number>
+                         </property>
+                         <property name="singleStep">
+                          <number>1</number>
+                         </property>
+                         <property name="value">
+                          <number>24</number>
                          </property>
                         </widget>
                        </item>
@@ -2141,12 +2152,23 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </widget>
                    </item>
                    <item>
+                    <widget class="Line" name="line_3">
+                     <property name="orientation">
+                      <enum>Qt::Orientation::Horizontal</enum>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
                     <widget class="QCheckBox" name="pointInitializationWriteStationKMLCheckBox">
                      <property name="cursor">
                       <cursorShape>PointingHandCursor</cursorShape>
                      </property>
                      <property name="text">
                       <string>Write Station KML</string>
+                     </property>
+                     <property name="icon">
+                      <iconset resource="../../wn-resources.qrc">
+                       <normaloff>:/weather_cloudy.png</normaloff>:/weather_cloudy.png</iconset>
                      </property>
                     </widget>
                    </item>
@@ -4361,6 +4383,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="text">
                  <string>Download Data</string>
                 </property>
+                <property name="icon">
+                 <iconset resource="../../wn-resources.qrc">
+                  <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
+                </property>
                </widget>
               </item>
               <item>
@@ -4379,6 +4405,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </property>
                 <property name="text">
                  <string>Cancel</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../wn-resources.qrc">
+                  <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
                 </property>
                </widget>
               </item>
@@ -4732,6 +4762,8 @@ QMenu::item:selected {
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../wn-resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -59,7 +59,7 @@ signals:
     void requestRefresh();
 
 private slots:
-    void pointInitializationGroupBoxToggled(bool checked);
+    void pointInitializationGroupBoxToggled(bool toggled);
     void pointInitializationDownloadDataButtonClicked();
     void weatherStationDataDownloadCancelButtonClicked();
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
