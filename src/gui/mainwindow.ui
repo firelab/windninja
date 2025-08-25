@@ -557,7 +557,7 @@
            <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <property name="currentIndex">
-           <number>10</number>
+           <number>20</number>
           </property>
           <widget class="QWidget" name="blankPage"/>
           <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -4258,7 +4258,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <item>
                 <widget class="QStackedWidget" name="weatherStationDataTimeStackedWidget">
                  <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
@@ -4272,18 +4272,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <property name="maximumSize">
                   <size>
                    <width>16777215</width>
-                   <height>16777215</height>
+                   <height>80</height>
                   </size>
                  </property>
                  <property name="currentIndex">
                   <number>1</number>
                  </property>
                  <widget class="QWidget" name="downloadMostRecentPage">
-                  <layout class="QHBoxLayout" name="horizontalLayout_9">
+                  <layout class="QVBoxLayout" name="verticalLayout_21" stretch="0">
                    <item>
                     <widget class="QTextEdit" name="downloadMostRecentTextEdit">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -4297,7 +4297,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>30</height>
+                       <height>16777215</height>
                       </size>
                      </property>
                      <property name="html">
@@ -4315,47 +4315,58 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </layout>
                  </widget>
                  <widget class="QWidget" name="downloadBetweenDatesPage">
-                  <layout class="QHBoxLayout" name="horizontalLayout_14">
+                  <layout class="QVBoxLayout" name="verticalLayout_20">
                    <item>
-                    <widget class="QLabel" name="downloadBetweenDatesStartTimeLabel">
+                    <layout class="QHBoxLayout" name="horizontalLayout_12">
+                     <item>
+                      <widget class="QLabel" name="downloadBetweenDatesStartTimeLabel">
+                       <property name="text">
+                        <string>Start Time:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
+                       <property name="displayFormat">
+                        <string>M/d/yy h:mm </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLabel" name="downloadBetweenDatesEndTimeLabel">
+                       <property name="text">
+                        <string>End Time:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
+                       <property name="displayFormat">
+                        <string>M/d/yy h:mm </string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <spacer name="downloadBetweenDatesPageSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>51</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                    </layout>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="downloadBetweenDatesTimeZoneLabel">
                      <property name="text">
-                      <string>Start Time:</string>
+                      <string>Current Time Zone: </string>
                      </property>
                     </widget>
-                   </item>
-                   <item>
-                    <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
-                     <property name="displayFormat">
-                      <string>M/d/yy h:mm </string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="downloadBetweenDatesEndTimeLabel">
-                     <property name="text">
-                      <string>End Time:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
-                     <property name="displayFormat">
-                      <string>M/d/yy h:mm </string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <spacer name="downloadBetweenDatesPageSpacer">
-                     <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
-                     </property>
-                     <property name="sizeHint" stdset="0">
-                      <size>
-                       <width>51</width>
-                       <height>20</height>
-                      </size>
-                     </property>
-                    </spacer>
                    </item>
                   </layout>
                  </widget>

@@ -621,7 +621,6 @@ void MainWindow::solveButtonClicked()
         initializationMethod = "point";
 
         QVector<QString> stationFiles = pointInitializationInput->getStationFiles();
-
         QString DEMTimeZone = ui->timeZoneComboBox->currentText();
         QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
 
@@ -629,14 +628,13 @@ void MainWindow::solveButtonClicked()
         stationFilesBytes.reserve(stationFiles.size());
         std::vector<const char*> stationFileNames;
         stationFileNames.reserve(stationFiles.size());
-        for (int i; i < stationFiles.size(); i++)
+        for (int i = 0; i < stationFiles.size(); i++)
         {
             stationFilesBytes.push_back(stationFiles[i].toUtf8());
             stationFileNames.push_back(stationFilesBytes.back().constData());
         }
 
         QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
-
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
 
         if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
@@ -673,6 +671,10 @@ void MainWindow::solveButtonClicked()
                     timeZoneBytes.constData(),
                     &endYear, &endMonth, &endDay, &endHour, &endMinute
                     );
+                if(err != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaGenerateSingleTimeObject: err = " << err;
+                }
 
                 outYear[0] = endYear;
                 outMonth[0] = endMonth;
@@ -690,14 +692,19 @@ void MainWindow::solveButtonClicked()
                 );
                 if(err != NINJA_SUCCESS)
                 {
-                    printf("NinjaGetTimeList: err = %d\n", err);
+                    qDebug() << "NinjaGetTimeList: err = " << err;
                 }
             }
 
             numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
 
-            ninjaArmy = NinjaMakePointArmy
-                (outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), nTimeSteps, DEMTimeZone.toUtf8().data(), stationFileNames.data(), stationFileNames.size(), DEMPath.toUtf8().data(), true, momentumFlag, papszOptions);
+            ninjaArmy = NinjaMakePointArmy(
+                outYear.data(), outMonth.data(), outDay.data(),
+                outHour.data(), outMinute.data(), nTimeSteps,
+                DEMTimeZone.toUtf8().data(), stationFileNames.data(),
+                stationFileNames.size(), DEMPath.toUtf8().data(),
+                true, momentumFlag, papszOptions
+                );
         }
         else
         {
@@ -718,7 +725,7 @@ void MainWindow::solveButtonClicked()
                 );
             if (err != NINJA_SUCCESS)
             {
-                printf("NinjaGenerateSingleTimeObject: err = %d\n", err);
+                qDebug() << "NinjaGenerateSingleTimeObject: err = " << err;
             }
 
             QVector<int> yearVec   = { outYear };
@@ -728,18 +735,16 @@ void MainWindow::solveButtonClicked()
             QVector<int> minuteVec = { outMinute };
 
             numNinjas = 1;
+            int nTimeSteps = 1;
 
             ninjaArmy = NinjaMakePointArmy(
                 yearVec.data(), monthVec.data(), dayVec.data(),
-                hourVec.data(), minuteVec.data(),
-                1,
+                hourVec.data(), minuteVec.data(), nTimeSteps,
                 DEMTimeZone.toUtf8().data(),
                 stationFileNames.data(),
                 static_cast<int>(stationFileNames.size()),
                 DEMPath.toUtf8().data(),
-                true,
-                momentumFlag,
-                papszOptions
+                true, momentumFlag, papszOptions
             );
         }
     }

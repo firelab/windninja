@@ -65,7 +65,7 @@ private slots:
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);
     void weatherStationDataDownloadButtonClicked();
-    void pointInitializationTreeViewItemSelectionChanged();
+    void pointInitializationTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void pointInitializationSelectAllButtonClicked();
     void pointInitializationSelectNoneButtonClicked();
     void folderExpanded(const QModelIndex &index);

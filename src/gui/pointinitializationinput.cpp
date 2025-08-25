@@ -266,7 +266,7 @@ void PointInitializationInput::setupTreeView()
     connect(ui->pointInitializationTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &PointInitializationInput::pointInitializationTreeViewItemSelectionChanged);
 }
 
-void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
+void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
     AppState& state = AppState::instance();
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
@@ -351,7 +351,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged()
     }
 
     state.isStationFileSelectionValid = true;
-    for (int i; i < stationFileTypes.size(); i++)
+    for (int i = 0; i < stationFileTypes.size(); i++)
     {
         if (stationFileTypes[i] != stationFileTypes[0]) {
             state.isStationFileSelectionValid = false;
