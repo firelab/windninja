@@ -68,9 +68,10 @@ private slots:
     void pointInitializationTreeViewItemSelectionChanged();
     void pointInitializationSelectAllButtonClicked();
     void pointInitializationSelectNoneButtonClicked();
-    void setupTreeView();
     void folderExpanded(const QModelIndex &index);
     void folderCollapsed(const QModelIndex &index);
+    void weatherStationDataTimestepsSpinBoxValueChanged(int value);
+    void setupTreeView();
 
 private:
     Ui::MainWindow *ui;

@@ -45,7 +45,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
-
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
     connect(ui->weatherStationDataDownloadCancelButton, &QPushButton::clicked, this, &PointInitializationInput::weatherStationDataDownloadCancelButtonClicked);
@@ -56,6 +55,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationSelectNoneButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationSelectNoneButtonClicked);
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
+    connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool checked)
@@ -421,6 +421,10 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     ui->weatherStationMaxTimeLabel->setText("Current Min Time: " + maxStationTime.toString());
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime(minStationTime.date(), minStationTime.time(), Qt::LocalTime));
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime(maxStationTime.date(), maxStationTime.time(), Qt::LocalTime));
+    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
+    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
+    ui->weatherStationDataStartDateTimeEdit->setCalendarPopup(false);
+    ui->weatherStationDataEndDateTimeEdit->setCalendarPopup(false);
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
     ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
@@ -446,8 +450,16 @@ void PointInitializationInput::folderCollapsed(const QModelIndex &index)
     openStationFolders.removeOne(path);
 }
 
+void PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged(int value)
+{
+    ui->weatherStationDataEndDateTimeEdit->setDisabled(value == 1);
+}
+
 QVector<QString> PointInitializationInput::getStationFiles()
 {
     return stationFiles;
 }
+
+
+
 

@@ -657,16 +657,40 @@ void MainWindow::solveButtonClicked()
             QVector<int> outHour(nTimeSteps);
             QVector<int> outMinute(nTimeSteps);
 
-            NinjaErr err = NinjaGetTimeList(
-                year.data(), month.data(), day.data(),
-                hour.data(), minute.data(),
-                outYear.data(), outMonth.data(), outDay.data(),
-                outHour.data(), outMinute.data(),
-                nTimeSteps, timeZoneBytes.data()
-            );
-            if(err != NINJA_SUCCESS)
+            if(nTimeSteps == 1)
             {
-                printf("NinjaGetTimeList: err = %d\n", err);
+                int startYear = year[0];
+                int startMonth = month[0];
+                int startDay = day[0];
+                int startHour = hour[0];
+                int startMinute = minute[0];
+
+                int endYear, endMonth, endDay, endHour, endMinute;
+
+                NinjaErr err = NinjaGenerateSingleTimeObject(
+                    startYear, startMonth, startDay, startHour, startMinute,
+                    timeZoneBytes.constData(),
+                    &endYear, &endMonth, &endDay, &endHour, &endMinute
+                    );
+
+                outYear[0] = endYear;
+                outMonth[0] = endMonth;
+                outDay[0] = endDay;
+                outHour[0] = endHour;
+                outMinute[0] = endMinute;
+            }
+            else {
+                NinjaErr err = NinjaGetTimeList(
+                    year.data(), month.data(), day.data(),
+                    hour.data(), minute.data(),
+                    outYear.data(), outMonth.data(), outDay.data(),
+                    outHour.data(), outMinute.data(),
+                    nTimeSteps, timeZoneBytes.data()
+                );
+                if(err != NINJA_SUCCESS)
+                {
+                    printf("NinjaGetTimeList: err = %d\n", err);
+                }
             }
 
             numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
