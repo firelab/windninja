@@ -31,6 +31,7 @@
 #define SURFACEINPUT_H
 
 #include "appstate.h"
+#include "ui_mainwindow.h"
 #include "../ninja/windninja.h"
 #include "../ninja/gdal_util.h"
 #include <QtWebEngineWidgets/qwebengineview.h>
@@ -60,10 +61,10 @@ public:
                     QWebEngineView* webEngineView,
                     QObject* parent = nullptr);
     double computeMeshResolution(int index, bool isMomemtumChecked);
-    QString getDEMFilePath();
 
 signals:
     void requestRefresh();
+    void setupTreeView();
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);
@@ -91,8 +92,8 @@ private:
 
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
-    QString currentDEMFilePath;
 
+    QString currentDEMFilePath;
     QString GDALDriverName;
     int GDALXSize, GDALYSize;
     double GDALCellSize, GDALMaxValue, GDALMinValue;

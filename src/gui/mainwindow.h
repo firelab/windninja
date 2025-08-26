@@ -33,6 +33,7 @@
 #include "surfaceinput.h"
 #include "menubar.h"
 #include "domainaverageinput.h"
+#include "pointinitializationinput.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
 #include "ui_mainwindow.h"
@@ -104,7 +105,6 @@ private slots:
     void diurnalCheckBoxClicked();
     void stabilityCheckBoxClicked();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-    void pointInitializationCheckBoxClicked();
     void useWeatherModelInitClicked();
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
@@ -130,6 +130,8 @@ private:
     MenuBar *menuBar;
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
+    PointInitializationInput *pointInitializationInput;
+    QString currentDEMFilePath;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);

@@ -28,7 +28,6 @@
  *****************************************************************************/
 
 #include "surfaceinput.h"
-#include "ui_mainwindow.h"
 
 SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
                                    QWebEngineView *webEngineView,
@@ -207,6 +206,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
         demFilePath += ".tif";
     }
     currentDEMFilePath = demFilePath;
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     std::string demFile = demFilePath.toStdString();
 
     std::string fetchType;
@@ -259,6 +259,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
     webEngineView->page()->runJavaScript(js);
 
     emit requestRefresh();
+    emit setupTreeView();
 }
 
 void SurfaceInput::elevationInputFileOpenButtonClicked()
@@ -286,6 +287,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     }
 
     currentDEMFilePath = demFilePath;
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
@@ -330,6 +332,8 @@ void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
     QString currentTimeZone = ui->timeZoneComboBox->currentText();
     QString timeZoneDetails = fetchTimeZoneDetails(currentTimeZone);
     ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
+    ui->weatherStationTimeZoneLabel->setText("Current Time Zone: " + currentTimeZone);
+    ui->downloadBetweenDatesTimeZoneLabel->setText("Current Time Zone: " + currentTimeZone);
 }
 
 void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
@@ -703,10 +707,4 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
     pointRadius[1] = centerLon;
     pointRadius[2] = radius;
 }
-
-QString SurfaceInput::getDEMFilePath()
-{
-    return currentDEMFilePath;
-}
-
 
