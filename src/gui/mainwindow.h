@@ -33,6 +33,7 @@
 #include "surfaceinput.h"
 #include "menubar.h"
 #include "domainaverageinput.h"
+#include "pointinitializationinput.h"
 #include "mapbridge.h"
 #include "serverbridge.h"
 #include "weathermodelinput.h"
@@ -70,20 +71,29 @@
 #include <vector>
 #include <string>
 
-
-
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 QT_END_NAMESPACE
+
+struct OutputMeshResolution {
+    double resolution;
+    QByteArray units;
+};
+
+struct OutputPDFSize {
+    double PDFHeight;
+    double PDFWidth;
+    double PDFDpi;
+};
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    void populateForecastDownloads();
     void toggleExpandCollapse(const QModelIndex &index);
     void loadMapKMZ(const std::vector<std::string>& input);
 
@@ -96,7 +106,6 @@ private slots:
     void diurnalCheckBoxClicked();
     void stabilityCheckBoxClicked();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-    void pointInitializationCheckBoxClicked();
     void useWeatherModelInitClicked();
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
@@ -110,25 +119,38 @@ private slots:
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
-
-
     void refreshUI();
+    void writeToConsole(QString message, QColor color = Qt::white);
 
 private:
     Ui::MainWindow *ui;
-    QWebEngineView *webView;
-    QWebChannel *channel;
+    QWebEngineView *webEngineView;
+    QWebChannel *webChannel;
     MapBridge *mapBridge;
     SurfaceInput *surfaceInput;
     MenuBar *menuBar;
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
     WeatherModelInput *weatherModelInput;
+    PointInitializationInput *pointInitializationInput;
+    QString currentDEMFilePath;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
     void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
-    void setOutputFlags(NinjaArmyH *ninjaArmy, int i);
+    void setOutputFlags(NinjaArmyH* ninjaArmy,
+                        int i,
+                        int numNinjas,
+                        OutputMeshResolution googleEarth,
+                        OutputMeshResolution fireBehavior,
+                        OutputMeshResolution shapeFiles,
+                        OutputMeshResolution geospatialPDFs,
+                        OutputPDFSize PDFSize);
+    OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
+                                           QDoubleSpinBox* outputMeshResolutionSpinBox,
+                                           QComboBox* outputMeshResolutionComboBox);
+
+    int lineNumber;
 
 };
 #endif // MAINWINDOW_H

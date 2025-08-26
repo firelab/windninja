@@ -29,6 +29,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         splashscreen.cpp
         surfaceinput.h
         surfaceinput.cpp
+        setconfigurationoptiondialog.h
+        setconfigurationoptiondialog.cpp
+        setconfigurationoptiondialog.ui
         menubar.h
         menubar.cpp
         mapbridge.h
@@ -38,7 +41,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         serverbridge.h serverbridge.cpp
         domainaverageinput.h domainaverageinput.cpp
         weathermodelinput.h weathermodelinput.cpp
-
+        pointinitializationinput.h pointinitializationinput.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET WindNinja APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -61,9 +64,6 @@ endif()
 target_include_directories(WindNinja PRIVATE /usr/local/include)
 
 add_dependencies(WindNinja ninja)
-
-add_definitions(-DMAP_PATH="${CMAKE_SOURCE_DIR}/data/map.html")
-
 
 target_link_libraries(WindNinja PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
 
