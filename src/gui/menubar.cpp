@@ -32,145 +32,356 @@
 MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
 {
+    dataPath = QDir(QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", "")));
+
     // QMenu fileMenu "File" actions
-    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProject);
-    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProject);
-    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolution);
-    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProject);
-    //connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
+    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
+    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
+    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
+    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
+    connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
+
     // QMenu optionsMenu "Options" actions
-    connect(ui->enableConsoleOutputAction, &QAction::triggered, this, &MenuBar::enableConsoleOutput);
-    connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutput);
+    //connect(ui->enableConsoleOutputAction, &QAction::toggled, ui->consoleDockWidget, &QDockWidget::setVisible);
+    //connect(ui->consoleDockWidget, &QDockWidget::visibilityChanged, ui->enableConsoleOutputAction, &QAction::setChecked);  // if closed from the QDockWidget itself, unchecks the menuAction
+    connect(ui->writeConsoleOutputAction, &QAction::triggered, this, &MenuBar::writeConsoleOutputActionTriggered);
 
     // QMenu toolsMenu "Tools" actions
-    connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBar::resampleData);
-    connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBar::writeBlankStationFile);
-    connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBar::setConfigurationOption);
+    //connect(ui->resampleDataAction, &QAction::triggered, this, &MenuBar::resampleDataActionTriggered);
+    connect(ui->writeBlankStationFileAction, &QAction::triggered, this, &MenuBar::writeBlankStationFileActionTriggered);
+    connect(ui->setConfigurationOptionAction, &QAction::triggered, this, &MenuBar::setConfigurationOptionActionTriggered);
 
     // QMenu helpMenu "Help" actions
     // sub QMenu displayingShapeFilesMenu "Displaying Shapefiles" actions
-    connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MenuBar::displayArcGISProGuide);
+    connect(ui->displayArcGISProGuideAction, &QAction::triggered, this, &MenuBar::displayArcGISProGuideActionTriggered);
 
     // sub QMenu tutorialsMenu "Tutorials" actions
-    connect(ui->displayTutorial1Action, &QAction::triggered, this, &MenuBar::displayTutorial1);
-    connect(ui->displayTutorial2Action, &QAction::triggered, this, &MenuBar::displayTutorial2);
-    connect(ui->displayTutorial3Action, &QAction::triggered, this, &MenuBar::displayTutorial3);
-    connect(ui->displayTutorial4Action, &QAction::triggered, this, &MenuBar::displayTutorial4);
+    connect(ui->displayTutorial1Action, &QAction::triggered, this, &MenuBar::displayTutorial1ActionTriggered);
+    connect(ui->displayTutorial2Action, &QAction::triggered, this, &MenuBar::displayTutorial2ActionTriggered);
+    connect(ui->displayTutorial3Action, &QAction::triggered, this, &MenuBar::displayTutorial3ActionTriggered);
+    connect(ui->displayTutorial4Action, &QAction::triggered, this, &MenuBar::displayTutorial4ActionTriggered);
 
     // sub QMenu instructionsMenu "Instructions" actions
-    connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MenuBar::displayDemDownloadInstructions);
-    connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MenuBar::displayFetchDemInstructions);
-    connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MenuBar::displayCommandLineInterfaceInstructions);
+    connect(ui->displayDemDownloadInstructionsAction, &QAction::triggered, this, &MenuBar::displayDemDownloadInstructionsActionTriggered);
+    connect(ui->displayFetchDemInstructionsAction, &QAction::triggered, this, &MenuBar::displayFetchDemInstructionsActionTriggered);
+    connect(ui->displayCommandLineInterfaceInstructionsAction, &QAction::triggered, this, &MenuBar::displayCommandLineInterfaceInstructionsActionTriggered);
 
     // remaining non-sub QMenu actions
-    connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MenuBar::aboutWindNinja);
-    connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBar::citeWindNinja);
-    connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBar::supportEmail);
-    connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReport);
+    connect(ui->aboutWindNinjaAction, &QAction::triggered, this, &MenuBar::aboutWindNinjaActionTriggered);
+    connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBar::citeWindNinjaActionTriggered);
+    connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBar::supportEmailActionTriggered);
+    connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReportActionTriggered);
     connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
 }
 
-void MenuBar::newProject()
+void MenuBar::newProjectActionTriggered()
 {
-  qDebug() << "MenuBar: newProject() triggered";
+    emit writeToConsole("MenuBar: newProject() triggered");
 }
 
-void MenuBar::openProject()
+void MenuBar::openProjectActionTriggered()
 {
-  qDebug() << "MenuBar: openProject() triggered";
+    emit writeToConsole("MenuBar: openProject() triggered");
 }
 
-void MenuBar::exportSolution()
+void MenuBar::exportSolutionActionTriggered()
 {
-  qDebug() << "MenuBar: exportSolution() triggered";
+    emit writeToConsole("MenuBar: exportSolution() triggered");
 }
 
-void MenuBar::closeProject()
+void MenuBar::closeProjectActionTriggered()
 {
-  qDebug() << "MenuBar: closeProject() triggered";
+    emit writeToConsole("MenuBar: closeProject() triggered");
 }
 
-void MenuBar::enableConsoleOutput()
+void MenuBar::writeConsoleOutputActionTriggered()
 {
-  qDebug() << "MenuBar: enableConsoleOutput() triggered";
+    QString fileName = QFileDialog::getSaveFileName(
+        ui->centralwidget,
+        tr("Save Console Output"),
+        "console-output.txt",
+        tr("Text Files (*.txt)")
+        );
+
+    if (!fileName.isEmpty())
+    {
+        QDateTime currentTime = QDateTime::currentDateTime();
+        emit writeToConsole("writing console output to " + fileName, Qt::darkGreen);
+        emit writeToConsole("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
+
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            emit writeToConsole("Cannot open " + fileName + " for writing.", Qt::red);
+            return;
+        }
+
+        QTextStream out(&file);
+        out << ui->consoleTextEdit->toPlainText();
+    }
 }
 
-void MenuBar::writeConsoleOutput()
+void MenuBar::writeBlankStationFileActionTriggered()
 {
-  qDebug() << "MenuBar: writeConsoleOutput() triggered";
+    QString fileName = QFileDialog::getSaveFileName(
+        ui->centralwidget,
+        tr("Save Blank Station File"),
+        "stations.csv",
+        tr("Text Files (*.csv)")
+        );
+
+    if(!fileName.isEmpty())
+    {
+        emit writeToConsole("writing blank station file to " + fileName, Qt::darkGreen);
+
+        char** papszOptions = nullptr;
+        int err = NinjaWriteBlankWxStationFile(fileName.toStdString().c_str(), papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaWriteBlankWxStationFile: err=" << err;
+            emit writeToConsole("failed to write blank station file!", Qt::red);
+        }
+    }
 }
 
-void MenuBar::resampleData()
+void MenuBar::setConfigurationOptionActionTriggered()
 {
-  qDebug() << "MenuBar: resampleData() triggered";
+    setConfigurationOptionDialog configDialog;
+
+    if (configDialog.exec() == QDialog::Rejected)
+        return;
+
+    QString key = configDialog.getKey();
+    QString val = configDialog.getValue();
+
+    if (key.isEmpty())
+        return;
+
+    qDebug() << "Setting configuration option" << key << "to" << val;
+    emit writeToConsole("Setting configuration option " + key + " to " + val);
+
+    CPLSetConfigOption(
+        key.toUtf8().constData(),
+        val.isEmpty() ? nullptr : val.toUtf8().constData()
+        );
 }
 
-void MenuBar::writeBlankStationFile()
+void MenuBar::displayArcGISProGuideActionTriggered()
 {
-  qDebug() << "MenuBar: writeBlankStationFile() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if(!QDesktopServices::openUrl(QUrl(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link."),
+            tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
+}
+void MenuBar::displayTutorial1ActionTriggered()
+{
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial1.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::setConfigurationOption()
+void MenuBar::displayTutorial2ActionTriggered()
 {
-  qDebug() << "MenuBar: setConfigurationOption() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial2.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::displayArcGISProGuide()
+void MenuBar::displayTutorial3ActionTriggered()
 {
-  qDebug() << "MenuBar: displayArcGISProGuide() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial3.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::displayTutorial1()
+void MenuBar::displayTutorial4ActionTriggered()
 {
-  qDebug() << "MenuBar: displayTutorial1() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial4.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::displayTutorial2()
+void MenuBar::displayDemDownloadInstructionsActionTriggered()
 {
-  qDebug() << "MenuBar: displayTutorial2() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/download_elevation_file.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::displayTutorial3()
+void MenuBar::displayFetchDemInstructionsActionTriggered()
 {
-  qDebug() << "MenuBar: displayTutorial3() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/fetch_dem_instructions.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::displayTutorial4()
+void MenuBar::displayCommandLineInterfaceInstructionsActionTriggered()
 {
-  qDebug() << "MenuBar: displayTutorial4() triggered";
+    QString displayFile = dataPath.absoluteFilePath("../doc/CLI_instructions.pdf");
+    displayFile = QDir::cleanPath(displayFile);
+
+    emit writeToConsole("Opening " + displayFile);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Broken Link"),
+            tr("The link to the tutorial is broken. You can access it through the Start Menu."),
+            QMessageBox::Ok
+            );
+    }
 }
 
-void MenuBar::displayDemDownloadInstructions()
+void MenuBar::aboutWindNinjaActionTriggered()
 {
-  qDebug() << "MenuBar: displayDemDownloadInstructions() triggered";
+    QString aboutText = "<h2>WindNinja</h2>\n";
+
+    aboutText.append("<p><h4>Version:</h4>" + QString(NINJA_VERSION_STRING) + "</p>");
+
+    aboutText.append("<p><h4>Git Commit:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
+
+    aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
+
+    aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
+                                                 "Natalie Wagenbrenner<br/>" \
+                                                 "Kyle Shannon<br/>" \
+                                                 "Loren Atwood<br/>" \
+                                                 "Mason Willman"); \
+
+    aboutText.append("<p>Missoula Fire Sciences Laboratory<br/>");
+    aboutText.append("Rocky Mountain Research Station<br/>");
+    aboutText.append("USDA Forest Service<br/>");
+    aboutText.append("5775 Highway 10 W.<br/>");
+    aboutText.append("Missoula, MT 59808</p>");
+
+    aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CONTRIBUTORS\">Contributors</a></p>");
+    aboutText.append("<h4>Sponsored By:</h4>");
+    aboutText.append("USDA Forest Service<br/>");
+    aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br/>");
+    aboutText.append("Joint Fire Sciences Program<br/>");
+    aboutText.append("Washington State University</p>");
+    aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
+    aboutText.append("<br/>");
+
+    QMessageBox::about(
+        ui->centralwidget,
+        tr("About WindNinja"),
+        aboutText
+        );
 }
 
-void MenuBar::displayFetchDemInstructions()
+void MenuBar::citeWindNinjaActionTriggered()
 {
-  qDebug() << "MenuBar: displayFetchDemInstructions() triggered";
+    QString citeText = "<h4>To cite WindNinja in a publication use:</h4>";
+
+    citeText.append("Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison ");
+    citeText.append("of three approaches for simulating fine-scale surface winds in ");
+    citeText.append("support of wildland fire management. Part I. Model formulation and ");
+    citeText.append("comparison against measurements. International Journal of Wildland ");
+    citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
+
+    citeText.append("<h4>For additional WindNinja publications visit:</h4>");
+
+    citeText.append("<p><a href=\"https://ninjastorm.firelab.org/windninja/publications/\">https://ninjastorm.firelab.org/windninja/publications</a></p>");
+
+    QMessageBox::about(
+        ui->centralwidget,
+        tr("Cite WindNinja"),
+        citeText
+        );
 }
 
-void MenuBar::displayCommandLineInterfaceInstructions()
+void MenuBar::supportEmailActionTriggered()
 {
-  qDebug() << "MenuBar: displayCommandLineInterfaceInstructions() triggered";
-}
+    QUrl mailto("mailto:wind.ninja.support@gmail.com?subject=[windninja-support]");
+    if (!QDesktopServices::openUrl(mailto)) {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Email Error"),
+            tr("Unable to open your default email client."),
+            QMessageBox::Ok
+            );
+    }}
 
-void MenuBar::aboutWindNinja()
+void MenuBar::submitBugReportActionTriggered()
 {
-  qDebug() << "MenuBar: aboutWindNinja() triggered";
-}
-
-void MenuBar::citeWindNinja()
-{
-  qDebug() << "MenuBar: citeWindNinja() triggered";
-}
-
-void MenuBar::supportEmail()
-{
-  qDebug() << "MenuBar: supportEmail() triggered";
-}
-
-void MenuBar::submitBugReport()
-{
-  qDebug() << "MenuBar: submitBugReport() triggered";
+    QUrl bugUrl("https://github.com/firelab/windninja/issues/new");
+    if (!QDesktopServices::openUrl(bugUrl))
+    {
+        QMessageBox::warning(
+            ui->centralwidget,
+            tr("Network Error"),
+            tr("Unable to open the bug report page. Please check your internet connection."),
+            QMessageBox::Ok
+            );
+    }
 }

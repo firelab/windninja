@@ -34,10 +34,16 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
+    ui->domainAverageTable->hideColumn(2);
+    ui->domainAverageTable->hideColumn(3);
+    ui->domainAverageTable->hideColumn(4);
+    ui->domainAverageTable->hideColumn(5);
+    ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
-    connect(ui->domainAverageCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::domainAverageCheckBoxClicked);
+    connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
 }
 
 void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
@@ -58,43 +64,52 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
     {
         switch (column)
         {
-        case 0: {
+        case 0:
+        {
             double d = value.toDouble(&valid);
-            if (!valid || d <= 0) {
+            if (!valid || d <= 0)
+            {
                 valid = false;
                 errorMessage = "Must be a positive number";
             }
             break;
         }
-        case 1: {
+        case 1:
+        {
             int i = value.toDouble(&valid);
-            if (!valid || i < 0 || i > 359.9) {
+            if (!valid || i < 0 || i > 359.9)
+            {
                 valid = false;
                 errorMessage = "Must be a number between 0 and 359";
             }
             break;
         }
-        case 2: {
+        case 2:
+        {
             QTime t = QTime::fromString(value, "hh:mm");
             valid = t.isValid();
             if (!valid) errorMessage = "Must be a valid 24h time (hh:mm)";
             break;
         }
-        case 3: {
+        case 3:
+        {
             QDate d = QDate::fromString(value, "MM/dd/yyyy");
             valid = d.isValid();
             if (!valid) errorMessage = "Must be a valid date (MM/DD/YYYY)";
             break;
         }
-        case 4: {
+        case 4:
+        {
             int i = value.toDouble(&valid);
-            if (!valid || i < 0 || i > 100) {
+            if (!valid || i < 0 || i > 100)
+            {
                 valid = false;
                 errorMessage = "Must be a number between 0 and 100";
             }
             break;
         }
-        case 5: {
+        case 5:
+        {
             value.toInt(&valid);
             if (!valid) errorMessage = "Must be an integer";
             break;
@@ -105,11 +120,14 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
     }
 
     QPair<int, int> cell(row, column);
-    if (!valid) {
+    if (!valid)
+    {
         invalidDAWCells.insert(cell);
         item->setBackground(Qt::red);
         item->setToolTip(errorMessage);
-    } else {
+    }
+    else
+    {
         invalidDAWCells.remove(cell);
         item->setBackground(QBrush());  // Reset to default
         item->setToolTip("");
@@ -156,10 +174,10 @@ void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)
     }
 }
 
-void DomainAverageInput::domainAverageCheckBoxClicked()
+void DomainAverageInput::domainAverageGroupBoxToggled()
 {
     AppState& state = AppState::instance();
-    state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
 
     if (state.isDomainAverageInitializationToggled) {
         ui->pointInitializationGroupBox->setChecked(false);

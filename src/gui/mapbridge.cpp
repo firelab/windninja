@@ -29,9 +29,11 @@
 
 #include "mapbridge.h"
 
-void MapBridge::receiveBoundingBox(const QString &jsonCoords) {
+void MapBridge::receiveBoundingBox(const QString &jsonCoords)
+ {
     QJsonDocument doc = QJsonDocument::fromJson(jsonCoords.toUtf8());
-    if (!doc.isObject()) {
+    if (!doc.isObject())
+    {
         qWarning() << "Invalid bounding box JSON";
         return;
     }

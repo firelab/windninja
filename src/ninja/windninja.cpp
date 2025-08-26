@@ -30,7 +30,6 @@
 #include "windninja.h"
 #include "ninjaArmy.h"
 #include "ninjaException.h"
-#include <string>
 
 #ifdef _OPENMP
     omp_lock_t netCDF_lock;
@@ -1752,7 +1751,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param scaling The line width at which to write the Google Earth output.
+ * \param width The line width at which to write the Google Earth output.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
@@ -1762,6 +1761,56 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
     if( NULL != army )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setGoogLineWidth( nIndex, width );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the Color Scheme of the Google Earth output for a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param colorScheme A string that specifies the color scheme ("default", "ROPGW", "oranges", "blues", "pinks", "greens", "magic_beans", "pink_to_greens").
+ * \param scaling The flag which determines if vector scaling will be used.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogColor
+    ( NinjaArmyH * army, const int nIndex, std::string colorScheme, bool scaling, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setGoogColor(nIndex, colorScheme, scaling);
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the flag to use a Consistent Color Scheme for all Google Earth Outputs of a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag that determines whether consistent color scaling will be used.
+ * \param numRuns The number of runs that will be simulated
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogConsistentColorScale
+    ( NinjaArmyH * army, const int nIndex, bool flag, int numRuns, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setGoogConsistentColorScale(nIndex, flag, numRuns);
     }
     else
     {
@@ -1872,6 +1921,37 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
 }
 
 /**
+ * \brief Set the resolution of the raster output for a simulation.
+ *
+ * \note Only valid if NinjaSetAsciiOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param flag That flag that determines whether to write the .atm file.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
+    ( NinjaArmyH * army, bool flag, char ** papszOptions)
+{
+    if( NULL != army)
+    {
+        try
+        {
+            reinterpret_cast<ninjaArmy*>(army)->set_writeFarsiteAtmFile(flag);
+            return NINJA_SUCCESS;
+        }
+        catch (const std::exception& e)
+        {
+            return NINJA_E_OTHER;
+        }
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+/**
  * \brief Set the flag to write VTK output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
@@ -1929,7 +2009,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
-    ( NinjaArmyH* army, const int nIndex, const bool flag, char ** options )
+    ( NinjaArmyH* army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -2297,4 +2377,31 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
 }
 
 
+}
+
+/*-----------------------------------------------------------------------------
+ *  Helper Methods
+ *-----------------------------------------------------------------------------*/
+
+/**
+ * \brief calls wxStation::writeBlankStationFile(), which writes a weather station csv file with no data, just a header.
+ *
+ * \param outputStationFilename A csv file to write a blank weather station file to.
+ * \param papszOptions options
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions )
+{
+    wxStation::writeBlankStationFile(outputStationFilename);
+
+    bool doesOutputFileExist = CPLCheckForFile((char*)outputStationFilename, NULL);
+    if( doesOutputFileExist )
+    {
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
 }

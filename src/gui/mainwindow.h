@@ -71,17 +71,28 @@
 #include <string>
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 QT_END_NAMESPACE
+
+struct OutputMeshResolution {
+    double resolution;
+    QByteArray units;
+};
+
+struct OutputPDFSize {
+    double PDFHeight;
+    double PDFWidth;
+    double PDFDpi;
+};
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    void populateForecastDownloads();
     void toggleExpandCollapse(const QModelIndex &index);
     void loadMapKMZ(const std::vector<std::string>& input);
 
@@ -108,11 +119,12 @@ private slots:
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void refreshUI();
+    void writeToConsole(QString message, QColor color = Qt::white);
 
 private:
     Ui::MainWindow *ui;
-    QWebEngineView *webView;
-    QWebChannel *channel;
+    QWebEngineView *webEngineView;
+    QWebChannel *webChannel;
     MapBridge *mapBridge;
     SurfaceInput *surfaceInput;
     MenuBar *menuBar;
@@ -124,6 +136,19 @@ private:
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
     void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
-    void setOutputFlags(NinjaArmyH *ninjaArmy, int i);
+    void setOutputFlags(NinjaArmyH* ninjaArmy,
+                        int i,
+                        int numNinjas,
+                        OutputMeshResolution googleEarth,
+                        OutputMeshResolution fireBehavior,
+                        OutputMeshResolution shapeFiles,
+                        OutputMeshResolution geospatialPDFs,
+                        OutputPDFSize PDFSize);
+    OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
+                                           QDoubleSpinBox* outputMeshResolutionSpinBox,
+                                           QComboBox* outputMeshResolutionComboBox);
+
+    int lineNumber;
+
 };
 #endif // MAINWINDOW_H

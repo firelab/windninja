@@ -47,17 +47,19 @@
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
 
-namespace Ui {
-class MainWindow;
+namespace Ui
+{
+    class MainWindow;
 }
 
 class SurfaceInput : public QObject
 {
   Q_OBJECT
+
 public:
-    explicit SurfaceInput(Ui::MainWindow* ui,
-                                QWebEngineView* webView,
-                                QObject* parent = nullptr);
+    SurfaceInput(Ui::MainWindow* ui,
+                    QWebEngineView* webEngineView,
+                    QObject* parent = nullptr);
     double computeMeshResolution(int index, bool isMomemtumChecked);
 
 signals:
@@ -67,7 +69,6 @@ signals:
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);
     void elevationInputFileOpenButtonClicked();
-    void timeZoneAllZonesCheckBoxClicked();
 
 private slots:
     void surfaceInputDownloadCancelButtonClicked();
@@ -82,10 +83,11 @@ private slots:
     void fetchDEMFinished();
     void timeZoneDetailsCheckBoxClicked();
     void timeZoneComboBoxCurrentIndexChanged(int index);
+    void timeZoneAllZonesCheckBoxClicked();
 
 private:
     Ui::MainWindow *ui;
-    QWebEngineView *webView;
+    QWebEngineView *webEngineView;
     SurfaceInput *surfaceInput;
 
     QProgressDialog *progress;

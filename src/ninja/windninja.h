@@ -66,9 +66,10 @@
 #define FALSE 0
 #endif
 
-WN_C_START
-
 #include <stdlib.h>
+#include <string>
+
+WN_C_START
 
 //Use structs instead of void * for type checking by C compilier
 struct NinjaArmyH;
@@ -293,31 +294,40 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * scaling, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogColor
+        ( NinjaArmyH * army, const int nIndex, std::string colorScheme, bool scaling, char ** papszOptions );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const double width, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const double width, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogConsistentColorScale
+        ( NinjaArmyH * army, const int nIndex, bool flag, int numRuns, char ** papszOptions);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetShpOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetShpResolution
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
+        ( NinjaArmyH * army, bool flag, char ** papszOptions);
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
-        ( NinjaArmyH* ninjaArmy, const int nIndex, const bool flag, char ** options );
+        ( NinjaArmyH* ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
         ( NinjaArmyH* ninjaArmy, const int nIndex, const double resolution, const char * units, char ** papszOptions );
@@ -361,5 +371,6 @@ typedef int  NinjaErr;
         int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute);
     WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
         (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions);
+    WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions );
 
 WN_C_END

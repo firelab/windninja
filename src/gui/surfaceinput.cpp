@@ -30,12 +30,19 @@
 #include "surfaceinput.h"
 
 SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
-                                   QWebEngineView *webView,
+                                   QWebEngineView *webEngineView,
                                    QObject* parent)
     : QObject(parent),
       ui(ui),
-      webView(webView)
+      webEngineView(webEngineView)
 {
+    ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
+    ui->elevationInputFileDownloadButton->setIcon(QIcon(":/server_go.png"));
+    ui->elevationInputTypePushButton->setIcon(QIcon(":/swoop_final.png"));
+    ui->timeZoneDetailsTextEdit->setVisible(false);
+
+    timeZoneAllZonesCheckBoxClicked();
+
     connect(ui->boundingBoxNorthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
     connect(ui->boundingBoxSouthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
     connect(ui->boundingBoxEastLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
@@ -50,7 +57,6 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadCancelButtonClicked);
     connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadButtonClicked);
-    connect(ui->openElevationInputFileMenuAction, &QAction::triggered, this, &SurfaceInput::elevationInputFileOpenButtonClicked);
     connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputTypePushButtonClicked);
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
@@ -76,11 +82,11 @@ void SurfaceInput::elevationInputTypePushButtonClicked()
 {
     if(ui->elevationInputTypePushButton->isChecked())
     {
-        webView->page()->runJavaScript("startRectangleDrawing();");
+        webEngineView->page()->runJavaScript("startRectangleDrawing();");
     }
     else
     {
-        webView->page()->runJavaScript("stopRectangleDrawing();");
+        webEngineView->page()->runJavaScript("stopRectangleDrawing();");
     }
 }
 
@@ -126,7 +132,7 @@ void SurfaceInput::boundingBoxLineEditsTextChanged()
                      .arg(south, 0, 'f', 10)
                      .arg(east,  0, 'f', 10)
                      .arg(west,  0, 'f', 10);
-        webView->page()->runJavaScript(js);
+        webEngineView->page()->runJavaScript(js);
     }
 }
 
@@ -166,14 +172,14 @@ void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
     ui->pointRadiusLonLineEdit->clear();
     ui->pointRadiusRadiusLineEdit->clear();
 
-    webView->page()->runJavaScript("stopRectangleDrawing();");
+    webEngineView->page()->runJavaScript("stopRectangleDrawing();");
     if(!currentDEMFilePath.isEmpty())
     {
         QStringList cornerStrs;
         for (int i = 0; i < 8; ++i)
           cornerStrs << QString::number(DEMCorners[i], 'f', 8);
         QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
-        webView->page()->runJavaScript(js);
+        webEngineView->page()->runJavaScript(js);
     }
 }
 
@@ -227,9 +233,12 @@ void SurfaceInput::elevationInputFileDownloadButtonClicked()
 
 void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 {
-    if (index == 3) {
+    if (index == 3)
+    {
         ui->meshResolutionSpinBox->setEnabled(true);
-    } else {
+    }
+    else
+    {
         ui->meshResolutionSpinBox->setEnabled(false);
     }
     ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
@@ -247,7 +256,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
     for (int i = 0; i < 8; ++i)
         cornerStrs << QString::number(DEMCorners[i], 'f', 8);
     QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
-    webView->page()->runJavaScript(js);
+    webEngineView->page()->runJavaScript(js);
 
     emit requestRefresh();
     emit setupTreeView();
@@ -260,16 +269,20 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     {
         directoryPath = currentDEMFilePath;
     }
-    else {
+    else
+    {
         directoryPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     }
     QString demFilePath = QFileDialog::getOpenFileName(ui->centralwidget, "Select a file", directoryPath, "(*.tif);;All Files (*)");
 
-    if (demFilePath.isEmpty()) {
-    if (!currentDEMFilePath.isEmpty()) {
-        ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
-        ui->elevationInputFileLineEdit->setToolTip(currentDEMFilePath);
-    }
+    if (demFilePath.isEmpty())
+    {
+        if (!currentDEMFilePath.isEmpty())
+        {
+
+            ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
+            ui->elevationInputFileLineEdit->setToolTip(currentDEMFilePath);
+        }
         return;
     }
 
@@ -297,20 +310,21 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
 
 void SurfaceInput::fetchDEMFinished()
 {
-    if (progress) {
+    if (progress)
+    {
         progress->close();
         progress->deleteLater();
         progress = nullptr;
     }
 
-    if (futureWatcher) {
+    if (futureWatcher)
+    {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;
     }
 
     ui->elevationInputFileLineEdit->setText(QFileInfo(currentDEMFilePath).fileName());
-    int currentIndex = ui->inputsStackedWidget->currentIndex();
-    ui->inputsStackedWidget->setCurrentIndex(currentIndex-1);
+    ui->inputsStackedWidget->setCurrentIndex(5);
 }
 
 void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
@@ -331,8 +345,10 @@ void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
     QVector<QVector<QString>> displayData = fetchAllTimeZones(isShowAllTimeZonesSelected);
 
     ui->timeZoneComboBox->clear();
-    for (const QVector<QString>& zone : displayData) {
-        if (!zone.isEmpty()) {
+    for (const QVector<QString>& zone : displayData)
+    {
+        if (!zone.isEmpty())
+        {
             ui->timeZoneComboBox->addItem(zone[0]);
         }
     }
@@ -348,11 +364,13 @@ void SurfaceInput::timeZoneDetailsCheckBoxClicked()
     ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
 }
 
-QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
+QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone)
+{
     QVector<QString> matchedRow;
     QFile file(":/date_time_zonespec.csv");
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         qWarning() << "Failed to open date_time_zonespec.csv";
         qDebug() << "No data found";
     }
@@ -360,10 +378,12 @@ QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
     QTextStream in(&file);
     bool firstLine = true;
 
-    while (!in.atEnd()) {
+    while (!in.atEnd())
+    {
         QString line = in.readLine();
 
-        if (firstLine) {
+        if (firstLine)
+        {
             firstLine = false;
             continue;  // skip header
         }
@@ -376,7 +396,8 @@ QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
 
         QString fullZone = row.mid(0, 1).join("/");
 
-        if (fullZone == currentTimeZone) {
+        if (fullZone == currentTimeZone)
+        {
             matchedRow = row;
             break;
         }
@@ -384,7 +405,8 @@ QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
 
     file.close();
 
-    if (matchedRow.isEmpty()) {
+    if (matchedRow.isEmpty())
+    {
         qDebug() << "No matching time zone found.";
     }
 
@@ -393,7 +415,8 @@ QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
     QString stdOffsetStr = matchedRow.value(5);
     QString dstAdjustStr = matchedRow.value(6);
 
-    auto timeToSeconds = [](const QString& t) -> int {
+    auto timeToSeconds = [](const QString& t) -> int
+    {
         QString s = t.trimmed();
         bool negative = s.startsWith('-');
         s = s.remove(QChar('+')).remove(QChar('-'));
@@ -410,7 +433,8 @@ QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone) {
     };
 
     // Convert total seconds back to HH:MM:SS with sign
-    auto secondsToTime = [](int totalSec) -> QString {
+    auto secondsToTime = [](int totalSec) -> QString
+    {
         QChar sign = totalSec < 0 ? '-' : '+';
         totalSec = std::abs(totalSec);
 
@@ -447,7 +471,8 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
 
     QFile file(":/date_time_zonespec.csv");
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         qDebug() << "Failed to open CSV file.";
         return fullData;
     }
@@ -455,10 +480,12 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
     QTextStream in(&file);
     bool firstLine = true;
 
-    while (!in.atEnd()) {
+    while (!in.atEnd())
+    {
         QString line = in.readLine();
 
-        if (firstLine) {
+        if (firstLine)
+        {
             firstLine = false;
             continue;
         }
@@ -466,14 +493,20 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
         QStringList tokens = line.split(",", Qt::KeepEmptyParts);
         QVector<QString> row;
         for (const QString& token : tokens)
+        {
             row.append(token.trimmed().remove('"'));
+        }
 
         if (!row.isEmpty())
+        {
             fullData.append(row);
+        }
 
-        if (!row.isEmpty()) {
+        if (!row.isEmpty())
+        {
             QStringList parts = row[0].split("/", Qt::KeepEmptyParts);
-            if (!parts.isEmpty() && parts[0] == "America" || row[0] == "Pacific/Honolulu") {
+            if (!parts.isEmpty() && parts[0] == "America" || row[0] == "Pacific/Honolulu")
+            {
                 americaData.append(row);
             }
         }
@@ -481,9 +514,12 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
 
     file.close();
 
-    if (isShowAllTimeZonesSelected) {
+    if (isShowAllTimeZonesSelected)
+    {
         return fullData;
-    } else {
+    }
+    else
+    {
         return americaData;
     }
 }
@@ -495,7 +531,8 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
     NinjaErr err = 0;
 
     err = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);
-    if (err != NINJA_SUCCESS){
+    if (err != NINJA_SUCCESS)
+    {
         qDebug() << "NinjaFetchDEMBBox: err =" << err;
         return err;
     }
@@ -564,7 +601,8 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
 #endif //NINJAFOAM
 
     int targetNumHorizCells = fine;
-    switch (index) {
+    switch (index)
+    {
     case 0:
         targetNumHorizCells = coarse;
         break;
@@ -591,7 +629,8 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
     meshResolution = (XCellSize + YCellSize) / 2;
 
 #ifdef NINJAFOAM
-    if (isMomemtumChecked) {
+    if (isMomemtumChecked)
+    {
         XLength = GDALXSize * GDALCellSize;
         YLength = GDALYSize * GDALCellSize;
 
@@ -615,7 +654,8 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
         int refinedCellCount = 0;
         int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
         int nRoundsRefinement = 0;
-        while(refinedCellCount < (0.5 * targetNumHorizCells)){
+        while(refinedCellCount < (0.5 * targetNumHorizCells))
+        {
             nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
             refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
             nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
