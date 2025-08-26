@@ -540,8 +540,8 @@ void MainWindow::stabilityCheckBoxClicked()
 void MainWindow::useWeatherModelInitClicked()
 {
     // AppState& state = AppState::instance();
-
     // state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
+
 
     // if (state.isWeatherModelInitializationToggled) {
     //     ui->domainAverageCheckBox->setChecked(false);
@@ -818,7 +818,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Weather Model")
     {
-        ui->weatherModelCheckBox->click();
+        ui->weatherModelGroupBox->setChecked(!ui->pointInitializationGroupBox);
     }
     else if (item->text(0) == "Surface Input")
     {
