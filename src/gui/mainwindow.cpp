@@ -407,8 +407,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->legendComboBox->setItemData(0, "equal_interval");
     ui->legendComboBox->setItemData(1, "equal_color");
 
-    ui->googleEarthScrollArea->setAlignment(Qt::AlignTop);
-
     connectSignals();
 
 
@@ -442,10 +440,6 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
-    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
-    connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxToggled);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxToggled);
@@ -457,11 +451,13 @@ void MainWindow::connectSignals()
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
-    connect(surfaceInput, SIGNAL(setupTreeView()), pointInitializationInput, SLOT(setupTreeView()));
 
-    //connect other writeToConsoles to the main writeToConsole
-    connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
-//    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
+    connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole); //    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
+    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
+    connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(surfaceInput, &SurfaceInput::setupTreeView, pointInitializationInput, &PointInitializationInput::setupTreeView);
+    connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
@@ -538,22 +534,6 @@ void MainWindow::stabilityCheckBoxClicked()
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
     refreshUI();
-}
-
-void MainWindow::useWeatherModelInitClicked()
-{
-    // AppState& state = AppState::instance();
-    // state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
-
-
-    // if (state.isWeatherModelInitializationToggled) {
-    //     ui->domainAverageCheckBox->setChecked(false);
-    //     ui->pointInitializationGroupBox->setChecked(false);
-    //     state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-    //     state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
-    // }
-
-    // refreshUI();
 }
 
 void MainWindow::outputDirectoryButtonClicked()
@@ -806,14 +786,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Domain Average Wind")
     {
-        if(!ui->domainAverageGroupBox->isChecked())
-        {
-            ui->domainAverageGroupBox->setChecked(true);
-        }
-        else
-        {
-            ui->domainAverageGroupBox->setChecked(false);
-        }
+        ui->domainAverageGroupBox->setChecked(!ui->domainAverageGroupBox->isChecked());
     }
     else if (item->text(0) == "Point Initialization")
     {
@@ -821,7 +794,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Weather Model")
     {
-        ui->weatherModelGroupBox->setChecked(!ui->pointInitializationGroupBox);
+        ui->weatherModelGroupBox->setChecked(!ui->weatherModelGroupBox->isChecked());
     }
     else if (item->text(0) == "Surface Input")
     {
@@ -829,47 +802,19 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Google Earth")
     {
-        if(!ui->googleEarthGroupBox->isChecked())
-        {
-            ui->googleEarthGroupBox->setChecked(true);
-        }
-        else
-        {
-            ui->googleEarthGroupBox->setChecked(false);
-        }
+        ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
     }
     else if (item->text(0) == "Fire Behavior")
     {
-        if(!ui->fireBehaviorGroupBox->isChecked())
-        {
-            ui->fireBehaviorGroupBox->setChecked(true);
-        }
-        else
-        {
-            ui->fireBehaviorGroupBox->setChecked(false);
-        }
+        ui->fireBehaviorGroupBox->setChecked(!ui->fireBehaviorGroupBox->isChecked());
     }
     else if (item->text(0) == "Shape Files")
     {
-        if(!ui->shapeFilesGroupBox->isChecked())
-        {
-            ui->shapeFilesGroupBox->setChecked(true);
-        }
-        else
-        {
-            ui->shapeFilesGroupBox->setChecked(false);
-        }
+        ui->shapeFilesGroupBox->setChecked(!ui->shapeFilesGroupBox->isChecked());
     }
     else if (item->text(0) == "Geospatial PDF Files")
     {
-        if(!ui->geospatialPDFFilesGroupBox->isChecked())
-        {
-            ui->geospatialPDFFilesGroupBox->setChecked(true);
-        }
-        else
-        {
-            ui->geospatialPDFFilesGroupBox->setChecked(false);
-        }
+        ui->geospatialPDFFilesGroupBox->setChecked(!ui->geospatialPDFFilesGroupBox->isChecked());
     }
     else if (item->text(0) == "VTK Files")
     {

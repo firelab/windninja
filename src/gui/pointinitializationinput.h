@@ -58,6 +58,9 @@ public:
 signals:
     void requestRefresh();
 
+public slots:
+    void setupTreeView();
+
 private slots:
     void pointInitializationGroupBoxToggled(bool toggled);
     void pointInitializationDownloadDataButtonClicked();
@@ -71,7 +74,6 @@ private slots:
     void folderExpanded(const QModelIndex &index);
     void folderCollapsed(const QModelIndex &index);
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
-    void setupTreeView();
 
 private:
     Ui::MainWindow *ui;

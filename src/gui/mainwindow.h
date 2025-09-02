@@ -107,7 +107,6 @@ private slots:
     void diurnalCheckBoxClicked();
     void stabilityCheckBoxClicked();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
-    void useWeatherModelInitClicked();
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void numberOfProcessorsSolveButtonClicked();

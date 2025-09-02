@@ -299,7 +299,7 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
     progress->show();
 
     futureWatcher = new QFutureWatcher<int>(this);
-    QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, surfaceInput, boundingBox, demFile, resolution, fetchType);
+    QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, boundingBox, demFile, resolution, fetchType);
     futureWatcher->setFuture(future);
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &SurfaceInput::fetchDEMFinished);
