@@ -111,11 +111,21 @@ void MainWindow::refreshUI()
     }
 
     // Update point initialization
-    if (state.isPointInitializationToggled) {
+    if (state.isPointInitializationToggled && state.isStationFileSelectionValid && state.isStationFileSelected) {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
         state.isPointInitializationValid = true;
+    } else if(state.isPointInitializationToggled && !state.isStationFileSelected) {
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No station file selected.");
+        state.isPointInitializationValid = false;
+    } else if(state.isPointInitializationToggled && !state.isStationFileSelectionValid){
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Conflicting files selected.");
+        state.isPointInitializationValid = false;
     } else {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
         state.isPointInitializationValid = false;
     }
 
@@ -323,7 +333,6 @@ MainWindow::MainWindow(QWidget *parent)
     resize(1200, 700);
     refreshUI();
     ui->treeWidget->expandAll();
-    ui->treeFileExplorer->expandAll();
 
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
@@ -343,6 +352,7 @@ MainWindow::MainWindow(QWidget *parent)
     menuBar = new MenuBar(ui, this);
     surfaceInput = new SurfaceInput(ui, webEngineView, this);
     domainAverageInput = new DomainAverageInput(ui, this);
+    pointInitializationInput = new PointInitializationInput(ui, this);
 
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
@@ -369,7 +379,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
-    ui->downloadPointInitData->setIcon(QIcon(":/application_get"));
 
     QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     ui->outputDirectoryLineEdit->setText(downloadsPath);
@@ -415,6 +424,8 @@ MainWindow::~MainWindow()
     delete webChannel;
     delete mapBridge;
     delete surfaceInput;
+    delete domainAverageInput;
+    delete pointInitializationInput;
     delete menuBar;
     delete ui;
 }
@@ -427,12 +438,12 @@ void MainWindow::connectSignals()
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
     connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
-    connect(ui->pointInitializationCheckBox, &QCheckBox::clicked, this, &MainWindow::pointInitializationCheckBoxClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxToggled);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxToggled);
@@ -444,6 +455,7 @@ void MainWindow::connectSignals()
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
+    connect(surfaceInput, SIGNAL(setupTreeView()), pointInitializationInput, SLOT(setupTreeView()));
 
     //connect other writeToConsoles to the main writeToConsole
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
@@ -526,38 +538,20 @@ void MainWindow::stabilityCheckBoxClicked()
     refreshUI();
 }
 
-
-void MainWindow::pointInitializationCheckBoxClicked()
-{
-    AppState& state = AppState::instance();
-    state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-
-    if (state.isPointInitializationToggled)
-    {
-        ui->domainAverageGroupBox->setChecked(false);
-        ui->weatherModelCheckBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
-    }
-
-    refreshUI();
-}
-
 void MainWindow::useWeatherModelInitClicked()
 {
-    AppState& state = AppState::instance();
+    // AppState& state = AppState::instance();
+    // state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
 
-    state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
 
-    if (state.isWeatherModelInitializationToggled)
-    {
-        ui->domainAverageGroupBox->setChecked(false);
-        ui->pointInitializationCheckBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-        state.isPointInitializationToggled = ui->pointInitializationCheckBox->isChecked();
-    }
+    // if (state.isWeatherModelInitializationToggled) {
+    //     ui->domainAverageCheckBox->setChecked(false);
+    //     ui->pointInitializationGroupBox->setChecked(false);
+    //     state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
+    //     state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
+    // }
 
-    refreshUI();
+    // refreshUI();
 }
 
 void MainWindow::outputDirectoryButtonClicked()
@@ -585,16 +579,16 @@ void MainWindow::solveButtonClicked()
 {
     AppState& state = AppState::instance();
 
-    int numNinjas;
-    NinjaArmyH *ninjaArmy;
-    char **papszOptions;
-    const char *initializationMethod;
-    QList<double> speeds;
-    QList<double> directions;
+    int numNinjas = 0;
+    NinjaArmyH *ninjaArmy = nullptr;
+    char **papszOptions = nullptr;
+    const char *initializationMethod = nullptr;
 
     if (state.isDomainAverageInitializationValid)
     {
         initializationMethod = "domain_average";
+        QList<double> speeds;
+        QList<double> directions;
 
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row)
@@ -611,6 +605,138 @@ void MainWindow::solveButtonClicked()
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
         QString speedUnits =  ui->tableSpeedUnits->currentText();
         ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
+    }
+    else if (state.isPointInitializationValid)
+    {
+        initializationMethod = "point";
+
+        QVector<QString> stationFiles = pointInitializationInput->getStationFiles();
+        QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+        QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
+
+        std::vector<QByteArray> stationFilesBytes;
+        stationFilesBytes.reserve(stationFiles.size());
+        std::vector<const char*> stationFileNames;
+        stationFileNames.reserve(stationFiles.size());
+        for (int i = 0; i < stationFiles.size(); i++)
+        {
+            stationFilesBytes.push_back(stationFiles[i].toUtf8());
+            stationFileNames.push_back(stationFilesBytes.back().constData());
+        }
+
+        QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+        bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
+
+        if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
+        {
+            QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
+            QDateTime end   = ui->weatherStationDataEndDateTimeEdit->dateTime();
+
+            QVector<int> year   = { start.date().year(),   end.date().year() };
+            QVector<int> month  = { start.date().month(),  end.date().month() };
+            QVector<int> day    = { start.date().day(),    end.date().day() };
+            QVector<int> hour   = { start.time().hour(),   end.time().hour() };
+            QVector<int> minute = { start.time().minute(), end.time().minute() };
+
+            int nTimeSteps = ui->weatherStationDataTimestepsSpinBox->value();
+
+            QVector<int> outYear(nTimeSteps);
+            QVector<int> outMonth(nTimeSteps);
+            QVector<int> outDay(nTimeSteps);
+            QVector<int> outHour(nTimeSteps);
+            QVector<int> outMinute(nTimeSteps);
+
+            if(nTimeSteps == 1)
+            {
+                int startYear = year[0];
+                int startMonth = month[0];
+                int startDay = day[0];
+                int startHour = hour[0];
+                int startMinute = minute[0];
+
+                int endYear, endMonth, endDay, endHour, endMinute;
+
+                NinjaErr err = NinjaGenerateSingleTimeObject(
+                    startYear, startMonth, startDay, startHour, startMinute,
+                    timeZoneBytes.constData(),
+                    &endYear, &endMonth, &endDay, &endHour, &endMinute
+                    );
+                if(err != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaGenerateSingleTimeObject: err = " << err;
+                }
+
+                outYear[0] = endYear;
+                outMonth[0] = endMonth;
+                outDay[0] = endDay;
+                outHour[0] = endHour;
+                outMinute[0] = endMinute;
+            }
+            else {
+                NinjaErr err = NinjaGetTimeList(
+                    year.data(), month.data(), day.data(),
+                    hour.data(), minute.data(),
+                    outYear.data(), outMonth.data(), outDay.data(),
+                    outHour.data(), outMinute.data(),
+                    nTimeSteps, timeZoneBytes.data()
+                );
+                if(err != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaGetTimeList: err = " << err;
+                }
+            }
+
+            numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
+
+            ninjaArmy = NinjaMakePointArmy(
+                outYear.data(), outMonth.data(), outDay.data(),
+                outHour.data(), outMinute.data(), nTimeSteps,
+                DEMTimeZone.toUtf8().data(), stationFileNames.data(),
+                stationFileNames.size(), DEMPath.toUtf8().data(),
+                true, momentumFlag, papszOptions
+                );
+        }
+        else
+        {
+            int year, month, day, hour, minute;
+            QDateTime date = ui->weatherStationDataTextEdit->property("simulationTime").toDateTime();
+            year = date.date().year();
+            month = date.date().month();
+            day = date.date().day();
+            hour = date.time().hour();
+            minute = date.time().minute();
+
+            int outYear, outMonth, outDay, outHour, outMinute;
+
+            NinjaErr err = NinjaGenerateSingleTimeObject(
+                year, month, day, hour, minute,
+                timeZoneBytes.constData(),
+                &outYear, &outMonth, &outDay, &outHour, &outMinute
+                );
+            if (err != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaGenerateSingleTimeObject: err = " << err;
+            }
+
+            QVector<int> yearVec   = { outYear };
+            QVector<int> monthVec  = { outMonth };
+            QVector<int> dayVec    = { outDay };
+            QVector<int> hourVec   = { outHour };
+            QVector<int> minuteVec = { outMinute };
+
+            numNinjas = 1;
+            int nTimeSteps = 1;
+
+            ninjaArmy = NinjaMakePointArmy(
+                yearVec.data(), monthVec.data(), dayVec.data(),
+                hourVec.data(), minuteVec.data(), nTimeSteps,
+                DEMTimeZone.toUtf8().data(),
+                stationFileNames.data(),
+                static_cast<int>(stationFileNames.size()),
+                DEMPath.toUtf8().data(),
+                true, momentumFlag, papszOptions
+            );
+        }
     }
     writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
@@ -630,37 +756,32 @@ void MainWindow::solveButtonClicked()
     }
     writeToConsole("Finished with simulations", Qt::darkGreen);
 
-    if(ui->googleEarthGroupBox->isChecked())
-    {
-        writeToConsole( "Loading kmz output onto map..." );
-        vector<string> outputFiles;
-        QDir outDir(ui->outputDirectoryLineEdit->text());
-        QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
-        int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
-        QString meshSize = QString::number(meshInt) + "m";
+    // vector<string> outputFiles;
+    // QDir outDir(ui->outputDirectoryLineEdit->text());
+    // QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
+    // int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
+    // QString meshSize = QString::number(meshInt) + "m";
 
-        for (int i = 0; i < numNinjas; i++)
-        {
-            QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
-                                                   .arg(demName)
-                                                   .arg(directions[i])
-                                                   .arg(speeds[i])
-                                                   .arg(meshSize));
-            outputFiles.push_back(filePath.toStdString());
-        }
+    // for (int i = 0; i < numNinjas; i++) {
+    //     QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
+    //                                            .arg(demName)
+    //                                            .arg(directions[i])
+    //                                            .arg(speeds[i])
+    //                                            .arg(meshSize));
+    //     outputFiles.push_back(filePath.toStdString());
+    // }
 
-        for (const auto& dir : outputFiles)
-        {
-            QString qDir = QString::fromStdString(dir);
+    // for (const auto& dir : outputFiles) {
+    //     QString qDir = QString::fromStdString(dir);
 
-            QFile f(qDir);
-            f.open(QIODevice::ReadOnly);
-            QByteArray data = f.readAll();
-            QString base64 = data.toBase64();
+    //     QFile f(qDir);
+    //     f.open(QIODevice::ReadOnly);
+    //     QByteArray data = f.readAll();
+    //     QString base64 = data.toBase64();
 
-            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-        }
-    }
+    //     webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+    // }
+
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -694,11 +815,11 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Point Initialization")
     {
-        ui->pointInitializationCheckBox->click();
+        ui->pointInitializationGroupBox->setChecked(!ui->pointInitializationGroupBox->isChecked());
     }
     else if (item->text(0) == "Weather Model")
     {
-        ui->weatherModelCheckBox->click();
+        ui->weatherModelGroupBox->setChecked(!ui->pointInitializationGroupBox);
     }
     else if (item->text(0) == "Surface Input")
     {
@@ -874,6 +995,20 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetCommunication: err =" << err;
         }
+        /*
+       * Sets Simulation Variables
+       */
+        if(ui->pointInitializationGroupBox->isChecked())
+        {
+            if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
+            {
+                err = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+                if(err != NINJA_SUCCESS)
+                {
+                    printf("NinjaSetStationKML: err = %d\n", err);
+                }
+            }
+        }
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
@@ -884,13 +1019,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             qDebug() << "NinjaSetNumberCPUs: err =" << err;
         }
 
-        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInitializationMethod: err =" << err;
         }
 
-        err = NinjaSetDem(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+        err = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
         if(err != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDem: err =" << err;
@@ -1044,7 +1179,7 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         qDebug() << "NinjaSetPDFBaseMap: err =" << err;
     }
 
-    err = NinjaSetPDFDEM(ninjaArmy, i, surfaceInput->getDEMFilePath().toUtf8().constData(), papszOptions);
+    err = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
     if (err != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFDEM: err =" << err;

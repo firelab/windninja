@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Handles GUI related logic for the Domain Average Page
+ * Purpose:  Hands GUI related logic for the Weather Model Page
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -27,40 +27,25 @@
  *
  *****************************************************************************/
 
-#ifndef DOMAINAVERAGEINPUT_H
-#define DOMAINAVERAGEINPUT_H
+#ifndef WEATHERMODELINPUT_H
+#define WEATHERMODELINPUT_H
 
-#include "appstate.h"
 #include "ui_mainwindow.h"
 #include <QObject>
-#include <QPair>
-#include <QSet>
 
-namespace Ui
-{
-    class MainWindow;
+namespace Ui {
+class MainWindow;
 }
 
-class DomainAverageInput: public QObject
+class WeatherModelInput : public QObject
 {
     Q_OBJECT
-
-signals:
-    void requestRefresh();
-
 public:
-    DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
-
-private slots:
-    void domainAverageTableCellChanged(int row, int column);
-    void clearTableButtonClicked();
-    void domainAverageGroupBoxToggled();
-    void windHeightComboBoxCurrentIndexChanged(int index);
+    explicit WeatherModelInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private:
-    QSet<QPair<int, int>> invalidDAWCells;
     Ui::MainWindow *ui;
 
 };
 
-#endif // DOMAINAVERAGEINPUT_H
+#endif // WEATHERMODELINPUT_H
