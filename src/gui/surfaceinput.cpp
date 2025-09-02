@@ -36,9 +36,6 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       ui(ui),
       webEngineView(webEngineView)
 {
-    ui->elevationInputFileOpenButton->setIcon(QIcon(":/folder.png"));
-    ui->elevationInputFileDownloadButton->setIcon(QIcon(":/server_go.png"));
-    ui->elevationInputTypePushButton->setIcon(QIcon(":/swoop_final.png"));
     ui->timeZoneDetailsTextEdit->setVisible(false);
 
     timeZoneAllZonesCheckBoxClicked();

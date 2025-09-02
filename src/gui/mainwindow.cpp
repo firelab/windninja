@@ -407,6 +407,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->legendComboBox->setItemData(0, "equal_interval");
     ui->legendComboBox->setItemData(1, "equal_color");
 
+    ui->googleEarthScrollArea->setAlignment(Qt::AlignTop);
+
     connectSignals();
 
 
