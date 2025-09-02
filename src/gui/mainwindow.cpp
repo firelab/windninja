@@ -459,6 +459,7 @@ void MainWindow::connectSignals()
 
     //connect other writeToConsoles to the main writeToConsole
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
+//    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
@@ -989,6 +990,11 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 
     for(unsigned int i=0; i<numNinjas; i++)
     {
+        err = NinjaSetCommunication(ninjaArmy, i, "gui", papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetCommunication: err =" << err;
+        }
         /*
        * Sets Simulation Variables
        */
@@ -1004,11 +1010,8 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             }
         }
 
-        err = NinjaSetCommunication(ninjaArmy, i, "cli", papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            qDebug() << "NinjaSetCommunication: err =" << err;
-        }
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
+        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
 
         err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
         if(err != NINJA_SUCCESS)

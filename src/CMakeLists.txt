@@ -19,9 +19,9 @@
 
 add_subdirectory(ninja)
 
-if(NINJA_QTGUI)
+if(NINJA_GUI)
     add_subdirectory(gui)
-endif(NINJA_QTGUI)
+endif(NINJA_GUI)
 if(NINJA_CLI)
     add_subdirectory(cli)
 endif(NINJA_CLI)

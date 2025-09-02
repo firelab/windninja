@@ -392,7 +392,7 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         //QMetaObject::invokeMethod((QObject*)this, "sendMessage",
         // 			      Qt::QueuedConnection,
         // 			      Q_ARG(QString*, &s),
-        // 			      Q_ARG(QColor, Qt::black));
+        // 			      Q_ARG(QColor, Qt::white));
         emit sendMessage(s);
     }
     else if(eMsg == ninjaDebug)

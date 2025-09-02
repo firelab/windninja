@@ -30,10 +30,10 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
-#include "appstate.h"
 #include "ui_mainwindow.h"
-#include "../ninja/windninja.h"
-#include "../ninja/gdal_util.h"
+#include "appstate.h"
+#include "windninja.h"
+#include "gdal_util.h"
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>

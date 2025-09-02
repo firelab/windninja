@@ -185,6 +185,7 @@ public:
     */
     int setNinjaComNumRuns( const int nIndex, const int RunNumber,
                             char ** papszOptions=NULL );
+
     /**
     * \brief Returns the ninjaCom for a ninja
     *

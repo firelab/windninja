@@ -633,6 +633,30 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
 }
 
 /**
+ * \brief Get the set communication handler for a given simulation.
+ * only useable with the GUI
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to get the communication handler from, that has already been created by a call to NinjaSetCommunication.
+ *
+ * \return a pointer to the ninjaComClass of the given ninja on success, a NULL pointer otherwise.
+ */
+#ifdef NINJA_GUI
+WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
+    ( NinjaArmyH * army, const int nIndex, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->getNinjaCom( nIndex );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+#endif //NINJA_GUI
+
+/**
  * \brief Set the DEM to use for the simulations.
  *
  * \see NinjaSetInMemoryDem
