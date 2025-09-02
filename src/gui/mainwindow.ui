@@ -21,8 +21,8 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>490</width>
-    <height>500</height>
+    <width>1000</width>
+    <height>800</height>
    </size>
   </property>
   <property name="baseSize">
@@ -750,8 +750,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>538</width>
-               <height>419</height>
+               <width>578</width>
+               <height>521</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1316,7 +1316,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>346</width>
+               <width>572</width>
                <height>661</height>
               </rect>
              </property>
@@ -2160,7 +2160,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>398</width>
+               <width>572</width>
                <height>639</height>
               </rect>
              </property>
@@ -2607,8 +2607,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>414</width>
-               <height>408</height>
+               <width>578</width>
+               <height>521</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3313,7 +3313,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>381</width>
+               <width>578</width>
                <height>318</height>
               </rect>
              </property>
@@ -4171,14 +4171,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="pointInitializationDownloadPage">
-         <layout class="QVBoxLayout" name="verticalLayout_10" stretch="0,0,0">
+         <layout class="QVBoxLayout" name="verticalLayout_10" stretch="0,0,1">
           <item>
            <widget class="QGroupBox" name="weatherStationDataGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>250</height>
+             </size>
             </property>
             <property name="title">
              <string>Fetch Station Data</string>
@@ -4549,15 +4555,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
       <item>
        <widget class="QTextEdit" name="consoleTextEdit">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
           <width>600</width>
-          <height>100</height>
+          <height>125</height>
          </size>
         </property>
         <property name="readOnly">
@@ -4566,40 +4578,44 @@ li.checked::marker { content: &quot;\2612&quot;; }
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="solveButton">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="cursor">
-         <cursorShape>PointingHandCursor</cursorShape>
-        </property>
-        <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">#solveButton {
+       <layout class="QHBoxLayout" name="horizontalLayout_14">
+        <item>
+         <widget class="QPushButton" name="solveButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="cursor">
+           <cursorShape>PointingHandCursor</cursorShape>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LayoutDirection::LeftToRight</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">#solveButton {
 	padding: 0;
 	width: 100px;
 	text-align: center;
 	padding: 5px;
 }</string>
-        </property>
-        <property name="text">
-         <string>Solve</string>
-        </property>
-       </widget>
+          </property>
+          <property name="text">
+           <string>Solve</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
