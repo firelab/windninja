@@ -464,7 +464,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>20</number>
+         <number>10</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -1783,6 +1783,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <height>16777215</height>
              </size>
             </property>
+            <property name="horizontalScrollBarPolicy">
+             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+            </property>
             <widget class="QWidget" name="pointInitializationScrollAreaWidget">
              <property name="geometry">
               <rect>
@@ -2608,7 +2611,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <x>0</x>
                <y>0</y>
                <width>578</width>
-               <height>521</height>
+               <height>588</height>
               </rect>
              </property>
              <property name="sizePolicy">
