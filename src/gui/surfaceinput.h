@@ -30,6 +30,7 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
+#include "ui_mainwindow.h"
 #include "appstate.h"
 #include "windninja.h"
 #include "gdal_util.h"
