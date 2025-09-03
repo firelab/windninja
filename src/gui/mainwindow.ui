@@ -1831,7 +1831,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,0,0,0,0,0,0,0,0">
+                <layout class="QVBoxLayout" name="verticalLayout_42" stretch="0,0,0,0,0,0,0,0,0,0">
                  <item>
                   <layout class="QHBoxLayout" name="pointInitializationDownloadLayout">
                    <item>
@@ -2179,7 +2179,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,1">
+                <layout class="QVBoxLayout" name="verticalLayout_43" stretch="0,1">
                  <item>
                   <widget class="QGroupBox" name="weatherModelDownloadGroupBox">
                    <property name="sizePolicy">
@@ -2191,7 +2191,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="title">
                     <string>Download Weather Data</string>
                    </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_29">
+                   <layout class="QVBoxLayout" name="verticalLayout_44">
                     <item>
                      <layout class="QHBoxLayout" name="weatherModelDataDownloadLayout" stretch="2,1,1,0">
                       <item>
@@ -2309,7 +2309,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <property name="checked">
                        <bool>false</bool>
                       </property>
-                      <layout class="QVBoxLayout" name="verticalLayout_31">
+                      <layout class="QVBoxLayout" name="verticalLayout_45">
                        <item>
                         <widget class="QTreeView" name="weatherModelTimestepsTreeView">
                          <property name="sizePolicy">
@@ -5046,8 +5046,6 @@ QMenu::item:selected {
     <iconset resource="../../wn-resources.qrc">
      <normaloff>:/bug_link.png</normaloff>:/bug_link.png</iconset>
    </property>
-  </action>
-  <action name="aboutQtAction">
    <property name="text">
     <string>Submit &amp;Bug Report</string>
    </property>
@@ -5062,8 +5060,6 @@ QMenu::item:selected {
    <property name="icon">
     <iconset theme="dialog-information"/>
    </property>
-  </action>
-  <action name="exportSolutionAction">
    <property name="text">
     <string>About &amp;Qt</string>
    </property>
