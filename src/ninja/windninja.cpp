@@ -651,7 +651,7 @@ WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
     }
     else
     {
-        return NINJA_E_NULL_PTR;
+        return NULL;
     }
 }
 #endif //NINJA_GUI
