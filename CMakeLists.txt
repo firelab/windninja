@@ -107,6 +107,7 @@ endif(WIN32)
 option(USE_VCPKG "Use VCPKG for boost and GDAL" )
 if(USE_VCPKG)
     message("Using VCPKG")
+    find_package(shaplib CONFIG REQUIRED)
     find_package(GDAL CONFIG REQUIRED)
     find_package(NETCDF CONFIG REQUIRED)
 #    target_link_libraries(main PRIVATE GDAL::GDAL)
@@ -530,7 +531,7 @@ CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 1.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial1.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 2.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial2.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 3.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial3.pdf\\\"
-CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 4.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial4.pdf\\\" 
+CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 4.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial4.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\CLI Instructions.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\CLI_instructions.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\ArcMap Instructions.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\Displaying_wind_vectors_in_ArcMap.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\DEM Download Instructions.lnk\\\" \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\download_elevation_file.pdf\\\"
