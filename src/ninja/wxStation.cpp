@@ -678,7 +678,7 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     }
     // If we failed to open or get metadata, bail
     if (rc == -1) {
-        OGR_DS_Destroy(hDS);
+        GDALClose(hDS);
         return -1;
     }
     
@@ -731,7 +731,7 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     }
     // If we failed to get version 1 columns, bail
     if (rc == -1) {
-        OGR_DS_Destroy(hDS);
+        GDALClose(hDS);
         return -1;
     }
     /*
@@ -748,7 +748,7 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
         }
         rc = 2;
     }
-    OGR_DS_Destroy(hDS);
+    GDALClose(hDS);
     return rc;
 }
 

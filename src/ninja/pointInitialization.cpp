@@ -777,7 +777,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
             if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
                 OGRFeature::DestroyFeature( poFeature );
-                OGR_DS_Destroy( hDS );
+                GDALClose( hDS );
 
                 oErrorString = "Bad latitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -792,7 +792,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             if( dfTempValue < -180.0 || dfTempValue > 360.0 )
             {
                 OGRFeature::DestroyFeature( poFeature );
-                OGR_DS_Destroy( hDS );
+                GDALClose( hDS );
 
                 oErrorString = "Bad longitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -1045,7 +1045,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         OGRFeature::DestroyFeature( poFeature );
     }
 
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
 
     return oStations;
 }
@@ -1641,7 +1641,7 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         OGR_F_Destroy( hFeature );
     }
 
-    OGR_DS_Destroy(poDS);
+    GDALClose(poDS);
     GDALClose(hDS);
 }
 /**

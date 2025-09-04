@@ -648,7 +648,7 @@ int windNinjaCLI(int argc, char* argv[])
             OGRPointToLatLon(bbox[1], bbox[0], hDS, "WGS84");
             OGRPointToLatLon(bbox[3], bbox[2], hDS, "WGS84");
             
-            OGR_DS_Destroy(hDS);
+            GDALClose(hDS);
 
             //add a buffer
             bbox[0] += 0.009; //north
