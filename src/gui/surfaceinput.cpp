@@ -550,6 +550,15 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALYSize = poInputDS->GetRasterYSize();
     GDALGetCorners(poInputDS, DEMCorners);
 
+    double latitude, longitude;
+    GDALGetCenter(poInputDS, &longitude, &latitude);
+    std::string timeZone = FetchTimeZone(longitude, latitude, NULL);
+    int index = ui->timeZoneComboBox->findText(QString::fromStdString(timeZone));
+    if (index >= 0)
+    {
+        ui->timeZoneComboBox->setCurrentIndex(index);
+    }
+
     if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
         double c1, c2;
@@ -574,7 +583,6 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
-
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
