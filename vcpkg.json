@@ -1,0 +1,43 @@
+{
+  "name": "windninja-deps",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "boost-date-time"
+    },
+    {
+      "name": "boost-program-options"
+    },
+    {
+      "name": "boost-test"
+    },
+    {
+      "name": "gdal"
+    },
+    {
+      "name": "shapelib"
+    },
+    {
+      "name": "qtbase",
+      "features": ["widgets", "network" ]
+    },
+    {
+      "name": "qttools"
+    },
+    {
+      "name": "qtdeclarative"
+    },
+    {
+      "name": "qtquickcontrols2"
+    },
+    {
+      "name": "qtpositioning"
+    },
+    {
+      "name": "qtwebchannel"
+    },
+    {
+      "name": "qtwebengine"
+    }
+  ]
+}
