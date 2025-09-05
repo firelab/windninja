@@ -50,6 +50,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputFileDownloadButtonClicked);
     connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputFileOpenButtonClicked);
     connect(ui->elevationInputFileLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::elevationInputFileLineEditTextChanged);
+    connect(ui->elevationInputTypeComboBox, &QComboBox::currentIndexChanged, ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
     connect(ui->meshResolutionComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionComboBoxCurrentIndexChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadCancelButtonClicked);
@@ -63,15 +64,13 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
 
 void SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
 {
-    switch(index)
+    if(index == 0)
     {
-    case 0:
         ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
-        break;
-
-    case 1:
+    }
+    else
+    {
         ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
-        break;
     }
 }
 
@@ -106,50 +105,66 @@ void SurfaceInput::boundingBoxReceived(double north, double south, double east, 
 
     double pointRadius[3];
     computePointRadius(north, east, south, west, pointRadius);
+
+    ui->pointRadiusLatLineEdit->blockSignals(true);
+    ui->pointRadiusLonLineEdit->blockSignals(true);
+    ui->pointRadiusRadiusLineEdit->blockSignals(true);
+
     ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
     ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
     ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
 
+    ui->pointRadiusLatLineEdit->blockSignals(false);
+    ui->pointRadiusLonLineEdit->blockSignals(false);
+    ui->pointRadiusRadiusLineEdit->blockSignals(false);
+
     ui->elevationInputTypePushButton->setChecked(false);
 }
 
+
 void SurfaceInput::boundingBoxLineEditsTextChanged()
 {
-    bool isNorthValid, isEastValid, isSouthValid, isWestValid;
-
-    double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
-    double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
-    double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
-    double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
-
-    if (isNorthValid && isEastValid && isSouthValid && isWestValid)
+    if(ui->elevationInputTypeComboBox->currentIndex() == 0)
     {
-        QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
-                     .arg(north, 0, 'f', 10)
-                     .arg(south, 0, 'f', 10)
-                     .arg(east,  0, 'f', 10)
-                     .arg(west,  0, 'f', 10);
-        webEngineView->page()->runJavaScript(js);
+        bool isNorthValid, isEastValid, isSouthValid, isWestValid;
+        double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
+        double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
+        double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
+        double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
+
+        if (isNorthValid && isEastValid && isSouthValid && isWestValid)
+        {
+            QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
+            .arg(north, 0, 'f', 10)
+                .arg(south, 0, 'f', 10)
+                .arg(east,  0, 'f', 10)
+                .arg(west,  0, 'f', 10);
+            webEngineView->page()->runJavaScript(js);
+        }
     }
 }
 
 void SurfaceInput::pointRadiusLineEditsTextChanged()
 {
-    // bool isLatValid, isLonValid, isRadiusValid;
+    if (ui->elevationInputTypeComboBox->currentIndex() == 1)
+    {
+        bool isLatValid, isLonValid, isRadiusValid;
+        double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
+        double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
+        double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
+        double boundingBox[4];
 
-    // double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
-    // double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
-    // double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
-    // double boundingBox[4];
-
-    // if(isLatValid && isLonValid && isRadiusValid)
-    // {
-    //     surfaceInput->computeBoundingBox(lat, lon, radius, boundingBox);
-    //     ui->boundingBoxNorthLineEdit->setText(QString::number(boundingBox[0]));
-    //     ui->boundingBoxEastLineEdit->setText(QString::number(boundingBox[1]));
-    //     ui->boundingBoxSouthLineEdit->setText(QString::number(boundingBox[2]));
-    //     ui->boundingBoxWestLineEdit->setText(QString::number(boundingBox[3]));
-    // }
+        if(isLatValid && isLonValid && isRadiusValid)
+        {
+            computeBoundingBox(lat, lon, radius, boundingBox);
+            QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
+                             .arg(boundingBox[0], 0, 'f', 10)
+                             .arg(boundingBox[2], 0, 'f', 10)
+                             .arg(boundingBox[1],  0, 'f', 10)
+                             .arg(boundingBox[3],  0, 'f', 10);
+            webEngineView->page()->runJavaScript(js);
+        }
+    }
 }
 
 void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
@@ -170,11 +185,14 @@ void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
     ui->pointRadiusRadiusLineEdit->clear();
 
     webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+
     if(!currentDEMFilePath.isEmpty())
     {
         QStringList cornerStrs;
         for (int i = 0; i < 8; ++i)
-          cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+        {
+            cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+        }
         QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
         webEngineView->page()->runJavaScript(js);
     }
@@ -238,6 +256,7 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
     {
         ui->meshResolutionSpinBox->setEnabled(false);
     }
+
     ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 }
 
@@ -550,6 +569,15 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALYSize = poInputDS->GetRasterYSize();
     GDALGetCorners(poInputDS, DEMCorners);
 
+    double latitude, longitude;
+    GDALGetCenter(poInputDS, &longitude, &latitude);
+    std::string timeZone = FetchTimeZone(longitude, latitude, NULL);
+    int index = ui->timeZoneComboBox->findText(QString::fromStdString(timeZone));
+    if (index >= 0)
+    {
+        ui->timeZoneComboBox->setCurrentIndex(index);
+    }
+
     if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
         double c1, c2;
@@ -574,7 +602,6 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
-
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)

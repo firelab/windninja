@@ -144,6 +144,8 @@
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
             rectangle.editing.enable();
+            sendBoundingBox(rectangle);
+            rectangle.on('edit', () => sendBoundingBox(rectangle)); 
         }
 
         function drawDEM(DEMCorners) {
