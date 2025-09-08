@@ -53,7 +53,6 @@ class PointInitializationInput : public QObject
 public:
     PointInitializationInput(Ui::MainWindow* ui, QObject* parent = nullptr);
     QVector<QString> getStationFiles();
-    void setupTreeView();
 
 
 signals:

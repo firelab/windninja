@@ -464,7 +464,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>10</number>
+         <number>11</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -750,8 +750,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
-               <height>521</height>
+               <width>538</width>
+               <height>419</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1316,7 +1316,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>572</width>
+               <width>346</width>
                <height>661</height>
               </rect>
              </property>
@@ -2199,6 +2199,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <property name="cursor">
                          <cursorShape>PointingHandCursor</cursorShape>
                         </property>
+                        <item>
+                         <property name="text">
+                          <string>NOMADS-HRRR-CONUS-3-KM</string>
+                         </property>
+                        </item>
                        </widget>
                       </item>
                       <item>
@@ -2610,8 +2615,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
-               <height>588</height>
+               <width>414</width>
+               <height>408</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3316,7 +3321,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
+               <width>381</width>
                <height>318</height>
               </rect>
              </property>
