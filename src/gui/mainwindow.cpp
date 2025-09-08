@@ -353,6 +353,7 @@ MainWindow::MainWindow(QWidget *parent)
     surfaceInput = new SurfaceInput(ui, webEngineView, this);
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, this);
+    weatherModelInput = new WeatherModelInput(ui, this);
 
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
@@ -455,7 +456,10 @@ void MainWindow::connectSignals()
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
-    connect(surfaceInput, SIGNAL(setupTreeView()), pointInitializationInput, SLOT(setupTreeView()));
+    connect(surfaceInput, &SurfaceInput::setupTreeView, pointInitializationInput, &PointInitializationInput::setupTreeView);
+    connect(surfaceInput, &SurfaceInput::setupTreeView, weatherModelInput, &WeatherModelInput::setUpTreeView);
+
+    connect(weatherModelInput, &WeatherModelInput::requestRefresh, this, &MainWindow::refreshUI);
 
     //connect other writeToConsoles to the main writeToConsole
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
@@ -535,22 +539,6 @@ void MainWindow::stabilityCheckBoxClicked()
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
     refreshUI();
-}
-
-void MainWindow::useWeatherModelInitClicked()
-{
-    // AppState& state = AppState::instance();
-    // state.isWeatherModelInitializationToggled = ui->weatherModelCheckBox->isChecked();
-
-
-    // if (state.isWeatherModelInitializationToggled) {
-    //     ui->domainAverageCheckBox->setChecked(false);
-    //     ui->pointInitializationGroupBox->setChecked(false);
-    //     state.isDomainAverageInitializationToggled = ui->domainAverageCheckBox->isChecked();
-    //     state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
-    // }
-
-    // refreshUI();
 }
 
 void MainWindow::outputDirectoryButtonClicked()

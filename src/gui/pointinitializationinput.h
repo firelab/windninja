@@ -53,6 +53,7 @@ class PointInitializationInput : public QObject
 public:
     PointInitializationInput(Ui::MainWindow* ui, QObject* parent = nullptr);
     QVector<QString> getStationFiles();
+    void setupTreeView();
 
 
 signals:
@@ -71,7 +72,6 @@ private slots:
     void folderExpanded(const QModelIndex &index);
     void folderCollapsed(const QModelIndex &index);
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
-    void setupTreeView();
 
 private:
     Ui::MainWindow *ui;
