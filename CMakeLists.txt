@@ -30,7 +30,7 @@ option(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab mac
 mark_as_advanced(FIRELAB_PACKAGE)
 
 if(FIRELAB_PACKAGE)
-    set(NINJA_QTGUI ON)
+    set(NINJA_GUI ON)
     set(NINJA_CLI ON)
 endif(FIRELAB_PACKAGE)
 
@@ -151,7 +151,7 @@ ELSE(USE_VCPKG)
 ENDIF(USE_VCPKG)
 
 # Ninja executables
-option(NINJA_QTGUI "Build Qt GUI" ON)
+option(NINJA_GUI "Build Qt GUI" ON)
 
 option(NINJA_CLI "Build Command Line Interface" ON)
 

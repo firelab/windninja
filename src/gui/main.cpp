@@ -28,7 +28,7 @@
  *****************************************************************************/
 
 #include "mainwindow.h"
-#include "../ninja/windninja.h"
+#include "windninja.h"
 #include <QApplication>
 #include <QTimer>
 #include <QSplashScreen>

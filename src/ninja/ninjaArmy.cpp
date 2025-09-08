@@ -1328,6 +1328,12 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
                 ( nIndex, ninjaComClass::ninjaCLICom );
             retval = NINJA_SUCCESS;
         }
+        else if( comType == "ninjaGUICom" || comType == "gui" )
+        {
+            ninjas[ nIndex ]->set_ninjaCommunication
+                ( nIndex, ninjaComClass::ninjaGUICom );
+            retval = NINJA_SUCCESS;
+        }
         else if( comType == "ninjaQuietCom" || comType == "quiet" )
         {
             ninjas[ nIndex ]->set_ninjaCommunication

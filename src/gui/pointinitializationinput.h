@@ -59,6 +59,9 @@ public:
 signals:
     void requestRefresh();
 
+public slots:
+    void setupTreeView();
+
 private slots:
     void pointInitializationGroupBoxToggled(bool toggled);
     void pointInitializationDownloadDataButtonClicked();

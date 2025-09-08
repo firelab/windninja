@@ -30,10 +30,10 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
-#include "appstate.h"
 #include "ui_mainwindow.h"
-#include "../ninja/windninja.h"
-#include "../ninja/gdal_util.h"
+#include "appstate.h"
+#include "windninja.h"
+#include "gdal_util.h"
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
@@ -88,7 +88,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QWebEngineView *webEngineView;
-    SurfaceInput *surfaceInput;
 
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
@@ -101,7 +100,7 @@ private:
 
     QString fetchTimeZoneDetails(QString currentTimeZone);
     QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
-    int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    static int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
     void computeDEMFile(QString filePath);
     void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
     void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
