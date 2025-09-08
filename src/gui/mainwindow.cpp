@@ -353,6 +353,7 @@ MainWindow::MainWindow(QWidget *parent)
     surfaceInput = new SurfaceInput(ui, webEngineView, this);
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, this);
+    weatherModelInput = new WeatherModelInput(ui, this);
 
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
@@ -456,8 +457,10 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(surfaceInput, &SurfaceInput::setupTreeView, pointInitializationInput, &PointInitializationInput::setupTreeView);
+    connect(surfaceInput, &SurfaceInput::setupTreeView, weatherModelInput, &WeatherModelInput::setUpTreeView);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(weatherModelInput, &WeatherModelInput::requestRefresh, this, &MainWindow::refreshUI);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)

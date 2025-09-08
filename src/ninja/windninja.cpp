@@ -344,10 +344,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(NinjaArmyH * army, double *bounds
  * \return Forecast file name on success, "exception" otherwise.
  */
 
-WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast(NinjaArmyH * army, const char* wxModelType,  unsigned int nHours, const char * elevationFile, char ** options)
 {
-    return reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wx_model_type, numNinjas, elevation_file);
-    
+    wxModelInitialization *model;
+    try
+    {
+        model = wxModelInitializationFactory::makeWxInitializationFromId(wxModelType);
+        model->fetchForecast(elevationFile, nHours);
+        return NINJA_SUCCESS;
+    }
+    catch(armyException &e)
+    {
+        return NINJA_E_INVALID;
+    }
+
+    //return reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wx_model_type, numNinjas, elevation_file);
 }
 
 /**

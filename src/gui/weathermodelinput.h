@@ -31,6 +31,9 @@
 #define WEATHERMODELINPUT_H
 
 #include "ui_mainwindow.h"
+#include "../ninja/windninja.h"
+#include "appstate.h"
+#include "QFileSystemModel"
 #include <QObject>
 
 namespace Ui {
@@ -42,9 +45,20 @@ class WeatherModelInput : public QObject
     Q_OBJECT
 public:
     explicit WeatherModelInput(Ui::MainWindow* ui, QObject* parent = nullptr);
+    void setUpTreeView();
+
+signals:
+    void requestRefresh();
+
+private slots:
+    void weatherModelDataDownloadButtonClicked();
+    void weatherModelDataTreeViewItemSelectionChanged();
+    void weatherModelGroupBoxToggled(bool checked);
 
 private:
-    Ui::MainWindow *ui;
+    Ui::MainWindow *ui;    
+    QFileSystemModel *weatherModelFileSystemModel;
+
 
 };
 
