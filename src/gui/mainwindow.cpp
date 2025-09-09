@@ -320,6 +320,57 @@ void MainWindow::writeToConsole(QString message, QColor color)
     lineNumber++;
 }
 
+void MainWindow::updateProgress(const QString message)
+{
+    progressDialog->setLabelText(message);
+}
+
+void MainWindow::updateProgress(int run, int progress)
+{
+    // update the stored progress value for the current run
+    if( runProgress[run] > progress )
+    {
+        // if the stored progress is bigger than what we are seeing in the currently emitted progress
+        // ignore it. This happens for pointInitialization, when the match points is iterating,
+        // sometimes its next solution is worse and then it would make the progress bar go backwards
+        // by ignoring it, the progress bar just stays where it is
+        runProgress[run] = runProgress[run];
+    }
+    else
+    {
+        // otherwise, store the progress for the current run
+        runProgress[run] = progress;
+    }
+
+    // update the total progress value
+    // calculate the total progress from scratch each time, summing up the progress from each run
+    totalProgress = 0;  // Initialize the progress bar each time
+    for(unsigned int i = 0; i < runProgress.size(); i++)
+    {
+        totalProgress = totalProgress + runProgress[i];
+    }
+
+    // update the progress bar
+    progressDialog->setValue(totalProgress);
+}
+
+void MainWindow::cancelSolve()
+{
+    progressDialog->setLabelText("Canceling...");
+//    progressDialog->setAutoClose(true);  // doesn't seem to matter where this gets placed, within this function, or outside this function, it doesn't seem to be helping. hrm.
+//    QCoreApplication::processEvents();  // doesn't seem to matter where this gets placed, within this function, or outside this function, it doesn't seem to be helping. hrm.
+
+    char **papszOptions = nullptr;
+    int err = NinjaCancel(ninjaArmy, papszOptions);
+    if( err != NINJA_SUCCESS )
+    {
+        qDebug() << "NinjaCancel: err =" << err;
+    }
+
+//    QCoreApplication::processEvents();
+//    progressDialog->setAutoClose(true);
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
@@ -453,7 +504,8 @@ void MainWindow::connectSignals()
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
-    connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole); //    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
+    connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
+//    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(surfaceInput, &SurfaceInput::setupTreeView, pointInitializationInput, &PointInitializationInput::setupTreeView);
@@ -565,7 +617,8 @@ void MainWindow::solveButtonClicked()
     AppState& state = AppState::instance();
 
     int numNinjas = 0;
-    NinjaArmyH *ninjaArmy = nullptr;
+//    NinjaArmyH *ninjaArmy = nullptr;
+    ninjaArmy = nullptr;
     char **papszOptions = nullptr;
     const char *initializationMethod = nullptr;
 
@@ -725,14 +778,85 @@ void MainWindow::solveButtonClicked()
     }
     writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
+    //progressDialog = new QProgressDialog("Solving...", "Cancel", 0, numNinjas*100, ui->centralwidget);
+    progressDialog = new QProgressDialog(this);
+    progressDialog->setWindowModality(Qt::WindowModal);
+//    progressDialog->setCancelButton(nullptr);
+    progressDialog->setMinimumDuration(0);
+//    progressDialog->setMinimumDuration(1);
+    progressDialog->setAutoClose(false);
+//    progressDialog->setAutoReset(false);
+
+    progressDialog->setRange(0, numNinjas*100);
+    progressDialog->setValue(0);
+    progressDialog->setLabelText("Solving...");
+
+    progressDialog->setCancelButtonText("Cancel");
+    connect( progressDialog, SIGNAL( canceled() ), this, SLOT( cancelSolve() ) );
+
+    // initialize the progress values for the current set of runs
+    totalProgress = 0;
+    for(unsigned int i = 0; i < numNinjas; i++)
+    {
+        runProgress.push_back(0);
+    }
+
+    progressDialog->show();
+
     prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+
+    // set progress dialog initial value and initial text for the set of runs
+    progressDialog->setValue(0);
+    progressDialog->setLabelText("Running...");
 
     writeToConsole( "Initializing runs..." );
     int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
     if(err != 1) //NinjaStartRuns returns 1 on success
     {
-        printf("NinjaStartRuns: err = %d\n", err);
+        if( err == NINJA_E_CANCELLED )
+        {
+//            progressDialog->cancel();  // sometimes delays it enough to cause it to seem to truly cancel, but it really doesn't, heck this signal was already emitted up to this point anyways
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));  // moving this to after the ninjaArmy destructor does its final extra flush-like emit, seems to neither hurt nor help. chatgpt seems to think we shouldn't even be doing disconnect() in the first place.  // have to have this uncommented out somewhere in here, or the code seg faults
+            progressDialog->setAutoClose(true);  // leaving this here or not in this spot, or in cancelSolve(), doesn't seem to be having much effect
+
+            runProgress.clear();  // trying to move this to after the destructor, when it is no longer needed, doesn't seem to hurt or help. But shouldn't this be after the disconnect, since signals still seem to be getting emitted till at least after the disconnect()? Hrm.
+
+            // calls delete on the solve class instance inner parts, normally done outside of canceled(),
+            // but because doing a return here to try to skip the final message, need to do it now
+            err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+            if(err != NINJA_SUCCESS)
+            {
+                printf("NinjaDestroyRuns: err = %d\n", err);
+            }
+
+//            runProgress.clear();
+//
+////            progressDialog->cancel();
+//            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+//            progressDialog->setAutoClose(true);
+
+            // why is there another message and info from the threads that occurs after this one most if not at least half the time? Somehow the threads are still finishing up, or the ninjaArmy destructor is behaving as a late extra final flush-like emit and overwrites this result with a new one that is actually an old one immediately after. So annoying.
+            writeToConsole( "Simulation cancelled by user" );
+            qDebug() << "Simulation cancelled by user";
+            return;
+        }
+        else
+        {
+            printf("NinjaStartRuns: err = %d\n", err);
+        }
     }
+
+    // moving this to after the ninjaArmy destructor does its final flush-like emit, seems to neither hurt nor help.
+    // chatgpt seems to think we shouldn't even be doing disconnect() in the first place, but have to have this uncommented out somewhere in here, or the code seg faults
+    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+    // why does this sometimes not become the final message and info? Somehow the threads are still finishing up, or the ninjaArmy destructor is behaving as a late extra final flush-like emit and overwrites this result with a new one that is actually an old one immediately after. So annoying.
+    int maxProgress = numNinjas*100;
+    progressDialog->setValue(maxProgress);
+    progressDialog->setLabelText("Simulations finished");
+    progressDialog->setCancelButtonText("Close");  // is this really wise? "close" now runs "cancelSolve" again! So maybe the disconnect SHOULD occur before this step. Hrm.
+    // clear the progress values for the next set of runs
+    runProgress.clear();  // is this wise to do before the ninjaArmy destructor, if it has that final extra flush-like emit still using this information?
 
     err = NinjaDestroyArmy(ninjaArmy, papszOptions);
     if(err != NINJA_SUCCESS)
@@ -740,6 +864,9 @@ void MainWindow::solveButtonClicked()
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
     writeToConsole("Finished with simulations", Qt::darkGreen);
+
+//    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+//    runProgress.clear();
 
     // vector<string> outputFiles;
     // QDir outDir(ui->outputDirectoryLineEdit->text());
@@ -962,6 +1089,22 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
+
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgress );
+        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ) );
+
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgress );
+        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ) );
+
+//        // old code style method (see this in the old qt4 gui code)
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::AutoConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ), Qt::AutoConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
+
+//        // new code style method, chatgpt seems to prefer this one, though the AutoConnection seems to have slightly better results, well maybe
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::QueuedConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ), Qt::QueuedConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ), Qt::QueuedConnection );
 
         err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
         if(err != NINJA_SUCCESS)

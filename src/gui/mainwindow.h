@@ -121,6 +121,9 @@ private slots:
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void refreshUI();
     void writeToConsole(QString message, QColor color = Qt::white);
+    void updateProgress(int run, int progress);
+    void updateProgress(const QString message);
+    void cancelSolve();
 
 private:
     Ui::MainWindow *ui;
@@ -133,6 +136,12 @@ private:
     DomainAverageInput *domainAverageInput;
     WeatherModelInput *weatherModelInput;
     PointInitializationInput *pointInitializationInput;
+
+    QProgressDialog *progressDialog;
+    int totalProgress;
+    std::vector<int> runProgress;
+    NinjaArmyH *ninjaArmy;
+
     QString currentDEMFilePath;
 
     void connectSignals();
