@@ -31,7 +31,7 @@
 #define WEATHERMODELINPUT_H
 
 #include "ui_mainwindow.h"
-#include "../ninja/windninja.h"
+#include "windninja.h"
 #include "appstate.h"
 #include "QFileSystemModel"
 #include <QObject>

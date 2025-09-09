@@ -31,9 +31,9 @@
 #define POINTINITIALIZATIONINPUT_H
 
 #include "appstate.h"
-#include "../ninja/windninja.h"
+#include "windninja.h"
+#include "gdal_util.h"
 #include "ui_mainwindow.h"
-#include "../ninja/gdal_util.h"
 #include <QObject>
 #include <QTimeZone>
 #include <QFuture>
