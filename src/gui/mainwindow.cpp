@@ -815,11 +815,11 @@ void MainWindow::solveButtonClicked()
     {
         if( err == NINJA_E_CANCELLED )
         {
-//            progressDialog->cancel();  // sometimes delays it enough to cause it to seem to truly cancel, but it really doesn't, heck this signal was already emitted up to this point anyways
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));  // moving this to after the ninjaArmy destructor does its final extra flush-like emit, seems to neither hurt nor help. chatgpt seems to think we shouldn't even be doing disconnect() in the first place.  // have to have this uncommented out somewhere in here, or the code seg faults
-            progressDialog->setAutoClose(true);  // leaving this here or not in this spot, or in cancelSolve(), doesn't seem to be having much effect
+////            progressDialog->cancel();  // sometimes delays it enough to cause it to seem to truly cancel, but it really doesn't, heck this signal was already emitted up to this point anyways
+//            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));  // moving this to after the ninjaArmy destructor does its final extra flush-like emit, seems to neither hurt nor help. chatgpt seems to think we shouldn't even be doing disconnect() in the first place.  // have to have this uncommented out somewhere in here, or the code seg faults
+//            progressDialog->setAutoClose(true);  // leaving this here or not in this spot, or in cancelSolve(), doesn't seem to be having much effect
 
-            runProgress.clear();  // trying to move this to after the destructor, when it is no longer needed, doesn't seem to hurt or help. But shouldn't this be after the disconnect, since signals still seem to be getting emitted till at least after the disconnect()? Hrm.
+//            runProgress.clear();  // trying to move this to after the destructor, when it is no longer needed, doesn't seem to hurt or help. But shouldn't this be after the disconnect, since signals still seem to be getting emitted till at least after the disconnect()? Hrm.
 
             // calls delete on the solve class instance inner parts, normally done outside of canceled(),
             // but because doing a return here to try to skip the final message, need to do it now
@@ -829,11 +829,11 @@ void MainWindow::solveButtonClicked()
                 printf("NinjaDestroyRuns: err = %d\n", err);
             }
 
-//            runProgress.clear();
-//
-////            progressDialog->cancel();
-//            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-//            progressDialog->setAutoClose(true);
+            runProgress.clear();
+
+//            progressDialog->cancel();
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            progressDialog->setAutoClose(true);
 
             // why is there another message and info from the threads that occurs after this one most if not at least half the time? Somehow the threads are still finishing up, or the ninjaArmy destructor is behaving as a late extra final flush-like emit and overwrites this result with a new one that is actually an old one immediately after. So annoying.
             writeToConsole( "Simulation cancelled by user" );
@@ -848,7 +848,7 @@ void MainWindow::solveButtonClicked()
 
     // moving this to after the ninjaArmy destructor does its final flush-like emit, seems to neither hurt nor help.
     // chatgpt seems to think we shouldn't even be doing disconnect() in the first place, but have to have this uncommented out somewhere in here, or the code seg faults
-    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+//    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
     // why does this sometimes not become the final message and info? Somehow the threads are still finishing up, or the ninjaArmy destructor is behaving as a late extra final flush-like emit and overwrites this result with a new one that is actually an old one immediately after. So annoying.
     int maxProgress = numNinjas*100;
@@ -856,7 +856,7 @@ void MainWindow::solveButtonClicked()
     progressDialog->setLabelText("Simulations finished");
     progressDialog->setCancelButtonText("Close");  // is this really wise? "close" now runs "cancelSolve" again! So maybe the disconnect SHOULD occur before this step. Hrm.
     // clear the progress values for the next set of runs
-    runProgress.clear();  // is this wise to do before the ninjaArmy destructor, if it has that final extra flush-like emit still using this information?
+//    runProgress.clear();  // is this wise to do before the ninjaArmy destructor, if it has that final extra flush-like emit still using this information?
 
     err = NinjaDestroyArmy(ninjaArmy, papszOptions);
     if(err != NINJA_SUCCESS)
@@ -865,8 +865,8 @@ void MainWindow::solveButtonClicked()
     }
     writeToConsole("Finished with simulations", Qt::darkGreen);
 
-//    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-//    runProgress.clear();
+    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+    runProgress.clear();
 
     // vector<string> outputFiles;
     // QDir outDir(ui->outputDirectoryLineEdit->text());
