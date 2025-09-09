@@ -466,22 +466,6 @@ int pointInput::directStationTraffic(const char* xFileName)
                 deselectStationFile(xFileName);
                 return -1;
             }
-            int start_time_hours = atoi(start_datetime.substr(11, 2).c_str());
-            int stop_time_hours = atoi(stop_datetime.substr(11, 2).c_str());
-            if( start_time_hours >= 24 )
-            {
-                QMessageBox::critical(this, tr("Failure."), "station start_time "+QString(start_datetime.c_str())+" has invalid hours!", QMessageBox::Ok | QMessageBox::Default);
-                // need to deselect the last selected station file as well
-                deselectStationFile(xFileName);
-                return -1;
-            }
-            if( stop_time_hours >= 24 )
-            {
-                QMessageBox::critical(this, tr("Failure."), "station stop_time "+QString(stop_datetime.c_str())+" has invalid hours!", QMessageBox::Ok | QMessageBox::Default);
-                // need to deselect the last selected station file as well
-                deselectStationFile(xFileName);
-                return -1;
-            }
 
             readStationTime(start_datetime,stop_datetime,idx2); //Turns the Start and Stop times into local timess......
             ssidx<<idx2;
@@ -621,36 +605,27 @@ int pointInput::directStationTraffic(const char* xFileName)
 void pointInput::readStationTime(string start_time, string stop_time, int xSteps)
 {
     QString q_time_format = "yyyy-MM-ddTHH:mm:ssZ";
-    QString start_utcX = QString::fromStdString(start_time);
-    QString end_utcX = QString::fromStdString(stop_time);
 
-    QDateTime start_qat = QDateTime::fromString(start_utcX,q_time_format);
-    QDateTime end_qat = QDateTime::fromString(end_utcX,q_time_format);
-
-    start_qat.setTimeSpec(Qt::UTC);
-    end_qat.setTimeSpec(Qt::UTC); //Set the Time to UTC
-    
-    
     //// convert the input start and stop times into boost local date time objects, so convert from UTC time to local time
-    
+
     blt::time_zone_ptr tz; // Initialize time zone
     tz = globalTimeZoneDB.time_zone_from_region(tzString.toStdString()); // Get time zone from database
     
     // parse the start time into date and time parts
-    int start_year = start_qat.date().year();
-    int start_month = start_qat.date().month();
-    int start_day = start_qat.date().day();    
-    int start_hour = start_qat.time().hour();
-    int start_minute = start_qat.time().minute();
-    int start_sec = start_qat.time().second();
+    int start_year = atoi(start_time.substr(0, 4).c_str());
+    int start_month = atoi(start_time.substr(5, 2).c_str());
+    int start_day = atoi(start_time.substr(8, 2).c_str());
+    int start_hour = atoi(start_time.substr(11, 2).c_str());
+    int start_minute = atoi(start_time.substr(14, 2).c_str());
+    int start_sec = atoi(start_time.substr(17, 2).c_str());
     
     // parse the start time into date and time parts
-    int stop_year = end_qat.date().year();
-    int stop_month = end_qat.date().month();
-    int stop_day = end_qat.date().day();    
-    int stop_hour = end_qat.time().hour();
-    int stop_minute = end_qat.time().minute();
-    int stop_sec = end_qat.time().second();
+    int stop_year = atoi(stop_time.substr(0, 4).c_str());
+    int stop_month = atoi(stop_time.substr(5, 2).c_str());
+    int stop_day = atoi(stop_time.substr(8, 2).c_str());
+    int stop_hour = atoi(stop_time.substr(11, 2).c_str());
+    int stop_minute = atoi(stop_time.substr(14, 2).c_str());
+    int stop_sec = atoi(stop_time.substr(17, 2).c_str());
     
     // make intermediate start and stop dates for generating ptime objects
     bg::date startTime_date(start_year,start_month,start_day);
@@ -671,8 +646,8 @@ void pointInput::readStationTime(string start_time, string stop_time, int xSteps
     
     std::string os_time_format = "%Y-%m-%dT%H:%M:%SZ";  // this is the ostringstream format string that replicates the above QDateTime format string
     
-    blt::local_time_facet* facet;
-    facet = new blt::local_time_facet();
+    bpt::time_facet* facet;
+    facet = new bpt::time_facet();
     
     facet->format(os_time_format.c_str());
     
@@ -680,7 +655,8 @@ void pointInput::readStationTime(string start_time, string stop_time, int xSteps
     // calculate the start_time QDate
     std::ostringstream os;
     os.imbue(std::locale(std::locale::classic(), facet));
-    os << boost_local_startTime;
+    //os << boost_local_startTime.utc_time();
+    os << boost_local_startTime.local_time();
     QString loc_start_time_qStr = QString::fromStdString( os.str() );
     os.str("");  // reset for parsing the next time
     os.clear();
@@ -688,7 +664,8 @@ void pointInput::readStationTime(string start_time, string stop_time, int xSteps
     
     // calculate the end_time QDate
     os.imbue(std::locale(std::locale::classic(), facet));
-    os << boost_local_stopTime;
+    //os << boost_local_stopTime.utc_time();
+    os << boost_local_stopTime.local_time();
     QString loc_end_time_qStr = QString::fromStdString( os.str() );
     os.str("");  // reset for parsing the next time
     os.clear();
