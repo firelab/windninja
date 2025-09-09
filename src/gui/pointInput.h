@@ -148,6 +148,8 @@ class pointInput : public QWidget
     stationFetchWidget *xWidget;
     QString tzString;
 
+    void deselectStationFile(const char* stationFileName);
+
   public slots:
     void updateTz(QString tz);
     void checkForModelData();
