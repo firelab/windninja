@@ -436,6 +436,53 @@ int pointInput::directStationTraffic(const char* xFileName)
             CPLDebug("STATION_FETCH","File can be used for Times Series");
             CPLDebug("STATION_FETCH","Suggesting Potentially Reasonable Time Series Parameters...");
 
+            ///// check whether the times are valid HERE, while we still have access to file index, last selected file information, and error type information
+            QString q_time_format = "yyyy-MM-ddTHH:mm:ssZ";
+            if( start_datetime.length() < q_time_format.toStdString().length() )
+            {
+                QMessageBox::critical(this, tr("Failure."), "station start_time "+QString(start_datetime.c_str())+" is invalid length!", QMessageBox::Ok | QMessageBox::Default);
+                // need to deselect the last selected station file as well
+                deselectStationFile(xFileName);
+                return -1;
+            }
+            if( stop_datetime.length() < q_time_format.toStdString().length() )
+            {
+                QMessageBox::critical(this, tr("Failure."), "station stop_time "+QString(stop_datetime.c_str())+" is invalid length!", QMessageBox::Ok | QMessageBox::Default);
+                // need to deselect the last selected station file as well
+                deselectStationFile(xFileName);
+                return -1;
+            }
+            if( start_datetime[4] != '-' || start_datetime[7] != '-' || start_datetime[10] != 'T' || start_datetime[13] != ':' || start_datetime[16] != ':' || start_datetime[19] != 'Z')
+            {
+                QMessageBox::critical(this, tr("Failure."), "station start_time "+QString(start_datetime.c_str())+" has invalid format!", QMessageBox::Ok | QMessageBox::Default);
+                // need to deselect the last selected station file as well
+                deselectStationFile(xFileName);
+                return -1;
+            }
+            if( stop_datetime[4] != '-' || stop_datetime[7] != '-' || stop_datetime[10] != 'T' || stop_datetime[13] != ':' || stop_datetime[16] != ':' || stop_datetime[19] != 'Z')
+            {
+                QMessageBox::critical(this, tr("Failure."), "station stop_time "+QString(stop_datetime.c_str())+" has invalid format!", QMessageBox::Ok | QMessageBox::Default);
+                // need to deselect the last selected station file as well
+                deselectStationFile(xFileName);
+                return -1;
+            }
+            int start_time_hours = atoi(start_datetime.substr(11, 2).c_str());
+            int stop_time_hours = atoi(stop_datetime.substr(11, 2).c_str());
+            if( start_time_hours >= 24 )
+            {
+                QMessageBox::critical(this, tr("Failure."), "station start_time "+QString(start_datetime.c_str())+" has invalid hours!", QMessageBox::Ok | QMessageBox::Default);
+                // need to deselect the last selected station file as well
+                deselectStationFile(xFileName);
+                return -1;
+            }
+            if( stop_time_hours >= 24 )
+            {
+                QMessageBox::critical(this, tr("Failure."), "station stop_time "+QString(stop_datetime.c_str())+" has invalid hours!", QMessageBox::Ok | QMessageBox::Default);
+                // need to deselect the last selected station file as well
+                deselectStationFile(xFileName);
+                return -1;
+            }
+
             readStationTime(start_datetime,stop_datetime,idx2); //Turns the Start and Stop times into local timess......
             ssidx<<idx2;
             idx3=ssidx.str();
@@ -997,6 +1044,14 @@ void pointInput::setDiurnalParam(bool diurnalCheck)
     CPLDebug("STATION_FETCH","DIURNAL/STABILITY STATUS: %i",isDiurnalChecked);
 }
 
+void pointInput::deselectStationFile(const char* stationFileName)
+{
+    QModelIndex QFileIdx = sfModel->index(stationFileName);
+    if( QFileIdx.isValid() )
+    {
+        treeView->selectionModel()->select(QFileIdx, QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+    }
+}
 
 /**
  * *@brief pointInput::checkForModelData
