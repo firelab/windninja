@@ -777,7 +777,7 @@ void MainWindow::solveButtonClicked()
     progressDialog->setWindowModality(Qt::WindowModal);
     progressDialog->setMinimumDuration(0);
     progressDialog->setAutoClose(false);
-//    progressDialog->setAutoReset(false);
+    progressDialog->setAutoReset(false);
 
     progressDialog->setCancelButtonText("Cancel");
     connect( progressDialog, SIGNAL( canceled() ), this, SLOT( cancelSolve() ) );
