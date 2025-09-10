@@ -368,6 +368,39 @@ public:
     */
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp type for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    * if used, expects to be called BEFORE setTurbKml_nColorBreaks() and setTurbKml_colorBreakVals()
+    *
+    * \param nIndex index of a ninja
+    * \param colorRampType the type and style of color ramp to use for a turbulence kml, "minToMax", "minToMax_uniform", or "specificVals"
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKml_colorRampType( const int nIndex, const std::string colorRampType, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp nColorBreaks for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    * if used, expects to be called AFTER setTurbKml_colorRampType() and BEFORE setTurbKml_colorBreakVals()
+    *
+    * \param nIndex index of a ninja
+    * \param nColorBreaks number of color ramp breaks to use
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKml_nColorBreaks( const int nIndex, const int nColorBreaks, char ** papszOptions=NULL );
+
+    /**
+    * \brief Set the turbulence kml ascii2png color ramp break values for a ninja
+    * function for setting values to use to later override the default turbulence kml ascii2png color ramp values
+    * if used, expects to be called AFTER setTurbKml_colorRampType() and setTurbKml_nColorBreaks()
+    *
+    * \param nIndex index of a ninja
+    * \param desiredBrk0, desiredBrk1, desiredBrk2, desiredBrk3 the desired color breaks, in increasing order, setting desiredBrk0 to an ignored value if nColorBreaks is set to 3
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setTurbKml_colorBreakVals( const int nIndex, const double desiredBrk0, const double desiredBrk1, const double desiredBrk2, const double desiredBrk3, char ** papszOptions=NULL );
+
 #endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
