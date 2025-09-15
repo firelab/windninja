@@ -1086,10 +1086,10 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
 
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgress );
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, static_cast<void (MainWindow::*)(QString)>(&MainWindow::updateProgress) );
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ) );
 
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, &MainWindow::updateProgress );
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, static_cast<void (MainWindow::*)(int,int)>(&MainWindow::updateProgress) );
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ) );
 
 //        // old code style method (see this in the old qt4 gui code)
