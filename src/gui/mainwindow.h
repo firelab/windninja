@@ -42,6 +42,7 @@
 //#include "ninjaCom.h"
 #include "windninja.h"
 #include <QWebChannel>
+#include <QFuture>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
@@ -138,6 +139,7 @@ private:
     PointInitializationInput *pointInitializationInput;
 
     QProgressDialog *progressDialog;
+    QFutureWatcher<void> *futureWatcher;
     int totalProgress;
     std::vector<int> runProgress;
     NinjaArmyH *ninjaArmy;

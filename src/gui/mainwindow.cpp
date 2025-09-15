@@ -789,6 +789,8 @@ void MainWindow::solveButtonClicked()
         runProgress.push_back(0);
     }
 
+    futureWatcher = new QFutureWatcher<void>(this);
+
     progressDialog->show();
 
     prepareArmy(ninjaArmy, numNinjas, initializationMethod);
@@ -798,31 +800,18 @@ void MainWindow::solveButtonClicked()
     progressDialog->setLabelText("Running...");
 
     writeToConsole( "Initializing runs..." );
-    int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
-    if(err != 1) //NinjaStartRuns returns 1 on success
-    {
-        if( err == NINJA_E_CANCELLED )
+
+
+    connect(futureWatcher, &QFutureWatcher<void>::finished, [=]() {
+        int err;
+        if (futureWatcher->isCanceled())
         {
-            // calls delete on the solve class instance inner parts, normally done outside of canceled(),
-            // but because doing a return here to try to skip the final message, need to do it now
             err = NinjaDestroyArmy(ninjaArmy, papszOptions);
             if(err != NINJA_SUCCESS)
             {
                 printf("NinjaDestroyRuns: err = %d\n", err);
             }
 
-            // aparently this disconnect() followed by a final message box, is potentially acting as a code guard
-            // the final extra flush-like emitted signal is still being emitted, but it is being ignored,
-            // or, it somehow indirectly forced a better event handling order, causing the leftover emitted signals
-            // to FINALLY wrap up at the appropriate time BEFORE the next set of code is called.
-            // it is hard to tell which it is, the method might break down for increasing numbers of threads.
-            // commenting out the disconnect() statements causes seg faults, implying that they are VITAL
-            // to dealing with these extra emitted signals, but it is hard to determine the exact reason they are fixing the problem
-            //
-            // normally it is not desired to use a disconnect() call to flush the last few unrelated signals,
-            // the disconnect() call is supposed to be for making the "cancel" button become a "close" button,
-            // but because disconnect() needs called for the cancelSolve() button anyways, using it to suppress/flush out
-            // all those final extra flush-like emitted signals happens to be super helpful I guess.
             disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
             progressDialog->setValue(maxProgress);
             progressDialog->setLabelText("Simulation cancelled");
@@ -833,40 +822,47 @@ void MainWindow::solveButtonClicked()
 
             writeToConsole( "Simulation cancelled by user" );
             qDebug() << "Simulation cancelled by user";
-            return;
         }
         else
         {
-            printf("NinjaStartRuns: err = %d\n", err);
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            progressDialog->setValue(maxProgress);
+            progressDialog->setLabelText("Simulations finished");
+            progressDialog->setCancelButtonText("Close");
+
+            err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+            if(err != NINJA_SUCCESS)
+            {
+                printf("NinjaDestroyRuns: err = %d\n", err);
+            }
+            writeToConsole("Finished with simulations", Qt::darkGreen);
+
+            // clear the progress values for the next set of runs
+            runProgress.clear();
         }
-    }
+    });
 
-    // aparently this disconnect() followed by a final message box, is potentially acting as a code guard
-    // the final extra flush-like emitted signal is still being emitted, but it is being ignored,
-    // or, it somehow indirectly forced a better event handling order, causing the leftover emitted signals
-    // to FINALLY wrap up at the appropriate time BEFORE the next set of code is called.
-    // it is hard to tell which it is, the method might break down for increasing numbers of threads.
-    // commenting out the disconnect() statements causes seg faults, implying that they are VITAL
-    // to dealing with these extra emitted signals, but it is hard to determine the exact reason they are fixing the problem
-    //
-    // normally it is not desired to use a disconnect() call to flush the last few unrelated signals,
-    // the disconnect() call is supposed to be for making the "cancel" button become a "close" button,
-    // but because disconnect() needs called for the cancelSolve() button anyways, using it to suppress/flush out
-    // all those final extra flush-like emitted signals happens to be super helpful I guess.
-    disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-    progressDialog->setValue(maxProgress);
-    progressDialog->setLabelText("Simulations finished");
-    progressDialog->setCancelButtonText("Close");
-
-    err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-    if(err != NINJA_SUCCESS)
-    {
-        printf("NinjaDestroyRuns: err = %d\n", err);
-    }
-    writeToConsole("Finished with simulations", Qt::darkGreen);
-
-    // clear the progress values for the next set of runs
-    runProgress.clear();
+    QFuture<void> future = QtConcurrent::run([=]() {
+        try {
+            int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+            if(err != 1) //StartRuns returns 1 on success
+            {
+                if( err == NINJA_E_CANCELLED )
+                {
+                    writeToConsole( "Simulation cancelled by user" );
+                    qDebug() << "Simulation cancelled by user";
+                }
+                else
+                {
+                    printf("NinjaStartRuns: err = %d\n", err);
+                }
+            }
+        } catch (const std::exception &e) { // Store error message somewhere (thread-safe)
+            qWarning() << "Solver error:" << e.what();
+            throw; // will propagate to the future
+        }
+    });
+    futureWatcher->setFuture(future);
 
     // vector<string> outputFiles;
     // QDir outDir(ui->outputDirectoryLineEdit->text());
@@ -1093,7 +1089,7 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgress );
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ) );
 
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgress );
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, &MainWindow::updateProgress );
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ) );
 
 //        // old code style method (see this in the old qt4 gui code)
