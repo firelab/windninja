@@ -122,8 +122,8 @@ private slots:
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void refreshUI();
     void writeToConsole(QString message, QColor color = Qt::white);
-    void updateProgress(int run, int progress);
-    void updateProgress(const QString message);
+    void updateProgressValue(int run, int progress);
+    void updateProgressMessage(const QString message);
     void cancelSolve();
 
 private:

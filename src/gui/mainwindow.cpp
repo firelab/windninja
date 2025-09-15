@@ -320,12 +320,12 @@ void MainWindow::writeToConsole(QString message, QColor color)
     lineNumber++;
 }
 
-void MainWindow::updateProgress(const QString message)
+void MainWindow::updateProgressMessage(const QString message)
 {
     progressDialog->setLabelText(message);
 }
 
-void MainWindow::updateProgress(int run, int progress)
+void MainWindow::updateProgressValue(int run, int progress)
 {
     // update the stored progress value for the current run
     if( runProgress[run] > progress )
@@ -1086,21 +1086,21 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
         connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
 
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, static_cast<void (MainWindow::*)(QString)>(&MainWindow::updateProgress) );
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ) );
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgressMessage );
+        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ) );
 
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, static_cast<void (MainWindow::*)(int,int)>(&MainWindow::updateProgress) );
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ) );
+        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, &MainWindow::updateProgressValue );
+        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ) );
 
 //        // old code style method (see this in the old qt4 gui code)
 //        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::AutoConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ), Qt::AutoConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ), Qt::AutoConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ), Qt::AutoConnection );
 
 //        // new code style method, chatgpt seems to prefer this one, though the AutoConnection seems to have slightly better results, well maybe
 //        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::QueuedConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgress( QString ) ), Qt::QueuedConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgress( int, int ) ), Qt::QueuedConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ), Qt::QueuedConnection );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ), Qt::QueuedConnection );
 
         err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
         if(err != NINJA_SUCCESS)
