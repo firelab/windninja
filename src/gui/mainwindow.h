@@ -139,7 +139,7 @@ private:
     PointInitializationInput *pointInitializationInput;
 
     QProgressDialog *progressDialog;
-    QFutureWatcher<void> *futureWatcher;
+    QFutureWatcher<int> *futureWatcher;
     int totalProgress;
     std::vector<int> runProgress;
     NinjaArmyH *ninjaArmy;

@@ -789,7 +789,7 @@ void MainWindow::solveButtonClicked()
         runProgress.push_back(0);
     }
 
-    futureWatcher = new QFutureWatcher<void>(this);
+    futureWatcher = new QFutureWatcher<int>(this);
 
     progressDialog->show();
 
@@ -803,64 +803,145 @@ void MainWindow::solveButtonClicked()
 
 
     connect(futureWatcher, &QFutureWatcher<void>::finished, [=]() {
-        ////if( futureWatcher->isCanceled() )  // this doesn't get triggered as reliably as the QProgressDialog cancel button
-        if( progressDialog->wasCanceled() )
-        {
+        try {
+
+            int result = futureWatcher->future().result();  // gets return of the QtConcurrent::run() function, unless an error was thrown in which case it throws. But the thrown error comes out truncated, it loses the details of the error message
+
+            if( result == 1 ) // simulation properly finished
+            {
+                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+                progressDialog->setValue(maxProgress);
+                progressDialog->setLabelText("Simulations finished");
+                progressDialog->setCancelButtonText("Close");
+
+                int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+                if(err != NINJA_SUCCESS)
+                {
+                    printf("NinjaDestroyRuns: err = %d\n", err);
+                }
+
+                // clear the progress values for the next set of runs
+                runProgress.clear();
+
+                qDebug() << "Finished with simulations";
+                writeToConsole("Finished with simulations", Qt::darkGreen);
+            }
+            ////else if( futureWatcher->isCanceled() ) // this doesn't get triggered as reliably as the QProgressDialog cancel button
+            //else if( result == NINJA_E_CANCELLED ) // this is probably the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
+            else if( progressDialog->wasCanceled() ) // simulation was cancelled
+            {
+                int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+                if(err != NINJA_SUCCESS)
+                {
+                    printf("NinjaDestroyRuns: err = %d\n", err);
+                }
+
+                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+                progressDialog->setValue(maxProgress);
+                progressDialog->setLabelText("Simulation cancelled");
+                progressDialog->setCancelButtonText("Close");
+                //progressDialog->close();
+
+                // clear the progress values for the next set of runs
+                runProgress.clear();
+
+                qDebug() << "Simulation cancelled by user";
+                //writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
+                //writeToConsole( "Simulation cancelled by user", Qt::QColor::fromRgb(255, 165, 0) );  // orange
+                writeToConsole( "Simulation cancelled by user", Qt::yellow);
+            }
+            else // simulation ended in some known error
+            {
+                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+                progressDialog->setValue(maxProgress);
+                progressDialog->setLabelText("Simulation ended in error\n"+QString::number(result));
+                progressDialog->setCancelButtonText("Close");
+
+                int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+                if(err != NINJA_SUCCESS)
+                {
+                    printf("NinjaDestroyRuns: err = %d\n", err);
+                }
+
+                // clear the progress values for the next set of runs
+                runProgress.clear();
+
+                qWarning() << "Solver error:" << result;
+                writeToConsole("Solver error: "+QString::number(result), Qt::red);
+            }
+
+        } catch (const std::exception &e) {
+
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            // message got truncated, use the QtConcurrent::run() messaging
+            // except that stuff there doesn't seem to propagate well either, hrm
+            progressDialog->setValue(maxProgress);
+            progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
+            progressDialog->setCancelButtonText("Close");
+
             int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
             if(err != NINJA_SUCCESS)
             {
                 printf("NinjaDestroyRuns: err = %d\n", err);
             }
-
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation cancelled");
-            progressDialog->setCancelButtonText("Close");
-            //progressDialog->close();
-
-            runProgress.clear();
-
-            qDebug() << "Simulation cancelled by user";
-            //writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
-            //writeToConsole( "Simulation cancelled by user", Qt::QColor::fromRgb(255, 165, 0) );  // orange
-            writeToConsole( "Simulation cancelled by user", Qt::yellow);
-        }
-        else
-        {
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulations finished");
-            progressDialog->setCancelButtonText("Close");
-
-            int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-            if(err != NINJA_SUCCESS)
-            {
-                printf("NinjaDestroyRuns: err = %d\n", err);
-            }
-
-            qDebug() << "Finished with simulations";
-            writeToConsole("Finished with simulations", Qt::darkGreen);
 
             // clear the progress values for the next set of runs
             runProgress.clear();
+
+            // message got truncated, use the QtConcurrent::run() messaging
+            // except that stuff there doesn't seem to propagate well either, hrm
+            qWarning() << "Solver error:" << e.what();
+            writeToConsole("Solver error: "+QString(e.what()), Qt::red);
+
+        } catch (...) {
+
+            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+            progressDialog->setValue(maxProgress);
+            progressDialog->setLabelText("Simulation ended with unknown error");
+            progressDialog->setCancelButtonText("Close");
+
+            int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+            if(err != NINJA_SUCCESS)
+            {
+                printf("NinjaDestroyRuns: err = %d\n", err);
+            }
+
+            // clear the progress values for the next set of runs
+            runProgress.clear();
+
+            qWarning() << "unknown solver error";
+            writeToConsole("unknown solver error", Qt::red);
+
         }
+
+        futureWatcher->deleteLater();
     });
 
-    QFuture<void> future = QtConcurrent::run([=]() {
+    QFuture<int> future = QtConcurrent::run([=]() {
         try {
-            int err = NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
-            if(err != 1) //StartRuns returns 1 on success
-            {
-                if( err == NINJA_E_CANCELLED )
-                {
-                    writeToConsole( "Simulation cancelled by user" );
-                    qDebug() << "Simulation cancelled by user";
-                }
-                else
-                {
-                    printf("NinjaStartRuns: err = %d\n", err);
-                }
-            }
+
+            //// calling prepareArmy here is causing all kinds of troubles. Local variables aren't properly being passed on,
+            //// or aren't properly copied ([=] type thing), or aren't properly in scope. The other values are .h variables,
+            //// so they would at least be in the proper scope. But the out of scope variables leads to all kinds
+            //// of "QObject::connect: Cannot connect" and "err = 2" type messages. It is still somehow continuing to run though.
+            ////
+            //// seems the only way to put prepareArmy into a QFutureWatcher function, if it would even work,
+            //// would be to have two separate QFutureWatcher functions
+            ////prepareArmy(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), initializationMethod);
+
+            return NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+
+        } catch (cancelledByUser& e) {  // I forgot that the cancelSolve() works by doing a throw, I'm surprised that this throw is propagating out of the solver though
+
+            qWarning() << "Solver error:" << e.what();
+
+            progressDialog->setValue(maxProgress);
+            progressDialog->setLabelText("Simulation cancelled by user");
+            progressDialog->setCancelButtonText("Close");
+
+            ////throw; // will propagate to the future. We purposefully want to skip passing it on for this case, use the QFutureWatcher->future()->result() value instead. However, the return/result value was 0, not the NINJA_E_CANCELLED value of 7. Hrm.
+            return NINJA_E_CANCELLED;  // turns out NinjaStartRuns() simply didn't return a value because cancelSolve() runs by triggering a throw before a return value can be given. So just have to return the appropriate value here.
+
         } catch (const std::exception &e) { // Store error message somewhere (thread-safe)
 
             qWarning() << "Solver error:" << e.what();
@@ -870,6 +951,17 @@ void MainWindow::solveButtonClicked()
             progressDialog->setCancelButtonText("Close");
 
             throw; // will propagate to the future
+
+        } catch (...) {
+
+            qWarning() << "unknown solver error";
+
+            progressDialog->setValue(maxProgress);
+            progressDialog->setLabelText("Simulation ended with unknown error");
+            progressDialog->setCancelButtonText("Close");
+
+            throw; // will propagate to the future
+
         }
     });
     futureWatcher->setFuture(future);
