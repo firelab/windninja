@@ -809,19 +809,9 @@ void MainWindow::solveButtonClicked()
 
             if( result == 1 ) // simulation properly finished
             {
-                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
                 progressDialog->setValue(maxProgress);
                 progressDialog->setLabelText("Simulations finished");
                 progressDialog->setCancelButtonText("Close");
-
-                int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-                if(err != NINJA_SUCCESS)
-                {
-                    printf("NinjaDestroyRuns: err = %d\n", err);
-                }
-
-                // clear the progress values for the next set of runs
-                runProgress.clear();
 
                 qDebug() << "Finished with simulations";
                 writeToConsole("Finished with simulations", Qt::darkGreen);
@@ -830,20 +820,10 @@ void MainWindow::solveButtonClicked()
             //else if( result == NINJA_E_CANCELLED ) // this is probably the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
             else if( progressDialog->wasCanceled() ) // simulation was cancelled
             {
-                int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-                if(err != NINJA_SUCCESS)
-                {
-                    printf("NinjaDestroyRuns: err = %d\n", err);
-                }
-
-                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
                 progressDialog->setValue(maxProgress);
                 progressDialog->setLabelText("Simulation cancelled");
                 progressDialog->setCancelButtonText("Close");
                 //progressDialog->close();
-
-                // clear the progress values for the next set of runs
-                runProgress.clear();
 
                 qDebug() << "Simulation cancelled by user";
                 //writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
@@ -852,19 +832,9 @@ void MainWindow::solveButtonClicked()
             }
             else // simulation ended in some known error
             {
-                disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
                 progressDialog->setValue(maxProgress);
                 progressDialog->setLabelText("Simulation ended in error\nerror: "+QString::number(result));
                 progressDialog->setCancelButtonText("Close");
-
-                int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-                if(err != NINJA_SUCCESS)
-                {
-                    printf("NinjaDestroyRuns: err = %d\n", err);
-                }
-
-                // clear the progress values for the next set of runs
-                runProgress.clear();
 
                 qWarning() << "Solver error:" << result;
                 writeToConsole("Solver error: "+QString::number(result), Qt::red);
@@ -872,49 +842,36 @@ void MainWindow::solveButtonClicked()
 
         } catch (const std::exception &e) {
 
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
             // message got truncated, use the QtConcurrent::run() messaging
             // ooh, with the thread safe method, things are now updating appropriately
             //progressDialog->setValue(maxProgress);
             //progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
             //progressDialog->setCancelButtonText("Close");
 
-            int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-            if(err != NINJA_SUCCESS)
-            {
-                printf("NinjaDestroyRuns: err = %d\n", err);
-            }
-
-            // clear the progress values for the next set of runs
-            runProgress.clear();
-
-            // message got truncated, use the QtConcurrent::run() messaging
-            // ooh, with the thread safe method, things are now updating appropriately
             //qWarning() << "Solver error:" << e.what();
             //writeToConsole("Solver error: "+QString(e.what()), Qt::red);
 
         } catch (...) {
 
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
             // message got truncated, use the QtConcurrent::run() messaging
             //progressDialog->setValue(maxProgress);
             //progressDialog->setLabelText("Simulation ended with unknown error");
             //progressDialog->setCancelButtonText("Close");
 
-            int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-            if(err != NINJA_SUCCESS)
-            {
-                printf("NinjaDestroyRuns: err = %d\n", err);
-            }
-
-            // clear the progress values for the next set of runs
-            runProgress.clear();
-
-            // message got truncated, use the QtConcurrent::run() messaging
             //qWarning() << "unknown solver error";
             //writeToConsole("unknown solver error", Qt::red);
-
         }
+
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+        int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRuns: err = %d\n", err);
+        }
+
+        // clear the progress values for the next set of runs
+        runProgress.clear();
 
         futureWatcher->deleteLater();
     });
