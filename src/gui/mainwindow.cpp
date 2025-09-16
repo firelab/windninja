@@ -854,7 +854,7 @@ void MainWindow::solveButtonClicked()
             {
                 disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
                 progressDialog->setValue(maxProgress);
-                progressDialog->setLabelText("Simulation ended in error\n"+QString::number(result));
+                progressDialog->setLabelText("Simulation ended in error\nerror: "+QString::number(result));
                 progressDialog->setCancelButtonText("Close");
 
                 int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
@@ -874,10 +874,10 @@ void MainWindow::solveButtonClicked()
 
             disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
             // message got truncated, use the QtConcurrent::run() messaging
-            // except that stuff there doesn't seem to propagate well either, hrm
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
-            progressDialog->setCancelButtonText("Close");
+            // ooh, with the thread safe method, things are now updating appropriately
+            //progressDialog->setValue(maxProgress);
+            //progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
+            //progressDialog->setCancelButtonText("Close");
 
             int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
             if(err != NINJA_SUCCESS)
@@ -889,16 +889,17 @@ void MainWindow::solveButtonClicked()
             runProgress.clear();
 
             // message got truncated, use the QtConcurrent::run() messaging
-            // except that stuff there doesn't seem to propagate well either, hrm
-            qWarning() << "Solver error:" << e.what();
-            writeToConsole("Solver error: "+QString(e.what()), Qt::red);
+            // ooh, with the thread safe method, things are now updating appropriately
+            //qWarning() << "Solver error:" << e.what();
+            //writeToConsole("Solver error: "+QString(e.what()), Qt::red);
 
         } catch (...) {
 
             disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation ended with unknown error");
-            progressDialog->setCancelButtonText("Close");
+            // message got truncated, use the QtConcurrent::run() messaging
+            //progressDialog->setValue(maxProgress);
+            //progressDialog->setLabelText("Simulation ended with unknown error");
+            //progressDialog->setCancelButtonText("Close");
 
             int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
             if(err != NINJA_SUCCESS)
@@ -909,8 +910,9 @@ void MainWindow::solveButtonClicked()
             // clear the progress values for the next set of runs
             runProgress.clear();
 
-            qWarning() << "unknown solver error";
-            writeToConsole("unknown solver error", Qt::red);
+            // message got truncated, use the QtConcurrent::run() messaging
+            //qWarning() << "unknown solver error";
+            //writeToConsole("unknown solver error", Qt::red);
 
         }
 
@@ -935,9 +937,14 @@ void MainWindow::solveButtonClicked()
 
             qWarning() << "Solver error:" << e.what();
 
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation cancelled by user");
-            progressDialog->setCancelButtonText("Close");
+            // no message with this error, and it is a known error,
+            // so probably better to update the message in the finished() function, than in QtConcurrent::run()
+            //QMetaObject::invokeMethod(this, [this, maxProgress]() {
+            //    progressDialog->setLabelText("Simulation cancelled by user");
+            //    progressDialog->setCancelButtonText("Close");
+            //    progressDialog->setValue(maxProgress);
+            //    writeToConsole( "Simulation cancelled by user", Qt::yellow);
+            //}, Qt::QueuedConnection);
 
             ////throw; // will propagate to the future. We purposefully want to skip passing it on for this case, use the QFutureWatcher->future()->result() value instead. However, the return/result value was 0, not the NINJA_E_CANCELLED value of 7. Hrm.
             return NINJA_E_CANCELLED;  // turns out NinjaStartRuns() simply didn't return a value because cancelSolve() runs by triggering a throw before a return value can be given. So just have to return the appropriate value here.
@@ -946,9 +953,13 @@ void MainWindow::solveButtonClicked()
 
             qWarning() << "Solver error:" << e.what();
 
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
-            progressDialog->setCancelButtonText("Close");
+            QString errorMsg = QString::fromStdString(e.what()); // copy out of 'e' before creating the invokeMethod lambda function
+            QMetaObject::invokeMethod(this, [this, maxProgress, errorMsg]() {
+                progressDialog->setLabelText("Simulation ended in error\n"+errorMsg);
+                progressDialog->setCancelButtonText("Close");
+                progressDialog->setValue(maxProgress);
+                writeToConsole("Solver error: "+errorMsg, Qt::red);
+            }, Qt::QueuedConnection);
 
             throw; // will propagate to the future
 
@@ -956,9 +967,12 @@ void MainWindow::solveButtonClicked()
 
             qWarning() << "unknown solver error";
 
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation ended with unknown error");
-            progressDialog->setCancelButtonText("Close");
+            QMetaObject::invokeMethod(this, [this, maxProgress]() {
+                progressDialog->setLabelText("Simulation ended with unknown error");
+                progressDialog->setCancelButtonText("Close");
+                progressDialog->setValue(maxProgress);
+                writeToConsole("unknown solver error", Qt::red);
+            }, Qt::QueuedConnection);
 
             throw; // will propagate to the future
 
