@@ -803,10 +803,10 @@ void MainWindow::solveButtonClicked()
 
 
     connect(futureWatcher, &QFutureWatcher<void>::finished, [=]() {
-        int err;
-        if (futureWatcher->isCanceled())
+        ////if( futureWatcher->isCanceled() )  // this doesn't get triggered as reliably as the QProgressDialog cancel button
+        if( progressDialog->wasCanceled() )
         {
-            err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+            int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
             if(err != NINJA_SUCCESS)
             {
                 printf("NinjaDestroyRuns: err = %d\n", err);
@@ -820,8 +820,10 @@ void MainWindow::solveButtonClicked()
 
             runProgress.clear();
 
-            writeToConsole( "Simulation cancelled by user" );
             qDebug() << "Simulation cancelled by user";
+            //writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
+            //writeToConsole( "Simulation cancelled by user", Qt::QColor::fromRgb(255, 165, 0) );  // orange
+            writeToConsole( "Simulation cancelled by user", Qt::yellow);
         }
         else
         {
@@ -830,11 +832,13 @@ void MainWindow::solveButtonClicked()
             progressDialog->setLabelText("Simulations finished");
             progressDialog->setCancelButtonText("Close");
 
-            err = NinjaDestroyArmy(ninjaArmy, papszOptions);
+            int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
             if(err != NINJA_SUCCESS)
             {
                 printf("NinjaDestroyRuns: err = %d\n", err);
             }
+
+            qDebug() << "Finished with simulations";
             writeToConsole("Finished with simulations", Qt::darkGreen);
 
             // clear the progress values for the next set of runs
@@ -858,7 +862,13 @@ void MainWindow::solveButtonClicked()
                 }
             }
         } catch (const std::exception &e) { // Store error message somewhere (thread-safe)
+
             qWarning() << "Solver error:" << e.what();
+
+            progressDialog->setValue(maxProgress);
+            progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
+            progressDialog->setCancelButtonText("Close");
+
             throw; // will propagate to the future
         }
     });
