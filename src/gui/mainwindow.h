@@ -138,11 +138,17 @@ private:
     WeatherModelInput *weatherModelInput;
     PointInitializationInput *pointInitializationInput;
 
+    NinjaArmyH *ninjaArmy;
+
+    std::vector<int> runProgress;
+    int totalProgress;
+    int maxProgress;
+
     QProgressDialog *progressDialog;
     QFutureWatcher<int> *futureWatcher;
-    int totalProgress;
-    std::vector<int> runProgress;
-    NinjaArmyH *ninjaArmy;
+
+    int startSolve(int numProcessors);
+    void finishedSolve();
 
     QString currentDEMFilePath;
 
