@@ -42,6 +42,7 @@
 //#include "ninjaCom.h"
 #include "windninja.h"
 #include <QWebChannel>
+#include <QFuture>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
@@ -121,6 +122,9 @@ private slots:
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void refreshUI();
     void writeToConsole(QString message, QColor color = Qt::white);
+    void updateProgressValue(int run, int progress);
+    void updateProgressMessage(const QString message);
+    void cancelSolve();
 
 private:
     Ui::MainWindow *ui;
@@ -133,6 +137,19 @@ private:
     DomainAverageInput *domainAverageInput;
     WeatherModelInput *weatherModelInput;
     PointInitializationInput *pointInitializationInput;
+
+    NinjaArmyH *ninjaArmy;
+
+    std::vector<int> runProgress;
+    int totalProgress;
+    int maxProgress;
+
+    QProgressDialog *progressDialog;
+    QFutureWatcher<int> *futureWatcher;
+
+    int startSolve(int numProcessors);
+    void finishedSolve();
+
     QString currentDEMFilePath;
 
     void connectSignals();

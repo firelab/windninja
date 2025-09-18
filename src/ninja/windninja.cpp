@@ -519,9 +519,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         {
             return reinterpret_cast<ninjaArmy*>( army )->startRuns( nprocessors );
         }
+        catch (exception& e)
+        {
+            std::cout << "Exception caught: " << e.what() << endl;
+            throw;
+        }
         catch( ... )
         {
-            return handleException();
+            std::cout << "Exception caught: Cannot determine exception type." << endl;
+//            return handleException();
+            throw;
         }
     }
     else

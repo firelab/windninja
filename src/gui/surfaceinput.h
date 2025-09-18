@@ -41,7 +41,6 @@
 #include <QStandardPaths>
 #include <QFileDialog>
 #include <QDebug>
-#include <QProgressDialog>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QProgressDialog>
