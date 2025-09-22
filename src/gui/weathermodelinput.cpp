@@ -38,17 +38,9 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
 
 void WeatherModelInput::weatherModelDataDownloadButtonClicked()
 {
-    QString wxModelType = ui->weatherModelDataComboBox->currentText();
-    QString DEMFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
-    int nHours = ui->weatherModelDataSpinBox->value();
-    NinjaArmyH *ninjaArmy = nullptr;
-    char ** options = nullptr;
-    NinjaErr err = NinjaFetchForecast(ninjaArmy, wxModelType.toUtf8().constData(), nHours, DEMFile.toUtf8().constData(), options);
-    if(err != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaFetchForecast: err =" << err;
-    }
-
+    NinjaToolsH* tools;
+    tools = NinjaMakeTools();
+    int NinjaErr = NinjaFetchWeatherData(tools);
     setUpTreeView();
 }
 

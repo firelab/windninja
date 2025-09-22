@@ -29,6 +29,7 @@
 
 #include "windninja.h"
 #include "ninjaArmy.h"
+#include "ninjaTools.h"
 #include "ninjaException.h"
 
 #ifdef _OPENMP
@@ -270,6 +271,19 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
     }
     
     return NULL;
+}
+
+WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
+{
+    NinjaToolsH* army;
+    army = reinterpret_cast<NinjaToolsH*>(new ninjaTools());
+    return army;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData(NinjaToolsH* tools)
+{
+    reinterpret_cast<ninjaTools*>( tools )->fetchData();
+    return NINJA_SUCCESS;
 }
 
 /**

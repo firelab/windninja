@@ -75,6 +75,10 @@ WN_C_START
 //Use structs instead of void * for type checking by C compilier
 struct NinjaArmyH;
 typedef struct NinjaArmyH NinjaArmyH;
+
+struct NinjaToolsH;
+typedef struct NinjaToolsH NinjaToolsH;
+
 typedef int  NinjaErr;
 
     /*-----------------------------------------------------------------------------
@@ -94,6 +98,10 @@ typedef int  NinjaErr;
     //TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeWeatherModelArmy
         ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaToolsH * NinjaMakeTools();
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData(NinjaToolsH* tools);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
         (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, double buffer, const char* units, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );
