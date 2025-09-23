@@ -193,6 +193,16 @@ public:
     * \return com the ninjaComClass of a ninja
     */
     ninjaComClass * getNinjaCom( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Initialize the ninja communication FILE stream of a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param stream communication FILE stream
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setNinjaComStream( const int nIndex, FILE* stream,
+                           char ** papszOptions = NULL);
 #endif //NINJA_GUI
 
     /*-----------------------------------------------------------------------------

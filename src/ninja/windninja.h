@@ -148,6 +148,9 @@ typedef int  NinjaErr;
 #ifdef NINJA_GUI
     WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetComStream
+        ( NinjaArmyH * ninjaArmy, const int nIndex, FILE* stream, char ** options );
 #endif //NINJA_GUI
 
     /*  Input Parameters  */

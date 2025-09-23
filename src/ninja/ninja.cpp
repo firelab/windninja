@@ -3579,6 +3579,10 @@ void ninja::set_ComNumRuns( int nRuns )
     input.Com->nRuns = nRuns;
 }
 
+void ninja::set_ninjaComStream(FILE* stream)
+{
+    input.Com->ninjaComStream = stream;
+}
 #endif //NINJA_GUI
 
 double ninja::get_progressWeight()

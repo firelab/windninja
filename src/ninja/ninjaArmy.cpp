@@ -1364,6 +1364,13 @@ ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
     }
     return NULL; //if not valid index
 }
+
+int ninjaArmy::setNinjaComStream( const int nIndex, FILE* stream,
+                                  char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_ninjaComStream( stream ) );
+}
 #endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------

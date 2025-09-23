@@ -354,6 +354,47 @@ void MainWindow::updateProgressValue(int run, int progress)
     progressDialog->setValue(totalProgress);
 }
 
+void MainWindow::writeComMessage()
+{
+    char buffer[1024];
+    ssize_t n = read(pipeFd[0], buffer, sizeof(buffer) - 1);
+    if( n > 0 )
+    {
+        buffer[n] = '\0';
+        ////writeToConsole(buffer);
+
+        // Break into lines in case multiple messages arrived at once
+        QString data = QString::fromUtf8(buffer);
+        QStringList lines = data.split('\n', Qt::SkipEmptyParts);
+        int runNumber;
+        int runProgress;
+        for( int i = 0; i < lines.size(); i++ )
+        {
+            const QString &line = lines[i];
+            if( sscanf(buffer, "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
+            {
+                emit updateProgressValue(runNumber, runProgress);
+            }
+            emit updateProgressMessage(line);
+            writeToConsole(line);
+        }
+    }
+    else if( n == 0 )
+    {
+        // EOF
+        writeToConsole( "reached end of COM stream file." );
+//        notifier->setEnabled(false);
+//        ::close(pipeFd[0]);
+    }
+    else
+    {
+        writeToConsole( "Error reading from COM stream file.", Qt::red );
+//        notifier.setEnabled(false);
+//        ::fclose(ninjaComStream);
+    }
+}
+
+
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
@@ -789,6 +830,23 @@ void MainWindow::solveButtonClicked()
         runProgress.push_back(0);
     }
 
+    // Create a pipe for ninjaCom
+    if( pipe(pipeFd) == -1)
+    {
+        qDebug() << "Failed to create pipe for NinjaSetComStream";
+        writeToConsole( "Failed to create pipe for NinjaSetComStream", Qt::red );
+    }
+
+    ninjaComStream = fdopen(pipeFd[1], "w");
+    if (!ninjaComStream)
+    {
+        qDebug() << "Failed to open write side of pipe for NinjaSetComStream";
+        writeToConsole( "Failed to open write side of pipe for NinjaSetComStream", Qt::red );
+    }
+
+    notifier = new QSocketNotifier(pipeFd[0], QSocketNotifier::Read, this);
+    QObject::connect(notifier, &QSocketNotifier::activated, this, &MainWindow::writeComMessage);
+
     futureWatcher = new QFutureWatcher<int>(this);
 
     progressDialog->show();
@@ -1010,6 +1068,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetCommunication: err =" << err;
         }
+
+        int err = NinjaSetComStream(ninjaArmy, i, ninjaComStream, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetComStream: err =" << err;
+        }
+
         /*
        * Sets Simulation Variables
        */
@@ -1026,13 +1091,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgressMessage );
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ) );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ) );
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, &MainWindow::updateProgressValue );
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ) );
+//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ) );
 
 //        // old code style method (see this in the old qt4 gui code)
 //        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::AutoConnection );
@@ -1397,6 +1462,9 @@ void MainWindow::finishedSolve()
     runProgress.clear();
 
     futureWatcher->deleteLater();
+
+    notifier->setEnabled(false);
+    ::close(pipeFd[0]);
 }
 
 

@@ -672,6 +672,29 @@ WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
         return NINJA_E_NULL_PTR;
     }
 }
+
+/**
+ * \brief Set the communication handler communication FILE for message communications during simulations.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param ninjaComStream the message communication FILE stream to send messages to.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetComStream
+    ( NinjaArmyH * army, const int nIndex, FILE* stream, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComStream
+            ( nIndex, stream );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
 #endif //NINJA_GUI
 
 /**

@@ -171,6 +171,7 @@ public:
 #ifdef NINJA_GUI
     int get_ComNumRuns() const;
     void set_ComNumRuns( int nRuns );
+    void set_ninjaComStream(FILE* stream);
 #endif //NINJA-GUI
     void set_progressWeight(double progressWeight); //For foam+diurnal simulations
     double get_progressWeight();

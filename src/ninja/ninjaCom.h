@@ -65,6 +65,7 @@ public:
     int *runProgress;
     int nRuns;
     int *progressMultiplier;
+    FILE* ninjaComStream;
 #endif
 
     typedef enum

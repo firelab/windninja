@@ -350,13 +350,17 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
                     //Loop over all the runs and send out their progress
                     //even if they aren't doing anything right now
                     //or are finished
-                    emit sendProgress(*runNumber,atoi(ninjaComMsg));
+//                    emit sendProgress(*runNumber,atoi(ninjaComMsg));
+                    //fprintf(ninjaComStream, "Run %d\n", *runNumber);
+                    //fflush(ninjaComStream);
+                    //fprintf(ninjaComStream, "(solver): %d%% complete\n", atoi(ninjaComMsg));
+                    //fflush(ninjaComStream);
                 }
             }
         }
         if(eMsg == ninjaOuterIterProgress)
         {
-//            emit sendProgress(*runNumber, atoi(ninjaComMsg) * progressMultiplier[*runNumber]);
+////            emit sendProgress(*runNumber, atoi(ninjaComMsg) * progressMultiplier[*runNumber]);
             //^ old way
             for(int ix=0;ix<nRuns;ix++)
             {
@@ -366,7 +370,11 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
                 //because it is iterative
                 //To finailize these runs this function is called again
                 //see ninja.cpp->search for explicitly ~line 565
-                emit sendProgress(*runNumber,atoi(ninjaComMsg));
+//                emit sendProgress(*runNumber,atoi(ninjaComMsg));
+                //fprintf(ninjaComStream, "Run %d\n", *runNumber);
+                //fflush(ninjaComStream);
+                //fprintf(ninjaComStream, "(solver): %d%% complete\n", atoi(ninjaComMsg));
+                //fflush(ninjaComStream);
             }
         }
     }
@@ -380,6 +388,10 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
                 fprintf(fpLog, "Run %d: More than %d errors have been reported. "
                         "No more will be reported from now on.\n",
                         *runNumber, nMaxErrors);
+                fprintf(ninjaComStream, "Run %d: More than %d errors have been reported. ",
+                        "No more will be reported from now on.\n",
+                        *runNumber, nMaxErrors);
+                fflush(ninjaComStream);
             }
             //return;
         }
@@ -388,53 +400,75 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     if(eMsg == ninjaNone)				//None
     {
         fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
-        s = "Run " + QString::number(*runNumber) + ": " + ninjaComMsg;
+//        s = "Run " + QString::number(*runNumber) + ": " + ninjaComMsg;
         //QMetaObject::invokeMethod((QObject*)this, "sendMessage",
         // 			      Qt::QueuedConnection,
         // 			      Q_ARG(QString*, &s),
         // 			      Q_ARG(QColor, Qt::white));
-        emit sendMessage(s);
+//        emit sendMessage(s);
+        fprintf(ninjaComStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        fflush(ninjaComStream);
     }
     else if(eMsg == ninjaDebug)
     {				//Debug
         fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
-        s = "Run " + QString::number(*runNumber) + ": " + ninjaComMsg;
-        emit sendMessage(s);
+//        s = "Run " + QString::number(*runNumber) + ": " + ninjaComMsg;
+//        emit sendMessage(s);
+        fprintf(ninjaComStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        fflush(ninjaComStream);
     }
     else if(eMsg == ninjaSolverProgress)	//Solver progress (%complete)
     {
         if(printSolverProgress)
         {
             fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
-            s = "Run " + QString::number(*runNumber) + " (solver): " + ninjaComMsg + "% done.";
-            emit sendProgress(*runNumber,atoi(ninjaComMsg)); //Update the progress bar
-            emit sendMessage(s);
+//            s = "Run " + QString::number(*runNumber) + " (solver): " + ninjaComMsg + "% done.";
+//            emit sendProgress(*runNumber,atoi(ninjaComMsg)); //Update the progress bar
+//            emit sendMessage(s);
+            //fprintf(ninjaComStream, "Run %d\n", *runNumber);
+            //fflush(ninjaComStream);
+            //fprintf(ninjaComStream, "(solver): %d%% complete\n", atoi(ninjaComMsg));
+            //fflush(ninjaComStream);
+            fprintf(ninjaComStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+            fflush(ninjaComStream);
         }
     }
     else if(eMsg == ninjaOuterIterProgress)    //Solver progress (%complete)
     {
         fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
-        s = "Run " + QString::number(*runNumber) + " (solver): " + ninjaComMsg + "% done.";
-        emit sendProgress(*runNumber,atoi(ninjaComMsg)); //update the progress bar
-        emit sendMessage(s);
+//        s = "Run " + QString::number(*runNumber) + " (solver): " + ninjaComMsg + "% done.";
+//        emit sendProgress(*runNumber,atoi(ninjaComMsg)); //update the progress bar
+//        emit sendMessage(s);
+        //fprintf(ninjaComStream, "Run %d\n", *runNumber);
+        //fflush(ninjaComStream);
+        //fprintf(ninjaComStream, "(solver): %d%% complete\n", atoi(ninjaComMsg));
+        //fflush(ninjaComStream);
+        fprintf(ninjaComStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+        fflush(ninjaComStream);
     }
     else if(eMsg == ninjaWarning)			//Warnings
     {
         fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
-        s = "Run " + QString::number(*runNumber) + "(warning): " + ninjaComMsg;
-        emit sendMessage(s);
+//        s = "Run " + QString::number(*runNumber) + "(warning): " + ninjaComMsg;
+//        emit sendMessage(s);
+        fprintf(ninjaComStream, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
+        fflush(ninjaComStream);
     }
     else if(eMsg == ninjaFailure)
     {			//Failures (ie errors)
         fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
-        s = "Run " + QString::number(*runNumber) + "(ERROR): " + ninjaComMsg;
-        emit sendMessage(s);
+//        s = "Run " + QString::number(*runNumber) + "(ERROR): " + ninjaComMsg;
+//        emit sendMessage(s);
+        fprintf(ninjaComStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        fflush(ninjaComStream);
     }
     else if(eMsg == ninjaFatal)
     {				//Failures (probably fatal)
         fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
-        s = "Run " + QString::number(*runNumber) + "ERROR): " + ninjaComMsg;
-        emit sendMessage(s);
+//        s = "Run " + QString::number(*runNumber) + "ERROR): " + ninjaComMsg;
+//        emit sendMessage(s);
+        fprintf(ninjaComStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        fflush(ninjaComStream);
     }
 }
 #else
