@@ -3545,6 +3545,33 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
+void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
+{
+    input.inputsComType = comType;
+
+    if(input.Com)
+        delete input.Com;
+
+    if(comType == ninjaComClass::ninjaDefaultCom)
+        input.Com = new ninjaDefaultComHandler();
+    else if(comType == ninjaComClass::ninjaQuietCom)
+        input.Com = new ninjaQuietComHandler();
+    else if(comType == ninjaComClass::ninjaLoggingCom)
+        input.Com = new ninjaLoggingComHandler();
+    else if(comType == ninjaComClass::ninjaGUICom)
+        input.Com = new ninjaGUIComHandler();
+    else if(comType == ninjaComClass::WFDSSCom)
+        input.Com = new ninjaWFDSSComHandler();
+    else if(comType == ninjaComClass::ninjaCLICom)
+        input.Com = new ninjaCLIComHandler();
+    else
+        input.Com = new ninjaDefaultComHandler();
+
+    input.inputsRunNumber = RunNumber;
+    input.Com->runNumber = &input.inputsRunNumber;
+    input.Com->lastMsg = input.lastComString;
+}
+
 void ninja::set_ninjaMultiComStream(FILE* stream)
 {
     input.Com->multiStream = stream;
@@ -5230,33 +5257,6 @@ double ninja::getFuelBedDepth(int fuelModel)
 
     //multiply by 0.3048 to convert from feet to meters
     return (depthInFeet * 0.3048);
-}
-
-void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
-{
-    input.inputsComType = comType;
-
-    if(input.Com)
-        delete input.Com;
-
-    if(comType == ninjaComClass::ninjaDefaultCom)
-        input.Com = new ninjaDefaultComHandler();
-    else if(comType == ninjaComClass::ninjaQuietCom)
-        input.Com = new ninjaQuietComHandler();
-    else if(comType == ninjaComClass::ninjaLoggingCom)
-        input.Com = new ninjaLoggingComHandler();
-    else if(comType == ninjaComClass::ninjaGUICom)
-        input.Com = new ninjaGUIComHandler();
-    else if(comType == ninjaComClass::WFDSSCom)
-        input.Com = new ninjaWFDSSComHandler();
-    else if(comType == ninjaComClass::ninjaCLICom)
-        input.Com = new ninjaCLIComHandler();
-    else
-        input.Com = new ninjaDefaultComHandler();
-
-    input.inputsRunNumber = RunNumber;
-    input.Com->runNumber = &input.inputsRunNumber;
-    input.Com->lastMsg = input.lastComString;
 }
 
 void ninja::checkInputs()

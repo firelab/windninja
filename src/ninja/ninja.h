@@ -163,6 +163,7 @@ public:
     /*-----------------------------------------------------------------------------
      *  ninjaCom section
      *-----------------------------------------------------------------------------*/
+    void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
     void set_ninjaMultiComStream(FILE* stream);
     int get_inputsRunNumber() const;
     ninjaComClass::eNinjaCom get_inputsComType() const;
@@ -362,7 +363,6 @@ public:
 
     double getFuelBedDepth(int fuelModel);
 
-    void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
     void checkInputs();
     void dumpMemory();
 
