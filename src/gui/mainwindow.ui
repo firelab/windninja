@@ -2199,11 +2199,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <property name="cursor">
                          <cursorShape>PointingHandCursor</cursorShape>
                         </property>
-                        <item>
-                         <property name="text">
-                          <string>NOMADS-HRRR-CONUS-3-KM</string>
-                         </property>
-                        </item>
                        </widget>
                       </item>
                       <item>

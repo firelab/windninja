@@ -54,12 +54,12 @@ private slots:
     void weatherModelDataDownloadButtonClicked();
     void weatherModelDataTreeViewItemSelectionChanged();
     void weatherModelGroupBoxToggled(bool checked);
+    void weatherModelDataComboBoxCurrentIndexChanged(int index);
 
 private:
-    Ui::MainWindow *ui;    
+    Ui::MainWindow *ui;
+    NinjaToolsH* tools;
     QFileSystemModel *weatherModelFileSystemModel;
-
-
 };
 
 #endif // WEATHERMODELINPUT_H

@@ -33,15 +33,54 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
+    tools = NinjaMakeTools();
+    int count = 0;
+    const char** identifiers = NinjaGetAllWeatherModelIdentifiers(tools, &count);
+    for (int i = 0; i < count; i++)
+    {
+        ui->weatherModelDataComboBox->addItem(identifiers[i]);
+    }
+    NinjaFreeAllWeatherModelIdentifiers(identifiers, count);
+
     connect(ui->weatherModelDataDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDataDownloadButtonClicked);
+    connect(ui->weatherModelDataComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelDataComboBoxCurrentIndexChanged);
+
+    weatherModelDataComboBoxCurrentIndexChanged(0);
 }
 
 void WeatherModelInput::weatherModelDataDownloadButtonClicked()
 {
-    NinjaToolsH* tools;
-    tools = NinjaMakeTools();
-    int NinjaErr = NinjaFetchWeatherData(tools);
+    QByteArray modelNameByte = ui->weatherModelDataComboBox->currentText().toUtf8();
+    QByteArray demFileByte   = ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8();
+
+    const char* modelName = modelNameByte.constData();
+    const char* demFile   = demFileByte.constData();
+    int hours = ui->weatherModelDataSpinBox->value();
+
+    int err = NinjaFetchWeatherData(tools, modelName, demFile, hours);
+    if (err != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaFetchWeatherData: " << err;
+    }
+
     setUpTreeView();
+}
+
+void WeatherModelInput::weatherModelDataComboBoxCurrentIndexChanged(int index)
+{
+    int starHour, endHour;
+
+    QByteArray modelNameByte = ui->weatherModelDataComboBox->currentText().toUtf8();
+    const char* modelName = modelNameByte.constData();
+
+    int NinjaErr = NinjaGetWeatherModelHours(tools, modelName, &starHour, &endHour);
+    if (NinjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaGetWeatherModelHours: " << NinjaErr;
+    }
+    ui->weatherModelDataSpinBox->setMinimum(starHour);
+    ui->weatherModelDataSpinBox->setMaximum(endHour);
+    ui->weatherModelDataSpinBox->setValue(starHour);
 }
 
 void WeatherModelInput::setUpTreeView()
