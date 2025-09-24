@@ -38,35 +38,14 @@
 #include <sstream>
 #include <string.h>
 
-#ifdef _OPENMP
-#include "omp.h"
-#endif
-
-#ifdef NINJA_GUI
-#include <QObject>
-#include <QString>
-#include <QColor>
-#include <QCoreApplication>
-#endif
-
 #define NINJA_MSG_SIZE 1000
 
 class ninjaComClass //virtual base class
-#ifdef NINJA_GUI
-  : public QObject
-#endif
 {
 public:
     ninjaComClass();
     virtual ~ninjaComClass();
     double progressWeight;
-
-#ifdef NINJA_GUI
-    int *runProgress;
-    int nRuns;
-    int *progressMultiplier;
-    FILE* ninjaComStream;
-#endif
 
     typedef enum
     {
@@ -94,6 +73,7 @@ public:
     eNinjaCom* comType;	//pointer to communication type, should point to eNinjaCom in WindNinjaInputs class
 
     FILE*     fpLog;
+    FILE* multiStream;
 
     int errorCount;	//running error count
     int	nMaxErrors;	//max number of errors to report
@@ -133,28 +113,13 @@ public:
     virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };
 
-#ifndef NINJA_GUI
+
 class ninjaGUIComHandler : public ninjaComClass	//concrete class
 {
 public:
     virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };
-#else
-class ninjaGUIComHandler : public ninjaComClass //concrete class
-{
-  Q_OBJECT
- public:
-  ninjaGUIComHandler();
-  ~ninjaGUIComHandler();
-  bool verbose;
-  virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 
- signals:
-  void sendProgress(int run, int progress);
-  void sendMessage(QString message, QColor color = Qt::white);
-
-};
-#endif // NINJA_GUI
 
 class ninjaWFDSSComHandler : public ninjaComClass	//concrete class
 {

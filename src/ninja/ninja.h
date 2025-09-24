@@ -163,18 +163,13 @@ public:
     /*-----------------------------------------------------------------------------
      *  ninjaCom section
      *-----------------------------------------------------------------------------*/
+    void set_ninjaMultiComStream(FILE* stream);
     int get_inputsRunNumber() const;
     ninjaComClass::eNinjaCom get_inputsComType() const;
     char * get_lastComString() const;
     FILE * get_ComLogFp() const; //returns the Com Log file pointer
-    ninjaComClass * get_Com() const; //returns the Com object
-#ifdef NINJA_GUI
-    int get_ComNumRuns() const;
-    void set_ComNumRuns( int nRuns );
-    void set_ninjaComStream(FILE* stream);
-#endif //NINJA-GUI
     void set_progressWeight(double progressWeight); //For foam+diurnal simulations
-    double get_progressWeight();
+
     /*************************************************************
       kyle's fx's for importing several file types through GDAL
       function lives in readInputFile.cpp for now.

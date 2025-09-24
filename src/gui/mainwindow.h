@@ -39,7 +39,6 @@
 #include "weathermodelinput.h"
 #include "ui_mainwindow.h"
 #include "appstate.h"
-//#include "ninjaCom.h"
 #include "windninja.h"
 #include <QWebChannel>
 #include <QFuture>

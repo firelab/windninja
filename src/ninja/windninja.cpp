@@ -651,43 +651,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
 }
 
 /**
- * \brief Get the set communication handler for a given simulation.
- * only useable with the GUI
- *
- * \param army An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to get the communication handler from, that has already been created by a call to NinjaSetCommunication.
- *
- * \return a pointer to the ninjaComClass of the given ninja on success, a NULL pointer otherwise.
- */
-#ifdef NINJA_GUI
-WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
-    ( NinjaArmyH * army, const int nIndex, char ** papszOptions )
-{
-    if( NULL != army )
-    {
-        return reinterpret_cast<ninjaArmy*>( army )->getNinjaCom( nIndex );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-/**
- * \brief Set the communication handler communication FILE for message communications during simulations.
+ * \brief Set the multi-stream FILE, for message communications during simulations.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param ninjaComStream the message communication FILE stream to send messages to.
+ * \param stream The message communication FILE to send multi-stream messages to.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetComStream
+WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
     ( NinjaArmyH * army, const int nIndex, FILE* stream, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComStream
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaMultiComStream
             ( nIndex, stream );
     }
     else
@@ -695,7 +672,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetComStream
         return NINJA_E_NULL_PTR;
     }
 }
-#endif //NINJA_GUI
 
 /**
  * \brief Set the DEM to use for the simulations.
@@ -2442,8 +2418,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
 }
 
 
-}
-
 /*-----------------------------------------------------------------------------
  *  Helper Methods
  *-----------------------------------------------------------------------------*/
@@ -2470,3 +2444,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputSt
         return NINJA_E_NULL_PTR;
     }
 }
+
+
+} // extern "C"

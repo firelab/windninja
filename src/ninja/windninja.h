@@ -27,7 +27,6 @@
  *
  *****************************************************************************/
 #include "ninja_errors.h"
-#include "ninjaCom.h"
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
  *-----------------------------------------------------------------------------*/
@@ -145,13 +144,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * comType, char ** options );
 
-#ifdef NINJA_GUI
-    WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
-        ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetComStream
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
         ( NinjaArmyH * ninjaArmy, const int nIndex, FILE* stream, char ** options );
-#endif //NINJA_GUI
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed

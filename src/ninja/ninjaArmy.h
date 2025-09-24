@@ -175,35 +175,16 @@ public:
 
     int setNinjaCommunication( const int nIndex, std::string comType,
                                char ** papszOptions = NULL);
-#ifdef NINJA_GUI
-    /**
-    * \brief Set the number of runs for a ninjaCom
-    *
-    * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                            char ** papszOptions=NULL );
 
     /**
-    * \brief Returns the ninjaCom for a ninja
+    * \brief Initialize the message communication multi-stream FILE of a ninja
     *
     * \param nIndex index of a ninja
-    * \return com the ninjaComClass of a ninja
-    */
-    ninjaComClass * getNinjaCom( const int nIndex, char ** papszOptions=NULL );
-
-    /**
-    * \brief Initialize the ninja communication FILE stream of a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param stream communication FILE stream
+    * \param stream communication multi-stream FILE of a ninja
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setNinjaComStream( const int nIndex, FILE* stream,
-                           char ** papszOptions = NULL);
-#endif //NINJA_GUI
+    int setNinjaMultiComStream( const int nIndex, FILE* stream,
+                                char ** papszOptions = NULL);
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods

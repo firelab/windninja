@@ -127,6 +127,7 @@ ninja::ninja(const ninja &rhs)
 {
     input.Com = NULL;   //must be set to null!
     set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
+//    set_ninjaMultiComStream(rhs.input.Com.multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
     strcpy( input.lastComString, rhs.get_lastComString() );
     input.Com->fpLog = rhs.get_ComLogFp();
 
@@ -3544,6 +3545,11 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
+void ninja::set_ninjaMultiComStream(FILE* stream)
+{
+    input.Com->multiStream = stream;
+}
+
 int ninja::get_inputsRunNumber() const
 {
     return input.inputsRunNumber;
@@ -3562,32 +3568,6 @@ char * ninja::get_lastComString() const
 FILE * ninja::get_ComLogFp() const
 {
     return input.Com->fpLog;
-}
-ninjaComClass * ninja::get_Com() const
-{
-    return input.Com;
-}
-
-#ifdef NINJA_GUI
-int ninja::get_ComNumRuns() const
-{
-    return input.Com->nRuns;
-}
-
-void ninja::set_ComNumRuns( int nRuns )
-{
-    input.Com->nRuns = nRuns;
-}
-
-void ninja::set_ninjaComStream(FILE* stream)
-{
-    input.Com->ninjaComStream = stream;
-}
-#endif //NINJA_GUI
-
-double ninja::get_progressWeight()
-{
-    return input.Com->progressWeight;
 }
 
 void ninja::set_progressWeight(double progressWeight)

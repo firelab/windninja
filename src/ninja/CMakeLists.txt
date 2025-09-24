@@ -15,16 +15,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 3.16)
 
-if(NINJA_GUI)
-    find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-    find_package(Qt6 REQUIRED COMPONENTS Widgets)
-endif(NINJA_GUI)
+#cmake_minimum_required(VERSION 3.16)
 
 if (APPLE)
     set(CMAKE_MACOSX_RPATH OFF)
 endif (APPLE)
+
 
 set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
@@ -135,16 +132,7 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${Boost_LIBRARIES})
 
 
-if(NINJA_GUI)
-    set(CMAKE_AUTOUIC ON)
-    set(CMAKE_AUTOMOC ON)
-    set(CMAKE_AUTORCC ON)
-    include_directories(${NINJA_INCLUDES} ${QT_INCLUDES})
-    set(NINJA_SOURCES ${NINJA_SOURCES} ${NINJA_LIB_INCLUDES_MOC})
-    set(LINK_LIBS ${LINK_LIBS} ${QT_LIBRARIES})
-else(NINJA_GUI)
-    include_directories(${NINJA_INCLUDES})
-endif(NINJA_GUI)
+include_directories(${NINJA_INCLUDES})
 
 if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
@@ -158,15 +146,8 @@ else()
     endif()
 endif()
 
-message(STATUS "The value of NINJA_GUI in /windninja/src/ninja/CMakeLists.txt is: ${NINJA_GUI}")
-if(NINJA_GUI)
-    target_link_libraries(ninja PUBLIC ${LINK_LIBS} PUBLIC Qt${QT_VERSION_MAJOR}::Widgets)  ## needs to be PUBLIC for the gui to properly find these
-else(NINJA_GUI)
-    target_link_libraries(ninja ${LINK_LIBS})  ## auto picks PUBLIC or PRIVATE depending on the need
-endif(NINJA_GUI)
+target_link_libraries(ninja ${LINK_LIBS})
 
-
-target_compile_definitions(ninja PUBLIC NINJA_GUI)  ## needs to be PUBLIC for the cli and the gui to properly find it, for their #ifdef GUI sections
 
 target_include_directories(ninja PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
 
@@ -175,5 +156,5 @@ install(TARGETS ninja DESTINATION lib COMPONENT libs)
 if(WIN32)
     install(TARGETS WindNinjadll DESTINATION ${lib_dest})
 endif(WIN32)
-install(FILES WindNinjaInputs.h ninja.h gdal_util.h ninjaCom.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
+install(FILES WindNinjaInputs.h ninja.h gdal_util.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 

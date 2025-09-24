@@ -1348,30 +1348,12 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
     return retval;
 }
 
-#ifdef NINJA_GUI
-int ninjaArmy::setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                                   char ** papszOptions )
+int ninjaArmy::setNinjaMultiComStream( const int nIndex, FILE* stream,
+                                       char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ComNumRuns( RunNumber ) );
+            ninjas[ nIndex ]->set_ninjaMultiComStream( stream ) );
 }
-
-ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
-{
-    IF_VALID_INDEX( nIndex, ninjas )
-    {
-        return ninjas[ nIndex ]->get_Com();
-    }
-    return NULL; //if not valid index
-}
-
-int ninjaArmy::setNinjaComStream( const int nIndex, FILE* stream,
-                                  char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaComStream( stream ) );
-}
-#endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------
  *  Ninja Speed Testing Methods
