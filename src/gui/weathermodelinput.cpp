@@ -38,24 +38,24 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     const char** identifiers = NinjaGetAllWeatherModelIdentifiers(tools, &count);
     for (int i = 0; i < count; i++)
     {
-        ui->weatherModelDataComboBox->addItem(identifiers[i]);
+        ui->weatherModelComboBox->addItem(identifiers[i]);
     }
     NinjaFreeAllWeatherModelIdentifiers(identifiers, count);
 
-    connect(ui->weatherModelDataDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDataDownloadButtonClicked);
-    connect(ui->weatherModelDataComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelDataComboBoxCurrentIndexChanged);
+    connect(ui->weatherModelDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDownloadButtonClicked);
+    connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
 
-    weatherModelDataComboBoxCurrentIndexChanged(0);
+    weatherModelComboBoxCurrentIndexChanged(0);
 }
 
-void WeatherModelInput::weatherModelDataDownloadButtonClicked()
+void WeatherModelInput::weatherModelDownloadButtonClicked()
 {
-    QByteArray modelNameByte = ui->weatherModelDataComboBox->currentText().toUtf8();
+    QByteArray modelNameByte = ui->weatherModelComboBox->currentText().toUtf8();
     QByteArray demFileByte   = ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8();
 
     const char* modelName = modelNameByte.constData();
     const char* demFile   = demFileByte.constData();
-    int hours = ui->weatherModelDataSpinBox->value();
+    int hours = ui->weatherModelSpinBox->value();
 
     int err = NinjaFetchWeatherData(tools, modelName, demFile, hours);
     if (err != NINJA_SUCCESS)
@@ -66,11 +66,11 @@ void WeatherModelInput::weatherModelDataDownloadButtonClicked()
     setUpTreeView();
 }
 
-void WeatherModelInput::weatherModelDataComboBoxCurrentIndexChanged(int index)
+void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
 {
     int starHour, endHour;
 
-    QByteArray modelNameByte = ui->weatherModelDataComboBox->currentText().toUtf8();
+    QByteArray modelNameByte = ui->weatherModelComboBox->currentText().toUtf8();
     const char* modelName = modelNameByte.constData();
 
     int NinjaErr = NinjaGetWeatherModelHours(tools, modelName, &starHour, &endHour);
@@ -78,9 +78,8 @@ void WeatherModelInput::weatherModelDataComboBoxCurrentIndexChanged(int index)
     {
         qDebug() << "NinjaGetWeatherModelHours: " << NinjaErr;
     }
-    ui->weatherModelDataSpinBox->setMinimum(starHour);
-    ui->weatherModelDataSpinBox->setMaximum(endHour);
-    ui->weatherModelDataSpinBox->setValue(starHour);
+    ui->weatherModelSpinBox->setMinimum(starHour);
+    ui->weatherModelSpinBox->setMaximum(endHour);
 }
 
 void WeatherModelInput::setUpTreeView()
@@ -94,27 +93,27 @@ void WeatherModelInput::setUpTreeView()
     weatherModelFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     weatherModelFileSystemModel->setNameFilterDisables(false);
 
-    ui->weatherModelDataTreeView->setModel(weatherModelFileSystemModel);
-    ui->weatherModelDataTreeView->setRootIndex(weatherModelFileSystemModel->index(fileInfo.absolutePath()));
-    ui->weatherModelDataTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
-    ui->weatherModelDataTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->weatherModelDataTreeView->setAnimated(true);
-    ui->weatherModelDataTreeView->setUniformRowHeights(true);
+    ui->weatherModelFileTreeView->setModel(weatherModelFileSystemModel);
+    ui->weatherModelFileTreeView->setRootIndex(weatherModelFileSystemModel->index(fileInfo.absolutePath()));
+    ui->weatherModelFileTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
+    ui->weatherModelFileTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->weatherModelFileTreeView->setAnimated(true);
+    ui->weatherModelFileTreeView->setUniformRowHeights(true);
 
-    QHeaderView *header = ui->weatherModelDataTreeView->header();
+    QHeaderView *header = ui->weatherModelFileTreeView->header();
     header->setStretchLastSection(false);
     header->setSectionResizeMode(0, QHeaderView::Stretch);
     header->resizeSection(0, 400);
     header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
     header->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 
-    ui->weatherModelDataTreeView->hideColumn(1);
-    ui->weatherModelDataTreeView->hideColumn(2);
+    ui->weatherModelFileTreeView->hideColumn(1);
+    ui->weatherModelFileTreeView->hideColumn(2);
 
-    connect(ui->weatherModelDataTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelDataTreeViewItemSelectionChanged);
+    connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
 }
 
-void WeatherModelInput::weatherModelDataTreeViewItemSelectionChanged()
+void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged()
 {
 
 }

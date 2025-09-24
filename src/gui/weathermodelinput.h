@@ -51,10 +51,10 @@ signals:
     void requestRefresh();
 
 private slots:
-    void weatherModelDataDownloadButtonClicked();
-    void weatherModelDataTreeViewItemSelectionChanged();
+    void weatherModelDownloadButtonClicked();
+    void weatherModelFileTreeViewItemSelectionChanged();
     void weatherModelGroupBoxToggled(bool checked);
-    void weatherModelDataComboBoxCurrentIndexChanged(int index);
+    void weatherModelComboBoxCurrentIndexChanged(int index);
 
 private:
     Ui::MainWindow *ui;
