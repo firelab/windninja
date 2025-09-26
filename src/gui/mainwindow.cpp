@@ -357,7 +357,11 @@ void MainWindow::updateProgressValue(int run, int progress)
 void MainWindow::writeComMessage()
 {
     char buffer[1024];
+#ifdef WIN32
+    int n = _read(pipeFdWin[0], buffer, sizeof(buffer) - 1);
+#else // WIN32
     ssize_t n = read(pipeFd[0], buffer, sizeof(buffer) - 1);
+#endif // WIN32
     if( n > 0 )
     {
         buffer[n] = '\0';
@@ -829,6 +833,27 @@ void MainWindow::solveButtonClicked()
         runProgress.push_back(0);
     }
 
+#ifdef WIN32
+    // Create a pipe for ninjaCom
+    if( _pipe(pipeFdWin, 4096, O_BINARY) == -1 )
+    {
+        qDebug() << "Failed to create pipe for NinjaSetComStream";
+        writeToConsole( "Failed to create pipe for NinjaSetComStream", Qt::red );
+    }
+
+    // Wrap write end in FILE*
+    ninjaComStream = _fdopen(_dup(pipeFdWin[1]), "w");
+    if( !ninjaComStream )
+    {
+        qDebug() << "Failed to open write side of pipe for NinjaSetComStream";
+        writeToConsole( "Failed to open write side of pipe for NinjaSetComStream", Qt::red );
+    }
+
+    // Create notifier for read end
+    HANDLE hRead = (HANDLE)_get_osfhandle(pipeFdWin[0]);
+    notifier = new QWinEventNotifier(hRead, this);
+    connect(notifier, &QWinEventNotifier::activated, this, &MainWindow::writeComMessage);
+#else // WIN32
     // Create a pipe for ninjaCom
     if( pipe(pipeFd) == -1)
     {
@@ -836,15 +861,18 @@ void MainWindow::solveButtonClicked()
         writeToConsole( "Failed to create pipe for NinjaSetComStream", Qt::red );
     }
 
+    // Wrap write end in FILE*
     ninjaComStream = fdopen(pipeFd[1], "w");
-    if (!ninjaComStream)
+    if( !ninjaComStream )
     {
         qDebug() << "Failed to open write side of pipe for NinjaSetComStream";
         writeToConsole( "Failed to open write side of pipe for NinjaSetComStream", Qt::red );
     }
 
+    // Create notifier for read end
     notifier = new QSocketNotifier(pipeFd[0], QSocketNotifier::Read, this);
     QObject::connect(notifier, &QSocketNotifier::activated, this, &MainWindow::writeComMessage);
+#endif // WIN32
 
     futureWatcher = new QFutureWatcher<int>(this);
 
