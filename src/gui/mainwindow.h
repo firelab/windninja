@@ -102,6 +102,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void updateProgressValueSignal(int run, int progress);
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
+
 private slots:
     void massSolverCheckBoxClicked();
     void momentumSolverCheckBoxClicked();
@@ -144,8 +149,6 @@ private:
     std::vector<int> runProgress;
     int totalProgress;
     int maxProgress;
-
-    static void updateProgressCallback(const char *pszMessage, void *pUser);
 
 #ifdef WIN32
     intptr_t pipeFdWin[2];  // [0] = read end, [1] = write end

@@ -354,7 +354,8 @@ void MainWindow::updateProgressValue(int run, int progress)
     progressDialog->setValue(totalProgress);
 }
 
-void MainWindow::updateProgressCallback(const char *pszMessage, void *pUser)
+//static void updateProgressCallback(const char *pszMessage, void *pUser)
+void updateProgressCallback(const char *pszMessage, void *pUser)  // this still worked?? huh.
 {
     MainWindow *self = static_cast<MainWindow*>(pUser);
 
@@ -370,14 +371,10 @@ void MainWindow::updateProgressCallback(const char *pszMessage, void *pUser)
     int runProgress;
     if( sscanf(msg.c_str(), "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
     {
-        QMetaObject::invokeMethod(self, [=]() {
-            self->updateProgressValue(runNumber, runProgress);
-        }, Qt::QueuedConnection);
+        emit self->updateProgressValueSignal(runNumber, runProgress);
     }
-    QMetaObject::invokeMethod(self, [=]() {
-        self->updateProgressMessage(QString::fromStdString(msg));
-        self->writeToConsole(QString::fromStdString(msg));
-    }, Qt::QueuedConnection);
+    emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+    emit self->writeToConsoleSignal(QString::fromStdString(msg));
 }
 
 void MainWindow::writeComMessage()
@@ -578,6 +575,10 @@ void MainWindow::connectSignals()
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(weatherModelInput, &WeatherModelInput::requestRefresh, this, &MainWindow::refreshUI);
+
+    connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
+    connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
+    connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
@@ -1122,7 +1123,7 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             qDebug() << "NinjaSetCommunication: err =" << err;
         }
 
-        err = NinjaSetComProgressFunc(ninjaArmy, i, &MainWindow::updateProgressCallback, this, papszOptions);
+        err = NinjaSetComProgressFunc(ninjaArmy, i, &updateProgressCallback, this, papszOptions);
         if(err != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetProgressFunc: err =" << err;
