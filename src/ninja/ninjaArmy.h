@@ -107,7 +107,7 @@ extern boost::local_time::tz_database globalTimeZoneDB;
     return NINJA_E_INVALID;
 #endif
 
-typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+#include "callbackFunctions.h"
 
 //#include "ninjaCom.h"
 /**

@@ -119,7 +119,7 @@
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
-typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+#include "callbackFunctions.h"
 
 class ninja
 {

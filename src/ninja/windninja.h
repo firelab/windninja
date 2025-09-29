@@ -76,7 +76,7 @@ struct NinjaArmyH;
 typedef struct NinjaArmyH NinjaArmyH;
 typedef int  NinjaErr;
 
-typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+#include "callbackFunctions.h"
 
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors

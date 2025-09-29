@@ -40,7 +40,7 @@
 
 #define NINJA_MSG_SIZE 1000
 
-typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+#include "callbackFunctions.h"
 
 class ninjaComClass //virtual base class
 {

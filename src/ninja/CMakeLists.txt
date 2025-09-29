@@ -33,6 +33,7 @@ set(NINJA_SOURCES air.cpp
                   ascii_grid.cpp
                   Array2D.cpp
                   Aspect.cpp
+                  callbackFunctions.h
                   cellDiurnal.cpp
                   cli.cpp
                   domainAverageInitialization.cpp
