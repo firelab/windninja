@@ -76,6 +76,8 @@ struct NinjaArmyH;
 typedef struct NinjaArmyH NinjaArmyH;
 typedef int  NinjaErr;
 
+typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
@@ -143,6 +145,9 @@ typedef int  NinjaErr;
     /*  Communication  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * comType, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
+        ( NinjaArmyH * ninjaArmy, const int nIndex, ProgressFunc func, void *pUser, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
         ( NinjaArmyH * ninjaArmy, const int nIndex, FILE* stream, char ** options );

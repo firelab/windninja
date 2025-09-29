@@ -1348,6 +1348,13 @@ int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
     return retval;
 }
 
+int ninjaArmy::setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
+                                        char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_ninjaComProgressFunc( func, pUser ) );
+}
+
 int ninjaArmy::setNinjaMultiComStream( const int nIndex, FILE* stream,
                                        char ** papszOptions )
 {

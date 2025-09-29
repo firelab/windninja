@@ -107,6 +107,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
     return NINJA_E_INVALID;
 #endif
 
+typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+
 //#include "ninjaCom.h"
 /**
 * Class used for doing multiple WindNinja runs.
@@ -172,6 +174,9 @@ public:
     int setNinjaCommunication( const int nIndex, const int RunNumber,
                                const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
+
+    int setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
+                                 char ** papszOptions = NULL);
 
     int setNinjaCommunication( const int nIndex, std::string comType,
                                char ** papszOptions = NULL);

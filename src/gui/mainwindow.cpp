@@ -354,6 +354,32 @@ void MainWindow::updateProgressValue(int run, int progress)
     progressDialog->setValue(totalProgress);
 }
 
+void MainWindow::updateProgressCallback(const char *pszMessage, void *pUser)
+{
+    MainWindow *self = static_cast<MainWindow*>(pUser);
+
+    std::string msg = pszMessage;
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    qDebug() << msg.c_str();
+
+    int runNumber;
+    int runProgress;
+    if( sscanf(msg.c_str(), "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
+    {
+        QMetaObject::invokeMethod(self, [=]() {
+            self->updateProgressValue(runNumber, runProgress);
+        }, Qt::QueuedConnection);
+    }
+    QMetaObject::invokeMethod(self, [=]() {
+        self->updateProgressMessage(QString::fromStdString(msg));
+        self->writeToConsole(QString::fromStdString(msg));
+    }, Qt::QueuedConnection);
+}
+
 void MainWindow::writeComMessage()
 {
     char buffer[1024];
@@ -377,10 +403,10 @@ void MainWindow::writeComMessage()
             const QString &line = lines[i];
             if( sscanf(buffer, "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
             {
-                emit updateProgressValue(runNumber, runProgress);
+//                emit updateProgressValue(runNumber, runProgress);
             }
-            emit updateProgressMessage(line);
-            writeToConsole(line);
+//            emit updateProgressMessage(line);
+//            writeToConsole(line);
         }
     }
     else if( n == 0 )
@@ -1096,7 +1122,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             qDebug() << "NinjaSetCommunication: err =" << err;
         }
 
-        int err = NinjaSetMultiComStream(ninjaArmy, i, ninjaComStream, papszOptions);
+        err = NinjaSetComProgressFunc(ninjaArmy, i, &MainWindow::updateProgressCallback, this, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetProgressFunc: err =" << err;
+        }
+
+        err = NinjaSetMultiComStream(ninjaArmy, i, ninjaComStream, papszOptions);
         if(err != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetMultiComStream: err =" << err;

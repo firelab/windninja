@@ -145,6 +145,8 @@ private:
     int totalProgress;
     int maxProgress;
 
+    static void updateProgressCallback(const char *pszMessage, void *pUser);
+
 #ifdef WIN32
     intptr_t pipeFdWin[2];  // [0] = read end, [1] = write end
     QWinEventNotifier* notifier;

@@ -39,6 +39,8 @@ ninjaComClass::ninjaComClass()
     lastMsg = NULL;
     runNumber = NULL;
     comType = NULL;
+    pfnProgress = nullptr;
+    pProgressUser = nullptr;
     errorCount = 0;
     nMaxErrors = 10;
     printSolverProgress = true;
@@ -281,10 +283,11 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     //char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
     //int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
 
+    char msg[NINJA_MSG_SIZE];  // Declare a character array to store the result of sprintf, for printing
+
     /* Trouble */
     if( runNumber == NULL )
         return;
-
 
     if (eMsg==ninjaFailure || eMsg==ninjaFatal)
     {
@@ -293,14 +296,19 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         {
             if(errorCount == nMaxErrors+1)
             {
-                fprintf(fpLog, "Run %d: More than %d errors have been reported. "
-                        "No more will be reported from now on.\n",
-                        *runNumber, nMaxErrors);
+                //fprintf(fpLog, "Run %d: More than %d errors have been reported. "
+                //        "No more will be reported from now on.\n",
+                //        *runNumber, nMaxErrors);
 
                 fprintf(multiStream, "Run %d: More than %d errors have been reported. ",
                         "No more will be reported from now on.\n",
                         *runNumber, nMaxErrors);
                 fflush(multiStream);
+
+                sprintf( msg, "Run %d: More than %d errors have been reported. ",
+                         "No more will be reported from now on.\n",
+                         *runNumber, nMaxErrors );
+                pfnProgress(msg, pProgressUser);
             }
             //return;
         }
@@ -308,55 +316,76 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
 
     if(eMsg == ninjaNone)                       //None
     {
-        fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        //fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
 
         fprintf(multiStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
         fflush(multiStream);
+
+        sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
+        pfnProgress(msg, pProgressUser);
     }
     else if(eMsg == ninjaDebug)                 //Debug
     {
-        fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        //fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
 
         fprintf(multiStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
         fflush(multiStream);
+
+        sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
+        pfnProgress(msg, pProgressUser);
     }
     else if(eMsg == ninjaSolverProgress)        //Solver progress (%complete)
     {
         if(printSolverProgress)
         {
-            fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+            //fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
 
             fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
             fflush(multiStream);
+
+            sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
+            pfnProgress(msg, pProgressUser);
         }
     }
     else if(eMsg == ninjaOuterIterProgress)     //Solver progress (%complete)
     {
-        fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+        //fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
 
         fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
         fflush(multiStream);
+
+        sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
+        pfnProgress(msg, pProgressUser);
     }
     else if(eMsg == ninjaWarning)               //Warnings
     {
-        fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
+        //fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
 
         fprintf(multiStream, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
         fflush(multiStream);
+
+        sprintf( msg, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg );
+        pfnProgress(msg, pProgressUser);
     }
     else if(eMsg == ninjaFailure)               //Failures (ie errors)
     {
-        fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        //fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
 
         fprintf(multiStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
         fflush(multiStream);
+
+        sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg );
+        pfnProgress(msg, pProgressUser);
     }
     else if(eMsg == ninjaFatal)                 //Failures (probably fatal)
     {
-        fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        //fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
 
         fprintf(multiStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
         fflush(multiStream);
+
+        sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg );
+        pfnProgress(msg, pProgressUser);
     }
 }
 

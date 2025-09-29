@@ -650,6 +650,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
+    ( NinjaArmyH * army, const int nIndex, ProgressFunc func, void *pUser, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
+            ( nIndex, func, pUser );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
 /**
  * \brief Set the multi-stream FILE, for message communications during simulations.
  *

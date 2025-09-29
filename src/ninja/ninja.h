@@ -119,6 +119,8 @@
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
+typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+
 class ninja
 {
 public:
@@ -164,6 +166,7 @@ public:
      *  ninjaCom section
      *-----------------------------------------------------------------------------*/
     void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
+    void set_ninjaComProgressFunc(ProgressFunc func, void *pUser);
     void set_ninjaMultiComStream(FILE* stream);
     int get_inputsRunNumber() const;
     ninjaComClass::eNinjaCom get_inputsComType() const;

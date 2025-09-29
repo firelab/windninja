@@ -40,6 +40,8 @@
 
 #define NINJA_MSG_SIZE 1000
 
+typedef void (*ProgressFunc)(const char *pszMessage, void *pUser);
+
 class ninjaComClass //virtual base class
 {
 public:
@@ -71,6 +73,9 @@ public:
     char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
     int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
     eNinjaCom* comType;	//pointer to communication type, should point to eNinjaCom in WindNinjaInputs class
+
+    ProgressFunc pfnProgress;
+    void *pProgressUser;
 
     FILE*     fpLog;
     FILE* multiStream;
