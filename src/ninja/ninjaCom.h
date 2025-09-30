@@ -82,7 +82,7 @@ public:
 
     int errorCount;	//running error count
     int	nMaxErrors;	//max number of errors to report
-    bool printSolverProgress;   //flag specifying where normal solver progress should be printed (matching will still be printed)
+    bool printSolverProgress;  //flag specifying where normal solver progress should be printed (matching will still be printed)
 
     //methods
 

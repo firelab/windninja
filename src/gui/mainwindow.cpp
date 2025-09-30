@@ -365,8 +365,6 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
         msg = msg.substr(0, msg.size()-1);
     }
 
-    qDebug() << msg.c_str();
-
     int runNumber;
     int runProgress;
     if( sscanf(msg.c_str(), "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
