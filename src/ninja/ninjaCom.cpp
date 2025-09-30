@@ -36,6 +36,7 @@
 ninjaComClass::ninjaComClass()
 {
     fpLog = stdout;
+    fpErr = stderr;
     lastMsg = NULL;
     runNumber = NULL;
     comType = NULL;
@@ -43,7 +44,9 @@ ninjaComClass::ninjaComClass()
     pProgressUser = nullptr;
     errorCount = 0;
     nMaxErrors = 10;
+    printMaxErrors = true;
     printSolverProgress = true;
+    printRunNumber = true;
     progressWeight = 1.0;
 }
 
@@ -134,7 +137,34 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         }
     }
 
+    fpLog = stdout;
+    if( *comType == eNinjaCom::ninjaLoggingCom )
+    {
+        fpLog = fopen("ninja.log", "w+");
+        if( fpLog == NULL )
+        {
+            return;
+        }
+    }
 
+    // for now, just send fpErr/stderr to stdout
+    //fpErr = stderr;
+    fpErr = stdout;
+
+// not applicable for eNinjaCom::WFDSSCom
+// printRunNumber is always effectively set to true for eNinjaCom::ninjaGUICom
+if( *comType == eNinjaCom::ninjaQuietCom || *comType == eNinjaCom::ninjaLoggingCom )
+{
+    printRunNumber = false;
+}
+
+if( *comType == eNinjaCom::ninjaLoggingCom || *comType == eNinjaCom::WFDSSCom || *comType == eNinjaCom::ninjaGUICom )
+{
+    printMaxErrors = false;
+}
+
+if( printMaxErrors == true )
+{
     if( eMsg == ninjaFailure || eMsg == ninjaFatal )
     {
         errorCount++;
@@ -142,9 +172,17 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         {
             if( errorCount == nMaxErrors+1 )
             {
-                fprintf(fpLog, "Run %d: More than %d errors have been reported. "
-                        "No more will be reported from now on.\n",
-                        *runNumber, nMaxErrors);
+                if( printRunNumber == true )
+                {
+                    fprintf(fpErr, "Run %d: More than %d errors have been reported. "
+                            "No more will be reported from now on.\n",
+                            *runNumber, nMaxErrors);
+                } else
+                {
+                    fprintf(fpErr, "More than %d errors have been reported. "
+                            "No more will be reported from now on.\n",
+                            nMaxErrors);
+                }
 
                 if( *comType == eNinjaCom::ninjaGUICom )
                 {
@@ -162,10 +200,19 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             return;
         }
     }
+} // if( printMaxErrors == true )
 
+if( *comType != eNinjaCom::ninjaQuietCom && *comType != eNinjaCom::WFDSSCom )
+{
     if(eMsg == ninjaNone)                       //None
     {
-        fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        if( printRunNumber == true )
+        {
+            fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        } else
+        {
+            fprintf(fpLog, "%s\n", ninjaComMsg);
+        }
 
         if( *comType == eNinjaCom::ninjaGUICom )
         {
@@ -176,9 +223,16 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             pfnProgress(msg, pProgressUser);
         }
     }
+    #ifdef NINJA_DEBUG
     else if(eMsg == ninjaDebug)                 //Debug
     {
-        fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        if( printRunNumber == true )
+        {
+            fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
+        } else
+        {
+            fprintf(fpLog, "%s\n", ninjaComMsg);
+        }
 
         if( *comType == eNinjaCom::ninjaGUICom )
         {
@@ -189,38 +243,81 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             pfnProgress(msg, pProgressUser);
         }
     }
+    #endif //NINJA_DEBUG
     else if(eMsg == ninjaSolverProgress)        //Solver progress (%complete)
     {
         if(printSolverProgress)
         {
-            fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+            if( printRunNumber == true )
+            {
+                if( atoi(ninjaComMsg) > 99 ) // does this even matter for anything??
+                {
+                fprintf(fpLog, "Run %d (solver): 99%% complete\n", *runNumber);
+                } else
+                {
+                fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+                }
+            } else
+            {
+                if( atoi(ninjaComMsg) > 99 ) // does this even matter for anything??
+                {
+                fprintf(fpLog, "Solver: 99%% complete\n");
+                } else
+                {
+                fprintf(fpLog, "Solver: %d%% complete\n", atoi(ninjaComMsg));
+                }
+            }
 
             if( *comType == eNinjaCom::ninjaGUICom )
             {
+                if( atoi(ninjaComMsg) > 99 ) // does this even matter for anything??
+                {
+                fprintf(multiStream, "Run %d (solver): 99%% complete\n", *runNumber);
+                } else
+                {
                 fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+                }
                 fflush(multiStream);
 
+                if( atoi(ninjaComMsg) > 99 ) // does this even matter for anything??
+                {
+                sprintf( msg, "Run %d (solver): 99%% complete\n", atoi(ninjaComMsg) );
+                } else
+                {
                 sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
+                }
                 pfnProgress(msg, pProgressUser);
             }
         }
     }
-    else if(eMsg == ninjaOuterIterProgress)     //Solver progress (%complete)
+    else if(eMsg == ninjaOuterIterProgress)     //Solver progress for outer matching iterations (%complete)
     {
-        fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+        if( printRunNumber == true )
+        {
+            fprintf(fpLog, "Run %d (matching): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+        } else
+        {
+            fprintf(fpLog, "Solver (matching): %d%% complete\n", atoi(ninjaComMsg));
+        }
 
         if( *comType == eNinjaCom::ninjaGUICom )
         {
-            fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+            fprintf(multiStream, "Run %d (matching): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
             fflush(multiStream);
 
-            sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
+            sprintf( msg, "Run %d (matching): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
             pfnProgress(msg, pProgressUser);
         }
     }
     else if(eMsg == ninjaWarning)               //Warnings
     {
-        fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
+        if( printRunNumber == true )
+        {
+            fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
+        } else
+        {
+            fprintf(fpLog, "\nWarning: %s\n", ninjaComMsg);
+        }
 
         if( *comType == eNinjaCom::ninjaGUICom )
         {
@@ -231,9 +328,19 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             pfnProgress(msg, pProgressUser);
         }
     }
-    else if(eMsg == ninjaFailure)               //Failures (ie errors)
+} // if( *comType != eNinjaCom::ninjaQuietCom && *comType != eNinjaCom::WFDSSCom )
+
+if( *comType != eNinjaCom::WFDSSCom )
+{
+    if(eMsg == ninjaFailure)                    //Failures (ie errors)
     {
-        fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        if( printRunNumber == true )
+        {
+            fprintf(fpErr, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        } else
+        {
+            fprintf(fpErr, "\nERROR: %s\n", ninjaComMsg);
+        }
 
         if( *comType == eNinjaCom::ninjaGUICom )
         {
@@ -246,7 +353,13 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     }
     else if(eMsg == ninjaFatal)                 //Failures (probably fatal)
     {
-        fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        if( printRunNumber == true )
+        {
+            fprintf(fpErr, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+        } else
+        {
+            fprintf(fpErr, "\nERROR: %s\n", ninjaComMsg);
+        }
 
         if( *comType == eNinjaCom::ninjaGUICom )
         {
@@ -257,5 +370,19 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             pfnProgress(msg, pProgressUser);
         }
     }
+} // if( *comType != eNinjaCom::WFDSSCom )
+
+if( *comType == eNinjaCom::WFDSSCom )
+{
+    //If message is a Failure or Fatal type, write the string to the NinjaComString which
+    //can then be read from the ninja class using lastComString
+    if( eMsg == ninjaFailure || eMsg == ninjaFatal )
+    {
+        strcpy(lastMsg, ninjaComMsg);  //lastMsg points to string in WindNinjaInputs class (which is inherited by the ninja class)
+    }
+} // if( *comType == eNinjaCom::WFDSSCom )
+
+    // technically only eNinjaCom::CLI had this, probably fine to just do it anyways
+    fflush(stdout);
 }
 

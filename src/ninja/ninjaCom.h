@@ -78,11 +78,14 @@ public:
     void *pProgressUser;
 
     FILE*     fpLog;
+    FILE*     fpErr;
     FILE* multiStream;
 
-    int errorCount;	//running error count
-    int	nMaxErrors;	//max number of errors to report
+    int errorCount; //running error count
+    int nMaxErrors; //max number of errors to report
+    bool printMaxErrors;  //flag to determine whether to keep printing error messages past when errorCount exceeds nMaxErrors
     bool printSolverProgress;  //flag specifying where normal solver progress should be printed (matching will still be printed)
+    bool printRunNumber;  //flag to determine if thread number should be printed at beginning of messages
 
     //methods
 
@@ -93,7 +96,6 @@ public:
     //void initializeNinjaCom(char *LastMsg, int* RunNumber, eNinjaCom* ComType);
 
     void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-
 };
 
 #endif //NINJACOM_H
