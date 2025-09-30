@@ -3562,8 +3562,7 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
 
 void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
 {
-    input.Com->pfnProgress = func;
-    input.Com->pProgressUser = pUser;
+    input.Com->set_progressFunc(func, pUser);
 }
 
 void ninja::set_ninjaMultiComStream(FILE* stream)

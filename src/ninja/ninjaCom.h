@@ -70,13 +70,16 @@ public:
         ninjaCLICom
     } eNinjaCom;
 
+    bool printLastMsg;
     char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
     int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
     eNinjaCom* comType;	//pointer to communication type, should point to eNinjaCom in WindNinjaInputs class
 
+    bool printProgressFunc;
     ProgressFunc pfnProgress;
     void *pProgressUser;
 
+    bool printLogFile;
     FILE*     fpLog;
     FILE*     fpErr;
     FILE* multiStream;
@@ -89,11 +92,13 @@ public:
 
     //methods
 
+    void set_progressFunc(ProgressFunc func, void *pUser);
+
     void noSolverProgress();
 
     void ninjaCom(msgType eMsg, const char *fmt, ...);
     void ninjaComV(msgType, const char *, va_list);
-    //void initializeNinjaCom(char *LastMsg, int* RunNumber, eNinjaCom* ComType);
+    //void initializeNinjaCom(char *LastMsg, int* RunNumber);
 
     void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };
