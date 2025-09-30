@@ -103,182 +103,15 @@ void ninjaComClass::ninjaComV(msgType eMsg, const char *fmt, va_list args)
 //}
 
 
-//**********************************************************************
-//                       ninjaDefaultComHandler()
-//**********************************************************************
 /**
-* Communication handler for "Default" WindNinja simulations.  Prints everything to stdout.  Normally used for command line type runs.
+* Communication handler for WindNinja simulations. Takes an input message and prints/passes it.
+* The place the message is printed or passed to (or if the message is ignored) depends on
+* the input message type, the pre-set ninjaComHandler type, and other pre-set ninjaCom settings
+*
 * @param eMsg Type of message to be passed. See msgType for available types.
 * @param ninjaComMsg Message to be printed.  Comes from ninjaComV and ninjaCom.
 */
-void ninjaDefaultComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
-{
-    fpLog = stdout;		//print to standard out
-    bool printRunNum = true;			//flag to determine if thread number should be printed at beginning of message
-
-    if(printRunNum == true)	//if run number should be printed at beginning of message
-    {
-        if (eMsg==ninjaFailure || eMsg==ninjaFatal)
-        {
-            errorCount++;
-            if (errorCount > nMaxErrors && nMaxErrors > 0)
-            {
-                if(errorCount == nMaxErrors+1)
-                {
-                    fprintf(fpLog, "Run %d: More than %d errors have been reported. "
-                            "No more will be reported from now on.\n",
-                            *runNumber, nMaxErrors);
-                }
-                return;
-            }
-        }
-
-        if(eMsg == ninjaNone)					//None
-            fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
-#ifdef NINJA_DEBUG
-        else if(eMsg == ninjaDebug)				//Debug
-            fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
-#endif //NINJA_DEBUG
-        else if(eMsg == ninjaSolverProgress)	//Solver progress (%complete)
-        {    if(printSolverProgress){
-                if(atoi(ninjaComMsg) > 99){
-                    fprintf(fpLog, "Run %d (solver): 99%% complete\n", *runNumber);
-                }
-                else
-                    fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
-              }
-        }
-        else if(eMsg == ninjaOuterIterProgress)  //Solver progress for outer matching iterations (%complete)
-            fprintf(fpLog, "Run %d (matching): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
-        else if(eMsg == ninjaWarning)			//Warnings
-            fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
-        else if(eMsg == ninjaFailure)			//Failures (ie errors)
-            fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
-        else if(eMsg == ninjaFatal)				//Failures (probably fatal)
-            fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
-
-    }else{	//if run number should NOT be printed at beginning of message
-
-        if (eMsg==ninjaFailure || eMsg==ninjaFatal)
-        {
-            errorCount++;
-            if (errorCount > nMaxErrors && nMaxErrors > 0)
-            {
-                if(errorCount == nMaxErrors+1)
-                {
-                    fprintf(fpLog, "More than %d errors have been reported. "
-                            "No more will be reported from now on.\n",
-                            nMaxErrors);
-                }
-                return;
-            }
-        }
-
-        if(eMsg == ninjaNone)					//None
-            fprintf(fpLog, "%s\n", ninjaComMsg);
-#ifdef NINJA_DEBUG
-        else if(eMsg == ninjaDebug)				//Debug
-            fprintf(fpLog, "%s\n", ninjaComMsg);
-#endif //NINJA_DEBUG
-        else if(eMsg == ninjaSolverProgress)	//Solver progress (%complete)
-        {
-            if(printSolverProgress)
-                fprintf(fpLog, "Solver: %d%% complete\n", atoi(ninjaComMsg));
-        }
-        else if(eMsg == ninjaOuterIterProgress)  //Solver progress for outer matching iterations (%complete)
-            fprintf(fpLog, "Solver (matching): %d%% complete\n", atoi(ninjaComMsg));
-        else if(eMsg == ninjaWarning)			//Warnings
-            fprintf(fpLog, "\nWarning: %s\n", ninjaComMsg);
-        else if(eMsg == ninjaFailure)			//Failures (ie errors)
-            fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
-        else if(eMsg == ninjaFatal)				//Failures (probably fatal)
-            fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
-    }
-}
-
-
-//**********************************************************************
-//                        ninjaQuietComHandler()
-//**********************************************************************
-/**
-* Communication handler for "Quiet" WindNinja simulations.  Only prints ninjaFailure and ninjaFatal messages.  Prints everything to stdout.
-* @param eMsg Type of message to be passed. See msgType for available types.
-* @param ninjaComMsg Message to be printed.  Comes from ninjaComV and ninjaCom.
-*/
-void ninjaQuietComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
-{
-    if(eMsg==ninjaFailure || eMsg==ninjaFatal)
-    {
-        fpLog = stdout;		//print to standard out
-
-        if (eMsg==ninjaFailure || eMsg==ninjaFatal)
-        {
-            errorCount++;
-            if (errorCount > nMaxErrors && nMaxErrors > 0)
-            {
-                if(errorCount == nMaxErrors+1)
-                {
-                    fprintf(fpLog, "More than %d errors have been reported. "
-                            "No more will be reported from now on.\n",
-                            nMaxErrors);
-                }
-                return;
-            }
-        }
-
-        if(eMsg == ninjaFailure)			//Failures (ie errors)
-            fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
-        else if(eMsg == ninjaFatal)				//Failures (probably fatal)
-            fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
-    }
-}
-
-
-//**********************************************************************
-//                       ninjaLoggingComHandler()
-//**********************************************************************
-/**
-* Communication handler that prints everything out to a file called ninja.log.
-* @param eMsg Type of message to be passed. See msgType for available types.
-* @param ninjaComMsg Message to be printed.  Comes from ninjaComV and ninjaCom.
-*/
-void ninjaLoggingComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
-{
-
-    fpLog = fopen("ninja.log", "w+");
-    if(fpLog==NULL)
-        return;
-
-    if(eMsg == ninjaNone)					//None
-        fprintf(fpLog, "%s\n", ninjaComMsg);
-#ifdef NINJA_DEBUG
-    else if(eMsg == ninjaDebug)				//Debug
-        fprintf(fpLog, "%s\n", ninjaComMsg);
-#endif //NINJA_DEBUG
-    else if(eMsg == ninjaSolverProgress)	//Solver progress (%complete)
-    {
-        if(printSolverProgress)
-            fprintf(fpLog, "Solver: %d%% complete\n", atoi(ninjaComMsg));
-    }
-    else if(eMsg == ninjaOuterIterProgress)  //Solver progress for outer matching iterations (%complete)
-        fprintf(fpLog, "Solver (matching): %d%% complete\n", atoi(ninjaComMsg));
-    else if(eMsg == ninjaWarning)			//Warnings
-        fprintf(fpLog, "\nWarning: %s\n", ninjaComMsg);
-    else if(eMsg == ninjaFailure)			//Failures (ie errors)
-        fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
-    else if(eMsg == ninjaFatal)				//Failures (probably fatal)
-        fprintf(fpLog, "\nERROR: %s\n", ninjaComMsg);
-}
-
-//**********************************************************************
-//                        ninjaGUIComHandler()
-//**********************************************************************
-/**
-* Communication handler for "GUI" WindNinja simulations.
-* @param eMsg Type of message to be passed. See msgType for available types.
-* @param ninjaComMsg Message to be printed.  Comes from ninjaComV and ninjaCom.
-*/
-void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
+void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
 {
     //char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
     //int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
@@ -300,15 +133,18 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
                 //        "No more will be reported from now on.\n",
                 //        *runNumber, nMaxErrors);
 
-                fprintf(multiStream, "Run %d: More than %d errors have been reported. ",
-                        "No more will be reported from now on.\n",
-                        *runNumber, nMaxErrors);
-                fflush(multiStream);
+                if( *comType == eNinjaCom::ninjaGUICom )
+                {
+                    fprintf(multiStream, "Run %d: More than %d errors have been reported. ",
+                            "No more will be reported from now on.\n",
+                            *runNumber, nMaxErrors);
+                    fflush(multiStream);
 
-                sprintf( msg, "Run %d: More than %d errors have been reported. ",
-                         "No more will be reported from now on.\n",
-                         *runNumber, nMaxErrors );
-                pfnProgress(msg, pProgressUser);
+                    sprintf( msg, "Run %d: More than %d errors have been reported. ",
+                             "No more will be reported from now on.\n",
+                             *runNumber, nMaxErrors );
+                    pfnProgress(msg, pProgressUser);
+                }
             }
             //return;
         }
@@ -318,21 +154,27 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         //fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
 
-        fprintf(multiStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
-        fflush(multiStream);
+        if( *comType == eNinjaCom::ninjaGUICom )
+        {
+            fprintf(multiStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
+            fflush(multiStream);
 
-        sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
-        pfnProgress(msg, pProgressUser);
+            sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
+            pfnProgress(msg, pProgressUser);
+        }
     }
     else if(eMsg == ninjaDebug)                 //Debug
     {
         //fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
 
-        fprintf(multiStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
-        fflush(multiStream);
+        if( *comType == eNinjaCom::ninjaGUICom )
+        {
+            fprintf(multiStream, "Run %d: %s\n", *runNumber, ninjaComMsg);
+            fflush(multiStream);
 
-        sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
-        pfnProgress(msg, pProgressUser);
+            sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
+            pfnProgress(msg, pProgressUser);
+        }
     }
     else if(eMsg == ninjaSolverProgress)        //Solver progress (%complete)
     {
@@ -340,6 +182,22 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         {
             //fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
 
+            if( *comType == eNinjaCom::ninjaGUICom )
+            {
+                fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+                fflush(multiStream);
+
+                sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
+                pfnProgress(msg, pProgressUser);
+            }
+        }
+    }
+    else if(eMsg == ninjaOuterIterProgress)     //Solver progress (%complete)
+    {
+        //fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+
+        if( *comType == eNinjaCom::ninjaGUICom )
+        {
             fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
             fflush(multiStream);
 
@@ -347,141 +205,44 @@ void ninjaGUIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             pfnProgress(msg, pProgressUser);
         }
     }
-    else if(eMsg == ninjaOuterIterProgress)     //Solver progress (%complete)
-    {
-        //fprintf(fpLog, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
-
-        fprintf(multiStream, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
-        fflush(multiStream);
-
-        sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg) );
-        pfnProgress(msg, pProgressUser);
-    }
     else if(eMsg == ninjaWarning)               //Warnings
     {
         //fprintf(fpLog, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
 
-        fprintf(multiStream, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
-        fflush(multiStream);
+        if( *comType == eNinjaCom::ninjaGUICom )
+        {
+            fprintf(multiStream, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
+            fflush(multiStream);
 
-        sprintf( msg, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg );
-        pfnProgress(msg, pProgressUser);
+            sprintf( msg, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg );
+            pfnProgress(msg, pProgressUser);
+        }
     }
     else if(eMsg == ninjaFailure)               //Failures (ie errors)
     {
         //fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
 
-        fprintf(multiStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
-        fflush(multiStream);
+        if( *comType == eNinjaCom::ninjaGUICom )
+        {
+            fprintf(multiStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+            fflush(multiStream);
 
-        sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg );
-        pfnProgress(msg, pProgressUser);
+            sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg );
+            pfnProgress(msg, pProgressUser);
+        }
     }
     else if(eMsg == ninjaFatal)                 //Failures (probably fatal)
     {
         //fprintf(fpLog, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
 
+        if( *comType == eNinjaCom::ninjaGUICom )
+        {
         fprintf(multiStream, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
         fflush(multiStream);
 
         sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg );
         pfnProgress(msg, pProgressUser);
+        } // if( *comType == eNinjaCom::ninjaGUICom )
     }
 }
 
-//**********************************************************************
-//                        ninjaWFDSSComHandler()
-//**********************************************************************
-/**
-* Communication handler for a "WFDSS" WindNinja simulation.
-* @param eMsg Type of message to be passed. See msgType for available types.
-* @param ninjaComMsg Message to be printed.  Comes from ninjaComV and ninjaCom.
-*/
-void ninjaWFDSSComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
-{
-    //If message is a Failure or Fatal type, write the string to the NinjaComString which
-    //can then be read from the ninja class using lastComString
-    if(eMsg==ninjaFailure || eMsg==ninjaFatal)
-        strcpy(lastMsg,ninjaComMsg);	//lastMsg points to string in WindNinjaInputs class (which is inherited by the ninja class)
-}
-
-
-//**********************************************************************
-//                       ninjaCLIComHandler()
-//**********************************************************************
-/**
-* Communication handler for a "CLI" WindNinja simulation.
-* @param eMsg Type of message to be passed. See msgType for available types.
-* @param ninjaComMsg Message to be printed.  Comes from ninjaComV and ninjaCom.
-*/
-void ninjaCLIComHandler::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
-{
-    fpLog = stdout;
-    bool printRunNum = true;
-    if(printRunNum == true) {
-        if (eMsg==ninjaFailure || eMsg==ninjaFatal) {
-            errorCount++;
-            if (errorCount > nMaxErrors && nMaxErrors > 0) {
-                if(errorCount == nMaxErrors+1) {
-                    fprintf(stderr, "Run %d: More than %d errors have been reported. "
-                            "No more will be reported from now on.\n",
-                            *runNumber, nMaxErrors);
-                }
-                return;
-            }
-        }
-
-        if(eMsg == ninjaNone)
-            fprintf(fpLog, "Run %d: %s\n", *runNumber, ninjaComMsg);
-
-        else if(eMsg == ninjaSolverProgress)
-        {
-            if(printSolverProgress)
-                fprintf(fpLog, "Run %d (solver): %d%% complete\n",
-                    *runNumber, atoi(ninjaComMsg));
-        }
-        else if(eMsg == ninjaOuterIterProgress)  //Solver progress for outer matching iterations (%complete)
-            fprintf(fpLog, "Run %d (matching): %d%% complete\n",
-                    *runNumber, atoi(ninjaComMsg));
-        else if(eMsg == ninjaWarning)
-            fprintf(fpLog, "\nRun %d (warning): %s\n",
-                    *runNumber, ninjaComMsg);
-        else if(eMsg == ninjaFailure)
-            fprintf(stderr, "\nRun %d (ERROR): %s\n",
-                    *runNumber, ninjaComMsg);
-        else if(eMsg == ninjaFatal)
-            fprintf(stderr, "\nRun %d (ERROR): %s\n",
-                    *runNumber, ninjaComMsg);
-
-    }
-    else {
-        if (eMsg==ninjaFailure || eMsg==ninjaFatal) {
-            errorCount++;
-            if (errorCount > nMaxErrors && nMaxErrors > 0) {
-                if(errorCount == nMaxErrors+1) {
-                    fprintf(stderr, "More than %d errors have been reported. "
-                            "No more will be reported from now on.\n",
-                            nMaxErrors);
-                }
-                return;
-            }
-        }
-
-        if(eMsg == ninjaNone)
-            fprintf(fpLog, "%s\n", ninjaComMsg);
-        else if(eMsg == ninjaSolverProgress)
-        {
-            if(printSolverProgress)
-                fprintf(fpLog, "Solver: %d%% complete\n", atoi(ninjaComMsg));
-        }
-        else if(eMsg == ninjaOuterIterProgress)  //Solver progress for outer matching iterations (%complete)
-            fprintf(fpLog, "Solver (matching): %d%% complete\n", atoi(ninjaComMsg));
-        else if(eMsg == ninjaWarning)
-            fprintf(fpLog, "\nWarning: %s\n", ninjaComMsg);
-        else if(eMsg == ninjaFailure)
-            fprintf(stderr, "\nERROR: %s\n", ninjaComMsg);
-        else if(eMsg == ninjaFatal)
-            fprintf(stderr, "\nERROR: %s\n", ninjaComMsg);
-        fflush(stdout);
-    }
-}

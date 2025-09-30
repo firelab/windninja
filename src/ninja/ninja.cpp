@@ -81,8 +81,8 @@ ninja::ninja()
     input.lastComString[0] = '\0';
     input.inputsRunNumber = 0;
     input.inputsComType = ninjaComClass::ninjaDefaultCom;
-    input.Com = new ninjaDefaultComHandler();
-
+    input.Com = new ninjaComClass();
+    input.Com->comType = &input.inputsComType;
 }
 
 /**Ninja destructor
@@ -3552,20 +3552,8 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
     if(input.Com)
         delete input.Com;
 
-    if(comType == ninjaComClass::ninjaDefaultCom)
-        input.Com = new ninjaDefaultComHandler();
-    else if(comType == ninjaComClass::ninjaQuietCom)
-        input.Com = new ninjaQuietComHandler();
-    else if(comType == ninjaComClass::ninjaLoggingCom)
-        input.Com = new ninjaLoggingComHandler();
-    else if(comType == ninjaComClass::ninjaGUICom)
-        input.Com = new ninjaGUIComHandler();
-    else if(comType == ninjaComClass::WFDSSCom)
-        input.Com = new ninjaWFDSSComHandler();
-    else if(comType == ninjaComClass::ninjaCLICom)
-        input.Com = new ninjaCLIComHandler();
-    else
-        input.Com = new ninjaDefaultComHandler();
+    input.Com = new ninjaComClass();
+    input.Com->comType = &input.inputsComType;
 
     input.inputsRunNumber = RunNumber;
     input.Com->runNumber = &input.inputsRunNumber;

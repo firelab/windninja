@@ -42,11 +42,11 @@
 
 #include "callbackFunctions.h"
 
-class ninjaComClass //virtual base class
+class ninjaComClass
 {
 public:
     ninjaComClass();
-    virtual ~ninjaComClass();
+    ~ninjaComClass();
     double progressWeight;
 
     typedef enum
@@ -92,49 +92,8 @@ public:
     void ninjaComV(msgType, const char *, va_list);
     //void initializeNinjaCom(char *LastMsg, int* RunNumber, eNinjaCom* ComType);
 
-    //pure virtual function that must be overridden in derived classes
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg) = 0;
+    void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 
 };
 
-
-class ninjaDefaultComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-
-class ninjaQuietComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-
-class ninjaLoggingComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-
-class ninjaGUIComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-
-class ninjaWFDSSComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-class ninjaCLIComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
 #endif //NINJACOM_H
