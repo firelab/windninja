@@ -45,7 +45,6 @@
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
-#include <QSocketNotifier>
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTreeWidgetItem>
@@ -129,7 +128,6 @@ private slots:
     void writeToConsole(QString message, QColor color = Qt::white);
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);
-    void writeComMessage();
     void cancelSolve();
 
 private:
@@ -149,15 +147,6 @@ private:
     std::vector<int> runProgress;
     int totalProgress;
     int maxProgress;
-
-#ifdef WIN32
-    intptr_t pipeFdWin[2];  // [0] = read end, [1] = write end
-    QWinEventNotifier* notifier;
-#else // WIN32
-    int pipeFd[2];  // [0] = read end, [1] = write end
-    QSocketNotifier* notifier;
-#endif // WIN32
-    FILE* ninjaComStream;
 
     QProgressDialog *progressDialog;
     QFutureWatcher<int> *futureWatcher;

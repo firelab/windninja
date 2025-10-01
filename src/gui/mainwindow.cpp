@@ -375,50 +375,6 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
     emit self->writeToConsoleSignal(QString::fromStdString(msg));
 }
 
-void MainWindow::writeComMessage()
-{
-    char buffer[1024];
-#ifdef WIN32
-    int n = _read(pipeFdWin[0], buffer, sizeof(buffer) - 1);
-#else // WIN32
-    ssize_t n = read(pipeFd[0], buffer, sizeof(buffer) - 1);
-#endif // WIN32
-    if( n > 0 )
-    {
-        buffer[n] = '\0';
-        ////writeToConsole(buffer);
-
-        // Break into lines in case multiple messages arrived at once
-        QString data = QString::fromUtf8(buffer);
-        QStringList lines = data.split('\n', Qt::SkipEmptyParts);
-        int runNumber;
-        int runProgress;
-        for( int i = 0; i < lines.size(); i++ )
-        {
-            const QString &line = lines[i];
-            if( sscanf(buffer, "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
-            {
-//                emit updateProgressValue(runNumber, runProgress);
-            }
-//            emit updateProgressMessage(line);
-//            writeToConsole(line);
-        }
-    }
-    else if( n == 0 )
-    {
-        // EOF
-        writeToConsole( "reached end of COM stream file." );
-//        notifier->setEnabled(false);
-//        ::close(pipeFd[0]);
-    }
-    else
-    {
-        writeToConsole( "Error reading from COM stream file.", Qt::red );
-//        notifier.setEnabled(false);
-//        ::fclose(ninjaComStream);
-    }
-}
-
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
@@ -858,47 +814,6 @@ void MainWindow::solveButtonClicked()
         runProgress.push_back(0);
     }
 
-#ifdef WIN32
-    // Create a pipe for ninjaCom
-    if( _pipe(pipeFdWin, 4096, O_BINARY) == -1 )
-    {
-        qDebug() << "Failed to create pipe for NinjaSetComStream";
-        writeToConsole( "Failed to create pipe for NinjaSetComStream", Qt::red );
-    }
-
-    // Wrap write end in FILE*
-    ninjaComStream = _fdopen(_dup(pipeFdWin[1]), "w");
-    if( !ninjaComStream )
-    {
-        qDebug() << "Failed to open write side of pipe for NinjaSetComStream";
-        writeToConsole( "Failed to open write side of pipe for NinjaSetComStream", Qt::red );
-    }
-
-    // Create notifier for read end
-    HANDLE hRead = (HANDLE)_get_osfhandle(pipeFdWin[0]);
-    notifier = new QWinEventNotifier(hRead, this);
-    connect(notifier, &QWinEventNotifier::activated, this, &MainWindow::writeComMessage);
-#else // WIN32
-    // Create a pipe for ninjaCom
-    if( pipe(pipeFd) == -1)
-    {
-        qDebug() << "Failed to create pipe for NinjaSetComStream";
-        writeToConsole( "Failed to create pipe for NinjaSetComStream", Qt::red );
-    }
-
-    // Wrap write end in FILE*
-    ninjaComStream = fdopen(pipeFd[1], "w");
-    if( !ninjaComStream )
-    {
-        qDebug() << "Failed to open write side of pipe for NinjaSetComStream";
-        writeToConsole( "Failed to open write side of pipe for NinjaSetComStream", Qt::red );
-    }
-
-    // Create notifier for read end
-    notifier = new QSocketNotifier(pipeFd[0], QSocketNotifier::Read, this);
-    QObject::connect(notifier, &QSocketNotifier::activated, this, &MainWindow::writeComMessage);
-#endif // WIN32
-
     futureWatcher = new QFutureWatcher<int>(this);
 
     progressDialog->show();
@@ -1125,12 +1040,6 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         if(err != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetProgressFunc: err =" << err;
-        }
-
-        err = NinjaSetMultiComStream(ninjaArmy, i, ninjaComStream, papszOptions);
-        if(err != NINJA_SUCCESS)
-        {
-            qDebug() << "NinjaSetMultiComStream: err =" << err;
         }
 
         /*
@@ -1501,9 +1410,6 @@ void MainWindow::finishedSolve()
     runProgress.clear();
 
     futureWatcher->deleteLater();
-
-    notifier->setEnabled(false);
-    ::close(pipeFd[0]);
 }
 
 
