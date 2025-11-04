@@ -34,6 +34,7 @@
 #include "windninja.h"
 #include "appstate.h"
 #include "QFileSystemModel"
+#include <QStandardItemModel>
 #include <QObject>
 
 namespace Ui {

@@ -2,6 +2,7 @@
 #define NINJATOOLS_H
 
 #include "nomads_wx_init.h"
+#include "wxModelInitializationFactory.h"
 
 class ninjaTools
 {
@@ -9,6 +10,7 @@ public:
     ninjaTools();
     void fetchWeatherModelData(const char* modelName, const char* demFile, int hours);
     std::vector<std::string> getForecastIdentifiers();
+    std::vector<std::string> getTimeList(const char* modelName, std::string timeZone);
     int getStartHour(const char*modelIdentifier);
     int getEndHour(const char* modelIdentifer);
 

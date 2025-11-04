@@ -45,6 +45,21 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
     return modelIdentifiers;
 }
 
+std::vector<std::string> ninjaTools::getTimeList(const char* fileName, std::string timeZone)
+{
+    wxModelInitialization *model = NULL;
+    model = wxModelInitializationFactory::makeWxInitialization(fileName);
+    std::vector<blt::local_date_time> temp = model->getTimeList(timeZone);
+    std::vector<std::string> timeList;
+
+    for(int i = 0; i < temp.size(); i++)
+    {
+        timeList.push_back(temp[i].to_string());
+    }
+
+    return timeList;
+}
+
 int ninjaTools::getStartHour(const char* modelIdentifier)
 {
     wxModelInitialization *model = NULL;

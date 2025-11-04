@@ -115,7 +115,35 @@ void WeatherModelInput::setUpTreeView()
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged()
 {
+    QItemSelectionModel *selectionModel = ui->weatherModelFileTreeView->selectionModel();
+    QModelIndexList indexes = selectionModel->selectedIndexes();
 
+    if (indexes.isEmpty())
+        return;
+
+    QModelIndex index = indexes.first();
+    QString filePath;
+
+    QFileSystemModel *model = qobject_cast<QFileSystemModel*>(ui->weatherModelFileTreeView->model());
+    if (model)
+        filePath = model->filePath(index);
+
+    std::string filepath = filePath.toStdString();
+    std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
+    int timeListCount = 0;
+    const char ** timeList = NinjaGetWeatherModelTimeList(tools, &timeListCount, filepath.c_str(), timeZone.c_str());
+
+    QStandardItemModel *timestepModel = new QStandardItemModel(this);
+    for (int i = 0; i < timeListCount; ++i) {
+        QString timestep = QString::fromUtf8(timeList[i]);
+        timestepModel->appendRow(new QStandardItem(timestep));
+    }
+
+    ui->weatherModelTimestepsTreeView->setModel(timestepModel);
+    ui->weatherModelTimestepsTreeView->setSortingEnabled(true);
+    ui->weatherModelTimestepsTreeView->sortByColumn(0, Qt::AscendingOrder);
+    QHeaderView *header = ui->weatherModelTimestepsTreeView->header();
+    header->setVisible(false);
 }
 
 void WeatherModelInput::weatherModelGroupBoxToggled(bool checked)

@@ -326,6 +326,26 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers(const char** id
     return NINJA_SUCCESS;
 }
 
+WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList(NinjaToolsH* tools, int* count, const char* fileName, const char* timeZone)
+{
+    if (!tools)
+        return nullptr;
+
+    std:string timeZoneString = timeZone;
+    std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getTimeList(fileName, timeZoneString);
+    *count = static_cast<int>(temp.size());
+
+    const char** timeList = new const char*[*count];
+    for (int i = 0; i < *count; i++)
+    {
+        char* time = new char[temp[i].size() + 1];
+        std::strcpy(time, temp[i].c_str());
+        timeList[i] = time;
+    }
+
+    return timeList;
+}
+
 WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
     (NinjaToolsH* tools, const char* modelIdentifier, int* startHour, int* endHour)
 {
@@ -735,7 +755,7 @@ WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
     }
     else
     {
-        return NINJA_E_NULL_PTR;
+        return NULL;
     }
 }
 #endif //NINJA_GUI
@@ -2486,10 +2506,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
 
 
 }
-
-/*-----------------------------------------------------------------------------
- *  Helper Methods
- *-----------------------------------------------------------------------------*/
 
 /**
  * \brief calls wxStation::writeBlankStationFile(), which writes a weather station csv file with no data, just a header.
