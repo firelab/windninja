@@ -42,6 +42,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     }
     NinjaFreeAllWeatherModelIdentifiers(identifiers, count);
 
+    connect(ui->weatherModelGroupBox, &QGroupBox::toggled, this, &WeatherModelInput::weatherModelGroupBoxToggled);
     connect(ui->weatherModelDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDownloadButtonClicked);
     connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
@@ -151,10 +152,10 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged()
     header->setVisible(false);
 }
 
-void WeatherModelInput::weatherModelGroupBoxToggled(bool checked)
+void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
 {
     AppState& state = AppState::instance();
-    state.isWeatherModelInitializationToggled = checked;
+    state.isWeatherModelInitializationToggled = toggled;
 
     if (state.isWeatherModelInitializationToggled)
     {

@@ -56,7 +56,7 @@ private slots:
     void weatherModelFileTreeViewItemSelectionChanged();
     void weatherModelTimeSelectAllButtonClicked();
     void weatherModelTimeSelectNoneButtonClicked();
-    void weatherModelGroupBoxToggled(bool checked);
+    void weatherModelGroupBoxToggled(bool toggled);
     void weatherModelComboBoxCurrentIndexChanged(int index);
 
 private:

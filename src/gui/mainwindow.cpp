@@ -770,6 +770,30 @@ void MainWindow::solveButtonClicked()
             );
         }
     }
+    else
+    {
+        QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
+        int timeListSize = selectedIndexes.count();
+        numNinjas = timeListSize;
+        initializationMethod = "wxmodel";
+        std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
+
+        QModelIndex index = ui->weatherModelFileTreeView->currentIndex();
+        QFileSystemModel *model = qobject_cast<QFileSystemModel *>(ui->weatherModelFileTreeView->model());
+        std::string filePath = model->filePath(index).toStdString();
+
+        // Allocate the char** array
+        const char **inputTimeList = new const char*[timeListSize];
+
+        for (int i = 0; i < timeListSize; ++i)
+        {
+            QString qstr = selectedIndexes[i].data().toString();
+            std::string str = qstr.toStdString();
+            inputTimeList[i] = strdup(str.c_str()); // allocate and copy each string
+        }
+
+        ninjaArmy = NinjaMakeWeatherModelArmy(filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
+    }
     writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
     maxProgress = numNinjas*100;

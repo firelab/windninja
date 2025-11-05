@@ -539,6 +539,9 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     const char *pszForecastFile = NULL;
     for( i = 0; i < (int)timeList.size(); i++ )
     {
+        std::string listTimeStr = timeList[i].to_string();
+        std::string ninjaTimeStr = input.ninjaTime.to_string();
+
         if( timeList[i] == input.ninjaTime )
         {
             bpt::ptime epoch( boost::gregorian::date( 1970, 1, 1 ) );

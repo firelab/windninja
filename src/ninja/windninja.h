@@ -97,7 +97,7 @@ typedef int  NinjaErr;
     //TODO: add helper function to get list of times in a forecast file
     //TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeWeatherModelArmy
-        ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options );
+        ( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaToolsH * NinjaMakeTools();
 

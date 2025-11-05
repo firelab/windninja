@@ -61,10 +61,9 @@ void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelGroupBox->setChecked(false);
+        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
-
-    state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-    state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
 
     emit requestRefresh();
 }

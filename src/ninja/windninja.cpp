@@ -245,7 +245,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
-    ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options )
+    ( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
 {
 #ifndef NINJAFOAM
     if(momentumFlag == true)
@@ -254,6 +254,36 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
     }
 #endif
 
+    // std::vector<blt::local_date_time> timeList;
+    // boost::local_time::time_zone_ptr timeZonePtr;
+    // timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);
+    // for (int i = 0; i < size; i++)
+    // {
+    //     std::string inputTime = inputTimeList[i];
+
+    //     std::istringstream iss(inputTime);
+    //     boost::local_time::local_time_input_facet* inFacet =
+    //         new boost::local_time::local_time_input_facet("%Y-%b-%d %H:%M:%S %ZP");
+    //     iss.imbue(std::locale(std::locale::classic(), inFacet));
+
+    //     blt::local_date_time ldt(boost::local_time::not_a_date_time);
+    //     iss >> ldt;
+
+    //     if (ldt.is_not_a_date_time())
+    //         throw std::runtime_error("Failed to parse local date time: " + inputTime);
+
+    //     // Convert back to string for debugging
+    //     std::ostringstream oss;
+    //     boost::local_time::local_time_facet* outFacet =
+    //         new boost::local_time::local_time_facet("%Y-%b-%d %H:%M:%S %Z");
+    //     oss.imbue(std::locale(std::locale::classic(), outFacet));
+    //     oss << ldt;
+
+    //     std::string parsedStr = oss.str(); // Inspect this in the debugger
+
+    //     timeList.push_back(ldt);
+    // }
+
     NinjaArmyH* army;
     try
     {
@@ -261,7 +291,8 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
 
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
-            std::string( timezone ),
+            std::string( timeZone ),
+            timeList,
             momentumFlag );
         return army;
     }
