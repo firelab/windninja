@@ -47,6 +47,7 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
 
 std::vector<std::string> ninjaTools::getTimeList(const char* fileName, std::string timeZone)
 {
+    std::string tz = "America/Denver";
     wxModelInitialization *model = NULL;
     model = wxModelInitializationFactory::makeWxInitialization(fileName);
     std::vector<blt::local_date_time> temp = model->getTimeList(timeZone);

@@ -44,6 +44,8 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
 
     connect(ui->weatherModelDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDownloadButtonClicked);
     connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
+    connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
+    connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
 
     weatherModelComboBoxCurrentIndexChanged(0);
 }
@@ -139,10 +141,13 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged()
         timestepModel->appendRow(new QStandardItem(timestep));
     }
 
-    ui->weatherModelTimestepsTreeView->setModel(timestepModel);
-    ui->weatherModelTimestepsTreeView->setSortingEnabled(true);
-    ui->weatherModelTimestepsTreeView->sortByColumn(0, Qt::AscendingOrder);
-    QHeaderView *header = ui->weatherModelTimestepsTreeView->header();
+    ui->weatherModelTimeTreeView->setModel(timestepModel);
+    ui->weatherModelTimeTreeView->setSortingEnabled(true);
+    ui->weatherModelTimeTreeView->sortByColumn(0, Qt::AscendingOrder);
+    ui->weatherModelTimeTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
+    ui->weatherModelTimeTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->weatherModelTimeTreeView->selectAll();
+    QHeaderView *header = ui->weatherModelTimeTreeView->header();
     header->setVisible(false);
 }
 
@@ -160,5 +165,15 @@ void WeatherModelInput::weatherModelGroupBoxToggled(bool checked)
     }
 
     emit requestRefresh();
+}
+
+void WeatherModelInput::weatherModelTimeSelectAllButtonClicked()
+{
+    ui->weatherModelTimeTreeView->selectAll();
+}
+
+void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
+{
+    ui->weatherModelTimeTreeView->clearSelection();
 }
 

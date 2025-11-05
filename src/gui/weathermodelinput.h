@@ -54,6 +54,8 @@ signals:
 private slots:
     void weatherModelDownloadButtonClicked();
     void weatherModelFileTreeViewItemSelectionChanged();
+    void weatherModelTimeSelectAllButtonClicked();
+    void weatherModelTimeSelectNoneButtonClicked();
     void weatherModelGroupBoxToggled(bool checked);
     void weatherModelComboBoxCurrentIndexChanged(int index);
 

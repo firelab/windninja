@@ -2288,7 +2288,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </widget>
                     </item>
                     <item>
-                     <widget class="QGroupBox" name="weatherModelTimeStepsGroupBox">
+                     <widget class="QGroupBox" name="weatherModelTimeGroupBox">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                         <horstretch>0</horstretch>
@@ -2306,7 +2306,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_45">
                        <item>
-                        <widget class="QTreeView" name="weatherModelTimestepsTreeView">
+                        <widget class="QTreeView" name="weatherModelTimeTreeView">
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                            <horstretch>0</horstretch>
@@ -2319,9 +2319,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </widget>
                        </item>
                        <item>
-                        <layout class="QHBoxLayout" name="weatherModelTimeStepsLayout">
+                        <layout class="QHBoxLayout" name="weatherModelTimeLayout">
                          <item>
-                          <spacer name="weatherModelTimestepLayoutSpacer">
+                          <spacer name="weatherModelTimeLayoutSpacer">
                            <property name="orientation">
                             <enum>Qt::Orientation::Horizontal</enum>
                            </property>
@@ -2334,14 +2334,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                           </spacer>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="weatherModelSelectAllButton">
+                          <widget class="QPushButton" name="weatherModelTimeSelectAllButton">
                            <property name="text">
                             <string>Select All</string>
                            </property>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="weatherModelSelectNoneButton">
+                          <widget class="QPushButton" name="weatherModelTimeSelectNoneButton">
                            <property name="text">
                             <string>Select None</string>
                            </property>
@@ -2605,8 +2605,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
-               <height>588</height>
+               <width>414</width>
+               <height>408</height>
               </rect>
              </property>
              <property name="sizePolicy">
