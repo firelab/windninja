@@ -292,7 +292,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
             std::string( timeZone ),
-            timeList,
+            //timeList,
             momentumFlag );
         return army;
     }

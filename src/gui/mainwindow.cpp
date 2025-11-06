@@ -456,7 +456,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectSignals();
 
-
     QString version(NINJA_VERSION_STRING);
     version = "Welcome to WindNinja " + version;
 
@@ -473,6 +472,7 @@ MainWindow::~MainWindow()
     delete surfaceInput;
     delete domainAverageInput;
     delete pointInitializationInput;
+    delete weatherModelInput;
     delete menuBar;
     delete ui;
 }

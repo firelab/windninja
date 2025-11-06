@@ -53,7 +53,7 @@ signals:
 
 private slots:
     void weatherModelDownloadButtonClicked();
-    void weatherModelFileTreeViewItemSelectionChanged();
+    void weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
     void weatherModelTimeSelectAllButtonClicked();
     void weatherModelTimeSelectNoneButtonClicked();
     void weatherModelGroupBoxToggled(bool toggled);
@@ -61,8 +61,10 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    NinjaToolsH* tools;
-    QFileSystemModel *weatherModelFileSystemModel;
+    NinjaToolsH* ninjaTools;
+    NinjaErr ninjaErr;
+    QFileSystemModel *fileModel;
+    QStandardItemModel *timeModel;
 };
 
 #endif // WEATHERMODELINPUT_H
