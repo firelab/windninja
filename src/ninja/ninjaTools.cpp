@@ -14,20 +14,12 @@ ninjaTools::ninjaTools()
         nomadsModels[i] = new NomadsWxModel( apszNomadsKeys[i][0] );
         i++;
     }
-    CPLDebug( "WINDNINJA", "Loaded %d NOMADS models", nomadsCount );
 }
 
 void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, int hours)
 {
     wxModelInitialization *model = NULL;
-    for(int i = 0; i < nomadsCount; i++)
-    {
-        if(nomadsModels[i]->getForecastIdentifier() == modelName)
-        {
-            model = nomadsModels[i];
-            break;
-        }
-    }
+    model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
 
     if (!model) {
         throw std::runtime_error(std::string("Weather model not found: ") + modelName);
@@ -38,6 +30,18 @@ void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFil
 
 std::vector<std::string> ninjaTools::getForecastIdentifiers()
 {
+    ncepGfsSurfInitialization gfs;
+    ncepNamSurfInitialization nam;
+    ncepNamAlaskaSurfInitialization namAla;
+    ncepRapSurfInitialization rap;
+    ncepNdfdInitialization ndfd;
+
+    modelIdentifiers.push_back(ndfd.getForecastIdentifier());
+    modelIdentifiers.push_back(nam.getForecastIdentifier());
+    modelIdentifiers.push_back(rap.getForecastIdentifier());
+    modelIdentifiers.push_back(namAla.getForecastIdentifier());
+    modelIdentifiers.push_back(gfs.getForecastIdentifier());
+
     for(int i = 0; i < nomadsCount; i++)
     {
         modelIdentifiers.push_back(nomadsModels[i]->getForecastIdentifier());
@@ -47,7 +51,6 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
 
 std::vector<std::string> ninjaTools::getTimeList(const char* fileName, std::string timeZone)
 {
-    std::string tz = "America/Denver";
     wxModelInitialization *model = NULL;
     model = wxModelInitializationFactory::makeWxInitialization(fileName);
     std::vector<blt::local_date_time> temp = model->getTimeList(timeZone);
@@ -64,27 +67,13 @@ std::vector<std::string> ninjaTools::getTimeList(const char* fileName, std::stri
 int ninjaTools::getStartHour(const char* modelIdentifier)
 {
     wxModelInitialization *model = NULL;
-    for(int i = 0; i < nomadsCount; i++)
-    {
-        if(nomadsModels[i]->getForecastIdentifier() == modelIdentifier)
-        {
-            model = nomadsModels[i];
-            break;
-        }
-    }
+    model = wxModelInitializationFactory::makeWxInitializationFromId(modelIdentifier);
     return model->getStartHour();
 }
 
 int ninjaTools::getEndHour(const char* modelIdentifier)
 {
     wxModelInitialization *model = NULL;
-    for(int i = 0; i < nomadsCount; i++)
-    {
-        if(nomadsModels[i]->getForecastIdentifier() == modelIdentifier)
-        {
-            model = nomadsModels[i];
-            break;
-        }
-    }
+    model = wxModelInitializationFactory::makeWxInitializationFromId(modelIdentifier);
     return model->getEndHour();
 }

@@ -34,6 +34,8 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     ui(ui)
 {
     ninjaTools = NinjaMakeTools();
+    fileModel = new QFileSystemModel(this);
+    timeModel = new QStandardItemModel(this);
 
     int identifiersSize = 0;
     const char** identifiers = NinjaGetAllWeatherModelIdentifiers(ninjaTools, &identifiersSize);
@@ -85,12 +87,11 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
 void WeatherModelInput::setUpTreeView()
 {
     // File Tree View
-    fileModel = new QFileSystemModel(this);
     QString demFilePath = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QFileInfo demFileInfo(demFilePath);
 
     fileModel->setRootPath(demFileInfo.absolutePath());
-    fileModel->setNameFilters({"*.zip", "NOMADS-*", "20*"});
+    fileModel->setNameFilters({"*.zip", "NOMADS-*", "20*", "UCAR-*"});
     fileModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     fileModel->setNameFilterDisables(false);
 
@@ -111,8 +112,6 @@ void WeatherModelInput::setUpTreeView()
     fileHeader->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 
     // Time Tree View
-    timeModel = new QStandardItemModel(this);
-
     ui->weatherModelTimeTreeView->setModel(timeModel);
     ui->weatherModelTimeTreeView->setSortingEnabled(true);
     ui->weatherModelTimeTreeView->sortByColumn(0, Qt::AscendingOrder);
@@ -150,6 +149,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
         qDebug() << "NinjaGetWeatherModelTimeList: Empty Time List";
     }
 
+    timeModel->clear();
     for (int i = 0; i < timeListSize; i++)
     {
         QString timestep = QString::fromUtf8(timeList[i]);
