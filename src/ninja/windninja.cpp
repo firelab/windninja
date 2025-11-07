@@ -254,35 +254,22 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
     }
 #endif
 
-    // std::vector<blt::local_date_time> timeList;
-    // boost::local_time::time_zone_ptr timeZonePtr;
-    // timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZone);
-    // for (int i = 0; i < size; i++)
-    // {
-    //     std::string inputTime = inputTimeList[i];
+    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+    std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+    std::vector<blt::local_date_time> timeList;
 
-    //     std::istringstream iss(inputTime);
-    //     boost::local_time::local_time_input_facet* inFacet =
-    //         new boost::local_time::local_time_input_facet("%Y-%b-%d %H:%M:%S %ZP");
-    //     iss.imbue(std::locale(std::locale::classic(), inFacet));
-
-    //     blt::local_date_time ldt(boost::local_time::not_a_date_time);
-    //     iss >> ldt;
-
-    //     if (ldt.is_not_a_date_time())
-    //         throw std::runtime_error("Failed to parse local date time: " + inputTime);
-
-    //     // Convert back to string for debugging
-    //     std::ostringstream oss;
-    //     boost::local_time::local_time_facet* outFacet =
-    //         new boost::local_time::local_time_facet("%Y-%b-%d %H:%M:%S %Z");
-    //     oss.imbue(std::locale(std::locale::classic(), outFacet));
-    //     oss << ldt;
-
-    //     std::string parsedStr = oss.str(); // Inspect this in the debugger
-
-    //     timeList.push_back(ldt);
-    // }
+    for(int i = 0; i < fullTimeList.size(); i++)
+    {
+        for(int j = 0; j < size; j++)
+        {
+            std::string time1 = fullTimeList[i].to_string();
+            std::string time2(inputTimeList[j]);
+            if(time1 == time2)
+            {
+                timeList.push_back(fullTimeList[i]);
+            }
+        }
+    }
 
     NinjaArmyH* army;
     try
@@ -292,7 +279,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
             std::string( timeZone ),
-            //timeList,
+            timeList,
             momentumFlag );
         return army;
     }
