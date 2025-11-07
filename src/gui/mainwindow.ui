@@ -464,7 +464,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>11</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -2164,7 +2164,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <x>0</x>
                <y>0</y>
                <width>572</width>
-               <height>637</height>
+               <height>713</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_22" stretch="0,1">
@@ -2179,7 +2179,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_43" stretch="0,1">
+                <layout class="QVBoxLayout" name="verticalLayout_43" stretch="0,0,1">
                  <item>
                   <widget class="QGroupBox" name="weatherModelDownloadGroupBox">
                    <property name="sizePolicy">
@@ -2241,6 +2241,29 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <property name="icon">
                        <iconset resource="../../wn-resources.qrc">
                         <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QGroupBox" name="pastcastGroupBox">
+                   <property name="title">
+                    <string>Earlierst Pastcast Date: 07/30/2014 // UTC or local time?</string>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_15">
+                    <item>
+                     <widget class="QDateTimeEdit" name="pastcastStartDateTimeEdit">
+                      <property name="timeSpec">
+                       <enum>Qt::TimeSpec::UTC</enum>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
+                      <property name="timeSpec">
+                       <enum>Qt::TimeSpec::UTC</enum>
                       </property>
                      </widget>
                     </item>
@@ -2605,8 +2628,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>414</width>
-               <height>408</height>
+               <width>578</width>
+               <height>588</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3311,7 +3334,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>381</width>
+               <width>578</width>
                <height>318</height>
               </rect>
              </property>

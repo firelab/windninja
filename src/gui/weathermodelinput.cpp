@@ -35,6 +35,10 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
 {
     ninjaTools = NinjaMakeTools();
 
+    ui->pastcastGroupBox->hide();
+    ui->pastcastStartDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc());
+    ui->pastcastEndDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc());
+
     int identifiersSize = 0;
     const char** identifiers = NinjaGetAllWeatherModelIdentifiers(ninjaTools, &identifiersSize);
     for (int i = 0; i < identifiersSize; i++)
@@ -42,6 +46,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
         ui->weatherModelComboBox->addItem(identifiers[i]);
     }
     NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
+
     weatherModelComboBoxCurrentIndexChanged(0);
 
     connect(ui->weatherModelGroupBox, &QGroupBox::toggled, this, &WeatherModelInput::weatherModelGroupBoxToggled);
@@ -59,6 +64,37 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     const char* demFile = demFileByte.constData();
     int hours = ui->weatherModelSpinBox->value();
 
+    if(ui->weatherModelComboBox->currentText().contains("PASTCAST"))
+    {
+        QDateTime startDT = ui->pastcastStartDateTimeEdit->dateTime();
+        QDateTime endDT = ui->pastcastEndDateTimeEdit->dateTime();
+
+        // Extract start date and time
+        QDate startQDate = startDT.date();
+        QTime startQTime = startDT.time();
+        int startYear = startQDate.year();
+        int startMonth = startQDate.month();
+        int startDay = startQDate.day();
+        int startHour = startQTime.hour();
+
+        // Extract end date and time
+        QDate endQDate = endDT.date();
+        QTime endQTime = endDT.time();
+        int endYear = endQDate.year();
+        int endMonth = endQDate.month();
+        int endDay = endQDate.day();
+        int endHour = endQTime.hour();
+
+        ninjaErr = NinjaFetchArchiveWeatherData(ninjaTools, modelIdentifier, demFile, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaFetchArchiveWeatherData: " << ninjaErr;
+        }
+
+
+        return;
+    }
+
     ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
     if (ninjaErr != NINJA_SUCCESS)
     {
@@ -68,6 +104,13 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
 void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
 {
+    if(ui->weatherModelComboBox->currentText().contains("PASTCAST"))
+    {
+        ui->weatherModelSpinBox->setDisabled(true);
+        ui->pastcastGroupBox->setVisible(true);
+
+        return;
+    }
     QByteArray modelIdentifierByte = ui->weatherModelComboBox->currentText().toUtf8();
     const char* modelIdentifier = modelIdentifierByte.constData();
     int starHour, endHour;
@@ -94,7 +137,7 @@ void WeatherModelInput::setUpTreeView()
     QFileInfo demFileInfo(demFilePath);
 
     fileModel->setRootPath(demFileInfo.absolutePath());
-    fileModel->setNameFilters({"*.zip", "NOMADS-*", "20*", "UCAR-*"});
+    fileModel->setNameFilters({"*.zip", "NOMADS-*", "20*", "UCAR-*", "PASTCAST-*"});
     fileModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     fileModel->setNameFilterDisables(false);
 

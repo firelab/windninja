@@ -311,6 +311,22 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData(NinjaToolsH* tools, const cha
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData(NinjaToolsH* tools, const char* modelName, const char* demFile, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
+{
+    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+
+    boost::gregorian::date startDate(startYear, startMonth, startDay);
+    boost::gregorian::date endDate(endYear, endMonth, endDay);
+
+    int hours = 0;
+
+    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+    forecastModel->setDateTime(startDate, endDate, boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(endHour));
+    forecastModel->fetchForecast(demFile, hours);
+
+    return NINJA_SUCCESS;
+}
+
 WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers(NinjaToolsH* tools, int* count)
 {
     if (!tools || !count)

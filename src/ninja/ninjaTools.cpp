@@ -46,6 +46,9 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
     {
         modelIdentifiers.push_back(nomadsModels[i]->getForecastIdentifier());
     }
+
+    GCPWxModel archive;
+    modelIdentifiers.push_back(archive.getForecastIdentifier());
     return modelIdentifiers;
 }
 
