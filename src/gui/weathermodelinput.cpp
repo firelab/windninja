@@ -34,8 +34,6 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     ui(ui)
 {
     ninjaTools = NinjaMakeTools();
-    fileModel = new QFileSystemModel(this);
-    timeModel = new QStandardItemModel(this);
 
     int identifiersSize = 0;
     const char** identifiers = NinjaGetAllWeatherModelIdentifiers(ninjaTools, &identifiersSize);
@@ -86,7 +84,12 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
 
 void WeatherModelInput::setUpTreeView()
 {
+    AppState& state = AppState::instance();
+    state.isWeatherModelForecastValid = false;
+    emit requestRefresh();
+
     // File Tree View
+    fileModel = new QFileSystemModel(this);
     QString demFilePath = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QFileInfo demFileInfo(demFilePath);
 
@@ -103,6 +106,7 @@ void WeatherModelInput::setUpTreeView()
     ui->weatherModelFileTreeView->setUniformRowHeights(true);
     ui->weatherModelFileTreeView->hideColumn(1);
     ui->weatherModelFileTreeView->hideColumn(2);
+    ui->weatherModelFileTreeView->collapseAll();
 
     QHeaderView *fileHeader = ui->weatherModelFileTreeView->header();
     fileHeader->setStretchLastSection(false);
@@ -112,6 +116,8 @@ void WeatherModelInput::setUpTreeView()
     fileHeader->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 
     // Time Tree View
+    timeModel = new QStandardItemModel(this);
+
     ui->weatherModelTimeTreeView->setModel(timeModel);
     ui->weatherModelTimeTreeView->setSortingEnabled(true);
     ui->weatherModelTimeTreeView->sortByColumn(0, Qt::AscendingOrder);
@@ -127,6 +133,9 @@ void WeatherModelInput::setUpTreeView()
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
+    AppState& state = AppState::instance();
+    state.isWeatherModelForecastValid = true;
+
     if (selected.indexes().empty())
     {
         return;
@@ -136,6 +145,9 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     QFileInfo fileInfo = fileModel->fileInfo(index);
     if(fileInfo.isDir())
     {
+        state.isWeatherModelForecastValid = false;
+        timeModel->clear();
+        emit requestRefresh();
         return;
     }
 
@@ -157,6 +169,8 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     }
 
     ui->weatherModelTimeTreeView->selectAll();
+
+    emit requestRefresh();
 }
 
 void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)

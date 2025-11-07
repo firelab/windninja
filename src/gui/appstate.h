@@ -39,7 +39,7 @@ public:
         return s;
     }
 
-    // Solver Methodology input states
+    // Solver Methodology states
     bool isSolverMethodologyValid = false;
     bool isMassSolverToggled = false;
     bool isMomentumSolverToggled = false;
@@ -60,11 +60,12 @@ public:
     bool isStationFileSelectionValid = false;
     bool isPointInitializationValid = false;
     bool isWeatherModelInitializationToggled = false;
+    bool isWeatherModelForecastValid = false;
     bool isWeatherModelInitializationValid = false;
     bool isShowAllTimeZonesSelected = false;
     bool isDisplayTimeZoneDetailsSelected = false;
 
-    //Output States
+    // Output States
     bool isOutputsValid = false;
     bool isGoogleEarthToggled = false;
     bool isGoogleEarthValid = false;

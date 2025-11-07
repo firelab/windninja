@@ -130,9 +130,13 @@ void MainWindow::refreshUI()
     }
 
     // Update weather model initialization
-    if (state.isWeatherModelInitializationToggled) {
+    if (state.isWeatherModelInitializationToggled && state.isWeatherModelForecastValid) {
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
         state.isWeatherModelInitializationValid = true;
+    } else if (state.isWeatherModelInitializationToggled && !state.isWeatherModelForecastValid) {
+        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Forecast is Invalid");
+        state.isWeatherModelInitializationValid = false;
     } else {
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, bulletIcon);
         state.isWeatherModelInitializationValid = false;

@@ -32,7 +32,7 @@
 PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
-{
+{    
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
@@ -241,6 +241,10 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
 
 void PointInitializationInput::setupTreeView()
 {
+    AppState& state = AppState::instance();
+    state.isStationFileSelectionValid = false;
+    emit requestRefresh();
+
     stationFileSystemModel = new QFileSystemModel(this);
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QFileInfo fileInfo(path);
