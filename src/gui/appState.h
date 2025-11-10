@@ -40,8 +40,21 @@ class AppState : public QObject
 
 public:
     static AppState& instance();
-    void setUi(Ui::MainWindow* mainUi);
+    void setUi(Ui::MainWindow* mainWindowUi);
     void refreshUI();
+    void updateSolverMethodologyState();
+    void updateSurfaceInputState();
+    void updateDomainAverageInputState();
+    void updatePointInitializationInputState();
+    void updateWeatherModelInputState();
+    void updateGoogleEarthOutputState();
+    void updateFireBehaviorOutputState();
+    void updateShapeFilesOutputState();
+    void updateGeoSpatialPDFFilesOutputState();
+    void updateVTKFilesOutputState();
+    void updateInputState();
+    void updateOutputState();
+    void updateOverallState();
 
     // Solver Methodology states
     bool isSolverMethodologyValid = false;
@@ -66,8 +79,6 @@ public:
     bool isWeatherModelInitializationToggled = false;
     bool isWeatherModelForecastValid = false;
     bool isWeatherModelInitializationValid = false;
-    bool isShowAllTimeZonesSelected = false;
-    bool isDisplayTimeZoneDetailsSelected = false;
 
     // Output States
     bool isOutputsValid = false;
@@ -86,10 +97,14 @@ public:
     bool isSolverReady = false;
 
 private:
-    AppState() {}
+    AppState();
     AppState(const AppState&) = delete;
     AppState& operator=(const AppState&) = delete;
     Ui::MainWindow *ui;
+
+    QIcon tickIcon;
+    QIcon crossIcon;
+    QIcon bulletIcon;
 };
 
 #endif // APPSTATE_H
