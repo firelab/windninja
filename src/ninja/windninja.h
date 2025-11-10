@@ -112,9 +112,14 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
         (NinjaToolsH* tools, const char* modelIdentifier, int* starHours, int* endHour);
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers(const char** identifiers, int count);
+    WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
+        (const char** identifiers, int count);
 
-    WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList(NinjaToolsH * tools, int * count, const char * fileName, const char * timeZone);
+    WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
+        (NinjaToolsH * tools, int * count, const char * fileName, const char * timeZone);
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
+        (const char** timeList, int timeListSize);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
         (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, double buffer, const char* units, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );

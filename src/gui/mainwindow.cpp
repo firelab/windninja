@@ -170,7 +170,7 @@ void MainWindow::refreshUI()
         ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
     }
 
-    if(state.isGoogleEarthToggled)
+    if(state.isGoogleEarthToggled)setupTreeView
     {
         if(state.isSurfaceInputValid)
         {
@@ -504,11 +504,11 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
-//    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
+//  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(surfaceInput, &SurfaceInput::setupTreeView, pointInitializationInput, &PointInitializationInput::setupTreeView);
-    connect(surfaceInput, &SurfaceInput::setupTreeView, weatherModelInput, &WeatherModelInput::setUpTreeView);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(weatherModelInput, &WeatherModelInput::requestRefresh, this, &MainWindow::refreshUI);

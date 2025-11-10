@@ -239,7 +239,7 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(index);
 }
 
-void PointInitializationInput::setupTreeView()
+void PointInitializationInput::updateTreeView()
 {
     AppState& state = AppState::instance();
     state.isStationFileSelectionValid = false;

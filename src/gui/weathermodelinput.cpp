@@ -36,7 +36,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     ninjaTools = NinjaMakeTools();
 
     ui->pastcastGroupBox->hide();
-    ui->pastcastStartDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc());
+    ui->pastcastStartDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc().addDays(-1));
     ui->pastcastEndDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc());
 
     int identifiersSize = 0;
@@ -66,31 +66,28 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
     if(ui->weatherModelComboBox->currentText().contains("PASTCAST"))
     {
-        QDateTime startDT = ui->pastcastStartDateTimeEdit->dateTime();
-        QDateTime endDT = ui->pastcastEndDateTimeEdit->dateTime();
+        QDateTime startDateTime = ui->pastcastStartDateTimeEdit->dateTime();
+        QDateTime endDateTime = ui->pastcastEndDateTimeEdit->dateTime();
 
-        // Extract start date and time
-        QDate startQDate = startDT.date();
-        QTime startQTime = startDT.time();
-        int startYear = startQDate.year();
-        int startMonth = startQDate.month();
-        int startDay = startQDate.day();
-        int startHour = startQTime.hour();
+        QDate startDate = startDateTime.date();
+        QTime startTime = startDateTime.time();
+        int startYear = startDate.year();
+        int startMonth = startDate.month();
+        int startDay = startDate.day();
+        int startHour = startTime.hour();
 
-        // Extract end date and time
-        QDate endQDate = endDT.date();
-        QTime endQTime = endDT.time();
-        int endYear = endQDate.year();
-        int endMonth = endQDate.month();
-        int endDay = endQDate.day();
-        int endHour = endQTime.hour();
+        QDate endDate = endDateTime.date();
+        QTime endTime = endDateTime.time();
+        int endYear = endDate.year();
+        int endMonth = endDate.month();
+        int endDay = endDate.day();
+        int endHour = endTime.hour();
 
         ninjaErr = NinjaFetchArchiveWeatherData(ninjaTools, modelIdentifier, demFile, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaFetchArchiveWeatherData: " << ninjaErr;
         }
-
 
         return;
     }
@@ -111,6 +108,7 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
 
         return;
     }
+
     QByteArray modelIdentifierByte = ui->weatherModelComboBox->currentText().toUtf8();
     const char* modelIdentifier = modelIdentifierByte.constData();
     int starHour, endHour;
@@ -125,7 +123,7 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
     ui->weatherModelSpinBox->setMaximum(endHour);
 }
 
-void WeatherModelInput::setUpTreeView()
+void WeatherModelInput::updateTreeView()
 {
     AppState& state = AppState::instance();
     state.isWeatherModelForecastValid = false;
@@ -174,13 +172,14 @@ void WeatherModelInput::setUpTreeView()
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
 }
 
-void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
+void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
 {
     AppState& state = AppState::instance();
-    state.isWeatherModelForecastValid = true;
 
     if (selected.indexes().empty())
     {
+        state.isWeatherModelForecastValid = false;
+
         return;
     }
 
@@ -188,11 +187,15 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     QFileInfo fileInfo = fileModel->fileInfo(index);
     if(fileInfo.isDir())
     {
-        state.isWeatherModelForecastValid = false;
         timeModel->clear();
+
+        state.isWeatherModelForecastValid = false;
         emit requestRefresh();
+
         return;
     }
+
+    state.isWeatherModelForecastValid = true;
 
     std::string modelFilePath = fileModel->filePath(index).toStdString();
     std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
@@ -212,6 +215,12 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     }
 
     ui->weatherModelTimeTreeView->selectAll();
+
+    ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
+    if(ninjaErr == NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaFreeWeatherModelTimeList: " << ninjaErr;
+    }
 
     emit requestRefresh();
 }

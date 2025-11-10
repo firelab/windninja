@@ -298,7 +298,8 @@ WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
     return army;
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData(NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
 {
     if(tools != NULL)
     {
@@ -311,7 +312,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData(NinjaToolsH* tools, const cha
     }
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData(NinjaToolsH* tools, const char* modelName, const char* demFile, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
 {
     wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
 
@@ -327,7 +329,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData(NinjaToolsH* tools, co
     return NINJA_SUCCESS;
 }
 
-WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers(NinjaToolsH* tools, int* count)
+WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
+    (NinjaToolsH* tools, int* count)
 {
     if (!tools || !count)
         return nullptr;
@@ -346,13 +349,17 @@ WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers(NinjaToolsH*
     return identifiers;
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers(const char** identifiers, int count)
+WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
+    (const char** identifiers, int count)
 {
     if (!identifiers)
+    {
         return NINJA_E_NULL_PTR;
+    }
 
     char** ids = (char**)identifiers;
-    for (int i = 0; i < count; ++i) {
+    for (int i = 0; i < count; i++)
+    {
         delete[] ids[i];
     }
     delete[] ids;
@@ -360,7 +367,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers(const char** id
     return NINJA_SUCCESS;
 }
 
-WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList(NinjaToolsH* tools, int* count, const char* fileName, const char* timeZone)
+WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
+    (NinjaToolsH* tools, int* count, const char* fileName, const char* timeZone)
 {
     if (!tools)
         return nullptr;
@@ -378,6 +386,24 @@ WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList(NinjaToolsH* tools
     }
 
     return timeList;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
+    (const char** timeList, int timeListSize)
+{
+    if (!timeList)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    char** times = (char**)timeList;
+    for (int i = 0; i < timeListSize; i++)
+    {
+        delete[] times[i];
+    }
+    delete[] times;
+
+    return NINJA_SUCCESS;
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
