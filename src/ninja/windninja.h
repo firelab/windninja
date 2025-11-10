@@ -75,6 +75,10 @@ WN_C_START
 //Use structs instead of void * for type checking by C compilier
 struct NinjaArmyH;
 typedef struct NinjaArmyH NinjaArmyH;
+
+struct NinjaToolsH;
+typedef struct NinjaToolsH NinjaToolsH;
+
 typedef int  NinjaErr;
 
     /*-----------------------------------------------------------------------------
@@ -93,7 +97,29 @@ typedef int  NinjaErr;
     //TODO: add helper function to get list of times in a forecast file
     //TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
     WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeWeatherModelArmy
-        ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options );
+        ( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaToolsH * NinjaMakeTools();
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
+        (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours);
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
+        (NinjaToolsH* tools, const char* modelName, const char* demFile, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
+
+    WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers(NinjaToolsH* tools, int* count);
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
+        (NinjaToolsH* tools, const char* modelIdentifier, int* starHours, int* endHour);
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
+        (const char** identifiers, int count);
+
+    WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
+        (NinjaToolsH * tools, int * count, const char * fileName, const char * timeZone);
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
+        (const char** timeList, int timeListSize);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
         (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, double buffer, const char* units, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );

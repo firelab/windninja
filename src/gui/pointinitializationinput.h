@@ -59,7 +59,7 @@ signals:
     void requestRefresh();
 
 public slots:
-    void setupTreeView();
+    void updateTreeView();
 
 private slots:
     void pointInitializationGroupBoxToggled(bool toggled);

@@ -29,6 +29,7 @@
 
 #include "windninja.h"
 #include "ninjaArmy.h"
+#include "ninjaTools.h"
 #include "ninjaException.h"
 
 #ifdef _OPENMP
@@ -244,7 +245,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
-    ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options )
+    ( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
 {
 #ifndef NINJAFOAM
     if(momentumFlag == true)
@@ -253,6 +254,23 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
     }
 #endif
 
+    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+    std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+    std::vector<blt::local_date_time> timeList;
+
+    for(int i = 0; i < fullTimeList.size(); i++)
+    {
+        for(int j = 0; j < size; j++)
+        {
+            std::string time1 = fullTimeList[i].to_string();
+            std::string time2(inputTimeList[j]);
+            if(time1 == time2)
+            {
+                timeList.push_back(fullTimeList[i]);
+            }
+        }
+    }
+
     NinjaArmyH* army;
     try
     {
@@ -260,7 +278,8 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
 
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
-            std::string( timezone ),
+            std::string( timeZone ),
+            timeList,
             momentumFlag );
         return army;
     }
@@ -270,6 +289,133 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
     }
     
     return NULL;
+}
+
+WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
+{
+    NinjaToolsH* army;
+    army = reinterpret_cast<NinjaToolsH*>(new ninjaTools());
+    return army;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
+{
+    if(tools != NULL)
+    {
+        reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
+{
+    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+
+    boost::gregorian::date startDate(startYear, startMonth, startDay);
+    boost::gregorian::date endDate(endYear, endMonth, endDay);
+
+    int hours = 0;
+
+    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+    forecastModel->setDateTime(startDate, endDate, boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(endHour));
+    forecastModel->fetchForecast(demFile, hours);
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
+    (NinjaToolsH* tools, int* count)
+{
+    if (!tools || !count)
+        return nullptr;
+
+    std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getForecastIdentifiers();
+    *count = static_cast<int>(temp.size());
+
+    const char** identifiers = new const char*[*count];
+    for (int i = 0; i < *count; i++)
+    {
+        char* identifier = new char[temp[i].size() + 1];
+        std::strcpy(identifier, temp[i].c_str());
+        identifiers[i] = identifier;
+    }
+
+    return identifiers;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
+    (const char** identifiers, int count)
+{
+    if (!identifiers)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    char** ids = (char**)identifiers;
+    for (int i = 0; i < count; i++)
+    {
+        delete[] ids[i];
+    }
+    delete[] ids;
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
+    (NinjaToolsH* tools, int* count, const char* fileName, const char* timeZone)
+{
+    if (!tools)
+        return nullptr;
+
+    std:string timeZoneString = timeZone;
+    std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getTimeList(fileName, timeZoneString);
+    *count = static_cast<int>(temp.size());
+
+    const char** timeList = new const char*[*count];
+    for (int i = 0; i < *count; i++)
+    {
+        char* time = new char[temp[i].size() + 1];
+        std::strcpy(time, temp[i].c_str());
+        timeList[i] = time;
+    }
+
+    return timeList;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
+    (const char** timeList, int timeListSize)
+{
+    if (!timeList)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    char** times = (char**)timeList;
+    for (int i = 0; i < timeListSize; i++)
+    {
+        delete[] times[i];
+    }
+    delete[] times;
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
+    (NinjaToolsH* tools, const char* modelIdentifier, int* startHour, int* endHour)
+{
+    if (!tools || !startHour || !endHour)
+        return NINJA_E_NULL_PTR;
+
+    *startHour = reinterpret_cast<ninjaTools*>(tools)->getStartHour(modelIdentifier);
+    *endHour = reinterpret_cast<ninjaTools*>(tools)->getEndHour(modelIdentifier);
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -669,7 +815,7 @@ WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
     }
     else
     {
-        return NINJA_E_NULL_PTR;
+        return NULL;
     }
 }
 #endif //NINJA_GUI
@@ -2420,10 +2566,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
 
 
 }
-
-/*-----------------------------------------------------------------------------
- *  Helper Methods
- *-----------------------------------------------------------------------------*/
 
 /**
  * \brief calls wxStation::writeBlankStationFile(), which writes a weather station csv file with no data, just a header.

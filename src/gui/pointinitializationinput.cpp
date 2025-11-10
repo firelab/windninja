@@ -32,7 +32,7 @@
 PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
-{
+{    
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
@@ -61,10 +61,9 @@ void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelGroupBox->setChecked(false);
+        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
-
-    state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-    state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
 
     emit requestRefresh();
 }
@@ -240,8 +239,12 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(index);
 }
 
-void PointInitializationInput::setupTreeView()
+void PointInitializationInput::updateTreeView()
 {
+    AppState& state = AppState::instance();
+    state.isStationFileSelectionValid = false;
+    emit requestRefresh();
+
     stationFileSystemModel = new QFileSystemModel(this);
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QFileInfo fileInfo(path);

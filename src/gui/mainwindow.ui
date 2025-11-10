@@ -750,8 +750,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>538</width>
-               <height>419</height>
+               <width>578</width>
+               <height>588</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1316,7 +1316,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>346</width>
+               <width>572</width>
                <height>661</height>
               </rect>
              </property>
@@ -2164,7 +2164,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <x>0</x>
                <y>0</y>
                <width>572</width>
-               <height>639</height>
+               <height>713</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_22" stretch="0,1">
@@ -2179,7 +2179,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_43" stretch="0,1">
+                <layout class="QVBoxLayout" name="verticalLayout_43" stretch="0,0,1">
                  <item>
                   <widget class="QGroupBox" name="weatherModelDownloadGroupBox">
                    <property name="sizePolicy">
@@ -2191,74 +2191,87 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="title">
                     <string>Download Weather Data</string>
                    </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_44">
+                   <layout class="QHBoxLayout" name="horizontalLayout_11">
                     <item>
-                     <layout class="QHBoxLayout" name="weatherModelDataDownloadLayout" stretch="2,1,1,0">
-                      <item>
-                       <widget class="QComboBox" name="weatherModelDataComboBox">
-                        <property name="cursor">
-                         <cursorShape>PointingHandCursor</cursorShape>
-                        </property>
-                        <item>
-                         <property name="text">
-                          <string>NOMADS-HRRR-CONUS-3-KM</string>
-                         </property>
-                        </item>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QSpinBox" name="weatherModelDataSpinBox">
-                        <property name="cursor">
-                         <cursorShape>PointingHandCursor</cursorShape>
-                        </property>
-                        <property name="specialValueText">
-                         <string/>
-                        </property>
-                        <property name="suffix">
-                         <string> hours</string>
-                        </property>
-                        <property name="minimum">
-                         <number>1</number>
-                        </property>
-                        <property name="value">
-                         <number>1</number>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QPushButton" name="weatherModelDataDownloadButton">
-                        <property name="cursor">
-                         <cursorShape>PointingHandCursor</cursorShape>
-                        </property>
-                        <property name="text">
-                         <string>Download Data</string>
-                        </property>
-                        <property name="icon">
-                         <iconset resource="../../wn-resources.qrc">
-                          <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <spacer name="weatherModelDataDownloadSpacer">
-                        <property name="orientation">
-                         <enum>Qt::Orientation::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>20</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                     </layout>
+                     <widget class="QComboBox" name="weatherModelComboBox">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="cursor">
+                       <cursorShape>PointingHandCursor</cursorShape>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QSpinBox" name="weatherModelSpinBox">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="cursor">
+                       <cursorShape>PointingHandCursor</cursorShape>
+                      </property>
+                      <property name="specialValueText">
+                       <string/>
+                      </property>
+                      <property name="suffix">
+                       <string> hours</string>
+                      </property>
+                      <property name="minimum">
+                       <number>1</number>
+                      </property>
+                      <property name="value">
+                       <number>6</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="weatherModelDownloadButton">
+                      <property name="cursor">
+                       <cursorShape>PointingHandCursor</cursorShape>
+                      </property>
+                      <property name="text">
+                       <string>Download</string>
+                      </property>
+                      <property name="icon">
+                       <iconset resource="../../wn-resources.qrc">
+                        <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
+                      </property>
+                     </widget>
                     </item>
                    </layout>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QGroupBox" name="weatherModelDataGroupBox">
+                  <widget class="QGroupBox" name="pastcastGroupBox">
+                   <property name="title">
+                    <string>Earlierst Pastcast Date: 07/30/2014 // UTC or local time?</string>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_15">
+                    <item>
+                     <widget class="QDateTimeEdit" name="pastcastStartDateTimeEdit">
+                      <property name="timeSpec">
+                       <enum>Qt::TimeSpec::UTC</enum>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
+                      <property name="timeSpec">
+                       <enum>Qt::TimeSpec::UTC</enum>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QGroupBox" name="weatherModelTreeViewsGroupBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                      <horstretch>0</horstretch>
@@ -2285,7 +2298,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <number>0</number>
                     </property>
                     <item>
-                     <widget class="QTreeView" name="weatherModelDataTreeView">
+                     <widget class="QTreeView" name="weatherModelFileTreeView">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                         <horstretch>0</horstretch>
@@ -2298,7 +2311,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </widget>
                     </item>
                     <item>
-                     <widget class="QGroupBox" name="weatherModelTimestepsGroupBox">
+                     <widget class="QGroupBox" name="weatherModelTimeGroupBox">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                         <horstretch>0</horstretch>
@@ -2316,7 +2329,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_45">
                        <item>
-                        <widget class="QTreeView" name="weatherModelTimestepsTreeView">
+                        <widget class="QTreeView" name="weatherModelTimeTreeView">
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                            <horstretch>0</horstretch>
@@ -2329,9 +2342,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </widget>
                        </item>
                        <item>
-                        <layout class="QHBoxLayout" name="weatherModelTimestepSelectionsLayout">
+                        <layout class="QHBoxLayout" name="weatherModelTimeLayout">
                          <item>
-                          <spacer name="weatherModelTimestepSelectionsLayout_2">
+                          <spacer name="weatherModelTimeLayoutSpacer">
                            <property name="orientation">
                             <enum>Qt::Orientation::Horizontal</enum>
                            </property>
@@ -2344,14 +2357,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                           </spacer>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="weatherModelSelectAllButton">
+                          <widget class="QPushButton" name="weatherModelTimeSelectAllButton">
                            <property name="text">
                             <string>Select All</string>
                            </property>
                           </widget>
                          </item>
                          <item>
-                          <widget class="QPushButton" name="weatherModelSelectNoneButton">
+                          <widget class="QPushButton" name="weatherModelTimeSelectNoneButton">
                            <property name="text">
                             <string>Select None</string>
                            </property>
@@ -2615,8 +2628,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>414</width>
-               <height>408</height>
+               <width>578</width>
+               <height>588</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3321,7 +3334,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>381</width>
+               <width>578</width>
                <height>318</height>
               </rect>
              </property>

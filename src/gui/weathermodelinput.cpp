@@ -33,65 +33,202 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
-    connect(ui->weatherModelDataDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDataDownloadButtonClicked);
+    ninjaTools = NinjaMakeTools();
+
+    ui->pastcastGroupBox->hide();
+    ui->pastcastStartDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc().addDays(-1));
+    ui->pastcastEndDateTimeEdit->setDateTime(QDateTime::currentDateTimeUtc());
+
+    int identifiersSize = 0;
+    const char** identifiers = NinjaGetAllWeatherModelIdentifiers(ninjaTools, &identifiersSize);
+    for (int i = 0; i < identifiersSize; i++)
+    {
+        ui->weatherModelComboBox->addItem(identifiers[i]);
+    }
+    NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
+
+    weatherModelComboBoxCurrentIndexChanged(0);
+
+    connect(ui->weatherModelGroupBox, &QGroupBox::toggled, this, &WeatherModelInput::weatherModelGroupBoxToggled);
+    connect(ui->weatherModelDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDownloadButtonClicked);
+    connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
+    connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
+    connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
 }
 
-void WeatherModelInput::weatherModelDataDownloadButtonClicked()
+void WeatherModelInput::weatherModelDownloadButtonClicked()
 {
-    QString wxModelType = ui->weatherModelDataComboBox->currentText();
-    QString DEMFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
-    int nHours = ui->weatherModelDataSpinBox->value();
-    NinjaArmyH *ninjaArmy = nullptr;
-    char ** options = nullptr;
-    NinjaErr err = NinjaFetchForecast(ninjaArmy, wxModelType.toUtf8().constData(), nHours, DEMFile.toUtf8().constData(), options);
-    if(err != NINJA_SUCCESS)
+    QByteArray modelIdentifierByte = ui->weatherModelComboBox->currentText().toUtf8();
+    QByteArray demFileByte   = ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8();
+    const char* modelIdentifier = modelIdentifierByte.constData();
+    const char* demFile = demFileByte.constData();
+    int hours = ui->weatherModelSpinBox->value();
+
+    if(ui->weatherModelComboBox->currentText().contains("PASTCAST"))
     {
-        qDebug() << "NinjaFetchForecast: err =" << err;
+        QDateTime startDateTime = ui->pastcastStartDateTimeEdit->dateTime();
+        QDateTime endDateTime = ui->pastcastEndDateTimeEdit->dateTime();
+
+        QDate startDate = startDateTime.date();
+        QTime startTime = startDateTime.time();
+        int startYear = startDate.year();
+        int startMonth = startDate.month();
+        int startDay = startDate.day();
+        int startHour = startTime.hour();
+
+        QDate endDate = endDateTime.date();
+        QTime endTime = endDateTime.time();
+        int endYear = endDate.year();
+        int endMonth = endDate.month();
+        int endDay = endDate.day();
+        int endHour = endTime.hour();
+
+        ninjaErr = NinjaFetchArchiveWeatherData(ninjaTools, modelIdentifier, demFile, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaFetchArchiveWeatherData: " << ninjaErr;
+        }
+
+        return;
     }
 
-    setUpTreeView();
+    ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaFetchWeatherData: " << ninjaErr;
+    }
 }
 
-void WeatherModelInput::setUpTreeView()
+void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
 {
-    weatherModelFileSystemModel = new QFileSystemModel(this);
-    QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
-    QFileInfo fileInfo(path);
+    if(ui->weatherModelComboBox->currentText().contains("PASTCAST"))
+    {
+        ui->weatherModelSpinBox->setDisabled(true);
+        ui->pastcastGroupBox->setVisible(true);
 
-    weatherModelFileSystemModel->setRootPath(fileInfo.absolutePath());
-    weatherModelFileSystemModel->setNameFilters({"*.zip", "NOMADS-*", "20*"});
-    weatherModelFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    weatherModelFileSystemModel->setNameFilterDisables(false);
+        return;
+    }
 
-    ui->weatherModelDataTreeView->setModel(weatherModelFileSystemModel);
-    ui->weatherModelDataTreeView->setRootIndex(weatherModelFileSystemModel->index(fileInfo.absolutePath()));
-    ui->weatherModelDataTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
-    ui->weatherModelDataTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui->weatherModelDataTreeView->setAnimated(true);
-    ui->weatherModelDataTreeView->setUniformRowHeights(true);
+    QByteArray modelIdentifierByte = ui->weatherModelComboBox->currentText().toUtf8();
+    const char* modelIdentifier = modelIdentifierByte.constData();
+    int starHour, endHour;
 
-    QHeaderView *header = ui->weatherModelDataTreeView->header();
-    header->setStretchLastSection(false);
-    header->setSectionResizeMode(0, QHeaderView::Stretch);
-    header->resizeSection(0, 400);
-    header->setSectionResizeMode(3, QHeaderView::ResizeToContents);
-    header->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ninjaErr = NinjaGetWeatherModelHours(ninjaTools, modelIdentifier, &starHour, &endHour);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaGetWeatherModelHours: " << ninjaErr;
+    }
 
-    ui->weatherModelDataTreeView->hideColumn(1);
-    ui->weatherModelDataTreeView->hideColumn(2);
-
-    connect(ui->weatherModelDataTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelDataTreeViewItemSelectionChanged);
+    ui->weatherModelSpinBox->setMinimum(starHour);
+    ui->weatherModelSpinBox->setMaximum(endHour);
 }
 
-void WeatherModelInput::weatherModelDataTreeViewItemSelectionChanged()
-{
-
-}
-
-void WeatherModelInput::weatherModelGroupBoxToggled(bool checked)
+void WeatherModelInput::updateTreeView()
 {
     AppState& state = AppState::instance();
-    state.isWeatherModelInitializationToggled = checked;
+    state.isWeatherModelForecastValid = false;
+    emit requestRefresh();
+
+    // File Tree View
+    fileModel = new QFileSystemModel(this);
+    QString demFilePath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo demFileInfo(demFilePath);
+
+    fileModel->setRootPath(demFileInfo.absolutePath());
+    fileModel->setNameFilters({"*.zip", "NOMADS-*", "20*", "UCAR-*", "PASTCAST-*"});
+    fileModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    fileModel->setNameFilterDisables(false);
+
+    ui->weatherModelFileTreeView->setModel(fileModel);
+    ui->weatherModelFileTreeView->setRootIndex(fileModel->index(demFileInfo.absolutePath()));
+    ui->weatherModelFileTreeView->setSelectionMode(QAbstractItemView::SingleSelection);
+    ui->weatherModelFileTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->weatherModelFileTreeView->setAnimated(true);
+    ui->weatherModelFileTreeView->setUniformRowHeights(true);
+    ui->weatherModelFileTreeView->hideColumn(1);
+    ui->weatherModelFileTreeView->hideColumn(2);
+    ui->weatherModelFileTreeView->collapseAll();
+
+    QHeaderView *fileHeader = ui->weatherModelFileTreeView->header();
+    fileHeader->setStretchLastSection(false);
+    fileHeader->setSectionResizeMode(0, QHeaderView::Stretch);
+    fileHeader->resizeSection(0, 400);
+    fileHeader->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    fileHeader->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+
+    // Time Tree View
+    timeModel = new QStandardItemModel(this);
+
+    ui->weatherModelTimeTreeView->setModel(timeModel);
+    ui->weatherModelTimeTreeView->setSortingEnabled(true);
+    ui->weatherModelTimeTreeView->sortByColumn(0, Qt::AscendingOrder);
+    ui->weatherModelTimeTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
+    ui->weatherModelTimeTreeView->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->weatherModelTimeTreeView->selectAll();
+
+    QHeaderView *timeHeader = ui->weatherModelTimeTreeView->header();
+    timeHeader->setVisible(false);
+
+    connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
+}
+
+void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
+{
+    AppState& state = AppState::instance();
+
+    if (selected.indexes().empty())
+    {
+        state.isWeatherModelForecastValid = false;
+
+        return;
+    }
+
+    QModelIndex index = selected.indexes().first();
+    QFileInfo fileInfo = fileModel->fileInfo(index);
+    if(fileInfo.isDir())
+    {
+        timeModel->clear();
+
+        state.isWeatherModelForecastValid = false;
+        emit requestRefresh();
+
+        return;
+    }
+
+    state.isWeatherModelForecastValid = true;
+
+    std::string modelFilePath = fileModel->filePath(index).toStdString();
+    std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
+    int timeListSize = 0;
+
+    const char **timeList = NinjaGetWeatherModelTimeList(ninjaTools, &timeListSize, modelFilePath.c_str(), timeZone.c_str());
+    if(timeList == NULL)
+    {
+        qDebug() << "NinjaGetWeatherModelTimeList: Empty Time List";
+    }
+
+    timeModel->clear();
+    for (int i = 0; i < timeListSize; i++)
+    {
+        QString timestep = QString::fromUtf8(timeList[i]);
+        timeModel->appendRow(new QStandardItem(timestep));
+    }
+
+    ui->weatherModelTimeTreeView->selectAll();
+
+    ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
+    if(ninjaErr == NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaFreeWeatherModelTimeList: " << ninjaErr;
+    }
+
+    emit requestRefresh();
+}
+
+void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
+{
+    AppState& state = AppState::instance();
+    state.isWeatherModelInitializationToggled = toggled;
 
     if (state.isWeatherModelInitializationToggled)
     {
@@ -102,5 +239,15 @@ void WeatherModelInput::weatherModelGroupBoxToggled(bool checked)
     }
 
     emit requestRefresh();
+}
+
+void WeatherModelInput::weatherModelTimeSelectAllButtonClicked()
+{
+    ui->weatherModelTimeTreeView->selectAll();
+}
+
+void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
+{
+    ui->weatherModelTimeTreeView->clearSelection();
 }
 

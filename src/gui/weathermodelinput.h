@@ -33,7 +33,12 @@
 #include "ui_mainwindow.h"
 #include "windninja.h"
 #include "appstate.h"
+#include "QTimeZone"
 #include "QFileSystemModel"
+#include <QStandardItemModel>
+#include <QFuture>
+#include <QFutureWatcher>
+#include <QProgressDialog>
 #include <QObject>
 
 namespace Ui {
@@ -45,21 +50,30 @@ class WeatherModelInput : public QObject
     Q_OBJECT
 public:
     explicit WeatherModelInput(Ui::MainWindow* ui, QObject* parent = nullptr);
-    void setUpTreeView();
 
 signals:
     void requestRefresh();
 
+public slots:
+    void updateTreeView();
+
+
 private slots:
-    void weatherModelDataDownloadButtonClicked();
-    void weatherModelDataTreeViewItemSelectionChanged();
-    void weatherModelGroupBoxToggled(bool checked);
+    void weatherModelDownloadButtonClicked();
+    void weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected);
+    void weatherModelTimeSelectAllButtonClicked();
+    void weatherModelTimeSelectNoneButtonClicked();
+    void weatherModelGroupBoxToggled(bool toggled);
+    void weatherModelComboBoxCurrentIndexChanged(int index);
 
 private:
-    Ui::MainWindow *ui;    
-    QFileSystemModel *weatherModelFileSystemModel;
-
-
+    Ui::MainWindow *ui;
+    NinjaToolsH* ninjaTools;
+    NinjaErr ninjaErr;
+    QFileSystemModel *fileModel;
+    QStandardItemModel *timeModel;
+    QProgressDialog *progress;
+    QFutureWatcher<int> *futureWatcher;
 };
 
 #endif // WEATHERMODELINPUT_H

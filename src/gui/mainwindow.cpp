@@ -130,9 +130,13 @@ void MainWindow::refreshUI()
     }
 
     // Update weather model initialization
-    if (state.isWeatherModelInitializationToggled) {
+    if (state.isWeatherModelInitializationToggled && state.isWeatherModelForecastValid) {
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
         state.isWeatherModelInitializationValid = true;
+    } else if (state.isWeatherModelInitializationToggled && !state.isWeatherModelForecastValid) {
+        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, xIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Forecast is Invalid");
+        state.isWeatherModelInitializationValid = false;
     } else {
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, bulletIcon);
         state.isWeatherModelInitializationValid = false;
@@ -166,7 +170,7 @@ void MainWindow::refreshUI()
         ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
     }
 
-    if(state.isGoogleEarthToggled)
+    if(state.isGoogleEarthToggled)setupTreeView
     {
         if(state.isSurfaceInputValid)
         {
@@ -456,7 +460,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectSignals();
 
-
     QString version(NINJA_VERSION_STRING);
     version = "Welcome to WindNinja " + version;
 
@@ -473,6 +476,7 @@ MainWindow::~MainWindow()
     delete surfaceInput;
     delete domainAverageInput;
     delete pointInitializationInput;
+    delete weatherModelInput;
     delete menuBar;
     delete ui;
 }
@@ -500,11 +504,11 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
-//    connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
+//  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(surfaceInput, &SurfaceInput::setupTreeView, pointInitializationInput, &PointInitializationInput::setupTreeView);
-    connect(surfaceInput, &SurfaceInput::setupTreeView, weatherModelInput, &WeatherModelInput::setUpTreeView);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
     connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
     connect(weatherModelInput, &WeatherModelInput::requestRefresh, this, &MainWindow::refreshUI);
@@ -769,6 +773,30 @@ void MainWindow::solveButtonClicked()
                 true, momentumFlag, papszOptions
             );
         }
+    }
+    else
+    {
+        QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
+        int timeListSize = selectedIndexes.count();
+        numNinjas = timeListSize;
+        initializationMethod = "wxmodel";
+        std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
+
+        QModelIndex index = ui->weatherModelFileTreeView->currentIndex();
+        QFileSystemModel *model = qobject_cast<QFileSystemModel *>(ui->weatherModelFileTreeView->model());
+        std::string filePath = model->filePath(index).toStdString();
+
+        // Allocate the char** array
+        const char **inputTimeList = new const char*[timeListSize];
+
+        for (int i = 0; i < timeListSize; ++i)
+        {
+            QString qstr = selectedIndexes[i].data().toString();
+            std::string str = qstr.toStdString();
+            inputTimeList[i] = strdup(str.c_str()); // allocate and copy each string
+        }
+
+        ninjaArmy = NinjaMakeWeatherModelArmy(filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
     }
     writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
