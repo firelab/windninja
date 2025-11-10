@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "serverbridge.h"
+#include "serverBridge.h"
 
 ServerBridge::ServerBridge() {}
 

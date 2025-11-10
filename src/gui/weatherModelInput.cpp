@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "weathermodelinput.h"
+#include "weatherModelInput.h"
 
 WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),

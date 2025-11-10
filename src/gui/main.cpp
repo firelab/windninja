@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "mainwindow.h"
+#include "mainWindow.h"
 #include "windninja.h"
 #include <QApplication>
 #include <QTimer>
@@ -38,7 +38,7 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QDebug>
-#include "splashscreen.h"
+#include "splashScreen.h"
 
 
 int main(int argc, char *argv[])

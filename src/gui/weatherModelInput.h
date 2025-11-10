@@ -30,9 +30,9 @@
 #ifndef WEATHERMODELINPUT_H
 #define WEATHERMODELINPUT_H
 
-#include "ui_mainwindow.h"
+#include "ui_mainWindow.h"
 #include "windninja.h"
-#include "appstate.h"
+#include "appState.h"
 #include "QTimeZone"
 #include "QFileSystemModel"
 #include <QStandardItemModel>

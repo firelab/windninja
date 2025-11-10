@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#include "domainaverageinput.h"
-#include "ui_mainwindow.h"
+#include "domainAverageInput.h"
+#include "ui_mainWindow.h"
 
 DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),

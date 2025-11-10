@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "pointinitializationinput.h"
+#include "pointInitializationInput.h"
 
 PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),

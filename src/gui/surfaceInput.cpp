@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "surfaceinput.h"
+#include "surfaceInput.h"
 
 SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
                                    QWebEngineView *webEngineView,
@@ -275,7 +275,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
     webEngineView->page()->runJavaScript(js);
 
     emit requestRefresh();
-    emit setupTreeView();
+    emit updateTreeView();
 }
 
 void SurfaceInput::elevationInputFileOpenButtonClicked()

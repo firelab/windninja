@@ -1,5 +1,5 @@
-#include "setconfigurationoptiondialog.h"
-#include "ui_setconfigurationoptiondialog.h"
+#include "setConfigurationDialogOption.h"
+#include "ui_setConfigurationDialogOption.h"
 
 setConfigurationOptionDialog::setConfigurationOptionDialog(QWidget *parent) :
     QDialog(parent),

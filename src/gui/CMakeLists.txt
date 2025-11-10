@@ -14,9 +14,9 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets WebEngineWidgets)
 
 set(PROJECT_SOURCES
         main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+        mainWindow.cpp
+        mainWindow.h
+        mainWindow.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -24,24 +24,25 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
-        appstate.h
-        splashscreen.h
-        splashscreen.cpp
-        surfaceinput.h
-        surfaceinput.cpp
-        setconfigurationoptiondialog.h
-        setconfigurationoptiondialog.cpp
-        setconfigurationoptiondialog.ui
-        menubar.h
-        menubar.cpp
-        mapbridge.h
-        mapbridge.cpp
-        surfaceinput.h
-        surfaceinput.cpp
-        serverbridge.h serverbridge.cpp
-        domainaverageinput.h domainaverageinput.cpp
-        weathermodelinput.h weathermodelinput.cpp
-        pointinitializationinput.h pointinitializationinput.cpp
+        appState.h
+        splashScreen.h
+        splashScreen.cpp
+        surfaceInput.h
+        surfaceInput.cpp
+        setConfigurationDialogOption.h
+        setConfigurationDialogOption.cpp
+        setConfigurationDialogOption.ui
+        menuBar.h
+        menuBar.cpp
+        mapBridge.h
+        mapBridge.cpp
+        surfaceInput.h
+        surfaceInput.cpp
+        serverBridge.h serverBridge.cpp
+        domainAverageInput.h domainAverageInput.cpp
+        weatherModelInput.h weatherModelInput.cpp
+        pointInitializationInput.h pointInitializationInput.cpp
+        appState.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET WindNinja APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

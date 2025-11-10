@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Handles GUI related logic for the Domain Average Page
+ * Purpose:  Connects the Qt GUI to the map.html using a Bridge
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -27,40 +27,27 @@
  *
  *****************************************************************************/
 
-#ifndef DOMAINAVERAGEINPUT_H
-#define DOMAINAVERAGEINPUT_H
+#include "mapBridge.h"
 
-#include "appstate.h"
-#include "ui_mainwindow.h"
-#include <QObject>
-#include <QPair>
-#include <QSet>
+void MapBridge::receiveBoundingBox(const QString &jsonCoords)
+ {
+    QJsonDocument doc = QJsonDocument::fromJson(jsonCoords.toUtf8());
+    if (!doc.isObject())
+    {
+        qWarning() << "Invalid bounding box JSON";
+        return;
+    }
 
-namespace Ui
-{
-    class MainWindow;
+    QJsonObject obj = doc.object();
+
+    double north = obj["north"].toDouble();
+    double south = obj["south"].toDouble();
+    double east = obj["east"].toDouble();
+    double west = obj["west"].toDouble();
+
+    qDebug() << "Bounding box received:";
+    qDebug() << "North:" << north << "South:" << south;
+    qDebug() << "East:" << east << "West:" << west;
+
+    emit boundingBoxReceived(north, south, east, west);
 }
-
-class DomainAverageInput: public QObject
-{
-    Q_OBJECT
-
-signals:
-    void requestRefresh();
-
-public:
-    DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
-
-private slots:
-    void domainAverageTableCellChanged(int row, int column);
-    void clearTableButtonClicked();
-    void domainAverageGroupBoxToggled();
-    void windHeightComboBoxCurrentIndexChanged(int index);
-
-private:
-    QSet<QPair<int, int>> invalidDAWCells;
-    Ui::MainWindow *ui;
-
-};
-
-#endif // DOMAINAVERAGEINPUT_H

@@ -27,289 +27,7 @@
  *
  *****************************************************************************/
 
-#include "mainwindow.h"
-
-/*
- * Helper function to refresh the ui state of the app
- * Called on every user input action
- */
-void MainWindow::refreshUI()
-{
-    AppState& state = AppState::instance();
-
-    QIcon tickIcon(":/tick.png");
-    QIcon xIcon(":/cross.png");
-    QIcon bulletIcon(":/bullet_blue.png");
-
-    ui->treeWidget->setMouseTracking(true);
-
-    // Update Solver Methodology UI
-    if (state.isMassSolverToggled != state.isMomentumSolverToggled) {
-        state.isSolverMethodologyValid = true;
-        ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(0)->setToolTip(0, "");
-    } else if (state.isMassSolverToggled && state.isMomentumSolverToggled) {
-        state.isSolverMethodologyValid = false;
-        ui->treeWidget->topLevelItem(0)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(0)->setToolTip(0,"Requires exactly one selection: currently too many selections.");
-    } else {
-        state.isSolverMethodologyValid = false;
-        ui->treeWidget->topLevelItem(0)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(0)->setToolTip(0,"Requires exactly one selection: currently no selections.");
-    }
-
-    if (state.isMassSolverToggled) {
-        ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, tickIcon);
-    } else {
-        ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
-    }
-
-    if (state.isMomentumSolverToggled) {
-        ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, tickIcon);
-    } else {
-        ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
-    }
-
-    // Update surface input state
-    if (ui->elevationInputFileLineEdit->text() != "") {
-        state.isSurfaceInputValid = true;
-        ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "");
-    } else {
-        state.isSurfaceInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "No DEM file detected.");
-    }
-
-    // Update diurnal input state
-    if (state.isDiurnalInputToggled) {
-        ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, tickIcon);
-    } else {
-        ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, bulletIcon);
-    }
-
-    // Update stability input state
-    if (state.isStabilityInputToggled) {
-        ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
-    } else {
-        ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, bulletIcon);
-    }
-
-    // Update domain average initialization
-    if (state.isDomainAverageInitializationToggled && state.isDomainAverageWindInputTableValid) {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
-        state.isDomainAverageInitializationValid = true;
-    } else if (state.isDomainAverageInitializationToggled && !state.isDomainAverageWindInputTableValid){
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs; hover over red cells for explanation.");
-        state.isDomainAverageInitializationValid = false;
-    } else {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
-        state.isDomainAverageInitializationValid = false;
-    }
-
-    // Update point initialization
-    if (state.isPointInitializationToggled && state.isStationFileSelectionValid && state.isStationFileSelected) {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
-        state.isPointInitializationValid = true;
-    } else if(state.isPointInitializationToggled && !state.isStationFileSelected) {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No station file selected.");
-        state.isPointInitializationValid = false;
-    } else if(state.isPointInitializationToggled && !state.isStationFileSelectionValid){
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Conflicting files selected.");
-        state.isPointInitializationValid = false;
-    } else {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
-        state.isPointInitializationValid = false;
-    }
-
-    // Update weather model initialization
-    if (state.isWeatherModelInitializationToggled && state.isWeatherModelForecastValid) {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
-        state.isWeatherModelInitializationValid = true;
-    } else if (state.isWeatherModelInitializationToggled && !state.isWeatherModelForecastValid) {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Forecast is Invalid");
-        state.isWeatherModelInitializationValid = false;
-    } else {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, bulletIcon);
-        state.isWeatherModelInitializationValid = false;
-    }
-
-    //  Update wind input
-    if (state.isDomainAverageInitializationValid || state.isPointInitializationValid || state.isWeatherModelInitializationValid) {
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
-        state.isWindInputValid = true;
-    } else {
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, xIcon);
-        state.isWindInputValid = false;
-    }
-
-    // Update overall input UI state
-    if (state.isSurfaceInputValid && state.isWindInputValid) {
-        state.isInputsValid = true;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "");
-    } else if (!state.isSurfaceInputValid && !state.isWindInputValid) {
-        state.isInputsValid = false;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad surface and wind inputs.");
-    } else if (!state.isSurfaceInputValid) {
-        state.isInputsValid = false;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad surface input.");
-    } else if (!state.isWindInputValid) {
-        state.isInputsValid = false;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Bad wind input.");
-    }
-
-    if(state.isGoogleEarthToggled)setupTreeView
-    {
-        if(state.isSurfaceInputValid)
-        {
-            state.isGoogleEarthValid = true;
-            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
-        }
-        else
-        {
-            state.isGoogleEarthValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Cannot read DEM File");
-        }
-    }
-    else
-    {
-        state.isGoogleEarthValid = false;
-        ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, bulletIcon);
-    }
-    if(state.isFireBehaviorToggled)
-    {
-        if(state.isSurfaceInputValid)
-        {
-            state.isFireBehaviorValid = true;
-            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
-        }
-        else
-        {
-            state.isFireBehaviorValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Cannot read DEM File");
-        }
-    }
-    else
-    {
-        state.isFireBehaviorValid = false;
-        ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, bulletIcon);
-    }
-    if(state.isShapeFilesToggled)
-    {
-        if(state.isSurfaceInputValid)
-        {
-            state.isShapeFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
-        }
-        else
-        {
-            state.isShapeFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Cannot read DEM File");
-        }
-    }
-    else
-    {
-        state.isShapeFilesValid = false;
-        ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
-    }
-    if(state.isGeoSpatialPDFFilesToggled)
-    {
-        if(state.isSurfaceInputValid)
-        {
-            state.isGeoSpatialPDFFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
-        }
-        else
-        {
-            state.isGeoSpatialPDFFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Cannot read DEM File");
-        }
-    }
-    else
-    {
-        state.isGeoSpatialPDFFilesValid = false;
-        ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
-    }
-    if(state.isVTKFilesToggled)
-    {
-        if(state.isSurfaceInputValid)
-        {
-            state.isVTKFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
-        }
-        else
-        {
-            state.isVTKFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, xIcon);
-            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Cannot read DEM File");
-        }
-    }
-    else
-    {
-        state.isVTKFilesValid = false;
-        ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
-    }
-
-
-    if(state.isGoogleEarthValid || state.isFireBehaviorValid || state.isShapeFilesValid || state.isGeoSpatialPDFFilesValid || state.isVTKFilesValid)
-    {
-        state.isOutputsValid = true;
-        ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
-    }
-    else
-    {
-        ui->treeWidget->topLevelItem(2)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(2)->setToolTip(0, "No Output Selected");
-    }
-
-    if (state.isSolverMethodologyValid && state.isInputsValid && state.isOutputsValid) {
-        ui->solveButton->setEnabled(true);
-        ui->numberOfProcessorsSolveButton->setEnabled(true);
-        ui->solveButton->setToolTip("");
-        ui->numberOfProcessorsSolveButton->setToolTip("");
-        ui->treeWidget->topLevelItem(3)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(3)->setToolTip(0, "");
-    } else {
-        ui->solveButton->setEnabled(false);
-        ui->numberOfProcessorsSolveButton->setEnabled(false);
-        ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
-        ui->numberOfProcessorsSolveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
-        ui->treeWidget->topLevelItem(3)->setIcon(0, xIcon);
-        ui->treeWidget->topLevelItem(3)->setToolTip(0, "There are errors in the inputs or outputs");
-    }
-}
+#include "mainWindow.h"
 
 void MainWindow::writeToConsole(QString message, QColor color)
 {
@@ -374,15 +92,19 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
       ui(new Ui::MainWindow)
 {
+    ui->setupUi(this);
+    resize(1200, 700);
+    ui->treeWidget->expandAll();
+
+    AppState& state = AppState::instance();
+    state.setUi(ui);
+    ui->massSolverCheckBox->setChecked(true);
+    state.isMassSolverToggled = true;
+
     lineNumber = 1;
 
     serverBridge = new ServerBridge();
     serverBridge->checkMessages();
-
-    ui->setupUi(this);    
-    resize(1200, 700);
-    refreshUI();
-    ui->treeWidget->expandAll();
 
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
@@ -466,6 +188,8 @@ MainWindow::MainWindow(QWidget *parent)
     writeToConsole(version, Qt::blue);
 
     writeToConsole("WINDNINJA_DATA=" + dataPath);
+
+    emit requestRefresh();
 }
 
 MainWindow::~MainWindow()
@@ -506,12 +230,13 @@ void MainWindow::connectSignals()
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
 //  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
-    connect(surfaceInput, &SurfaceInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(surfaceInput, &SurfaceInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
     connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
-    connect(domainAverageInput, &DomainAverageInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, this, &MainWindow::refreshUI);
-    connect(weatherModelInput, &WeatherModelInput::requestRefresh, this, &MainWindow::refreshUI);
+    connect(domainAverageInput, &DomainAverageInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
+    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
+    connect(weatherModelInput, &WeatherModelInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
+    connect(this, &MainWindow::requestRefresh, &AppState::instance(), &AppState::refreshUI);
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
@@ -535,7 +260,7 @@ void MainWindow::massSolverCheckBoxClicked()
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     }
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::momentumSolverCheckBoxClicked()
@@ -553,7 +278,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     }
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::diurnalCheckBoxClicked()
@@ -579,7 +304,7 @@ void MainWindow::diurnalCheckBoxClicked()
         ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     }
 
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::stabilityCheckBoxClicked()
@@ -587,7 +312,7 @@ void MainWindow::stabilityCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::outputDirectoryButtonClicked()
@@ -922,35 +647,35 @@ void MainWindow::googleEarthGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGoogleEarthToggled = checked;
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::fireBehaviorGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isFireBehaviorToggled = checked;
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::shapeFilesGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isShapeFilesToggled = checked;
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::geospatialPDFFilesGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGeoSpatialPDFFilesToggled = checked;
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::VTKFilesCheckBoxClicked(bool checked)
 {
     AppState& state = AppState::instance();
     state.isVTKFilesToggled = checked;
-    refreshUI();
+    emit requestRefresh();
 }
 
 void MainWindow::googleEarthMeshResolutionGroupBoxToggled(bool checked)

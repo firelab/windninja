@@ -30,10 +30,10 @@
 #ifndef POINTINITIALIZATIONINPUT_H
 #define POINTINITIALIZATIONINPUT_H
 
-#include "appstate.h"
+#include "appState.h"
 #include "windninja.h"
 #include "gdal_util.h"
-#include "ui_mainwindow.h"
+#include "ui_mainWindow.h"
 #include <QObject>
 #include <QTimeZone>
 #include <QFuture>

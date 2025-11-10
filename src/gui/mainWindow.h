@@ -30,16 +30,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "surfaceinput.h"
-#include "menubar.h"
-#include "domainaverageinput.h"
-#include "pointinitializationinput.h"
-#include "mapbridge.h"
-#include "serverbridge.h"
-#include "weathermodelinput.h"
-#include "ui_mainwindow.h"
-#include "appstate.h"
-//#include "ninjaCom.h"
+#include "surfaceInput.h"
+#include "menuBar.h"
+#include "domainAverageInput.h"
+#include "pointInitializationInput.h"
+#include "mapBridge.h"
+#include "serverBridge.h"
+#include "weatherModelInput.h"
+#include "ui_mainWindow.h"
+#include "appState.h"
 #include "windninja.h"
 #include <QWebChannel>
 #include <QFuture>
@@ -102,6 +101,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void requestRefresh();
+
 private slots:
     void massSolverCheckBoxClicked();
     void momentumSolverCheckBoxClicked();
@@ -120,7 +122,6 @@ private slots:
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
-    void refreshUI();
     void writeToConsole(QString message, QColor color = Qt::white);
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);

@@ -30,14 +30,18 @@
 #ifndef APPSTATE_H
 #define APPSTATE_H
 
-class AppState
+#include "ui_mainWindow.h"
+#include <QObject>
+
+
+class AppState : public QObject
 {
+    Q_OBJECT
+
 public:
-    static AppState& instance()
-    {
-        static AppState s;
-        return s;
-    }
+    static AppState& instance();
+    void setUi(Ui::MainWindow* mainUi);
+    void refreshUI();
 
     // Solver Methodology states
     bool isSolverMethodologyValid = false;
@@ -81,11 +85,11 @@ public:
     // All Inputs Ok
     bool isSolverReady = false;
 
-
 private:
-    AppState() {}                         // private constructor
-    AppState(const AppState&) = delete;  // prevent copying
+    AppState() {}
+    AppState(const AppState&) = delete;
     AppState& operator=(const AppState&) = delete;
+    Ui::MainWindow *ui;
 };
 
 #endif // APPSTATE_H
