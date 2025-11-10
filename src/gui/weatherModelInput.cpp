@@ -86,7 +86,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
         ninjaErr = NinjaFetchArchiveWeatherData(ninjaTools, modelIdentifier, demFile, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
         if (ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaFetchArchiveWeatherData: " << ninjaErr;
+            qDebug() << "NinjaFetchArchiveWeatherData: ninjaErr=" << ninjaErr;
         }
 
         return;
@@ -95,7 +95,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
     if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaFetchWeatherData: " << ninjaErr;
+        qDebug() << "NinjaFetchWeatherData: ninjaErr=" << ninjaErr;
     }
 }
 
@@ -116,7 +116,7 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
     ninjaErr = NinjaGetWeatherModelHours(ninjaTools, modelIdentifier, &starHour, &endHour);
     if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaGetWeatherModelHours: " << ninjaErr;
+        qDebug() << "NinjaGetWeatherModelHours: ninjaErr=" << ninjaErr;
     }
 
     ui->weatherModelSpinBox->setMinimum(starHour);
@@ -219,7 +219,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
     if(ninjaErr == NINJA_SUCCESS)
     {
-        qDebug() << "NinjaFreeWeatherModelTimeList: " << ninjaErr;
+        qDebug() << "NinjaFreeWeatherModelTimeList: ninjaErr=" << ninjaErr;
     }
 
     emit requestRefresh();

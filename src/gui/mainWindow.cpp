@@ -29,68 +29,9 @@
 
 #include "mainWindow.h"
 
-void MainWindow::writeToConsole(QString message, QColor color)
-{
-    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
-    // {
-    //     color = Qt::black;
-    // }
-
-    ui->consoleTextEdit->setTextColor(color);
-    ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
-    ui->consoleTextEdit->repaint();
-    lineNumber++;
-}
-
-void MainWindow::updateProgressMessage(const QString message)
-{
-    progressDialog->setLabelText(message);
-}
-
-void MainWindow::updateProgressValue(int run, int progress)
-{
-    // update the stored progress value for the current run
-    if( runProgress[run] > progress )
-    {
-        // if the stored progress is bigger than what we are seeing in the currently emitted progress
-        // ignore it. This happens for pointInitialization, when the match points is iterating,
-        // sometimes its next solution is worse and then it would make the progress bar go backwards
-        // by ignoring it, the progress bar just stays where it is
-        runProgress[run] = runProgress[run];
-    }
-    else
-    {
-        // otherwise, store the progress for the current run
-        runProgress[run] = progress;
-    }
-
-    // update the total progress value
-    // calculate the total progress from scratch each time, summing up the progress from each run
-    totalProgress = 0;  // Initialize the progress bar each time
-    for(unsigned int i = 0; i < runProgress.size(); i++)
-    {
-        totalProgress = totalProgress + runProgress[i];
-    }
-
-    // update the progress bar
-    progressDialog->setValue(totalProgress);
-}
-
-void MainWindow::cancelSolve()
-{
-    progressDialog->setLabelText("Canceling...");
-
-    char **papszOptions = nullptr;
-    int err = NinjaCancel(ninjaArmy, papszOptions);
-    if( err != NINJA_SUCCESS )
-    {
-        qDebug() << "NinjaCancel: err =" << err;
-    }
-}
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
-      ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     resize(1200, 700);
@@ -194,14 +135,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete webEngineView;
-    delete webChannel;
-    delete mapBridge;
-    delete surfaceInput;
-    delete domainAverageInput;
-    delete pointInitializationInput;
-    delete weatherModelInput;
-    delete menuBar;
+    delete serverBridge;
     delete ui;
 }
 
@@ -228,7 +162,7 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
-//  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
+    //  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
@@ -237,6 +171,65 @@ void MainWindow::connectSignals()
     connect(pointInitializationInput, &PointInitializationInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
     connect(weatherModelInput, &WeatherModelInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
     connect(this, &MainWindow::requestRefresh, &AppState::instance(), &AppState::refreshUI);
+}
+
+void MainWindow::writeToConsole(QString message, QColor color)
+{
+    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
+    // {
+    //     color = Qt::black;
+    // }
+
+    ui->consoleTextEdit->setTextColor(color);
+    ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
+    ui->consoleTextEdit->repaint();
+    lineNumber++;
+}
+
+void MainWindow::updateProgressMessage(const QString message)
+{
+    progressDialog->setLabelText(message);
+}
+
+void MainWindow::updateProgressValue(int run, int progress)
+{
+    // update the stored progress value for the current run
+    if( runProgress[run] > progress )
+    {
+        // if the stored progress is bigger than what we are seeing in the currently emitted progress
+        // ignore it. This happens for pointInitialization, when the match points is iterating,
+        // sometimes its next solution is worse and then it would make the progress bar go backwards
+        // by ignoring it, the progress bar just stays where it is
+        runProgress[run] = runProgress[run];
+    }
+    else
+    {
+        // otherwise, store the progress for the current run
+        runProgress[run] = progress;
+    }
+
+    // update the total progress value
+    // calculate the total progress from scratch each time, summing up the progress from each run
+    totalProgress = 0;  // Initialize the progress bar each time
+    for(unsigned int i = 0; i < runProgress.size(); i++)
+    {
+        totalProgress = totalProgress + runProgress[i];
+    }
+
+    // update the progress bar
+    progressDialog->setValue(totalProgress);
+}
+
+void MainWindow::cancelSolve()
+{
+    progressDialog->setLabelText("Canceling...");
+
+    char **papszOptions = nullptr;
+    ninjaErr  = NinjaCancel(ninjaArmy, papszOptions);
+    if( ninjaErr != NINJA_SUCCESS )
+    {
+        qDebug() << "NinjaCancel: ninjaErr =" << ninjaErr;
+    }
 }
 
 void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
@@ -417,14 +410,14 @@ void MainWindow::solveButtonClicked()
 
                 int endYear, endMonth, endDay, endHour, endMinute;
 
-                NinjaErr err = NinjaGenerateSingleTimeObject(
+                ninjaErr = NinjaGenerateSingleTimeObject(
                     startYear, startMonth, startDay, startHour, startMinute,
                     timeZoneBytes.constData(),
                     &endYear, &endMonth, &endDay, &endHour, &endMinute
                     );
-                if(err != NINJA_SUCCESS)
+                if(ninjaErr != NINJA_SUCCESS)
                 {
-                    qDebug() << "NinjaGenerateSingleTimeObject: err = " << err;
+                    qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr = " << ninjaErr;
                 }
 
                 outYear[0] = endYear;
@@ -434,16 +427,16 @@ void MainWindow::solveButtonClicked()
                 outMinute[0] = endMinute;
             }
             else {
-                NinjaErr err = NinjaGetTimeList(
+                ninjaErr = NinjaGetTimeList(
                     year.data(), month.data(), day.data(),
                     hour.data(), minute.data(),
                     outYear.data(), outMonth.data(), outDay.data(),
                     outHour.data(), outMinute.data(),
                     nTimeSteps, timeZoneBytes.data()
                 );
-                if(err != NINJA_SUCCESS)
+                if(ninjaErr != NINJA_SUCCESS)
                 {
-                    qDebug() << "NinjaGetTimeList: err = " << err;
+                    qDebug() << "NinjaGetTimeList: ninjaErr = " << ninjaErr;
                 }
             }
 
@@ -469,14 +462,14 @@ void MainWindow::solveButtonClicked()
 
             int outYear, outMonth, outDay, outHour, outMinute;
 
-            NinjaErr err = NinjaGenerateSingleTimeObject(
+            ninjaErr = NinjaGenerateSingleTimeObject(
                 year, month, day, hour, minute,
                 timeZoneBytes.constData(),
                 &outYear, &outMonth, &outDay, &outHour, &outMinute
                 );
-            if (err != NINJA_SUCCESS)
+            if (ninjaErr != NINJA_SUCCESS)
             {
-                qDebug() << "NinjaGenerateSingleTimeObject: err = " << err;
+                qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr = " << ninjaErr;
             }
 
             QVector<int> yearVec   = { outYear };
@@ -749,19 +742,18 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     }
 
     char **papszOptions = nullptr;
-    int err;
-    err = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
-    if(err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetAsciiAtmFile: err =" << err;
+        qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
     }
 
     for(unsigned int i=0; i<numNinjas; i++)
     {
-        err = NinjaSetCommunication(ninjaArmy, i, "gui", papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetCommunication(ninjaArmy, i, "gui", papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetCommunication: err =" << err;
+            qDebug() << "NinjaSetCommunication: ninjaErr =" << ninjaErr;
         }
         /*
        * Sets Simulation Variables
@@ -770,10 +762,10 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-                err = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
-                if(err != NINJA_SUCCESS)
+                ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+                if(ninjaErr != NINJA_SUCCESS)
                 {
-                    printf("NinjaSetStationKML: err = %d\n", err);
+                    printf("NinjaSetStationKML: ninjaErr = %d\n", ninjaErr);
                 }
             }
         }
@@ -797,58 +789,58 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 //        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ), Qt::QueuedConnection );
 //        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ), Qt::QueuedConnection );
 
-        err = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetNumberCPUs: err =" << err;
+            qDebug() << "NinjaSetNumberCPUs: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetInitializationMethod: err =" << err;
+            qDebug() << "NinjaSetInitializationMethod: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetDem: err =" << err;
+            qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetPosition(ninjaArmy, i, papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetPosition: err =" << err;
+            qDebug() << "NinjaSetPosition: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetInputWindHeight: err =" << err;
+            qDebug() << "NinjaSetInputWindHeight: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetDiurnalWinds: err =" << err;
+            qDebug() << "NinjaSetDiurnalWinds: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetUniVegetation: err =" << err;
+            qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetMeshResolutionChoice: err =" << err;
+            qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
         }
 
-        err = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
-        if(err != NINJA_SUCCESS)
+        ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetNumVertLayers: err =" << err;
+            qDebug() << "NinjaSetNumVertLayers: ninjaErr =" << ninjaErr;
         }
 
         setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
@@ -865,126 +857,126 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
                                 OutputPDFSize PDFSize)
 {
     char **papszOptions = nullptr;
-    int err;
+    int ninjaErr;
 
-    err = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetOutputPath: err =" << err;
+        qDebug() << "NinjaSetOutputPath: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetOutputWindHeight: err =" << err;
+        qDebug() << "NinjaSetOutputWindHeight: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetOutputSpeedUnits: err =" << err;
+        qDebug() << "NinjaSetOutputSpeedUnits: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetGoogOutFlag: err =" << err;
+        qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, googleEarth.units.constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, googleEarth.units.constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetGoogResolution: err =" << err;
+        qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetGoogSpeedScaling: err =" << err;
+        qDebug() << "NinjaSetGoogSpeedScaling: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetGoogLineWidth: err =" << err;
+        qDebug() << "NinjaSetGoogLineWidth: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetGoogColor: err =" << err;
+        qDebug() << "NinjaSetGoogColor: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetGoogConsistentColorScale: err =" << err;
+        qDebug() << "NinjaSetGoogConsistentColorScale: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetAsciiOutFlag: err =" << err;
+        qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetAsciiResolution: err =" << err;
+        qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetShpOutFlag: err =" << err;
+        qDebug() << "NinjaSetShpOutFlag: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetShpResolution: err =" << err;
+        qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetPDFOutFlag: err =" << err;
+        qDebug() << "NinjaSetPDFOutFlag: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetPDFLineWidth: err =" << err;
+        qDebug() << "NinjaSetPDFLineWidth: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetPDFBaseMap: err =" << err;
+        qDebug() << "NinjaSetPDFBaseMap: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetPDFDEM: err =" << err;
+        qDebug() << "NinjaSetPDFDEM: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetPDFSize: err =" << err;
+        qDebug() << "NinjaSetPDFSize: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetPDFResolution: err =" << err;
+        qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
     }
 
-    err = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetVtkOutFlag: err =" << err;
+        qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
     }
 }
 
@@ -1018,7 +1010,7 @@ int MainWindow::startSolve(int numProcessors)
         //// calling prepareArmy here is causing all kinds of troubles. Local variables aren't properly being passed on,
         //// or aren't properly copied ([=] type thing), or aren't properly in scope. The other values are .h variables,
         //// so they would at least be in the proper scope. But the out of scope variables leads to all kinds
-        //// of "QObject::connect: Cannot connect" and "err = 2" type messages. It is still somehow continuing to run though.
+        //// of "QObject::connect: Cannot connect" and "ninjaErr = 2" type messages. It is still somehow continuing to run though.
         ////
         //// seems the only way to put prepareArmy into a QFutureWatcher function, if it would even work,
         //// would be to have two separate QFutureWatcher functions, needs to be separated out from NinjaStartRuns()
@@ -1140,10 +1132,10 @@ void MainWindow::finishedSolve()
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
     char **papszOptions = nullptr;
-    int err = NinjaDestroyArmy(ninjaArmy, papszOptions);
-    if(err != NINJA_SUCCESS)
+    int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
     {
-        printf("NinjaDestroyRuns: err = %d\n", err);
+        printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
     }
 
     // clear the progress values for the next set of runs

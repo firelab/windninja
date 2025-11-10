@@ -102,25 +102,25 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> minute = {start.time().minute(), end.time().minute()};
     QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);
 
-    NinjaErr err = NinjaGetTimeList(
+    NinjaErr ninjaErr = NinjaGetTimeList(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(),
         outYear.data(), outMonth.data(), outDay.data(),
         outHour.data(), outMinute.data(),
         2, DEMTimeZoneBytes.data()
         );
-    if(err != NINJA_SUCCESS)
+    if(ninjaErr != NINJA_SUCCESS)
     {
-        printf("NinjaGetTimeList: err = %d\n", err);
+        printf("NinjaGetTimeList: ninjaErr = %d\n", ninjaErr);
     }
 
     if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration (someone downloads too much data)
     {
         char ** options = nullptr;
-        int err = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
-        if(err != NINJA_SUCCESS)
+        int ninjaErr = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaCheckTimeDuration err=" << err;
+            qDebug() << "NinjaCheckTimeDuration ninjaErr=" << ninjaErr;
         }
     }
 
@@ -171,7 +171,7 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
                                                    QString outputPath)
 {
     char ** options = NULL;
-    NinjaErr err = NinjaFetchStationFromBBox(
+    NinjaErr ninjaErr = NinjaFetchStationFromBBox(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(), year.size(),
         elevationFile.toUtf8().constData(), buffer,
@@ -180,10 +180,10 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
         false, options
         );
 
-    if (err != NINJA_SUCCESS)
-        qDebug() << "NinjaFetchStationFromBbox: err =" << err;
+    if (ninjaErr != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
 
-    return err;
+    return ninjaErr;
 }
 
 int PointInitializationInput::fetchStationByName(QVector<int> year,
@@ -198,7 +198,7 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
                                                  QString outputPath)
 {
     char ** options = NULL;
-    NinjaErr err = NinjaFetchStationByName(
+    NinjaErr ninjaErr = NinjaFetchStationByName(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(), year.size(),
         elevationFile.toUtf8().constData(), stationList.toUtf8().constData(),
@@ -206,10 +206,10 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
         outputPath.toUtf8().constData(), false, options
         );
 
-    if (err != NINJA_SUCCESS)
-        qDebug() << "NinjaFetchStationFromBbox: err =" << err;
+    if (ninjaErr != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
 
-    return err;
+    return ninjaErr;
 }
 
 void PointInitializationInput::fetchStationDataFinished()

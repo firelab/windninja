@@ -48,11 +48,11 @@ int main(int argc, char *argv[])
     int result;
 
     char ** papszOptions = NULL;
-    NinjaErr err = 0;
-    err = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
-    if(err != NINJA_SUCCESS)
+    NinjaErr ninjaErr = 0;
+    ninjaErr = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
+    if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaInit: err =" << err;
+        qDebug() << "NinjaInit: ninjaErr =" << ninjaErr;
     }
 
     QApplication a(argc, argv);

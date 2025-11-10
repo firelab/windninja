@@ -135,10 +135,10 @@ void MenuBar::writeBlankStationFileActionTriggered()
         emit writeToConsole("writing blank station file to " + fileName, Qt::darkGreen);
 
         char** papszOptions = nullptr;
-        int err = NinjaWriteBlankWxStationFile(fileName.toStdString().c_str(), papszOptions);
-        if(err != NINJA_SUCCESS)
+        int ninjaErr = NinjaWriteBlankWxStationFile(fileName.toStdString().c_str(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaWriteBlankWxStationFile: err=" << err;
+            qDebug() << "NinjaWriteBlankWxStationFile: ninjaErr=" << ninjaErr;
             emit writeToConsole("failed to write blank station file!", Qt::red);
         }
     }

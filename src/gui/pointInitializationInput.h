@@ -78,6 +78,8 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+    NinjaErr ninjaErr;
+
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
     QFileSystemModel *stationFileSystemModel;

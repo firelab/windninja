@@ -140,6 +140,7 @@ private:
     PointInitializationInput *pointInitializationInput;
 
     NinjaArmyH *ninjaArmy;
+    NinjaErr ninjaErr;
 
     std::vector<int> runProgress;
     int totalProgress;

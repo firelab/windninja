@@ -544,13 +544,13 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
 {
     NinjaArmyH* ninjaArmy = NULL;
     char ** papszOptions = NULL;
-    NinjaErr err = 0;
+    NinjaErr ninjaErr = 0;
 
-    err = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);
-    if (err != NINJA_SUCCESS)
+    ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaFetchDEMBBox: err =" << err;
-        return err;
+        qDebug() << "NinjaFetchDEMBBox: ninjaErr =" << ninjaErr;
+        return ninjaErr;
     }
     else
     {
