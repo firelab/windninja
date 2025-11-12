@@ -59,6 +59,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::timeZoneComboBoxCurrentIndexChanged);
+    connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
 }
 
 

@@ -68,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, this);
     weatherModelInput = new WeatherModelInput(ui, this);
+    outputs = new Outputs(ui, this);
 
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
@@ -94,33 +95,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
-
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    ui->outputDirectoryLineEdit->setText(downloadsPath);
-    ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
-
-    ui->outputWindHeightUnitsComboBox->setItemData(0, "ft");
-    ui->outputWindHeightUnitsComboBox->setItemData(1, "m");
-    ui->meshResolutionUnitsComboBox->setItemData(0, "m");
-    ui->meshResolutionUnitsComboBox->setItemData(1, "ft");
-    ui->googleEarthMeshResolutionComboBox->setItemData(0, "m");
-    ui->googleEarthMeshResolutionComboBox->setItemData(1, "ft");
-    ui->fireBehaviorMeshResolutionComboBox->setItemData(0, "m");
-    ui->fireBehaviorMeshResolutionComboBox->setItemData(1, "ft");
-    ui->shapeFilesMeshResolutionComboBox->setItemData(0, "m");
-    ui->shapeFilesMeshResolutionComboBox->setItemData(1, "ft");
-    ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(0, "m");
-    ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(1, "ft");
-    ui->alternativeColorSchemeComboBox->setItemData(0, "default");
-    ui->alternativeColorSchemeComboBox->setItemData(1, "ROPGW");
-    ui->alternativeColorSchemeComboBox->setItemData(2, "oranges");
-    ui->alternativeColorSchemeComboBox->setItemData(3, "blues");
-    ui->alternativeColorSchemeComboBox->setItemData(4, "pinks");
-    ui->alternativeColorSchemeComboBox->setItemData(5, "greens");
-    ui->alternativeColorSchemeComboBox->setItemData(6, "magic_beans");
-    ui->alternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
-    ui->legendComboBox->setItemData(0, "equal_interval");
-    ui->legendComboBox->setItemData(1, "equal_color");
 
     connectSignals();
 
@@ -150,34 +124,16 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
-    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthGroupBoxToggled);
-    connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorGroupBoxToggled);
-    connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesGroupBoxToggled);
-    connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesGroupBoxToggled);
-    connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &MainWindow::VTKFilesCheckBoxClicked);
-    connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::googleEarthMeshResolutionGroupBoxToggled);
-    connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::fireBehaviorMeshResolutionGroupBoxToggled);
-    connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::shapeFilesMeshResolutionGroupBoxToggled);
-    connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
-    //  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
-    connect(surfaceInput, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
     connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
-    connect(domainAverageInput, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
-    connect(pointInitializationInput, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
     connect(weatherModelInput, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
     connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
     connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
-    connect(this, &MainWindow::updateGoogleState, &AppState::instance(), &AppState::updateGoogleEarthOutputState);
-    connect(this, &MainWindow::updateFireBehaviorState, &AppState::instance(), &AppState::updateFireBehaviorOutputState);
-    connect(this, &MainWindow::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
-    connect(this, &MainWindow::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
-    connect(this, &MainWindow::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
     connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
 }
 
@@ -644,65 +600,6 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
 }
 
-void MainWindow::googleEarthGroupBoxToggled(bool checked)
-{
-    AppState& state = AppState::instance();
-    state.isGoogleEarthToggled = checked;
-    emit updateGoogleState();
-}
-
-void MainWindow::fireBehaviorGroupBoxToggled(bool checked)
-{
-    AppState& state = AppState::instance();
-    state.isFireBehaviorToggled = checked;
-    emit updateFireBehaviorState();
-}
-
-void MainWindow::shapeFilesGroupBoxToggled(bool checked)
-{
-    AppState& state = AppState::instance();
-    state.isShapeFilesToggled = checked;
-    emit updateShapeState();
-}
-
-void MainWindow::geospatialPDFFilesGroupBoxToggled(bool checked)
-{
-    AppState& state = AppState::instance();
-    state.isGeoSpatialPDFFilesToggled = checked;
-    emit updatePDFState();
-}
-
-void MainWindow::VTKFilesCheckBoxClicked(bool checked)
-{
-    AppState& state = AppState::instance();
-    state.isVTKFilesToggled = checked;
-    emit updateVTKState();
-}
-
-void MainWindow::googleEarthMeshResolutionGroupBoxToggled(bool checked)
-{
-    ui->googleEarthMeshResolutionSpinBox->setEnabled(!checked);
-    ui->googleEarthMeshResolutionComboBox->setEnabled(!checked);
-}
-
-void MainWindow::fireBehaviorMeshResolutionGroupBoxToggled(bool checked)
-{
-    ui->fireBehaviorMeshResolutionSpinBox->setEnabled(!checked);
-    ui->fireBehaviorMeshResolutionComboBox->setEnabled(!checked);
-}
-
-void MainWindow::shapeFilesMeshResolutionGroupBoxToggled(bool checked)
-{
-    ui->shapeFilesMeshResolutionSpinBox->setEnabled(!checked);
-    ui->shapeFilesMeshResolutionComboBox->setEnabled(!checked);
-}
-
-void MainWindow::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
-{
-    ui->geospatialPDFFilesMeshResolutionSpinBox->setEnabled(!checked);
-    ui->geospatialPDFFilesMeshResolutionComboBox->setEnabled(!checked);
-}
-
 void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
 {
     OutputMeshResolution googleEarth = getMeshResolution(
@@ -779,13 +676,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ) );  // other way of doing it
+        connect(NinjaGetCommunication(ninjaArmy, i, papszOptions), SIGNAL(sendMessage(QString,QColor)), this, SLOT(writeToConsole(QString,QColor)));  // other way of doing it
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgressMessage );
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ) );
+        connect(NinjaGetCommunication(ninjaArmy, i, papszOptions), SIGNAL(sendMessage(QString,QColor)), this, SLOT(updateProgressMessage(QString)));
 
         //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, &MainWindow::updateProgressValue );
-        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ) );
+        connect(NinjaGetCommunication(ninjaArmy, i, papszOptions), SIGNAL(sendProgress(int,int)), this, SLOT(updateProgressValue(int,int)));
 
 //        // old code style method (see this in the old qt4 gui code)
 //        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::AutoConnection );

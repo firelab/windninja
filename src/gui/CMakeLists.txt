@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS Widgets WebEngineWidgets)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -25,6 +26,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
         appState.h
+        appState.cpp
         splashScreen.h
         splashScreen.cpp
         surfaceInput.h
@@ -38,11 +40,16 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         mapBridge.cpp
         surfaceInput.h
         surfaceInput.cpp
-        serverBridge.h serverBridge.cpp
-        domainAverageInput.h domainAverageInput.cpp
-        weatherModelInput.h weatherModelInput.cpp
-        pointInitializationInput.h pointInitializationInput.cpp
-        appState.cpp
+        serverBridge.h
+        serverBridge.cpp
+        domainAverageInput.h
+        domainAverageInput.cpp
+        pointInitializationInput.h
+        pointInitializationInput.cpp
+        weatherModelInput.h
+        weatherModelInput.cpp
+        outputs.h
+        outputs.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET WindNinja APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -64,6 +71,7 @@ endif()
 
 
 target_link_libraries(WindNinja PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)
+target_link_libraries(WindNinja PRIVATE Qt6::Core)
 
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

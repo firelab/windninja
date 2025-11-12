@@ -50,6 +50,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
+    connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)

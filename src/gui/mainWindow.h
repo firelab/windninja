@@ -30,6 +30,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "outputs.h"
 #include "surfaceInput.h"
 #include "menuBar.h"
 #include "domainAverageInput.h"
@@ -72,13 +73,6 @@
 #include <vector>
 #include <string>
 
-QT_BEGIN_NAMESPACE
-namespace Ui
-{
-    class MainWindow;
-}
-QT_END_NAMESPACE
-
 struct OutputMeshResolution {
     double resolution;
     QByteArray units;
@@ -104,11 +98,6 @@ public:
 signals:
     void updateDirunalState();
     void updateStabilityState();
-    void updateGoogleState();
-    void updateFireBehaviorState();
-    void updateShapeState();
-    void updatePDFState();
-    void updateVTKState();
     void updateMetholodyState();
 
 private slots:
@@ -120,15 +109,6 @@ private slots:
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void numberOfProcessorsSolveButtonClicked();
-    void googleEarthGroupBoxToggled(bool checked);
-    void fireBehaviorGroupBoxToggled(bool checked);
-    void shapeFilesGroupBoxToggled(bool checked);
-    void geospatialPDFFilesGroupBoxToggled(bool checked);
-    void VTKFilesCheckBoxClicked(bool checked);
-    void googleEarthMeshResolutionGroupBoxToggled(bool checked);
-    void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
-    void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
-    void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void writeToConsole(QString message, QColor color = Qt::white);
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);
@@ -143,8 +123,9 @@ private:
     MenuBar *menuBar;
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
-    WeatherModelInput *weatherModelInput;
     PointInitializationInput *pointInitializationInput;
+    WeatherModelInput *weatherModelInput;
+    Outputs *outputs;
 
     NinjaArmyH *ninjaArmy;
     NinjaErr ninjaErr;

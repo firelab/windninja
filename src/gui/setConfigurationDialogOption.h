@@ -1,11 +1,8 @@
 #ifndef SETCONFIGURATIONDIALOGOPTION_H
 #define SETCONFIGURATIONDIALOGOPTION_H
 
+#include "ui_setConfigurationDialogOption.h"
 #include <QDialog>
-
-namespace Ui {
-class setConfigurationOptionDialog;
-}
 
 class setConfigurationOptionDialog : public QDialog
 {

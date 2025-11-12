@@ -44,6 +44,7 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
+    connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
 }
 
 void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
