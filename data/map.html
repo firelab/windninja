@@ -61,6 +61,26 @@
         .leaflet-drag-target {
             cursor: move !important;
         }
+        .leaflet-control-center {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .leaflet-control-center a {
+            display: block;
+            text-align: center;
+            color: #0077ff;
+            font-size: 20px;
+            line-height: 26px;
+            width: 28px;
+            height: 28px;
+            text-decoration: none;
+        }
+        .leaflet-control-center a:hover {
+            background: #0077ff;
+            color: white;
+        }
     </style>
 
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
@@ -145,7 +165,11 @@
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
             rectangle.editing.enable();
             sendBoundingBox(rectangle);
-            rectangle.on('edit', () => sendBoundingBox(rectangle)); 
+            map.fitBounds(rectangle.getBounds());
+            rectangle.on('edit', () => {
+                sendBoundingBox(rectangle);
+                map.fitBounds(rectangle.getBounds()); 
+            });
         }
 
         function drawDEM(DEMCorners) {
@@ -164,6 +188,8 @@
                 weight: 2,
                 fill: false
             }).addTo(mapRectangleLayer);
+
+            map.fitBounds(rectangle.getBounds());
         }
 
         function startRectangleDrawing() {
@@ -242,13 +268,42 @@
             mapRectangleLayer.addLayer(layer);
             layer.editing.enable();
             sendBoundingBox(layer);
-            layer.on('edit', () => sendBoundingBox(layer));
+            layer.on('edit', () => {
+                sendBoundingBox(layer);
+                map.fitBounds(layer.getBounds());
+            });
+            map.fitBounds(layer.getBounds());
         });
 
         const baseMaps = {};
         const overlayMaps = {};
         const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
         L.control.scale().addTo(map);
+
+        const centerControl = L.control({ position: 'topleft' });
+
+        centerControl.onAdd = function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
+            const button = L.DomUtil.create('a', '', container);
+            button.innerHTML = '⌖';
+            button.title = 'Center on current shape';
+            button.href = '#';
+
+            L.DomEvent.on(button, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                if (mapRectangleLayer.getLayers().length > 0) {
+                    const layer = mapRectangleLayer.getLayers()[0];
+                    if (layer.getBounds) {
+                        map.fitBounds(layer.getBounds());
+                    }
+                }
+            });
+
+            return container;
+        };
+
+        centerControl.addTo(map);
 
         new QWebChannel(qt.webChannelTransport, channel => {
             window.bridge = channel.objects.bridge;
