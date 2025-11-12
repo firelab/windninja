@@ -127,7 +127,7 @@ void WeatherModelInput::updateTreeView()
 {
     AppState& state = AppState::instance();
     state.isWeatherModelForecastValid = false;
-    emit requestRefresh();
+    emit updateState();
 
     // File Tree View
     fileModel = new QFileSystemModel(this);
@@ -190,7 +190,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
         timeModel->clear();
 
         state.isWeatherModelForecastValid = false;
-        emit requestRefresh();
+        emit updateState();
 
         return;
     }
@@ -222,7 +222,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
         qDebug() << "NinjaFreeWeatherModelTimeList: ninjaErr=" << ninjaErr;
     }
 
-    emit requestRefresh();
+    emit updateState();
 }
 
 void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
@@ -238,7 +238,7 @@ void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
         state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
     }
 
-    emit requestRefresh();
+    emit updateState();
 }
 
 void WeatherModelInput::weatherModelTimeSelectAllButtonClicked()

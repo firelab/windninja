@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     AppState& state = AppState::instance();
     state.setUi(ui);
     ui->massSolverCheckBox->setChecked(true);
+    ui->treeWidget->setMouseTracking(true);
     state.isMassSolverToggled = true;
 
     lineNumber = 1;
@@ -130,7 +131,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     writeToConsole("WINDNINJA_DATA=" + dataPath);
 
-    emit requestRefresh();
+    state.setState();
 }
 
 MainWindow::~MainWindow()
@@ -164,13 +165,20 @@ void MainWindow::connectSignals()
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
     //  connect(menuBar, SIGNAL( writeToConsole(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ));  // other way to do it
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
-    connect(surfaceInput, &SurfaceInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
+    connect(surfaceInput, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
     connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
-    connect(domainAverageInput, &DomainAverageInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
-    connect(pointInitializationInput, &PointInitializationInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
-    connect(weatherModelInput, &WeatherModelInput::requestRefresh, &AppState::instance(), &AppState::refreshUI);
-    connect(this, &MainWindow::requestRefresh, &AppState::instance(), &AppState::refreshUI);
+    connect(domainAverageInput, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
+    connect(pointInitializationInput, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
+    connect(weatherModelInput, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
+    connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
+    connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
+    connect(this, &MainWindow::updateGoogleState, &AppState::instance(), &AppState::updateGoogleEarthOutputState);
+    connect(this, &MainWindow::updateFireBehaviorState, &AppState::instance(), &AppState::updateFireBehaviorOutputState);
+    connect(this, &MainWindow::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
+    connect(this, &MainWindow::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
+    connect(this, &MainWindow::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
+    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -253,7 +261,7 @@ void MainWindow::massSolverCheckBoxClicked()
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     }
-    emit requestRefresh();
+    emit updateMetholodyState();
 }
 
 void MainWindow::momentumSolverCheckBoxClicked()
@@ -271,7 +279,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
     }
-    emit requestRefresh();
+    emit updateMetholodyState();
 }
 
 void MainWindow::diurnalCheckBoxClicked()
@@ -297,7 +305,7 @@ void MainWindow::diurnalCheckBoxClicked()
         ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     }
 
-    emit requestRefresh();
+    emit updateDirunalState();
 }
 
 void MainWindow::stabilityCheckBoxClicked()
@@ -305,7 +313,7 @@ void MainWindow::stabilityCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
-    emit requestRefresh();
+    emit updateStabilityState();
 }
 
 void MainWindow::outputDirectoryButtonClicked()
@@ -640,35 +648,35 @@ void MainWindow::googleEarthGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGoogleEarthToggled = checked;
-    emit requestRefresh();
+    emit updateGoogleState();
 }
 
 void MainWindow::fireBehaviorGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isFireBehaviorToggled = checked;
-    emit requestRefresh();
+    emit updateFireBehaviorState();
 }
 
 void MainWindow::shapeFilesGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isShapeFilesToggled = checked;
-    emit requestRefresh();
+    emit updateShapeState();
 }
 
 void MainWindow::geospatialPDFFilesGroupBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGeoSpatialPDFFilesToggled = checked;
-    emit requestRefresh();
+    emit updatePDFState();
 }
 
 void MainWindow::VTKFilesCheckBoxClicked(bool checked)
 {
     AppState& state = AppState::instance();
     state.isVTKFilesToggled = checked;
-    emit requestRefresh();
+    emit updateVTKState();
 }
 
 void MainWindow::googleEarthMeshResolutionGroupBoxToggled(bool checked)

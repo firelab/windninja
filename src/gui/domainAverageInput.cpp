@@ -134,7 +134,7 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
     }
 
     AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
-    emit requestRefresh();
+    emit updateState();
 }
 
 
@@ -146,7 +146,7 @@ void DomainAverageInput::clearTableButtonClicked()
     ui->domainAverageTable->clearContents();
     invalidDAWCells.clear();
 
-    emit requestRefresh();
+    emit updateState();
 }
 
 void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)
@@ -187,6 +187,6 @@ void DomainAverageInput::domainAverageGroupBoxToggled()
         state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
-    emit requestRefresh();
+    emit updateState();
 }
 

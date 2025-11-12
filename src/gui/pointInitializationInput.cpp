@@ -65,7 +65,7 @@ void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
         state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
-    emit requestRefresh();
+    emit updateState();
 }
 
 void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
@@ -243,7 +243,7 @@ void PointInitializationInput::updateTreeView()
 {
     AppState& state = AppState::instance();
     state.isStationFileSelectionValid = false;
-    emit requestRefresh();
+    emit updateState();
 
     stationFileSystemModel = new QFileSystemModel(this);
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
@@ -361,7 +361,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             break;
         }
     }
-    emit requestRefresh();
+    emit updateState();
 }
 
 void PointInitializationInput::pointInitializationSelectAllButtonClicked()

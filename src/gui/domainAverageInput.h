@@ -46,7 +46,7 @@ class DomainAverageInput: public QObject
     Q_OBJECT
 
 signals:
-    void requestRefresh();
+    void updateState();
 
 public:
     DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);

@@ -56,7 +56,7 @@ public:
 
 
 signals:
-    void requestRefresh();
+    void updateState();
 
 public slots:
     void updateTreeView();

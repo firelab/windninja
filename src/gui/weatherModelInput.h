@@ -52,7 +52,7 @@ public:
     explicit WeatherModelInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 signals:
-    void requestRefresh();
+    void updateState();
 
 public slots:
     void updateTreeView();

@@ -62,7 +62,7 @@ public:
     double computeMeshResolution(int index, bool isMomemtumChecked);
 
 signals:
-    void requestRefresh();
+    void updateState();
     void updateTreeView();
 
 public slots:

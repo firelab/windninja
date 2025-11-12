@@ -274,7 +274,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
     QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
     webEngineView->page()->runJavaScript(js);
 
-    emit requestRefresh();
+    emit updateState();
     emit updateTreeView();
 }
 
@@ -355,7 +355,6 @@ void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
 void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
 {
     AppState& state = AppState::instance();
-    state.isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
 
     bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
     QVector<QVector<QString>> displayData = fetchAllTimeZones(isShowAllTimeZonesSelected);
@@ -375,9 +374,7 @@ void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
 
 void SurfaceInput::timeZoneDetailsCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-    state.isDisplayTimeZoneDetailsSelected = ui->timeZoneDetailsCheckBox->isChecked();
-    ui->timeZoneDetailsTextEdit->setVisible(state.isDisplayTimeZoneDetailsSelected);
+    ui->timeZoneDetailsTextEdit->setVisible(ui->timeZoneDetailsCheckBox->isChecked());
 }
 
 QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone)

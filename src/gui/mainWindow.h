@@ -102,7 +102,14 @@ public:
     ~MainWindow();
 
 signals:
-    void requestRefresh();
+    void updateDirunalState();
+    void updateStabilityState();
+    void updateGoogleState();
+    void updateFireBehaviorState();
+    void updateShapeState();
+    void updatePDFState();
+    void updateVTKState();
+    void updateMetholodyState();
 
 private slots:
     void massSolverCheckBoxClicked();
