@@ -46,11 +46,6 @@
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
 
-namespace Ui
-{
-    class MainWindow;
-}
-
 class SurfaceInput : public QObject
 {
   Q_OBJECT

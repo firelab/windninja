@@ -44,21 +44,26 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->boundingBoxSouthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
     connect(ui->boundingBoxEastLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
     connect(ui->boundingBoxWestLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
+
     connect(ui->pointRadiusLatLineEdit,&QLineEdit::textChanged, this, &SurfaceInput::pointRadiusLineEditsTextChanged);
     connect(ui->pointRadiusLonLineEdit,&QLineEdit::textChanged, this, &SurfaceInput::pointRadiusLineEditsTextChanged);
     connect(ui->pointRadiusRadiusLineEdit,&QLineEdit::textChanged, this, &SurfaceInput::pointRadiusLineEditsTextChanged);
+
     connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputFileDownloadButtonClicked);
     connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputFileOpenButtonClicked);
     connect(ui->elevationInputFileLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::elevationInputFileLineEditTextChanged);
+
     connect(ui->elevationInputTypeComboBox, &QComboBox::currentIndexChanged, ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
     connect(ui->meshResolutionComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionComboBoxCurrentIndexChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::timeZoneComboBoxCurrentIndexChanged);
+
     connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadCancelButtonClicked);
     connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadButtonClicked);
     connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputTypePushButtonClicked);
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
-    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::timeZoneComboBoxCurrentIndexChanged);
+
     connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
 }
 

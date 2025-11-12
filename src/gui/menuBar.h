@@ -43,10 +43,6 @@
 #include <QTextBlock>
 #include <QDesktopServices>
 
-namespace Ui {
-class MainWindow;
-}
-
 class MenuBar : public QObject
 {
     Q_OBJECT

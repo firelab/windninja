@@ -39,7 +39,7 @@ AppState::AppState()
     : tickIcon(":/tick.png"),
     crossIcon(":/cross.png"),
     bulletIcon(":/bullet_blue.png")
-{ }
+{}
 
 void AppState::setUi(Ui::MainWindow* mainWindowUi)
 {
@@ -67,10 +67,12 @@ void AppState::updateSolverMethodologyState()
     if (isMassSolverToggled)
     {
         isSolverMethodologyValid = true;
-        ui->treeWidget->topLevelItem(0)->setToolTip(0, "Conservation of Mass Selected");
         ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(0)->setToolTip(0, "Using Conservation of Mass Selected");
         ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass Selected");
         ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Not Selected");
     }
     else if (isMomentumSolverToggled)
     {
@@ -78,16 +80,19 @@ void AppState::updateSolverMethodologyState()
         ui->treeWidget->topLevelItem(0)->setToolTip(1, "Conservation of Mass and Momentum Selected");
         ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, tickIcon);
+        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Selected");
         ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass Not Selected");
     }
     else
     {
         isSolverMethodologyValid = false;
         ui->treeWidget->topLevelItem(0)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(0)->setToolTip(0,"Select a Solver");
-        ui->treeWidget->topLevelItem(0)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass Not Selected");
+        ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Not Selected");
     }
 
     updateOverallState();
@@ -143,13 +148,13 @@ void AppState::updateDomainAverageInputState()
     if (isDomainAverageInitializationToggled && isDomainAverageWindInputTableValid)
     {
         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "");
+        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Valid");
         isDomainAverageInitializationValid = true;
     }
     else if (isDomainAverageInitializationToggled && !isDomainAverageWindInputTableValid)
     {
         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs; hover over red cells for explanation.");
+        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs");
         isDomainAverageInitializationValid = false;
     }
     else
@@ -167,7 +172,7 @@ void AppState::updatePointInitializationInputState()
     if (isPointInitializationToggled && isStationFileSelectionValid && isStationFileSelected)
     {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "");
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Valid");
         isPointInitializationValid = true;
     }
     else if(isPointInitializationToggled && !isStationFileSelected)

@@ -36,11 +36,6 @@
 #include <QPair>
 #include <QSet>
 
-namespace Ui
-{
-    class MainWindow;
-}
-
 class DomainAverageInput: public QObject
 {
     Q_OBJECT

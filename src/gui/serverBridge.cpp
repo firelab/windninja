@@ -100,72 +100,73 @@ bool ServerBridge::NinjaCheckVersions(char * mostrecentversion, char * localvers
 
 char * ServerBridge::NinjaQueryServerMessages(bool checkAbort)
 {
-    // CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
-    // const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
-    // CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
-    // CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
-    // if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
-    // {
-    //     CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
-    //     return NULL;
-    // }
+    CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+    CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "5");
+    const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
+    CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
+    CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );
+    if( !poResult || poResult->nStatus != 0 || poResult->nDataLen == 0 )
+    {
+        CPLDebug( "NINJA", "Failed to reach the ninjastorm server." );
+        return NULL;
+    }
 
-    // const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
-    // std::vector<std::string> messages;
-    // std::istringstream iss(pszTextContent);
-    // std::string message;
+    const char* pszTextContent = reinterpret_cast<const char*>(poResult->pabyData);
+    std::vector<std::string> messages;
+    std::istringstream iss(pszTextContent);
+    std::string message;
 
-    // // Read all lines into the vector
-    // while (std::getline(iss, message))
-    // {
-    //     messages.push_back(message);
-    // }
+    // Read all lines into the vector
+    while (std::getline(iss, message))
+    {
+        messages.push_back(message);
+    }
 
-    // // Process all lines except the last two
-    // std::ostringstream oss;
-    // if (checkAbort)
-    // {
-    //     for (size_t i = 0; i < messages.size(); ++i)
-    //     {
-    //         if (i == messages.size()-1)
-    //         {
-    //             oss << messages[i] << "\n";
-    //         }
-    //     }
-    // }
-    // else
-    // {
-    //     bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING));
-    //     if (!versionisuptodate)
-    //     {
-    //         oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "<br><br>";
+    // Process all lines except the last two
+    std::ostringstream oss;
+    if (checkAbort)
+    {
+        for (size_t i = 0; i < messages.size(); ++i)
+        {
+            if (i == messages.size()-1)
+            {
+                oss << messages[i] << "\n";
+            }
+        }
+    }
+    else
+    {
+        bool versionisuptodate = NinjaCheckVersions(const_cast<char*>(messages[1].c_str()), const_cast<char*>(NINJA_VERSION_STRING));
+        if (!versionisuptodate)
+        {
+            oss << "You are using an outdated WindNinja version, please update to version: " << messages[1] << "<br><br>";
 
-    //         oss << "Windows: Download the new " << messages[1]
-    //             << " installer <a href=\"https://research.fs.usda.gov/firelab/products/dataandtools/windninja\">here</a><br><br>";
+            oss << "Windows: Download the new " << messages[1]
+                << " installer <a href=\"https://research.fs.usda.gov/firelab/products/dataandtools/windninja\">here</a><br><br>";
 
-    //         oss << "Linux: See the <a href=\"https://github.com/firelab/windninja/tree/" << messages[1] << "\">" << messages[1] << "</a> tag in our GitHub repo<br>";
+            oss << "Linux: See the <a href=\"https://github.com/firelab/windninja/tree/" << messages[1] << "\">" << messages[1] << "</a> tag in our GitHub repo<br>";
 
-    //     }
-    //     if (messages[4].empty() == false)
-    //     {
-    //         for (size_t i = 3; i < messages.size() - 2; ++i)
-    //         {
-    //             if (!messages[i].empty())
-    //             {
-    //                 oss << messages[i] << "\n";
-    //             }
-    //         }
-    //     }
-    //     if (messages[4].empty() && versionisuptodate) {
-    //         return NULL;
-    //     }
-    // }
+        }
+        if (messages[4].empty() == false)
+        {
+            for (size_t i = 3; i < messages.size() - 2; ++i)
+            {
+                if (!messages[i].empty())
+                {
+                    oss << messages[i] << "\n";
+                }
+            }
+        }
+        if (messages[4].empty() && versionisuptodate) {
+            return NULL;
+        }
+    }
 
-    // std::string resultingmessage = oss.str();
-    // char* returnString = new char[resultingmessage.length() + 1];
-    // std::strcpy(returnString, resultingmessage.c_str());
-    // CPLHTTPDestroyResult(poResult);
-    // return returnString;
+    std::string resultingmessage = oss.str();
+    char* returnString = new char[resultingmessage.length() + 1];
+    std::strcpy(returnString, resultingmessage.c_str());
+    CPLHTTPDestroyResult(poResult);
+    return returnString;
 
     return NULL;
 }

@@ -41,10 +41,6 @@
 #include <QProgressDialog>
 #include <QObject>
 
-namespace Ui {
-class MainWindow;
-}
-
 class WeatherModelInput : public QObject
 {
     Q_OBJECT

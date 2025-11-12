@@ -42,11 +42,6 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QFileSystemModel>
 
-
-namespace Ui {
-class MainWindow;
-}
-
 class PointInitializationInput : public QObject
 {
     Q_OBJECT
