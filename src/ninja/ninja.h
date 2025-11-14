@@ -119,6 +119,8 @@
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
+#include "callbackFunctions.h"
+
 class ninja
 {
 public:
@@ -163,17 +165,15 @@ public:
     /*-----------------------------------------------------------------------------
      *  ninjaCom section
      *-----------------------------------------------------------------------------*/
+    void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
+    void set_ninjaComProgressFunc(ProgressFunc func, void *pUser);
+    void set_ninjaMultiComStream(FILE* stream);
     int get_inputsRunNumber() const;
     ninjaComClass::eNinjaCom get_inputsComType() const;
     char * get_lastComString() const;
     FILE * get_ComLogFp() const; //returns the Com Log file pointer
-    ninjaComClass * get_Com() const; //returns the Com object
-#ifdef NINJA_GUI
-    int get_ComNumRuns() const;
-    void set_ComNumRuns( int nRuns );
-#endif //NINJA-GUI
     void set_progressWeight(double progressWeight); //For foam+diurnal simulations
-    double get_progressWeight();
+
     /*************************************************************
       kyle's fx's for importing several file types through GDAL
       function lives in readInputFile.cpp for now.
@@ -366,7 +366,6 @@ public:
 
     double getFuelBedDepth(int fuelModel);
 
-    void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
     void checkInputs();
     void dumpMemory();
 

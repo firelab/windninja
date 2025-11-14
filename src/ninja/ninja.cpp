@@ -81,8 +81,8 @@ ninja::ninja()
     input.lastComString[0] = '\0';
     input.inputsRunNumber = 0;
     input.inputsComType = ninjaComClass::ninjaDefaultCom;
-    input.Com = new ninjaDefaultComHandler();
-
+    input.Com = new ninjaComClass();
+    input.Com->comType = &input.inputsComType;
 }
 
 /**Ninja destructor
@@ -127,6 +127,7 @@ ninja::ninja(const ninja &rhs)
 {
     input.Com = NULL;   //must be set to null!
     set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
+//    set_ninjaMultiComStream(rhs.input.Com.multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
     strcpy( input.lastComString, rhs.get_lastComString() );
     input.Com->fpLog = rhs.get_ComLogFp();
 
@@ -3544,6 +3545,31 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
+void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
+{
+    input.inputsComType = comType;
+
+    if(input.Com)
+        delete input.Com;
+
+    input.Com = new ninjaComClass();
+    input.Com->comType = &input.inputsComType;
+
+    input.inputsRunNumber = RunNumber;
+    input.Com->runNumber = &input.inputsRunNumber;
+    input.Com->lastMsg = input.lastComString;
+}
+
+void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
+{
+    input.Com->set_progressFunc(func, pUser);
+}
+
+void ninja::set_ninjaMultiComStream(FILE* stream)
+{
+    input.Com->multiStream = stream;
+}
+
 int ninja::get_inputsRunNumber() const
 {
     return input.inputsRunNumber;
@@ -3562,28 +3588,6 @@ char * ninja::get_lastComString() const
 FILE * ninja::get_ComLogFp() const
 {
     return input.Com->fpLog;
-}
-ninjaComClass * ninja::get_Com() const
-{
-    return input.Com;
-}
-
-#ifdef NINJA_GUI
-int ninja::get_ComNumRuns() const
-{
-    return input.Com->nRuns;
-}
-
-void ninja::set_ComNumRuns( int nRuns )
-{
-    input.Com->nRuns = nRuns;
-}
-
-#endif //NINJA_GUI
-
-double ninja::get_progressWeight()
-{
-    return input.Com->progressWeight;
 }
 
 void ninja::set_progressWeight(double progressWeight)
@@ -5246,33 +5250,6 @@ double ninja::getFuelBedDepth(int fuelModel)
 
     //multiply by 0.3048 to convert from feet to meters
     return (depthInFeet * 0.3048);
-}
-
-void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
-{
-    input.inputsComType = comType;
-
-    if(input.Com)
-        delete input.Com;
-
-    if(comType == ninjaComClass::ninjaDefaultCom)
-        input.Com = new ninjaDefaultComHandler();
-    else if(comType == ninjaComClass::ninjaQuietCom)
-        input.Com = new ninjaQuietComHandler();
-    else if(comType == ninjaComClass::ninjaLoggingCom)
-        input.Com = new ninjaLoggingComHandler();
-    else if(comType == ninjaComClass::ninjaGUICom)
-        input.Com = new ninjaGUIComHandler();
-    else if(comType == ninjaComClass::WFDSSCom)
-        input.Com = new ninjaWFDSSComHandler();
-    else if(comType == ninjaComClass::ninjaCLICom)
-        input.Com = new ninjaCLIComHandler();
-    else
-        input.Com = new ninjaDefaultComHandler();
-
-    input.inputsRunNumber = RunNumber;
-    input.Com->runNumber = &input.inputsRunNumber;
-    input.Com->lastMsg = input.lastComString;
 }
 
 void ninja::checkInputs()

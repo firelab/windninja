@@ -27,7 +27,6 @@
  *
  *****************************************************************************/
 #include "ninja_errors.h"
-#include "ninjaCom.h"
 /*-----------------------------------------------------------------------------
  *  Macros for Compilation Compatibility with gcc and g++
  *-----------------------------------------------------------------------------*/
@@ -80,6 +79,8 @@ struct NinjaToolsH;
 typedef struct NinjaToolsH NinjaToolsH;
 
 typedef int  NinjaErr;
+
+#include "callbackFunctions.h"
 
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
@@ -171,10 +172,11 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * comType, char ** options );
 
-#ifdef NINJA_GUI
-    WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
-        ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
-#endif //NINJA_GUI
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
+        ( NinjaArmyH * ninjaArmy, const int nIndex, ProgressFunc func, void *pUser, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
+        ( NinjaArmyH * ninjaArmy, const int nIndex, FILE* stream, char ** options );
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed

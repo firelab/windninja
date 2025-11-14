@@ -38,34 +38,16 @@
 #include <sstream>
 #include <string.h>
 
-#ifdef _OPENMP
-#include "omp.h"
-#endif
-
-#ifdef NINJA_GUI
-#include <QObject>
-#include <QString>
-#include <QColor>
-#include <QCoreApplication>
-#endif
-
 #define NINJA_MSG_SIZE 1000
 
-class ninjaComClass //virtual base class
-#ifdef NINJA_GUI
-  : public QObject
-#endif
+#include "callbackFunctions.h"
+
+class ninjaComClass
 {
 public:
     ninjaComClass();
-    virtual ~ninjaComClass();
+    ~ninjaComClass();
     double progressWeight;
-
-#ifdef NINJA_GUI
-    int *runProgress;
-    int nRuns;
-    int *progressMultiplier;
-#endif
 
     typedef enum
     {
@@ -88,82 +70,37 @@ public:
         ninjaCLICom
     } eNinjaCom;
 
+    bool printLastMsg;
     char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
     int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
     eNinjaCom* comType;	//pointer to communication type, should point to eNinjaCom in WindNinjaInputs class
 
-    FILE*     fpLog;
+    bool printProgressFunc;
+    ProgressFunc pfnProgress;
+    void *pProgressUser;
 
-    int errorCount;	//running error count
-    int	nMaxErrors;	//max number of errors to report
-    bool printSolverProgress;   //flag specifying where normal solver progress should be printed (matching will still be printed)
+    bool printLogFile;
+    FILE*     fpLog;
+    FILE*     fpErr;
+    FILE* multiStream;
+
+    int errorCount; //running error count
+    int nMaxErrors; //max number of errors to report
+    bool printMaxErrors;  //flag to determine whether to keep printing error messages past when errorCount exceeds nMaxErrors
+    bool printSolverProgress;  //flag specifying where normal solver progress should be printed (matching will still be printed)
+    bool printRunNumber;  //flag to determine if thread number should be printed at beginning of messages
 
     //methods
+
+    void set_progressFunc(ProgressFunc func, void *pUser);
 
     void noSolverProgress();
 
     void ninjaCom(msgType eMsg, const char *fmt, ...);
     void ninjaComV(msgType, const char *, va_list);
-    //void initializeNinjaCom(char *LastMsg, int* RunNumber, eNinjaCom* ComType);
+    //void initializeNinjaCom(char *LastMsg, int* RunNumber);
 
-    //pure virtual function that must be overridden in derived classes
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg) = 0;
-
+    void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };
 
-
-class ninjaDefaultComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-
-class ninjaQuietComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-
-class ninjaLoggingComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-#ifndef NINJA_GUI
-class ninjaGUIComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-#else
-class ninjaGUIComHandler : public ninjaComClass //concrete class
-{
-  Q_OBJECT
- public:
-  ninjaGUIComHandler();
-  ~ninjaGUIComHandler();
-  bool verbose;
-  virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-
- signals:
-  void sendProgress(int run, int progress);
-  void sendMessage(QString message, QColor color = Qt::white);
-
-};
-#endif // NINJA_GUI
-
-class ninjaWFDSSComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
-
-class ninjaCLIComHandler : public ninjaComClass	//concrete class
-{
-public:
-    virtual void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
-};
 #endif //NINJACOM_H

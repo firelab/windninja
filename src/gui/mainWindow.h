@@ -30,6 +30,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+<<<<<<< HEAD:src/gui/mainWindow.h
 #include "outputs.h"
 #include "surfaceInput.h"
 #include "menuBar.h"
@@ -40,6 +41,17 @@
 #include "weatherModelInput.h"
 #include "ui_mainWindow.h"
 #include "appState.h"
+=======
+#include "surfaceinput.h"
+#include "menubar.h"
+#include "domainaverageinput.h"
+#include "pointinitializationinput.h"
+#include "mapbridge.h"
+#include "serverbridge.h"
+#include "weathermodelinput.h"
+#include "ui_mainwindow.h"
+#include "appstate.h"
+>>>>>>> GUI-Redesign-upgradeNinjaCom:src/gui/mainwindow.h
 #include "windninja.h"
 #include <QWebChannel>
 #include <QFuture>
@@ -96,9 +108,15 @@ public:
     ~MainWindow();
 
 signals:
+<<<<<<< HEAD:src/gui/mainWindow.h
     void updateDirunalState();
     void updateStabilityState();
     void updateMetholodyState();
+=======
+    void updateProgressValueSignal(int run, int progress);
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
+>>>>>>> GUI-Redesign-upgradeNinjaCom:src/gui/mainwindow.h
 
 private slots:
     void massSolverCheckBoxClicked();

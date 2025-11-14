@@ -183,6 +183,27 @@ void MainWindow::updateProgressValue(int run, int progress)
     progressDialog->setValue(totalProgress);
 }
 
+//static void updateProgressCallback(const char *pszMessage, void *pUser)
+void updateProgressCallback(const char *pszMessage, void *pUser)  // this still worked?? huh.
+{
+    MainWindow *self = static_cast<MainWindow*>(pUser);
+
+    std::string msg = pszMessage;
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    int runNumber;
+    int runProgress;
+    if( sscanf(msg.c_str(), "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
+    {
+        emit self->updateProgressValueSignal(runNumber, runProgress);
+    }
+    emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+    emit self->writeToConsoleSignal(QString::fromStdString(msg));
+}
+
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
@@ -659,6 +680,13 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetCommunication: ninjaErr =" << ninjaErr;
         }
+
+        ninjaErr = NinjaSetComProgressFunc(ninjaArmy, i, &updateProgressCallback, this, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetProgressFunc: err =" << ninjaErr;
+        }
+
         /*
        * Sets Simulation Variables
        */
@@ -673,25 +701,6 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
                 }
             }
         }
-
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::writeToConsole );  // more exact way of doing it
-        connect(NinjaGetCommunication(ninjaArmy, i, papszOptions), SIGNAL(sendMessage(QString,QColor)), this, SLOT(writeToConsole(QString,QColor)));  // other way of doing it
-
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendMessage, this, &MainWindow::updateProgressMessage );
-        connect(NinjaGetCommunication(ninjaArmy, i, papszOptions), SIGNAL(sendMessage(QString,QColor)), this, SLOT(updateProgressMessage(QString)));
-
-        //connect( static_cast<ninjaGUIComHandler*>(NinjaGetCommunication( ninjaArmy, i, papszOptions )), &ninjaGUIComHandler::sendProgress, this, &MainWindow::updateProgressValue );
-        connect(NinjaGetCommunication(ninjaArmy, i, papszOptions), SIGNAL(sendProgress(int,int)), this, SLOT(updateProgressValue(int,int)));
-
-//        // old code style method (see this in the old qt4 gui code)
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::AutoConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ), Qt::AutoConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ), Qt::AutoConnection );
-
-//        // new code style method, chatgpt seems to prefer this one, though the AutoConnection seems to have slightly better results, well maybe
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( writeToConsole(QString, QColor) ), Qt::QueuedConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendMessage(QString, QColor) ), this, SLOT( updateProgressMessage( QString ) ), Qt::QueuedConnection );
-//        connect( NinjaGetCommunication( ninjaArmy, i, papszOptions ), SIGNAL( sendProgress( int, int ) ), this, SLOT( updateProgressValue( int, int ) ), Qt::QueuedConnection );
 
         ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
         if(ninjaErr != NINJA_SUCCESS)

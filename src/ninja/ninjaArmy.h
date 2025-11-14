@@ -107,6 +107,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
     return NINJA_E_INVALID;
 #endif
 
+#include "callbackFunctions.h"
+
 //#include "ninjaCom.h"
 /**
 * Class used for doing multiple WindNinja runs.
@@ -173,27 +175,21 @@ public:
                                const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
 
+    int setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
+                                 char ** papszOptions = NULL);
+
     int setNinjaCommunication( const int nIndex, std::string comType,
                                char ** papszOptions = NULL);
-#ifdef NINJA_GUI
-    /**
-    * \brief Set the number of runs for a ninjaCom
-    *
-    * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                            char ** papszOptions=NULL );
 
     /**
-    * \brief Returns the ninjaCom for a ninja
+    * \brief Initialize the message communication multi-stream FILE of a ninja
     *
     * \param nIndex index of a ninja
-    * \return com the ninjaComClass of a ninja
+    * \param stream communication multi-stream FILE of a ninja
+    * \return errval Returns NINJA_SUCCESS upon success
     */
-    ninjaComClass * getNinjaCom( const int nIndex, char ** papszOptions=NULL );
-#endif //NINJA_GUI
+    int setNinjaMultiComStream( const int nIndex, FILE* stream,
+                                char ** papszOptions = NULL);
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods

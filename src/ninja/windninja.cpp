@@ -796,29 +796,42 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     }
 }
 
-/**
- * \brief Get the set communication handler for a given simulation.
- * only useable with the GUI
- *
- * \param army An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to get the communication handler from, that has already been created by a call to NinjaSetCommunication.
- *
- * \return a pointer to the ninjaComClass of the given ninja on success, a NULL pointer otherwise.
- */
-#ifdef NINJA_GUI
-WINDNINJADLL_EXPORT ninjaComClass * NinjaGetCommunication
-    ( NinjaArmyH * army, const int nIndex, char ** papszOptions )
+WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
+    ( NinjaArmyH * army, const int nIndex, ProgressFunc func, void *pUser, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->getNinjaCom( nIndex );
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
+            ( nIndex, func, pUser );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the multi-stream FILE, for message communications during simulations.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param stream The message communication FILE to send multi-stream messages to.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
+    ( NinjaArmyH * army, const int nIndex, FILE* stream, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaMultiComStream
+            ( nIndex, stream );
     }
     else
     {
         return NULL;
     }
 }
-#endif //NINJA_GUI
 
 /**
  * \brief Set the DEM to use for the simulations.
@@ -2564,9 +2577,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
     }
 }
 
-
-}
-
 /**
  * \brief calls wxStation::writeBlankStationFile(), which writes a weather station csv file with no data, just a header.
  *
@@ -2589,3 +2599,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputSt
         return NINJA_E_NULL_PTR;
     }
 }
+
+
+} // extern "C"
