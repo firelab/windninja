@@ -1436,7 +1436,7 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     //MSVC 2010 is not c++11 compliant-> isnan doesn't work with MSVC2010
     //changing to CPLISNan()
 
-    if(CPLIsNan(result))
+    if(std::isnan(result))
     {
         result = work;
     }
@@ -2247,8 +2247,8 @@ vector<double> pointInitialization::Irradiate(vector<string> solar_radiation, st
         {
             solFrac=one;
         }
-        //Note that CPLIsNan is required to compile on MSVC2010 c++11's isnan doesn't work
-        if (CPLIsNan(solFrac))
+        //Note that std::isnan is required to compile on MSVC2010 c++11's isnan doesn't work
+        if (std::isnan(solFrac))
         {
             solFrac=one;
         }
