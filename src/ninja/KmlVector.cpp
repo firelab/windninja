@@ -71,7 +71,7 @@ KmlVector::~KmlVector()
         splitValue = NULL;
     }
 
-    OCTDestroyCoordinateTransformation( coordTransform );
+    OCTDestroyCoordinateTransformation( (OGRCoordinateTransformationH)coordTransform );
 }
 
 void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits units)

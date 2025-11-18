@@ -20,7 +20,7 @@ cmake_minimum_required (VERSION 3.16)
 project(WindNinja)
 
 # let cmake figure out how to set the C++ level
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
@@ -89,6 +89,9 @@ if(USE_VCPKG)
         find_package(shapelib CONFIG REQUIRED)
         find_package(GDAL CONFIG REQUIRED)
         find_package(netCDF CONFIG REQUIRED)
+
+        find_package(Boost REQUIRED COMPONENTS program_options)
+
 
         set(GDAL_LIBRARY GDAL::GDAL)
         set(NETCDF_LIBRARIES_C netCDF::netcdf)
