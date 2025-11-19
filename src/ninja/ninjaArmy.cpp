@@ -359,6 +359,9 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
         if(fcastList == NULL){
+            //ninjas hasn't been sized yet
+            //which i to even use for ninjas?
+            //ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
             throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
                   std::string(" cannot be opened."));
         }
@@ -412,7 +415,8 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
         }
         catch(armyException &e)
         {
-            std::cout << "Bad forecast file, exiting" << endl;
+            //which i to even use for ninjas?
+            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
             throw;
         }
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -489,7 +493,8 @@ bool ninjaArmy::startRuns(int numProcessors)
         }
     }catch (exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        //ninjas[j]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
@@ -507,6 +512,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         int status = NinjaFoam::GenerateFoamDirectory(ninjas[0]->input.dem.fileName);
         if(status != 0){
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error generating the NINJAFOAM directory.");
             throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }
     }
@@ -703,23 +709,22 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -800,21 +805,24 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             }catch (bad_alloc& e)
             {
-                std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-                std::cout << "WindNinja appears to have run out of memory." << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
                 status = false;
+                throw;
             }catch (cancelledByUser& e)
             {
-                std::cout << "Exception caught: " << e.what() << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
                 status = false;
+                throw;
             }catch (exception& e)
             {
-                std::cout << "Exception caught: " << e.what() << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
                 status = false;
+                throw;
             }catch (...)
             {
-                std::cout << "Exception caught: Cannot determine exception type." << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
                 status = false;
+                throw;
             }
         }
         try{
@@ -824,23 +832,22 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -922,6 +929,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             }catch (bad_alloc& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_BAD_ALLOC_EXC;
                 asMessages[omp_get_thread_num()] = "Exception bad_alloc caught:";
@@ -933,6 +941,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (logic_error& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception logic_error caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_LOGIC_EXC;
                 asMessages[omp_get_thread_num()] = "Exception logic_error caught:";
@@ -944,9 +953,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
              }catch (cancelledByUser& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception canceled by user caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = NINJA_CANCEL_USER_EXC;
-                asMessages[omp_get_thread_num()] = "Exception cacneled by user caught:";
+                asMessages[omp_get_thread_num()] = "Exception canceled by user caught:";
                 asMessages[omp_get_thread_num()] + e.what();
                 asMessages[omp_get_thread_num()] += "\n";
                 status = false;
@@ -955,6 +965,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (badForecastFile& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception badForecastFile caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = NINJA_BAD_FORECAST_EXC;
                 asMessages[omp_get_thread_num()] = "Exception badForecastFile caught:";
@@ -966,6 +977,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (exception& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_EXC;
                 asMessages[omp_get_thread_num()] = "Exception caught:";
@@ -977,6 +989,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (...)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_UNKNOWN_EXC;
                 asMessages[omp_get_thread_num()] = "Unknown Exception caught:";
@@ -997,23 +1010,22 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -1164,23 +1176,22 @@ bool ninjaArmy::startRuns(int numProcessors)
         }
     }catch (bad_alloc& e)
     {
-        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-        std::cout << "WindNinja appears to have run out of memory." << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
         status = false;
         throw;
     }catch (cancelledByUser& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
         status = false;
         throw;
     }catch (exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         status = false;
         throw;
     }catch (...)
     {
-        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
         status = false;
         throw;
     }
@@ -1215,26 +1226,25 @@ bool ninjaArmy::startFirstRun()
     }
     catch (bad_alloc& e)
     {
-        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-        std::cout << "WindNinja appears to have run out of memory." << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
         status = false;
         throw;
     }
     catch (cancelledByUser& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
     catch (exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
     catch (...)
     {
-        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
         status = false;
         throw;
     }
@@ -1264,9 +1274,12 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
             std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
             int stringPos = fileroot.find_last_of('_');
             if(stringPos > 0)
+            {
                 fileroot.erase(stringPos);
-            else
+            } else
+            {
                 throw std::runtime_error("Problem writing FARSITE atmosphere file.  The ninja ASCII velocity filename appears to be malformed.");
+            }
 
             //Form atm filename
             std::string filename( CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm") );

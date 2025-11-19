@@ -174,12 +174,12 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
                 {
                     if( printRunNumber == true )
                     {
-                        sprintf( msg, "Run %d: More than %d errors have been reported. ",
+                        sprintf( msg, "Run %d: More than %d errors have been reported. "
                                  "No more will be reported from now on.\n",
                                  *runNumber, nMaxErrors );
                     } else
                     {
-                        sprintf( msg, "More than %d errors have been reported. ",
+                        sprintf( msg, "More than %d errors have been reported. "
                                  "No more will be reported from now on.\n",
                                  nMaxErrors );
                     }
@@ -303,12 +303,13 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "\nRun %d (warning): %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d (warning): %s\n", *runNumber, ninjaComMsg);
         } else
         {
-            sprintf( msg, "\nWarning: %s\n", ninjaComMsg);
+            sprintf( msg, "Warning: %s\n", ninjaComMsg);
         }
 
+        //fprintf(fpLog, "\n%s", msg);
         fprintf(fpLog, "%s", msg);
 
         if( multiStream != NULL )
@@ -325,12 +326,13 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d (ERROR): %s\n", *runNumber, ninjaComMsg);
         } else
         {
-            sprintf( msg, "\nERROR: %s\n", ninjaComMsg);
+            sprintf( msg, "ERROR: %s\n", ninjaComMsg);
         }
 
+        //fprintf(fpErr, "\n%s", msg);
         fprintf(fpErr, "%s", msg);
 
         if( multiStream != NULL )
@@ -348,12 +350,13 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "\nRun %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d (ERROR): %s\n", *runNumber, ninjaComMsg);
         } else
         {
-            sprintf( msg, "\nERROR: %s\n", ninjaComMsg);
+            sprintf( msg, "ERROR: %s\n", ninjaComMsg);
         }
 
+        //fprintf(fpErr, "\n%s", msg);
         fprintf(fpErr, "%s", msg);
 
         if( multiStream != NULL )

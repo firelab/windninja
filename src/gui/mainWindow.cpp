@@ -211,6 +211,8 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
+    //qDebug() << "Canceling...";
+    //writeToConsole( "Canceling...", Qt::yellow);
 
     char **papszOptions = nullptr;
     ninjaErr  = NinjaCancel(ninjaArmy, papszOptions);
@@ -533,6 +535,7 @@ void MainWindow::solveButtonClicked()
     progressDialog->setValue(0);
     progressDialog->setLabelText("Running...");
 
+    qDebug() << "Initializing runs...";
     writeToConsole( "Initializing runs..." );
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishedSolve);
@@ -938,7 +941,7 @@ int MainWindow::startSolve(int numProcessors)
 
     } catch (cancelledByUser& e) {  // I forgot that the cancelSolve() works by doing a throw, I'm surprised that this throw is propagating out of the solver though
 
-        qWarning() << "Solver error:" << e.what();
+        //qWarning() << "Solver error:" << e.what();
 
         // no message with this error, and it is a known error,
         // so probably better to update the message in the finished() function, than in QtConcurrent::run()
@@ -954,28 +957,28 @@ int MainWindow::startSolve(int numProcessors)
 
     } catch (const std::exception &e) { // Store error message somewhere (thread-safe)
 
-        qWarning() << "Solver error:" << e.what();
+        //qWarning() << "Solver error:" << e.what();
 
-        QString errorMsg = QString::fromStdString(e.what()); // copy out of 'e' before creating the thread safe invokeMethod lambda function
-        QMetaObject::invokeMethod(this, [this, errorMsg]() {
-            progressDialog->setLabelText("Simulation ended in error\n"+errorMsg);
-            progressDialog->setCancelButtonText("Close");
-            progressDialog->setValue(this->maxProgress);
-            writeToConsole("Solver error: "+errorMsg, Qt::red);
-        }, Qt::QueuedConnection);
+        //QString errorMsg = QString::fromStdString(e.what()); // copy out of 'e' before creating the thread safe invokeMethod lambda function
+        //QMetaObject::invokeMethod(this, [this, errorMsg]() {
+        //    progressDialog->setLabelText("Simulation ended in error\n"+errorMsg);
+        //    progressDialog->setCancelButtonText("Close");
+        //    progressDialog->setValue(this->maxProgress);
+        //    writeToConsole("Solver error: "+errorMsg, Qt::red);
+        //}, Qt::QueuedConnection);
 
         throw; // will propagate to the future
 
     } catch (...) {
 
-        qWarning() << "unknown solver error";
+        //qWarning() << "unknown solver error";
 
-        QMetaObject::invokeMethod(this, [this]() {
-            progressDialog->setLabelText("Simulation ended with unknown error");
-            progressDialog->setCancelButtonText("Close");
-            progressDialog->setValue(this->maxProgress);
-            writeToConsole("unknown solver error", Qt::red);
-        }, Qt::QueuedConnection);
+        //QMetaObject::invokeMethod(this, [this]() {
+        //    progressDialog->setLabelText("Simulation ended with unknown error");
+        //    progressDialog->setCancelButtonText("Close");
+        //    progressDialog->setValue(this->maxProgress);
+        //    writeToConsole("unknown solver error", Qt::red);
+        //}, Qt::QueuedConnection);
 
         throw; // will propagate to the future
 
@@ -1000,37 +1003,38 @@ void MainWindow::finishedSolve()
             qDebug() << "Finished with simulations";
             writeToConsole("Finished with simulations", Qt::darkGreen);
         }
-        ////else if( futureWatcher->isCanceled() ) // this doesn't get triggered as reliably as the QProgressDialog cancel button
         //else if( result == NINJA_E_CANCELLED ) // this is probably the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
         else if( progressDialog->wasCanceled() ) // simulation was cancelled
         {
             progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation cancelled");
+            //progressDialog->setLabelText("Simulation cancelled");
             progressDialog->setCancelButtonText("Close");
             //progressDialog->close();
 
-            qDebug() << "Simulation cancelled by user";
-            //writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
-            //writeToConsole( "Simulation cancelled by user", Qt::QColor::fromRgb(255, 165, 0) );  // orange
-            writeToConsole( "Simulation cancelled by user", Qt::yellow);
+            //qDebug() << "Simulation cancelled by user";
+            ////writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
+            ////writeToConsole( "Simulation cancelled by user", Qt::QColor::fromRgb(255, 165, 0) );  // orange
+            //writeToConsole( "Simulation cancelled by user", Qt::yellow);
+
         }
         else // simulation ended in some known error
         {
             progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation ended in error\nerror: "+QString::number(result));
+            //progressDialog->setLabelText("Simulation ended in error\nerror: "+QString::number(result));
             progressDialog->setCancelButtonText("Close");
 
-            qWarning() << "Solver error:" << result;
-            writeToConsole("Solver error: "+QString::number(result), Qt::red);
+            // should I get rid of these? they seem like they might be helpful
+            //qWarning() << "Solver error:" << result;
+            //writeToConsole("Solver error: "+QString::number(result), Qt::red);
         }
 
     } catch (const std::exception &e) {
 
         // message got truncated, use the QtConcurrent::run() messaging
         // ooh, with the thread safe method, things are now updating appropriately
-        //progressDialog->setValue(maxProgress);
+        progressDialog->setValue(maxProgress);
         //progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
-        //progressDialog->setCancelButtonText("Close");
+        progressDialog->setCancelButtonText("Close");
 
         //qWarning() << "Solver error:" << e.what();
         //writeToConsole("Solver error: "+QString(e.what()), Qt::red);
@@ -1038,9 +1042,9 @@ void MainWindow::finishedSolve()
     } catch (...) {
 
         // message got truncated, use the QtConcurrent::run() messaging
-        //progressDialog->setValue(maxProgress);
+        progressDialog->setValue(maxProgress);
         //progressDialog->setLabelText("Simulation ended with unknown error");
-        //progressDialog->setCancelButtonText("Close");
+        progressDialog->setCancelButtonText("Close");
 
         //qWarning() << "unknown solver error";
         //writeToConsole("unknown solver error", Qt::red);
