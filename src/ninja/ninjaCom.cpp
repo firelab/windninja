@@ -309,7 +309,6 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             sprintf( msg, "Warning: %s\n", ninjaComMsg);
         }
 
-        //fprintf(fpLog, "\n%s", msg);
         fprintf(fpLog, "%s", msg);
 
         if( multiStream != NULL )
@@ -332,7 +331,6 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             sprintf( msg, "ERROR: %s\n", ninjaComMsg);
         }
 
-        //fprintf(fpErr, "\n%s", msg);
         fprintf(fpErr, "%s", msg);
 
         if( multiStream != NULL )
@@ -356,7 +354,6 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
             sprintf( msg, "ERROR: %s\n", ninjaComMsg);
         }
 
-        //fprintf(fpErr, "\n%s", msg);
         fprintf(fpErr, "%s", msg);
 
         if( multiStream != NULL )

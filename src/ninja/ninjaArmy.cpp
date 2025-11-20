@@ -480,23 +480,20 @@ bool ninjaArmy::startRuns(int numProcessors)
 
     //check for duplicate runs before we start the simulations
     //this is mostly for batch domain avg runs in the GUI and the API
-    try{
-        if(ninjas.size() > 1){
-            for(unsigned int i=0; i<ninjas.size()-1; i++){
-                for(unsigned int j=i+1; j<ninjas.size(); j++){
-                    if(ninjas[i]->input == ninjas[j]->input &&
-                       ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
-                            throw std::runtime_error("Multiple runs were requested with the same input parameters.");
-                    }
+    if(ninjas.size() > 1)
+    {
+        for(unsigned int i=0; i<ninjas.size()-1; i++)
+        {
+            for(unsigned int j=i+1; j<ninjas.size(); j++)
+            {
+                if(ninjas[i]->input == ninjas[j]->input && ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag)
+                {
+                    ninjas[j]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Multiple runs were requested with the same input parameters.");
+                    status = false;
+                    throw std::runtime_error("Multiple runs were requested with the same input parameters.");
                 }
             }
         }
-    }catch (exception& e)
-    {
-        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        //ninjas[j]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        status = false;
-        throw;
     }
 
 #ifdef NINJAFOAM

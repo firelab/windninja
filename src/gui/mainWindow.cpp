@@ -930,8 +930,6 @@ int MainWindow::startSolve(int numProcessors)
 void MainWindow::finishedSolve()
 {
     // get the return value of the QtConcurrent::run() function
-    // Note that if an error was thrown during QtConcurrent::run(), this throws instead
-    // but the thrown error comes out truncated, it loses the details of the original error message
     int result = futureWatcher->future().result();
 
     // ninjaCom handles most of the progress dialog, cli, and console window messaging now
@@ -944,25 +942,16 @@ void MainWindow::finishedSolve()
         qDebug() << "Finished with simulations";
         writeToConsole("Finished with simulations", Qt::darkGreen);
     }
-    //else if( result == NINJA_E_CANCELLED ) // this is probably the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
+    //else if( result == NINJA_E_CANCELLED ) // the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
     else if( progressDialog->wasCanceled() ) // simulation was cancelled
     {
         progressDialog->setValue(maxProgress);
-        //progressDialog->setLabelText("Simulation cancelled");
         progressDialog->setCancelButtonText("Close");
-        //progressDialog->close();
-
-        //qDebug() << "Simulation cancelled by user";
-        //writeToConsole( "Simulation cancelled by user", Qt::yellow);
     }
     else // simulation ended in some known error
     {
         progressDialog->setValue(maxProgress);
-        //progressDialog->setLabelText("Simulation ended in error\nerror: "+QString::number(result));
         progressDialog->setCancelButtonText("Close");
-
-        //qWarning() << "Solver error:" << result;
-        //writeToConsole("Solver error: "+QString::number(result), Qt::red);
     }
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
