@@ -198,14 +198,95 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
         msg = msg.substr(0, msg.size()-1);
     }
 
-    int runNumber;
+    int runNumber = -1;
+    sscanf(msg.c_str(), "Run %d", &runNumber);
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
     int runProgress;
-    if( sscanf(msg.c_str(), "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
+    endPos = msg.find("% complete");
+    if( endPos != msg.npos )
     {
+        clipStr = msg.substr(0, endPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        pos = clipStr.rfind(": ");
+        startPos = pos+2;
+        clipStr = clipStr.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        runProgress = atoi(clipStr.c_str());
+
         emit self->updateProgressValueSignal(runNumber, runProgress);
     }
-    emit self->updateProgressMessageSignal(QString::fromStdString(msg));
-    emit self->writeToConsoleSignal(QString::fromStdString(msg));
+
+//"Run 1 (ERROR): Multiple runs were requested with the same input parameters."
+//"Run 0 (ERROR): Exception caught: I WANT CHOCOLATE!!! Yum."
+//"Run 0: Exception caught: Simulation was cancelled by the user."
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("(ERROR): ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else if( msg.find("(ERROR): ") != msg.npos )
+        {
+            pos = msg.find("(ERROR): ");
+            startPos = pos+9;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Simulation was cancelled by the user." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation cancelled"));
+            emit self->writeToConsoleSignal(QString::fromStdString("Simulation cancelled by user"), Qt::yellow);
+        }
+        else if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown solver error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("Solver error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("(warning): ") != msg.npos || msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("(warning): ") != msg.npos )
+        {
+            pos = msg.find("(warning): ");
+            startPos = pos+11;
+        }
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("Solver ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("Solver warning: "+clipStr), Qt::yellow);
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+
 }
 
 void MainWindow::cancelSolve()
