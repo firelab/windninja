@@ -610,7 +610,30 @@ void MainWindow::solveButtonClicked()
 
     progressDialog->show();
 
-    prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+    bool retVal = prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+    if( retVal == false )
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
+
+        // do cleanup before the return, similar to finishedSolve()
+
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+        char **papszOptions = nullptr;
+        int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+        }
+
+        // clear the progress values for the next set of runs
+        runProgress.clear();
+
+        futureWatcher->deleteLater();
+
+        return;
+    }
 
     // set progress dialog initial value and initial text for the set of runs
     progressDialog->setValue(0);
@@ -708,7 +731,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
 }
 
-void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
+bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
 {
     OutputMeshResolution googleEarth = getMeshResolution(
         ui->googleEarthMeshResolutionGroupBox->isChecked(),
@@ -755,12 +778,6 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     }
 
     char **papszOptions = nullptr;
-    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
-    if(ninjaErr != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
-    }
-
     for(unsigned int i=0; i<numNinjas; i++)
     {
         ninjaErr = NinjaSetCommunication(ninjaArmy, i, "gui", papszOptions);
@@ -774,7 +791,18 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetProgressFunc: err =" << ninjaErr;
         }
+    }
 
+    // can this one even be tested?? The way it is organized also makes it tough to setup a ninjaCom message
+    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    for(unsigned int i=0; i<numNinjas; i++)
+    {
         /*
        * Sets Simulation Variables
        */
@@ -782,73 +810,111 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
+                // function needs MAJOR rework to get the testing to work, direct call to non-ninjaArmy function makes this process tougher
                 ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), "fudge", papszOptions);  // test error handling  // ran, but the functions need reorganized for proper messaging
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), "fudge", ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, "fudge", ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     printf("NinjaSetStationKML: ninjaErr = %d\n", ninjaErr);
+                    return false;
                 }
             }
         }
 
         ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+        //ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i+10, ui->numberOfProcessorsSpinBox->value(), papszOptions);  // test error handling
+        //ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumberCPUs: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i+10, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, "fudge", ui->pointInitializationGroupBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInitializationMethod: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetDem(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetDem(ninjaArmy, i, "fudge", papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
+            return false;
         }
 
-        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);
+        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);  // if setting up ninja.cpp function call to simply throw, this breaks, this requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
+        //ninjaErr = NinjaSetPosition(ninjaArmy, i+10, papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetPosition: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i+10, ui->inputWindHeightSpinBox->value(), "m", papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, -1, "m", papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInputWindHeight: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i+10, ui->diurnalCheckBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDiurnalWinds: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i+10, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, "fudge", papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
+        //ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i+10, 20, papszOptions);  // test error handling
+        //ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumVertLayers: ninjaErr =" << ninjaErr;
+            return false;
         }
 
-        setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
+        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
+        if( retVal == false )
+        {
+            return false;
+        }
     }
+
+    return true;
 }
 
-void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
+bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
                                 int i,
                                 int numNinjas,
                                 OutputMeshResolution googleEarth,
@@ -861,124 +927,178 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     int ninjaErr;
 
     ninjaErr = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetOutputPath(ninjaArmy, i+10, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputPath: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i+10, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
+    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, -1, ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputWindHeight: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i+10, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputSpeedUnits: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, googleEarth.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, googleEarth.resolution, googleEarth.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i+10, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogSpeedScaling: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
+    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i+10, ui->googleEarthVectorsSpinBox->value(), papszOptions);  // test error handling
+    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
+    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, 101, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogLineWidth: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetGoogColor(ninjaArmy, i+10, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);  // test error handling
+    ////ninjaErr = NinjaSetGoogColor(ninjaArmy, i, "fudge", ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h  // actually, the colorScheme string appears to not even be checked
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogColor: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
+    //ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i+10, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogConsistentColorScale: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i+10, ui->shapeFilesGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i+10, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
+    //ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i+10, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFLineWidth: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
+    //ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i+10, ui->basemapComboBox->currentIndex(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFBaseMap: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetPDFDEM(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);  // test error handling
+    ////ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, "fudge", papszOptions);  // test error handling  // the dem string is not even checked
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFDEM: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
+    //ninjaErr = NinjaSetPDFSize(ninjaArmy, i+10, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFSize: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i+10, ui->VTKFilesCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
+
+    return true;
 }
 
 OutputMeshResolution MainWindow::getMeshResolution(

@@ -147,8 +147,8 @@ private:
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
-    void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
-    void setOutputFlags(NinjaArmyH* ninjaArmy,
+    bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
+    bool setOutputFlags(NinjaArmyH* ninjaArmy,
                         int i,
                         int numNinjas,
                         OutputMeshResolution googleEarth,

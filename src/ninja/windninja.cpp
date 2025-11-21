@@ -1766,8 +1766,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetStationKML
 
     if( NULL != army )
     {
-        wxStation::writeKmlFile( reinterpret_cast<ninjaArmy*>( army )->getWxStations(nIndex), demFileName, outputDirectory, velocityUnits::getUnit(outputSpeedUnits));
-        return NINJA_SUCCESS;
+        try
+        {
+            wxStation::writeKmlFile( reinterpret_cast<ninjaArmy*>( army )->getWxStations(nIndex), demFileName, outputDirectory, velocityUnits::getUnit(outputSpeedUnits));
+            return NINJA_SUCCESS;
+        }
+        catch (const std::exception& e)
+        {
+            return NINJA_E_OTHER;
+        }
     }
     else
     {
