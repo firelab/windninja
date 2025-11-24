@@ -665,16 +665,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
         {
             return reinterpret_cast<ninjaArmy*>( army )->startRuns( nprocessors );
         }
-        catch (exception& e)
-        {
-            std::cout << "Exception caught: " << e.what() << endl;
-            throw;
-        }
         catch( ... )
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
-//            return handleException();
-            throw;
+            return handleException();
         }
     }
     else
@@ -1773,8 +1766,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetStationKML
 
     if( NULL != army )
     {
-        wxStation::writeKmlFile( reinterpret_cast<ninjaArmy*>( army )->getWxStations(nIndex), demFileName, outputDirectory, velocityUnits::getUnit(outputSpeedUnits));
-        return NINJA_SUCCESS;
+        try
+        {
+            wxStation::writeKmlFile( reinterpret_cast<ninjaArmy*>( army )->getWxStations(nIndex), demFileName, outputDirectory, velocityUnits::getUnit(outputSpeedUnits));
+            return NINJA_SUCCESS;
+        }
+        catch (const std::exception& e)
+        {
+            return NINJA_E_OTHER;
+        }
     }
     else
     {

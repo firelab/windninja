@@ -73,7 +73,12 @@ extern boost::local_time::tz_database globalTimeZoneDB;
    if( i >= 0 && i < iterable.size() )
 
 #define CHECK_VALID_INDEX(i,iterable) \
-  if( i < 0 || i >= iterable.size() ) throw std::runtime_error("invalid index");
+  if( i < 0 || i >= iterable.size() ) \
+  {                                   \
+      std::cout << "here1" << std::endl; \
+      ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
+      throw std::runtime_error("invalid index"); \
+  }                                   \
 
 /* *
  * Macro IF_VALID_INDEX_DO is a boiler plate for most of the ninjaArmy functions.
@@ -83,6 +88,7 @@ extern boost::local_time::tz_database globalTimeZoneDB;
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
 #ifdef C_API
+//#ifndef C_API
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
@@ -90,20 +96,32 @@ extern boost::local_time::tz_database globalTimeZoneDB;
         {                                      \
            func;                               \
         }                                      \
+        catch( exception& e )                  \
+        {                                      \
+            std::cout << "here2a" << std::endl; \
+            ninjas[ i ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what()); \
+            return NINJA_E_INVALID;            \
+        }                                      \
         catch( ... )                           \
         {                                      \
+            std::cout << "here2b" << std::endl; \
+            ninjas[ i ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type."); \
             return NINJA_E_INVALID;            \
         }                                      \
         return NINJA_SUCCESS;                  \
     }                                          \
+    std::cout << "here3a" << std::endl;        \
+    ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
     return NINJA_E_INVALID;
 #else
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
        func;                                   \
-       return NINJA_SUCCESS;                  \
+       return NINJA_SUCCESS;                   \
     }                                          \
+    std::cout << "here3b" << std::endl;        \
+    ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
     return NINJA_E_INVALID;
 #endif
 

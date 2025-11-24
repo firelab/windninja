@@ -198,19 +198,102 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
         msg = msg.substr(0, msg.size()-1);
     }
 
-    int runNumber;
+    int runNumber = -1;
+    sscanf(msg.c_str(), "Run %d", &runNumber);
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
     int runProgress;
-    if( sscanf(msg.c_str(), "Run %d (solver): %d%% complete", &runNumber, &runProgress) == 2 )
+    endPos = msg.find("% complete");
+    if( endPos != msg.npos )
     {
+        clipStr = msg.substr(0, endPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        pos = clipStr.rfind(": ");
+        startPos = pos+2;
+        clipStr = clipStr.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        runProgress = atoi(clipStr.c_str());
+
         emit self->updateProgressValueSignal(runNumber, runProgress);
     }
-    emit self->updateProgressMessageSignal(QString::fromStdString(msg));
-    emit self->writeToConsoleSignal(QString::fromStdString(msg));
+
+//"Run 1 (ERROR): Multiple runs were requested with the same input parameters."
+//"Run 0 (ERROR): Exception caught: I WANT CHOCOLATE!!! Yum."
+//"Run 0: Exception caught: Simulation was cancelled by the user."
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("(ERROR): ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else if( msg.find("(ERROR): ") != msg.npos )
+        {
+            pos = msg.find("(ERROR): ");
+            startPos = pos+9;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Simulation was cancelled by the user." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation cancelled"));
+            emit self->writeToConsoleSignal(QString::fromStdString("Simulation cancelled by user"), Qt::yellow);
+        }
+        else if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown solver error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("Solver error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("(warning): ") != msg.npos || msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("(warning): ") != msg.npos )
+        {
+            pos = msg.find("(warning): ");
+            startPos = pos+11;
+        }
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("Solver ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("Solver warning: "+clipStr), Qt::yellow);
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+
 }
 
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
+    //qDebug() << "Canceling...";
+    //writeToConsole( "Canceling...", Qt::yellow);
 
     char **papszOptions = nullptr;
     ninjaErr  = NinjaCancel(ninjaArmy, papszOptions);
@@ -527,12 +610,36 @@ void MainWindow::solveButtonClicked()
 
     progressDialog->show();
 
-    prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+    bool retVal = prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+    if( retVal == false )
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
+
+        // do cleanup before the return, similar to finishedSolve()
+
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+        char **papszOptions = nullptr;
+        int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+        }
+
+        // clear the progress values for the next set of runs
+        runProgress.clear();
+
+        futureWatcher->deleteLater();
+
+        return;
+    }
 
     // set progress dialog initial value and initial text for the set of runs
     progressDialog->setValue(0);
     progressDialog->setLabelText("Running...");
 
+    qDebug() << "Initializing runs...";
     writeToConsole( "Initializing runs..." );
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishedSolve);
@@ -624,7 +731,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
 }
 
-void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
+bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
 {
     OutputMeshResolution googleEarth = getMeshResolution(
         ui->googleEarthMeshResolutionGroupBox->isChecked(),
@@ -671,12 +778,6 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     }
 
     char **papszOptions = nullptr;
-    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
-    if(ninjaErr != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
-    }
-
     for(unsigned int i=0; i<numNinjas; i++)
     {
         ninjaErr = NinjaSetCommunication(ninjaArmy, i, "gui", papszOptions);
@@ -690,7 +791,18 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetProgressFunc: err =" << ninjaErr;
         }
+    }
 
+    // can this one even be tested?? The way it is organized also makes it tough to setup a ninjaCom message
+    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    for(unsigned int i=0; i<numNinjas; i++)
+    {
         /*
        * Sets Simulation Variables
        */
@@ -698,73 +810,111 @@ void MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
+                // function needs MAJOR rework to get the testing to work, direct call to non-ninjaArmy function makes this process tougher
                 ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), "fudge", papszOptions);  // test error handling  // ran, but the functions need reorganized for proper messaging
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), "fudge", ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
+                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, "fudge", ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     printf("NinjaSetStationKML: ninjaErr = %d\n", ninjaErr);
+                    return false;
                 }
             }
         }
 
         ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+        //ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i+10, ui->numberOfProcessorsSpinBox->value(), papszOptions);  // test error handling
+        //ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumberCPUs: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i+10, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, "fudge", ui->pointInitializationGroupBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInitializationMethod: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetDem(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetDem(ninjaArmy, i, "fudge", papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
+            return false;
         }
 
-        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);
+        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);  // if setting up ninja.cpp function call to simply throw, this breaks, this requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
+        //ninjaErr = NinjaSetPosition(ninjaArmy, i+10, papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetPosition: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i+10, ui->inputWindHeightSpinBox->value(), "m", papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, -1, "m", papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInputWindHeight: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i+10, ui->diurnalCheckBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDiurnalWinds: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i+10, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, "fudge", papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
+            return false;
         }
 
         ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
+        //ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i+10, 20, papszOptions);  // test error handling
+        //ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumVertLayers: ninjaErr =" << ninjaErr;
+            return false;
         }
 
-        setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
+        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
+        if( retVal == false )
+        {
+            return false;
+        }
     }
+
+    return true;
 }
 
-void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
+bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
                                 int i,
                                 int numNinjas,
                                 OutputMeshResolution googleEarth,
@@ -777,124 +927,178 @@ void MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     int ninjaErr;
 
     ninjaErr = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetOutputPath(ninjaArmy, i+10, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputPath: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i+10, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
+    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, -1, ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputWindHeight: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i+10, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputSpeedUnits: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, googleEarth.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, googleEarth.resolution, googleEarth.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i+10, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogSpeedScaling: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
+    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i+10, ui->googleEarthVectorsSpinBox->value(), papszOptions);  // test error handling
+    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
+    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, 101, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogLineWidth: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetGoogColor(ninjaArmy, i+10, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);  // test error handling
+    ////ninjaErr = NinjaSetGoogColor(ninjaArmy, i, "fudge", ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h  // actually, the colorScheme string appears to not even be checked
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogColor: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
+    //ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i+10, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogConsistentColorScale: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i+10, ui->shapeFilesGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i+10, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
+    //ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i+10, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFLineWidth: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
+    //ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i+10, ui->basemapComboBox->currentIndex(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFBaseMap: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetPDFDEM(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);  // test error handling
+    ////ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, "fudge", papszOptions);  // test error handling  // the dem string is not even checked
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFDEM: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
+    //ninjaErr = NinjaSetPDFSize(ninjaArmy, i+10, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFSize: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
+        return false;
     }
 
     ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i+10, ui->VTKFilesCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
+        return false;
     }
+
+    return true;
 }
 
 OutputMeshResolution MainWindow::getMeshResolution(
@@ -920,130 +1124,35 @@ OutputMeshResolution MainWindow::getMeshResolution(
 
 int MainWindow::startSolve(int numProcessors)
 {
-    try {
-
-        char **papszOptions = nullptr; // found that I could pass this in as an argument after all, but makes more sense to just define it here
-        
-        //// calling prepareArmy here is causing all kinds of troubles. Local variables aren't properly being passed on,
-        //// or aren't properly copied ([=] type thing), or aren't properly in scope. The other values are .h variables,
-        //// so they would at least be in the proper scope. But the out of scope variables leads to all kinds
-        //// of "QObject::connect: Cannot connect" and "ninjaErr = 2" type messages. It is still somehow continuing to run though.
-        ////
-        //// seems the only way to put prepareArmy into a QFutureWatcher function, if it would even work,
-        //// would be to have two separate QFutureWatcher functions, needs to be separated out from NinjaStartRuns()
-        ////prepareArmy(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), initializationMethod);
-
-        return NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions); // huh? I guess because "this" was used, it still has access to numNinjas this way
-        //return NinjaStartRuns(ninjaArmy, numProcessors, papszOptions);
-
-    } catch (cancelledByUser& e) {  // I forgot that the cancelSolve() works by doing a throw, I'm surprised that this throw is propagating out of the solver though
-
-        qWarning() << "Solver error:" << e.what();
-
-        // no message with this error, and it is a known error,
-        // so probably better to update the message in the finished() function, than in QtConcurrent::run()
-        //QMetaObject::invokeMethod(this, [this]() {
-        //    progressDialog->setLabelText("Simulation cancelled by user");
-        //    progressDialog->setCancelButtonText("Close");
-        //    progressDialog->setValue(this->maxProgress);
-        //    writeToConsole( "Simulation cancelled by user", Qt::yellow);
-        //}, Qt::QueuedConnection);
-
-        ////throw; // will propagate to the future. We purposefully want to skip passing it on for this case, use the QFutureWatcher->future()->result() value instead. However, the return/result value was 0, not the NINJA_E_CANCELLED value of 7. Hrm.
-        return NINJA_E_CANCELLED;  // turns out NinjaStartRuns() simply didn't return a value because cancelSolve() runs by triggering a throw before a return value can be given. So just have to return the appropriate value here.
-
-    } catch (const std::exception &e) { // Store error message somewhere (thread-safe)
-
-        qWarning() << "Solver error:" << e.what();
-
-        QString errorMsg = QString::fromStdString(e.what()); // copy out of 'e' before creating the thread safe invokeMethod lambda function
-        QMetaObject::invokeMethod(this, [this, errorMsg]() {
-            progressDialog->setLabelText("Simulation ended in error\n"+errorMsg);
-            progressDialog->setCancelButtonText("Close");
-            progressDialog->setValue(this->maxProgress);
-            writeToConsole("Solver error: "+errorMsg, Qt::red);
-        }, Qt::QueuedConnection);
-
-        throw; // will propagate to the future
-
-    } catch (...) {
-
-        qWarning() << "unknown solver error";
-
-        QMetaObject::invokeMethod(this, [this]() {
-            progressDialog->setLabelText("Simulation ended with unknown error");
-            progressDialog->setCancelButtonText("Close");
-            progressDialog->setValue(this->maxProgress);
-            writeToConsole("unknown solver error", Qt::red);
-        }, Qt::QueuedConnection);
-
-        throw; // will propagate to the future
-
-    }
+    char **papszOptions = nullptr;
+    return NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
 }
 
 void MainWindow::finishedSolve()
 {
-    try {
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
 
-        // get the return value of the QtConcurrent::run() function
-        // Note that if an error was thrown during QtConcurrent::run(), this throws instead
-        // but the thrown error comes out truncated, it loses the details of the original error message
-        int result = futureWatcher->future().result();
+    // ninjaCom handles most of the progress dialog, cli, and console window messaging now
+    if( result == 1 ) // simulation properly finished
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setLabelText("Simulations finished");
+        progressDialog->setCancelButtonText("Close");
 
-        if( result == 1 ) // simulation properly finished
-        {
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulations finished");
-            progressDialog->setCancelButtonText("Close");
-
-            qDebug() << "Finished with simulations";
-            writeToConsole("Finished with simulations", Qt::darkGreen);
-        }
-        ////else if( futureWatcher->isCanceled() ) // this doesn't get triggered as reliably as the QProgressDialog cancel button
-        //else if( result == NINJA_E_CANCELLED ) // this is probably the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
-        else if( progressDialog->wasCanceled() ) // simulation was cancelled
-        {
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation cancelled");
-            progressDialog->setCancelButtonText("Close");
-            //progressDialog->close();
-
-            qDebug() << "Simulation cancelled by user";
-            //writeToConsole( "Simulation cancelled by user", Qt::orange);  // orange isn't a predefined QColor
-            //writeToConsole( "Simulation cancelled by user", Qt::QColor::fromRgb(255, 165, 0) );  // orange
-            writeToConsole( "Simulation cancelled by user", Qt::yellow);
-        }
-        else // simulation ended in some known error
-        {
-            progressDialog->setValue(maxProgress);
-            progressDialog->setLabelText("Simulation ended in error\nerror: "+QString::number(result));
-            progressDialog->setCancelButtonText("Close");
-
-            qWarning() << "Solver error:" << result;
-            writeToConsole("Solver error: "+QString::number(result), Qt::red);
-        }
-
-    } catch (const std::exception &e) {
-
-        // message got truncated, use the QtConcurrent::run() messaging
-        // ooh, with the thread safe method, things are now updating appropriately
-        //progressDialog->setValue(maxProgress);
-        //progressDialog->setLabelText("Simulation ended in error\n"+QString(e.what()));
-        //progressDialog->setCancelButtonText("Close");
-
-        //qWarning() << "Solver error:" << e.what();
-        //writeToConsole("Solver error: "+QString(e.what()), Qt::red);
-
-    } catch (...) {
-
-        // message got truncated, use the QtConcurrent::run() messaging
-        //progressDialog->setValue(maxProgress);
-        //progressDialog->setLabelText("Simulation ended with unknown error");
-        //progressDialog->setCancelButtonText("Close");
-
-        //qWarning() << "unknown solver error";
-        //writeToConsole("unknown solver error", Qt::red);
+        qDebug() << "Finished with simulations";
+        writeToConsole("Finished with simulations", Qt::darkGreen);
+    }
+    //else if( result == NINJA_E_CANCELLED ) // the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
+    else if( progressDialog->wasCanceled() ) // simulation was cancelled
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
+    }
+    else // simulation ended in some known error
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
     }
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
