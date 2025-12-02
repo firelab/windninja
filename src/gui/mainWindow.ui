@@ -205,24 +205,18 @@
     <string notr="true"/>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_9">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>0</number>
-    </property>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_33">
-      <item>
+     <widget class="QSplitter" name="mapSplitter">
+      <property name="orientation">
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <widget class="QSplitter" name="inputsStackedWidgetSplitter">
+       <property name="orientation">
+        <enum>Qt::Orientation::Vertical</enum>
+       </property>
        <widget class="QTreeWidget" name="treeWidget">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -430,11 +424,9 @@
          </property>
         </item>
        </widget>
-      </item>
-      <item>
        <widget class="QStackedWidget" name="inputsStackedWidget">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -464,7 +456,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>19</number>
+         <number>12</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -1765,49 +1757,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QScrollArea" name="pointInitializationScrollArea">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+            <property name="widgetResizable">
+             <bool>true</bool>
             </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTop|Qt::AlignmentFlag::AlignTrailing</set>
             </property>
             <widget class="QWidget" name="pointInitializationScrollAreaWidget">
              <property name="geometry">
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>558</width>
-               <height>654</height>
+               <width>586</width>
+               <height>488</height>
               </rect>
              </property>
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_19" stretch="0">
+             <layout class="QVBoxLayout" name="verticalLayout_19">
               <item>
                <widget class="QGroupBox" name="pointInitializationGroupBox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                   <horstretch>0</horstretch>
-                  <verstretch>1</verstretch>
+                  <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="minimumSize">
@@ -1836,6 +1807,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <layout class="QHBoxLayout" name="pointInitializationDownloadLayout">
                    <item>
                     <widget class="QLabel" name="pointInitializationSelectWeatherStationsLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>Select Weather Stations</string>
                      </property>
@@ -1856,6 +1833,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <widget class="QPushButton" name="pointInitializationDownloadDataButton">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="maximumSize">
                       <size>
                        <width>140</width>
@@ -1939,6 +1922,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <widget class="QPushButton" name="pointInitializationSelectAllButton">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>Select All</string>
                      </property>
@@ -1946,6 +1935,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <widget class="QPushButton" name="pointInitializationSelectNoneButton">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>Select None</string>
                      </property>
@@ -1963,7 +1958,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QStackedWidget" name="pointInitializationDataTimeStackedWidget">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -1981,12 +1976,24 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="weatherStationDataTimeDatesPage">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <layout class="QGridLayout" name="gridLayout_5">
                      <item row="1" column="1">
                       <widget class="QLabel" name="weatherStationDataEndTimeLabel">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
                        <property name="text">
                         <string>Stop Time</string>
                        </property>
@@ -2017,6 +2024,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item row="1" column="2">
                       <widget class="QLabel" name="weatherStationDataTimestepsLabel">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
                        <property name="text">
                         <string>Number of Time Steps</string>
                        </property>
@@ -2024,6 +2037,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                      <item row="1" column="0">
                       <widget class="QLabel" name="weatherStationDataStartTimeLabel">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
                        <property name="text">
                         <string>Start Time</string>
                        </property>
@@ -2067,11 +2086,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </layout>
                    </widget>
                    <widget class="QWidget" name="weatherStationDataTimeCalculatedPage">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <layout class="QVBoxLayout" name="verticalLayout_16">
                      <item>
                       <widget class="QTextEdit" name="weatherStationDataTextEdit">
                        <property name="sizePolicy">
-                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
@@ -2090,6 +2115,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QLabel" name="weatherStationTimeZoneLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Current Time Zone:</string>
                    </property>
@@ -2097,6 +2128,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QLabel" name="weatherStationMinTimeLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Current Min Time:</string>
                    </property>
@@ -2104,6 +2141,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QLabel" name="weatherStationMaxTimeLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Current Max Time: </string>
                    </property>
@@ -2118,6 +2161,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QCheckBox" name="pointInitializationWriteStationKMLCheckBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -2585,13 +2634,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <widget class="QCheckBox" name="rawWeatherModelOutputCheckBox">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
             <property name="text">
              <string>Write Raw Weather Model Output</string>
             </property>
-            <property name="checked">
+            <property name="checkable">
              <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -2628,8 +2686,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>414</width>
-               <height>408</height>
+               <width>578</width>
+               <height>480</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3334,7 +3392,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>381</width>
+               <width>578</width>
                <height>318</height>
               </rect>
              </property>
@@ -4572,11 +4630,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
        </widget>
-      </item>
-      <item>
        <widget class="QTextEdit" name="consoleTextEdit">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -4589,107 +4645,65 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </property>
         <property name="maximumSize">
          <size>
-          <width>600</width>
-          <height>125</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="readOnly">
          <bool>true</bool>
         </property>
        </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_14">
-        <item>
-         <widget class="QPushButton" name="solveButton">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="cursor">
-           <cursorShape>PointingHandCursor</cursorShape>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::LayoutDirection::LeftToRight</enum>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">#solveButton {
-	padding: 0;
-	width: 100px;
-	text-align: center;
-	padding: 5px;
-}</string>
-          </property>
-          <property name="text">
-           <string>Solve</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="QWidget" name="mapPanelWidget" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>1</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>100</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="baseSize">
-       <size>
-        <width>0</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="ButtonText">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>0</red>
-            <green>0</green>
-            <blue>0</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="ButtonText">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>0</red>
-            <green>0</green>
-            <blue>0</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled/>
-       </palette>
-      </property>
-      <property name="styleSheet">
-       <string notr="true"/>
-      </property>
+      </widget>
+      <widget class="QWidget" name="mapPanelWidget" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="palette">
+        <palette>
+         <active>
+          <colorrole role="ButtonText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </active>
+         <inactive>
+          <colorrole role="ButtonText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>0</red>
+             <green>0</green>
+             <blue>0</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </inactive>
+         <disabled/>
+        </palette>
+       </property>
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>

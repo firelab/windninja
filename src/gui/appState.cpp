@@ -430,18 +430,14 @@ void AppState::updateOverallState()
 {
     if (isSolverMethodologyValid && isInputValid && isOutputValid)
     {
-        ui->solveButton->setEnabled(true);
         ui->numberOfProcessorsSolveButton->setEnabled(true);
-        ui->solveButton->setToolTip("");
         ui->numberOfProcessorsSolveButton->setToolTip("");
         ui->treeWidget->topLevelItem(3)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(3)->setToolTip(0, "");
     }
     else
     {
-        ui->solveButton->setEnabled(false);
         ui->numberOfProcessorsSolveButton->setEnabled(false);
-        ui->solveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
         ui->numberOfProcessorsSolveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
         ui->treeWidget->topLevelItem(3)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(3)->setToolTip(0, "There are errors in the inputs or outputs");

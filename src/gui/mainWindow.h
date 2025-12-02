@@ -111,7 +111,6 @@ private slots:
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
-    void numberOfProcessorsSolveButtonClicked();
     void writeToConsole(QString message, QColor color = Qt::white);
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);

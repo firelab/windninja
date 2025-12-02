@@ -121,8 +121,7 @@ void MainWindow::connectSignals()
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
     connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
-    connect(ui->solveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
-    connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::numberOfProcessorsSolveButtonClicked);
+    connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
 
@@ -393,11 +392,6 @@ void MainWindow::outputDirectoryButtonClicked()
         ui->outputDirectoryLineEdit->setText(currentPath);
         ui->outputDirectoryLineEdit->setToolTip(currentPath);
     }
-}
-
-void MainWindow::numberOfProcessorsSolveButtonClicked()
-{
-    ui->solveButton->click();
 }
 
 void MainWindow::solveButtonClicked()
