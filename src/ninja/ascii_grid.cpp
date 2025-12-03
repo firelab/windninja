@@ -1983,60 +1983,41 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     //  drop that part of the varnames for the function
     std::string colorRampType = ascii2png_colorRampType;
     int nColorBreaks = ascii2png_nColorBreaks;
-    double desiredBrk0 = ascii2png_desiredBrk0;
-    double desiredBrk1 = ascii2png_desiredBrk1;
-    double desiredBrk2 = ascii2png_desiredBrk2;
-    double desiredBrk3 = ascii2png_desiredBrk3;
 
+    double desiredBrk0;
+    double desiredBrk1;
+    double desiredBrk2;
+    double desiredBrk3;
 
-    // some manual overriding color ramp values if needed for debugging
+    double dataMinVal = get_minValue();
+    double dataMaxVal = get_maxValue();
 
-    // set color ramp type and number of color breaks to use
-    ////colorRampType = "minToMax";  // original
-    //colorRampType = "specificVals";  // override with default or own specific values
-
-    // tend to use 4 color breaks for colorRampType "minToMax" and 3 or 4 color breaks for colorRampType "specificVals"
-    // note that the original colors are blue, green, yellow, and red in that order, and that nColorBreaks of 3 drops the first blue color
-    // nvm, forcing it so that colorRampType "minToMax" always expects 4 color breaks
-    //nColorBreaks = 4;
-    ////nColorBreaks = 3;
-
-    // set manual values to override the default desiredBrk values
-    // make sure to specify values correctly for 3 vs 4 nColorBreaks
-
-    //double dataMinVal = get_minValue();
-    //double dataMaxVal = get_maxValue();
-
-    /*desiredBrk0 = 3.5;
-    desiredBrk1 = 4.5;
-    desiredBrk2 = 5.5;
-    desiredBrk3 = 6.5;*/
-
-    /*desiredBrk0 = 3.0;
-    desiredBrk1 = 4.0;
-    desiredBrk2 = 5.0;
-    desiredBrk3 = 6.0;*/
-
-    /*desiredBrk0 = 4.0;
-    desiredBrk1 = 5.0;
-    desiredBrk2 = 6.0;
-    desiredBrk3 = 7.0;
-    //desiredBrk3 = 10.0;*/
-
-    // for testing, override desiredBrk values to replicate min to max with 4 color breaks
-    /*desiredBrk0 = dataMinVal;
-    desiredBrk3 = dataMaxVal;
-    desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
-    desiredBrk2 = (desiredBrk3+desiredBrk1)/2;*/
-
-    // for testing, override desiredBrk values to do a from min to max using just the last 3 colors,
-    //  with a dummy diredBrk0 value so that plotting comes out the same for 3 and 4 color breaks
-    // to do this, set it to be the regular min to max ranges and halfway between, after one smaller value, probably 0.0
-    // useful for troubleshooting 3 vs 4 color break methods
-    /*desiredBrk0 = 0.0;
-    desiredBrk1 = dataMinVal;
-    desiredBrk2 = (dataMinVal+dataMaxVal)/2;
-    desiredBrk3 = dataMaxVal;*/
+    if ( colorRampType == "minToMax" )
+    {
+        desiredBrk0 = dataMinVal;
+        desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
+        desiredBrk3 = dataMaxVal;
+        desiredBrk2 = (desiredBrk3+desiredBrk1)/2.0;
+    } else if ( colorRampType == "minToMax_uniform" )
+    {
+        desiredBrk0 = 0.0;
+        desiredBrk1 = dataMinVal;
+        desiredBrk2 = (dataMinVal+dataMaxVal)/2.0;
+        desiredBrk3 = dataMaxVal;
+        if ( nColorBreaks == 4 )
+        {
+            desiredBrk0 = dataMinVal;
+            desiredBrk1 = dataMinVal+(dataMaxVal-dataMinVal)/3.0;
+            desiredBrk2 = dataMinVal+(dataMaxVal-dataMinVal)*2.0/3.0;
+            desiredBrk3 = dataMaxVal;
+        }
+    } else // if ( colorRampType == "specificVals" )
+    {
+        desiredBrk0 = ascii2png_desiredBrk0;  // ignored when nColorBreaks == 3
+        desiredBrk1 = ascii2png_desiredBrk1;
+        desiredBrk2 = ascii2png_desiredBrk2;
+        desiredBrk3 = ascii2png_desiredBrk3;
+    }
 
 
     if ( colorRampType != "minToMax" && colorRampType != "minToMax_uniform" && colorRampType != "specificVals" )
@@ -2170,22 +2151,14 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     int numBins = idxRangeMax - idxRangeMin;
     double rangeMinVal;
     double rangeMaxVal;
-
-    if ( colorRampType == "minToMax" || colorRampType == "minToMax_uniform" )
+    if ( nColorBreaks == 4 )
     {
-        rangeMinVal = raw_minValue;
-        rangeMaxVal = raw_maxValue;
-    } else // if ( colorRampType == "specificVals" )
+        rangeMinVal = desiredBrk0;
+        rangeMaxVal = desiredBrk3;
+    } else // if ( nColorBreaks == 3 )
     {
-        if ( nColorBreaks == 4 )
-        {
-            rangeMinVal = desiredBrk0;
-            rangeMaxVal = desiredBrk3;
-        } else // if ( nColorBreaks == 3 )
-        {
-            rangeMinVal = desiredBrk1;
-            rangeMaxVal = desiredBrk3;
-        }
+        rangeMinVal = desiredBrk1;
+        rangeMaxVal = desiredBrk3;
     }
 
     double binWidth = (rangeMaxVal - rangeMinVal)/double(numBins);
@@ -2262,41 +2235,17 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
             }
         }
 
-
-    if ( colorRampType == "minToMax" )
-    {
-        brk0 = 0;
-        brk1 = _minValue;
-        brk2 = 0.2*(_maxValue-_minValue)+_minValue;
-        brk4 = _maxValue;
-        brk3 = (brk4+brk2)/2.0;
-    } else if ( colorRampType == "minToMax_uniform" )
-    {
-        brk0 = 0;
-        brk1 = _minValue;
-        brk2 = _minValue;
-        brk3 = (_minValue+_maxValue)/2.0;
-        brk4 = _maxValue;
-        if ( nColorBreaks == 4 )
-        {
-            brk0 = 0;
-            brk1 = _minValue;
-            brk2 = _minValue+(_maxValue-_minValue)/3.0;
-            brk3 = _minValue+(_maxValue-_minValue)*2.0/3.0;
-            brk4 = _maxValue;
-        }
-    } else // if ( colorRampType == "specificVals" )
-    {
-        // adapt the percent distances between the brk values to match the locations
-        //  of the desired break values within the desired break value range
-        // hrm, comes out the same even with nColorBreaks 3 vs 4, because of the nature of the histogram binning calculation
-        brk0 = 0;
-        brk1 = idxRangeMin;
-        brk4 = idxRangeMax;
-        // int( val + 0.5 ) here is to make int() behave like round()
-        brk2 = int( (desiredBrk1 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
-        brk3 = int( (desiredBrk2 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
-    }
+    // adapt the percent distances between the brk values to match the locations
+    //  of the desired break values within the desired break value range
+    // hrm, comes out the same even with nColorBreaks 3 vs 4, because of the nature of the histogram binning calculation
+    //  but only when rangeMinVal matches across cases
+    //  getting a +1 sometimes for brk2 compared to the old method as well, but doesn't hurt too much
+    brk0 = 0;
+    brk1 = idxRangeMin;
+    brk4 = idxRangeMax;
+    // int( val + 0.5 ) here is to make int() behave like round()
+    brk2 = int( (desiredBrk1 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
+    brk3 = int( (desiredBrk2 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
 
     poCT->SetColorEntry(brk0, &white);
     if ( nColorBreaks == 4 )
@@ -2350,32 +2299,10 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         double _brk2;
         double _brk4;
         double _brk3;
-        if ( colorRampType == "minToMax" )
-        {
-            _brk1 = raw_minValue;
-            _brk2 = 0.20*(raw_maxValue-raw_minValue)+raw_minValue;
-            _brk4 = raw_maxValue;
-            _brk3 = (_brk4+_brk2)/2.0;
-        } else if ( colorRampType == "minToMax_uniform" )
-        {
-            _brk1 = 0.0;
-            _brk2 = raw_minValue;
-            _brk3 = (raw_minValue+raw_maxValue)/2.0;
-            _brk4 = raw_maxValue;
-            if ( nColorBreaks == 4 )
-            {
-                _brk1 = raw_minValue;
-                _brk2 = raw_minValue+(raw_maxValue-raw_minValue)/3.0;
-                _brk3 = raw_minValue+(raw_maxValue-raw_minValue)*2.0/3.0;
-                _brk4 = raw_maxValue;
-            }
-        } else // if ( colorRampType == "specificVals" )
-        {
-            _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
-            _brk2 = desiredBrk1;
-            _brk3 = desiredBrk2;
-            _brk4 = desiredBrk3;
-        }
+        _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
+        _brk2 = desiredBrk1;
+        _brk3 = desiredBrk2;
+        _brk4 = desiredBrk3;
 
 	    for(int labelIdx = 0; labelIdx < 5; labelIdx++)
 	    {
