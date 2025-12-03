@@ -2095,12 +2095,12 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
     
     //this->write_Grid("this_grid", 2);
-    
+
 
     /* -------------------------------------------------------------------- */
     /*  Scale data for the color table                                      */
     /* -------------------------------------------------------------------- */
-    
+
     AsciiGrid<T>scaledDataGrid(*this);
 
 
@@ -2115,31 +2115,6 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     //    }
     //}//scaledDataGrid.write_Grid("scaled_datagrid", 2);
 
-
-    // need min value (without no data vals) later to make legend
-    double raw_minValue = std::numeric_limits<double>::max();
-    for(int i=0; i<scaledDataGrid.get_nRows(); i++)
-        {
-            for (int j=0;j<scaledDataGrid.get_nCols();j++)
-            {
-                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue())
-                {
-                    raw_minValue = scaledDataGrid(i,j);
-                }
-            }
-        }
-        
-    double raw_maxValue = std::numeric_limits<double>::min();
-    for(int i = scaledDataGrid.get_nRows() - 1;i >= 0;i--)
-    {
-        for (int j = 0;j < scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) > raw_maxValue && scaledDataGrid(i,j) != get_noDataValue())
-            {
-                raw_maxValue = scaledDataGrid(i,j);
-            }
-        }
-    }
 
     // didn't see much difference when varying the range, the important thing is that scaled values are between 0 and 255
     // however, brk2 and brk4 divide may divide more evenly int wise into numbers/range divisible by 2 and 5.
@@ -2210,36 +2185,10 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     int brk0, brk1, brk2, brk3, brk4;
 
-    double _maxValue = std::numeric_limits<double>::min();
-    for(int i = scaledDataGrid.get_nRows() - 1;i >= 0;i--)
-    {
-        for (int j = 0;j < scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) > _maxValue && scaledDataGrid(i,j) != get_noDataValue())
-            {
-                _maxValue = scaledDataGrid(i,j);
-            }
-        }
-    }
-
-    // need min value without 0s aka without no data vals, to make legend
-    double _minValue = std::numeric_limits<double>::max();
-    for(int i=nYSize-1;i>=0;i--)
-        {
-            for (int j=0;j<scaledDataGrid.get_nCols();j++)
-            {
-                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() && scaledDataGrid(i,j) != 0)
-                {
-                    _minValue = scaledDataGrid(i,j);
-                }
-            }
-        }
-
     // adapt the percent distances between the brk values to match the locations
     //  of the desired break values within the desired break value range
     // hrm, comes out the same even with nColorBreaks 3 vs 4, because of the nature of the histogram binning calculation
     //  but only when rangeMinVal matches across cases
-    //  getting a +1 sometimes for brk2 compared to the old method as well, but doesn't hurt too much
     brk0 = 0;
     brk1 = idxRangeMin;
     brk4 = idxRangeMax;
@@ -2295,14 +2244,10 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 	    ostringstream os;
 
         double _brk0 = 0;
-        double _brk1;
-        double _brk2;
-        double _brk4;
-        double _brk3;
-        _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
-        _brk2 = desiredBrk1;
-        _brk3 = desiredBrk2;
-        _brk4 = desiredBrk3;
+        double _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
+        double _brk2 = desiredBrk1;
+        double _brk3 = desiredBrk2;
+        double _brk4 = desiredBrk3;
 
 	    for(int labelIdx = 0; labelIdx < 5; labelIdx++)
 	    {
