@@ -227,6 +227,8 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
 
 void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
 {
+    ui->rawWeatherModelOutputCheckBox->setEnabled(toggled);
+
     AppState& state = AppState::instance();
     state.isWeatherModelInitializationToggled = toggled;
 

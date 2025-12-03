@@ -230,7 +230,7 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>250</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="palette">
@@ -434,7 +434,7 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>250</height>
+          <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -445,7 +445,7 @@
         </property>
         <property name="baseSize">
          <size>
-          <width>300</width>
+          <width>0</width>
           <height>0</height>
          </size>
         </property>
@@ -1768,8 +1768,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>586</width>
-               <height>488</height>
+               <width>502</width>
+               <height>399</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -2212,7 +2212,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>572</width>
+               <width>450</width>
                <height>713</height>
               </rect>
              </property>
@@ -2634,7 +2634,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <widget class="QCheckBox" name="rawWeatherModelOutputCheckBox">
             <property name="enabled">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -2649,7 +2649,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <bool>true</bool>
             </property>
             <property name="checked">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -2686,8 +2686,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
-               <height>480</height>
+               <width>414</width>
+               <height>408</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3392,7 +3392,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
+               <width>381</width>
                <height>318</height>
               </rect>
              </property>

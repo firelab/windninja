@@ -1092,6 +1092,30 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
+    if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
+    {
+        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelGoogOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelShpOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+    }
+
     return true;
 }
 
