@@ -83,6 +83,7 @@ private slots:
     void citeWindNinjaActionTriggered();
     void supportEmailActionTriggered();
     void submitBugReportActionTriggered();
+    void enableConsoleOutputActionToggled(bool toggled);
 
 private:
     Ui::MainWindow* ui;

@@ -72,6 +72,7 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBar::supportEmailActionTriggered);
     connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReportActionTriggered);
     connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
+    connect(ui->enableConsoleOutputAction, &QAction::toggled, this, &MenuBar::enableConsoleOutputActionToggled);
 }
 
 void MenuBar::newProjectActionTriggered()
@@ -384,4 +385,9 @@ void MenuBar::submitBugReportActionTriggered()
             QMessageBox::Ok
             );
     }
+}
+
+void MenuBar::enableConsoleOutputActionToggled(bool toggled)
+{
+    ui->consoleTextEdit->setVisible(toggled);
 }
