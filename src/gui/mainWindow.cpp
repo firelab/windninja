@@ -871,13 +871,16 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
-        ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-        //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i+10, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-        //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, "fudge", papszOptions);  // test error handling
-        if(ninjaErr != NINJA_SUCCESS)
+        if(ui->vegetationStackedWidget->currentIndex() == 0)
         {
-            qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
-            return false;
+            ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+            //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i+10, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+            //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, "fudge", papszOptions);  // test error handling
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
+                return false;
+            }
         }
 
         ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);

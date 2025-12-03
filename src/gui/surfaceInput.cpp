@@ -37,6 +37,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       webEngineView(webEngineView)
 {
     ui->timeZoneDetailsTextEdit->setVisible(false);
+    ui->vegetationStackedWidget->setCurrentIndex(0);
 
     timeZoneAllZonesCheckBoxClicked();
 
@@ -272,6 +273,15 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &arg1)
     ui->outputDirectoryLineEdit->setText(file.absolutePath());
 
     computeDEMFile(currentDEMFilePath);
+    if(demFileType == "LCP")
+    {
+        ui->vegetationStackedWidget->setCurrentIndex(1);
+    }
+    else
+    {
+        ui->vegetationStackedWidget->setCurrentIndex(0);
+    }
+
     ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
 
     QStringList cornerStrs;
@@ -567,7 +577,32 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALDataset *poInputDS;
     poInputDS = (GDALDataset*)GDALOpen(filePath.toStdString().c_str(), GA_ReadOnly);
 
-    GDALDriverName = poInputDS->GetDriver()->GetDescription();
+    QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
+    if(GDALDriverName == "AAIGrid")
+    {
+        demFileType = "ASC";
+    }
+    else if (GDALDriverName == "LCP")
+    {
+        demFileType = "LCP";
+    }
+    else if (GDALDriverName == "GTiff")
+    {
+        int bandCount = GDALGetRasterCount(poInputDS);
+        if(bandCount >1)
+        {
+            demFileType = "LCP";
+        }
+        else
+        {
+            demFileType = "GTIFF";
+        }
+    }
+    else if (GDALDriverName == "IMG")
+    {
+        demFileType = "IMG";
+    }
+
     GDALXSize = poInputDS->GetRasterXSize();
     GDALYSize = poInputDS->GetRasterYSize();
     GDALGetCorners(poInputDS, DEMCorners);

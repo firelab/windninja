@@ -87,7 +87,7 @@ private:
     QFutureWatcher<int> *futureWatcher;
 
     QString currentDEMFilePath;
-    QString GDALDriverName;
+    QString demFileType;
     int GDALXSize, GDALYSize;
     double GDALCellSize, GDALMaxValue, GDALMinValue;
     double DEMCorners[8];
