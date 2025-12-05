@@ -1847,33 +1847,40 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              bool writeLegend, bool keepTiff)
 {
 
-    // "colorRampType" is the style and choice of values and levels to use. "minToMax" is always 4 color breaks, between min to max at levels 0, 1/5, 3/5, 1 and is the past original default method. "minToMax_uniform" is 3 or 4 color breaks specified by "nColorBreaks", between min to max at levels 0, 1/3, 2/3, 1. "specificVals" is 3 or 4 color breaks specified by "nColorBreaks", the breaks set by "desiredBrk0 to 3" in increasing order, the levels auto adjust between 0 and 1 to go with the breaks.
-    // set color ramp type and number of color breaks to use
-    std::string colorRampType = "minToMax";  // original, default
-    //std::string colorRampType = "minToMax_uniform";  // override with more uniform method
-    //std::string colorRampType = "specificVals";  // override with own specific values
+    double dataMinVal = get_minValue();
+    double dataMaxVal = get_maxValue();
 
-    // tend to use 4 color breaks overall, colorRampType "minToMax" always expects 4 color breaks, colorRampType "minToMaxUniform" and "specificVals" and be 3 or 4 color breaks
+    // the default is 4 color breaks, which can be overwritten only with 3 color breaks
     // note that the original colors are blue, green, yellow, and red in that order, and that nColorBreaks of 3 drops the first blue color
     int nColorBreaks = 4;
-    //int nColorBreaks = 3;
+    std::string found_nColorBreaks_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_NCOLORBREAKS", "");
+    if ( found_nColorBreaks_str != "" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_NCOLORBREAKS=" << found_nColorBreaks_str << std::endl;
+        nColorBreaks = atoi(found_nColorBreaks_str.c_str());
+    }
+    if ( nColorBreaks != 3 && nColorBreaks != 4 )
+    {
+        throw std::runtime_error(CPLSPrintf("TURBULENCE_KML_OUTPUT_NCOLORBREAKS %d is not valid!!!\nimplementation only available right now for 3 or 4 colorBreaks!!!",nColorBreaks));
+    }
 
     double desiredBrk0;
     double desiredBrk1;
     double desiredBrk2;
     double desiredBrk3;
 
-    double dataMinVal = get_minValue();
-    double dataMaxVal = get_maxValue();
-
-    if ( colorRampType == "minToMax" )
+    std::string colorRampType = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_COLORRAMPTYPE", "minToMax");
+    if ( colorRampType == "minToMax" || colorRampType == "" )
     {
+        // default colorRampType "minToMax", the original past method, sets the 4 color breaks between the data min to max at levels 0, 1/5, 3/5, 1
         desiredBrk0 = dataMinVal;
         desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
         desiredBrk3 = dataMaxVal;
         desiredBrk2 = (desiredBrk3+desiredBrk1)/2.0;
     } else if ( colorRampType == "minToMax_uniform" )
     {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=minToMax_uniform" << std::endl;
+        // "minToMax_uniform" is 3 or 4 color breaks specified by "nColorBreaks", between min to max at levels 0, 1/3, 2/3, 1.
         desiredBrk0 = 0.0;
         desiredBrk1 = dataMinVal;
         desiredBrk2 = (dataMinVal+dataMaxVal)/2.0;
@@ -1885,56 +1892,81 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
             desiredBrk2 = dataMinVal+(dataMaxVal-dataMinVal)*2.0/3.0;
             desiredBrk3 = dataMaxVal;
         }
-    } else // if ( colorRampType == "specificVals" )
+    } else if ( colorRampType == "specificVals" )
     {
-        // default values for smokejumper simulations
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=specificVals" << std::endl;
+        // "specificVals" is 3 or 4 color breaks specified by "nColorBreaks", the breaks set by "desiredBrk0 to 3" in increasing order, the levels auto adjust between 0 and 1 to go with the breaks.
+        // default values for smokejumper simulations, in mph
         desiredBrk0 = 0.0;  // ignored when nColorBreaks == 3
         desiredBrk1 = 2.0;
         desiredBrk2 = 3.0;
         desiredBrk3 = 5.0;
-    }
-
-
-    if ( colorRampType != "minToMax" && colorRampType != "minToMax_uniform" && colorRampType != "specificVals" )
-    {
-        throw std::runtime_error(CPLSPrintf("ascii2png() input colorRampType \"%s\" is not valid!!!\nvalid values are \"minToMax\", \"minToMax_uniform\", and \"specificVals\"",colorRampType.c_str()));
-    }
-
-    if ( nColorBreaks != 3 && nColorBreaks != 4 )
-    {
-        throw std::runtime_error(CPLSPrintf("ascii2png() input nColorBreaks %d is not valid!!!\nimplementation only available right now for 3 or 4 colorBreaks!!!",nColorBreaks));
-    }
-
-
-    if ( colorRampType == "minToMax" )
-    {
-
-        if ( nColorBreaks != 4 )
-        {
-            throw std::runtime_error(CPLSPrintf("ascii2png() input colorRampType \"minToMax\" expects nColorBreaks to be set to 4!!!\nnColorBreaks = %d",nColorBreaks));
-        }
-
-    }
-
-    if ( colorRampType != "specificVals" )
-    {
-
+        // hrm, can't include this unit conversion stuff, because ninjaUnits.h has ascii_grid.h as a dependency, would create a circular dependency
+        // instead, seems you can just set the desired output units to something other than mph, then override the desiredBrk vals with the corresponding unit values
+        //if( legendUnits != "mph" )
+        //{
+        //    velocityUnits::toBaseUnits(desiredBrk0, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk1, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk2, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk3, velocityUnits::milesPerHour);
+        //    velocityUnits::fromBaseUnits(desiredBrk0, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk1, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk2, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk3, velocityUnits::getUnit(legendUnits));
+        //}
+        // overwriting values are assumed to already be in legendUnits
         if ( nColorBreaks == 4 )
         {
-            if ( desiredBrk1 <= desiredBrk0 )
+            std::string found_desiredBrk0_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK0", "");
+            if ( found_desiredBrk0_str != "" )
             {
-                throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 <= desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+                std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK0=" << found_desiredBrk0_str << std::endl;
+                desiredBrk0 = atof(found_desiredBrk0_str.c_str());
             }
         }
-        if ( desiredBrk2 <= desiredBrk1 )
+        std::string found_desiredBrk1_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK1", "");
+        std::string found_desiredBrk2_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK2", "");
+        std::string found_desiredBrk3_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK3", "");
+        if ( found_desiredBrk1_str != "" )
         {
-            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 <= desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK1=" << found_desiredBrk1_str << std::endl;
+            desiredBrk1 = atof(found_desiredBrk1_str.c_str());
         }
-        if ( desiredBrk3 <= desiredBrk2 )
+        if ( found_desiredBrk2_str != "" )
         {
-            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 <= desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK2=" << found_desiredBrk2_str << std::endl;
+            desiredBrk2 = atof(found_desiredBrk2_str.c_str());
         }
+        if ( found_desiredBrk3_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK3=" << found_desiredBrk3_str << std::endl;
+            desiredBrk3 = atof(found_desiredBrk3_str.c_str());
+        }
+        std::cout << "ascii2png() input nColorBreaks = " << nColorBreaks << std::endl;
+        std::cout << "ascii2png() input desiredBrk0 = " << desiredBrk0 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk1 = " << desiredBrk1 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk2 = " << desiredBrk2 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk3 = " << desiredBrk3 << " " << legendUnits << std::endl;
+    } else
+    {
+        throw std::runtime_error(CPLSPrintf("input CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE %s is not valid!!!\navailable options are 'minToMax', 'minToMaxUniform', 'specificVals'",colorRampType.c_str()));
+    }
 
+
+    if ( nColorBreaks == 4 )
+    {
+        if ( desiredBrk1 <= desiredBrk0 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 <= desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+        }
+    }
+    if ( desiredBrk2 <= desiredBrk1 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 <= desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+    }
+    if ( desiredBrk3 <= desiredBrk2 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 <= desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
     }
 
 
