@@ -510,69 +510,14 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
-    # --- Existing Non-Qt Install Logic ---
-    # Install the CURL_CA_BUNDLE file from the bin folder, and drop it in data/
-    install(FILES ${GIS_INTERNALS_HOME}/bin/curl/curl-ca-bundle.crt DESTINATION
-            share/windninja COMPONENT apps)
-    # Install the dlls GDAL depends on
-    file(GLOB dlls ${GIS_INTERNALS_HOME}/bin/*.dll)
-    foreach(dll ${dlls})
-        install(PROGRAMS ${dll} DESTINATION bin COMPONENT apps)
-    endforeach(dll ${dlls})
-    install(PROGRAMS ${GIS_INTERNALS_HOME}/bin/gdal/plugins/gdal_netCDF.dll DESTINATION bin/gdalplugins COMPONENT app)
 
-    # --- Start of VCPKG/Qt 6 Install Logic ---
-    
-    # 1. Find the Qt 6 libraries
-    # Adjust components (Gui, Network, Widgets, etc.) to match what your application uses.
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets) 
-
-    # Determine the directory where Qt libraries are installed by vcpkg
-    # Use a known component (like Qt6::Core) to find the location.
-    get_target_property(QT_CORE_LOCATION Qt6::Core LOCATION)
-    get_filename_component(QT_BIN_DIR ${QT_CORE_LOCATION} DIRECTORY)
-
-    # 2. Install Qt 6 Runtime DLLs
-    # Install the main Qt 6 libraries you are linking against.
-    # Qt 6 DLL names are generally like Qt6Core.dll, Qt6Gui.dll, etc.
-    set(QT_LIBS_TO_INSTALL 
-        Qt6Core.dll 
-        Qt6Gui.dll 
-        Qt6Network.dll
-        Qt6Widgets.dll
-        # Add other components if needed (e.g., Qt6WebKit.dll, Qt6Svg.dll)
+    set(WINDEPLOYQT_EXE
+        "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe"
     )
-
-    foreach(qt_lib ${QT_LIBS_TO_INSTALL})
-        install(PROGRAMS "${QT_BIN_DIR}/${qt_lib}" DESTINATION bin COMPONENT apps)
-    endforeach()
-    
-    # 3. Install Necessary Plugins (e.g., platforms, imageformats)
-    # Plugins are critical for Qt applications on Windows. They are typically found 
-    # relative to the bin directory in the vcpkg install root.
-    get_filename_component(QT_PREFIX_DIR ${QT_BIN_DIR} DIRECTORY)
-    set(QT_VCPKG_PLUGINS_DIR "${QT_PREFIX_DIR}/plugins")
-    
-    # Install the qwindows platform plugin (usually required for GUI apps)
-    install(PROGRAMS "${QT_VCPKG_PLUGINS_DIR}/platforms/qwindows.dll"
-            DESTINATION bin/platforms COMPONENT apps)
-
-    # Install the JPEG image format plugin (qjpeg.dll)
-    install(PROGRAMS "${QT_VCPKG_PLUGINS_DIR}/imageformats/qjpeg.dll" 
-            DESTINATION bin/imageformats COMPONENT apps)
-    
-    # --- HACK FOR OPENMP ---
-    # Leaving the MSVC OpenMP logic as-is, as it was in the original script.
-    if(BUILD_64)
-        install(PROGRAMS ${MSVC_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
-    else(BUILD_64)
-        install(PROGRAMS ${MSVC_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
-    endif(BUILD_64)
-
-    if(NINJAFOAM)
-        install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
-        install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
-    endif(NINJAFOAM)
+    add_custom_target(deploy_windninja ALL
+        COMMAND "${WINDEPLOYQT_EXE}" --release "$<TARGET_FILE:WindNinja>"
+        DEPENDS WindNinja
+    )
 
 endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
