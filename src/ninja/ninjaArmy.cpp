@@ -113,7 +113,10 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArm
 #endif //NINJAFOAM
 
         setNinjaCommunication( i, i, *Com->comType );
-        setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
+        if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
+        {
+            setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
+        }
     }
 }
 
