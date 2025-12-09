@@ -68,6 +68,14 @@ NinjaErr handleException()
 
 extern "C"
 {
+
+WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
+{
+    NinjaArmyH* army;
+    army = reinterpret_cast<NinjaArmyH*>(new ninjaArmy());
+    return army;
+}
+
 /**
  * \brief Create a new suite of domain average windninja runs.
  *
@@ -100,10 +108,9 @@ extern "C"
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
-
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
-    ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
-//    ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList,
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
+    ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
+//    ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList,
 //      const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
 
@@ -130,11 +137,8 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 //        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
 //   
 
-    NinjaArmyH* army;
-
     try
     {
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
 
         for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++) 
@@ -150,11 +154,11 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
 //            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
         }
 
-        return army;
+        return NINJA_SUCCESS;
     }
-    catch( bad_alloc& )
+    catch( ... )
     {
-        return NULL;
+        return NINJA_E_INVALID;
     }
 }
 
@@ -759,6 +763,34 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
     if( NULL != army )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setNumberCPUs( nIndex, nCPUs );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyCommunication
+    ( NinjaArmyH * army, const char * comType, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaCommunication
+            ( std::string( comType ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComProgressFunc
+    ( NinjaArmyH * army, ProgressFunc func, void *pUser, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
+            ( func, pUser );
     }
     else
     {

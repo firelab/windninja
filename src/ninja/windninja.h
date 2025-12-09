@@ -85,9 +85,11 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/
-    WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeDomainAverageArmy
-        ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options);
-//        ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList,
+    WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy();
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
+        ( NinjaArmyH * ninjaArmy, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options);
+//        ( NinjaArmyH * ninjaArmy, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList,
 //         const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char* airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options);
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
@@ -169,6 +171,12 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
 
     /*  Communication  */
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyCommunication
+        ( NinjaArmyH * ninjaArmy, const char * comType, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComProgressFunc
+        ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * comType, char ** options );
 

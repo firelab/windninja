@@ -398,10 +398,38 @@ void MainWindow::solveButtonClicked()
 {
     AppState& state = AppState::instance();
 
+    maxProgress = 100;
+
+    //progressDialog = new QProgressDialog("Initializing Runs...", "Cancel", 0, maxProgress, ui->centralwidget);
+    progressDialog = new QProgressDialog(ui->centralwidget);
+    progressDialog->setRange(0, maxProgress);
+    progressDialog->setValue(0);
+    progressDialog->setLabelText("Initializing Runs...");
+    progressDialog->setCancelButtonText("Cancel");
+
+    progressDialog->setWindowModality(Qt::WindowModal);
+    progressDialog->setMinimumDuration(0);
+    progressDialog->setAutoClose(false);
+    progressDialog->setAutoReset(false);
+
     int numNinjas = 0;
     ninjaArmy = nullptr;
     char **papszOptions = nullptr;
     const char *initializationMethod = nullptr;
+
+    ninjaArmy = NinjaInitializeArmy();
+
+    ninjaErr = NinjaSetArmyCommunication(ninjaArmy, "gui", papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetArmyCommunication: ninjaErr =" << ninjaErr;
+    }
+
+    ninjaErr = NinjaSetArmyComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "Army NinjaSetArmyComProgressFunc: err =" << ninjaErr;
+    }
 
     if (state.isDomainAverageInitializationValid)
     {
@@ -423,7 +451,33 @@ void MainWindow::solveButtonClicked()
         numNinjas = speeds.size();
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
         QString speedUnits =  ui->tableSpeedUnits->currentText();
-        ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
+
+        ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaMakeDomainAverageArmy: ninjaErr =" << ninjaErr;
+
+            progressDialog->setValue(maxProgress);
+            progressDialog->setCancelButtonText("Close");
+
+            // do cleanup before the return, similar to finishedSolve()
+
+            //disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+            char **papszOptions = nullptr;
+            int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+            }
+
+            // clear the progress values for the next set of runs
+            //runProgress.clear();
+
+            //futureWatcher->deleteLater();
+
+            return;
+        }
     }
     else if (state.isPointInitializationValid)
     {
@@ -584,11 +638,10 @@ void MainWindow::solveButtonClicked()
     writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
     maxProgress = numNinjas*100;
-    progressDialog = new QProgressDialog("Solving...", "Cancel", 0, maxProgress, ui->centralwidget);
-    progressDialog->setWindowModality(Qt::WindowModal);
-    progressDialog->setMinimumDuration(0);
-    progressDialog->setAutoClose(false);
-    progressDialog->setAutoReset(false);
+
+    progressDialog->setRange(0, maxProgress);
+    progressDialog->setValue(0);
+    progressDialog->setLabelText("Solving...");
 
     progressDialog->setCancelButtonText("Cancel");
     connect( progressDialog, SIGNAL( canceled() ), this, SLOT( cancelSolve() ) );

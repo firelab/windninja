@@ -74,6 +74,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
 {
     if(&A != this)
     {
+        Com = NULL;   //must be set to null!
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
         copyLocalData( A );
@@ -93,6 +94,9 @@ int ninjaArmy::getSize()
 
 void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
     int i;
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
@@ -1316,6 +1320,72 @@ void ninjaArmy::setAtmFlags()
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
+
+int ninjaArmy::setNinjaCommunication( std::string comType,
+                                      char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    try
+    {
+        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
+        if( comType == "ninjaCLICom" || comType == "cli" )
+        {
+            inputsComType = ninjaComClass::ninjaCLICom;
+            retval = NINJA_SUCCESS;
+        }
+        else if( comType == "ninjaGUICom" || comType == "gui" )
+        {
+            inputsComType = ninjaComClass::ninjaGUICom;
+            retval = NINJA_SUCCESS;
+        }
+        else if( comType == "ninjaQuietCom" || comType == "quiet" )
+        {
+            inputsComType = ninjaComClass::ninjaQuietCom;
+            retval = NINJA_SUCCESS;
+        }
+        else
+        {
+            retval = NINJA_E_INVALID;
+        }
+
+        inputsRunNumber = 9999;
+        lastComString[0] = 'the heck!\0';
+
+//        if(Com)
+//            delete Com;
+
+        // following ninja.cpp style, might be able to move this and some of the initial value things from the lines above,
+        //  to the ninjaArmy constructor, would then also require copy constructor stuff for the initial value storages
+        Com = new ninjaComClass();
+
+        Com->comType = &inputsComType;
+        Com->runNumber = &inputsRunNumber;
+        Com->lastMsg = lastComString;
+    }
+    catch( ... )
+    {
+        std::cout << "!!!failed to set ninjaArmy level ninjaCom!!!" << std::endl;
+        return NINJA_E_INVALID;
+    }
+
+    return retval;
+}
+
+int ninjaArmy::setNinjaComProgressFunc( ProgressFunc func, void *pUser,
+                                        char ** papszOptions )
+{
+    try
+    {
+        Com->set_progressFunc(func, pUser);
+    }
+    catch( ... )
+    {
+        std::cout << "!!!failed to set ninjaArmy level ninjaCom progress function!!!" << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
+}
+
 
 int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
                            const ninjaComClass::eNinjaCom comType,

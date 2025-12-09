@@ -141,7 +141,10 @@ public:
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    //ninjaComClass *Com;
+    ninjaComClass *Com;
+    char lastComString[NINJA_MSG_SIZE];
+    int inputsRunNumber;
+    ninjaComClass::eNinjaCom inputsComType;
 
     enum eWxModelType{
         ncepNdfd,
@@ -181,6 +184,12 @@ public:
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
+
+    int setNinjaCommunication( std::string comType,
+                               char ** papszOptions = NULL );
+    int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
+                                 char ** papszOptions = NULL);
+
     /**
     * \brief Initialize the ninja communication of a ninja
     *
