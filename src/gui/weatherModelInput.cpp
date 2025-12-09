@@ -45,6 +45,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     {
         ui->weatherModelComboBox->addItem(identifiers[i]);
     }
+
     NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
 
     weatherModelComboBoxCurrentIndexChanged(0);
@@ -135,9 +136,18 @@ void WeatherModelInput::updateTreeView()
     QFileInfo demFileInfo(demFilePath);
 
     fileModel->setRootPath(demFileInfo.absolutePath());
-    fileModel->setNameFilters({"*.zip", "NOMADS-*", "20*", "UCAR-*", "PASTCAST-*"});
     fileModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     fileModel->setNameFilterDisables(false);
+
+    QStringList filters;
+    for(int i = 0; i < ui->weatherModelComboBox->count(); i++)
+    {
+        filters << ui->weatherModelComboBox->itemText(i) + "-" + demFileInfo.fileName();
+    }
+    filters << "20*.zip";
+    filters << "20*T*";
+    filters << "*.nc";
+    fileModel->setNameFilters(filters);
 
     ui->weatherModelFileTreeView->setModel(fileModel);
     ui->weatherModelFileTreeView->setRootIndex(fileModel->index(demFileInfo.absolutePath()));
