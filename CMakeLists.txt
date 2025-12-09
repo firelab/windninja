@@ -519,6 +519,18 @@ if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
         DEPENDS WindNinja
     )
 
+    install(
+    DIRECTORY "${PROJECT_BINARY_DIR}/src/gui/"
+    DESTINATION bin
+    FILES_MATCHING
+        PATTERN "*.exe"
+        PATTERN "*.dll"
+        PATTERN "plugins/*"
+        PATTERN "platforms/*"
+        PATTERN "resources/*"
+        PATTERN "*.qm"
+)
+
 endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 set(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
