@@ -825,20 +825,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     }
 
     char **papszOptions = nullptr;
-    for(unsigned int i=0; i<numNinjas; i++)
-    {
-        ninjaErr = NinjaSetCommunication(ninjaArmy, i, "gui", papszOptions);
-        if(ninjaErr != NINJA_SUCCESS)
-        {
-            qDebug() << "NinjaSetCommunication: ninjaErr =" << ninjaErr;
-        }
-
-        ninjaErr = NinjaSetComProgressFunc(ninjaArmy, i, &updateProgressCallback, this, papszOptions);
-        if(ninjaErr != NINJA_SUCCESS)
-        {
-            qDebug() << "NinjaSetProgressFunc: err =" << ninjaErr;
-        }
-    }
 
     // can this one even be tested?? The way it is organized also makes it tough to setup a ninjaCom message
     ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
