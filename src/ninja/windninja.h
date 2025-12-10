@@ -67,7 +67,7 @@
 #endif
 
 #include <stdlib.h>
-#include <string>
+#include <stdio.h>
 
 WN_C_START
 
@@ -331,7 +331,7 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * scaling, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogColor
-        ( NinjaArmyH * army, const int nIndex, std::string colorScheme, bool scaling, char ** papszOptions );
+        ( NinjaArmyH * army, const int nIndex, const char * colorScheme, bool scaling, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double width, char ** papszOptions );

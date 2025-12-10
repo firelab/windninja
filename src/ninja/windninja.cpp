@@ -1990,11 +1990,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogColor
-    ( NinjaArmyH * army, const int nIndex, std::string colorScheme, bool scaling, char ** papszOptions )
+    ( NinjaArmyH * army, const int nIndex, const char * colorScheme, bool scaling, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setGoogColor(nIndex, colorScheme, scaling);
+        return reinterpret_cast<ninjaArmy*>( army )->setGoogColor(nIndex, std::string( colorScheme ), scaling);
     }
     else
     {

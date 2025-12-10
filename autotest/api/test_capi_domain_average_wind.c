@@ -41,11 +41,11 @@ int main()
     const char * comType = "cli"; //communication type is always set to "cli"
     const int nCPUs = 4;
     char ** papszOptions = NULL;
-    NinjaErr err = 0; 
+    NinjaErr err = 0;
     err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
     if(err != NINJA_SUCCESS)
     {
-      printf("NinjaInit: err = %d\n", err);
+        printf("NinjaInit: err = %d\n", err);
     }
 
     /* 
@@ -93,13 +93,34 @@ int main()
     //const double meshResolution = 300.0;
     const char * meshResolutionUnits = "m";
 
-    /* 
-     * Create the army
+    bool matchedPoints = true;  // for point initialization, but currently required as an input to SetInitializationMethod(). Should the match points pointInitialization algorythm be run, or should it just run as a domainAvgRun on the input wind field. ALWAYS set to true unless you know what you are doing.
+
+    /*
+     * Initialize the army
      */
-    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    ninjaArmy = NinjaInitializeArmy();
     if( NULL == ninjaArmy )
     {
-        printf("NinjaCreateArmy: ninjaArmy = NULL\n");
+        printf("NinjaInitializeArmy: ninjaArmy = NULL\n");
+    }
+
+    /*
+     * Set the ninja communication
+     */
+    err = NinjaSetCommunication(ninjaArmy, comType, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetCommunication: err = %d\n", err);
+    }
+
+    /*
+     * Create the army
+     */
+    err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    //err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    if( err != NINJA_SUCCESS)
+    {
+        printf("NinjaMakeDomainAverageArmy: err = %d\n", err);
     }
 
     /* 
@@ -110,19 +131,13 @@ int main()
       /* 
        * Sets Simulation Variables
        */
-      err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-        printf("NinjaSetCommunication: err = %d\n", err);
-      }
-    
       err = NinjaSetNumberCPUs(ninjaArmy, i, nCPUs, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetNumberCPUs: err = %d\n", err);
       }
     
-      err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+      err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, matchedPoints, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetInitializationMethod: err = %d\n", err);
