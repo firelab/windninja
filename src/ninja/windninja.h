@@ -93,14 +93,14 @@ typedef int  NinjaErr;
 //         const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char* airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options);
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
-    WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakePointArmy
-        (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options);
+    WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
+        ( NinjaArmyH * ninjaArmy, int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options);
 
     //TODO: add helper function to get first and last timesteps in a forecast file
     //TODO: add helper function to get list of times in a forecast file
     //TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
-    WINDNINJADLL_EXPORT NinjaArmyH * NinjaMakeWeatherModelArmy
-        ( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options );
+    WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
+        ( NinjaArmyH * ninjaArmy, const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaToolsH * NinjaMakeTools();
 
@@ -171,17 +171,11 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
 
     /*  Communication  */
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyCommunication
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
         ( NinjaArmyH * ninjaArmy, const char * comType, char ** options );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComProgressFunc
-        ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-        ( NinjaArmyH * ninjaArmy, const int nIndex, const char * comType, char ** options );
-
     WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
-        ( NinjaArmyH * ninjaArmy, const int nIndex, ProgressFunc func, void *pUser, char ** options );
+        ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
         ( NinjaArmyH * ninjaArmy, const int nIndex, FILE* stream, char ** options );

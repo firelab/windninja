@@ -217,7 +217,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     ui->weatherModelTimeTreeView->selectAll();
 
     ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
-    if(ninjaErr == NINJA_SUCCESS)
+    if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFreeWeatherModelTimeList: ninjaErr=" << ninjaErr;
     }

@@ -89,6 +89,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  * Avaliable Creation Options:
  *                             None
  *
+ * \param army An opaque handle to a valid ninjaArmy.
  * \param numNinjas The number of runs to create.
  * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
  * \param speedList List of wind speeds to simulate.
@@ -153,13 +154,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
 //            
 //            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
         }
-
-        return NINJA_SUCCESS;
     }
     catch( ... )
     {
         return NINJA_E_INVALID;
     }
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -173,6 +174,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
  * Avaliable Creation Options:
  *                             None
  *
+ * \param army An opaque handle to a valid ninjaArmy.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
@@ -187,8 +189,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
-    (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
+    ( NinjaArmyH * army, int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
 {
     wxStation::SetStationFormat(wxStation::newFormat);
     if(momentumFlag == true)
@@ -196,7 +198,6 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
         throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
     }
 
-    NinjaArmyH* army;
     try
     {
         std::vector <boost::posix_time::ptime> timeList;
@@ -211,7 +212,6 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
         }
         pointInitialization::storeFileNames(sFiles);
 
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
         reinterpret_cast<ninjaArmy*>( army )->makePointArmy
         (   timeList,
             std::string(timeZone),
@@ -219,13 +219,17 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
             std::string(elevationFile),
             matchPointsFlag,
             momentumFlag);
-        return army;
     }
     catch( armyException & e )
     {
-        return NULL;
+        return NINJA_E_INVALID;
     }
-    return NULL;
+    //catch( ... )
+    //{
+    //    return NINJA_E_INVALID;
+    //}
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -239,6 +243,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
  *                             None
  *                             TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
  *
+ * \param army An opaque handle to a valid ninjaArmy.
  * \param forecastFilename A valid NOMADS/UCAR based weather model file.
  * \param timezone a timezone string representing a valid timezone, e.g.
  *                 America/Boise.
@@ -248,13 +253,13 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
  *
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
-    ( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
+    ( NinjaArmyH * army, const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
 {
 #ifndef NINJAFOAM
     if(momentumFlag == true)
     {
-        throw std::runtime_error("bMomentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
     }
 #endif
 
@@ -275,24 +280,24 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
         }
     }
 
-    NinjaArmyH* army;
     try
     {
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
-
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
             std::string( timeZone ),
             timeList,
             momentumFlag );
-        return army;
     }
     catch( armyException & e )
     {
-        return NULL;
+        return NINJA_E_INVALID;
     }
+    //catch( ... )
+    //{
+    //    return NINJA_E_INVALID;
+    //}
     
-    return NULL;
+    return NINJA_SUCCESS;
 }
 
 WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
@@ -770,7 +775,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
     }
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyCommunication
+/**
+ * \brief Set the communication handler for simulations.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param comType Type of communication.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
     ( NinjaArmyH * army, const char * comType, char ** papszOptions )
 {
     if( NULL != army )
@@ -784,50 +797,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyCommunication
     }
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComProgressFunc
+WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
     ( NinjaArmyH * army, ProgressFunc func, void *pUser, char ** papszOptions )
 {
     if( NULL != army )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
             ( func, pUser );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-/**
- * \brief Set the communication handler for simulations.
- *
- * \param army An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * \param comType Type of communication. For now, comType is always "cli".
- *
- * \return NINJA_SUCCESS on success, non-zero otherwise.
- */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-    ( NinjaArmyH * army, const int nIndex, const char * comType, char ** papszOptions )
-{
-    if( NULL != army )
-    {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaCommunication
-            ( nIndex, std::string( comType ) );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
-    ( NinjaArmyH * army, const int nIndex, ProgressFunc func, void *pUser, char ** papszOptions )
-{
-    if( NULL != army )
-    {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
-            ( nIndex, func, pUser );
     }
     else
     {

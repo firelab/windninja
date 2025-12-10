@@ -419,16 +419,16 @@ void MainWindow::solveButtonClicked()
 
     ninjaArmy = NinjaInitializeArmy();
 
-    ninjaErr = NinjaSetArmyCommunication(ninjaArmy, "gui", papszOptions);
+    ninjaErr = NinjaSetCommunication(ninjaArmy, "gui", papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetArmyCommunication: ninjaErr =" << ninjaErr;
+        qDebug() << "NinjaSetCommunication: ninjaErr =" << ninjaErr;
     }
 
-    ninjaErr = NinjaSetArmyComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
+    ninjaErr = NinjaSetComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "Army NinjaSetArmyComProgressFunc: err =" << ninjaErr;
+        qDebug() << "Army NinjaSetComProgressFunc: err =" << ninjaErr;
     }
 
     if (state.isDomainAverageInitializationValid)
@@ -456,27 +456,6 @@ void MainWindow::solveButtonClicked()
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaMakeDomainAverageArmy: ninjaErr =" << ninjaErr;
-
-            progressDialog->setValue(maxProgress);
-            progressDialog->setCancelButtonText("Close");
-
-            // do cleanup before the return, similar to finishedSolve()
-
-            //disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-
-            char **papszOptions = nullptr;
-            int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
-            if(ninjaErr != NINJA_SUCCESS)
-            {
-                printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
-            }
-
-            // clear the progress values for the next set of runs
-            //runProgress.clear();
-
-            //futureWatcher->deleteLater();
-
-            return;
         }
     }
     else if (state.isPointInitializationValid)
@@ -536,7 +515,7 @@ void MainWindow::solveButtonClicked()
                     );
                 if(ninjaErr != NINJA_SUCCESS)
                 {
-                    qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr = " << ninjaErr;
+                    qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr =" << ninjaErr;
                 }
 
                 outYear[0] = endYear;
@@ -545,7 +524,8 @@ void MainWindow::solveButtonClicked()
                 outHour[0] = endHour;
                 outMinute[0] = endMinute;
             }
-            else {
+            else
+            {
                 ninjaErr = NinjaGetTimeList(
                     year.data(), month.data(), day.data(),
                     hour.data(), minute.data(),
@@ -555,19 +535,26 @@ void MainWindow::solveButtonClicked()
                 );
                 if(ninjaErr != NINJA_SUCCESS)
                 {
-                    qDebug() << "NinjaGetTimeList: ninjaErr = " << ninjaErr;
+                    qDebug() << "NinjaGetTimeList: ninjaErr =" << ninjaErr;
                 }
             }
 
-            numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
+            if(ninjaErr == NINJA_SUCCESS)
+            {
+                numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
 
-            ninjaArmy = NinjaMakePointArmy(
-                outYear.data(), outMonth.data(), outDay.data(),
-                outHour.data(), outMinute.data(), nTimeSteps,
-                DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                stationFileNames.size(), DEMPath.toUtf8().data(),
-                true, momentumFlag, papszOptions
-                );
+                ninjaErr = NinjaMakePointArmy( ninjaArmy,
+                    outYear.data(), outMonth.data(), outDay.data(),
+                    outHour.data(), outMinute.data(), nTimeSteps,
+                    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
+                    stationFileNames.size(), DEMPath.toUtf8().data(),
+                    true, momentumFlag, papszOptions
+                    );
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
+                }
+            }
         }
         else
         {
@@ -588,7 +575,7 @@ void MainWindow::solveButtonClicked()
                 );
             if (ninjaErr != NINJA_SUCCESS)
             {
-                qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr = " << ninjaErr;
+                qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr =" << ninjaErr;
             }
 
             QVector<int> yearVec   = { outYear };
@@ -600,15 +587,22 @@ void MainWindow::solveButtonClicked()
             numNinjas = 1;
             int nTimeSteps = 1;
 
-            ninjaArmy = NinjaMakePointArmy(
-                yearVec.data(), monthVec.data(), dayVec.data(),
-                hourVec.data(), minuteVec.data(), nTimeSteps,
-                DEMTimeZone.toUtf8().data(),
-                stationFileNames.data(),
-                static_cast<int>(stationFileNames.size()),
-                DEMPath.toUtf8().data(),
-                true, momentumFlag, papszOptions
-            );
+            if(ninjaErr == NINJA_SUCCESS)
+            {
+                ninjaErr = NinjaMakePointArmy( ninjaArmy,
+                    yearVec.data(), monthVec.data(), dayVec.data(),
+                    hourVec.data(), minuteVec.data(), nTimeSteps,
+                    DEMTimeZone.toUtf8().data(),
+                    stationFileNames.data(),
+                    static_cast<int>(stationFileNames.size()),
+                    DEMPath.toUtf8().data(),
+                    true, momentumFlag, papszOptions
+                );
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaMakePointArmy =" << ninjaErr;
+                }
+            }
         }
     }
     else
@@ -633,8 +627,37 @@ void MainWindow::solveButtonClicked()
             inputTimeList[i] = strdup(str.c_str()); // allocate and copy each string
         }
 
-        ninjaArmy = NinjaMakeWeatherModelArmy(filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
+        ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaMakeWeatherModelArmy =" << ninjaErr;
+        }
     }
+
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
+
+        // do cleanup before the return, similar to finishedSolve()
+
+        //disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+        char **papszOptions = nullptr;
+        int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+        }
+
+        // clear the progress values for the next set of runs
+        //runProgress.clear();
+
+        //futureWatcher->deleteLater();
+
+        return;
+    }
+
     writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
 
     maxProgress = numNinjas*100;

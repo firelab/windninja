@@ -131,6 +131,9 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
                              string demFile, bool matchPoints, bool momentumFlag)
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
@@ -151,6 +154,12 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
     for(unsigned int i=0; i<timeList.size(); i++)
     {
         ninjas[i] = new ninja();
+
+        setNinjaCommunication( i, i, *Com->comType );
+        if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
+        {
+            setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
+        }
     }
 
     boost::local_time::tz_database tz_db;
@@ -361,6 +370,9 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
  */
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -369,9 +381,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
         if(fcastList == NULL){
-            //ninjas hasn't been sized yet
-            //which i to even use for ninjas?
-            //ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
             throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
                   std::string(" cannot be opened."));
         }
@@ -400,6 +410,12 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 #else
             ninjas[i] = new ninja();
 #endif //NINJAFOAM
+
+            setNinjaCommunication( i, i, *Com->comType );
+            if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
+            {
+                setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
+            }
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -425,8 +441,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
         }
         catch(armyException &e)
         {
-            //which i to even use for ninjas?
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
             throw;
         }
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -447,6 +462,12 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 #else
             ninjas[i] = new ninja();
 #endif
+
+            setNinjaCommunication( i, i, *Com->comType );
+            if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
+            {
+                setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
+            }
         }
 
 
