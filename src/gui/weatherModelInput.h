@@ -53,7 +53,6 @@ signals:
 public slots:
     void updateTreeView();
 
-
 private slots:
     void weatherModelDownloadButtonClicked();
     void weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected);
@@ -63,13 +62,29 @@ private slots:
     void weatherModelComboBoxCurrentIndexChanged(int index);
 
 private:
-    Ui::MainWindow *ui;
     NinjaToolsH* ninjaTools;
     NinjaErr ninjaErr;
+
+    Ui::MainWindow *ui;
     QFileSystemModel *fileModel;
     QStandardItemModel *timeModel;
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
+    const QVector<QString> modelGlossary = {
+        "UCAR=University Corporation for Atmospheric Research",
+        "NOMADS=NOAA Operational Model Archive and Distribution System",
+        "GCP=Google Cloud Platform",
+        "NDFD=National Digital Forecast Database",
+        "NAM=North American Mesoscale",
+        "RAP=Rapid Refresh",
+        "HRRR=High-Resolution Rapid Refresh",
+        "GFS=Global Forecast System",
+        "HIRES=High Resolution",
+        "NEST=Nested",
+        "ARW=Advanced Research WRF",
+        "NMM=Non-hydrostatic Mesoscale Model",
+        "NBM=National Blend of Models"
+    };
 };
 
 #endif // WEATHERMODELINPUT_H

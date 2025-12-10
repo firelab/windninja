@@ -110,6 +110,24 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
         return;
     }
 
+    QStringList tooltipList;
+    QString weatherModel = ui->weatherModelComboBox->currentText();
+    for(int i = 0; i < modelGlossary.size(); i++)
+    {
+        int pos = modelGlossary[i].indexOf('=');
+        if (pos <= 0)
+        {
+            continue;
+        }
+
+        QString key = modelGlossary[i].left(pos);
+        if(weatherModel.contains(key, Qt::CaseInsensitive))
+        {
+            tooltipList << modelGlossary[i].mid(pos + 1);
+        }
+    }
+    ui->weatherModelComboBox->setToolTip(tooltipList.join(", "));
+
     QByteArray modelIdentifierByte = ui->weatherModelComboBox->currentText().toUtf8();
     const char* modelIdentifier = modelIdentifierByte.constData();
     int starHour, endHour;
