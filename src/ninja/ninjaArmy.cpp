@@ -38,7 +38,6 @@ ninjaArmy::ninjaArmy()
     Com = NULL;
 //    Com = new ninjaComClass();
 //    Com->runNumber = 0;
-////    Com->comType = ninjaComClass::ninjaDefaultCom;
 ////    Com->lastMsg[0] = '\0';
 
 //    ninjas.push_back(new ninja());
@@ -53,7 +52,7 @@ ninjaArmy::ninjaArmy()
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
     Com = NULL;   // must be set to null! Gets created fresh in setNinjaCommunication()
-    setNinjaCommunication(A.Com->comType);
+    setNinjaCommunication();
     Com->runNumber = A.Com->runNumber;
     setNinjaMultiComStream(A.Com->multiStream);
     strcpy( Com->lastMsg, A.Com->lastMsg );
@@ -90,7 +89,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
     if(&A != this)
     {
         Com = NULL;   // must be set to null! Gets created fresh in setNinjaCommunication()
-        setNinjaCommunication(A.Com->comType);
+        setNinjaCommunication();
         Com->runNumber = A.Com->runNumber;
         setNinjaMultiComStream(A.Com->multiStream);
         strcpy( Com->lastMsg, A.Com->lastMsg );
@@ -133,7 +132,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArm
         ninjas[i] = new ninja();
 #endif //NINJAFOAM
 
-        setNinjaCommunication( i, i, Com->comType );
+        setNinjaCommunication( i, i );
         if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
         {
             setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
@@ -176,7 +175,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
     {
         ninjas[i] = new ninja();
 
-        setNinjaCommunication( i, i, Com->comType );
+        setNinjaCommunication( i, i );
         if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
         {
             setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
@@ -432,7 +431,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
             ninjas[i] = new ninja();
 #endif //NINJAFOAM
 
-            setNinjaCommunication( i, i, Com->comType );
+            setNinjaCommunication( i, i );
             if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
             {
                 setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
@@ -484,7 +483,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
             ninjas[i] = new ninja();
 #endif
 
-            setNinjaCommunication( i, i, Com->comType );
+            setNinjaCommunication( i, i );
             if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
             {
                 setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
@@ -1369,45 +1368,7 @@ void ninjaArmy::setAtmFlags()
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaCommunication( std::string comType,
-                                      char ** papszOptions )
-{
-    int retval = NINJA_E_INVALID;
-    try
-    {
-        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
-        if( comType == "ninjaCLICom" || comType == "cli" )
-        {
-            retval = setNinjaCommunication( ninjaComClass::ninjaCLICom, papszOptions );
-        }
-        else if( comType == "ninjaGUICom" || comType == "gui" )
-        {
-            retval = setNinjaCommunication( ninjaComClass::ninjaGUICom, papszOptions );
-        }
-        else if( comType == "ninjaQuietCom" || comType == "quiet" )
-        {
-            retval = setNinjaCommunication( ninjaComClass::ninjaQuietCom, papszOptions );
-        }
-        else
-        {
-            std::cout << "Invalid input '" << comType
-                      << "' in ninjaArmy::setNinjaCommunication()"
-                      << "\nchoices are: 'ninjaCLICom', 'cli', 'ninjaGUICom', 'gui', 'ninjaQuietCom', 'quiet'"
-                      << std::endl;
-            retval = NINJA_E_INVALID;
-        }
-    }
-    catch( ... )
-    {
-        std::cout << "!!!failed to set ninjaArmy level ninjaCom!!!" << std::endl;
-        return NINJA_E_INVALID;
-    }
-
-    return retval;
-}
-
-int ninjaArmy::setNinjaCommunication( const ninjaComClass::eNinjaCom comType,
-                                      char ** papszOptions )
+int ninjaArmy::setNinjaCommunication( char ** papszOptions )
 {
     try
     {
@@ -1417,7 +1378,6 @@ int ninjaArmy::setNinjaCommunication( const ninjaComClass::eNinjaCom comType,
         Com = new ninjaComClass();
 
         Com->runNumber = 9999;
-        Com->comType = comType;
 //        Com->lastMsg[0] = '\0';
         strcpy(Com->lastMsg, "the heck!\0");
     }
@@ -1461,44 +1421,10 @@ int ninjaArmy::setNinjaMultiComStream( FILE* stream,
 }
 
 int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
-                           const ninjaComClass::eNinjaCom comType,
-                           char ** papszOptions )
+                                      char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
-}
-
-int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
-                           char ** papszOptions )
-{
-    int retval = NINJA_E_INVALID;
-    IF_VALID_INDEX( nIndex, ninjas )
-    {
-        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
-        if( comType == "ninjaCLICom" || comType == "cli" )
-        {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaCLICom );
-            retval = NINJA_SUCCESS;
-        }
-        else if( comType == "ninjaGUICom" || comType == "gui" )
-        {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaGUICom );
-            retval = NINJA_SUCCESS;
-        }
-        else if( comType == "ninjaQuietCom" || comType == "quiet" )
-        {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaQuietCom );
-            retval = NINJA_SUCCESS;
-        }
-        else
-        {
-            retval = NINJA_E_INVALID;
-        }
-    }
-    return retval;
+            ninjas[ nIndex ]->set_ninjaCommunication( RunNumber ) );
 }
 
 int ninjaArmy::setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,

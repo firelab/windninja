@@ -779,17 +779,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
  * \brief Set the communication handler for simulations.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param comType Type of communication.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-    ( NinjaArmyH * army, const char * comType, char ** papszOptions )
+    ( NinjaArmyH * army, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaCommunication
-            ( std::string( comType ) );
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaCommunication();
     }
     else
     {

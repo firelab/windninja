@@ -419,7 +419,7 @@ void MainWindow::solveButtonClicked()
 
     ninjaArmy = NinjaInitializeArmy();
 
-    ninjaErr = NinjaSetCommunication(ninjaArmy, "gui", papszOptions);
+    ninjaErr = NinjaSetCommunication(ninjaArmy, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetCommunication: ninjaErr =" << ninjaErr;

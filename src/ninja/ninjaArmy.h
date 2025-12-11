@@ -183,11 +183,7 @@ public:
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
 
-    int setNinjaCommunication( std::string comType,
-                               char ** papszOptions = NULL );
-
-    int setNinjaCommunication( const ninjaComClass::eNinjaCom comType,
-                               char ** papszOptions = NULL );
+    int setNinjaCommunication( char ** papszOptions = NULL );
 
     int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
                                  char ** papszOptions = NULL);
@@ -200,18 +196,13 @@ public:
     *
     * \param nIndex index of a ninja
     * \param RunNumber number of runs
-    * \param comType type of communication
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNinjaCommunication( const int nIndex, const int RunNumber,
-                               const ninjaComClass::eNinjaCom comType,
                                char ** papszOptions = NULL );
 
     int setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
                                  char ** papszOptions = NULL);
-
-    int setNinjaCommunication( const int nIndex, std::string comType,
-                               char ** papszOptions = NULL);
 
     /**
     * \brief Initialize the message communication multi-stream FILE of a ninja

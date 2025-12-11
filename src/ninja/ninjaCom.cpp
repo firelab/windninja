@@ -40,7 +40,6 @@ ninjaComClass::ninjaComClass()
     printLastMsg = false;
     lastMsg[0] = '\0';
     runNumber = -9999;
-    comType = ninjaComClass::ninjaDefaultCom;
     printProgressFunc = false;
     pfnProgress = nullptr;
     pProgressUser = nullptr;

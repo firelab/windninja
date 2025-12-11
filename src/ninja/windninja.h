@@ -172,7 +172,7 @@ typedef int  NinjaErr;
 
     /*  Communication  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-        ( NinjaArmyH * ninjaArmy, const char * comType, char ** options );
+        ( NinjaArmyH * ninjaArmy, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
         ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );

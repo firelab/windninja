@@ -60,20 +60,9 @@ public:
         ninjaFatal
     } msgType;
 
-    typedef enum
-    {
-        ninjaDefaultCom,
-        ninjaQuietCom,
-        ninjaLoggingCom,
-        ninjaGUICom,
-        WFDSSCom,
-        ninjaCLICom
-    } eNinjaCom;
-
     bool printLastMsg;
     char lastMsg[NINJA_MSG_SIZE];  // storage of the last message
     int runNumber;  // run number of the simulation. Can turn this back into a pointer to the value in the WindNinjaInputs class, if the values start to differ
-    eNinjaCom comType;  // communication type
 
     bool printProgressFunc;
     ProgressFunc pfnProgress;

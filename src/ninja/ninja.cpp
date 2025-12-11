@@ -81,7 +81,6 @@ ninja::ninja()
     input.inputsRunNumber = 0;
     input.Com = new ninjaComClass();
     input.Com->runNumber = input.inputsRunNumber;
-//    input.Com->comType = ninjaComClass::ninjaDefaultCom;
 //    input.Com->lastMsg[0] = '\0';
 }
 
@@ -126,7 +125,7 @@ ninja::ninja(const ninja &rhs)
 , input(rhs.input)
 {
     input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
-    set_ninjaCommunication(rhs.input.inputsRunNumber, rhs.input.Com->comType);
+    set_ninjaCommunication(rhs.input.inputsRunNumber);
     set_ninjaMultiComStream(rhs.input.Com->multiStream);
     strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
     input.Com->fpLog = rhs.input.Com->fpLog;
@@ -184,7 +183,7 @@ ninja &ninja::operator=(const ninja &rhs)
     if(&rhs != this)
     {
         input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
-        set_ninjaCommunication(rhs.input.inputsRunNumber, rhs.input.Com->comType);
+        set_ninjaCommunication(rhs.input.inputsRunNumber);
         set_ninjaMultiComStream(rhs.input.Com->multiStream);
         strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
         input.Com->fpLog = rhs.input.Com->fpLog;
@@ -3550,7 +3549,7 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
-void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
+void ninja::set_ninjaCommunication(int RunNumber)
 {
     input.inputsRunNumber = RunNumber;
 
@@ -3560,9 +3559,7 @@ void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comTy
     input.Com = new ninjaComClass();
 
     input.Com->runNumber = input.inputsRunNumber;
-    input.Com->comType = comType;
 //    input.Com->lastMsg[0] = '\0';
-    //input.Com->lastMsg = input.lastComString;
 }
 
 void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
