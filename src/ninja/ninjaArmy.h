@@ -127,7 +127,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
 
 #include "callbackFunctions.h"
 
-//#include "ninjaCom.h"
+#include "ninjaCom.h"
+
 /**
 * Class used for doing multiple WindNinja runs.
 */
@@ -190,6 +191,9 @@ public:
 
     int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
                                  char ** papszOptions = NULL);
+
+    int setNinjaMultiComStream( FILE* stream,
+                                char ** papszOptions = NULL);
 
     /**
     * \brief Initialize the ninja communication of a ninja

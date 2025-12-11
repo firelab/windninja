@@ -126,10 +126,10 @@ ninja::ninja(const ninja &rhs)
 , input(rhs.input)
 {
     input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
-    set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
-//    set_ninjaMultiComStream(rhs.input.Com->multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
-    strcpy( input.Com->lastMsg, rhs.get_lastComString() );
-    input.Com->fpLog = rhs.get_ComLogFp();
+    set_ninjaCommunication(rhs.input.inputsRunNumber, rhs.input.Com->comType);
+    set_ninjaMultiComStream(rhs.input.Com->multiStream);
+    strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
+    input.Com->fpLog = rhs.input.Com->fpLog;
 
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
@@ -184,10 +184,10 @@ ninja &ninja::operator=(const ninja &rhs)
     if(&rhs != this)
     {
         input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
-        set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
-//        set_ninjaMultiComStream(rhs.input.Com->multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
-        strcpy( input.Com->lastMsg, rhs.get_lastComString() );
-        input.Com->fpLog = rhs.get_ComLogFp();
+        set_ninjaCommunication(rhs.input.inputsRunNumber, rhs.input.Com->comType);
+        set_ninjaMultiComStream(rhs.input.Com->multiStream);
+        strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
+        input.Com->fpLog = rhs.input.Com->fpLog;
 
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
@@ -3573,26 +3573,6 @@ void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
 void ninja::set_ninjaMultiComStream(FILE* stream)
 {
     input.Com->multiStream = stream;
-}
-
-int ninja::get_inputsRunNumber() const
-{
-    return input.inputsRunNumber;
-}
-
-ninjaComClass::eNinjaCom ninja::get_inputsComType() const
-{
-    return input.Com->comType;
-}
-
-char * ninja::get_lastComString() const
-{
-    return (char*)input.Com->lastMsg;
-}
-
-FILE * ninja::get_ComLogFp() const
-{
-    return input.Com->fpLog;
 }
 
 void ninja::set_progressWeight(double progressWeight)

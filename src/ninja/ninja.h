@@ -168,10 +168,6 @@ public:
     void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
     void set_ninjaComProgressFunc(ProgressFunc func, void *pUser);
     void set_ninjaMultiComStream(FILE* stream);
-    int get_inputsRunNumber() const;
-    ninjaComClass::eNinjaCom get_inputsComType() const;
-    char * get_lastComString() const;
-    FILE * get_ComLogFp() const; //returns the Com Log file pointer
     void set_progressWeight(double progressWeight); //For foam+diurnal simulations
 
     /*************************************************************

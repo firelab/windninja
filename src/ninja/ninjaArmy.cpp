@@ -55,7 +55,7 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
     Com = NULL;   // must be set to null! Gets created fresh in setNinjaCommunication()
     setNinjaCommunication(A.Com->comType);
     Com->runNumber = A.Com->runNumber;
-//    set_ninjaMultiComStream(A.Com->multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
+    setNinjaMultiComStream(A.Com->multiStream);
     strcpy( Com->lastMsg, A.Com->lastMsg );
     Com->fpLog = A.Com->fpLog;
 
@@ -92,7 +92,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
         Com = NULL;   // must be set to null! Gets created fresh in setNinjaCommunication()
         setNinjaCommunication(A.Com->comType);
         Com->runNumber = A.Com->runNumber;
-//        set_ninjaMultiComStream(A.Com->multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
+        setNinjaMultiComStream(A.Com->multiStream);
         strcpy( Com->lastMsg, A.Com->lastMsg );
         Com->fpLog = A.Com->fpLog;
 
@@ -1440,6 +1440,21 @@ int ninjaArmy::setNinjaComProgressFunc( ProgressFunc func, void *pUser,
     catch( ... )
     {
         std::cout << "!!!failed to set ninjaArmy level ninjaCom progress function!!!" << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::setNinjaMultiComStream( FILE* stream,
+                                       char ** papszOptions )
+{
+    try
+    {
+        Com->multiStream = stream;
+    }
+    catch( ... )
+    {
+        std::cout << "!!!failed to set ninjaArmy level ninjaCom multiStream FILE pointer!!!" << std::endl;
         return NINJA_E_INVALID;
     }
     return NINJA_SUCCESS;
