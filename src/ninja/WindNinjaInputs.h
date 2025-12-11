@@ -106,12 +106,9 @@ public:
      *  Base input data passed to "simulate_wind()"
      *-----------------------------------------------------------------------------*/
 
-    
-    ninjaComClass *Com;	//pointer to a com handler for the specific communication type desired
-    char lastComString[NINJA_MSG_SIZE];
     int inputsRunNumber;
-    ninjaComClass::eNinjaCom inputsComType;
-    
+    ninjaComClass *Com;  //pointer to a com handler for the specific communication type desired
+
     int armySize; 
     GDALDatasetH hSpdMemDs;
     GDALDatasetH hDirMemDs;

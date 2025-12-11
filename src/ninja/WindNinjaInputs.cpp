@@ -33,6 +33,7 @@ WindNinjaInputs::WindNinjaInputs()
 : ninjaTime(boost::local_time::not_a_date_time)
 {
     //Initialize variables
+    Com = NULL;
     hSpdMemDs = NULL;
     hDirMemDs = NULL;
     hDustMemDs = NULL;
@@ -223,8 +224,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 {
   if(&rhs != this)
     {
-      //ninjaCom stuff
-      Com = NULL;   //must be set to null!
+      Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
       armySize = rhs.armySize;
       hSpdMemDs = rhs.hSpdMemDs;
       hDirMemDs = rhs.hDirMemDs;

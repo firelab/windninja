@@ -77,12 +77,12 @@ ninja::ninja()
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
 
-    //ninjaCom stuff
-    input.lastComString[0] = '\0';
+    // ninjaCom stuff
     input.inputsRunNumber = 0;
-    input.inputsComType = ninjaComClass::ninjaDefaultCom;
     input.Com = new ninjaComClass();
-    input.Com->comType = &input.inputsComType;
+    input.Com->runNumber = input.inputsRunNumber;
+//    input.Com->comType = ninjaComClass::ninjaDefaultCom;
+//    input.Com->lastMsg[0] = '\0';
 }
 
 /**Ninja destructor
@@ -125,12 +125,11 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    input.Com = NULL;   //must be set to null!
+    input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
     set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
-//    set_ninjaMultiComStream(rhs.input.Com.multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
-    strcpy( input.lastComString, rhs.get_lastComString() );
+//    set_ninjaMultiComStream(rhs.input.Com->multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
+    strcpy( input.Com->lastMsg, rhs.get_lastComString() );
     input.Com->fpLog = rhs.get_ComLogFp();
-
 
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
@@ -184,6 +183,12 @@ ninja &ninja::operator=(const ninja &rhs)
 {
     if(&rhs != this)
     {
+        input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
+        set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
+//        set_ninjaMultiComStream(rhs.input.Com->multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
+        strcpy( input.Com->lastMsg, rhs.get_lastComString() );
+        input.Com->fpLog = rhs.get_ComLogFp();
+
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
@@ -3547,17 +3552,17 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
 
 void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
 {
-    input.inputsComType = comType;
+    input.inputsRunNumber = RunNumber;
 
     if(input.Com)
         delete input.Com;
 
     input.Com = new ninjaComClass();
-    input.Com->comType = &input.inputsComType;
 
-    input.inputsRunNumber = RunNumber;
-    input.Com->runNumber = &input.inputsRunNumber;
-    input.Com->lastMsg = input.lastComString;
+    input.Com->runNumber = input.inputsRunNumber;
+    input.Com->comType = comType;
+//    input.Com->lastMsg[0] = '\0';
+    //input.Com->lastMsg = input.lastComString;
 }
 
 void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
@@ -3577,12 +3582,12 @@ int ninja::get_inputsRunNumber() const
 
 ninjaComClass::eNinjaCom ninja::get_inputsComType() const
 {
-    return input.inputsComType;
+    return input.Com->comType;
 }
 
 char * ninja::get_lastComString() const
 {
-    return (char*)input.lastComString;
+    return (char*)input.Com->lastMsg;
 }
 
 FILE * ninja::get_ComLogFp() const

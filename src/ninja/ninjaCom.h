@@ -71,9 +71,9 @@ public:
     } eNinjaCom;
 
     bool printLastMsg;
-    char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
-    int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
-    eNinjaCom* comType;	//pointer to communication type, should point to eNinjaCom in WindNinjaInputs class
+    char lastMsg[NINJA_MSG_SIZE];  // storage of the last message
+    int runNumber;  // run number of the simulation. Can turn this back into a pointer to the value in the WindNinjaInputs class, if the values start to differ
+    eNinjaCom comType;  // communication type
 
     bool printProgressFunc;
     ProgressFunc pfnProgress;
@@ -98,7 +98,7 @@ public:
 
     void ninjaCom(msgType eMsg, const char *fmt, ...);
     void ninjaComV(msgType, const char *, va_list);
-    //void initializeNinjaCom(char *LastMsg, int* RunNumber);
+    //void initializeNinjaCom(char *LastMsg, int RunNumber);
 
     void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };

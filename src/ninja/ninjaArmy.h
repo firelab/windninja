@@ -141,10 +141,7 @@ public:
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    ninjaComClass *Com;
-    char lastComString[NINJA_MSG_SIZE];
-    int inputsRunNumber;
-    ninjaComClass::eNinjaCom inputsComType;
+    ninjaComClass *Com;  //pointer to a com handler for the specific communication type desired
 
     enum eWxModelType{
         ncepNdfd,
@@ -187,6 +184,10 @@ public:
 
     int setNinjaCommunication( std::string comType,
                                char ** papszOptions = NULL );
+
+    int setNinjaCommunication( const ninjaComClass::eNinjaCom comType,
+                               char ** papszOptions = NULL );
+
     int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
                                  char ** papszOptions = NULL);
 
