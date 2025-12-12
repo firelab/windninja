@@ -456,7 +456,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>5</number>
+         <number>11</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -742,8 +742,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>578</width>
-               <height>480</height>
+               <width>538</width>
+               <height>419</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1355,7 +1355,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>572</width>
+               <width>346</width>
                <height>661</height>
               </rect>
              </property>
@@ -1815,8 +1815,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>586</width>
-               <height>488</height>
+               <width>502</width>
+               <height>399</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -2351,15 +2351,30 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <layout class="QHBoxLayout" name="horizontalLayout_15">
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastStartDateTimeEdit">
+                      <property name="showGroupSeparator" stdset="0">
+                       <bool>false</bool>
+                      </property>
+                      <property name="displayFormat">
+                       <string>M/d/yy h:mm </string>
+                      </property>
+                      <property name="calendarPopup">
+                       <bool>true</bool>
+                      </property>
                       <property name="timeSpec">
-                       <enum>Qt::TimeSpec::UTC</enum>
+                       <enum>Qt::TimeSpec::LocalTime</enum>
                       </property>
                      </widget>
                     </item>
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
+                      <property name="displayFormat">
+                       <string>M/d/yy h:mm </string>
+                      </property>
+                      <property name="calendarPopup">
+                       <bool>true</bool>
+                      </property>
                       <property name="timeSpec">
-                       <enum>Qt::TimeSpec::UTC</enum>
+                       <enum>Qt::TimeSpec::LocalTime</enum>
                       </property>
                      </widget>
                     </item>

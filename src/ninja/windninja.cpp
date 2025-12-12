@@ -313,17 +313,43 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
-    (NinjaToolsH* tools, const char* modelName, const char* demFile, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
 {
     wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
 
     boost::gregorian::date startDate(startYear, startMonth, startDay);
     boost::gregorian::date endDate(endYear, endMonth, endDay);
 
+    // Load timezone database
+    boost::local_time::tz_database tz_db;
+    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+    boost::local_time::local_date_time ldtStart(
+        startDate,
+        boost::posix_time::hours(startHour),
+        timeZonePtr,
+        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+        );
+
+    boost::local_time::local_date_time ldtEnd(
+        endDate,
+        boost::posix_time::hours(endHour),
+        timeZonePtr,
+        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+        );
+
+    boost::posix_time::ptime startUTC = ldtStart.utc_time();
+    boost::posix_time::ptime endUTC   = ldtEnd.utc_time();
+
     int hours = 0;
 
     auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
-    forecastModel->setDateTime(startDate, endDate, boost::lexical_cast<std::string>(startHour), boost::lexical_cast<std::string>(endHour));
+    forecastModel->setDateTime(startUTC.date(),
+                               endUTC.date(),
+                               boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
+                               boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
     forecastModel->fetchForecast(demFile, hours);
 
     return NINJA_SUCCESS;

@@ -52,6 +52,7 @@ signals:
 
 public slots:
     void updateTreeView();
+    void updatePastcastDateTimeEdits();
 
 private slots:
     void weatherModelDownloadButtonClicked();
