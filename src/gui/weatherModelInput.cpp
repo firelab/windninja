@@ -93,7 +93,10 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
         future = QtConcurrent::run(
             WeatherModelInput::fetchPastcastWeather,
-            ninjaTools, modelIdentifier, demFile, timeZone,
+            ninjaTools,
+            ui->weatherModelComboBox->currentText(),
+            ui->elevationInputFileLineEdit->property("fullpath").toString(),
+            ui->timeZoneComboBox->currentText(),
             start.date().year(), start.date().month(), start.date().day(), start.time().hour(),
             end.date().year(),   end.date().month(),   end.date().day(),   end.time().hour()
             );
@@ -102,7 +105,10 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     {
         future = QtConcurrent::run(
             WeatherModelInput::fetchForecastWeather,
-            ninjaTools, modelIdentifier, demFile, hours
+            ninjaTools,
+            ui->weatherModelComboBox->currentText(),
+            ui->elevationInputFileLineEdit->property("fullpath").toString(),
+            hours
             );
     }
 
@@ -113,10 +119,16 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 }
 
 int WeatherModelInput::fetchForecastWeather(NinjaToolsH* ninjaTools,
-                                      const char* modelIdentifier,
-                                      const char* demFile,
-                                      int hours)
+                                            const QString& modelIdentifierStr,
+                                            const QString& demFileStr,
+                                            int hours)
 {
+    QByteArray modelIdentifierByte = modelIdentifierStr.toUtf8();
+    QByteArray demFileByte        = demFileStr.toUtf8();
+
+    const char* modelIdentifier = modelIdentifierByte.constData();
+    const char* demFile        = demFileByte.constData();
+
     NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
     if (ninjaErr != NINJA_SUCCESS)
         qDebug() << "NinjaFetchWeatherData: ninjaErr =" << ninjaErr;
@@ -124,19 +136,29 @@ int WeatherModelInput::fetchForecastWeather(NinjaToolsH* ninjaTools,
 }
 
 int WeatherModelInput::fetchPastcastWeather(NinjaToolsH* ninjaTools,
-                                      const char* modelIdentifier,
-                                      const char* demFile,
-                                      const char* timeZone,
-                                      int startYear, int startMonth, int startDay, int startHour,
-                                      int endYear, int endMonth, int endDay, int endHour)
+                                            const QString& modelIdentifierStr,
+                                            const QString& demFileStr,
+                                            const QString& timeZoneStr,
+                                            int startYear, int startMonth, int startDay, int startHour,
+                                            int endYear, int endMonth, int endDay, int endHour)
 {
+    QByteArray modelIdentifierByte = modelIdentifierStr.toUtf8();
+    QByteArray demFileByte         = demFileStr.toUtf8();
+    QByteArray timeZoneByte        = timeZoneStr.toUtf8();
+
+    const char* modelIdentifier = modelIdentifierByte.constData();
+    const char* demFile        = demFileByte.constData();
+    const char* timeZone       = timeZoneByte.constData();
+
     NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
         ninjaTools, modelIdentifier, demFile, timeZone,
         startYear, startMonth, startDay, startHour,
         endYear, endMonth, endDay, endHour
         );
+
     if (ninjaErr != NINJA_SUCCESS)
         qDebug() << "NinjaFetchArchiveWeatherData: ninjaErr =" << ninjaErr;
+
     return ninjaErr;
 }
 

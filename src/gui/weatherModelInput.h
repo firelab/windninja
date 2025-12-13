@@ -88,9 +88,17 @@ private:
         "NMM=Non-hydrostatic Mesoscale Model",
         "NBM=National Blend of Models"
     };
-    static int fetchForecastWeather(NinjaToolsH* ninjaTools, const char* modelIdentifier, const char* demFile, int hours);
+    static int fetchForecastWeather(NinjaToolsH* ninjaTools,
+                                                      const QString& modelIdentifierStr,
+                                                      const QString& demFileStr,
+                                                      int hours);
 
-    static int fetchPastcastWeather(NinjaToolsH* ninjaTools, const char* modelIdentifier, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
+    static int fetchPastcastWeather(NinjaToolsH* ninjaTools,
+                                            const QString& modelIdentifierStr,
+                                            const QString& demFileStr,
+                                            const QString& timeZoneStr,
+                                            int startYear, int startMonth, int startDay, int startHour,
+                                            int endYear, int endMonth, int endDay, int endHour);
 };
 
 #endif // WEATHERMODELINPUT_H
