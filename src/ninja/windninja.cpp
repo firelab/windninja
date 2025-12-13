@@ -320,7 +320,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
     boost::gregorian::date startDate(startYear, startMonth, startDay);
     boost::gregorian::date endDate(endYear, endMonth, endDay);
 
-    // Load timezone database
     boost::local_time::tz_database tz_db;
     tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
     boost::local_time::time_zone_ptr timeZonePtr;

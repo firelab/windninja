@@ -72,42 +72,86 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     QByteArray timeZoneByte = ui->timeZoneComboBox->currentText().toUtf8();
 
     const char* modelIdentifier = modelIdentifierByte.constData();
-    const char* demFile = demFileByte.constData();
-    const char* timeZone = timeZoneByte.constData();
+    const char* demFile        = demFileByte.constData();
+    const char* timeZone       = timeZoneByte.constData();
     int hours = ui->weatherModelSpinBox->value();
 
-    if(ui->weatherModelComboBox->currentText().contains("PASTCAST"))
+    progress = new QProgressDialog("Fetching Forecast Data...", QString(), 0, 0, ui->centralwidget);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setCancelButton(nullptr);
+    progress->setMinimumDuration(0);
+    progress->setAutoClose(true);
+    progress->show();
+
+    futureWatcher = new QFutureWatcher<int>(this);
+
+    QFuture<int> future;
+    if (ui->weatherModelComboBox->currentText().contains("PASTCAST"))
     {
-        QDateTime startDateTime = ui->pastcastStartDateTimeEdit->dateTime();
-        QDateTime endDateTime = ui->pastcastEndDateTimeEdit->dateTime();
+        QDateTime start = ui->pastcastStartDateTimeEdit->dateTime();
+        QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
 
-        QDate startDate = startDateTime.date();
-        QTime startTime = startDateTime.time();
-        int startYear = startDate.year();
-        int startMonth = startDate.month();
-        int startDay = startDate.day();
-        int startHour = startTime.hour();
-
-        QDate endDate = endDateTime.date();
-        QTime endTime = endDateTime.time();
-        int endYear = endDate.year();
-        int endMonth = endDate.month();
-        int endDay = endDate.day();
-        int endHour = endTime.hour();
-
-        ninjaErr = NinjaFetchArchiveWeatherData(ninjaTools, modelIdentifier, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
-        if (ninjaErr != NINJA_SUCCESS)
-        {
-            qDebug() << "NinjaFetchArchiveWeatherData: ninjaErr=" << ninjaErr;
-        }
-
-        return;
+        future = QtConcurrent::run(
+            WeatherModelInput::fetchPastcastWeather,
+            ninjaTools, modelIdentifier, demFile, timeZone,
+            start.date().year(), start.date().month(), start.date().day(), start.time().hour(),
+            end.date().year(),   end.date().month(),   end.date().day(),   end.time().hour()
+            );
+    }
+    else
+    {
+        future = QtConcurrent::run(
+            WeatherModelInput::fetchForecastWeather,
+            ninjaTools, modelIdentifier, demFile, hours
+            );
     }
 
-    ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
+    futureWatcher->setFuture(future);
+
+    connect(futureWatcher, &QFutureWatcher<int>::finished,
+            this, &WeatherModelInput::weatherModelDownloadFinished);
+}
+
+int WeatherModelInput::fetchForecastWeather(NinjaToolsH* ninjaTools,
+                                      const char* modelIdentifier,
+                                      const char* demFile,
+                                      int hours)
+{
+    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
     if (ninjaErr != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchWeatherData: ninjaErr =" << ninjaErr;
+    return ninjaErr;
+}
+
+int WeatherModelInput::fetchPastcastWeather(NinjaToolsH* ninjaTools,
+                                      const char* modelIdentifier,
+                                      const char* demFile,
+                                      const char* timeZone,
+                                      int startYear, int startMonth, int startDay, int startHour,
+                                      int endYear, int endMonth, int endDay, int endHour)
+{
+    NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
+        ninjaTools, modelIdentifier, demFile, timeZone,
+        startYear, startMonth, startDay, startHour,
+        endYear, endMonth, endDay, endHour
+        );
+    if (ninjaErr != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchArchiveWeatherData: ninjaErr =" << ninjaErr;
+    return ninjaErr;
+}
+
+void WeatherModelInput::weatherModelDownloadFinished()
+{
+    if (progress)
     {
-        qDebug() << "NinjaFetchWeatherData: ninjaErr=" << ninjaErr;
+        progress->close();
+        progress->deleteLater();
+        progress = nullptr;
+    }
+    if (futureWatcher)
+    {
+        futureWatcher->deleteLater();
+        futureWatcher = nullptr;
     }
 }
 
