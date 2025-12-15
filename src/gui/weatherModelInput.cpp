@@ -36,22 +36,12 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     ninjaTools = NinjaMakeTools();
 
     ui->pastcastGroupBox->hide();
-
-    QDateTime dt1 = ui->pastcastStartDateTimeEdit->dateTime();
-    dt1.setTimeSpec(Qt::OffsetFromUTC);
-    dt1.setOffsetFromUtc(0);
-
-    QDateTime dt2 = ui->pastcastEndDateTimeEdit->dateTime();
-    dt2.setTimeSpec(Qt::OffsetFromUTC);
-    dt2.setOffsetFromUtc(0);
-
     int identifiersSize = 0;
     const char** identifiers = NinjaGetAllWeatherModelIdentifiers(ninjaTools, &identifiersSize);
     for (int i = 0; i < identifiersSize; i++)
     {
         ui->weatherModelComboBox->addItem(identifiers[i]);
     }
-
     NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
 
     weatherModelComboBoxCurrentIndexChanged(0);
@@ -66,14 +56,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
 }
 
 void WeatherModelInput::weatherModelDownloadButtonClicked()
-{
-    QByteArray modelIdentifierByte = ui->weatherModelComboBox->currentText().toUtf8();
-    QByteArray demFileByte = ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8();
-    QByteArray timeZoneByte = ui->timeZoneComboBox->currentText().toUtf8();
-
-    const char* modelIdentifier = modelIdentifierByte.constData();
-    const char* demFile        = demFileByte.constData();
-    const char* timeZone       = timeZoneByte.constData();
+{   
     int hours = ui->weatherModelSpinBox->value();
 
     progress = new QProgressDialog("Fetching Forecast Data...", QString(), 0, 0, ui->centralwidget);
@@ -84,10 +67,12 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     progress->show();
 
     futureWatcher = new QFutureWatcher<int>(this);
-
     QFuture<int> future;
+
     if (ui->weatherModelComboBox->currentText().contains("PASTCAST"))
     {
+        progress->setLabelText("Fetching Pastcast Data...");
+
         QDateTime start = ui->pastcastStartDateTimeEdit->dateTime();
         QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
 
@@ -98,8 +83,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
             ui->elevationInputFileLineEdit->property("fullpath").toString(),
             ui->timeZoneComboBox->currentText(),
             start.date().year(), start.date().month(), start.date().day(), start.time().hour(),
-            end.date().year(),   end.date().month(),   end.date().day(),   end.time().hour()
-            );
+            end.date().year(),   end.date().month(),   end.date().day(),   end.time().hour());
     }
     else
     {
@@ -108,8 +92,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
             ninjaTools,
             ui->weatherModelComboBox->currentText(),
             ui->elevationInputFileLineEdit->property("fullpath").toString(),
-            hours
-            );
+            hours);
     }
 
     futureWatcher->setFuture(future);
@@ -118,37 +101,42 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
             this, &WeatherModelInput::weatherModelDownloadFinished);
 }
 
-int WeatherModelInput::fetchForecastWeather(NinjaToolsH* ninjaTools,
-                                            const QString& modelIdentifierStr,
-                                            const QString& demFileStr,
-                                            int hours)
+int WeatherModelInput::fetchForecastWeather(
+    NinjaToolsH* ninjaTools,
+    const QString& modelIdentifierStr,
+    const QString& demFileStr,
+    int hours)
 {
-    QByteArray modelIdentifierByte = modelIdentifierStr.toUtf8();
-    QByteArray demFileByte        = demFileStr.toUtf8();
+    QByteArray modelIdentifierTemp = modelIdentifierStr.toUtf8();
+    QByteArray demFileTemp = demFileStr.toUtf8();
 
-    const char* modelIdentifier = modelIdentifierByte.constData();
-    const char* demFile        = demFileByte.constData();
+    const char* modelIdentifier = modelIdentifierTemp.constData();
+    const char* demFile = demFileTemp.constData();
 
     NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
     if (ninjaErr != NINJA_SUCCESS)
+    {
         qDebug() << "NinjaFetchWeatherData: ninjaErr =" << ninjaErr;
+    }
+
     return ninjaErr;
 }
 
-int WeatherModelInput::fetchPastcastWeather(NinjaToolsH* ninjaTools,
-                                            const QString& modelIdentifierStr,
-                                            const QString& demFileStr,
-                                            const QString& timeZoneStr,
-                                            int startYear, int startMonth, int startDay, int startHour,
-                                            int endYear, int endMonth, int endDay, int endHour)
+int WeatherModelInput::fetchPastcastWeather(
+    NinjaToolsH* ninjaTools,
+    const QString& modelIdentifierStr,
+    const QString& demFileStr,
+    const QString& timeZoneStr,
+    int startYear, int startMonth, int startDay, int startHour,
+    int endYear, int endMonth, int endDay, int endHour)
 {
-    QByteArray modelIdentifierByte = modelIdentifierStr.toUtf8();
-    QByteArray demFileByte         = demFileStr.toUtf8();
-    QByteArray timeZoneByte        = timeZoneStr.toUtf8();
+    QByteArray modelIdentifierTemp = modelIdentifierStr.toUtf8();
+    QByteArray demFileTemp = demFileStr.toUtf8();
+    QByteArray timeZoneTemp = timeZoneStr.toUtf8();
 
-    const char* modelIdentifier = modelIdentifierByte.constData();
-    const char* demFile        = demFileByte.constData();
-    const char* timeZone       = timeZoneByte.constData();
+    const char* modelIdentifier = modelIdentifierTemp.constData();
+    const char* demFile = demFileTemp.constData();
+    const char* timeZone = timeZoneTemp.constData();
 
     NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
         ninjaTools, modelIdentifier, demFile, timeZone,
@@ -157,7 +145,9 @@ int WeatherModelInput::fetchPastcastWeather(NinjaToolsH* ninjaTools,
         );
 
     if (ninjaErr != NINJA_SUCCESS)
+    {
         qDebug() << "NinjaFetchArchiveWeatherData: ninjaErr =" << ninjaErr;
+    }
 
     return ninjaErr;
 }
@@ -209,7 +199,7 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
     const char* modelIdentifier = modelIdentifierByte.constData();
     int starHour, endHour;
 
-    ninjaErr = NinjaGetWeatherModelHours(ninjaTools, modelIdentifier, &starHour, &endHour);
+    NinjaErr ninjaErr = NinjaGetWeatherModelHours(ninjaTools, modelIdentifier, &starHour, &endHour);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaGetWeatherModelHours: ninjaErr=" << ninjaErr;
@@ -321,7 +311,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
 
     ui->weatherModelTimeTreeView->selectAll();
 
-    ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
+    NinjaErr ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
     if(ninjaErr == NINJA_SUCCESS)
     {
         qDebug() << "NinjaFreeWeatherModelTimeList: ninjaErr=" << ninjaErr;
@@ -360,9 +350,19 @@ void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
 
 void WeatherModelInput::updatePastcastDateTimeEdits()
 {
-    QTimeZone zone(   ui->timeZoneComboBox->currentText().toUtf8());
-    QDateTime demTime = QDateTime::currentDateTime().toTimeZone(zone);
-    demTime.setTimeSpec(Qt::LocalTime); // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
+    QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
+
+    // Update Minimum Time
+    QDate earliestDate(2014, 7, 30);
+    QDateTime utcDateTime(earliestDate, QTime(18, 0), Qt::UTC);
+    QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
+    ui->pastcastGroupBox->setTitle("Earliest Pastcast Datetime: " + localDateTime.toString("MM/dd/yyyy hh:mm"));
+    ui->pastcastGroupBox->updateGeometry();
+
+    // Update Date Time Edits
+    QDateTime demTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
+    demTime.setTimeSpec(Qt::LocalTime);
 
     ui->pastcastStartDateTimeEdit->setDateTime(demTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demTime);

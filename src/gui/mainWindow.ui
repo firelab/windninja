@@ -2345,8 +2345,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QGroupBox" name="pastcastGroupBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="title">
-                    <string>Earlierst Pastcast Date: 07/30/2014 // UTC or local time?</string>
+                    <string>Minimum Pastcast Date: 07/30/2014 18:00</string>
+                   </property>
+                   <property name="flat">
+                    <bool>false</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_15">
                     <item>
