@@ -39,6 +39,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QProgressDialog>
+#include <QtConcurrent/QtConcurrent>
 #include <QObject>
 
 class WeatherModelInput : public QObject
@@ -52,7 +53,7 @@ signals:
 
 public slots:
     void updateTreeView();
-
+    void updatePastcastDateTimeEdits();
 
 private slots:
     void weatherModelDownloadButtonClicked();
@@ -61,15 +62,45 @@ private slots:
     void weatherModelTimeSelectNoneButtonClicked();
     void weatherModelGroupBoxToggled(bool toggled);
     void weatherModelComboBoxCurrentIndexChanged(int index);
+    void weatherModelDownloadFinished();
 
 private:
-    Ui::MainWindow *ui;
     NinjaToolsH* ninjaTools;
-    NinjaErr ninjaErr;
+
+    Ui::MainWindow *ui;
     QFileSystemModel *fileModel;
     QStandardItemModel *timeModel;
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
+    const QVector<QString> modelGlossary = {
+        "UCAR=University Corporation for Atmospheric Research",
+        "NOMADS=NOAA Operational Model Archive and Distribution System",
+        "GCP=Google Cloud Platform",
+        "NDFD=National Digital Forecast Database",
+        "NAM=North American Mesoscale",
+        "RAP=Rapid Refresh",
+        "HRRR=High-Resolution Rapid Refresh",
+        "GFS=Global Forecast System",
+        "HIRES=High Resolution",
+        "NEST=Nested",
+        "ARW=Advanced Research WRF",
+        "NMM=Non-hydrostatic Mesoscale Model",
+        "NBM=National Blend of Models"
+    };
+
+    static int fetchForecastWeather(
+        NinjaToolsH* ninjaTools,
+        const QString& modelIdentifierStr,
+        const QString& demFileStr,
+        int hours);
+
+    static int fetchPastcastWeather(
+        NinjaToolsH* ninjaTools,
+        const QString& modelIdentifierStr,
+        const QString& demFileStr,
+        const QString& timeZoneStr,
+        int startYear, int startMonth, int startDay, int startHour,
+        int endYear, int endMonth, int endDay, int endHour);
 };
 
 #endif // WEATHERMODELINPUT_H
