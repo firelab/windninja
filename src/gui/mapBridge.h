@@ -44,10 +44,12 @@ public:
 
 signals:
     void boundingBoxReceived(double north, double south, double east, double west);
+    void ready();
 
 
 public slots:
     void receiveBoundingBox(const QString &jsonCoords);
+    void notifyReady();
 
 };
 

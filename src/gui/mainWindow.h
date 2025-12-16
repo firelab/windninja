@@ -103,6 +103,10 @@ signals:
     void updateProgressMessageSignal(const QString &msg);
     void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
 
+protected:
+    void showEvent(QShowEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+
 private slots:
     void massSolverCheckBoxClicked();
     void momentumSolverCheckBoxClicked();
@@ -160,6 +164,9 @@ private:
                                            QComboBox* outputMeshResolutionComboBox);
 
     int lineNumber;
+
+    void writeSettings();
+    void readSettings();
 
 };
 #endif // MAINWINDOW_H

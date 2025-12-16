@@ -307,6 +307,7 @@
 
         new QWebChannel(qt.webChannelTransport, channel => {
             window.bridge = channel.objects.bridge;
+            window.bridge.notifyReady();
         });
 
     </script>

@@ -52,11 +52,12 @@ MainWindow::MainWindow(QWidget *parent)
     QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
     QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
     QString mapPath = QDir(dataPath).filePath("map.html");
-    webChannel = new QWebChannel(this);
-    mapBridge = new MapBridge(this);
     webEngineView = new QWebEngineView(ui->mapPanelWidget);
+    webChannel = new QWebChannel(webEngineView->page());
+    mapBridge = new MapBridge(this);
     webChannel->registerObject(QStringLiteral("bridge"), mapBridge);
     webEngineView->page()->setWebChannel(webChannel);
+
     QUrl url = QUrl::fromLocalFile(mapPath);
     webEngineView->setUrl(url);
     QVBoxLayout *layout = new QVBoxLayout();
@@ -100,9 +101,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     QString version(NINJA_VERSION_STRING);
     version = "Welcome to WindNinja " + version;
-
     writeToConsole(version, Qt::blue);
-
     writeToConsole("WINDNINJA_DATA=" + dataPath);
 
     state.setState();
@@ -1191,4 +1190,101 @@ void MainWindow::finishedSolve()
     futureWatcher->deleteLater();
 }
 
+void MainWindow::writeSettings()
+{
+    writeToConsole("Saving settings...");
 
+    QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
+    settings.setDefaultFormat(QSettings::IniFormat);
+
+    settings.setDefaultFormat(QSettings::IniFormat);
+    //input file path
+    settings.setValue("inputFileDir", ui->elevationInputFileLineEdit->property("fullpath"));
+    //veg choice
+    settings.setValue("vegChoice", ui->vegetationComboBox->currentIndex());
+    //mesh choice
+    settings.setValue("meshChoice", ui->meshResolutionComboBox->currentIndex());
+    //mesh units
+    settings.setValue("meshUnits", ui->meshResolutionUnitsComboBox->currentIndex());
+    //number of processors
+    settings.setValue("nProcessors", ui->numberOfProcessorsSpinBox->value());
+
+    //time zone
+    //settings.setValue("timeZone", ui->timeZoneComboBox->currentIndex());
+
+    //settings.setValue("pointFile", tree->point->stationFileName );
+
+    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
+
+    writeToConsole("Settings saved.");
+}
+
+void MainWindow::readSettings()
+{
+    QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
+    settings.setDefaultFormat(QSettings::IniFormat);
+    if(settings.contains("inputFileDir"))
+    {
+        QString temp = settings.value("inputFileDir").toString();
+        ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
+    }
+    else
+    {
+        // std::string oTmpPath = FindNinjaRootDir();
+        // inputFileDir = CPLFormFilename(oTmpPath.c_str(), "etc/windninja/example-files", NULL);
+    }
+    if(settings.contains("vegChoice"))
+    {
+        ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
+    }
+    if(settings.contains("meshChoice"))
+    {
+        int choice = settings.value("meshChoice").toInt();
+        ui->meshResolutionComboBox->setCurrentIndex(choice);
+        if(choice == 4 && settings.contains("customRes"))
+        {
+            ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
+        }
+    }
+    if(settings.contains("meshUnits"))
+    {
+        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
+    }
+    if(settings.contains("nProcessors"))
+    {
+        ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
+    }
+    if(settings.contains("timeZone"))
+    {
+        // QString v = settings.value("timeZone").toString();
+        // int index = tree->surface->timeZone->tzComboBox->findText(v);
+        // if(index == -1)
+        //     tree->surface->timeZone->tzCheckBox->setChecked( true );
+        // index = tree->surface->timeZone->tzComboBox->findText(v);
+        // if( index == 0 )
+        //     tree->surface->timeZone->tzComboBox->setCurrentIndex(index +  1);
+        // true->surface->timeZone->tzComboBox->setCurrentIndex(index);
+    }
+    else
+    {
+        // tree->surface->timeZone->tzComboBox->setCurrentIndex(2);
+        // tree->surface->timeZone->tzComboBox->setCurrentIndex(1);
+    }
+    if(settings.contains("pointFile"))
+    {
+        // QString f = settings.value("pointFile").toString();
+        // tree->point->stationFileName = f;
+    }
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    connect(mapBridge, &MapBridge::ready, this, &MainWindow::readSettings);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    writeSettings();
+    QMainWindow::closeEvent(event);
+}
