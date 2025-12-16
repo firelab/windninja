@@ -52,9 +52,6 @@ ninjaArmy::ninjaArmy()
 */
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
-    if(Com)
-        delete Com;
-
     Com = new ninjaComClass();
 
     Com->runNumber = A.Com->runNumber;
@@ -80,8 +77,7 @@ ninjaArmy::~ninjaArmy()
         delete ninjas[0];
     }
     destoryLocalData();
-    if(Com)
-        delete Com;
+    delete Com;
 }
 
 /**
@@ -94,8 +90,7 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
 {
     if(&A != this)
     {
-        if(Com)
-            delete Com;
+        delete Com;
 
         Com = new ninjaComClass();
 

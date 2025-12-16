@@ -89,8 +89,8 @@ ninja::ninja()
  */
 ninja::~ninja()
 {
-	deleteDynamicMemory();
-        delete input.Com;
+    deleteDynamicMemory();
+    delete input.Com;
 }
 
 /**
@@ -124,9 +124,6 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    if(input.Com)
-        delete input.Com;
-
     input.Com = new ninjaComClass();
 
     set_ninjaComRunNumber(rhs.input.inputsRunNumber);
@@ -188,8 +185,7 @@ ninja &ninja::operator=(const ninja &rhs)
 {
     if(&rhs != this)
     {
-        if(input.Com)
-            delete input.Com;
+        delete input.Com;
 
         input.Com = new ninjaComClass();
 
