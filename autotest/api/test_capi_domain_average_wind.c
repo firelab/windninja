@@ -47,6 +47,16 @@ int main()
         printf("NinjaInit: err = %d\n", err);
     }
 
+    /*
+     * Setting up a log file, for ninjaCom, if desired
+     */
+    FILE* multiStream = NULL;
+    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/output/ninja.log", "w+");
+    if(multiStream == NULL)
+    {
+        printf("error opening log file\n");
+    }
+
     /* 
      * Set up domain average run 
      */
@@ -104,12 +114,12 @@ int main()
     }
 
     /*
-     * Set the ninja communication
+     * Customize the ninja communication
      */
-    err = NinjaSetCommunication(ninjaArmy, papszOptions);
+    err = NinjaSetMultiComStream(ninjaArmy, multiStream, papszOptions);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetCommunication: err = %d\n", err);
+        printf("NinjaSetMultiComStream: err = %d\n", err);
     }
 
     /*
@@ -225,6 +235,14 @@ int main()
     {
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
- 
+
+    if(multiStream != NULL)
+    {
+        if(fclose(multiStream) != 0)
+        {
+            printf("error closing log file\n");
+        }
+    }
+
     return NINJA_SUCCESS;
 }

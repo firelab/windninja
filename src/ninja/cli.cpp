@@ -608,8 +608,6 @@ int windNinjaCLI(int argc, char* argv[])
 
         ninjaArmy windsim;
 
-        windsim.setNinjaCommunication();
-
         /* Do we have to fetch an elevation file */
         
 #ifdef EMISSIONS

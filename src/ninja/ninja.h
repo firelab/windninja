@@ -165,7 +165,7 @@ public:
     /*-----------------------------------------------------------------------------
      *  ninjaCom section
      *-----------------------------------------------------------------------------*/
-    void set_ninjaCommunication(int RunNumber);
+    void set_ninjaComRunNumber(int RunNumber);
     void set_ninjaComProgressFunc(ProgressFunc func, void *pUser);
     void set_ninjaMultiComStream(FILE* stream);
     void set_progressWeight(double progressWeight); //For foam+diurnal simulations

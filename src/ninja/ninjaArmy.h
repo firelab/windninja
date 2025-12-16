@@ -183,8 +183,6 @@ public:
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
 
-    int setNinjaCommunication( char ** papszOptions = NULL );
-
     int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
                                  char ** papszOptions = NULL);
 
@@ -192,14 +190,14 @@ public:
                                 char ** papszOptions = NULL);
 
     /**
-    * \brief Initialize the ninja communication of a ninja
+    * \brief Set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja
-    * \param RunNumber number of runs
+    * \param RunNumber the specific ninja/simulation run number
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setNinjaCommunication( const int nIndex, const int RunNumber,
-                               char ** papszOptions = NULL );
+    int setNinjaComRunNumber( const int nIndex, const int RunNumber,
+                              char ** papszOptions = NULL );
 
     int setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
                                  char ** papszOptions = NULL);

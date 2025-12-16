@@ -81,7 +81,7 @@ ninja::ninja()
     input.inputsRunNumber = 0;
     input.Com = new ninjaComClass();
     input.Com->runNumber = input.inputsRunNumber;
-//    input.Com->lastMsg[0] = '\0';
+    //input.Com->lastMsg[0] = '\0';
 }
 
 /**Ninja destructor
@@ -124,9 +124,15 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
-    set_ninjaCommunication(rhs.input.inputsRunNumber);
-    set_ninjaMultiComStream(rhs.input.Com->multiStream);
+    if(input.Com)
+        delete input.Com;
+
+    input.Com = new ninjaComClass();
+
+    set_ninjaComRunNumber(rhs.input.inputsRunNumber);
+    input.Com->pfnProgress = rhs.input.Com->pfnProgress;
+    input.Com->pProgressUser = rhs.input.Com->pProgressUser;
+    input.Com->multiStream = rhs.input.Com->multiStream;
     strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
     input.Com->fpLog = rhs.input.Com->fpLog;
 
@@ -182,9 +188,15 @@ ninja &ninja::operator=(const ninja &rhs)
 {
     if(&rhs != this)
     {
-        input.Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
-        set_ninjaCommunication(rhs.input.inputsRunNumber);
-        set_ninjaMultiComStream(rhs.input.Com->multiStream);
+        if(input.Com)
+            delete input.Com;
+
+        input.Com = new ninjaComClass();
+
+        set_ninjaComRunNumber(rhs.input.inputsRunNumber);
+        input.Com->pfnProgress = rhs.input.Com->pfnProgress;
+        input.Com->pProgressUser = rhs.input.Com->pProgressUser;
+        input.Com->multiStream = rhs.input.Com->multiStream;
         strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
         input.Com->fpLog = rhs.input.Com->fpLog;
 
@@ -3549,17 +3561,10 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
-void ninja::set_ninjaCommunication(int RunNumber)
+void ninja::set_ninjaComRunNumber(int RunNumber)
 {
     input.inputsRunNumber = RunNumber;
-
-    if(input.Com)
-        delete input.Com;
-
-    input.Com = new ninjaComClass();
-
     input.Com->runNumber = input.inputsRunNumber;
-//    input.Com->lastMsg[0] = '\0';
 }
 
 void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)

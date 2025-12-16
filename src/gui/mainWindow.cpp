@@ -399,7 +399,6 @@ void MainWindow::solveButtonClicked()
     AppState& state = AppState::instance();
 
     maxProgress = 100;
-
     //progressDialog = new QProgressDialog("Initializing Runs...", "Cancel", 0, maxProgress, ui->centralwidget);
     progressDialog = new QProgressDialog(ui->centralwidget);
     progressDialog->setRange(0, maxProgress);
@@ -418,12 +417,6 @@ void MainWindow::solveButtonClicked()
     const char *initializationMethod = nullptr;
 
     ninjaArmy = NinjaInitializeArmy();
-
-    ninjaErr = NinjaSetCommunication(ninjaArmy, papszOptions);
-    if(ninjaErr != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaSetCommunication: ninjaErr =" << ninjaErr;
-    }
 
     ninjaErr = NinjaSetComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)

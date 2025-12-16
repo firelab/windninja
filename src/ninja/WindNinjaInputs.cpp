@@ -224,7 +224,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 {
   if(&rhs != this)
     {
-      Com = NULL;   // must be set to null! Gets created fresh in set_ninjaCommunication()
+      Com = NULL;   // must be set to null! Gets created fresh in the ninjaArmy/ninja constructors and assignment operators
       armySize = rhs.armySize;
       hSpdMemDs = rhs.hSpdMemDs;
       hDirMemDs = rhs.hDirMemDs;

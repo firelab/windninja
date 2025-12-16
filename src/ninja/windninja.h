@@ -171,14 +171,11 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
 
     /*  Communication  */
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-        ( NinjaArmyH * ninjaArmy, char ** options );
-
     WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
         ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
-        ( NinjaArmyH * ninjaArmy, const int nIndex, FILE* stream, char ** options );
+        ( NinjaArmyH * ninjaArmy, FILE* stream, char ** options );
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed

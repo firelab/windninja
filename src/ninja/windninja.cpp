@@ -776,25 +776,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 }
 
 /**
- * \brief Set the communication handler for simulations.
+ * \brief Set a comProgressFunction handler for simulations.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-    ( NinjaArmyH * army, char ** papszOptions )
-{
-    if( NULL != army )
-    {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaCommunication();
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
 WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
     ( NinjaArmyH * army, ProgressFunc func, void *pUser, char ** papszOptions )
 {
@@ -813,18 +800,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
  * \brief Set the multi-stream FILE, for message communications during simulations.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
  * \param stream The message communication FILE to send multi-stream messages to.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
-    ( NinjaArmyH * army, const int nIndex, FILE* stream, char ** papszOptions )
+    ( NinjaArmyH * army, FILE* stream, char ** papszOptions )
 {
     if( NULL != army )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setNinjaMultiComStream
-            ( nIndex, stream );
+            ( stream );
     }
     else
     {
