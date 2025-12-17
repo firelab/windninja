@@ -5,6 +5,8 @@ WindNinja
 
 WindNinja is a diagnostic wind model developed for use in wildland fire modeling.
 
+We are in the process of updating our dependencies to provide full support for Ubuntu 22.04, Ubuntu 24.04 and Windows 10/11. This includes mondernizing our compilers, QT framework version, Windows package manager, and code. The end goal will be a WindNinja with a new, fresh GUI that has better compilation support on Windows and Ubuntu. 
+
 Web:
 https://ninjastorm.firelab.org/windninja/
 
