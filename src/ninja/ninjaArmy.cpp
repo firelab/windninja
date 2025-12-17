@@ -36,10 +36,7 @@ ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
     Com = new ninjaComClass();
-    //Com->runNumber = 0;
     Com->runNumber = 9999;
-    //Com->lastMsg[0] = '\0';
-    strcpy(Com->lastMsg, "the heck!\0");
 
 //    ninjas.push_back(new ninja());
     initLocalData();
@@ -52,14 +49,9 @@ ninjaArmy::ninjaArmy()
 */
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
-    Com = new ninjaComClass();
-
-    Com->runNumber = A.Com->runNumber;
-    Com->pfnProgress = A.Com->pfnProgress;
-    Com->pProgressUser = A.Com->pProgressUser;
-    Com->multiStream = A.Com->multiStream;
-    strcpy( Com->lastMsg, A.Com->lastMsg );
-    Com->fpLog = A.Com->fpLog;
+    //Com = new ninjaComClass();
+    //*Com = *A.Com;
+    Com = new ninjaComClass(*A.Com);
 
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
@@ -91,15 +83,8 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
     if(&A != this)
     {
         delete Com;
-
         Com = new ninjaComClass();
-
-        Com->runNumber = A.Com->runNumber;
-        Com->pfnProgress = A.Com->pfnProgress;
-        Com->pProgressUser = A.Com->pProgressUser;
-        Com->multiStream = A.Com->multiStream;
-        strcpy( Com->lastMsg, A.Com->lastMsg );
-        Com->fpLog = A.Com->fpLog;
+        *Com = *A.Com;
 
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
@@ -138,15 +123,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArm
         ninjas[i] = new ninja();
 #endif //NINJAFOAM
 
-        setNinjaComRunNumber( i, i );
-        if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
-        {
-            setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
-        }
-        if( Com->multiStream != NULL )
-        {
-            setNinjaMultiComStream( i, Com->multiStream );
-        }
+        setNinjaCommunication( i, i );
     }
 }
 
@@ -185,15 +162,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
     {
         ninjas[i] = new ninja();
 
-        setNinjaComRunNumber( i, i );
-        if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
-        {
-            setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
-        }
-        if( Com->multiStream != NULL )
-        {
-            setNinjaMultiComStream( i, Com->multiStream );
-        }
+        setNinjaCommunication( i, i );
     }
 
     boost::local_time::tz_database tz_db;
@@ -445,15 +414,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
             ninjas[i] = new ninja();
 #endif //NINJAFOAM
 
-            setNinjaComRunNumber( i, i );
-            if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
-            {
-                setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
-            }
-            if( Com->multiStream != NULL )
-            {
-                setNinjaMultiComStream( i, Com->multiStream );
-            }
+            setNinjaCommunication( i, i );
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -501,15 +462,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
             ninjas[i] = new ninja();
 #endif
 
-            setNinjaComRunNumber( i, i );
-            if( Com->pfnProgress != NULL && Com->pProgressUser != NULL)
-            {
-                setNinjaComProgressFunc( i, Com->pfnProgress, Com->pProgressUser );
-            }
-            if( Com->multiStream != NULL )
-            {
-                setNinjaMultiComStream( i, Com->multiStream );
-            }
+            setNinjaCommunication( i, i );
         }
 
 
@@ -1420,25 +1373,30 @@ int ninjaArmy::setNinjaMultiComStream( FILE* stream,
     return NINJA_SUCCESS;
 }
 
-int ninjaArmy::setNinjaComRunNumber( const int nIndex, const int RunNumber,
-                                     char ** papszOptions )
+int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
+                                      char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaComRunNumber( RunNumber ) );
-}
-
-int ninjaArmy::setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
-                                        char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaComProgressFunc( func, pUser ) );
-}
-
-int ninjaArmy::setNinjaMultiComStream( const int nIndex, FILE* stream,
-                                       char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaMultiComStream( stream ) );
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        try
+        {
+            ninjas[ nIndex ]->set_ninjaCommunication( Com );
+            ninjas[ nIndex ]->set_ninjaComRunNumber( RunNumber );
+            retval = NINJA_SUCCESS;
+        }
+        catch( std::exception &e )
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s, Failed to set ninjas[%d] level ninjaCom", e.what(), RunNumber);
+            retval = NINJA_E_INVALID;
+        }
+        catch( ... )
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to set ninjas[%d] level ninjaCom", RunNumber);
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
 }
 
 /*-----------------------------------------------------------------------------

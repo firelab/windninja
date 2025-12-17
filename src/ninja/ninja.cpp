@@ -78,10 +78,8 @@ ninja::ninja()
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
 
     // ninjaCom stuff
-    input.inputsRunNumber = 0;
     input.Com = new ninjaComClass();
-    input.Com->runNumber = input.inputsRunNumber;
-    //input.Com->lastMsg[0] = '\0';
+    set_ninjaComRunNumber(-9999);  // initial val
 }
 
 /**Ninja destructor
@@ -124,14 +122,9 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    input.Com = new ninjaComClass();
-
-    set_ninjaComRunNumber(rhs.input.inputsRunNumber);
-    input.Com->pfnProgress = rhs.input.Com->pfnProgress;
-    input.Com->pProgressUser = rhs.input.Com->pProgressUser;
-    input.Com->multiStream = rhs.input.Com->multiStream;
-    strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
-    input.Com->fpLog = rhs.input.Com->fpLog;
+    //input.Com = new ninjaComClass();
+    //*input.Com = *rhs.input.Com;
+    input.Com = new ninjaComClass(*rhs.input.Com);
 
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
@@ -186,15 +179,8 @@ ninja &ninja::operator=(const ninja &rhs)
     if(&rhs != this)
     {
         delete input.Com;
-
         input.Com = new ninjaComClass();
-
-        set_ninjaComRunNumber(rhs.input.inputsRunNumber);
-        input.Com->pfnProgress = rhs.input.Com->pfnProgress;
-        input.Com->pProgressUser = rhs.input.Com->pProgressUser;
-        input.Com->multiStream = rhs.input.Com->multiStream;
-        strcpy( input.Com->lastMsg, rhs.input.Com->lastMsg );
-        input.Com->fpLog = rhs.input.Com->fpLog;
+        *input.Com = *rhs.input.Com;
 
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
@@ -3557,20 +3543,15 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
+void ninja::set_ninjaCommunication(const ninjaComClass* Com)
+{
+    *input.Com = *Com;
+}
+
 void ninja::set_ninjaComRunNumber(int RunNumber)
 {
     input.inputsRunNumber = RunNumber;
     input.Com->runNumber = input.inputsRunNumber;
-}
-
-void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
-{
-    input.Com->set_progressFunc(func, pUser);
-}
-
-void ninja::set_ninjaMultiComStream(FILE* stream)
-{
-    input.Com->multiStream = stream;
 }
 
 void ninja::set_progressWeight(double progressWeight)

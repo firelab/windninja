@@ -30,8 +30,8 @@
 #include "ninjaCom.h"
 
 /**
-* Constructor for ninjaComClass.
-* @return
+* @brief Default constructor.
+*
 */
 ninjaComClass::ninjaComClass()
 {
@@ -43,8 +43,8 @@ ninjaComClass::ninjaComClass()
     printProgressFunc = false;
     pfnProgress = nullptr;
     pProgressUser = nullptr;
-    multiStream = NULL;
     printLogFile = false;
+    multiStream = NULL;
     errorCount = 0;
     nMaxErrors = 10;
     printMaxErrors = false;
@@ -54,12 +54,67 @@ ninjaComClass::ninjaComClass()
 }
 
 /**
-* Destructor for ninjaComClass.
-* @return
+* @brief Destructor.
+*
 */
 ninjaComClass::~ninjaComClass()
 {
 
+}
+
+/**
+* @brief Copy constructor.
+*
+* @param a ninjaComClass object to be copied.
+*/
+ninjaComClass::ninjaComClass(const ninjaComClass& A)
+{
+    fpLog = A.fpLog;
+    fpErr = A.fpErr;
+    printLastMsg = A.printLastMsg;
+    strcpy( lastMsg, A.lastMsg );
+    runNumber = A.runNumber;
+    printProgressFunc = A.printProgressFunc;
+    pfnProgress = A.pfnProgress;
+    pProgressUser = A.pProgressUser;
+    printLogFile = A.printLogFile;
+    multiStream = A.multiStream;
+    errorCount = A.errorCount;
+    nMaxErrors = A.nMaxErrors;
+    printMaxErrors = A.printMaxErrors;
+    printSolverProgress = A.printSolverProgress;
+    printRunNumber = A.printRunNumber;
+    progressWeight = A.progressWeight;
+}
+
+/**
+* @brief Equals operator.
+*
+* @param a ninjaComClass object to set equal to.
+* @return A reference to a ninjaComClass object equal to the one on the right-hand side.
+*/
+ninjaComClass& ninjaComClass::operator=(const ninjaComClass &A)
+{
+    if(&A != this)
+    {
+        fpLog = A.fpLog;
+        fpErr = A.fpErr;
+        printLastMsg = A.printLastMsg;
+        strcpy( lastMsg, A.lastMsg );
+        runNumber = A.runNumber;
+        printProgressFunc = A.printProgressFunc;
+        pfnProgress = A.pfnProgress;
+        pProgressUser = A.pProgressUser;
+        printLogFile = A.printLogFile;
+        multiStream = A.multiStream;
+        errorCount = A.errorCount;
+        nMaxErrors = A.nMaxErrors;
+        printMaxErrors = A.printMaxErrors;
+        printSolverProgress = A.printSolverProgress;
+        printRunNumber = A.printRunNumber;
+        progressWeight = A.progressWeight;
+    }
+    return *this;
 }
 
 void ninjaComClass::set_progressFunc(ProgressFunc func, void *pUser)
@@ -87,7 +142,8 @@ void ninjaComClass::noSolverProgress()
 }
 
 /**
-* Communication function used to pass messages from the program to different ninjaComHandler() functions.
+* Communication function used to pass messages from the program to the ninjaComHandler() function,
+* parsing the printf() %f, %d, %s, etc style syntax of the message into a fully built string.
 * @param eMsg Type of message to be passed. See msgType for available types.
 * @param Message to be passed, using string formatting (like a printf() statement).
 */

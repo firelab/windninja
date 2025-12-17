@@ -45,8 +45,13 @@
 class ninjaComClass
 {
 public:
+
     ninjaComClass();
     ~ninjaComClass();
+
+    ninjaComClass(const ninjaComClass& A);
+    ninjaComClass& operator=(const ninjaComClass &A);
+
     double progressWeight;
 
     typedef enum

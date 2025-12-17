@@ -142,7 +142,7 @@ public:
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    ninjaComClass *Com;  //pointer to a com handler for the specific communication type desired
+    ninjaComClass *Com;  // pointer to the ninjaArmy level com handler
 
     enum eWxModelType{
         ncepNdfd,
@@ -190,27 +190,15 @@ public:
                                 char ** papszOptions = NULL);
 
     /**
-    * \brief Set the ninja and ninjaCom runNumber of a ninja
+    * \brief Set the ninjaCom handler of a ninja, using the ninjaArmy level ninjaCom handler
+    *  and set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja
     * \param RunNumber the specific ninja/simulation run number
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setNinjaComRunNumber( const int nIndex, const int RunNumber,
-                              char ** papszOptions = NULL );
-
-    int setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
-                                 char ** papszOptions = NULL);
-
-    /**
-    * \brief Initialize the message communication multi-stream FILE of a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param stream communication multi-stream FILE of a ninja
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNinjaMultiComStream( const int nIndex, FILE* stream,
-                                char ** papszOptions = NULL);
+    int setNinjaCommunication( const int nIndex, const int RunNumber,
+                               char ** papszOptions = NULL);
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods
