@@ -52,8 +52,6 @@ public:
     ninjaComClass(const ninjaComClass& A);
     ninjaComClass& operator=(const ninjaComClass &A);
 
-    double progressWeight;
-
     typedef enum
     {
         ninjaNone,
@@ -83,6 +81,8 @@ public:
     bool printMaxErrors;  //flag to determine whether to keep printing error messages past when errorCount exceeds nMaxErrors
     bool printSolverProgress;  //flag specifying where normal solver progress should be printed (matching will still be printed)
     bool printRunNumber;  //flag to determine if thread number should be printed at beginning of messages
+
+    double progressWeight;
 
     //methods
 

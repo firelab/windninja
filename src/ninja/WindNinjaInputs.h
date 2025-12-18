@@ -109,7 +109,7 @@ public:
     ninjaComClass *Com;  // pointer to a given ninjas[i] level com handler
     int inputsRunNumber;
 
-    int armySize; 
+    int armySize;
     GDALDatasetH hSpdMemDs;
     GDALDatasetH hDirMemDs;
     GDALDatasetH hDustMemDs;

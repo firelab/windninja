@@ -49,8 +49,6 @@ ninjaArmy::ninjaArmy()
 */
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
-    //Com = new ninjaComClass();
-    //*Com = *A.Com;
     Com = new ninjaComClass(*A.Com);
 
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;

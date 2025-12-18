@@ -76,10 +76,6 @@ ninja::ninja()
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
-
-    // ninjaCom stuff
-    input.Com = new ninjaComClass();
-    set_ninjaComRunNumber(-9999);  // initial val
 }
 
 /**Ninja destructor
@@ -88,7 +84,6 @@ ninja::ninja()
 ninja::~ninja()
 {
     deleteDynamicMemory();
-    delete input.Com;
 }
 
 /**
@@ -122,10 +117,6 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    //input.Com = new ninjaComClass();
-    //*input.Com = *rhs.input.Com;
-    input.Com = new ninjaComClass(*rhs.input.Com);
-
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
     isNullRun = rhs.isNullRun;
@@ -178,10 +169,6 @@ ninja &ninja::operator=(const ninja &rhs)
 {
     if(&rhs != this)
     {
-        delete input.Com;
-        input.Com = new ninjaComClass();
-        *input.Com = *rhs.input.Com;
-
         AngleGrid = rhs.AngleGrid;
         VelocityGrid = rhs.VelocityGrid;
         CloudGrid = rhs.CloudGrid;
