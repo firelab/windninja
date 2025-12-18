@@ -88,9 +88,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy();
 
     WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
-        ( NinjaArmyH * ninjaArmy, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options);
-//        ( NinjaArmyH * ninjaArmy, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList,
-//         const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char* airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options);
+        ( NinjaArmyH * ninjaArmy, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
+          const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char* airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options);
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
     WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy

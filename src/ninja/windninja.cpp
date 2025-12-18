@@ -110,9 +110,8 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
-    ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
-//    ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList,
-//      const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
+    ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
+      const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
 
 #ifndef NINJAFOAM
@@ -145,14 +144,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
         for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++) 
         {
             reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
-            
+
             reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
 
-//            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
-//
-//            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
-//            
-//            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+
+            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+
+            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
         }
     }
     catch( ... )

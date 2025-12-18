@@ -66,7 +66,7 @@ int main()
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
-    const int diurnalFlag = 0; //diurnal slope wind parameterization not used
+    const int diurnalFlag = 1; //diurnal slope wind parameterization not used
     const double height = 10.0;
     const char * heightUnits = "m";
     //bool momentumFlag = 0; //we're using the conservation of mass solver
@@ -125,8 +125,7 @@ int main()
     /*
      * Create the army
      */
-    err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
-    //err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
     if( err != NINJA_SUCCESS)
     {
         printf("NinjaMakeDomainAverageArmy: err = %d\n", err);
