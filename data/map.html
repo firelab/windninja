@@ -189,8 +189,10 @@
                 fill: false
             }).addTo(mapRectangleLayer);
 
-            map.fitBounds(rectangle.getBounds());
-        }
+            setTimeout(() => {
+    map.fitBounds(rectangle.getBounds());
+}, 5000);
+    }
 
         function startRectangleDrawing() {
             mapRectangleLayer.clearLayers();
@@ -275,6 +277,7 @@
             map.fitBounds(layer.getBounds());
         });
 
+
         const baseMaps = {};
         const overlayMaps = {};
         const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
@@ -307,7 +310,6 @@
 
         new QWebChannel(qt.webChannelTransport, channel => {
             window.bridge = channel.objects.bridge;
-            window.bridge.notifyReady();
         });
 
     </script>

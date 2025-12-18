@@ -104,7 +104,6 @@ signals:
     void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
 
 protected:
-    void showEvent(QShowEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
@@ -167,6 +166,7 @@ private:
 
     void writeSettings();
     void readSettings();
+    void waitForLeaflet();
 
 };
 #endif // MAINWINDOW_H

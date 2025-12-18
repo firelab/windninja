@@ -129,10 +129,11 @@ void MainWindow::connectSignals()
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
     connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
     connect(weatherModelInput, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
+    connect(webEngineView, &QWebEngineView::loadFinished, this, &MainWindow::readSettings);
+
     connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
     connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
     connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
-
     connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
     connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
@@ -1225,7 +1226,6 @@ void MainWindow::readSettings()
     settings.setDefaultFormat(QSettings::IniFormat);
     if(settings.contains("inputFileDir"))
     {
-        QString temp = settings.value("inputFileDir").toString();
         ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
     }
     else
@@ -1280,7 +1280,7 @@ void MainWindow::readSettings()
 void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
-    connect(mapBridge, &MapBridge::ready, this, &MainWindow::readSettings);
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
