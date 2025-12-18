@@ -63,9 +63,21 @@ public:
         ninjaFatal
     } msgType;
 
+
+    bool printRunNumber;  // flag to determine if thread number should be printed at beginning of messages
+    int runNumber;  // run number of the simulation. Can turn this back into a pointer to the value in the WindNinjaInputs class, if the values start to differ
+
+    bool printMaxErrors;  // flag to determine whether to keep printing error messages past when errorCount exceeds nMaxErrors
+    int errorCount;  // running error count
+    int nMaxErrors;  // max number of errors to report
+
+    double progressWeight;  // storage managed and used by diurnal simulations
+
+    bool printSolverProgress;  // flag specifying whether normal solver progress should be printed (matching progress from point initialization runs will still be printed)
+
     bool printLastMsg;
     char lastMsg[NINJA_MSG_SIZE];  // storage of the last message
-    int runNumber;  // run number of the simulation. Can turn this back into a pointer to the value in the WindNinjaInputs class, if the values start to differ
+
 
     bool printProgressFunc;
     ProgressFunc pfnProgress;
@@ -76,13 +88,6 @@ public:
     FILE*     fpErr;
     FILE* multiStream;
 
-    int errorCount; //running error count
-    int nMaxErrors; //max number of errors to report
-    bool printMaxErrors;  //flag to determine whether to keep printing error messages past when errorCount exceeds nMaxErrors
-    bool printSolverProgress;  //flag specifying where normal solver progress should be printed (matching will still be printed)
-    bool printRunNumber;  //flag to determine if thread number should be printed at beginning of messages
-
-    double progressWeight;
 
     //methods
 
@@ -92,7 +97,6 @@ public:
 
     void ninjaCom(msgType eMsg, const char *fmt, ...);
     void ninjaComV(msgType, const char *, va_list);
-    //void initializeNinjaCom(char *LastMsg, int RunNumber);
 
     void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
 };

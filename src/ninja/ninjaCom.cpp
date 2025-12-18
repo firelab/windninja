@@ -35,22 +35,28 @@
 */
 ninjaComClass::ninjaComClass()
 {
-    fpLog = stdout;
-    fpErr = stderr;
+    printRunNumber = true;
+    runNumber = -9999;
+
+    printMaxErrors = false;
+    errorCount = 0;
+    nMaxErrors = 10;
+
+    progressWeight = 1.0;
+
+    printSolverProgress = true;
+
     printLastMsg = false;
     lastMsg[0] = '\0';
-    runNumber = -9999;
+
     printProgressFunc = false;
     pfnProgress = nullptr;
     pProgressUser = nullptr;
+
     printLogFile = false;
+    fpLog = stdout;
+    fpErr = stderr;
     multiStream = NULL;
-    errorCount = 0;
-    nMaxErrors = 10;
-    printMaxErrors = false;
-    printSolverProgress = true;
-    printRunNumber = true;
-    progressWeight = 1.0;
 }
 
 /**
@@ -69,22 +75,28 @@ ninjaComClass::~ninjaComClass()
 */
 ninjaComClass::ninjaComClass(const ninjaComClass& A)
 {
-    fpLog = A.fpLog;
-    fpErr = A.fpErr;
+    printRunNumber = A.printRunNumber;
+    runNumber = A.runNumber;
+
+    printMaxErrors = A.printMaxErrors;
+    errorCount = A.errorCount;
+    nMaxErrors = A.nMaxErrors;
+
+    progressWeight = A.progressWeight;
+
+    printSolverProgress = A.printSolverProgress;
+
     printLastMsg = A.printLastMsg;
     strcpy( lastMsg, A.lastMsg );
-    runNumber = A.runNumber;
+
     printProgressFunc = A.printProgressFunc;
     pfnProgress = A.pfnProgress;
     pProgressUser = A.pProgressUser;
+
     printLogFile = A.printLogFile;
+    fpLog = A.fpLog;
+    fpErr = A.fpErr;
     multiStream = A.multiStream;
-    errorCount = A.errorCount;
-    nMaxErrors = A.nMaxErrors;
-    printMaxErrors = A.printMaxErrors;
-    printSolverProgress = A.printSolverProgress;
-    printRunNumber = A.printRunNumber;
-    progressWeight = A.progressWeight;
 }
 
 /**
@@ -97,22 +109,28 @@ ninjaComClass& ninjaComClass::operator=(const ninjaComClass &A)
 {
     if(&A != this)
     {
-        fpLog = A.fpLog;
-        fpErr = A.fpErr;
+        printRunNumber = A.printRunNumber;
+        runNumber = A.runNumber;
+
+        printMaxErrors = A.printMaxErrors;
+        errorCount = A.errorCount;
+        nMaxErrors = A.nMaxErrors;
+
+        progressWeight = A.progressWeight;
+
+        printSolverProgress = A.printSolverProgress;
+
         printLastMsg = A.printLastMsg;
         strcpy( lastMsg, A.lastMsg );
-        runNumber = A.runNumber;
+
         printProgressFunc = A.printProgressFunc;
         pfnProgress = A.pfnProgress;
         pProgressUser = A.pProgressUser;
+
         printLogFile = A.printLogFile;
+        fpLog = A.fpLog;
+        fpErr = A.fpErr;
         multiStream = A.multiStream;
-        errorCount = A.errorCount;
-        nMaxErrors = A.nMaxErrors;
-        printMaxErrors = A.printMaxErrors;
-        printSolverProgress = A.printSolverProgress;
-        printRunNumber = A.printRunNumber;
-        progressWeight = A.progressWeight;
     }
     return *this;
 }
@@ -126,9 +144,9 @@ void ninjaComClass::set_progressFunc(ProgressFunc func, void *pUser)
         return;
     }
 
+    printProgressFunc = true;
     pfnProgress = func;
     pProgressUser = pUser;
-    printProgressFunc = true;
 }
 
 /**
@@ -170,12 +188,6 @@ void ninjaComClass::ninjaComV(msgType eMsg, const char *fmt, va_list args)
 
     ninjaComHandler(eMsg, ninjaMsg);
 }
-
-//void ninjaComClass::initializeNinjaCom(char *LastMsg, int RunNumber)
-//{
-//	lastMsg = LastMsg;
-//	runNumber = RunNumber;
-//}
 
 /**
 * Communication handler for WindNinja simulations. Takes an input message and prints/passes it.
