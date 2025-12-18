@@ -3533,6 +3533,7 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
 void ninja::set_ninjaCommunication(const ninjaComClass* Com)
 {
     *input.Com = *Com;
+    input.Com->printRunNumber = true;
 }
 
 void ninja::set_ninjaComRunNumber(int RunNumber)

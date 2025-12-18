@@ -37,6 +37,7 @@ ninjaArmy::ninjaArmy()
 {
     Com = new ninjaComClass();
     Com->runNumber = 9999;
+    Com->printRunNumber = false;
 
 //    ninjas.push_back(new ninja());
     initLocalData();
