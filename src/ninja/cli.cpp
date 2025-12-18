@@ -1435,21 +1435,10 @@ int windNinjaCLI(int argc, char* argv[])
         }
 //STATION_FETCH
 
-        /*
-        windsim.Com = new ninjaCLIComHandler();
-        int r = -1;
-        windsim.Com->runNumber = &r;
-        char msg[1024];
-        windsim.Com->lastMsg = msg;
-        */
-
         //For loop over all ninjas (just 1 ninja unless it's a weather model run)--------------------
 
         for(int i_ = 0; i_ < windsim.getSize(); i_++)
         {
-            //Set ninja communication----------------------------------------------------------
-            windsim.setNinjaCommunication(i_, i_, ninjaComClass::ninjaCLICom );
-
             windsim.setNumberCPUs( i_, vm["num_threads"].as<int>() );
 
             //windsim.ninjas[i_].readInputFile(*elevation_file);

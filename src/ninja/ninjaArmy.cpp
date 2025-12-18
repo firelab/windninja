@@ -35,6 +35,10 @@
 ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
+    Com = new ninjaComClass();
+    Com->runNumber = 9999;
+    Com->printRunNumber = false;
+
 //    ninjas.push_back(new ninja());
     initLocalData();
 }
@@ -46,6 +50,8 @@ ninjaArmy::ninjaArmy()
 */
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
+    Com = new ninjaComClass(*A.Com);
+
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
     copyLocalData( A );
@@ -62,6 +68,7 @@ ninjaArmy::~ninjaArmy()
         delete ninjas[0];
     }
     destoryLocalData();
+    delete Com;
 }
 
 /**
@@ -74,6 +81,10 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
 {
     if(&A != this)
     {
+        delete Com;
+        Com = new ninjaComClass();
+        *Com = *A.Com;
+
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
         copyLocalData( A );
@@ -93,6 +104,9 @@ int ninjaArmy::getSize()
 
 void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
     int i;
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
@@ -107,6 +121,8 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 #else
         ninjas[i] = new ninja();
 #endif //NINJAFOAM
+
+        setNinjaCommunication( i, i );
     }
 }
 
@@ -121,6 +137,9 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
                              string demFile, bool matchPoints, bool momentumFlag)
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
@@ -141,6 +160,8 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
     for(unsigned int i=0; i<timeList.size(); i++)
     {
         ninjas[i] = new ninja();
+
+        setNinjaCommunication( i, i );
     }
 
     boost::local_time::tz_database tz_db;
@@ -351,6 +372,9 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
  */
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -359,9 +383,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
         if(fcastList == NULL){
-            //ninjas hasn't been sized yet
-            //which i to even use for ninjas?
-            //ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
             throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
                   std::string(" cannot be opened."));
         }
@@ -390,6 +412,8 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 #else
             ninjas[i] = new ninja();
 #endif //NINJAFOAM
+
+            setNinjaCommunication( i, i );
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -415,8 +439,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
         }
         catch(armyException &e)
         {
-            //which i to even use for ninjas?
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
             throw;
         }
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -437,6 +460,8 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 #else
             ninjas[i] = new ninja();
 #endif
+
+            setNinjaCommunication( i, i );
         }
 
 
@@ -1317,59 +1342,60 @@ void ninjaArmy::setAtmFlags()
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
-                           const ninjaComClass::eNinjaCom comType,
-                           char ** papszOptions )
+int ninjaArmy::setNinjaComProgressFunc( ProgressFunc func, void *pUser,
+                                        char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
+    try
+    {
+        Com->set_progressFunc(func, pUser);
+    }
+    catch( ... )
+    {
+        std::cout << "!!!failed to set ninjaArmy level ninjaCom progress function!!!" << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
 }
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
-                           char ** papszOptions )
+int ninjaArmy::setNinjaMultiComStream( FILE* stream,
+                                       char ** papszOptions )
+{
+    try
+    {
+        Com->multiStream = stream;
+    }
+    catch( ... )
+    {
+        std::cout << "!!!failed to set ninjaArmy level ninjaCom multiStream FILE pointer!!!" << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
+                                      char ** papszOptions )
 {
     int retval = NINJA_E_INVALID;
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
-        if( comType == "ninjaCLICom" || comType == "cli" )
+        try
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaCLICom );
+            ninjas[ nIndex ]->set_ninjaCommunication( Com );
+            ninjas[ nIndex ]->set_ninjaComRunNumber( RunNumber );
             retval = NINJA_SUCCESS;
         }
-        else if( comType == "ninjaGUICom" || comType == "gui" )
+        catch( std::exception &e )
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaGUICom );
-            retval = NINJA_SUCCESS;
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s, Failed to set ninjas[%d] level ninjaCom", e.what(), RunNumber);
+            retval = NINJA_E_INVALID;
         }
-        else if( comType == "ninjaQuietCom" || comType == "quiet" )
+        catch( ... )
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaQuietCom );
-            retval = NINJA_SUCCESS;
-        }
-        else
-        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to set ninjas[%d] level ninjaCom", RunNumber);
             retval = NINJA_E_INVALID;
         }
     }
     return retval;
-}
-
-int ninjaArmy::setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
-                                        char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaComProgressFunc( func, pUser ) );
-}
-
-int ninjaArmy::setNinjaMultiComStream( const int nIndex, FILE* stream,
-                                       char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaMultiComStream( stream ) );
 }
 
 /*-----------------------------------------------------------------------------

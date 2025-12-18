@@ -30,37 +30,109 @@
 #include "ninjaCom.h"
 
 /**
-* Constructor for ninjaComClass.
-* @return
+* @brief Default constructor.
+*
 */
 ninjaComClass::ninjaComClass()
 {
-    fpLog = stdout;
-    fpErr = stderr;
+    printRunNumber = true;
+    runNumber = -9999;
+
+    printMaxErrors = false;
+    errorCount = 0;
+    nMaxErrors = 10;
+
+    progressWeight = 1.0;
+
+    printSolverProgress = true;
+
     printLastMsg = false;
-    lastMsg = NULL;
-    runNumber = NULL;
-    comType = NULL;
+    lastMsg[0] = '\0';
+
     printProgressFunc = false;
     pfnProgress = nullptr;
     pProgressUser = nullptr;
-    multiStream = NULL;
+
     printLogFile = false;
-    errorCount = 0;
-    nMaxErrors = 10;
-    printMaxErrors = false;
-    printSolverProgress = true;
-    printRunNumber = true;
-    progressWeight = 1.0;
+    fpLog = stdout;
+    fpErr = stderr;
+    multiStream = NULL;
 }
 
 /**
-* Destructor for ninjaComClass.
-* @return
+* @brief Destructor.
+*
 */
 ninjaComClass::~ninjaComClass()
 {
 
+}
+
+/**
+* @brief Copy constructor.
+*
+* @param a ninjaComClass object to be copied.
+*/
+ninjaComClass::ninjaComClass(const ninjaComClass& A)
+{
+    printRunNumber = A.printRunNumber;
+    runNumber = A.runNumber;
+
+    printMaxErrors = A.printMaxErrors;
+    errorCount = A.errorCount;
+    nMaxErrors = A.nMaxErrors;
+
+    progressWeight = A.progressWeight;
+
+    printSolverProgress = A.printSolverProgress;
+
+    printLastMsg = A.printLastMsg;
+    strcpy( lastMsg, A.lastMsg );
+
+    printProgressFunc = A.printProgressFunc;
+    pfnProgress = A.pfnProgress;
+    pProgressUser = A.pProgressUser;
+
+    printLogFile = A.printLogFile;
+    fpLog = A.fpLog;
+    fpErr = A.fpErr;
+    multiStream = A.multiStream;
+}
+
+/**
+* @brief Equals operator.
+*
+* @param a ninjaComClass object to set equal to.
+* @return A reference to a ninjaComClass object equal to the one on the right-hand side.
+*/
+ninjaComClass& ninjaComClass::operator=(const ninjaComClass &A)
+{
+    if(&A != this)
+    {
+        printRunNumber = A.printRunNumber;
+        runNumber = A.runNumber;
+
+        printMaxErrors = A.printMaxErrors;
+        errorCount = A.errorCount;
+        nMaxErrors = A.nMaxErrors;
+
+        progressWeight = A.progressWeight;
+
+        printSolverProgress = A.printSolverProgress;
+
+        printLastMsg = A.printLastMsg;
+        strcpy( lastMsg, A.lastMsg );
+
+        printProgressFunc = A.printProgressFunc;
+        pfnProgress = A.pfnProgress;
+        pProgressUser = A.pProgressUser;
+
+        printLogFile = A.printLogFile;
+        fpLog = A.fpLog;
+        fpErr = A.fpErr;
+        multiStream = A.multiStream;
+    }
+    return *this;
 }
 
 void ninjaComClass::set_progressFunc(ProgressFunc func, void *pUser)
@@ -72,9 +144,9 @@ void ninjaComClass::set_progressFunc(ProgressFunc func, void *pUser)
         return;
     }
 
+    printProgressFunc = true;
     pfnProgress = func;
     pProgressUser = pUser;
-    printProgressFunc = true;
 }
 
 /**
@@ -88,7 +160,8 @@ void ninjaComClass::noSolverProgress()
 }
 
 /**
-* Communication function used to pass messages from the program to different ninjaComHandler() functions.
+* Communication function used to pass messages from the program to the ninjaComHandler() function,
+* parsing the printf() %f, %d, %s, etc style syntax of the message into a fully built string.
 * @param eMsg Type of message to be passed. See msgType for available types.
 * @param Message to be passed, using string formatting (like a printf() statement).
 */
@@ -116,12 +189,6 @@ void ninjaComClass::ninjaComV(msgType eMsg, const char *fmt, va_list args)
     ninjaComHandler(eMsg, ninjaMsg);
 }
 
-//void ninjaComClass::initializeNinjaCom(char *LastMsg, int* RunNumber)
-//{
-//	lastMsg = LastMsg;
-//	runNumber = RunNumber;
-//}
-
 /**
 * Communication handler for WindNinja simulations. Takes an input message and prints/passes it.
 * The place the message is printed or passed to (or if the message is ignored)
@@ -132,14 +199,11 @@ void ninjaComClass::ninjaComV(msgType eMsg, const char *fmt, va_list args)
 */
 void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
 {
-    //char* lastMsg;	//pointer to last message, points to char in WindNinjaInputs class
-    //int* runNumber;	//pointer to run number, points to int in WindNinjaInputs class
-
     char msg[NINJA_MSG_SIZE];  // Declare a character array to store the result of sprintf, for printing
 
     if( printProgressFunc == false || multiStream != NULL )
     {
-        if( runNumber == NULL )
+        if( runNumber == -9999 )
         {
             return;
         }
@@ -176,7 +240,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
                     {
                         sprintf( msg, "Run %d: More than %d errors have been reported. "
                                  "No more will be reported from now on.\n",
-                                 *runNumber, nMaxErrors );
+                                 runNumber, nMaxErrors );
                     } else
                     {
                         sprintf( msg, "More than %d errors have been reported. "
@@ -206,7 +270,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg );
+            sprintf( msg, "Run %d: %s\n", runNumber, ninjaComMsg );
         } else
         {
             sprintf( msg, "%s\n", ninjaComMsg );
@@ -230,7 +294,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "Run %d: %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d: %s\n", runNumber, ninjaComMsg);
         } else
         {
             sprintf( msg, "%s\n", ninjaComMsg);
@@ -256,7 +320,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
         {
             if( printRunNumber == true )
             {
-                sprintf( msg, "Run %d (solver): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+                sprintf( msg, "Run %d (solver): %d%% complete\n", runNumber, atoi(ninjaComMsg));
             } else
             {
                 sprintf( msg, "Solver: %d%% complete\n", atoi(ninjaComMsg));
@@ -280,7 +344,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "Run %d (matching): %d%% complete\n", *runNumber, atoi(ninjaComMsg));
+            sprintf( msg, "Run %d (matching): %d%% complete\n", runNumber, atoi(ninjaComMsg));
         } else
         {
             sprintf( msg, "Solver (matching): %d%% complete\n", atoi(ninjaComMsg));
@@ -303,7 +367,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "Run %d (warning): %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d (warning): %s\n", runNumber, ninjaComMsg);
         } else
         {
             sprintf( msg, "Warning: %s\n", ninjaComMsg);
@@ -325,7 +389,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "Run %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d (ERROR): %s\n", runNumber, ninjaComMsg);
         } else
         {
             sprintf( msg, "ERROR: %s\n", ninjaComMsg);
@@ -348,7 +412,7 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
     {
         if( printRunNumber == true )
         {
-            sprintf( msg, "Run %d (ERROR): %s\n", *runNumber, ninjaComMsg);
+            sprintf( msg, "Run %d (ERROR): %s\n", runNumber, ninjaComMsg);
         } else
         {
             sprintf( msg, "ERROR: %s\n", ninjaComMsg);
@@ -370,11 +434,11 @@ void ninjaComClass::ninjaComHandler(msgType eMsg, const char *ninjaComMsg)
 
     if( printLastMsg == true )
     {
-        //If message is a Failure or Fatal type, write the string to the NinjaComString which
-        //can then be read from the ninja class using lastComString
+        // If message is a Failure or Fatal type, write the string to the lastMsg storage
+        // which can then be read from ninjaCom using ninja::get_lastComString()
         if( eMsg == ninjaFailure || eMsg == ninjaFatal )
         {
-            strcpy(lastMsg, ninjaComMsg);  //lastMsg points to string in WindNinjaInputs class (which is inherited by the ninja class)
+            strcpy(lastMsg, ninjaComMsg);  // stores the raw message in lastMsg, without any ninjaCom message processing
         }
     } // if( printLastMsg == true )
 

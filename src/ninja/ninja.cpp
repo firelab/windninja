@@ -76,13 +76,6 @@ ninja::ninja()
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
-
-    //ninjaCom stuff
-    input.lastComString[0] = '\0';
-    input.inputsRunNumber = 0;
-    input.inputsComType = ninjaComClass::ninjaDefaultCom;
-    input.Com = new ninjaComClass();
-    input.Com->comType = &input.inputsComType;
 }
 
 /**Ninja destructor
@@ -90,8 +83,7 @@ ninja::ninja()
  */
 ninja::~ninja()
 {
-	deleteDynamicMemory();
-        delete input.Com;
+    deleteDynamicMemory();
 }
 
 /**
@@ -125,13 +117,6 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    input.Com = NULL;   //must be set to null!
-    set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
-//    set_ninjaMultiComStream(rhs.input.Com.multiStream); // is this even a valid way to deal with the FILE* pointer? Seems like there might be smarter ways to do this
-    strcpy( input.lastComString, rhs.get_lastComString() );
-    input.Com->fpLog = rhs.get_ComLogFp();
-
-
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
     isNullRun = rhs.isNullRun;
@@ -3545,49 +3530,16 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
-void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
+void ninja::set_ninjaCommunication(const ninjaComClass* Com)
 {
-    input.inputsComType = comType;
+    *input.Com = *Com;
+    input.Com->printRunNumber = true;
+}
 
-    if(input.Com)
-        delete input.Com;
-
-    input.Com = new ninjaComClass();
-    input.Com->comType = &input.inputsComType;
-
+void ninja::set_ninjaComRunNumber(int RunNumber)
+{
     input.inputsRunNumber = RunNumber;
-    input.Com->runNumber = &input.inputsRunNumber;
-    input.Com->lastMsg = input.lastComString;
-}
-
-void ninja::set_ninjaComProgressFunc(ProgressFunc func, void *pUser)
-{
-    input.Com->set_progressFunc(func, pUser);
-}
-
-void ninja::set_ninjaMultiComStream(FILE* stream)
-{
-    input.Com->multiStream = stream;
-}
-
-int ninja::get_inputsRunNumber() const
-{
-    return input.inputsRunNumber;
-}
-
-ninjaComClass::eNinjaCom ninja::get_inputsComType() const
-{
-    return input.inputsComType;
-}
-
-char * ninja::get_lastComString() const
-{
-    return (char*)input.lastComString;
-}
-
-FILE * ninja::get_ComLogFp() const
-{
-    return input.Com->fpLog;
+    input.Com->runNumber = input.inputsRunNumber;
 }
 
 void ninja::set_progressWeight(double progressWeight)

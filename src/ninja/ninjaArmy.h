@@ -127,7 +127,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
 
 #include "callbackFunctions.h"
 
-//#include "ninjaCom.h"
+#include "ninjaCom.h"
+
 /**
 * Class used for doing multiple WindNinja runs.
 */
@@ -141,7 +142,7 @@ public:
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    //ninjaComClass *Com;
+    ninjaComClass *Com;  // pointer to the ninjaArmy level com handler
 
     enum eWxModelType{
         ncepNdfd,
@@ -181,33 +182,23 @@ public:
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
+
+    int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
+                                 char ** papszOptions = NULL);
+
+    int setNinjaMultiComStream( FILE* stream,
+                                char ** papszOptions = NULL);
+
     /**
-    * \brief Initialize the ninja communication of a ninja
+    * \brief Set the ninjaCom handler of a ninja, using the ninjaArmy level ninjaCom handler
+    *  and set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \param comType type of communication
+    * \param RunNumber the specific ninja/simulation run number
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNinjaCommunication( const int nIndex, const int RunNumber,
-                               const ninjaComClass::eNinjaCom comType,
-                               char ** papszOptions = NULL );
-
-    int setNinjaComProgressFunc( const int nIndex, ProgressFunc func, void *pUser,
-                                 char ** papszOptions = NULL);
-
-    int setNinjaCommunication( const int nIndex, std::string comType,
                                char ** papszOptions = NULL);
-
-    /**
-    * \brief Initialize the message communication multi-stream FILE of a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param stream communication multi-stream FILE of a ninja
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNinjaMultiComStream( const int nIndex, FILE* stream,
-                                char ** papszOptions = NULL);
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods
