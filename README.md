@@ -14,19 +14,7 @@ https://github.com/firelab/windninja
 FAQ:
 [https://ninjastorm.firelab.org/windninja/faq.html](https://ninjastorm.firelab.org/windninja/faq.html)
 
-Install:
--------
-We provide binaries for Windows, but require building from source for Linux and MacOS. We also support Docker.
-
-[Windows Binaries](https://research.fs.usda.gov/firelab/products/dataandtools/windninja)
-
-NOTE: We are in the process of updating our dependencies to provide full support for Ubuntu 22.04, Ubuntu 24.04 and Windows 10/11. This includes modernizing our compilers, QT framework version, Windows package manager, and code. The end result will be a WindNinja with an improved GUI and better compilation support on Windows and Ubuntu - coming to the master branch Feburary 2026. 
-
-[Linux build – Ubuntu 20.04](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-20.04)
-
-[Linux build – Ubuntu 22.04 (no GUI)](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-22.04)
-
-[Building on Windows](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies)
+Install: https://github.com/firelab/windninja/wiki
 
 Directories:
  * autotest    -> testing suite
