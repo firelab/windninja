@@ -51,3 +51,8 @@ void MapBridge::receiveBoundingBox(const QString &jsonCoords)
 
     emit boundingBoxReceived(north, south, east, west);
 }
+
+void MapBridge::notifyReady()
+{
+    emit ready();
+}
