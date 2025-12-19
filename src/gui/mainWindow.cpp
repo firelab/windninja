@@ -220,21 +220,22 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
         emit self->updateProgressValueSignal(runNumber, runProgress);
     }
 
-//"Run 1 (ERROR): Multiple runs were requested with the same input parameters."
-//"Run 0 (ERROR): Exception caught: I WANT CHOCOLATE!!! Yum."
+//"Run 1 ERROR: Multiple runs were requested with the same input parameters."
+//"Run 0 ERROR: Exception caught: I WANT CHOCOLATE!!! Yum."
 //"Run 0: Exception caught: Simulation was cancelled by the user."
+//"Run 1: Exception canceled by user caught: Simulation was cancelled by the user."
 
-    if( msg.find("Exception caught: ") != msg.npos || msg.find("(ERROR): ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos || msg.find("Exception canceled by user caught: ") != msg.npos )
     {
         if( msg.find("Exception caught: ") != msg.npos )
         {
             pos = msg.find("Exception caught: ");
             startPos = pos+18;
         }
-        else if( msg.find("(ERROR): ") != msg.npos )
+        else if( msg.find("Exception canceled by user caught: ") != msg.npos )
         {
-            pos = msg.find("(ERROR): ");
-            startPos = pos+9;
+            pos = msg.find("Exception canceled by user caught: ");
+            startPos = pos+35;
         }
         else // if( msg.find("ERROR: ") != msg.npos )
         {
@@ -261,13 +262,8 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
             emit self->writeToConsoleSignal(QString::fromStdString("Solver error: "+clipStr), Qt::red);
         }
     }
-    else if( msg.find("(warning): ") != msg.npos || msg.find("Warning: ") != msg.npos )
+    else if( msg.find("Warning: ") != msg.npos )
     {
-        if( msg.find("(warning): ") != msg.npos )
-        {
-            pos = msg.find("(warning): ");
-            startPos = pos+11;
-        }
         if( msg.find("Warning: ") != msg.npos )
         {
             pos = msg.find("Warning: ");

@@ -141,7 +141,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
     {
         reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
 
-        for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++) 
+        for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++)
         {
             reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
 
