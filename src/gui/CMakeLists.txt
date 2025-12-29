@@ -5,8 +5,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt6 REQUIRED COMPONENTS Widgets WebEngineWidgets)
-find_package(Qt6 REQUIRED COMPONENTS Core)
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Widgets
+    WebEngineWidgets
+    WebChannel
+)
 
 set(PROJECT_SOURCES
         main.cpp
@@ -53,7 +57,7 @@ else()
 endif()
 
 if(WIN32)
-  target_link_libraries(WindNinja PRIVATE shapelib::shp)
+  target_link_libraries(WindNinja PRIVATE shapelib::shp GDAL::GDAL)
 endif()
 
 target_link_libraries(WindNinja PRIVATE Qt${QT_VERSION_MAJOR}::Widgets PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets PRIVATE ninja)

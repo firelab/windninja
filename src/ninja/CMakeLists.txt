@@ -142,7 +142,7 @@ include_directories(${NINJA_INCLUDES})
 if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
     add_library(WindNinjadll SHARED ${NINJA_SOURCES})
-    target_link_libraries(WindNinjadll  PRIVATE shapelib::shp ${LINK_LIBS})
+    target_link_libraries(WindNinjadll  PRIVATE shapelib::shp GDAL::GDAL ${LINK_LIBS})
     target_compile_definitions(WindNinjadll
         PUBLIC 
             WIN32_LEAN_AND_MEAN

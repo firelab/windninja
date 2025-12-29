@@ -51,21 +51,7 @@
     #endif //WIN32 && WINDNINJA_EXPORTS
 #endif //WINDNINJADLL_EXPORT
 
-#ifdef WIN32
-#define true 1
-#define false 0
-#else
 #include <stdbool.h>
-#endif
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-
 #include <stdlib.h>
 #include <stdio.h>
 

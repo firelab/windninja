@@ -82,20 +82,7 @@ set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
 message(STATUS "PKG VERSION: ${WINDNINJA_VERSION_NAME}")
 
-include(FindBoost)
-set(Boost_DEBUG OFF)
-if(WIN32)
-    set(Boost_USE_STATIC_LIBS ON)
-else(WIN32)
-    set(Boost_USE_STATIC_LIBS OFF)
-endif(WIN32)
-set(Boost_USE_MULTITHREAD OFF)
-find_package(Boost 1.41.1 COMPONENTS date_time program_options
-                                     unit_test_framework REQUIRED)
 
-include(FindNetCDF)
-include(FindGDAL)
-find_package(NetCDF)
 
 option(USE_VCPKG "Use VCPKG for Windows dependencies" OFF)
 if(USE_VCPKG)
@@ -110,9 +97,22 @@ if(USE_VCPKG)
 
         set(GDAL_LIBRARY GDAL::GDAL)
         set(NETCDF_LIBRARIES_C netCDF::netcdf)
+        set(Boost_DEBUG OFF)
+        set(Boost_USE_STATIC_LIBS ON)
+        set(Boost_USE_MULTITHREAD OFF)
+
     else()
         message(FATAL_ERROR "USE_VCPKG is only supported on Windows.")
     endif()
+else()
+    include(FindBoost)
+    set(Boost_DEBUG OFF)
+    set(Boost_USE_STATIC_LIBS OFF)
+    set(Boost_USE_MULTITHREAD OFF)
+    find_package(Boost 1.41.1 COMPONENTS date_time program_options unit_test_framework REQUIRED)
+    include(FindNetCDF)
+    include(FindGDAL)
+    find_package(NetCDF)
 endif()
 
 # Ninja executables
