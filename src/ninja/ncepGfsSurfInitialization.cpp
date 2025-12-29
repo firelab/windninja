@@ -217,7 +217,7 @@ void ncepGfsSurfInitialization::checkForValidData()
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = CPLIsNan(dfNoData);
+                noDataIsNan = std::isnan(dfNoData);
             }
 
             //set the data
@@ -231,7 +231,7 @@ void ncepGfsSurfInitialization::checkForValidData()
                 {
                     if(noDataIsNan)
                     {
-                        if(CPLIsNan(padfScanline[k]))
+                        if(std::isnan(padfScanline[k]))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -540,7 +540,7 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         if( varList[i] == "Temperature_height_above_ground" ) {
             tempBandNum = (bandNum * 3) - 2;  // adjust for height dimension (3)
             GDAL2AsciiGrid( wrpDS, tempBandNum, airGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 airGrid.set_noDataValue(-9999.0);
                 airGrid.replaceNan( -9999.0 );
             }
@@ -548,7 +548,7 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         else if( varList[i] == "v-component_of_wind_height_above_ground" ) {
             vBandNum = (bandNum * 3) - 2;  // adjust for height dimension (3)
             GDAL2AsciiGrid( wrpDS, vBandNum, vGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 vGrid.set_noDataValue(-9999.0);
                 vGrid.replaceNan( -9999.0 );
             }
@@ -556,7 +556,7 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         else if( varList[i] == "u-component_of_wind_height_above_ground" ) {
             uBandNum = (bandNum * 3) - 2;  //adjust for height dimension (3)
             GDAL2AsciiGrid( wrpDS, uBandNum, uGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 uGrid.set_noDataValue(-9999.0);
                 uGrid.replaceNan( -9999.0 );
                 //TEST FOR SOUTHERN HEMISPHERE WARP ISSUE.
@@ -567,7 +567,7 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
         else if( varList[i] == "Total_cloud_cover_convective_cloud" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 cloudGrid.set_noDataValue(-9999.0);
                 cloudGrid.replaceNan( -9999.0 );
             }

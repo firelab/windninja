@@ -15,12 +15,12 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.16)
 
 project(WindNinja)
 
 # let cmake figure out how to set the C++ level
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
@@ -82,7 +82,6 @@ set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
 message(STATUS "PKG VERSION: ${WINDNINJA_VERSION_NAME}")
 
-# Locate third party libs
 include(FindBoost)
 set(Boost_DEBUG OFF)
 if(WIN32)
@@ -94,65 +93,30 @@ set(Boost_USE_MULTITHREAD OFF)
 find_package(Boost 1.41.1 COMPONENTS date_time program_options
                                      unit_test_framework REQUIRED)
 
-# All GIS related libs.  Windows uses GIS_INTERNALS_HOME
-if(WIN32)
-    option(USE_GIS_INTERNALS "Use dependencies (as many as possible) from gisinternals.com" OFF)
-    if(USE_GIS_INTERNALS)
-        find_path(GIS_INTERNALS_HOME gdal CACHE PATH)
-    file(TO_NATIVE_PATH ${GIS_INTERNALS_HOME} GIS_INTERNALS_HOME)
-    string(REGEX REPLACE "\\\\" "/" GIS_INTERNALS_HOME "${GIS_INTERNALS_HOME}")
-    endif(USE_GIS_INTERNALS)
-endif(WIN32)
+include(FindNetCDF)
+include(FindGDAL)
+find_package(NetCDF)
 
-option(USE_VCPKG "Use VCPKG for boost and GDAL" )
+option(USE_VCPKG "Use VCPKG for Windows dependencies" OFF)
 if(USE_VCPKG)
-    message("Using VCPKG")
-    find_package(GDAL CONFIG REQUIRED)
-    find_package(NETCDF CONFIG REQUIRED)
-#    target_link_libraries(main PRIVATE GDAL::GDAL)
-ELSE(USE_VCPKG)
-    include(FindNetCDF)
-    include(FindGDAL)
     if(WIN32)
-        if(NOT GIS_INTERNALS_HOME)
-            find_package(NetCDF REQUIRED)
-            find_package(GDAL REQUIRED)
-        else(NOT GIS_INTERNALS_HOME)
-            find_package(NetCDF)
-            find_package(GDAL)
-        endif(NOT GIS_INTERNALS_HOME)
-    else(WIN32)
-        find_package(NetCDF REQUIRED)
-        find_package(GDAL REQUIRED)
-    endif(WIN32)
-endif(USE_VCPKG)
+        message(STATUS "Using VCPKG")
+        find_package(shapelib CONFIG REQUIRED)
+        find_package(GDAL CONFIG REQUIRED)
+        find_package(netCDF CONFIG REQUIRED)
 
-if(USE_VCPKG)
-    set(GDAL_LIBRARY GDAL::GDAL)
-    set(NETCDF_LIBRARIES_C netCDF::netcdf)
-ELSE(USE_VCPKG)
-    if(WIN32)
-        if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
-            set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
-            set(NETCDF_LIBRARIES NOT_USED CACHE TYPE PATH FORCE)
-            set(NETCDF_LIBRARIES_C ${GIS_INTERNALS_HOME}/lib/netcdf.lib CACHE TYPE NAME FORCE)
-            set(NETCDF_INCLUDES-FOUND TRUE)
-            set(NETCDF_LIBRARIES_C-FOUND TRUE)
-       endif(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
-    endif(WIN32)
-    if(WIN32)
-        if(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
-            set(GDAL_INCLUDE_DIR ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
-            set(GDAL_LIBRARY ${GIS_INTERNALS_HOME}/lib/gdal_i.lib CACHE TYPE NAME FORCE)
-            set(GDAL_INCLUDE_DIR-FOUND TRUE)
-            set(GDAL_LIBRARY-FOUND TRUE)
-        endif(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
-    endif(WIN32)
-ENDIF(USE_VCPKG)
+        find_package(Boost REQUIRED COMPONENTS program_options)
+
+
+        set(GDAL_LIBRARY GDAL::GDAL)
+        set(NETCDF_LIBRARIES_C netCDF::netcdf)
+    else()
+        message(FATAL_ERROR "USE_VCPKG is only supported on Windows.")
+    endif()
+endif()
 
 # Ninja executables
 option(NINJA_GUI "Build Qt GUI" ON)
-
 option(NINJA_CLI "Build Command Line Interface" ON)
 
 # Weather related options
@@ -167,30 +131,37 @@ if(WITH_NOMADS_SUPPORT)
     if(NOT HAVE_TIMEGM)
         add_definitions(-DUSE_INTERNAL_TIME_GM)
     endif(NOT HAVE_TIMEGM)
+
     option(NOMADS_USE_VSI_READ "Use VSI*L api instead of CPLHTTPFetch" OFF)
     if(NOMADS_USE_VSI_READ)
         add_definitions(-DNOMADS_USE_VSI_READ)
     endif(NOMADS_USE_VSI_READ)
+
     option(NOMADS_RTMA "Enable the RTMA forecasts" OFF)
     if(NOMADS_RTMA)
         add_definitions(-DNOMADS_RTMA)
     endif(NOMADS_RTMA)
+
     option(NOMADS_EXPER_FORECASTS "Enable NARRE and NEST forecasts." OFF)
     if(NOMADS_EXPER_FORECASTS)
         add_definitions(-DNOMADS_EXPER_FORECASTS)
     endif(NOMADS_EXPER_FORECASTS)
+
     option(NOMADS_ENABLE_ASYNC "Enable multi-threading for NOMADS download" ON)
     if(NOMADS_ENABLE_ASYNC)
         add_definitions(-DNOMADS_ENABLE_ASYNC)
     endif(NOMADS_ENABLE_ASYNC)
+
     option(NOMADS_USE_IP "Use the ip address for the nomads server, not a host" OFF)
     if(NOMADS_USE_IP)
         add_definitions(-DNOMADS_USE_IP)
     endif(NOMADS_USE_IP)
+
     option(NOMADS_ENABLE_3D "Enable 3d initialization using NOMADS data." OFF)
     if(NOMADS_ENABLE_3D)
         add_definitions(-DNOMADS_ENABLE_3D)
     endif(NOMADS_ENABLE_3D)
+
     option(NOMADS_INTERNAL_VRT "Use an internal copy of GDALAutoCreateVRT that allows for band subsetting" OFF)
     if(NOMADS_INTERNAL_VRT)
         add_definitions(-DNOMADS_INTERNAL_VRT)
@@ -221,13 +192,9 @@ endif(C_API)
 
 # Enable phone home and message server startup
 option(PHONE_HOME_QUERIES "Enable Phone Home Queries" ON)
-
 if (PHONE_HOME_QUERIES)
     add_definitions(-DPHONE_HOME_QUERIES_ENABLED)
-    message(STATUS "Phone Home Queries are enabled.")
-else()
-    message(STATUS "Phone Home Queries are disabled.")
-endif()
+endif(PHONE_HOME_QUERIES)
 
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
@@ -317,18 +284,26 @@ endif(NOT WIN32)
 
 # Optional utilities
 option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
+
 option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
+
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
+
 option(BUILD_WRF_TO_KMZ "Build a standalone command line interface for converting WRF output to kmz" OFF )
 mark_as_advanced(BUILD_WRF_TO_KMZ)
+
 option(BUILD_HRRR_TO_KMZ "Build a standalone command line interface for converting hrrr output runs to kmz, without running full WindNinja" OFF )
 mark_as_advanced(BUILD_HRRR_TO_KMZ)
+
 option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
 mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
+
 option(BUILD_FLOW_SEPARATION_GRID "Build an application for building flow separation" OFF)
 mark_as_advanced(BUILD_FLOW_SEPARATION_GRID)
+
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
+
 option(BUILD_SURFACE_INPUT_NODATA_FILLER "Build an application for filling input surface no data values" ON)
 mark_as_advanced(BUILD_SURFACE_INPUT_NODATA_FILLER)
 
@@ -530,7 +505,7 @@ CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 1.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial1.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 2.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial2.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 3.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial3.pdf\\\"
-CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 4.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial4.pdf\\\" 
+CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 4.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial4.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\CLI Instructions.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\CLI_instructions.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\ArcMap Instructions.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\Displaying_wind_vectors_in_ArcMap.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\DEM Download Instructions.lnk\\\" \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\download_elevation_file.pdf\\\"
@@ -549,44 +524,29 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Tutorials\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
 # Build the nsis installer on the firelab machine(s).  Not for external use.
-if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
-    # Install the CURL_CA_BUNDLE file from the bin folder, and drop it in data/
-    install(FILES ${GIS_INTERNALS_HOME}/bin/curl/curl-ca-bundle.crt DESTINATION
-            share/windninja COMPONENT apps)
-    # Install the dlls GDAL depends on
-    file(GLOB dlls ${GIS_INTERNALS_HOME}/bin/*.dll)
-    foreach(dll ${dlls})
-        install(PROGRAMS ${dll} DESTINATION bin COMPONENT apps)
-    endforeach(dll ${dlls})
-    install(PROGRAMS ${GIS_INTERNALS_HOME}/bin/gdal/plugins/gdal_netCDF.dll DESTINATION bin/gdalplugins COMPONENT app)
-    get_filename_component(qtbin ${QT_QMAKE_EXECUTABLE} DIRECTORY)
-    string(REGEX REPLACE "\\\\" "/" qtbin "${qtbin}")
-    if(BUILD_TYPE MATCHES "release")
-        install(PROGRAMS "${qtbin}/qtgui4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtcore4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtwebkit4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/phonon4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtnetwork4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${QT_PLUGINS_DIR}/imageformats/qjpeg4.dll" DESTINATION bin/imageformats)
-    else(BUILD_TYPE MATCHES "release")
-        install(PROGRAMS "${qtbin}/qtguid4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtcored4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtwebkitd4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/phonond4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtnetworkd4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${QT_PLUGINS_DIR}/imageformats/qjpegd4.dll" DESTINATION bin/imageformats)
-    endif( BUILD_TYPE MATCHES "release")
-    # HACK FOR OPENMP
-    if(BUILD_64)
-        install(PROGRAMS ${MSVC_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
-    else(BUILD_64)
-        install(PROGRAMS ${MSVC_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
-    endif(BUILD_64)
-    if(NINJAFOAM)
-        install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
-        install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
-    endif(NINJAFOAM)
-endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
+if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
+
+    set(WINDEPLOYQT_EXE
+        "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe"
+    )
+    add_custom_target(deploy_windninja ALL
+        COMMAND "${WINDEPLOYQT_EXE}" --release "$<TARGET_FILE:WindNinja>"
+        DEPENDS WindNinja
+    )
+
+    install(
+    DIRECTORY "${PROJECT_BINARY_DIR}/src/gui/"
+    DESTINATION bin
+    FILES_MATCHING
+        PATTERN "*.exe"
+        PATTERN "*.dll"
+        PATTERN "plugins/*"
+        PATTERN "platforms/*"
+        PATTERN "resources/*"
+        PATTERN "*.qm"
+)
+
+endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 set(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
 set(CPACK_COMPONENT_LIBS_DISABLED TRUE)

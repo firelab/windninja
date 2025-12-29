@@ -412,7 +412,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         /*AsciiGrid<double> tempGrid;
         AsciiGrid<double> temp2Grid;
         GDAL2AsciiGrid( wrpDS, 12, tempGrid );
-        if( CPLIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
             tempGrid.set_noDataValue( -9999.0 );
             tempGrid.replaceNan( -9999.0 );
         }

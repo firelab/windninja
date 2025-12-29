@@ -282,7 +282,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
     // try multi threaded download
     const int MAX_CONCURRENT = 4;
-    std::vector<void*> threadHandles;
+    std::vector<CPLJoinableThread*> threadHandles;
 
     int i = 0;
     for (size_t dt = 0; dt < validTimes.size(); ++dt)
@@ -299,7 +299,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         params->options = options;
         params->i = i;
 
-        void* handle = CPLCreateJoinableThread(ThreadFunc, params);
+        CPLJoinableThread* handle = CPLCreateJoinableThread(ThreadFunc, params);
         if (!handle) {
             CPLDebug("GCP", "Failed to create thread");
             delete params;

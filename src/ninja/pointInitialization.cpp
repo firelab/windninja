@@ -777,7 +777,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
             if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
                 OGRFeature::DestroyFeature( poFeature );
-                OGR_DS_Destroy( hDS );
+                GDALClose( hDS );
 
                 oErrorString = "Bad latitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -792,7 +792,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             if( dfTempValue < -180.0 || dfTempValue > 360.0 )
             {
                 OGRFeature::DestroyFeature( poFeature );
-                OGR_DS_Destroy( hDS );
+                GDALClose( hDS );
 
                 oErrorString = "Bad longitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -1045,7 +1045,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         OGRFeature::DestroyFeature( poFeature );
     }
 
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
 
     return oStations;
 }
@@ -1436,7 +1436,7 @@ double pointInitialization::interpolator(double iPoint, double lowX, double high
     //MSVC 2010 is not c++11 compliant-> isnan doesn't work with MSVC2010
     //changing to CPLISNan()
 
-    if(CPLIsNan(result))
+    if(std::isnan(result))
     {
         result = work;
     }
@@ -1641,7 +1641,7 @@ void pointInitialization::fetchMetaData(std::string fileName, std::string demFil
         OGR_F_Destroy( hFeature );
     }
 
-    OGR_DS_Destroy(poDS);
+    GDALClose(poDS);
     GDALClose(hDS);
 }
 /**
@@ -2247,8 +2247,8 @@ vector<double> pointInitialization::Irradiate(vector<string> solar_radiation, st
         {
             solFrac=one;
         }
-        //Note that CPLIsNan is required to compile on MSVC2010 c++11's isnan doesn't work
-        if (CPLIsNan(solFrac))
+        //Note that std::isnan is required to compile on MSVC2010 c++11's isnan doesn't work
+        if (std::isnan(solFrac))
         {
             solFrac=one;
         }

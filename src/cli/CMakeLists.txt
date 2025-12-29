@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 3.16)
+#cmake_minimum_required(VERSION 3.10)
 
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -43,7 +43,18 @@ add_executable(WindNinja_cli cmake_cli.cpp)
 
 add_dependencies(WindNinja_cli ninja)
 
-target_link_libraries(WindNinja_cli ${LINK_LIBS})
+if(WIN32)
+  target_link_libraries(WindNinja_cli PRIVATE shapelib::shp)
+endif()
+
+target_link_libraries(WindNinja_cli PRIVATE ${LINK_LIBS})
+
+if(MSVC)
+    target_compile_definitions(WindNinja_cli
+        PUBLIC 
+            WIN32_LEAN_AND_MEAN 
+    )
+endif()
 
 install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
 

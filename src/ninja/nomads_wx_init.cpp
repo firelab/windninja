@@ -633,7 +633,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         if( EQUAL( pszElement, "TMP" ) )
         {
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             airGrid.set_noDataValue( -9999.0 );
             airGrid.replaceNan( -9999.0 );
@@ -643,7 +643,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         else if( EQUAL( pszElement, "UGRD" ) )
         {
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, uGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             uGrid.set_noDataValue( -9999.0 );
             uGrid.replaceNan( -9999.0 );
@@ -652,7 +652,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         else if( EQUAL( pszElement, "VGRD" ) )
         {
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, vGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             vGrid.set_noDataValue( -9999.0 );
             vGrid.replaceNan( -9999.0 );
@@ -661,7 +661,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         else if( EQUAL( pszElement, "TCDC" ) )
         {
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, cloudGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             cloudGrid.set_noDataValue( -9999.0 );
             cloudGrid.replaceNan( -9999.0 );
@@ -678,7 +678,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
           }
 
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, airGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             airGrid.set_noDataValue( -9999.0 );
             airGrid.replaceNan( -9999.0 );
@@ -696,7 +696,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
           }
 
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, speedGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             speedGrid.set_noDataValue( -9999.0 );
             speedGrid.replaceNan( -9999.0 );
@@ -706,7 +706,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         {
           blendCheck = true;
           GDAL2AsciiGrid( (GDALDataset*)hVrtDS, i + 1, directionGrid );
-          if( CPLIsNan( dfNoData ) )
+          if( std::isnan( dfNoData ) )
           {
             directionGrid.set_noDataValue( -9999.0 );
             directionGrid.replaceNan( -9999.0 );
@@ -785,7 +785,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             {
                 dfNoData = -9999.0;
             }
-            if( CPLIsNan( dfNoData ) )
+            if( std::isnan( dfNoData ) )
             {
                 cloudGrid.set_noDataValue( -9999.0 );
                 cloudGrid.replaceNan( -9999.0 );

@@ -244,7 +244,7 @@ void ncepNdfdInitialization::checkForValidData()
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = CPLIsNan(dfNoData);
+                noDataIsNan = std::isnan(dfNoData);
             }
 
             //set the data
@@ -258,7 +258,7 @@ void ncepNdfdInitialization::checkForValidData()
                 {
                     if(noDataIsNan)
                     {
-                        if(CPLIsNan(padfScanline[k]))
+                        if(std::isnan(padfScanline[k]))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -665,7 +665,7 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         //                GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
         //        }
         //    }
-        //if( CPLIsNan( dfNoData ) ) {
+        //if( std::isnan( dfNoData ) ) {
         //airHighGrid.set_noDataValue(-9999.0);
         //airHighGrid.replaceNan( -9999.0 );
         //airLowGrid.set_noDataValue(-9999.0);
@@ -704,7 +704,7 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         //    }
 
         ///* fix no data in the air high, low, and regular grid */
-        //if( CPLIsNan( dfNoData ) ) {
+        //if( std::isnan( dfNoData ) ) {
         //airHighGrid.set_noDataValue(-9999.0);
         //airHighGrid.replaceNan( -9999.0 );
         //airLowGrid.set_noDataValue(-9999.0);
@@ -717,7 +717,7 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         if(varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer_layer")
         {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-        if( CPLIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         cloudGrid.set_noDataValue(-9999.0);
         cloudGrid.replaceNan( -9999.0 );
         }
@@ -726,7 +726,7 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         }else if(varList[i] == "Wind_direction_from_which_blowing_height_above_ground")
         {
             GDAL2AsciiGrid( wrpDS, bandNum, directionGrid );
-        if( CPLIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         directionGrid.set_noDataValue(-9999.0);
         directionGrid.replaceNan( -9999.0 );
         }

@@ -158,7 +158,7 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
         hMemDS = NULL;
     }
     
-    OGR_DS_Destroy(hOGRDS);
+    GDALClose(hOGRDS);
 }
 #endif
 

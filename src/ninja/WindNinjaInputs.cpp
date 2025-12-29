@@ -370,7 +370,7 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
  * @param rhs WindNinjaInputs object to compare with.
  * @return true if objects are equal, otherwise false.
  */
-bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs)
+bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs) const
 {
     if( inputSpeed == rhs.inputSpeed &&
         inputSpeedUnits == rhs.inputSpeedUnits &&

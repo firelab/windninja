@@ -297,7 +297,7 @@ void OutputWriter::_closeOGRFile()
 {
     if( NULL != hDataSource )
     {
-        OGR_DS_Destroy( hDataSource );
+        GDALClose( hDataSource );
         hDataSource = NULL;
     }
 }

@@ -361,7 +361,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         if( varList[i] == "2t" ) {
             GDAL2AsciiGrid( wrpDS, i+1, airGrid );
 
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 airGrid.set_noDataValue( -9999.0 );
                 airGrid.replaceNan( -9999.0 );
             }
@@ -372,21 +372,21 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
         else if( varList[i] == "10v" ) {
             GDAL2AsciiGrid( wrpDS, i+1, vGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 vGrid.set_noDataValue( -9999.0 );
                 vGrid.replaceNan( -9999.0 );
             }
         }
         else if( varList[i] == "10u" ) {
             GDAL2AsciiGrid( wrpDS, i+1, uGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 uGrid.set_noDataValue( -9999.0 );
                 uGrid.replaceNan( -9999.0 );
             }
         }
         else if( varList[i] == "tcc" ) {
             GDAL2AsciiGrid( wrpDS, i+1, cloudGrid );
-            if( CPLIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 cloudGrid.set_noDataValue( -9999.0 );
                 cloudGrid.replaceNan( -9999.0 );
             }

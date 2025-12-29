@@ -747,7 +747,7 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
     }
     OGR_F_Destroy( hFeature );
     OGR_G_DestroyGeometry( hGeometry );
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
     return oTimeZone;
 }
 /**
@@ -818,7 +818,7 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
         }
     }
     OGR_G_DestroyGeometry( hTestGeometry );
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
     return bContains;
 }
 
