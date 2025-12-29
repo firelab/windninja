@@ -308,10 +308,12 @@
 
         centerControl.addTo(map);
 
-        new QWebChannel(qt.webChannelTransport, channel => {
-            window.bridge = channel.objects.bridge;
-        });
-
+        if (window.qt) {
+            new QWebChannel(qt.webChannelTransport, channel => {
+                window.bridge = channel.objects.bridge;
+            });
+        }
+        
     </script>
 </body>
 </html>
