@@ -56,7 +56,11 @@ add_executable(WindNinja_cli cmake_cli.cpp)
 
 add_dependencies(WindNinja_cli ninja)
 
-target_link_libraries(WindNinja_cli  PRIVATE shapelib::shp ${LINK_LIBS})
+if(WIN32)
+  target_link_libraries(WindNinja_cli PRIVATE shapelib::shp)
+endif()
+
+target_link_libraries(WindNinja_cli PRIVATE ${LINK_LIBS})
 
 if(MSVC)
     target_compile_definitions(WindNinja_cli

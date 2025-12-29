@@ -44,12 +44,15 @@ else()
     )
 endif()
 
+if(WIN32)
+  target_link_libraries(WindNinja PRIVATE shapelib::shp)
+endif()
+
 target_link_libraries(WindNinja
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
     PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets
     PRIVATE Qt${QT_VERSION_MAJOR}::WebChannel
     PRIVATE ninja
-    PRIVATE shapelib::shp
 )
 
 include(GNUInstallDirs)
