@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "splashscreen.h"
+#include "splashScreen.h"
 #include <QPainter>
 #include <QApplication>
 #include <QMouseEvent>

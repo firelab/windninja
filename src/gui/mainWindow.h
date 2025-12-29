@@ -30,18 +30,19 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "surfaceinput.h"
-#include "menubar.h"
-#include "domainaverageinput.h"
-#include "pointinitializationinput.h"
-#include "mapbridge.h"
-#include "serverbridge.h"
-#include "weathermodelinput.h"
-#include "ui_mainwindow.h"
-#include "appstate.h"
-//#include "ninjaCom.h"
+#include "outputs.h"
+#include "surfaceInput.h"
+#include "menuBar.h"
+#include "domainAverageInput.h"
+#include "pointInitializationInput.h"
+#include "mapBridge.h"
+#include "serverBridge.h"
+#include "weatherModelInput.h"
+#include "ui_mainWindow.h"
+#include "appState.h"
 #include "windninja.h"
 #include <QWebChannel>
+#include <QFuture>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
@@ -72,13 +73,6 @@
 #include <vector>
 #include <string>
 
-QT_BEGIN_NAMESPACE
-namespace Ui
-{
-    class MainWindow;
-}
-QT_END_NAMESPACE
-
 struct OutputMeshResolution {
     double resolution;
     QByteArray units;
@@ -101,6 +95,18 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    void updateDirunalState();
+    void updateStabilityState();
+    void updateMetholodyState();
+    void updateProgressValueSignal(int run, int progress);
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
+
+protected:
+    void showEvent(QShowEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+
 private slots:
     void massSolverCheckBoxClicked();
     void momentumSolverCheckBoxClicked();
@@ -109,18 +115,10 @@ private slots:
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
-    void numberOfProcessorsSolveButtonClicked();
-    void googleEarthGroupBoxToggled(bool checked);
-    void fireBehaviorGroupBoxToggled(bool checked);
-    void shapeFilesGroupBoxToggled(bool checked);
-    void geospatialPDFFilesGroupBoxToggled(bool checked);
-    void VTKFilesCheckBoxClicked(bool checked);
-    void googleEarthMeshResolutionGroupBoxToggled(bool checked);
-    void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
-    void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
-    void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
-    void refreshUI();
     void writeToConsole(QString message, QColor color = Qt::white);
+    void updateProgressValue(int run, int progress);
+    void updateProgressMessage(const QString message);
+    void cancelSolve();
 
 private:
     Ui::MainWindow *ui;
@@ -131,14 +129,29 @@ private:
     MenuBar *menuBar;
     ServerBridge *serverBridge;
     DomainAverageInput *domainAverageInput;
-    WeatherModelInput *weatherModelInput;
     PointInitializationInput *pointInitializationInput;
+    WeatherModelInput *weatherModelInput;
+    Outputs *outputs;
+
+    NinjaArmyH *ninjaArmy;
+    NinjaErr ninjaErr;
+
+    std::vector<int> runProgress;
+    int totalProgress;
+    int maxProgress;
+
+    QProgressDialog *progressDialog;
+    QFutureWatcher<int> *futureWatcher;
+
+    int startSolve(int numProcessors);
+    void finishedSolve();
+
     QString currentDEMFilePath;
 
     void connectSignals();
     void treeItemClicked(QTreeWidgetItem *item, int column);
-    void prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
-    void setOutputFlags(NinjaArmyH* ninjaArmy,
+    bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
+    bool setOutputFlags(NinjaArmyH* ninjaArmy,
                         int i,
                         int numNinjas,
                         OutputMeshResolution googleEarth,
@@ -151,6 +164,10 @@ private:
                                            QComboBox* outputMeshResolutionComboBox);
 
     int lineNumber;
+
+    void writeSettings();
+    void readSettings();
+    void waitForLeaflet();
 
 };
 #endif // MAINWINDOW_H

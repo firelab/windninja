@@ -38,14 +38,23 @@ int main()
      * Setting up the simulation
      */
     NinjaArmyH* ninjaArmy = NULL; 
-    const char * comType = "cli"; //communication type is always set to "cli"
     const int nCPUs = 4;
     char ** papszOptions = NULL;
-    NinjaErr err = 0; 
+    NinjaErr err = 0;
     err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
     if(err != NINJA_SUCCESS)
     {
-      printf("NinjaInit: err = %d\n", err);
+        printf("NinjaInit: err = %d\n", err);
+    }
+
+    /*
+     * Setting up a log file, for ninjaCom, if desired
+     */
+    FILE* multiStream = NULL;
+    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/output/ninja.log", "w+");
+    if(multiStream == NULL)
+    {
+        printf("error opening log file\n");
     }
 
     /* 
@@ -57,7 +66,7 @@ int main()
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
-    const int diurnalFlag = 0; //diurnal slope wind parameterization not used
+    const int diurnalFlag = 1; //diurnal slope wind parameterization not used
     const double height = 10.0;
     const char * heightUnits = "m";
     //bool momentumFlag = 0; //we're using the conservation of mass solver
@@ -93,13 +102,33 @@ int main()
     //const double meshResolution = 300.0;
     const char * meshResolutionUnits = "m";
 
-    /* 
-     * Create the army
+    bool matchedPoints = true;  // for point initialization, but currently required as an input to SetInitializationMethod(). Should the match points pointInitialization algorythm be run, or should it just run as a domainAvgRun on the input wind field. ALWAYS set to true unless you know what you are doing.
+
+    /*
+     * Initialize the army
      */
-    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    ninjaArmy = NinjaInitializeArmy();
     if( NULL == ninjaArmy )
     {
-        printf("NinjaCreateArmy: ninjaArmy = NULL\n");
+        printf("NinjaInitializeArmy: ninjaArmy = NULL\n");
+    }
+
+    /*
+     * Customize the ninja communication
+     */
+    err = NinjaSetMultiComStream(ninjaArmy, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetMultiComStream: err = %d\n", err);
+    }
+
+    /*
+     * Create the army
+     */
+    err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    if( err != NINJA_SUCCESS)
+    {
+        printf("NinjaMakeDomainAverageArmy: err = %d\n", err);
     }
 
     /* 
@@ -110,19 +139,13 @@ int main()
       /* 
        * Sets Simulation Variables
        */
-      err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-        printf("NinjaSetCommunication: err = %d\n", err);
-      }
-    
       err = NinjaSetNumberCPUs(ninjaArmy, i, nCPUs, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetNumberCPUs: err = %d\n", err);
       }
     
-      err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+      err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, matchedPoints, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetInitializationMethod: err = %d\n", err);
@@ -211,6 +234,14 @@ int main()
     {
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
- 
+
+    if(multiStream != NULL)
+    {
+        if(fclose(multiStream) != 0)
+        {
+            printf("error closing log file\n");
+        }
+    }
+
     return NINJA_SUCCESS;
 }

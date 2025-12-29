@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Hands GUI related logic for the Weather Model Page
+ * Purpose:  Connects the Qt GUI to the map.html using a Bridge
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -27,11 +27,32 @@
  *
  *****************************************************************************/
 
-#include "weathermodelinput.h"
+#include "mapBridge.h"
 
-WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
-    : QObject(parent),
-    ui(ui)
+void MapBridge::receiveBoundingBox(const QString &jsonCoords)
+ {
+    QJsonDocument doc = QJsonDocument::fromJson(jsonCoords.toUtf8());
+    if (!doc.isObject())
+    {
+        qWarning() << "Invalid bounding box JSON";
+        return;
+    }
+
+    QJsonObject obj = doc.object();
+
+    double north = obj["north"].toDouble();
+    double south = obj["south"].toDouble();
+    double east = obj["east"].toDouble();
+    double west = obj["west"].toDouble();
+
+    qDebug() << "Bounding box received:";
+    qDebug() << "North:" << north << "South:" << south;
+    qDebug() << "East:" << east << "West:" << west;
+
+    emit boundingBoxReceived(north, south, east, west);
+}
+
+void MapBridge::notifyReady()
 {
-
+    emit ready();
 }

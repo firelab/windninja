@@ -73,7 +73,12 @@ extern boost::local_time::tz_database globalTimeZoneDB;
    if( i >= 0 && i < iterable.size() )
 
 #define CHECK_VALID_INDEX(i,iterable) \
-  if( i < 0 || i >= iterable.size() ) throw std::runtime_error("invalid index");
+  if( i < 0 || i >= iterable.size() ) \
+  {                                   \
+      std::cout << "here1" << std::endl; \
+      ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
+      throw std::runtime_error("invalid index"); \
+  }                                   \
 
 /* *
  * Macro IF_VALID_INDEX_DO is a boiler plate for most of the ninjaArmy functions.
@@ -83,6 +88,7 @@ extern boost::local_time::tz_database globalTimeZoneDB;
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
 #ifdef C_API
+//#ifndef C_API
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
@@ -90,24 +96,39 @@ extern boost::local_time::tz_database globalTimeZoneDB;
         {                                      \
            func;                               \
         }                                      \
+        catch( exception& e )                  \
+        {                                      \
+            std::cout << "here2a" << std::endl; \
+            ninjas[ i ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what()); \
+            return NINJA_E_INVALID;            \
+        }                                      \
         catch( ... )                           \
         {                                      \
+            std::cout << "here2b" << std::endl; \
+            ninjas[ i ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type."); \
             return NINJA_E_INVALID;            \
         }                                      \
         return NINJA_SUCCESS;                  \
     }                                          \
+    std::cout << "here3a" << std::endl;        \
+    ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
     return NINJA_E_INVALID;
 #else
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
        func;                                   \
-       return NINJA_SUCCESS;                  \
+       return NINJA_SUCCESS;                   \
     }                                          \
+    std::cout << "here3b" << std::endl;        \
+    ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
     return NINJA_E_INVALID;
 #endif
 
-//#include "ninjaCom.h"
+#include "callbackFunctions.h"
+
+#include "ninjaCom.h"
+
 /**
 * Class used for doing multiple WindNinja runs.
 */
@@ -121,7 +142,7 @@ public:
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    //ninjaComClass *Com;
+    ninjaComClass *Com;  // pointer to the ninjaArmy level com handler
 
     enum eWxModelType{
         ncepNdfd,
@@ -138,7 +159,7 @@ public:
                           std::string demFile,bool matchPoints, bool momentumFlag );
     
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
-    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> timeList, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions);
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
@@ -161,39 +182,23 @@ public:
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
+
+    int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
+                                 char ** papszOptions = NULL);
+
+    int setNinjaMultiComStream( FILE* stream,
+                                char ** papszOptions = NULL);
+
     /**
-    * \brief Initialize the ninja communication of a ninja
+    * \brief Set the ninjaCom handler of a ninja, using the ninjaArmy level ninjaCom handler
+    *  and set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \param comType type of communication
+    * \param RunNumber the specific ninja/simulation run number
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNinjaCommunication( const int nIndex, const int RunNumber,
-                               const ninjaComClass::eNinjaCom comType,
-                               char ** papszOptions = NULL );
-
-    int setNinjaCommunication( const int nIndex, std::string comType,
                                char ** papszOptions = NULL);
-#ifdef NINJA_GUI
-    /**
-    * \brief Set the number of runs for a ninjaCom
-    *
-    * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                            char ** papszOptions=NULL );
-
-    /**
-    * \brief Returns the ninjaCom for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \return com the ninjaComClass of a ninja
-    */
-    ninjaComClass * getNinjaCom( const int nIndex, char ** papszOptions=NULL );
-#endif //NINJA_GUI
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods

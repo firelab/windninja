@@ -1,11 +1,8 @@
-#ifndef SETCONFIGURATIONOPTIONDIALOG_H
-#define SETCONFIGURATIONOPTIONDIALOG_H
+#ifndef SETCONFIGURATIONDIALOGOPTION_H
+#define SETCONFIGURATIONDIALOGOPTION_H
 
+#include "ui_setConfigurationDialogOption.h"
 #include <QDialog>
-
-namespace Ui {
-class setConfigurationOptionDialog;
-}
 
 class setConfigurationOptionDialog : public QDialog
 {
@@ -22,4 +19,4 @@ private:
     Ui::setConfigurationOptionDialog *ui;
 };
 
-#endif // SETCONFIGURATIONOPTIONDIALOG_H
+#endif // SETCONFIGURATIONDIALOGOPTION_H

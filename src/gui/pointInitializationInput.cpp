@@ -27,12 +27,12 @@
  *
  *****************************************************************************/
 
-#include "pointinitializationinput.h"
+#include "pointInitializationInput.h"
 
 PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
-{
+{    
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
@@ -50,6 +50,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
+    connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
@@ -61,12 +62,11 @@ void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelGroupBox->setChecked(false);
+        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
+        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
-    state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-    state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
-
-    emit requestRefresh();
+    emit updateState();
 }
 
 void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
@@ -103,25 +103,25 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> minute = {start.time().minute(), end.time().minute()};
     QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);
 
-    NinjaErr err = NinjaGetTimeList(
+    NinjaErr ninjaErr = NinjaGetTimeList(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(),
         outYear.data(), outMonth.data(), outDay.data(),
         outHour.data(), outMinute.data(),
         2, DEMTimeZoneBytes.data()
         );
-    if(err != NINJA_SUCCESS)
+    if(ninjaErr != NINJA_SUCCESS)
     {
-        printf("NinjaGetTimeList: err = %d\n", err);
+        printf("NinjaGetTimeList: ninjaErr = %d\n", ninjaErr);
     }
 
     if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration (someone downloads too much data)
     {
         char ** options = nullptr;
-        int err = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
-        if(err != NINJA_SUCCESS)
+        int ninjaErr = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaCheckTimeDuration err=" << err;
+            qDebug() << "NinjaCheckTimeDuration ninjaErr=" << ninjaErr;
         }
     }
 
@@ -172,7 +172,7 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
                                                    QString outputPath)
 {
     char ** options = NULL;
-    NinjaErr err = NinjaFetchStationFromBBox(
+    NinjaErr ninjaErr = NinjaFetchStationFromBBox(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(), year.size(),
         elevationFile.toUtf8().constData(), buffer,
@@ -181,10 +181,10 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
         false, options
         );
 
-    if (err != NINJA_SUCCESS)
-        qDebug() << "NinjaFetchStationFromBbox: err =" << err;
+    if (ninjaErr != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
 
-    return err;
+    return ninjaErr;
 }
 
 int PointInitializationInput::fetchStationByName(QVector<int> year,
@@ -199,7 +199,7 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
                                                  QString outputPath)
 {
     char ** options = NULL;
-    NinjaErr err = NinjaFetchStationByName(
+    NinjaErr ninjaErr = NinjaFetchStationByName(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(), year.size(),
         elevationFile.toUtf8().constData(), stationList.toUtf8().constData(),
@@ -207,10 +207,10 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
         outputPath.toUtf8().constData(), false, options
         );
 
-    if (err != NINJA_SUCCESS)
-        qDebug() << "NinjaFetchStationFromBbox: err =" << err;
+    if (ninjaErr != NINJA_SUCCESS)
+        qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
 
-    return err;
+    return ninjaErr;
 }
 
 void PointInitializationInput::fetchStationDataFinished()
@@ -240,8 +240,12 @@ void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(index);
 }
 
-void PointInitializationInput::setupTreeView()
+void PointInitializationInput::updateTreeView()
 {
+    AppState& state = AppState::instance();
+    state.isStationFileSelectionValid = false;
+    emit updateState();
+
     stationFileSystemModel = new QFileSystemModel(this);
     QString path = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QFileInfo fileInfo(path);
@@ -358,7 +362,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             break;
         }
     }
-    emit requestRefresh();
+    emit updateState();
 }
 
 void PointInitializationInput::pointInitializationSelectAllButtonClicked()

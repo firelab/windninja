@@ -17,11 +17,6 @@
 
 #cmake_minimum_required(VERSION 3.10)
 
-if(NINJA_GUI)
-    find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-    find_package(Qt6 REQUIRED COMPONENTS Widgets)
-endif(NINJA_GUI)
-
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
                     ${Boost_INCLUDE_DIRS}
@@ -33,14 +28,6 @@ set(LINK_LIBS ${Boost_LIBRARIES}
               ${GDAL_LIBRARY}
               ${NETCDF_LIBRARIES_C}
               ${CURL_LIBRARIES})
-
-if(NINJA_GUI)
-    set(LINK_LIBS ${LINK_LIBS}
-                  Qt${QT_VERSION_MAJOR}::Widgets)
-    if(PACKAGE_DEBUG)
-        message("CLI Linking to Qt Libraries")
-    endif(PACKAGE_DEBUG)
-endif(NINJA_GUI)
 
 if(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})

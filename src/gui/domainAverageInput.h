@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Connects the Qt GUI to the map.html using a Bridge
+ * Purpose:  Handles GUI related logic for the Domain Average Page
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -27,28 +27,35 @@
  *
  *****************************************************************************/
 
-#ifndef BRIDGE_H
-#define BRIDGE_H
+#ifndef DOMAINAVERAGEINPUT_H
+#define DOMAINAVERAGEINPUT_H
 
+#include "appState.h"
+#include "ui_mainWindow.h"
 #include <QObject>
-#include <QDebug>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <QPair>
+#include <QSet>
 
-class MapBridge : public QObject
+class DomainAverageInput: public QObject
 {
     Q_OBJECT
 
-public:
-    MapBridge(QObject *parent = nullptr) : QObject(parent) {}
-
 signals:
-    void boundingBoxReceived(double north, double south, double east, double west);
+    void updateState();
 
+public:
+    DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
-public slots:
-    void receiveBoundingBox(const QString &jsonCoords);
+private slots:
+    void domainAverageTableCellChanged(int row, int column);
+    void clearTableButtonClicked();
+    void domainAverageGroupBoxToggled();
+    void windHeightComboBoxCurrentIndexChanged(int index);
+
+private:
+    QSet<QPair<int, int>> invalidDAWCells;
+    Ui::MainWindow *ui;
 
 };
 
-#endif // BRIDGE_H
+#endif // DOMAINAVERAGEINPUT_H

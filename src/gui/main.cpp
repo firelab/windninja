@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "mainwindow.h"
+#include "mainWindow.h"
 #include "windninja.h"
 #include <QApplication>
 #include <QTimer>
@@ -38,7 +38,7 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QDebug>
-#include "splashscreen.h"
+#include "splashScreen.h"
 
 
 int main(int argc, char *argv[])
@@ -48,11 +48,11 @@ int main(int argc, char *argv[])
     int result;
 
     char ** papszOptions = NULL;
-    NinjaErr err = 0;
-    err = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
-    if(err != NINJA_SUCCESS)
+    NinjaErr ninjaErr = 0;
+    ninjaErr = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
+    if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaInit: err =" << err;
+        qDebug() << "NinjaInit: ninjaErr =" << ninjaErr;
     }
 
     QApplication a(argc, argv);

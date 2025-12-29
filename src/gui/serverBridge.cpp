@@ -27,7 +27,7 @@
  *
  *****************************************************************************/
 
-#include "serverbridge.h"
+#include "serverBridge.h"
 
 ServerBridge::ServerBridge() {}
 
@@ -101,6 +101,7 @@ bool ServerBridge::NinjaCheckVersions(char * mostrecentversion, char * localvers
 char * ServerBridge::NinjaQueryServerMessages(bool checkAbort)
 {
     CPLSetConfigOption("GDAL_HTTP_UNSAFESSL", "YES");
+    CPLSetConfigOption("GDAL_HTTP_TIMEOUT", "5");
     const char* url = "https://ninjastorm.firelab.org/sqlitetest/messages.txt";
     CPLHTTPResult *poResult = CPLHTTPFetch(url, NULL);
     CPLSetConfigOption( "GDAL_HTTP_TIMEOUT", NULL );

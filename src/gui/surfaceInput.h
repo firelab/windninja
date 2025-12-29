@@ -30,8 +30,8 @@
 #ifndef SURFACEINPUT_H
 #define SURFACEINPUT_H
 
-#include "ui_mainwindow.h"
-#include "appstate.h"
+#include "ui_mainWindow.h"
+#include "appState.h"
 #include "windninja.h"
 #include "gdal_util.h"
 #include <QtWebEngineWidgets/qwebengineview.h>
@@ -41,16 +41,10 @@
 #include <QStandardPaths>
 #include <QFileDialog>
 #include <QDebug>
-#include <QProgressDialog>
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
-
-namespace Ui
-{
-    class MainWindow;
-}
 
 class SurfaceInput : public QObject
 {
@@ -63,8 +57,8 @@ public:
     double computeMeshResolution(int index, bool isMomemtumChecked);
 
 signals:
-    void requestRefresh();
-    void setupTreeView();
+    void updateState();
+    void updateTreeView();
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);
@@ -93,7 +87,7 @@ private:
     QFutureWatcher<int> *futureWatcher;
 
     QString currentDEMFilePath;
-    QString GDALDriverName;
+    QString demFileType;
     int GDALXSize, GDALYSize;
     double GDALCellSize, GDALMaxValue, GDALMinValue;
     double DEMCorners[8];

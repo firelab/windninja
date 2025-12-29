@@ -30,27 +30,27 @@
 #ifndef APPSTATE_H
 #define APPSTATE_H
 
-class AppState
-{
-public:
-    static AppState& instance()
-    {
-        static AppState s;
-        return s;
-    }
+#include "ui_mainWindow.h"
+#include <QObject>
 
-    // Solver Methodology input states
+class AppState : public QObject
+{
+    Q_OBJECT
+
+public:
+    static AppState& instance();
+    void setUi(Ui::MainWindow* mainWindowUi);
+    void setState();
+
     bool isSolverMethodologyValid = false;
     bool isMassSolverToggled = false;
     bool isMomentumSolverToggled = false;
 
-    // Input states
-    bool isInputsValid = false;
+    bool isInputValid = false;
     bool isSurfaceInputValid = false;
     bool isDiurnalInputToggled = false;
     bool isStabilityInputToggled = false;
 
-    // Wind Input States
     bool isWindInputValid = false;
     bool isDomainAverageInitializationToggled = false;
     bool isDomainAverageWindInputTableValid = true;
@@ -60,12 +60,10 @@ public:
     bool isStationFileSelectionValid = false;
     bool isPointInitializationValid = false;
     bool isWeatherModelInitializationToggled = false;
+    bool isWeatherModelForecastValid = false;
     bool isWeatherModelInitializationValid = false;
-    bool isShowAllTimeZonesSelected = false;
-    bool isDisplayTimeZoneDetailsSelected = false;
 
-    //Output States
-    bool isOutputsValid = false;
+    bool isOutputValid = false;
     bool isGoogleEarthToggled = false;
     bool isGoogleEarthValid = false;
     bool isFireBehaviorToggled = false;
@@ -77,14 +75,35 @@ public:
     bool isVTKFilesToggled = false;
     bool isVTKFilesValid = false;
 
-    // All Inputs Ok
     bool isSolverReady = false;
 
+public slots:
+    void updateSolverMethodologyState();
+    void updateSurfaceInputState();
+    void updateDiurnalInputState();
+    void updateStabilityInputState();
+    void updateDomainAverageInputState();
+    void updatePointInitializationInputState();
+    void updateWeatherModelInputState();
+    void updateGoogleEarthOutputState();
+    void updateFireBehaviorOutputState();
+    void updateShapeFilesOutputState();
+    void updateGeoSpatialPDFFilesOutputState();
+    void updateVTKFilesOutputState();
 
 private:
-    AppState() {}                         // private constructor
-    AppState(const AppState&) = delete;  // prevent copying
+    Ui::MainWindow *ui;
+
+    QIcon tickIcon;
+    QIcon crossIcon;
+    QIcon bulletIcon;
+
+    AppState();
+    AppState(const AppState&) = delete;
     AppState& operator=(const AppState&) = delete;
+    void updateInputState();
+    void updateOutputState();
+    void updateOverallState();
 };
 
 #endif // APPSTATE_H

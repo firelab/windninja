@@ -30,11 +30,11 @@
 #ifndef MENUBAR_H
 #define MENUBAR_H
 
-#include "setconfigurationoptiondialog.h"
+#include "setConfigurationDialogOption.h"
 #include "windninja.h"
 #include "gdal_util.h"
 #include "ninja_version.h"
-#include "ui_mainwindow.h"
+#include "ui_mainWindow.h"
 #include <QObject>
 #include <QDir>
 #include <QMessageBox>
@@ -42,10 +42,6 @@
 #include <QTextDocument>
 #include <QTextBlock>
 #include <QDesktopServices>
-
-namespace Ui {
-class MainWindow;
-}
 
 class MenuBar : public QObject
 {
@@ -87,6 +83,7 @@ private slots:
     void citeWindNinjaActionTriggered();
     void supportEmailActionTriggered();
     void submitBugReportActionTriggered();
+    void enableConsoleOutputActionToggled(bool toggled);
 
 private:
     Ui::MainWindow* ui;

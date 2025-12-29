@@ -27,8 +27,8 @@
  *
  *****************************************************************************/
 
-#include "domainaverageinput.h"
-#include "ui_mainwindow.h"
+#include "domainAverageInput.h"
+#include "ui_mainWindow.h"
 
 DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
@@ -44,14 +44,17 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
+    connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
 }
 
 void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
 {
     QTableWidget* table = ui->domainAverageTable;
     QTableWidgetItem* item = table->item(row, column);
-    if (!item) return;
-
+    if (!item)
+    {
+        return;
+    }
     QString value = item->text().trimmed();
     bool valid = false;
     QString errorMessage;
@@ -60,7 +63,8 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
     if (value.isEmpty())
     {
         valid = true;
-    } else
+    }
+    else
     {
         switch (column)
         {
@@ -88,14 +92,20 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
         {
             QTime t = QTime::fromString(value, "hh:mm");
             valid = t.isValid();
-            if (!valid) errorMessage = "Must be a valid 24h time (hh:mm)";
+            if (!valid)
+            {
+                errorMessage = "Must be a valid 24h time (hh:mm)";
+            }
             break;
         }
         case 3:
         {
             QDate d = QDate::fromString(value, "MM/dd/yyyy");
             valid = d.isValid();
-            if (!valid) errorMessage = "Must be a valid date (MM/DD/YYYY)";
+            if (!valid)
+            {
+                errorMessage = "Must be a valid date (MM/DD/YYYY)";
+            }
             break;
         }
         case 4:
@@ -111,7 +121,10 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
         case 5:
         {
             value.toInt(&valid);
-            if (!valid) errorMessage = "Must be an integer";
+            if (!valid)
+            {
+                errorMessage = "Must be an integer";
+            }
             break;
         }
         default:
@@ -134,7 +147,8 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
     }
 
     AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
-    emit requestRefresh();
+
+    emit updateState();
 }
 
 
@@ -146,7 +160,7 @@ void DomainAverageInput::clearTableButtonClicked()
     ui->domainAverageTable->clearContents();
     invalidDAWCells.clear();
 
-    emit requestRefresh();
+    emit updateState();
 }
 
 void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)
@@ -187,6 +201,6 @@ void DomainAverageInput::domainAverageGroupBoxToggled()
         state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
-    emit requestRefresh();
+    emit updateState();
 }
 

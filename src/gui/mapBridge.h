@@ -3,7 +3,7 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Hands GUI related logic for the Weather Model Page
+ * Purpose:  Connects the Qt GUI to the map.html using a Bridge
  * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
@@ -27,25 +27,30 @@
  *
  *****************************************************************************/
 
-#ifndef WEATHERMODELINPUT_H
-#define WEATHERMODELINPUT_H
+#ifndef BRIDGE_H
+#define BRIDGE_H
 
-#include "ui_mainwindow.h"
 #include <QObject>
+#include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
 
-namespace Ui {
-class MainWindow;
-}
-
-class WeatherModelInput : public QObject
+class MapBridge : public QObject
 {
     Q_OBJECT
-public:
-    explicit WeatherModelInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
-private:
-    Ui::MainWindow *ui;
+public:
+    MapBridge(QObject *parent = nullptr) : QObject(parent) {}
+
+signals:
+    void boundingBoxReceived(double north, double south, double east, double west);
+    void ready();
+
+
+public slots:
+    void receiveBoundingBox(const QString &jsonCoords);
+    void notifyReady();
 
 };
 
-#endif // WEATHERMODELINPUT_H
+#endif // BRIDGE_H

@@ -30,10 +30,10 @@
 #ifndef POINTINITIALIZATIONINPUT_H
 #define POINTINITIALIZATIONINPUT_H
 
-#include "appstate.h"
-#include "../ninja/windninja.h"
-#include "ui_mainwindow.h"
-#include "../ninja/gdal_util.h"
+#include "appState.h"
+#include "windninja.h"
+#include "gdal_util.h"
+#include "ui_mainWindow.h"
 #include <QObject>
 #include <QTimeZone>
 #include <QFuture>
@@ -41,11 +41,6 @@
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
 #include <QFileSystemModel>
-
-
-namespace Ui {
-class MainWindow;
-}
 
 class PointInitializationInput : public QObject
 {
@@ -56,10 +51,10 @@ public:
 
 
 signals:
-    void requestRefresh();
+    void updateState();
 
 public slots:
-    void setupTreeView();
+    void updateTreeView();
 
 private slots:
     void pointInitializationGroupBoxToggled(bool toggled);
@@ -77,6 +72,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    NinjaErr ninjaErr;
 
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
