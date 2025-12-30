@@ -38,6 +38,7 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QDebug>
+#include <QStyleFactory>
 #include "splashScreen.h"
 
 
@@ -61,6 +62,7 @@ int main(int argc, char *argv[])
     a.setWindowIcon(icon);
     a.setApplicationName(QString("WindNinja"));
     a.setApplicationVersion(ver);
+    a.setStyle(QStyleFactory::create("Fusion"));
 
     MainWindow* w = nullptr;
     try
