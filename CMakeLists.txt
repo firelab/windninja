@@ -544,9 +544,23 @@ if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
         PATTERN "platforms/*"
         PATTERN "resources/*"
         PATTERN "*.qm"
-)
+    )
+
+    install(
+        DIRECTORY "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/gdal/"
+        DESTINATION share/windninja/gdal-data/data
+        COMPONENT apps
+    )
+
+    install(
+        FILES "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/proj/proj.db"
+        DESTINATION share/windninja/proj-data/data
+        COMPONENT apps
+    )
+
 
 endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
+
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 set(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
 set(CPACK_COMPONENT_LIBS_DISABLED TRUE)
