@@ -431,7 +431,7 @@ endforeach(f ${share_files})
 
 # Leaflet data
 if(WIN32 AND FIRELAB_PACKAGE)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share)
+    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 else(WIN32 AND FIRELAB_PACKAGE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 endif(WIN32 AND FIRELAB_PACKAGE)
