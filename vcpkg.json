@@ -12,7 +12,8 @@
       "name": "boost-test"
     },
     {
-      "name": "gdal"
+      "name": "gdal",
+      "features": ["poppler"]
     },
     {
       "name": "shapelib"
@@ -37,7 +38,8 @@
       "name": "qtwebchannel"
     },
     {
-      "name": "qtwebengine"
+      "name": "qtwebengine",
+      "features": ["webchannel"]
     }
   ]
 }
