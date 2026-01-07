@@ -526,11 +526,11 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 # Build the nsis installer on the firelab machine(s).  Not for external use.
 if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
 
-    set(WINDEPLOYQT_EXE
-        "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe"
-    )
+    set(WINDEPLOYQT_EXE "${Qt6_DIR}/../../../bin/windeployqt.exe")
+    
     add_custom_target(deploy_windninja ALL
-        COMMAND "${WINDEPLOYQT_EXE}" --release "$<TARGET_FILE:WindNinja>"
+        COMMAND "${WINDEPLOYQT_EXE}" --release 
+                "$<TARGET_FILE:WindNinja>"
         DEPENDS WindNinja
     )
 
@@ -547,13 +547,13 @@ if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
     )
 
     install(
-        DIRECTORY "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/gdal/"
+        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/gdal/"
         DESTINATION share/windninja/gdal-data/data
         COMPONENT apps
     )
 
     install(
-        FILES "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/share/proj/proj.db"
+        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/proj/"
         DESTINATION share/windninja/proj-data/data
         COMPONENT apps
     )
