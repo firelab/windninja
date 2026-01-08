@@ -1294,7 +1294,6 @@ void MainWindow::writeSettings()
     QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
     settings.setDefaultFormat(QSettings::IniFormat);
 
-    settings.setDefaultFormat(QSettings::IniFormat);
     //input file path
     settings.setValue("inputFileDir", ui->elevationInputFileLineEdit->property("fullpath"));
     //veg choice
@@ -1320,15 +1319,21 @@ void MainWindow::readSettings()
 {
     QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
     settings.setDefaultFormat(QSettings::IniFormat);
+
     if(settings.contains("inputFileDir"))
     {
-        ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
+        if(QFile::exists(settings.value("inputFileDir").toString()))
+        {
+            ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
+        }
     }
     else
     {
         // std::string oTmpPath = FindNinjaRootDir();
         // inputFileDir = CPLFormFilename(oTmpPath.c_str(), "etc/windninja/example-files", NULL);
     }
+
+    // TODO: some of the following might be overriding the values computed by inputFileDir, when the other way around might be better
     if(settings.contains("vegChoice"))
     {
         ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
