@@ -676,10 +676,10 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
     case 2:
         targetNumHorizCells = fine;
         break;
-    case 3:
-        return 200;
+    case 3:  // custom
+        return ui->meshResolutionSpinBox->value();
     default:
-        return 200;
+        return ui->meshResolutionSpinBox->value();
     }
 
     double XLength = GDALXSize * GDALCellSize;
