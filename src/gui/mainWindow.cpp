@@ -1293,9 +1293,13 @@ void MainWindow::writeSettings()
 
     QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
     settings.setDefaultFormat(QSettings::IniFormat);
+    //qDebug() << "settings filename =" << settings.fileName();
 
     //input file path
     settings.setValue("inputFileDir", ui->elevationInputFileLineEdit->property("fullpath"));
+
+    //momentum flag
+    settings.setValue("momentumFlag", ui->momentumSolverCheckBox->isChecked());
     //veg choice
     settings.setValue("vegChoice", ui->vegetationComboBox->currentIndex());
     //mesh choice
@@ -1310,6 +1314,11 @@ void MainWindow::writeSettings()
 
     //settings.setValue("pointFile", tree->point->stationFileName );
 
+    //if(ui->meshResolutionComboBox->currentIndex() == 3)
+    //{
+    //    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
+    //}
+    // need to write it every time, the past value will get left there without getting updated otherwise, doesn't delete past settings values
     settings.setValue("customRes", ui->meshResolutionSpinBox->value());
 
     writeToConsole("Settings saved.");
@@ -1334,6 +1343,15 @@ void MainWindow::readSettings()
     }
 
     // TODO: some of the following might be overriding the values computed by inputFileDir, when the other way around might be better
+    if(settings.contains("momentumFlag"))
+    {
+        bool momentumFlag = settings.value("momentumFlag").toBool();
+        if(momentumFlag == true)
+        {
+            ui->momentumSolverCheckBox->setChecked(true);
+            emit momentumSolverCheckBoxClicked();
+        }
+    }
     if(settings.contains("vegChoice"))
     {
         ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
@@ -1342,8 +1360,12 @@ void MainWindow::readSettings()
     {
         int choice = settings.value("meshChoice").toInt();
         ui->meshResolutionComboBox->setCurrentIndex(choice);
-        if(choice == 4 && settings.contains("customRes"))
+        if(choice == 3)
         {
+            if(!settings.contains("customRes"))
+            {
+                qDebug() << "Error. WindNinja settings does not contain \"customRes\"";
+            }
             ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
         }
     }
