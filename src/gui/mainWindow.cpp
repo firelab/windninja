@@ -749,36 +749,11 @@ void MainWindow::solveButtonClicked()
     writeToConsole( "Initializing runs..." );
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishedSolve);
+    connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::afterFinishedSolve);
 
     QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
     futureWatcher->setFuture(future);
 
-    // prep output kmz files for map kmz plotting
-    QDir outputDir(ui->outputDirectoryLineEdit->text());
-
-    QStringList fileTypeFilters;
-    fileTypeFilters << "*.kmz";
-
-    QStringList fullOutputFileList = outputDir.entryList(fileTypeFilters, QDir::Files | QDir::NoDotAndDotDot);
-
-    QStringList outputFileList;
-    for (const QString& outFileStr : fullOutputFileList)
-    {
-        QString fullOutputFilename = outputDir.absolutePath() + "/" + outFileStr;
-        outputFileList.append(fullOutputFilename);
-    }
-
-    for (const auto& outFileStr : outputFileList)
-    {
-        qDebug() << "outFileStr =" << outFileStr;
-        QFile outFile(outFileStr);
-
-        outFile.open(QIODevice::ReadOnly);
-        QByteArray data = outFile.readAll();
-        QString base64 = data.toBase64();
-
-        webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-    }
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -1287,6 +1262,108 @@ void MainWindow::finishedSolve()
     runProgress.clear();
 
     futureWatcher->deleteLater();
+}
+
+void MainWindow::afterFinishedSolve()
+{
+    if(!progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    {
+        //enable QWebInspector for degugging google maps widget
+        qDebug() << "ENABLE_QWEBINSPECTOR =" << CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO");
+        if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
+        {
+            // Create the dedicated window for the inspector
+            QWidget* inspectorWindow = new QWidget();
+            inspectorWindow->setWindowTitle("Web Inspector - Developer Tools");
+            //inspectorWindow->setAttribute(Qt::WA_DeleteOnClose); // Auto-delete when closed  // this causes a seg fault when added to the code, allows closing WindNinja first without troubles, but closing this inspectorWindow first crash closes, the seg fault appears in both cases just one is less blow-uppy when it goes. Without this I can close things in whichever order but I get TWO of that "Release of profile requested but WebEnginePage still not deleted. Expect troubles !" warning message after it all closes.
+            inspectorWindow->setMinimumSize(800, 600);
+
+            // Create the inspector view with the new window as its parent
+            QWebEngineView* inspectorView = new QWebEngineView(inspectorWindow);
+            inspectorView->page()->setInspectedPage(webEngineView->page()); // 'webEngineView' is your main web engine view
+
+            // Set up layout for the new window
+            QVBoxLayout* layout = new QVBoxLayout(inspectorWindow);
+            layout->addWidget(inspectorView);
+            layout->setContentsMargins(0, 0, 0, 0);
+
+            // Show the new window
+            inspectorWindow->show();
+        }
+
+        // prep output kmz files for map kmz plotting
+        QDir outputDir(ui->outputDirectoryLineEdit->text());
+        QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
+        int meshResInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
+        QString meshResUnitsStr = "m";
+        if(ui->meshResolutionUnitsComboBox->currentIndex() == 1) // feet
+        {
+            meshResUnitsStr = "ft";
+        }
+
+        QStringList fileTypeFilters;
+        fileTypeFilters << "*.kmz";
+
+        QStringList fullOutputFileList = outputDir.entryList(fileTypeFilters, QDir::Files | QDir::NoDotAndDotDot);
+
+        QStringList containsFilters;
+        containsFilters << demName << QString::number(meshResInt)+meshResUnitsStr;
+
+        QStringList preFilteredOutputFileList;
+        for (const QString& outFileStr : fullOutputFileList)
+        {
+            int filtersFound = 0;
+            for (const QString& filterStr : containsFilters )
+            {
+                if(outFileStr.contains(filterStr))
+                {
+                    filtersFound++;
+                }
+            }
+            if(filtersFound == containsFilters.size())
+            {
+                preFilteredOutputFileList.append(outFileStr);
+            }
+        }
+
+        QStringList notContainsFilters;
+        //notContainsFilters << "station" << "wx" << "HRRR";
+        // just doing the bogus one, let all the others through, see what happens
+        //  oh, the station kml and HRRR forecast ones were still not grabbed in the list,
+        //  because station kml doesn't have meshRes in it, and HRRR forecast doesn't have the dem name in it
+        notContainsFilters << "wx";
+
+        QStringList filteredOutputFileList;
+        for (const QString& outFileStr : preFilteredOutputFileList)
+        {
+            int filtersNotFound = 0;
+            for (const QString& notFilterStr : notContainsFilters )
+            {
+                if(!outFileStr.contains(notFilterStr))
+                {
+                    filtersNotFound++;
+                }
+            }
+            if(filtersNotFound == notContainsFilters.size())
+            {
+                QString fullOutputFilename = outputDir.absolutePath() + "/" + outFileStr;
+                filteredOutputFileList.append(fullOutputFilename);
+            }
+        }
+
+        for (const auto& outFileStr : filteredOutputFileList)
+        {
+            qDebug() << "outFileStr =" << outFileStr;
+            QFile outFile(outFileStr);
+
+            outFile.open(QIODevice::ReadOnly);
+            QByteArray data = outFile.readAll();
+            QString base64 = data.toBase64();
+
+            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+        }
+
+    } // if(!progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
 }
 
 void MainWindow::writeSettings()
