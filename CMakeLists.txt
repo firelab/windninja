@@ -527,7 +527,6 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
 
     set(WINDEPLOYQT_EXE "${Qt6_DIR}/../../../bin/windeployqt.exe")
-    
     add_custom_target(deploy_windninja ALL
         COMMAND "${WINDEPLOYQT_EXE}" --release 
                 "$<TARGET_FILE:WindNinja>"
