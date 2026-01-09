@@ -753,32 +753,32 @@ void MainWindow::solveButtonClicked()
     QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
     futureWatcher->setFuture(future);
 
-    // vector<string> outputFiles;
-    // QDir outDir(ui->outputDirectoryLineEdit->text());
-    // QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
-    // int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
-    // QString meshSize = QString::number(meshInt) + "m";
+    // prep output kmz files for map kmz plotting
+    QDir outputDir(ui->outputDirectoryLineEdit->text());
 
-    // for (int i = 0; i < numNinjas; i++) {
-    //     QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
-    //                                            .arg(demName)
-    //                                            .arg(directions[i])
-    //                                            .arg(speeds[i])
-    //                                            .arg(meshSize));
-    //     outputFiles.push_back(filePath.toStdString());
-    // }
+    QStringList fileTypeFilters;
+    fileTypeFilters << "*.kmz";
 
-    // for (const auto& dir : outputFiles) {
-    //     QString qDir = QString::fromStdString(dir);
+    QStringList fullOutputFileList = outputDir.entryList(fileTypeFilters, QDir::Files | QDir::NoDotAndDotDot);
 
-    //     QFile f(qDir);
-    //     f.open(QIODevice::ReadOnly);
-    //     QByteArray data = f.readAll();
-    //     QString base64 = data.toBase64();
+    QStringList outputFileList;
+    for (const QString& outFileStr : fullOutputFileList)
+    {
+        QString fullOutputFilename = outputDir.absolutePath() + "/" + outFileStr;
+        outputFileList.append(fullOutputFilename);
+    }
 
-    //     webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-    // }
+    for (const auto& outFileStr : outputFileList)
+    {
+        qDebug() << "outFileStr =" << outFileStr;
+        QFile outFile(outFileStr);
 
+        outFile.open(QIODevice::ReadOnly);
+        QByteArray data = outFile.readAll();
+        QString base64 = data.toBase64();
+
+        webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+    }
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
