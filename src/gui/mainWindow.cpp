@@ -318,6 +318,7 @@ void MainWindow::massSolverCheckBoxClicked()
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+        surfaceInput->updateMeshResolutionByUnits();
     }
     emit updateMetholodyState();
 }
@@ -336,6 +337,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+        surfaceInput->updateMeshResolutionByUnits();
     }
     emit updateMetholodyState();
 }

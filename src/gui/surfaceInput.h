@@ -55,6 +55,7 @@ public:
                     QWebEngineView* webEngineView,
                     QObject* parent = nullptr);
     double computeMeshResolution(int index, bool isMomemtumChecked);
+    void updateMeshResolutionByUnits();
 
 signals:
     void updateState();
