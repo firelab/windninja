@@ -1358,6 +1358,10 @@ void MainWindow::readSettings()
     {
         ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
     }
+    if(settings.contains("meshUnits"))  // putting this after loading meshChoice results in overwriting the value by an extra set of units
+    {
+        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
+    }
     if(settings.contains("meshChoice"))
     {
         int choice = settings.value("meshChoice").toInt();
@@ -1371,14 +1375,11 @@ void MainWindow::readSettings()
             ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
         }
     }
-    if(settings.contains("meshUnits"))
-    {
-        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
-    }
     if(settings.contains("nProcessors"))
     {
         ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
     }
+    // won't we want the timezone of the dem every time, to avoid accidentally doing a weird combination of time zones?
     if(settings.contains("timeZone"))
     {
         // QString v = settings.value("timeZone").toString();

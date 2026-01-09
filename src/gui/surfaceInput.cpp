@@ -732,7 +732,6 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
 #endif //NINJAFOAM
 
     return meshResolution;
-
 }
 
 void SurfaceInput::updateMeshResolutionByUnits()
