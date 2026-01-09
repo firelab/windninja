@@ -1266,7 +1266,10 @@ void MainWindow::finishedSolve()
 
 void MainWindow::afterFinishedSolve()
 {
-    if(!progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
     {
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
@@ -1313,7 +1316,7 @@ void MainWindow::afterFinishedSolve()
             webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
         }
 
-    } // if(!progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
 }
 
 void MainWindow::writeSettings()
