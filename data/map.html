@@ -205,6 +205,7 @@
         }
 
         async function loadKmzFromBase64(kmlData) {
+            console.log("running LoadKmzFromBase64");
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
