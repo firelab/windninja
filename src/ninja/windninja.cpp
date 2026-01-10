@@ -2616,5 +2616,116 @@ WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputSt
     }
 }
 
+/**
+ * \brief calls ninjaArmy::getRunKmzFilenames(), which gets the ninjas[i] output kmz filenames,
+ *        as well as ninjas[i] station kml filenames and ninjas[i] weather model filenames,
+ *        if they were created for the run.
+ *
+ * \note Must be called after NinjaStartRuns is called and finished successfully.
+ * \note NinjaDestroyRunKmzFilenames() must be called on the run kmz filenames when done with the filenames, to properly deallocate the filenames memory.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param numRuns The number of runs that were simulated, to be filled. Also the expected size of the filled filename arrays.
+ * \param kmzFilenames The ninjas[i] output kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns.
+ * \param stationKmlFilenames The ninjas[i] station kml filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without station kml file output use "" for the station kml filenames.
+ * \param weatherModelKmzFilenames The ninjas[i] weather model kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+ * \param papszOptions options
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *numRuns, char*** kmzFilenames, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions)
+{
+    std::vector<std::string> kmzFilenameStrings;
+    std::vector<std::string> stationKmlFilenameStrings;
+    std::vector<std::string> wxModelKmzFilenameStrings;
+
+    if( NULL != army )
+    {
+        NinjaErr retval = reinterpret_cast<ninjaArmy*>( army )->getRunKmzFilenames( kmzFilenameStrings, stationKmlFilenameStrings, wxModelKmzFilenameStrings );
+        if( retval != NINJA_SUCCESS )
+        {
+            return retval;
+        }
+
+        int n = (int)kmzFilenameStrings.size();
+        *numRuns = n;
+
+        *kmzFilenames = (char **)malloc(sizeof(char *) * n);
+        *stationKmlFilenames = (char **)malloc(sizeof(char *) * n);
+        *weatherModelKmzFilenames = (char **)malloc(sizeof(char *) * n);
+
+        for(int i = 0; i < n; i++)
+        {
+            std::string kmzFilenameStr = kmzFilenameStrings[i];
+            std::string stationKmlFilenameStr = stationKmlFilenameStrings[i];
+            std::string wxModelKmzFilenameStr = wxModelKmzFilenameStrings[i];
+
+            char *kmzFilename = (char *)malloc(kmzFilenameStr.size() + 1);
+            char *stationKmlFilename = (char *)malloc(stationKmlFilenameStr.size() + 1);
+            char *wxModelKmzFilename = (char *)malloc(wxModelKmzFilenameStr.size() + 1);
+
+            if(!kmzFilename || !stationKmlFilename || !wxModelKmzFilename)
+            {
+                return NINJA_E_BAD_ALLOC;
+            }
+
+            memcpy(kmzFilename, kmzFilenameStr.c_str(), kmzFilenameStr.size() + 1);
+            memcpy(stationKmlFilename, stationKmlFilenameStr.c_str(), stationKmlFilenameStr.size() + 1);
+            memcpy(wxModelKmzFilename, wxModelKmzFilenameStr.c_str(), wxModelKmzFilenameStr.size() + 1);
+
+            (*kmzFilenames)[i] = kmzFilename;
+            (*stationKmlFilenames)[i] = stationKmlFilename;
+            (*weatherModelKmzFilenames)[i] = wxModelKmzFilename;
+        }
+
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmzFilenames, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions)
+{
+    for(int i = 0; i < numRuns; i++)
+    {
+        if(kmzFilenames)
+        {
+            if(kmzFilenames[i])
+            {
+                free(kmzFilenames[i]);
+            }
+        }
+        if(stationKmlFilenames)
+        {
+            if(stationKmlFilenames[i])
+            {
+                free(stationKmlFilenames[i]);
+            }
+        }
+        if(weatherModelKmzFilenames)
+        {
+            if(weatherModelKmzFilenames[i])
+            {
+                free(weatherModelKmzFilenames[i]);
+            }
+        }
+    }
+
+    if(kmzFilenames)
+    {
+        free(kmzFilenames);
+    }
+    if(stationKmlFilenames)
+    {
+        free(stationKmlFilenames);
+    }
+    if(weatherModelKmzFilenames)
+    {
+        free(weatherModelKmzFilenames);
+    }
+}
+
 
 } // extern "C"

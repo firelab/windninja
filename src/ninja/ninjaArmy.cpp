@@ -669,6 +669,11 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
+    // prep a clean set of kmz output filenames to append to before ninjas[i] gets deleted after each run
+    kmzFilenames.clear();
+    stationKmlFilenames.clear();
+    wxModelKmzFilenames.clear();
+
     if(ninjas.size() == 1)
     {
         //set number of threads for the run
@@ -728,6 +733,9 @@ bool ninjaArmy::startRuns(int numProcessors)
             //write farsite atmosphere file
             if(writeFarsiteAtmFile)
                 writeFarsiteAtmosphereFile();
+
+            //setup the run kmz filenames, for C-API calls
+            setCurrentRunKmzFilenames(0);
 
         }catch (bad_alloc& e)
         {
@@ -816,6 +824,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
+
+                //setup the run kmz filenames, for C-API calls
+                setCurrentRunKmzFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
@@ -940,6 +951,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
+
+                //setup the run kmz filenames, for C-API calls
+                setCurrentRunKmzFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
@@ -2470,6 +2484,17 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
     }
     return std::string("");
 }
+
+int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+                                   std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions )
+{
+    kmzFilenamesStr = kmzFilenames;
+    stationKmlFilenamesStr = stationKmlFilenames;
+    wxModelKmzFilenamesStr = wxModelKmzFilenames;
+
+    return NINJA_SUCCESS;
+}
+
 /**
  * @brief Reset the army in able to reinitialize needed parameters
  *
@@ -2493,6 +2518,32 @@ void ninjaArmy::cancelAndReset()
 {
     cancel();
     reset();
+}
+
+void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
+{
+    kmzFilenames.push_back( ninjas[runNumber]->input.kmzFile );
+
+    //stationKmlFilenames.push_back( "" );
+    //wxModelKmzFilenames.push_back( "" );
+
+    // uh oh, this one has MORE than ONE for the RUN, TODO: need to resize my storage.
+    //  Also, need to figure out how to loop through the stations data of the run to get the station filenames
+    //  I see ninjaArmy::getWxStations() might be a cleaner way to get these input.stations as well, for sure input.stations seems to be the starting point
+    // oh, this is weird, I looked in wxStation to find the equivalent to stationFilenames, and found this "stationKmlNames" data member,
+    //  but it's weird because this is a vector of stationKmlNames stored on each individual wxStation? Meaning input.stations[0] might be all that is needed
+    //  but it really is kinda weird, and the one time the value gets setup seems to only be during calls to wxStation::writeKmlFile(),
+    //  which DOES appear to be called, manually, by both cli.cpp and ninjaArmy.cpp, BUT it is done so on one stations[i] at a time, which is also quite weird,
+    //    wxStation::writeKmlFile( army.getWxStations( i ), <other args> );
+    //  anyhow, at least I seem to have a path forward to get the filename, for now,
+    //  and just using the stationKmlNames[0] of the first input.stations[0] seems to be an actual station filename.
+    // make sure to actually check the kml output writing or you will get seg faults,
+    //  the stations[i].stationKmlNames[i] storage isn't sized unless station kml output writing is checked
+    ////stationKmlFilenames.push_back( ninjas[runNumber]->input.stationFilename );
+    stationKmlFilenames.push_back( ninjas[runNumber]->input.stations[0].stationKmlNames[0] );
+
+    // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
+    wxModelKmzFilenames.push_back( ninjas[runNumber]->input.wxModelKmzFile );
 }
 
 void ninjaArmy::initLocalData(void)

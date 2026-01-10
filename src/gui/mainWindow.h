@@ -145,7 +145,7 @@ private:
 
     int startSolve(int numProcessors);
     void finishedSolve();
-    void afterFinishedSolve();
+    void plotKmzOutputs();
 
     QString currentDEMFilePath;
 

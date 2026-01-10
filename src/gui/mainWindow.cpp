@@ -749,7 +749,6 @@ void MainWindow::solveButtonClicked()
     writeToConsole( "Initializing runs..." );
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishedSolve);
-    connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::afterFinishedSolve);
 
     QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
     futureWatcher->setFuture(future);
@@ -1251,6 +1250,9 @@ void MainWindow::finishedSolve()
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
+    // one more process to do after finishedSolve() stuff
+    plotKmzOutputs();
+
     char **papszOptions = nullptr;
     int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
@@ -1264,7 +1266,7 @@ void MainWindow::finishedSolve()
     futureWatcher->deleteLater();
 }
 
-void MainWindow::afterFinishedSolve()
+void MainWindow::plotKmzOutputs()
 {
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
@@ -1288,24 +1290,22 @@ void MainWindow::afterFinishedSolve()
             inspectorWindow->show();
         }
 
-        // prep output kmz files for map kmz plotting
-        QDir outputDir(ui->outputDirectoryLineEdit->text());
+        // vars to be filled
+        int numRuns = 0;
+        char **kmzFilenames = NULL;
+        char **stationKmlFilenames = NULL;
+        char **weatherModelKmzFilenames = NULL;
 
-        QStringList fileTypeFilters;
-        //fileTypeFilters << "*.kmz" << "*kml";
-        fileTypeFilters << "*.kmz";
-
-        QStringList fullOutputFileList = outputDir.entryList(fileTypeFilters, QDir::Files | QDir::NoDotAndDotDot);
-
-        QStringList outputFileList;
-        for (const QString& outFileStr : fullOutputFileList)
+        char **papszOptions = nullptr;
+        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            QString fullOutputFilename = outputDir.absolutePath() + "/" + outFileStr;
-            outputFileList.append(fullOutputFilename);
+            printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-        for (const auto& outFileStr : outputFileList)
+        for(int i = 0; i < numRuns; i++)
         {
+            QString outFileStr = QString::fromStdString(kmzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
             QFile outFile(outFileStr);
 
@@ -1314,6 +1314,32 @@ void MainWindow::afterFinishedSolve()
             QString base64 = data.toBase64();
 
             webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+        }
+
+        for(int i = 0; i < numRuns; i++)
+        {
+            QString outFileStr = QString::fromStdString(stationKmlFilenames[i]);
+            qDebug() << "station kml outFile =" << outFileStr;
+            // tested, this type does not plot right now, because the map.html can't handle it yet
+        }
+
+        for(int i = 0; i < numRuns; i++)
+        {
+            QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
+            qDebug() << "wx model kmz outFile =" << outFileStr;
+            QFile outFile(outFileStr);
+
+            outFile.open(QIODevice::ReadOnly);
+            QByteArray data = outFile.readAll();
+            QString base64 = data.toBase64();
+
+            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+        }
+
+        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
     } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
