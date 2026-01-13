@@ -13,7 +13,7 @@
     },
     {
       "name": "gdal",
-      "features": ["poppler"]
+      "features": ["poppler", "netcdf", "openssl"]
     },
     {
       "name": "shapelib"

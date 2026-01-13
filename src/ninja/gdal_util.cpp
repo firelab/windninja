@@ -440,47 +440,46 @@ bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
 
 bool OGRPointToLatLon(double &x, double &y, OGRDataSourceH hDS,
                       const char *datum) {
-  char *pszPrj = NULL;
+    char *pszPrj = NULL;
 
-  OGRSpatialReference *poSrcSRS;
-  OGRSpatialReference oSourceSRS, oTargetSRS;
-  OGRCoordinateTransformation *poCT;
+    const OGRSpatialReference *poSrcSRS;
+    OGRSpatialReference oSourceSRS, oTargetSRS;
+    OGRCoordinateTransformation *poCT;
 
-  if (hDS == NULL) {
-    return false;
-  }
+    if (hDS == NULL) {
+        return false;
+    }
 
-  OGRLayer *poLayer;
+    OGRLayer *poLayer;
 
-  poLayer = (OGRLayer *)OGR_DS_GetLayer(hDS, 0);
-  poLayer->ResetReading();
+    poLayer = (OGRLayer *)OGR_DS_GetLayer(hDS, 0);
+    poLayer->ResetReading();
 
-  poSrcSRS = poLayer->GetSpatialRef();
-  if (poSrcSRS == NULL) {
-    return false;
-  }
+    poSrcSRS = poLayer->GetSpatialRef();
+    if (poSrcSRS == NULL) {
+        return false;
+    }
+    oSourceSRS = *poSrcSRS;
+    oTargetSRS.SetWellKnownGeogCS(datum);
 
-  oTargetSRS.SetWellKnownGeogCS(datum);
+    #ifdef GDAL_COMPUTE_VERSION
+    #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
+        oSourceSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
+    #endif /* GDAL_COMPUTE_VERSION */
+    poCT = OGRCreateCoordinateTransformation(&oSourceSRS, &oTargetSRS);
 
-#ifdef GDAL_COMPUTE_VERSION
-#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
-    poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
-#endif /* GDAL_COMPUTE_VERSION */
+    if (poCT == NULL) {
+        return false;
+    }
 
-  poCT = OGRCreateCoordinateTransformation(poSrcSRS, &oTargetSRS);
-
-  if (poCT == NULL) {
-    return false;
-  }
-
-  if (!poCT->Transform(1, &x, &y)) {
+    if (!poCT->Transform(1, &x, &y)) {
+        OGRCoordinateTransformation::DestroyCT(poCT);
+        return false;
+    }
     OGRCoordinateTransformation::DestroyCT(poCT);
-    return false;
-  }
-  OGRCoordinateTransformation::DestroyCT(poCT);
-  return true;
+    return true;
 }
 
 /**
