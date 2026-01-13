@@ -28,7 +28,7 @@ endif(WIN32)
 
 project(WindNinja)
 
-# let cmake figure out how to set the C++ level
+# Set C++ version for CMake
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
@@ -182,11 +182,11 @@ if(WITH_LCP_CLIENT)
     add_definitions(-DWITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
 
-#disable for exception handling in the GUI and CLI
-option(C_API "Enable WindNinja C API" OFF)
-if(C_API)
-    add_definitions(-DC_API)
-endif(C_API)
+# Disable for exception handling in the GUI and CLI
+# option(C_API "Enable WindNinja C API" OFF)
+# if(C_API)
+#     add_definitions(-DC_API)
+# endif(C_API)
 
 # Enable phone home and message server startup
 option(PHONE_HOME_QUERIES "Enable Phone Home Queries" ON)
@@ -311,18 +311,6 @@ if(NINJA_GDAL_OUTPUT)
   add_definitions(-DNINJA_GDAL_OUTPUT)
 endif()
 
-if(MSVC)
-    # Run windeployqt6.exe to provide all QT related DLLs
-    set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe")
-    add_custom_target(deploy_windninja ALL
-        COMMAND "${WINDEPLOYQT_EXE}"  
-                "$<TARGET_FILE:WindNinja>"
-        DEPENDS WindNinja
-    )
-endif(MSVC)
-
-option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" OFF)
-
 # Recurse into subdirectories
 add_subdirectory(src)
 
@@ -336,6 +324,16 @@ if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
 
+# Run windeployqt6.exe to provide all QT related DLLs
+if(MSVC)
+    set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.ex")
+    add_custom_target(deploy_windninja ALL
+        COMMAND "${WINDEPLOYQT_EXE}"  
+                "$<TARGET_FILE:WindNinja>"
+        DEPENDS WindNinja
+    )
+endif(MSVC)
+
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
 mark_as_advanced(PACKAGE_DEBUG)
@@ -345,18 +343,6 @@ if(CMAKE_SIZEOF_VOID_P MATCHES "8")
     add_definitions(-DNINJA_64BIT=1)
     if(PACKAGE_DEBUG)
         message(STATUS "Building 64-bit installer")
-    endif(PACKAGE_DEBUG)
-elseif(CMAKE_SIZEOF_VOID_P MATCHES "4")
-    set(BUILD_64 FALSE)
-    add_definitions(-DNINJA_32BIT=1)
-    if(PACKAGE_DEBUG)
-        message(STATUS "Building 32-bit installer")
-    endif(PACKAGE_DEBUG)
-else(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    set(BUILD_64 FALSE)
-    add_definitions(-DNINJA_32BIT=1)
-    if(PACKAGE_DEBUG)
-        message(STATUS "Cannot determine architecture, using 32-bit by default")
     endif(PACKAGE_DEBUG)
 endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
@@ -374,91 +360,92 @@ if(VERBOSE_CMAKE)
     include(CMakePrintSystemInformation)
 endif(VERBOSE_CMAKE)
 
-if(FIRE_BEHAVIOR_DATA_INSTALL)
-    #FireBehaviorModels only requires date_time_zonespec.csv and tz_world.zip
-    message("Only installing data files necessary for FireBehaviorModels")
-    set(fire_behavior_model_files date_time_zonespec.csv tz_world.zip)
-    foreach(f ${fire_behavior_model_files})
-        install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-                share/windninja COMPONENT apps)
-    endforeach(f ${fire_behavior_model_files})
+# Install DEM and configuration files
+set(etc_files
+    missoula_valley.tif
+    example_lcp.tif
+    cli_domainAverage.cfg
+    cli_domainAverage_diurnal.cfg
+    cli_pointInitialization_diurnal.cfg
+    cli_wxModelInitialization_diurnal.cfg
+    cli_momentumSolver_diurnal.cfg)
+list(TRANSFORM etc_files PREPEND ${PROJECT_SOURCE_DIR}/data/)
+install(FILES ${etc_files}
+        DESTINATION etc/windninja/example-files
+        COMPONENT apps)
 
-else(FIRE_BEHAVIOR_DATA_INSTALL)
-# install target related files
-set(etc_files missoula_valley.tif
-                  example_lcp.tif
-                  cli_domainAverage.cfg
-                  cli_domainAverage_diurnal.cfg
-                  cli_pointInitialization_diurnal.cfg
-                  cli_wxModelInitialization_diurnal.cfg
-                  cli_momentumSolver_diurnal.cfg)
-foreach(f ${etc_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            etc/windninja/example-files COMPONENT apps)
-endforeach(f ${etc_files})
+# Install wxstation current files (add weather station files to example files)
+set(wx_station_current_files
+    missoula_valley_stations_4.csv
+    KMSO-2018-06-25_1237-0.csv
+    PNTM8-2018-06-25_1237-2.csv
+    TR266-2018-06-25_1237-3.csv
+    TS934-2018-06-25_1237-1.csv)
+list(TRANSFORM wx_station_current_files
+     PREPEND ${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/)
+install(FILES ${wx_station_current_files}
+        DESTINATION etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley
+        COMPONENT apps)
 
-#add weather station files to example files
-set(wx_station_current_files  WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv)
-foreach(f ${wx_station_current_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley COMPONENT apps)
-endforeach(f ${wx_station_current_files})
+# Install wxstation files (add weather station time series files)
+set(wx_station_ts_files
+    missoula_valley_stations_4.csv
+    KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
+    PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
+    TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
+    TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
+list(TRANSFORM wx_station_ts_files
+     PREPEND ${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/)
+install(FILES ${wx_station_ts_files}
+        DESTINATION etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley
+        COMPONENT apps)
 
-#add weather station time series files
-set(wx_station_ts_files  WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
-foreach(f ${wx_station_ts_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley COMPONENT apps)
-endforeach(f ${wx_station_ts_files})
+# Install all share files 
+set(share_files
+    date_time_zonespec.csv
+    config_options.csv
+    tz_world.zip
+    landfire.zip
+    map.html
+    qt_certs_bundle.pem
+    thredds.csv
+    surface_data.zip
+    srtm_region.geojson
+    us_srtm_region.dbf
+    us_srtm_region.prj
+    us_srtm_region.shp
+    us_srtm_region.shx)
+list(TRANSFORM share_files PREPEND ${PROJECT_SOURCE_DIR}/data/)
+install(FILES ${share_files}
+        DESTINATION share/windninja
+        COMPONENT apps)
 
-set(share_files date_time_zonespec.csv
-                config_options.csv
-                tz_world.zip
-                landfire.zip
-                map.html
-                qt_certs_bundle.pem
-                thredds.csv
-                surface_data.zip
-                srtm_region.geojson
-                us_srtm_region.dbf
-                us_srtm_region.prj
-                us_srtm_region.shp
-                us_srtm_region.shx)
-foreach(f ${share_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            share/windninja COMPONENT apps)
-endforeach(f ${share_files})
-
-# Leaflet data
+# Install Leaflet data
 if(WIN32 AND FIRELAB_PACKAGE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 endif(WIN32 AND FIRELAB_PACKAGE)
 
-set(doc_files CLI_instructions.pdf
-              displaying_wind_vectors_in_ArcGIS_Pro.pdf
-              download_elevation_file.pdf
-              fetch_dem_instructions.pdf)
-foreach(f ${doc_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/doc/${f} DESTINATION
-            share/windninja/doc COMPONENT apps)
-endforeach(f ${doc_files})
+# Install all documentation files
+set(doc_files
+    CLI_instructions.pdf
+    displaying_wind_vectors_in_ArcGIS_Pro.pdf
+    download_elevation_file.pdf
+    fetch_dem_instructions.pdf)
+list(TRANSFORM doc_files PREPEND ${PROJECT_SOURCE_DIR}/doc/)
+install(FILES ${doc_files}
+        DESTINATION share/windninja/doc
+        COMPONENT apps)
 
-set(tutorials tutorials/WindNinja_tutorial1.pdf
-              tutorials/WindNinja_tutorial2.pdf
-              tutorials/WindNinja_tutorial3.pdf
-              tutorials/WindNinja_tutorial4.pdf)
-foreach(f ${tutorials})
-    install(FILES ${PROJECT_SOURCE_DIR}/doc/${f} DESTINATION
-            share/windninja/doc/tutorials COMPONENT apps)
-endforeach(f ${tutorials})
+# Install all tutorial files
+set(tutorial_files
+    tutorials/WindNinja_tutorial1.pdf
+    tutorials/WindNinja_tutorial2.pdf
+    tutorials/WindNinja_tutorial3.pdf
+    tutorials/WindNinja_tutorial4.pdf)
+list(TRANSFORM tutorial_files PREPEND ${PROJECT_SOURCE_DIR}/doc/tutorials/)
+install(FILES ${tutorials}
+        DESTINATION share/windninja/doc/tutorials
+        COMPONENT apps)
 
 # Install the ninjafoam data
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)
@@ -467,6 +454,33 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam DESTINATION share/windnin
 install(FILES ${PROJECT_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja)
 install(FILES ${PROJECT_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
 install(FILES ${PROJECT_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
+
+# Installs specific to Windows NSIS installer
+if(WIN32)
+    # Install DLLS for WindNinja.exe to the bin directory
+    install(
+    DIRECTORY "${CMAKE_BINARY_DIR}/src/gui/"
+    DESTINATION bin
+    FILES_MATCHING
+        PATTERN "*.exe"
+        PATTERN "*.dll"
+        PATTERN "plugins/*"
+        PATTERN "platforms/*"
+        PATTERN "resources/*"
+        PATTERN "*.qm")
+
+    # Installs GDAL data from VCPKG to the gdal-data/data directory
+    install(
+        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/gdal/"
+        DESTINATION share/windninja/gdal-data/data
+        COMPONENT apps)
+
+    # Installs PROJ data from VCPKG to the proj-data/data directory
+    install(
+        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/proj/"
+        DESTINATION share/windninja/proj-data/data
+        COMPONENT apps)
+endif(WIN32)
 
 set(ZIPFILES "")
 
@@ -524,67 +538,26 @@ Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Example Files.lnk\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Tutorials\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
-# Build the nsis installer on the firelab machine(s).  Not for external use.
-if(FIRELAB_PACKAGE AND WIN32 AND MSVC)
-
-    # Install DLLS for WindNinja.exe to the bin directory
-    install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/src/gui/"
-    DESTINATION bin
-    FILES_MATCHING
-        PATTERN "*.exe"
-        PATTERN "*.dll"
-        PATTERN "plugins/*"
-        PATTERN "platforms/*"
-        PATTERN "resources/*"
-        PATTERN "*.qm"
-    )
-
-    # Installs GDAL data from VCPKG to the gdal-data/data directory
-    install(
-        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/gdal/"
-        DESTINATION share/windninja/gdal-data/data
-        COMPONENT apps
-    )
-
-    # Installs PROJ data from VCPKG to the proj-data/data directory
-    install(
-        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/proj/"
-        DESTINATION share/windninja/proj-data/data
-        COMPONENT apps
-    )
-
-endif(FIRELAB_PACKAGE AND WIN32 AND MSVC)
-
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 set(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
 set(CPACK_COMPONENT_LIBS_DISABLED TRUE)
 set(CPACK_COMPONENT_INCLUDES_HIDDEN TRUE)
 set(CPACK_COMPONENT_INCLUDES_DISABLED TRUE)
 
-# *****************************************************************************
 # CPack call
-# *****************************************************************************
 include(CPack)
 include(CTest)
 
-# *****************************************************************************
-# CPack groupings
-# *****************************************************************************
+# CPack Groupings
 CPACK_ADD_COMPONENT(apps
                     DISPLAY_NAME "WindNinja"
                     DESCRIPTION "WindNinja binaries and documentation"
-                    GROUP Application
-                    )
+                    GROUP Application)
+
 CPACK_ADD_COMPONENT(libs
                     DISPLAY_NAME "WindNinja Libraries"
-                    DESCRIPTION "Development libraries"
-                    #GROUP Development
-                    )
+                    DESCRIPTION "Development libraries")
+
 CPACK_ADD_COMPONENT(includes
                     DISPLAY_NAME "WindNinja Headers"
-                    DESCRIPTION "Development include files"
-                    #GROUP Development
-                    )
-
-endif(FIRE_BEHAVIOR_DATA_INSTALL)
+                    DESCRIPTION "Development include files")
