@@ -17,6 +17,29 @@
     },
     {
       "name": "shapelib"
+    },
+    {
+      "name": "qtbase",
+      "features": ["widgets", "network" ]
+    },
+    {
+      "name": "qttools"
+    },
+    {
+      "name": "qtdeclarative"
+    },
+    {
+      "name": "qtquickcontrols2"
+    },
+    {
+      "name": "qtpositioning"
+    },
+    {
+      "name": "qtwebchannel"
+    },
+    {
+      "name": "qtwebengine",
+      "features": ["webchannel"]
     }
   ]
 }

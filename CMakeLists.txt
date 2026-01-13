@@ -17,6 +17,15 @@
 
 cmake_minimum_required (VERSION 3.16)
 
+# Check if the user is using VCPKG on Windows
+if(WIN32)
+    if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg.cmake")
+        message(FATAL_ERROR
+            "WindNinja requires the Visual C++ Package Manager VCPKG.\n"
+        )
+    endif()
+endif(WIN32)
+
 project(WindNinja)
 
 # let cmake figure out how to set the C++ level
@@ -82,28 +91,17 @@ set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
 message(STATUS "PKG VERSION: ${WINDNINJA_VERSION_NAME}")
 
-
-
-option(USE_VCPKG "Use VCPKG for Windows dependencies" OFF)
-if(USE_VCPKG)
-    if(WIN32)
-        message(STATUS "Using VCPKG")
-        find_package(shapelib CONFIG REQUIRED)
-        find_package(GDAL CONFIG REQUIRED)
-        find_package(netCDF CONFIG REQUIRED)
-
-        find_package(Boost REQUIRED COMPONENTS program_options)
-
-
-        set(GDAL_LIBRARY GDAL::GDAL)
-        set(NETCDF_LIBRARIES_C netCDF::netcdf)
-        set(Boost_DEBUG OFF)
-        set(Boost_USE_STATIC_LIBS ON)
-        set(Boost_USE_MULTITHREAD OFF)
-
-    else()
-        message(FATAL_ERROR "USE_VCPKG is only supported on Windows.")
-    endif()
+# Find Dependencies: VCPKG for Windows and ATP for Linux
+if(MSVC)
+    find_package(shapelib CONFIG REQUIRED)
+    find_package(GDAL CONFIG REQUIRED)
+    find_package(netCDF CONFIG REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS date_time program_options unit_test_framework)
+    set(GDAL_LIBRARY GDAL::GDAL)
+    set(NETCDF_LIBRARIES_C netCDF::netcdf)
+    set(Boost_DEBUG OFF)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_USE_MULTITHREAD OFF)
 else()
     include(FindBoost)
     set(Boost_DEBUG OFF)
@@ -113,7 +111,7 @@ else()
     include(FindNetCDF)
     include(FindGDAL)
     find_package(NetCDF)
-endif()
+endif(MSVC)
 
 # Ninja executables
 option(NINJA_GUI "Build Qt GUI" ON)
@@ -313,6 +311,16 @@ if(NINJA_GDAL_OUTPUT)
   add_definitions(-DNINJA_GDAL_OUTPUT)
 endif()
 
+if(MSVC)
+    # Run windeployqt6.exe to provide all QT related DLLs
+    set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe")
+    add_custom_target(deploy_windninja ALL
+        COMMAND "${WINDEPLOYQT_EXE}"  
+                "$<TARGET_FILE:WindNinja>"
+        DEPENDS WindNinja
+    )
+endif(MSVC)
+
 option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" OFF)
 
 # Recurse into subdirectories
@@ -432,8 +440,6 @@ endforeach(f ${share_files})
 # Leaflet data
 if(WIN32 AND FIRELAB_PACKAGE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
-else(WIN32 AND FIRELAB_PACKAGE)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 endif(WIN32 AND FIRELAB_PACKAGE)
 
 set(doc_files CLI_instructions.pdf
@@ -463,11 +469,6 @@ install(FILES ${PROJECT_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
 install(FILES ${PROJECT_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
 
 set(ZIPFILES "")
-
-# GDAL data
-if(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
-    install(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
-endif(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
 
 if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
@@ -524,17 +525,11 @@ RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Tutorials\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
 # Build the nsis installer on the firelab machine(s).  Not for external use.
-if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
+if(FIRELAB_PACKAGE AND WIN32 AND MSVC)
 
-    set(WINDEPLOYQT_EXE "${Qt6_DIR}/../../../bin/windeployqt.exe")
-    add_custom_target(deploy_windninja ALL
-        COMMAND "${WINDEPLOYQT_EXE}" --release 
-                "$<TARGET_FILE:WindNinja>"
-        DEPENDS WindNinja
-    )
-
+    # Install DLLS for WindNinja.exe to the bin directory
     install(
-    DIRECTORY "${PROJECT_BINARY_DIR}/src/gui/"
+    DIRECTORY "${CMAKE_BINARY_DIR}/src/gui/"
     DESTINATION bin
     FILES_MATCHING
         PATTERN "*.exe"
@@ -545,20 +540,21 @@ if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
         PATTERN "*.qm"
     )
 
+    # Installs GDAL data from VCPKG to the gdal-data/data directory
     install(
         DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/gdal/"
         DESTINATION share/windninja/gdal-data/data
         COMPONENT apps
     )
 
+    # Installs PROJ data from VCPKG to the proj-data/data directory
     install(
         DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/proj/"
         DESTINATION share/windninja/proj-data/data
         COMPONENT apps
     )
 
-
-endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND USE_VCPKG)
+endif(FIRELAB_PACKAGE AND WIN32 AND MSVC)
 
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 set(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
