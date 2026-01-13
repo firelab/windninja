@@ -1293,13 +1293,12 @@ void MainWindow::plotKmzOutputs()
         // vars to be filled
         int numRuns = 0;
         char **kmzFilenames = NULL;
-        int numRunsWithStationKmls = 0;
         int *numStationKmls = NULL;
         char ***stationKmlFilenames = NULL;
         char **weatherModelKmzFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numRunsWithStationKmls, &numStationKmls, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numStationKmls, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
@@ -1322,22 +1321,18 @@ void MainWindow::plotKmzOutputs()
             // plot the station kmls of the run
             if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-qDebug() << "i=" << i << "numRunsWithStationKmls=" << numRunsWithStationKmls;
-                if(i < numRunsWithStationKmls)
+qDebug() << "i =" << i << ", numStationKmls[i] =" << numStationKmls[i];
+                for(int j = 0; j < numStationKmls[i]; j++)
                 {
-qDebug() << "numStationKmls[i]=" << numStationKmls[i];
-                    for(int j = 0; j < numStationKmls[i]; j++)
-                    {
-                        QString outFileStr = QString::fromStdString(stationKmlFilenames[i][j]);
-                        qDebug() << "station kml outFile =" << outFileStr;
-                        QFile outFile(outFileStr);
+                    QString outFileStr = QString::fromStdString(stationKmlFilenames[i][j]);
+                    qDebug() << "station kml outFile =" << outFileStr;
+                    QFile outFile(outFileStr);
 
-                        outFile.open(QIODevice::ReadOnly);
-                        QByteArray data = outFile.readAll();
-                        QString base64 = data.toBase64();
+                    outFile.open(QIODevice::ReadOnly);
+                    QByteArray data = outFile.readAll();
+                    QString base64 = data.toBase64();
 
-                        webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-                    }
+                    webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
                 }
             }
 
@@ -1357,7 +1352,7 @@ qDebug() << "numStationKmls[i]=" << numStationKmls[i];
             }
         }
 
-        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numRunsWithStationKmls, numStationKmls, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numStationKmls, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);

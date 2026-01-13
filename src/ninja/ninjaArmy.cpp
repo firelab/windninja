@@ -2524,29 +2524,39 @@ void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
 {
     kmzFilenames.push_back( ninjas[runNumber]->input.kmzFile );
 std::cout << "ninjas[" << runNumber << "]->input.stations.size() = " << ninjas[runNumber]->input.stations.size() << std::endl;
-    if(ninjas[runNumber]->input.stations.size() != 0)
+    std::vector<std::string> currentStationKmlFilenames;
+    if(ninjas[runNumber]->input.stations.size() == 0)
     {
-std::cout << "ninjas[" << runNumber << "]->input.stations[0].stationKmlNames.size() = " << ninjas[runNumber]->input.stations[0].stationKmlNames.size() << std::endl;
-        if(ninjas[runNumber]->input.stations[0].stationKmlNames.size() != 0)
+        currentStationKmlFilenames.push_back( "" );
+    } else
+    {
+std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames.size() = " << ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() << std::endl;
+        if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
+        {
+            currentStationKmlFilenames.push_back( "" );
+        } else
         {
             // assume all the other stations across all the other stations storage, are the exact same list as that of the first station
             // SHOULD be true, seems like the idea of the storage was to make sure each station had access to the same copy of data
             // it's still one of the quirkiest code setups that I've seen in a while
-            std::vector<std::string> currentStationKmlFilenames;
-            for(int j = 0; j < ninjas[runNumber]->input.stations[0].stationKmlNames.size(); j++)
+            for(int j = 0; j < ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size(); j++)
             {
-std::cout << "ninjas[" << runNumber << "]->input.stations[0].stationKmlNames[" << j << "] = " << ninjas[runNumber]->input.stations[0].stationKmlNames[j] << std::endl;
+std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames[" << j << "] = " << ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] << std::endl;
                 if(ninjas[runNumber]->input.stations[j].stationKmlNames.size())
                 {
-                    currentStationKmlFilenames.push_back( ninjas[runNumber]->input.stations[0].stationKmlNames[j] );
+                    currentStationKmlFilenames.push_back( ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] );
                 }
             }
-            stationKmlFilenames.push_back( currentStationKmlFilenames );
-std::cout << "stationKmlFilenames.size() = " << stationKmlFilenames.size() << std::endl;
-std::cout << "stationKmlFilenames[0].size() = " << stationKmlFilenames[0].size() << std::endl;
         }
     }
-
+    stationKmlFilenames.push_back( currentStationKmlFilenames );
+std::cout << "stationKmlFilenames.size() = " << stationKmlFilenames.size() << std::endl;
+std::cout << "stationKmlFilenames[0].size() = " << stationKmlFilenames[0].size() << std::endl;
+std::cout << "stationKmlFilenames[0][0] = \"" << stationKmlFilenames[0][0] << "\"" << std::endl;
+std::cout << "stationKmlFilenames[0][" << stationKmlFilenames[0].size()-1 << "] = \"" << stationKmlFilenames[0][stationKmlFilenames[0].size()-1] << "\"" << std::endl;
+//std::cout << "stationKmlFilenames[" << runNumber << "].size() = " << stationKmlFilenames[runNumber].size() << std::endl;
+//std::cout << "stationKmlFilenames[" << runNumber << "][0] = \"" << stationKmlFilenames[runNumber][0] << "\"" << std::endl;
+//std::cout << "stationKmlFilenames[" << runNumber << "][" << stationKmlFilenames[runNumber].size()-1 << "] = \"" << stationKmlFilenames[runNumber][stationKmlFilenames[runNumber].size()-1] << "\"" << std::endl;
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
     if(ninjas[runNumber]->input.wxModelKmzFile == "!set")
     {
