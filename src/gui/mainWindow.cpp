@@ -955,13 +955,24 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             }
         }
 
-        ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
-        if(ninjaErr != NINJA_SUCCESS)
+        if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
         {
-            qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
-            return false;
+            ninjaErr = NinjaSetMeshResolution(ninjaArmy, i, ui->meshResolutionSpinBox->value(), ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetMeshResolution: ninjaErr =" << ninjaErr;
+                return false;
+            }
+        } else
+        {
+            ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+            //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+            //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
+                return false;
+            }
         }
 
         ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
@@ -1209,7 +1220,7 @@ OutputMeshResolution MainWindow::getMeshResolution(
     else
     {
         result.resolution = ui->meshResolutionSpinBox->value();
-        result.units = ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionComboBox->currentIndex()).toString().toUtf8();
+        result.units = ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8();
     }
 
     return result;
@@ -1410,7 +1421,7 @@ void MainWindow::writeSettings()
 
     //settings.setValue("pointFile", tree->point->stationFileName );
 
-    //if(ui->meshResolutionComboBox->currentIndex() == 3)
+    //if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
     //{
     //    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
     //}
