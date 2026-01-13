@@ -641,7 +641,7 @@ void MainWindow::solveButtonClicked()
             }
         }
     }
-    else
+    else //if (state.isWeatherModelInitializationValid)
     {
         QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
         int timeListSize = selectedIndexes.count();
@@ -1293,11 +1293,13 @@ void MainWindow::plotKmzOutputs()
         // vars to be filled
         int numRuns = 0;
         char **kmzFilenames = NULL;
-        char **stationKmlFilenames = NULL;
+        int numRunsWithStationKmls = 0;
+        int *numStationKmls = NULL;
+        char ***stationKmlFilenames = NULL;
         char **weatherModelKmzFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numRunsWithStationKmls, &numStationKmls, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
@@ -1305,6 +1307,7 @@ void MainWindow::plotKmzOutputs()
 
         for(int i = 0; i < numRuns; i++)
         {
+            // plot the output kmz of the run
             QString outFileStr = QString::fromStdString(kmzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
             QFile outFile(outFileStr);
@@ -1314,29 +1317,47 @@ void MainWindow::plotKmzOutputs()
             QString base64 = data.toBase64();
 
             webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+
+            // if it is a point initialization run, and station kmls were created for the run,
+            // plot the station kmls of the run
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
+            {
+qDebug() << "i=" << i << "numRunsWithStationKmls=" << numRunsWithStationKmls;
+                if(i < numRunsWithStationKmls)
+                {
+qDebug() << "numStationKmls[i]=" << numStationKmls[i];
+                    for(int j = 0; j < numStationKmls[i]; j++)
+                    {
+                        QString outFileStr = QString::fromStdString(stationKmlFilenames[i][j]);
+                        qDebug() << "station kml outFile =" << outFileStr;
+                        QFile outFile(outFileStr);
+
+                        outFile.open(QIODevice::ReadOnly);
+                        QByteArray data = outFile.readAll();
+                        QString base64 = data.toBase64();
+
+                        webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+                    }
+                }
+            }
+
+            // if it is a weather model run, and weather model kmzs were created for the run,
+            // plot the weather model kmz of the run
+            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthGroupBox->isChecked())
+            {
+                QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
+                qDebug() << "wx model kmz outFile =" << outFileStr;
+                QFile outFile(outFileStr);
+
+                outFile.open(QIODevice::ReadOnly);
+                QByteArray data = outFile.readAll();
+                QString base64 = data.toBase64();
+
+                webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+            }
         }
 
-        for(int i = 0; i < numRuns; i++)
-        {
-            QString outFileStr = QString::fromStdString(stationKmlFilenames[i]);
-            qDebug() << "station kml outFile =" << outFileStr;
-            // tested, this type does not plot right now, because the map.html can't handle it yet
-        }
-
-        for(int i = 0; i < numRuns; i++)
-        {
-            QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
-            qDebug() << "wx model kmz outFile =" << outFileStr;
-            QFile outFile(outFileStr);
-
-            outFile.open(QIODevice::ReadOnly);
-            QByteArray data = outFile.readAll();
-            QString base64 = data.toBase64();
-
-            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-        }
-
-        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numRunsWithStationKmls, numStationKmls, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
