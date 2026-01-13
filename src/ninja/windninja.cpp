@@ -2676,7 +2676,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *num
 
         int m = (int)stationKmlFilenameStrings.size();
         *numStationKmls = m;
-std::cout << "m = " << m << std::endl;
+
         *stationKmlFilenames = (char **)malloc(sizeof(char *) * m);
 
         for(int j = 0; j < m; j++)

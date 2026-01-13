@@ -2531,13 +2531,11 @@ void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
     // still, it's one of the quirkiest code setups that I've seen in a while
     if(runNumber == 0)
     {
-std::cout << "ninjas[" << runNumber << "]->input.stations.size() = " << ninjas[runNumber]->input.stations.size() << std::endl;
         if(ninjas[runNumber]->input.stations.size() == 0)
         {
             stationKmlFilenames.push_back( "" );
         } else
         {
-std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames.size() = " << ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() << std::endl;
             if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
             {
                 stationKmlFilenames.push_back( "" );
@@ -2545,14 +2543,10 @@ std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].s
             {
                 for(int j = 0; j < ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size(); j++)
                 {
-std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames[" << j << "] = " << ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] << std::endl;
                     stationKmlFilenames.push_back( ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] );
                 }
             }
         }
-std::cout << "stationKmlFilenames.size() = " << stationKmlFilenames.size() << std::endl;
-std::cout << "stationKmlFilenames[0] = \"" << stationKmlFilenames[0] << "\"" << std::endl;
-std::cout << "stationKmlFilenames[" << stationKmlFilenames.size()-1 << "] = \"" << stationKmlFilenames[stationKmlFilenames.size()-1] << "\"" << std::endl;
     }
 
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]

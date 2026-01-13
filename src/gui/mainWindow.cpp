@@ -1304,6 +1304,28 @@ void MainWindow::plotKmzOutputs()
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
+        std::vector<std::string> kmzFilenamesStr;
+        std::vector<std::string> stationKmlFilenamesStr;
+        std::vector<std::string> wxModelKmzFilenamesStr;
+
+        kmzFilenamesStr.reserve(numRuns);
+        wxModelKmzFilenamesStr.reserve(numRuns);
+        for(int i = 0; i < numRuns; i++)
+        {
+            kmzFilenamesStr.emplace_back(kmzFilenames[i]);
+            wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
+        }
+
+        stationKmlFilenamesStr.reserve(numStationKmls);
+        for(int j = 0; j < numStationKmls; j++)
+        {
+            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[j]);
+        }
+
+        outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
+        outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
+        outputWxModelKmzFilenames.push_back(std::move( wxModelKmzFilenamesStr ));
+
         for(int i = 0; i < numRuns; i++)
         {
             // plot the output kmz of the run
