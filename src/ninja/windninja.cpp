@@ -766,11 +766,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
 }
         
 WINDNINJADLL_EXPORT NinjaErr NinjaInit
-    ( char ** papszOptions )
+    ( const char * runType, char ** papszOptions )
 {
     NinjaErr retval = NINJA_E_INVALID;
 
-    retval = NinjaInitialize();
+    retval = NinjaInitialize(runType);
 
     return retval;
 }

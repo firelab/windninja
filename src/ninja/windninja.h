@@ -134,7 +134,7 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const unsigned int nprocessors, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaInit
-        ( char ** options );
+        ( const char * runType, char ** options );
 
     /*-----------------------------------------------------------------------------
      *  Various Simulation Parameters

@@ -49,8 +49,9 @@ int main(int argc, char *argv[])
     int result;
 
     char ** papszOptions = NULL;
+    const char * runType = "gui";
     NinjaErr ninjaErr = 0;
-    ninjaErr = NinjaInit(papszOptions);   //TODO: NEED TO ADD NINJA INITIALIZE FOR GUI THROUGH API
+    ninjaErr = NinjaInit(runType, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaInit: ninjaErr =" << ninjaErr;
