@@ -73,11 +73,6 @@
 #include <vector>
 #include <string>
 
-struct OutputMeshResolution {
-    double resolution;
-    QByteArray units;
-};
-
 struct OutputPDFSize {
     double PDFHeight;
     double PDFWidth;
@@ -159,14 +154,7 @@ private:
     bool setOutputFlags(NinjaArmyH* ninjaArmy,
                         int i,
                         int numNinjas,
-                        OutputMeshResolution googleEarth,
-                        OutputMeshResolution fireBehavior,
-                        OutputMeshResolution shapeFiles,
-                        OutputMeshResolution geospatialPDFs,
                         OutputPDFSize PDFSize);
-    OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
-                                           QDoubleSpinBox* outputMeshResolutionSpinBox,
-                                           QComboBox* outputMeshResolutionComboBox);
 
     int lineNumber;
 

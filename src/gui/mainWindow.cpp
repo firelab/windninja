@@ -813,26 +813,6 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 
 bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
 {
-    OutputMeshResolution googleEarth = getMeshResolution(
-        ui->googleEarthMeshResolutionGroupBox->isChecked(),
-        ui->googleEarthMeshResolutionSpinBox,
-        ui->googleEarthMeshResolutionComboBox);
-
-    OutputMeshResolution fireBehavior = getMeshResolution(
-        ui->fireBehaviorMeshResolutionGroupBox->isChecked(),
-        ui->fireBehaviorMeshResolutionSpinBox,
-        ui->fireBehaviorMeshResolutionComboBox);
-
-    OutputMeshResolution shapeFiles = getMeshResolution(
-        ui->shapeFilesMeshResolutionGroupBox->isChecked(),
-        ui->shapeFilesMeshResolutionSpinBox,
-        ui->shapeFilesMeshResolutionComboBox);
-
-    OutputMeshResolution geospatialPDFs = getMeshResolution(
-        ui->geospatialPDFFilesMeshResolutionGroupBox->isChecked(),
-        ui->geospatialPDFFilesMeshResolutionSpinBox,
-        ui->geospatialPDFFilesMeshResolutionComboBox);
-
     OutputPDFSize PDFSize;
     switch(ui->sizeDimensionsComboBox->currentIndex())
     {
@@ -984,7 +964,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
-        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
+        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, PDFSize);
         if( retVal == false )
         {
             return false;
@@ -997,10 +977,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
                                 int i,
                                 int numNinjas,
-                                OutputMeshResolution googleEarth,
-                                OutputMeshResolution fireBehavior,
-                                OutputMeshResolution shapeFiles,
-                                OutputMeshResolution geospatialPDFs,
                                 OutputPDFSize PDFSize)
 {
     char **papszOptions = nullptr;
@@ -1041,9 +1017,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, googleEarth.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, googleEarth.resolution, googleEarth.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
@@ -1094,9 +1070,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
@@ -1111,9 +1087,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
@@ -1161,9 +1137,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
@@ -1203,27 +1179,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     return true;
-}
-
-OutputMeshResolution MainWindow::getMeshResolution(
-    bool useOutputMeshResolution,
-    QDoubleSpinBox* outputMeshResolutionSpinBox,
-    QComboBox* outputMeshResolutionComboBox)
-{
-    OutputMeshResolution result;
-
-    if (!useOutputMeshResolution)
-    {
-        result.resolution = outputMeshResolutionSpinBox->value();
-        result.units = outputMeshResolutionComboBox->itemData(outputMeshResolutionComboBox->currentIndex()).toString().toUtf8();
-    }
-    else
-    {
-        result.resolution = ui->meshResolutionSpinBox->value();
-        result.units = ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8();
-    }
-
-    return result;
 }
 
 int MainWindow::startSolve(int numProcessors)
