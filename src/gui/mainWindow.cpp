@@ -1293,8 +1293,8 @@ void MainWindow::plotKmzOutputs()
         // vars to be filled
         int numRuns = 0;
         char **kmzFilenames = NULL;
-        int *numStationKmls = NULL;
-        char ***stationKmlFilenames = NULL;
+        int numStationKmls = 0;
+        char **stationKmlFilenames = NULL;
         char **weatherModelKmzFilenames = NULL;
 
         char **papszOptions = nullptr;
@@ -1318,13 +1318,13 @@ void MainWindow::plotKmzOutputs()
             webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
 
             // if it is a point initialization run, and station kmls were created for the run,
-            // plot the station kmls of the run
-            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
+            // plot the station kmls of the first run
+            // (first run, because station kmls are SHARED across runs)
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
             {
-qDebug() << "i =" << i << ", numStationKmls[i] =" << numStationKmls[i];
-                for(int j = 0; j < numStationKmls[i]; j++)
+                for(int j = 0; j < numStationKmls; j++)
                 {
-                    QString outFileStr = QString::fromStdString(stationKmlFilenames[i][j]);
+                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
                     qDebug() << "station kml outFile =" << outFileStr;
                     QFile outFile(outFileStr);
 

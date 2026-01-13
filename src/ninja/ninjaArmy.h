@@ -1346,11 +1346,11 @@ public:
     *        and the weather model filenames of each ninja if they were created for the run.
     *
     * \param kmzFilenames The output kmz filenames of each ninja, to be filled.
-    * \param stationKmlFilenames The station kml filenames of each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
+    * \param stationKmlFilenames The station kml filenames SHARED across each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
     * \param weatherModelKmzFilenames The weather model kmz filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
     * \return errval Returns NINJA_SUCCESS upon success.
     */
-    int getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::vector<std::string>>& stationKmlFilenamesStr,
+    int getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
                             std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
@@ -1361,7 +1361,7 @@ public:
     void cancelAndReset();
 
     std::vector<std::string> kmzFilenames;
-    std::vector<std::vector<std::string>> stationKmlFilenames;
+    std::vector<std::string> stationKmlFilenames;
     std::vector<std::string> wxModelKmzFilenames;
 
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
