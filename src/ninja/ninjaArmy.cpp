@@ -670,9 +670,9 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     // prep a clean set of kmz output filenames to append to before ninjas[i] gets deleted after each run
-    kmzFilenames.clear();
-    stationKmlFilenames.clear();
-    wxModelKmzFilenames.clear();
+    kmzFilenames.resize(ninjas.size());
+    stationKmlFilenames.resize(ninjas.size());
+    wxModelKmzFilenames.resize(ninjas.size());
 
     if(ninjas.size() == 1)
     {
@@ -2522,7 +2522,7 @@ void ninjaArmy::cancelAndReset()
 
 void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
 {
-    kmzFilenames.push_back( ninjas[runNumber]->input.kmzFile );
+    kmzFilenames[runNumber] = ninjas[runNumber]->input.kmzFile;
 std::cout << "ninjas[" << runNumber << "]->input.stations.size() = " << ninjas[runNumber]->input.stations.size() << std::endl;
     std::vector<std::string> currentStationKmlFilenames;
     if(ninjas[runNumber]->input.stations.size() == 0)
@@ -2549,21 +2549,17 @@ std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].s
             }
         }
     }
-    stationKmlFilenames.push_back( currentStationKmlFilenames );
-std::cout << "stationKmlFilenames.size() = " << stationKmlFilenames.size() << std::endl;
-std::cout << "stationKmlFilenames[0].size() = " << stationKmlFilenames[0].size() << std::endl;
-std::cout << "stationKmlFilenames[0][0] = \"" << stationKmlFilenames[0][0] << "\"" << std::endl;
-std::cout << "stationKmlFilenames[0][" << stationKmlFilenames[0].size()-1 << "] = \"" << stationKmlFilenames[0][stationKmlFilenames[0].size()-1] << "\"" << std::endl;
-//std::cout << "stationKmlFilenames[" << runNumber << "].size() = " << stationKmlFilenames[runNumber].size() << std::endl;
-//std::cout << "stationKmlFilenames[" << runNumber << "][0] = \"" << stationKmlFilenames[runNumber][0] << "\"" << std::endl;
-//std::cout << "stationKmlFilenames[" << runNumber << "][" << stationKmlFilenames[runNumber].size()-1 << "] = \"" << stationKmlFilenames[runNumber][stationKmlFilenames[runNumber].size()-1] << "\"" << std::endl;
+    stationKmlFilenames[runNumber] = currentStationKmlFilenames;
+std::cout << "stationKmlFilenames[" << runNumber << "].size() = " << stationKmlFilenames[runNumber].size() << std::endl;
+std::cout << "stationKmlFilenames[" << runNumber << "][0] = \"" << stationKmlFilenames[runNumber][0] << "\"" << std::endl;
+std::cout << "stationKmlFilenames[" << runNumber << "][" << stationKmlFilenames[runNumber].size()-1 << "] = \"" << stationKmlFilenames[runNumber][stationKmlFilenames[runNumber].size()-1] << "\"" << std::endl;
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
     if(ninjas[runNumber]->input.wxModelKmzFile == "!set")
     {
-        wxModelKmzFilenames.push_back( "" );
+        wxModelKmzFilenames[runNumber] = "";
     } else
     {
-        wxModelKmzFilenames.push_back( ninjas[runNumber]->input.wxModelKmzFile );
+        wxModelKmzFilenames[runNumber] = ninjas[runNumber]->input.wxModelKmzFile;
     }
 }
 
