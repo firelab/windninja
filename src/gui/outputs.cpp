@@ -46,6 +46,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
     connect(this, &Outputs::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
+    connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
+    connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
 }
 
 void Outputs::googleEarthGroupBoxToggled(bool checked)
@@ -87,22 +89,80 @@ void Outputs::googleEarthMeshResolutionGroupBoxToggled(bool checked)
 {
     ui->googleEarthMeshResolutionSpinBox->setEnabled(!checked);
     ui->googleEarthMeshResolutionComboBox->setEnabled(!checked);
+
+    emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
+    emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
 }
 
 void Outputs::fireBehaviorMeshResolutionGroupBoxToggled(bool checked)
 {
     ui->fireBehaviorMeshResolutionSpinBox->setEnabled(!checked);
     ui->fireBehaviorMeshResolutionComboBox->setEnabled(!checked);
+
+    emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
+    emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
 }
 
 void Outputs::shapeFilesMeshResolutionGroupBoxToggled(bool checked)
 {
     ui->shapeFilesMeshResolutionSpinBox->setEnabled(!checked);
     ui->shapeFilesMeshResolutionComboBox->setEnabled(!checked);
+
+    emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
+    emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
 }
 
 void Outputs::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
 {
     ui->geospatialPDFFilesMeshResolutionSpinBox->setEnabled(!checked);
     ui->geospatialPDFFilesMeshResolutionComboBox->setEnabled(!checked);
+
+    emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
+    emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
+}
+
+void Outputs::meshResolutionSpinBoxValueChanged(double value)
+{
+    if(ui->googleEarthMeshResolutionGroupBox->isChecked())
+    {
+        ui->googleEarthMeshResolutionSpinBox->setValue(value);
+    }
+
+    if(ui->fireBehaviorMeshResolutionGroupBox->isChecked())
+    {
+        ui->fireBehaviorMeshResolutionSpinBox->setValue(value);
+    }
+
+    if(ui->shapeFilesMeshResolutionGroupBox->isChecked())
+    {
+        ui->shapeFilesMeshResolutionSpinBox->setValue(value);
+    }
+
+    if(ui->geospatialPDFFilesMeshResolutionGroupBox->isChecked())
+    {
+        ui->geospatialPDFFilesMeshResolutionSpinBox->setValue(value);
+    }
+}
+
+void Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
+{
+    if(ui->googleEarthMeshResolutionGroupBox->isChecked())
+    {
+        ui->googleEarthMeshResolutionComboBox->setCurrentIndex(index);
+    }
+
+    if(ui->fireBehaviorMeshResolutionGroupBox->isChecked())
+    {
+        ui->fireBehaviorMeshResolutionComboBox->setCurrentIndex(index);
+    }
+
+    if(ui->shapeFilesMeshResolutionGroupBox->isChecked())
+    {
+        ui->shapeFilesMeshResolutionComboBox->setCurrentIndex(index);
+    }
+
+    if(ui->geospatialPDFFilesMeshResolutionGroupBox->isChecked())
+    {
+        ui->geospatialPDFFilesMeshResolutionComboBox->setCurrentIndex(index);
+    }
 }

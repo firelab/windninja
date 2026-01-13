@@ -30,6 +30,8 @@ private slots:
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
+    void meshResolutionSpinBoxValueChanged(double value);
+    void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
 
 private:
     Ui::MainWindow *ui;
