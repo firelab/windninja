@@ -326,7 +326,7 @@ endif(BUILD_TESTING)
 
 # Run windeployqt6.exe to provide all QT related DLLs
 if(MSVC)
-    set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.ex")
+    set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe")
     add_custom_target(deploy_windninja ALL
         COMMAND "${WINDEPLOYQT_EXE}"  
                 "$<TARGET_FILE:WindNinja>"
