@@ -73,11 +73,6 @@
 #include <vector>
 #include <string>
 
-struct OutputMeshResolution {
-    double resolution;
-    QByteArray units;
-};
-
 struct OutputPDFSize {
     double PDFHeight;
     double PDFWidth;
@@ -145,6 +140,11 @@ private:
 
     int startSolve(int numProcessors);
     void finishedSolve();
+    void plotKmzOutputs();
+
+    std::vector<std::vector<std::string>> outputKmzFilenames;
+    std::vector<std::vector<std::string>> outputStationKmlFilenames;
+    std::vector<std::vector<std::string>> outputWxModelKmzFilenames;
 
     QString currentDEMFilePath;
 
@@ -154,14 +154,7 @@ private:
     bool setOutputFlags(NinjaArmyH* ninjaArmy,
                         int i,
                         int numNinjas,
-                        OutputMeshResolution googleEarth,
-                        OutputMeshResolution fireBehavior,
-                        OutputMeshResolution shapeFiles,
-                        OutputMeshResolution geospatialPDFs,
                         OutputPDFSize PDFSize);
-    OutputMeshResolution getMeshResolution(bool useOutputMeshResolution,
-                                           QDoubleSpinBox* outputMeshResolutionSpinBox,
-                                           QComboBox* outputMeshResolutionComboBox);
 
     int lineNumber;
 

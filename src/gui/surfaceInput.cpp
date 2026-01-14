@@ -68,14 +68,13 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
 }
 
-
 void SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
 {
-    if(index == 0)
+    if(index == 0) // meters
     {
         ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
     }
-    else
+    else  // if(index == 1) // feet
     {
         ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
     }
@@ -264,6 +263,7 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
     }
 
     ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    updateMeshResolutionByUnits();
 }
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
@@ -282,6 +282,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
     }
 
     ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    updateMeshResolutionByUnits();
 
     QStringList cornerStrs;
     for (int i = 0; i < 8; ++i)
@@ -676,10 +677,10 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
     case 2:
         targetNumHorizCells = fine;
         break;
-    case 3:
-        return 200;
+    case 3:  // custom
+        return ui->meshResolutionSpinBox->value();
     default:
-        return 200;
+        return ui->meshResolutionSpinBox->value();
     }
 
     double XLength = GDALXSize * GDALCellSize;
@@ -731,7 +732,20 @@ double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
 #endif //NINJAFOAM
 
     return meshResolution;
+}
 
+void SurfaceInput::updateMeshResolutionByUnits()
+{
+    // units are expected to always already be calculated to be in meters
+    // UNLESS it is CUSTOM, then it needs to be left in whatever units it shows up in,
+    //  units are then only altered when updating the units combo box
+    if(ui->meshResolutionComboBox->currentIndex() != 3)
+    {
+        if(ui->meshResolutionUnitsComboBox->currentIndex() == 1)  // feet
+        {
+            ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
+        }
+    }
 }
 
 void SurfaceInput::computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4])

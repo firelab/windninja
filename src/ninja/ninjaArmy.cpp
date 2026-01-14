@@ -669,6 +669,13 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
+    // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
+    // stationKmlfilenames is an exception, it is filled by appending the ninjas[0] set of station files,
+    // which are shared across runs. Appends within a single run don't mess up the ordering like they do across runs.
+    kmzFilenames.resize(ninjas.size());
+    stationKmlFilenames.clear();
+    wxModelKmzFilenames.resize(ninjas.size());
+
     if(ninjas.size() == 1)
     {
         //set number of threads for the run
@@ -728,6 +735,9 @@ bool ninjaArmy::startRuns(int numProcessors)
             //write farsite atmosphere file
             if(writeFarsiteAtmFile)
                 writeFarsiteAtmosphereFile();
+
+            //setup the run kmz filenames, for C-API calls
+            setCurrentRunKmzFilenames(0);
 
         }catch (bad_alloc& e)
         {
@@ -816,6 +826,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
+
+                //setup the run kmz filenames, for C-API calls
+                setCurrentRunKmzFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
@@ -940,6 +953,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
+
+                //setup the run kmz filenames, for C-API calls
+                setCurrentRunKmzFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
@@ -2470,6 +2486,17 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
     }
     return std::string("");
 }
+
+int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+                                   std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions )
+{
+    kmzFilenamesStr = kmzFilenames;
+    stationKmlFilenamesStr = stationKmlFilenames;
+    wxModelKmzFilenamesStr = wxModelKmzFilenames;
+
+    return NINJA_SUCCESS;
+}
+
 /**
  * @brief Reset the army in able to reinitialize needed parameters
  *
@@ -2493,6 +2520,43 @@ void ninjaArmy::cancelAndReset()
 {
     cancel();
     reset();
+}
+
+void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
+{
+    kmzFilenames[runNumber] = ninjas[runNumber]->input.kmzFile;
+
+    // assume all the other stations across all the other stations storage, are the exact same list as that of the first station
+    // SHOULD be true, seems like the idea of the storage was to make sure each station had access to the same copy of data, so a form of SHARED storage
+    // still, it's one of the quirkiest code setups that I've seen in a while
+    if(runNumber == 0)
+    {
+        if(ninjas[runNumber]->input.stations.size() == 0)
+        {
+            stationKmlFilenames.push_back( "" );
+        } else
+        {
+            if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
+            {
+                stationKmlFilenames.push_back( "" );
+            } else
+            {
+                for(int j = 0; j < ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size(); j++)
+                {
+                    stationKmlFilenames.push_back( ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] );
+                }
+            }
+        }
+    }
+
+    // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
+    if(ninjas[runNumber]->input.wxModelKmzFile == "!set")
+    {
+        wxModelKmzFilenames[runNumber] = "";
+    } else
+    {
+        wxModelKmzFilenames[runNumber] = ninjas[runNumber]->input.wxModelKmzFile;
+    }
 }
 
 void ninjaArmy::initLocalData(void)

@@ -1340,13 +1340,30 @@ public:
     * \return path String of the path, which is empty if no output is set
     */
     std::string getOutputPath( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Returns the output kmz filenames of each ninja, as well as the station kml filenames
+    *        and the weather model filenames of each ninja if they were created for the run.
+    *
+    * \param kmzFilenames The output kmz filenames of each ninja, to be filled.
+    * \param stationKmlFilenames The station kml filenames SHARED across each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
+    * \param weatherModelKmzFilenames The weather model kmz filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+    * \return errval Returns NINJA_SUCCESS upon success.
+    */
+    int getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+                            std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions=NULL );
+
     /*-----------------------------------------------------------------------------
      *  Termination Section
      *-----------------------------------------------------------------------------*/
     void reset();
     void cancel();
     void cancelAndReset();
-    
+
+    std::vector<std::string> kmzFilenames;
+    std::vector<std::string> stationKmlFilenames;
+    std::vector<std::string> wxModelKmzFilenames;
+
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer
@@ -1359,6 +1376,8 @@ protected:
     bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
     void setAtmFlags();
+
+    void setCurrentRunKmzFilenames(int runNumber);
 
     /*
     ** This function initializes various data for the lifetime of the

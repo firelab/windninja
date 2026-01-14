@@ -318,6 +318,7 @@ void MainWindow::massSolverCheckBoxClicked()
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+        surfaceInput->updateMeshResolutionByUnits();
     }
     emit updateMetholodyState();
 }
@@ -336,6 +337,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+        surfaceInput->updateMeshResolutionByUnits();
     }
     emit updateMetholodyState();
 }
@@ -639,7 +641,7 @@ void MainWindow::solveButtonClicked()
             }
         }
     }
-    else
+    else //if (state.isWeatherModelInitializationValid)
     {
         QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
         int timeListSize = selectedIndexes.count();
@@ -751,32 +753,6 @@ void MainWindow::solveButtonClicked()
     QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
     futureWatcher->setFuture(future);
 
-    // vector<string> outputFiles;
-    // QDir outDir(ui->outputDirectoryLineEdit->text());
-    // QString demName = QFileInfo(ui->elevationInputFileLineEdit->text()).baseName();
-    // int meshInt = static_cast<int>(std::round(ui->meshResolutionSpinBox->value()));
-    // QString meshSize = QString::number(meshInt) + "m";
-
-    // for (int i = 0; i < numNinjas; i++) {
-    //     QString filePath = outDir.filePath(QString("%1_%2_%3_%4.kmz")
-    //                                            .arg(demName)
-    //                                            .arg(directions[i])
-    //                                            .arg(speeds[i])
-    //                                            .arg(meshSize));
-    //     outputFiles.push_back(filePath.toStdString());
-    // }
-
-    // for (const auto& dir : outputFiles) {
-    //     QString qDir = QString::fromStdString(dir);
-
-    //     QFile f(qDir);
-    //     f.open(QIODevice::ReadOnly);
-    //     QByteArray data = f.readAll();
-    //     QString base64 = data.toBase64();
-
-    //     webView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-    // }
-
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -837,26 +813,6 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 
 bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
 {
-    OutputMeshResolution googleEarth = getMeshResolution(
-        ui->googleEarthMeshResolutionGroupBox->isChecked(),
-        ui->googleEarthMeshResolutionSpinBox,
-        ui->googleEarthMeshResolutionComboBox);
-
-    OutputMeshResolution fireBehavior = getMeshResolution(
-        ui->fireBehaviorMeshResolutionGroupBox->isChecked(),
-        ui->fireBehaviorMeshResolutionSpinBox,
-        ui->fireBehaviorMeshResolutionComboBox);
-
-    OutputMeshResolution shapeFiles = getMeshResolution(
-        ui->shapeFilesMeshResolutionGroupBox->isChecked(),
-        ui->shapeFilesMeshResolutionSpinBox,
-        ui->shapeFilesMeshResolutionComboBox);
-
-    OutputMeshResolution geospatialPDFs = getMeshResolution(
-        ui->geospatialPDFFilesMeshResolutionGroupBox->isChecked(),
-        ui->geospatialPDFFilesMeshResolutionSpinBox,
-        ui->geospatialPDFFilesMeshResolutionComboBox);
-
     OutputPDFSize PDFSize;
     switch(ui->sizeDimensionsComboBox->currentIndex())
     {
@@ -979,13 +935,24 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             }
         }
 
-        ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-        //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
-        if(ninjaErr != NINJA_SUCCESS)
+        if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
         {
-            qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
-            return false;
+            ninjaErr = NinjaSetMeshResolution(ninjaArmy, i, ui->meshResolutionSpinBox->value(), ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetMeshResolution: ninjaErr =" << ninjaErr;
+                return false;
+            }
+        } else
+        {
+            ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+            //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+            //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
+                return false;
+            }
         }
 
         ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
@@ -997,7 +964,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
-        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, googleEarth, fireBehavior, shapeFiles, geospatialPDFs, PDFSize);
+        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, PDFSize);
         if( retVal == false )
         {
             return false;
@@ -1010,10 +977,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
                                 int i,
                                 int numNinjas,
-                                OutputMeshResolution googleEarth,
-                                OutputMeshResolution fireBehavior,
-                                OutputMeshResolution shapeFiles,
-                                OutputMeshResolution geospatialPDFs,
                                 OutputPDFSize PDFSize)
 {
     char **papszOptions = nullptr;
@@ -1054,9 +1017,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, googleEarth.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, googleEarth.resolution, googleEarth.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, googleEarth.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
@@ -1107,9 +1070,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, fireBehavior.resolution, fireBehavior.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, fireBehavior.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
@@ -1124,9 +1087,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, shapeFiles.resolution, shapeFiles.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, shapeFiles.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
@@ -1174,9 +1137,9 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);
-    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, geospatialPDFs.resolution, geospatialPDFs.units.constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, geospatialPDFs.resolution, "fudge", papszOptions);  // test error handling
+    ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
@@ -1218,27 +1181,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     return true;
 }
 
-OutputMeshResolution MainWindow::getMeshResolution(
-    bool useOutputMeshResolution,
-    QDoubleSpinBox* outputMeshResolutionSpinBox,
-    QComboBox* outputMeshResolutionComboBox)
-{
-    OutputMeshResolution result;
-
-    if (!useOutputMeshResolution)
-    {
-        result.resolution = outputMeshResolutionSpinBox->value();
-        result.units = outputMeshResolutionComboBox->itemData(outputMeshResolutionComboBox->currentIndex()).toString().toUtf8();
-    }
-    else
-    {
-        result.resolution = ui->meshResolutionSpinBox->value();
-        result.units = ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionComboBox->currentIndex()).toString().toUtf8();
-    }
-
-    return result;
-}
-
 int MainWindow::startSolve(int numProcessors)
 {
     char **papszOptions = nullptr;
@@ -1274,6 +1216,9 @@ void MainWindow::finishedSolve()
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
+    // one more process to do after finishedSolve() stuff
+    plotKmzOutputs();
+
     char **papszOptions = nullptr;
     int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
@@ -1287,16 +1232,136 @@ void MainWindow::finishedSolve()
     futureWatcher->deleteLater();
 }
 
+void MainWindow::plotKmzOutputs()
+{
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    {
+        // enable QWebInspector for degugging the google maps widget
+        if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
+        {
+            QWidget* inspectorWindow = new QWidget(this);
+            inspectorWindow->setWindowTitle("Web Inspector - Developer Tools");
+            inspectorWindow->setMinimumSize(800, 600);
+
+            QWebEngineView* inspectorView = new QWebEngineView(inspectorWindow);
+            inspectorView->page()->setInspectedPage(webEngineView->page());
+
+            QVBoxLayout* layout = new QVBoxLayout(inspectorWindow);
+            layout->addWidget(inspectorView);
+            layout->setContentsMargins(0, 0, 0, 0);
+
+            inspectorWindow->show();
+        }
+
+        // vars to be filled
+        int numRuns = 0;
+        char **kmzFilenames = NULL;
+        int numStationKmls = 0;
+        char **stationKmlFilenames = NULL;
+        char **weatherModelKmzFilenames = NULL;
+
+        char **papszOptions = nullptr;
+        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numStationKmls, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
+        }
+
+        std::vector<std::string> kmzFilenamesStr;
+        std::vector<std::string> stationKmlFilenamesStr;
+        std::vector<std::string> wxModelKmzFilenamesStr;
+
+        kmzFilenamesStr.reserve(numRuns);
+        wxModelKmzFilenamesStr.reserve(numRuns);
+        for(int i = 0; i < numRuns; i++)
+        {
+            kmzFilenamesStr.emplace_back(kmzFilenames[i]);
+            wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
+        }
+
+        stationKmlFilenamesStr.reserve(numStationKmls);
+        for(int j = 0; j < numStationKmls; j++)
+        {
+            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[j]);
+        }
+
+        outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
+        outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
+        outputWxModelKmzFilenames.push_back(std::move( wxModelKmzFilenamesStr ));
+
+        for(int i = 0; i < numRuns; i++)
+        {
+            // plot the output kmz of the run
+            QString outFileStr = QString::fromStdString(kmzFilenames[i]);
+            qDebug() << "kmz outFile =" << outFileStr;
+            QFile outFile(outFileStr);
+
+            outFile.open(QIODevice::ReadOnly);
+            QByteArray data = outFile.readAll();
+            QString base64 = data.toBase64();
+
+            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+
+            // if it is a point initialization run, and station kmls were created for the run,
+            // plot the station kmls of the first run
+            // (first run, because station kmls are SHARED across runs)
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
+            {
+                for(int j = 0; j < numStationKmls; j++)
+                {
+                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
+                    qDebug() << "station kml outFile =" << outFileStr;
+                    QFile outFile(outFileStr);
+
+                    outFile.open(QIODevice::ReadOnly);
+                    QByteArray data = outFile.readAll();
+                    QString base64 = data.toBase64();
+
+                    webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+                }
+            }
+
+            // if it is a weather model run, and weather model kmzs were created for the run,
+            // plot the weather model kmz of the run
+            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthGroupBox->isChecked())
+            {
+                QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
+                qDebug() << "wx model kmz outFile =" << outFileStr;
+                QFile outFile(outFileStr);
+
+                outFile.open(QIODevice::ReadOnly);
+                QByteArray data = outFile.readAll();
+                QString base64 = data.toBase64();
+
+                webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+            }
+        }
+
+        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numStationKmls, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
+        }
+
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+}
+
 void MainWindow::writeSettings()
 {
     writeToConsole("Saving settings...");
 
     QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
     settings.setDefaultFormat(QSettings::IniFormat);
+    //qDebug() << "settings filename =" << settings.fileName();
 
-    settings.setDefaultFormat(QSettings::IniFormat);
     //input file path
     settings.setValue("inputFileDir", ui->elevationInputFileLineEdit->property("fullpath"));
+
+    //momentum flag
+    settings.setValue("momentumFlag", ui->momentumSolverCheckBox->isChecked());
     //veg choice
     settings.setValue("vegChoice", ui->vegetationComboBox->currentIndex());
     //mesh choice
@@ -1311,6 +1376,11 @@ void MainWindow::writeSettings()
 
     //settings.setValue("pointFile", tree->point->stationFileName );
 
+    //if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
+    //{
+    //    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
+    //}
+    // need to write it every time, the past value will get left there without getting updated otherwise, doesn't delete past settings values
     settings.setValue("customRes", ui->meshResolutionSpinBox->value());
 
     writeToConsole("Settings saved.");
@@ -1320,36 +1390,56 @@ void MainWindow::readSettings()
 {
     QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
     settings.setDefaultFormat(QSettings::IniFormat);
+
     if(settings.contains("inputFileDir"))
     {
-        ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
+        if(QFile::exists(settings.value("inputFileDir").toString()))
+        {
+            ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
+        }
     }
     else
     {
         // std::string oTmpPath = FindNinjaRootDir();
         // inputFileDir = CPLFormFilename(oTmpPath.c_str(), "etc/windninja/example-files", NULL);
     }
+
+    // TODO: some of the following might be overriding the values computed by inputFileDir, when the other way around might be better
+    if(settings.contains("momentumFlag"))
+    {
+        bool momentumFlag = settings.value("momentumFlag").toBool();
+        if(momentumFlag == true)
+        {
+            ui->momentumSolverCheckBox->setChecked(true);
+            emit momentumSolverCheckBoxClicked();
+        }
+    }
     if(settings.contains("vegChoice"))
     {
         ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
+    }
+    if(settings.contains("meshUnits"))  // putting this after loading meshChoice results in overwriting the value by an extra set of units
+    {
+        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
     }
     if(settings.contains("meshChoice"))
     {
         int choice = settings.value("meshChoice").toInt();
         ui->meshResolutionComboBox->setCurrentIndex(choice);
-        if(choice == 4 && settings.contains("customRes"))
+        if(choice == 3)
         {
+            if(!settings.contains("customRes"))
+            {
+                qDebug() << "Error. WindNinja settings does not contain \"customRes\"";
+            }
             ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
         }
-    }
-    if(settings.contains("meshUnits"))
-    {
-        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
     }
     if(settings.contains("nProcessors"))
     {
         ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
     }
+    // won't we want the timezone of the dem every time, to avoid accidentally doing a weird combination of time zones?
     if(settings.contains("timeZone"))
     {
         // QString v = settings.value("timeZone").toString();
