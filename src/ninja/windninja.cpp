@@ -2747,6 +2747,8 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmz
     {
         free(weatherModelKmzFilenames);
     }
+
+    return NINJA_SUCCESS;
 }
 
 
