@@ -137,6 +137,8 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
     connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+    connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -281,7 +283,6 @@ void updateProgressCallback(const char *pszMessage, void *pUser)  // this still 
         emit self->updateProgressMessageSignal(QString::fromStdString(msg));
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
-
 }
 
 void MainWindow::cancelSolve()

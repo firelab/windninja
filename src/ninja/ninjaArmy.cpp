@@ -258,6 +258,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions){
     if (pszDstFile == NULL)
     {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Input dstFile '%s' in ninjaArmy::fetchDEMPoint() is invalid.", pszDstFile);
         return NINJA_E_INVALID;
     }
     SURF_FETCH_E retval = SURF_FETCH_E_NONE;
@@ -277,6 +278,7 @@ int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* unit
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
     }
     if (fetcher == NULL) {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input fetchType '%s' in ninjaArmy::fetchDEMPoint()\nchoices are: 'srtm', 'gmted', 'relief', 'lcp'", fetchType);
         delete fetcher;
         return NINJA_E_INVALID;
     }
@@ -284,6 +286,8 @@ int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* unit
     int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
     if (result != 0)
     {
+        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaArmy::fetchDEMPoint(), fetching failed!");
         delete fetcher;
         return NINJA_E_INVALID;
     }
@@ -318,6 +322,7 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
             fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
         }
         if (fetcher == NULL) {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input fetchType '%s' in ninjaArmy::fetchDEMBBox()\nchoices are: 'srtm', 'gmted', 'relief', 'lcp'", fetchType);
             delete fetcher;
             return NINJA_E_INVALID;
         }
@@ -329,6 +334,8 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
         int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
         if (result != 0)
         {
+            //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaArmy::fetchDEMBBox(), fetching failed!");
             delete fetcher;
             return NINJA_E_INVALID;
         }
