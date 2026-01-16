@@ -352,28 +352,30 @@ void SurfaceInput::fetchDEMFinished()
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
 
-    if (progress)
+    if(result == NINJA_SUCCESS)
     {
-        progress->close();
-        progress->deleteLater();
-        progress = nullptr;
+        emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
+
+        if (progress)
+        {
+            progress->close();
+            progress->deleteLater();
+            progress = nullptr;
+        }
+
+        ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
+        ui->inputsStackedWidget->setCurrentIndex(5);
+
+    } else
+    {
+        emit writeToConsoleSignal("Failed to fetch DEM file.");
     }
 
+    // delete the futureWatcher every time, whether success or failure
     if (futureWatcher)
     {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;
-    }
-
-    ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-    ui->inputsStackedWidget->setCurrentIndex(5);
-
-    if(result == NINJA_SUCCESS)
-    {
-        emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
-    } else
-    {
-        emit writeToConsoleSignal("Failed to fetch DEM file.");
     }
 }
 
@@ -573,12 +575,13 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
 
 void SurfaceInput::updateProgressMessage(const QString message)
 {
-    //progress->setLabelText(message);
-    QMessageBox::critical(
-        nullptr,
-        QApplication::tr("Error"),
-        message
-    );
+    progress->setLabelText(message);
+    progress->setWindowTitle(tr("Error"));
+    progress->setCancelButtonText(tr("Close"));
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setRange(0, 1);
+    progress->setValue(progress->maximum());
 }
 
 //static void updateProgressCallback_SurfaceInput(const char *pszMessage, void *pUser)

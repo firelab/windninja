@@ -45,7 +45,6 @@
 #include <QFutureWatcher>
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
-#include <QMessageBox>
 
 class SurfaceInput : public QObject
 {
