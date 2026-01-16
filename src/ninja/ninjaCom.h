@@ -79,26 +79,26 @@ public:
     char lastMsg[NINJA_MSG_SIZE];  // storage of the last message
 
 
-    bool printProgressFunc;
-    ProgressFunc pfnProgress;
-    void *pProgressUser;
+    bool printToMsgHandler;
+    ninjaComMessageHandler pMsgHandler;  // A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+    void *pMsgUser;  // A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
 
     bool printLogFile;
     FILE*     fpLog;
     FILE*     fpErr;
-    FILE* multiStream;
+    FILE* multiStream;  // A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
 
 
     //methods
 
-    void set_progressFunc(ProgressFunc func, void *pUser);
+    void set_messageHandler(ninjaComMessageHandler pMessageHandler, void *pUser);
 
     void noSolverProgress();
 
-    void ninjaCom(msgType eMsg, const char *fmt, ...);
+    void ninjaCom(msgType eMsgType, const char *fmt, ...);
     void ninjaComV(msgType, const char *, va_list);
 
-    void ninjaComHandler(msgType eMsg, const char *ninjaComMsg);
+    void ninjaComDispatchMessage(msgType eMsgType, const char *ninjaComMsg);
 };
 
 #endif //NINJACOM_H

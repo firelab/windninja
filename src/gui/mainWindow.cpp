@@ -188,7 +188,7 @@ void MainWindow::updateProgressValue(int run, int progress)
     progressDialog->setValue(totalProgress);
 }
 
-static void updateProgressCallback(const char *pszMessage, void *pUser)
+static void comMessageHandler(const char *pszMessage, void *pUser)
 {
     MainWindow *self = static_cast<MainWindow*>(pUser);
 
@@ -416,10 +416,10 @@ void MainWindow::solveButtonClicked()
 
     ninjaArmy = NinjaInitializeArmy();
 
-    ninjaErr = NinjaSetComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
+    ninjaErr = NinjaSetComMessageHandler(ninjaArmy, &comMessageHandler, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "Army NinjaSetComProgressFunc: err =" << ninjaErr;
+        qDebug() << "NinjaSetComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
     if (state.isDomainAverageInitializationValid)

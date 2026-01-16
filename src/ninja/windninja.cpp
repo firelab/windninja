@@ -800,19 +800,23 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 }
 
 /**
- * \brief Set a comProgressFunction handler for simulations.
+ * \brief Set a ninjaComMessageHandler callback function for simulations.
+ *
+ * Allows the caller to receive status, progress, informational messages, and error
+ * messages generated during simulations via a user-provided callback function.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- *
+ * \param pMsgHandler A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+ * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
-    ( NinjaArmyH * army, ProgressFunc func, void *pUser, char ** papszOptions )
+WINDNINJADLL_EXPORT NinjaErr NinjaSetComMessageHandler
+    ( NinjaArmyH * army, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
-            ( func, pUser );
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComMessageHandler
+            ( pMsgHandler, pUser );
     }
     else
     {
@@ -821,10 +825,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
 }
 
 /**
- * \brief Set the multi-stream FILE, for message communications during simulations.
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param stream The message communication FILE to send multi-stream messages to.
+ * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */

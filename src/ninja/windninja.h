@@ -156,8 +156,8 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
 
     /*  Communication  */
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
-        ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetComMessageHandler
+        ( NinjaArmyH * ninjaArmy, ninjaComMessageHandler pMsgHandler, void *pUser, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
         ( NinjaArmyH * ninjaArmy, FILE* stream, char ** options );

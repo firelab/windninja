@@ -1365,16 +1365,16 @@ void ninjaArmy::setAtmFlags()
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaComProgressFunc( ProgressFunc func, void *pUser,
-                                        char ** papszOptions )
+int ninjaArmy::setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                          char ** papszOptions )
 {
     try
     {
-        Com->set_progressFunc(func, pUser);
+        Com->set_messageHandler(pMsgHandler, pUser);
     }
     catch( ... )
     {
-        std::cout << "!!!failed to set ninjaArmy level ninjaCom progress function!!!" << std::endl;
+        std::cerr << "CRITICAL: ninjaArmy level ninjaComMessageHandler not set. Messages will NOT be delivered." << std::endl;
         return NINJA_E_INVALID;
     }
     return NINJA_SUCCESS;
@@ -1389,7 +1389,7 @@ int ninjaArmy::setNinjaMultiComStream( FILE* stream,
     }
     catch( ... )
     {
-        std::cout << "!!!failed to set ninjaArmy level ninjaCom multiStream FILE pointer!!!" << std::endl;
+        std::cerr << "ERROR: ninjaArmy level ninjaCom multiStream FILE pointer not set." << std::endl;
         return NINJA_E_INVALID;
     }
     return NINJA_SUCCESS;

@@ -584,7 +584,7 @@ void SurfaceInput::updateProgressMessage(const QString message)
     progress->setValue(progress->maximum());
 }
 
-static void updateProgressCallback(const char *pszMessage, void *pUser)
+static void comMessageHandler(const char *pszMessage, void *pUser)
 {
     SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
 
@@ -655,10 +655,10 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
 
     ninjaArmy = NinjaInitializeArmy();
 
-    ninjaErr = NinjaSetComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
+    ninjaErr = NinjaSetComMessageHandler(ninjaArmy, &comMessageHandler, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "Army NinjaSetComProgressFunc: err =" << ninjaErr;
+        qDebug() << "NinjaSetComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
     ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);  // some errors and warnings are caught, but only as error codes, not as messages. Would need to update how we do the messaging within the various SurfaceFetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom.

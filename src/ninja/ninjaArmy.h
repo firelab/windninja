@@ -183,14 +183,27 @@ public:
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
 
-    int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
-                                 char ** papszOptions = NULL);
+    /**
+    * \brief Set a ninjaComMessageHandler callback function to the ninjaArmy level ninjaCom
+    *
+    * \param pMsgHandler A pointer to a ninjaComMessageHandler callback function.
+    * \param pUser A pointer to the object or context associated with the callback function.
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                   char ** papszOptions = NULL);
 
+    /**
+    * \brief Set a ninjaCom multi-stream FILE handle to the ninjaArmy level ninjaCom
+    *
+    * \param stream A pointer to a multi-stream FILE handle/stream.
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
     int setNinjaMultiComStream( FILE* stream,
                                 char ** papszOptions = NULL);
 
     /**
-    * \brief Set the ninjaCom handler of a ninja, using the ninjaArmy level ninjaCom handler
+    * \brief Set the ninjaCom of a ninja, using the ninjaArmy level ninjaCom
     *  and set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja
