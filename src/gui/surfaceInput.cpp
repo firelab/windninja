@@ -584,8 +584,7 @@ void SurfaceInput::updateProgressMessage(const QString message)
     progress->setValue(progress->maximum());
 }
 
-//static void updateProgressCallback_SurfaceInput(const char *pszMessage, void *pUser)
-void updateProgressCallback_SurfaceInput(const char *pszMessage, void *pUser)  // this still worked?? huh.
+static void updateProgressCallback(const char *pszMessage, void *pUser)
 {
     SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
 
@@ -656,7 +655,7 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
 
     ninjaArmy = NinjaInitializeArmy();
 
-    ninjaErr = NinjaSetComProgressFunc(ninjaArmy, &updateProgressCallback_SurfaceInput, this, papszOptions);
+    ninjaErr = NinjaSetComProgressFunc(ninjaArmy, &updateProgressCallback, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "Army NinjaSetComProgressFunc: err =" << ninjaErr;

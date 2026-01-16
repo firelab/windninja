@@ -188,8 +188,7 @@ void MainWindow::updateProgressValue(int run, int progress)
     progressDialog->setValue(totalProgress);
 }
 
-//static void updateProgressCallback(const char *pszMessage, void *pUser)
-void updateProgressCallback(const char *pszMessage, void *pUser)  // this still worked?? huh.
+static void updateProgressCallback(const char *pszMessage, void *pUser)
 {
     MainWindow *self = static_cast<MainWindow*>(pUser);
 
