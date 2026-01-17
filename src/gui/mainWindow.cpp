@@ -139,6 +139,7 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 
     connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -416,10 +417,10 @@ void MainWindow::solveButtonClicked()
 
     ninjaArmy = NinjaInitializeArmy();
 
-    ninjaErr = NinjaSetComMessageHandler(ninjaArmy, &comMessageHandler, this, papszOptions);
+    ninjaErr = NinjaSetArmyComMessageHandler(ninjaArmy, &comMessageHandler, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetComMessageHandler(): ninjaErr =" << ninjaErr;
+        qDebug() << "NinjaSetArmyComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
     if (state.isDomainAverageInitializationValid)

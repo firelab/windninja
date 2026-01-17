@@ -156,11 +156,17 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
 
     /*  Communication  */
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetComMessageHandler
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComMessageHandler
         ( NinjaArmyH * ninjaArmy, ninjaComMessageHandler pMsgHandler, void *pUser, char ** options );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
         ( NinjaArmyH * ninjaArmy, FILE* stream, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
+        ( NinjaToolsH * tools, ninjaComMessageHandler pMsgHandler, void *pUser, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsMultiComStream
+        ( NinjaToolsH * tools, FILE* stream, char ** options );
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed

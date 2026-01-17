@@ -357,7 +357,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
                                endUTC.date(),
                                boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
                                boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
-    forecastModel->fetchForecast(demFile, hours);
+    std::string forecastFileName = forecastModel->fetchForecast(demFile, hours);
+    ////std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, numNinjas, elevationFile);
+//    std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, nHours, elevationFile);
+    if(forecastFileName == "exception")
+    {
+        return NINJA_E_INVALID;
+    }
 
     return NINJA_SUCCESS;
 }
@@ -529,15 +535,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast(NinjaArmyH * army, const char* w
     try
     {
         model = wxModelInitializationFactory::makeWxInitializationFromId(wxModelType);
-        model->fetchForecast(elevationFile, nHours);
+        std::string forecastFileName = model->fetchForecast(elevationFile, nHours);
+        ////std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, numNinjas, elevationFile);
+//        std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, nHours, elevationFile);
+        if(forecastFileName == "exception")
+        {
+            return NINJA_E_INVALID;
+        }
         return NINJA_SUCCESS;
     }
     catch(armyException &e)
     {
         return NINJA_E_INVALID;
     }
-
-    //return reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wx_model_type, numNinjas, elevation_file);
 }
 
 /**
@@ -800,7 +810,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 }
 
 /**
- * \brief Set a ninjaComMessageHandler callback function for simulations.
+ * \brief Set a ninjaComMessageHandler callback function, for message communications during simulations, to the ninjaArmy level ninjaCom.
  *
  * Allows the caller to receive status, progress, informational messages, and error
  * messages generated during simulations via a user-provided callback function.
@@ -810,7 +820,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
  * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetComMessageHandler
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComMessageHandler
     ( NinjaArmyH * army, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
 {
     if( NULL != army )
@@ -825,19 +835,66 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetComMessageHandler
 }
 
 /**
- * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations.
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations, to the ninjaArmy level ninjaCom.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
     ( NinjaArmyH * army, FILE* stream, char ** papszOptions )
 {
     if( NULL != army )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setNinjaMultiComStream
+            ( stream );
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+/**
+ * \brief Set a ninjaComMessageHandler callback function, for message communications during simulations, to the ninjaTools level ninjaCom
+ *
+ * Allows the caller to receive status, progress, informational messages, and error
+ * messages generated during simulations via a user-provided callback function.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param pMsgHandler A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+ * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
+    ( NinjaToolsH * tools, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
+{
+    if( NULL != tools )
+    {
+        return reinterpret_cast<ninjaTools*>( tools )->setNinjaComMessageHandler
+            ( pMsgHandler, pUser );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations, to the ninjaTools level ninjaCom
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsMultiComStream
+    ( NinjaToolsH * tools, FILE* stream, char ** papszOptions )
+{
+    if( NULL != tools )
+    {
+        return reinterpret_cast<ninjaTools*>( tools )->setNinjaMultiComStream
             ( stream );
     }
     else

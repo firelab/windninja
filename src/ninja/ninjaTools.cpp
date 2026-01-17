@@ -1,7 +1,15 @@
 #include "ninjaTools.h"
 
+/**
+* @brief Default constructor.
+*
+*/
 ninjaTools::ninjaTools()
 {
+    Com = new ninjaComClass();
+    Com->runNumber = 9999;
+    Com->printRunNumber = false;
+
     nomadsCount = 0;
     while( apszNomadsKeys[nomadsCount][0] != NULL )
     {
@@ -16,16 +24,83 @@ ninjaTools::ninjaTools()
     }
 }
 
-void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, int hours)
+/**
+* @brief Destructor.
+*
+*/
+ninjaTools::~ninjaTools()
 {
-    wxModelInitialization *model = NULL;
-    model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+    if(nomadsModels)
+    {
+        for(int i = 0; i < nomadsCount; i++)
+        {
+            if(nomadsModels[i])
+            {
+                free(nomadsModels[i]);
+            }
+        }
 
-    if (!model) {
-        throw std::runtime_error(std::string("Weather model not found: ") + modelName);
+        free(nomadsModels);
     }
 
-    model->fetchForecast(demFile, hours);
+    delete Com;
+}
+
+/**
+* @brief Copy constructor.
+*
+* @param An Object to copy.
+*/
+/*ninjaTools::ninjaTools(const ninjaTools& A)
+{
+    nomadsCount = A.nomadsCount;
+    nomadsModels = new NomadsWxModel*[nomadsCount];
+    for(int i = 0; i < nomadsCount; i++)
+    {
+        nomadsModels[i] = new NomadsWxModel( apszNomadsKeys[i][0] ); // this should ACTUALLY be something like "new NomadsWxModel( A.nomadsModels[i] )" or something like that, but I don't think it has a proper copy constructor setup. I guess just replicate the constructor for now.
+    }
+
+    Com = new ninjaComClass(*A.Com);
+}*/
+
+/**
+* @brief Equals operator.
+*
+* @param A Right-hand side.
+* @return An Object equal to the one on the right-hand side;
+*/
+/*ninjaTools& ninjaTools::operator=(ninjaTools const& A)
+{
+    if(&A != this)
+    {
+        // I don't even want to know where to begin for the nomadsModels here
+
+        delete Com;
+        Com = new ninjaComClass();
+        *Com = *A.Com;
+    }
+    return *this;
+}*/
+
+void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, int hours)
+{
+    try
+    {
+        wxModelInitialization *model = NULL;
+
+        model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+
+        if (!model) {
+            throw std::runtime_error(std::string("Weather model not found: ") + modelName);
+        }
+
+        model->fetchForecast(demFile, hours);
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return;
+    }
 }
 
 std::vector<std::string> ninjaTools::getForecastIdentifiers()
@@ -79,4 +154,38 @@ int ninjaTools::getEndHour(const char* modelIdentifier)
     wxModelInitialization *model = NULL;
     model = wxModelInitializationFactory::makeWxInitializationFromId(modelIdentifier);
     return model->getEndHour();
+}
+
+/*-----------------------------------------------------------------------------
+ *  Ninja Communication Methods
+ *-----------------------------------------------------------------------------*/
+
+int ninjaTools::setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                           char ** papszOptions )
+{
+    try
+    {
+        Com->set_messageHandler(pMsgHandler, pUser);
+    }
+    catch( ... )
+    {
+        std::cerr << "CRITICAL: ninjaTools level ninjaComMessageHandler not set. Messages will NOT be delivered." << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
+}
+
+int ninjaTools::setNinjaMultiComStream( FILE* stream,
+                                        char ** papszOptions )
+{
+    try
+    {
+        Com->multiStream = stream;
+    }
+    catch( ... )
+    {
+        std::cerr << "ERROR: ninjaTools level ninjaCom multiStream FILE pointer not set." << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
 }

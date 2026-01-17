@@ -366,6 +366,7 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
     }
     catch(armyException &e)
     {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         return "exception";
     }
 }

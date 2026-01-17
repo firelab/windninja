@@ -116,10 +116,10 @@ int main()
     /*
      * Customize the ninja communication
      */
-    err = NinjaSetMultiComStream(ninjaArmy, multiStream, papszOptions);
+    err = NinjaSetArmyMultiComStream(ninjaArmy, multiStream, papszOptions);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetMultiComStream: err = %d\n", err);
+        printf("NinjaSetArmyMultiComStream: err = %d\n", err);
     }
 
     /*
