@@ -456,7 +456,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>11</number>
+         <number>13</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="solverMethodologyInformationPage">
@@ -2757,8 +2757,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>414</width>
-               <height>408</height>
+               <width>578</width>
+               <height>480</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2773,6 +2773,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
               <item>
                <widget class="QGroupBox" name="googleEarthGroupBox">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -2792,7 +2795,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <bool>true</bool>
                 </property>
                 <property name="checked">
-                 <bool>false</bool>
+                 <bool>true</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_18">
                  <item>
