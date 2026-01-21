@@ -140,6 +140,7 @@
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
         });
+        
 
         const mapRectangleLayer = new L.FeatureGroup();
         map.addLayer(mapRectangleLayer);
@@ -204,6 +205,8 @@
             rectangleDrawer.disable();
         }
 
+        let activeKmzLayer = null;
+
         async function loadKmzFromBase64(kmlData) {
             console.log("running LoadKmzFromBase64");
             const binary = atob(kmlData);
@@ -236,23 +239,26 @@
                 const layerName = entry.name;
 
                 const legendControl = L.control({ position: 'bottomright' });
+
                 legendControl.onAdd = function () {
                     const container = L.DomUtil.create('div', 'kmz-legend');
-                    container.style.background = 'white';
-                    container.style.padding = '4px';
-                    container.style.borderRadius = '6px';
-                    container.style.maxWidth = '250px';
-                    container.innerHTML = `<strong>${layerName}</strong><br>`;
+                    L.DomEvent.disableClickPropagation(container);
 
-                    legendEntries.forEach(async (legendEntry) => {
-                        const blob = await legendEntry.async('blob');
-                        const url = URL.createObjectURL(blob);
-                        const img = new Image();
-                        img.src = url;
-                        img.style.maxWidth = '80%';
-                        img.style.marginTop = '6px';
-                        container.appendChild(img);
-                    });
+                    if (legendEntries.length > 0) {
+                        (async () => {
+                            const legendEntry = legendEntries[0]; // Grabs only the legend
+                            const blob = await legendEntry.async('blob');
+                            const url = URL.createObjectURL(blob);
+
+                            const img = new Image();
+                            img.src = url;
+                            img.style.display = 'block';
+                            img.style.maxWidth = '150px'; 
+                            img.style.height = 'auto';
+
+                            container.appendChild(img);
+                        })();
+                    }
 
                     return container;
                 };
@@ -260,8 +266,11 @@
                 kmlLegendLayer.on('add', () => legendControl.addTo(map));
                 kmlLegendLayer.on('remove', () => legendControl.remove());
 
-                layerControl.addOverlay(kmlLegendLayer, layerName);
-                kmlLegendLayer.addTo(map);
+                layerControl.addBaseLayer(kmlLegendLayer, layerName);
+                if (!activeKmzLayer) {
+                    activeKmzLayer = kmlLegendLayer;
+                    kmlLegendLayer.addTo(map);
+                    }
             }
         }
 
