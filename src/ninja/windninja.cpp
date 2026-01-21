@@ -356,47 +356,67 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
         return NINJA_E_NULL_PTR;
     }
 
-    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+    try
+    {
+        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
 
-    boost::gregorian::date startDate(startYear, startMonth, startDay);
-    boost::gregorian::date endDate(endYear, endMonth, endDay);
+        boost::gregorian::date startDate(startYear, startMonth, startDay);
+        boost::gregorian::date endDate(endYear, endMonth, endDay);
 
-    boost::local_time::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    boost::local_time::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);
+        boost::local_time::tz_database tz_db;
+        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+        boost::local_time::time_zone_ptr timeZonePtr;
+        timeZonePtr = tz_db.time_zone_from_region(timeZone);
 
-    boost::local_time::local_date_time ldtStart(
-        startDate,
-        boost::posix_time::hours(startHour),
-        timeZonePtr,
-        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
-        );
+        boost::local_time::local_date_time ldtStart(
+            startDate,
+            boost::posix_time::hours(startHour),
+            timeZonePtr,
+            boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+            );
 
-    boost::local_time::local_date_time ldtEnd(
-        endDate,
-        boost::posix_time::hours(endHour),
-        timeZonePtr,
-        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
-        );
+        boost::local_time::local_date_time ldtEnd(
+            endDate,
+            boost::posix_time::hours(endHour),
+            timeZonePtr,
+            boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
+            );
 
-    boost::posix_time::ptime startUTC = ldtStart.utc_time();
-    boost::posix_time::ptime endUTC   = ldtEnd.utc_time();
+        boost::posix_time::ptime startUTC = ldtStart.utc_time();
+        boost::posix_time::ptime endUTC   = ldtEnd.utc_time();
 
-    int hours = 0;
+        int hours = 0;
 
-    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
-    forecastModel->setDateTime(startUTC.date(),
-                               endUTC.date(),
-                               boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
-                               boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
-    std::string forecastFileName = forecastModel->fetchForecast(demFile, hours);
-    ////std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, numNinjas, elevationFile);
-//    std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, nHours, elevationFile);
-    if(forecastFileName == "exception")
+        auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
+        forecastModel->setDateTime(startUTC.date(),
+                                   endUTC.date(),
+                                   boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
+                                   boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
+
+        // doing it this way loses access to ninjaCom, which means that the QProgressDialog
+        // is left hanging as if it is still processing. Need to use the other method for now.
+        //std::string forecastFileName = forecastModel->fetchForecast(demFile, hours);
+        //if(forecastFileName == "exception")
+        //{
+        //    return NINJA_E_INVALID;
+        //}
+
+        // doing it this way, lets it access ninjaCom, but loses the above information
+        // Probably need to just move the above into a ninjaTools function, to be safer and more correct
+        reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+    }
+    catch( armyException & e )
     {
         return NINJA_E_INVALID;
     }
+    catch( exception & e )
+    {
+        return NINJA_E_INVALID;
+    }
+    //catch( ... )
+    //{
+    //    return NINJA_E_INVALID;
+    //}
 
     return NINJA_SUCCESS;
 }
@@ -593,20 +613,33 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast
     wxModelInitialization *model;
     try
     {
-        model = wxModelInitializationFactory::makeWxInitializationFromId(wxModelType);
-        std::string forecastFileName = model->fetchForecast(elevationFile, nHours);
-        ////std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, numNinjas, elevationFile);
-//        std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, nHours, elevationFile);
+        // doing it this way loses access to ninjaCom, which means that the QProgressDialog
+        // is left hanging as if it is still processing. Need to use the other method for now.
+        // this is even more especially true, when trying to force errors, like "fudge" thrown into wxModelType
+        //model = wxModelInitializationFactory::makeWxInitializationFromId(wxModelType);
+        //std::string forecastFileName = model->fetchForecast(elevationFile, nHours);
+
+        // doing it this way, lets it access ninjaCom, but potentially loses the above information
+        // but for this particular case, the above IS the same thing as this function call, so not losing any of the above information
+        std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, nHours, elevationFile);  // numNinjas is equivalent to nHours, probably should update the variable names of this function to be clearer
         if(forecastFileName == "exception")
         {
             return NINJA_E_INVALID;
         }
-        return NINJA_SUCCESS;
     }
-    catch(armyException &e)
+    catch( armyException & e )
     {
         return NINJA_E_INVALID;
     }
+    catch( exception & e )
+    {
+        return NINJA_E_INVALID;
+    }
+    //catch( ... )
+    //{
+    //    return NINJA_E_INVALID;
+    //}
+    return NINJA_SUCCESS;
 }
 
 /**

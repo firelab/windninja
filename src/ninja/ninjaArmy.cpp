@@ -358,7 +358,8 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
     try
     {
         model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
-        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);
+//        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);  // why the heck was this -2?? Threw it off for my case
+        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas);
         delete model;
         char* cstr = new char[forecastFileName.length() + 1];
         std::strcpy(cstr, forecastFileName.c_str());

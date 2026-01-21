@@ -94,7 +94,12 @@ void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFil
             throw std::runtime_error(std::string("Weather model not found: ") + modelName);
         }
 
-        model->fetchForecast(demFile, hours);
+        std::string forecastFileName = model->fetchForecast(demFile, hours);
+        if(forecastFileName == "exception")
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: ninjaTools::fetchWeatherModelData() returned an invalid forecastFileName.");
+            return NINJA_E_INVALID;
+        }
     }
     catch(armyException &e)
     {
