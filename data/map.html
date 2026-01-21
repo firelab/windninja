@@ -81,6 +81,19 @@
             background: #0077ff;
             color: white;
         }
+        .leaflet-topcenter {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none; /* optional, avoids interfering with map clicks */
+}
+
+.kmz-top-center-legend img {
+    display: block;
+}
+
     </style>
 
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
@@ -212,7 +225,7 @@
 
         let activeKmzLayer = null;
 
-        async function loadKmzFromBase64(kmlData) {
+        async function loadKmzFromBase64(kmlData, timeSeries) {
             clearKmzBaseLayers();
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
@@ -250,6 +263,7 @@
                     const container = L.DomUtil.create('div', 'kmz-legend');
                     L.DomEvent.disableClickPropagation(container);
 
+
                     if (legendEntries.length > 0) {
                         (async () => {
                             const legendEntry = legendEntries[0]; // Grabs only the legend
@@ -263,6 +277,26 @@
                             img.style.height = 'auto';
 
                             container.appendChild(img);
+
+                    if (timeSeries && legendEntries.length > 1) {
+    const legendEntry2 = legendEntries[1];
+    const blob2 = await legendEntry2.async('blob');
+    const url2 = URL.createObjectURL(blob2);
+
+    const img2 = new Image();
+    img2.src = url2;
+    img2.style.position = 'absolute';
+    img2.style.top = '10px';
+    img2.style.left = '50%';
+    img2.style.transform = 'translateX(-50%)';
+    img2.style.maxWidth = '90%'; // prevents it from overflowing the map
+    img2.style.height = 'auto';
+    img2.style.zIndex = '1000';
+    img2.className = 'kmz-time-series-legend';
+
+    // Append directly to the map container
+    map.getContainer().appendChild(img2);
+}
                         })();
                     }
 
