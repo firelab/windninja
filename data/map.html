@@ -191,9 +191,11 @@
             }).addTo(mapRectangleLayer);
 
             setTimeout(() => {
-    map.fitBounds(rectangle.getBounds());
-}, 5000);
-    }
+                map.fitBounds(rectangle.getBounds());
+            }, 5000);
+
+            showCenterControl();
+        }
 
         function startRectangleDrawing() {
             mapRectangleLayer.clearLayers();
@@ -202,13 +204,16 @@
 
         function stopRectangleDrawing() {
             mapRectangleLayer.clearLayers();
+            if(!drawDEMCheck) {
+                hideCenterControl();
+            }
             rectangleDrawer.disable();
         }
 
         let activeKmzLayer = null;
 
         async function loadKmzFromBase64(kmlData) {
-            console.log("running LoadKmzFromBase64");
+            clearKmzBaseLayers();
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -239,6 +244,7 @@
                 const layerName = entry.name;
 
                 const legendControl = L.control({ position: 'bottomright' });
+                kmzLegendControls.push(legendControl);
 
                 legendControl.onAdd = function () {
                     const container = L.DomUtil.create('div', 'kmz-legend');
@@ -267,10 +273,17 @@
                 kmlLegendLayer.on('remove', () => legendControl.remove());
 
                 layerControl.addBaseLayer(kmlLegendLayer, layerName);
+                kmzBaseLayers.push(kmlLegendLayer);
+
+                if (!layerControlAdded) {
+                    layerControl.addTo(map);
+                    layerControlAdded = true;
+                }
+
                 if (!activeKmzLayer) {
                     activeKmzLayer = kmlLegendLayer;
                     kmlLegendLayer.addTo(map);
-                    }
+                }
             }
         }
 
@@ -285,15 +298,37 @@
                 map.fitBounds(layer.getBounds());
             });
             map.fitBounds(layer.getBounds());
+            showCenterControl();
         });
+
+        function showCenterControl() {
+            if (!centerControlAdded) {
+                centerControl.addTo(map);
+                centerControlAdded = true;
+            }
+        }
+
+        function hideCenterControl() {
+            if (centerControlAdded) {
+                map.removeControl(centerControl);
+                centerControlAdded = false;
+            }
+        }
 
 
         const baseMaps = {};
         const overlayMaps = {};
-        const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+        const layerControl = L.control.layers(baseMaps, overlayMaps);
+        let layerControlAdded = false;
+        let drawDEMCheck = false;
+
+        let kmzBaseLayers = [];
+let kmzLegendControls = [];
+        
         L.control.scale().addTo(map);
 
         const centerControl = L.control({ position: 'topleft' });
+        let centerControlAdded = false;
 
         centerControl.onAdd = function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
@@ -316,7 +351,22 @@
             return container;
         };
 
-        centerControl.addTo(map);
+        function clearKmzBaseLayers() {
+    kmzBaseLayers.forEach(layer => {
+        if (map.hasLayer(layer)) {
+            map.removeLayer(layer);
+        }
+        layerControl.removeLayer(layer);
+    });
+
+    kmzLegendControls.forEach(ctrl => {
+        map.removeControl(ctrl);
+    });
+
+    kmzBaseLayers = [];
+    kmzLegendControls = [];
+    activeKmzLayer = null;
+}
 
         if (window.qt) {
             new QWebChannel(qt.webChannelTransport, channel => {
