@@ -344,44 +344,6 @@ int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double reso
 }
 
 /**
- * @brief Fetches a forecast file from UCAR/THREDDS server.
- * 
- * @param wx_model_type Type of weather model.
- * @param numNinjas Number of ninjas.
- * @param elevation_file Name of elevation file.
- * 
- * @return Name of forecast file.
- */
-const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int numNinjas, const char* elevation_file)
-{
-    wxModelInitialization *model;
-    try
-    {
-        model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
-//        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);  // why the heck was this -2?? Threw it off for my case
-        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas);
-        delete model;
-        char* cstr = new char[forecastFileName.length() + 1];
-        std::strcpy(cstr, forecastFileName.c_str());
-        return cstr;
-    }
-    catch(armyException &e)
-    {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        return "exception";
-    }
-    catch( exception& e )
-    {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        return "exception";
-    }
-    catch( ... )
-    {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
-        return "exception";
-    }
-}
-/**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
  * @param forecastFilename Name of forecast file.

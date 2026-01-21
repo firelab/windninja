@@ -23,6 +23,7 @@ public:
     ninjaComClass *Com;  // pointer to the ninjaTools level com handler
 
     void fetchWeatherModelData(const char* modelName, const char* demFile, int hours);
+    void fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
     std::vector<std::string> getForecastIdentifiers();
     std::vector<std::string> getTimeList(const char* modelName, std::string timeZone);
     int getStartHour(const char*modelIdentifier);

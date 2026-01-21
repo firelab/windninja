@@ -70,7 +70,6 @@ private slots:
 
 private:
     NinjaToolsH* ninjaTools;
-    //NinjaArmyH* ninjaArmy;  // if trying out the old ninjaArmy form of fetching
 
     Ui::MainWindow *ui;
     QFileSystemModel *fileModel;

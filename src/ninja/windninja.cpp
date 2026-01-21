@@ -69,6 +69,11 @@ NinjaErr handleException()
 extern "C"
 {
 
+/**
+ * \brief Automatically allocate an empty ninjaArmy.
+ *
+ * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
 {
     NinjaArmyH* army;
@@ -77,7 +82,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
 }
 
 /**
- * \brief Create a new suite of domain average windninja runs.
+ * \brief Generate a new suite of domain average windninja runs.
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
@@ -107,7 +112,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  * \param cloudCoverUnits String indicating cloud cover units ("fraction" or "percent"), can be NULL.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
     ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
@@ -167,7 +172,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a weather station file.
+ * \brief Generate a ninjaArmy from a weather station file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * a weather station file and list of datetimes specified by arrays of years, months, days, and hours 
@@ -190,7 +195,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
  * \param momentumFlag A flag representing whether to use the momentum solver or not (the momentum solver is not currently supported in point initializations). Default is false.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
     ( NinjaArmyH * army, int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
@@ -241,7 +246,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
+ * \brief Generate a ninjaArmy from a forecast file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * the weather forecast file.  One run is done for each timestep in the forecast 
@@ -259,7 +264,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
  * \param momentumFlag A flag representing whether to use the momentum solver or not.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
     ( NinjaArmyH * army, const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
@@ -313,6 +318,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
     return NINJA_SUCCESS;
 }
 
+/**
+ * \brief Automatically allocate a ninjaTools.
+ *
+ * \return An opaque handle to a ninjaTools on success, NULL otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
 {
     NinjaToolsH* army;
@@ -320,6 +330,17 @@ WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
     return army;
 }
 
+/**
+ * \brief Fetch Forecast file from UCAR/THREDDS server, or from NOMADS server.
+ *
+ * This method will fetch a forecast file from the UCAR/THREDDS server, also can be from the NOMADS server.
+ *
+ * \param modelName A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM").
+ * \param demFile A valid path to an elevation file.
+ * \param hours Number of hours to be requested (the forecast duration).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
     (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
 {
@@ -358,52 +379,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
 
     try
     {
-        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
-
-        boost::gregorian::date startDate(startYear, startMonth, startDay);
-        boost::gregorian::date endDate(endYear, endMonth, endDay);
-
-        boost::local_time::tz_database tz_db;
-        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-        boost::local_time::time_zone_ptr timeZonePtr;
-        timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-        boost::local_time::local_date_time ldtStart(
-            startDate,
-            boost::posix_time::hours(startHour),
-            timeZonePtr,
-            boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
-            );
-
-        boost::local_time::local_date_time ldtEnd(
-            endDate,
-            boost::posix_time::hours(endHour),
-            timeZonePtr,
-            boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
-            );
-
-        boost::posix_time::ptime startUTC = ldtStart.utc_time();
-        boost::posix_time::ptime endUTC   = ldtEnd.utc_time();
-
-        int hours = 0;
-
-        auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
-        forecastModel->setDateTime(startUTC.date(),
-                                   endUTC.date(),
-                                   boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
-                                   boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
-
-        // doing it this way loses access to ninjaCom, which means that the QProgressDialog
-        // is left hanging as if it is still processing. Need to use the other method for now.
-        //std::string forecastFileName = forecastModel->fetchForecast(demFile, hours);
-        //if(forecastFileName == "exception")
-        //{
-        //    return NINJA_E_INVALID;
-        //}
-
-        // doing it this way, lets it access ninjaCom, but loses the above information
-        // Probably need to just move the above into a ninjaTools function, to be safer and more correct
-        reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+        reinterpret_cast<ninjaTools*>( tools )->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
     }
     catch( armyException & e )
     {
@@ -588,58 +564,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     }
 
     return reinterpret_cast<ninjaArmy*>( army )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType);
-}
-
-/**
- * \brief Fetch Forecast file from UCAR/THREDDS server.
- *
- * This method will fetch a forecast file from the UCAR/THREDDS server.
- *
- * \param wx_model_type A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM")
- * \param numNinjas Number of Ninjas
- * \param elevation_file A valid path to an elevation file.
- *
- * \return Forecast file name on success, "exception" otherwise.
- */
-
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast
-    (NinjaArmyH * army, const char* wxModelType,  unsigned int nHours, const char * elevationFile, char ** options)
-{
-    if(!army)
-    {
-        return NINJA_E_NULL_PTR;
-    }
-
-    wxModelInitialization *model;
-    try
-    {
-        // doing it this way loses access to ninjaCom, which means that the QProgressDialog
-        // is left hanging as if it is still processing. Need to use the other method for now.
-        // this is even more especially true, when trying to force errors, like "fudge" thrown into wxModelType
-        //model = wxModelInitializationFactory::makeWxInitializationFromId(wxModelType);
-        //std::string forecastFileName = model->fetchForecast(elevationFile, nHours);
-
-        // doing it this way, lets it access ninjaCom, but potentially loses the above information
-        // but for this particular case, the above IS the same thing as this function call, so not losing any of the above information
-        std::string forecastFileName = reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wxModelType, nHours, elevationFile);  // numNinjas is equivalent to nHours, probably should update the variable names of this function to be clearer
-        if(forecastFileName == "exception")
-        {
-            return NINJA_E_INVALID;
-        }
-    }
-    catch( armyException & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    catch( exception & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
-    return NINJA_SUCCESS;
 }
 
 /**

@@ -121,9 +121,6 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
         (NinjaArmyH * ninjaArmy, double * boundsBox, const char * fileName, double resolution, char * fetchType, char ** options );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast
-        (NinjaArmyH * ninjaArmy, const char * wx_model_type,  unsigned int nHours, const char * elevation_file, char ** options );
-
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaArmyH * ninjaArmy, char ** options );
 

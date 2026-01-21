@@ -163,7 +163,6 @@ public:
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions);
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
-    const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
