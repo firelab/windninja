@@ -791,7 +791,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Google Earth")
     {
-        ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
+        ui->googleEarthCheckBox->setChecked(!ui->googleEarthCheckBox->isChecked());
     }
     else if (item->text(0) == "Fire Behavior")
     {
@@ -1009,8 +1009,8 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthGroupBox->isChecked(), papszOptions);  // test error handling
+    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1156,7 +1156,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
 
     if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
     {
-        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1237,7 +1237,7 @@ void MainWindow::plotKmzOutputs()
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
 
-    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
     {
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
@@ -1303,7 +1303,11 @@ void MainWindow::plotKmzOutputs()
             QByteArray data = outFile.readAll();
             QString base64 = data.toBase64();
 
-            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+            bool timeSeries = !ui->domainAverageGroupBox->isChecked();
+
+            webEngineView->page()->runJavaScript(
+                "loadKmzFromBase64('" + base64 + "', " + (timeSeries ? "true" : "false") + ");"
+            );
 
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
@@ -1326,7 +1330,7 @@ void MainWindow::plotKmzOutputs()
 
             // if it is a weather model run, and weather model kmzs were created for the run,
             // plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthGroupBox->isChecked())
+            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
@@ -1346,7 +1350,7 @@ void MainWindow::plotKmzOutputs()
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
 }
 
 void MainWindow::writeSettings()
