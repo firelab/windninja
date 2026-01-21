@@ -113,6 +113,7 @@ void AppState::updateSurfaceInputState()
         ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Input File Cannot be Detected");
     }
     updateInputState();
+    updateGoogleEarthOutputState();
 }
 
 void AppState::updateDiurnalInputState()
@@ -223,7 +224,7 @@ void AppState::updateWeatherModelInputState()
 
 void AppState::updateGoogleEarthOutputState()
 {
-    if(isGoogleEarthToggled)
+    if(ui->googleEarthGroupBox->isChecked())
     {
         if(isSurfaceInputValid)
         {
