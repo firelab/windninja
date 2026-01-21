@@ -224,7 +224,7 @@ void AppState::updateWeatherModelInputState()
 
 void AppState::updateGoogleEarthOutputState()
 {
-    if(ui->googleEarthGroupBox->isChecked())
+    if(ui->googleEarthCheckBox->isChecked())
     {
         if(isSurfaceInputValid)
         {
