@@ -311,7 +311,22 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
 {
     if(tools != NULL)
     {
-        reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+        try
+        {
+            reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+        }
+        catch( armyException & e )
+        {
+            return NINJA_E_INVALID;
+        }
+        catch( exception & e )
+        {
+            return NINJA_E_INVALID;
+        }
+        //catch( ... )
+        //{
+        //    return NINJA_E_INVALID;
+        //}
         return NINJA_SUCCESS;
     }
     else

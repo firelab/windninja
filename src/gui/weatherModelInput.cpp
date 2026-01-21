@@ -109,18 +109,18 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
 void WeatherModelInput::updateProgressMessage(const QString message)
 {
-    QMessageBox::critical(
-        nullptr,
-        QApplication::tr("Error"),
-        message
-    );
-//    progress->setLabelText(message);
-//    progress->setWindowTitle(tr("Error"));
-//    progress->setCancelButtonText(tr("Close"));
-//    progress->setAutoClose(false);
-//    progress->setAutoReset(false);
-//    progress->setRange(0, 1);
-//    progress->setValue(progress->maximum());
+//    QMessageBox::critical(
+//        nullptr,
+//        QApplication::tr("Error"),
+//        message
+//    );
+    progress->setLabelText(message);
+    progress->setWindowTitle(tr("Error"));
+    progress->setCancelButtonText(tr("Close"));
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setRange(0, 1);
+    progress->setValue(progress->maximum());
 }
 
 static void comMessageHandler(const char *pszMessage, void *pUser)
@@ -198,11 +198,11 @@ int WeatherModelInput::fetchForecastWeather(
     const char* modelIdentifier = modelIdentifierTemp.constData();
     const char* demFile = demFileTemp.constData();
 
-    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);  // some errors and warnings are caught, but only as error codes, not as messages, for instance "ERROR 1: HTTP error code : 404", "ERROR 1: Failed to download file.", "Warning 1: Failed to download forecast, stepping back one forecast run time step.". Would need to update how we do the messaging within the various SurfaceFetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom. Also, a seg fault from the first available wx model somehow, need to track down what is going on with that weather model.
-    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, "fudge", demFile, hours);  // getting a similar seg fault, "what():  std::exception". I think I must not be quite handling something that is being thrown
-    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, "fudge", hours);  // getting a similar seg fault, "what():  std::exception", after "ERROR 4: fudge: No such file or directory". I think I must not be quite handling something that is being thrown
-    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, -1);  // um, this one somehow went forward as if it was a correct value? Stepped back one, but in the end I got a single weather model data file, not the usual 2 when it steps back like that.
-    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, 0);  // only works as a test for certain specific weather models, that have minimums of 3 or 6 hrs, like xxxx
+    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);  // some errors and warnings are caught, but only as error codes, not as messages, for instance "ERROR 1: HTTP error code : 404", "ERROR 1: Failed to download file.", "Warning 1: Failed to download forecast, stepping back one forecast run time step.". Would need to update how we do the messaging within the various wxModelInitialization fetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom.
+    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, "fudge", demFile, hours);  // works with proper error message, after non-caught message "ERROR 4: fudge: No such file or directory".
+    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, "fudge", hours);  // works with proper error message, after non-caught message "ERROR 4: fudge: No such file or directory".
+    ////NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, -1);  // um, this one somehow went forward as if it was a correct value? Stepped back one, but in the end I got a single weather model data file, not the usual 2 when it steps back like that.
+    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, 0);  // only works as a test for certain specific weather models, that have minimums of 3 or 6 hrs, like UCAR-NDFD-CONUS-2.5-KM (currently breaking as a model, even on qt4 gui), UCAR-NAM-CONUS-12-KM (this works great as a test)
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFetchWeatherData: ninjaErr =" << ninjaErr;

@@ -369,6 +369,16 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         return "exception";
     }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return "exception";
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return "exception";
+    }
 }
 /**
  * @brief Makes an army (array) of ninjas for a weather forecast run.

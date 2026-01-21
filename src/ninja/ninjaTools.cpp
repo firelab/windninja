@@ -99,7 +99,17 @@ void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFil
     catch(armyException &e)
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        return;
+        throw;
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        throw;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        throw;
     }
 }
 
