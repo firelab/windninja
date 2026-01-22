@@ -438,12 +438,12 @@ install(FILES ${doc_files}
 
 # Install all tutorial files
 set(tutorial_files
-    tutorials/WindNinja_tutorial1.pdf
-    tutorials/WindNinja_tutorial2.pdf
-    tutorials/WindNinja_tutorial3.pdf
-    tutorials/WindNinja_tutorial4.pdf)
+    WindNinja_tutorial1.pdf
+    WindNinja_tutorial2.pdf
+    WindNinja_tutorial3.pdf
+    WindNinja_tutorial4.pdf)
 list(TRANSFORM tutorial_files PREPEND ${PROJECT_SOURCE_DIR}/doc/tutorials/)
-install(FILES ${tutorials}
+install(FILES ${tutorial_files}
         DESTINATION share/windninja/doc/tutorials
         COMPONENT apps)
 
