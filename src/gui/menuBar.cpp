@@ -32,7 +32,9 @@
 MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent), ui(ui)
 {
-    dataPath = QDir(QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", "")));
+    char ** options;
+    const char * tmp = NinjaFindBinDir(options);
+    dataPath = QDir(QString::fromUtf8(tmp));
 
     // QMenu fileMenu "File" actions
     connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
@@ -169,7 +171,7 @@ void MenuBar::setConfigurationOptionActionTriggered()
 
 void MenuBar::displayArcGISProGuideActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -185,7 +187,7 @@ void MenuBar::displayArcGISProGuideActionTriggered()
 }
 void MenuBar::displayTutorial1ActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial1.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial1.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -202,7 +204,7 @@ void MenuBar::displayTutorial1ActionTriggered()
 
 void MenuBar::displayTutorial2ActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial2.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial2.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -219,7 +221,7 @@ void MenuBar::displayTutorial2ActionTriggered()
 
 void MenuBar::displayTutorial3ActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial3.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial3.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -236,7 +238,7 @@ void MenuBar::displayTutorial3ActionTriggered()
 
 void MenuBar::displayTutorial4ActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/tutorials/WindNinja_tutorial4.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial4.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -253,7 +255,7 @@ void MenuBar::displayTutorial4ActionTriggered()
 
 void MenuBar::displayDemDownloadInstructionsActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/download_elevation_file.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/download_elevation_file.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -270,7 +272,7 @@ void MenuBar::displayDemDownloadInstructionsActionTriggered()
 
 void MenuBar::displayFetchDemInstructionsActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/fetch_dem_instructions.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/fetch_dem_instructions.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
@@ -287,7 +289,7 @@ void MenuBar::displayFetchDemInstructionsActionTriggered()
 
 void MenuBar::displayCommandLineInterfaceInstructionsActionTriggered()
 {
-    QString displayFile = dataPath.absoluteFilePath("../doc/CLI_instructions.pdf");
+    QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/CLI_instructions.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
     emit writeToConsole("Opening " + displayFile);
