@@ -34,10 +34,7 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
-    ui->domainAverageTable->hideColumn(2);
-    ui->domainAverageTable->hideColumn(3);
-    ui->domainAverageTable->hideColumn(4);
-    ui->domainAverageTable->hideColumn(5);
+    setupDomainAverageTableWidgets();
     ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
@@ -202,5 +199,40 @@ void DomainAverageInput::domainAverageGroupBoxToggled()
     }
 
     emit updateState();
+}
+
+void DomainAverageInput::setupDomainAverageTableWidgets()
+{
+    QTableWidget* table = ui->domainAverageTable;
+    int rows = table->rowCount();
+
+    for (int row = 0; row < rows; ++row)
+    {
+
+        QDoubleSpinBox* speedSpin = new QDoubleSpinBox(table);
+        speedSpin->setRange(0.0, 500.0);
+        speedSpin->setDecimals(2);
+        table->setCellWidget(row, 0, speedSpin);
+
+        QSpinBox* dirSpin = new QSpinBox(table);
+        dirSpin->setRange(0, 359);
+        table->setCellWidget(row, 1, dirSpin);
+
+        QTimeEdit* timeEdit = new QTimeEdit(QTime::currentTime(), table);
+        timeEdit->setDisplayFormat("HH:mm");
+        table->setCellWidget(row, 2, timeEdit);
+
+        QDateEdit* dateEdit = new QDateEdit(QDate::currentDate(), table);
+        dateEdit->setCalendarPopup(true);
+        table->setCellWidget(row, 3, dateEdit);
+
+        QSpinBox* cloudSpin = new QSpinBox(table);
+        cloudSpin->setRange(0, 100);
+        table->setCellWidget(row, 4, cloudSpin);
+
+        QSpinBox* airTempSpin = new QSpinBox(table);
+        airTempSpin->setRange(-40, 200);
+        table->setCellWidget(row, 5, airTempSpin);
+    }
 }
 

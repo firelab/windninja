@@ -47,6 +47,7 @@ public:
     DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 private slots:
+    void setupDomainAverageTableWidgets();
     void domainAverageTableCellChanged(int row, int column);
     void clearTableButtonClicked();
     void domainAverageGroupBoxToggled();
