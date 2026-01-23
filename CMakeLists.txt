@@ -324,6 +324,11 @@ if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
 
+# Add the resource files for the .exe icon
+if (MSVC)
+    target_sources(WindNinja PRIVATE ${PROJECT_SOURCE_DIR}/wn-ms-resource.rc)
+endif()
+
 # Run windeployqt6.exe to provide all QT related DLLs
 if(MSVC)
     set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe")
