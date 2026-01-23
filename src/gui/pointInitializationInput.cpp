@@ -51,6 +51,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
+
+    connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
 }
 
 void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
@@ -91,6 +93,15 @@ void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
+    emit writeToConsoleSignal("Fetching station data...");
+
+    progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setCancelButton(nullptr);
+    progress->setMinimumDuration(0);
+    progress->setAutoClose(true);
+    progress->show();
+
     QString DEMTimeZone = ui->timeZoneComboBox->currentText();
     QByteArray DEMTimeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
     QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
@@ -103,6 +114,87 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> minute = {start.time().minute(), end.time().minute()};
     QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);
 
+    // this one should break so hard, the code won't even know what happened
+    // yeah, a qt error this time, "ASSERT failure in QList::operator[]: "index out of range""
+    // well, that's confusing. This breaking only happens if doing "qDebug() << outTime[1];" rather than just [0],
+    // comment that out and it runs to completion fine for everything, it just uses the first time for everything.
+    // looks like it just uses the single time, as either a latestTime or a time-series file format,
+    //  depending on the choice of the input download type, latestTime or time-series
+    /*QVector<int> year   = {start.date().year(),   end.date().year()};
+    QVector<int> month  = {start.date().month(),  end.date().month()};
+    QVector<int> day    = {start.date().day(),    end.date().day()};
+    QVector<int> hour   = {start.time().hour(),   end.time().hour()};
+    QVector<int> minute = {start.time().minute(), end.time().minute()};
+    QVector<int> outYear(1), outMonth(1), outDay(1), outHour(1), outMinute(1);*/
+
+    // this set will probably work fine
+    // yup, worked fine. The time-series became a time-series from and to the same exact time
+    /*QVector<int> year   = {start.date().year(),   start.date().year()};
+    QVector<int> month  = {start.date().month(),  start.date().month()};
+    QVector<int> day    = {start.date().day(),    start.date().day()};
+    QVector<int> hour   = {start.time().hour(),   start.time().hour()};
+    QVector<int> minute = {start.time().minute(), start.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
+    // this set will probably work fine
+    // yup, worked fine. The time-series became a time-series from and to the same exact time
+    /*QVector<int> year   = {end.date().year(),   end.date().year()};
+    QVector<int> month  = {end.date().month(),  end.date().month()};
+    QVector<int> day    = {end.date().day(),    end.date().day()};
+    QVector<int> hour   = {end.time().hour(),   end.time().hour()};
+    QVector<int> minute = {end.time().minute(), end.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
+    // should die pretty hard
+    // well, it runs this part fine, just dies normally when run by the later fetch,
+    // unless it is a latestTime fetch in which case it just uses the first time from the list
+    /*QVector<int> year   = {start.date().year(),   start.date().year()-1};
+    QVector<int> month  = {start.date().month(),  start.date().month()};
+    QVector<int> day    = {start.date().day(),    start.date().day()};
+    QVector<int> hour   = {start.time().hour(),   start.time().hour()};
+    QVector<int> minute = {start.time().minute(), start.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
+    // should die pretty hard
+    // well, it runs this part fine, just runs normally when run by the later fetch (because the fetch SHOULD die, but does not right now for this case),
+    // unless it is a latestTime fetch in which case it just uses the first time from the list
+    /*QVector<int> year   = {start.date().year(),   start.date().year()};
+    QVector<int> month  = {start.date().month(),  start.date().month()};
+    QVector<int> day    = {start.date().day(),    start.date().day()};
+    QVector<int> hour   = {start.time().hour(),   start.time().hour()-1};
+    QVector<int> minute = {start.time().minute(), start.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
+    // should die pretty hard
+    // well, it runs this part fine, just dies normally when run by the later fetch,
+    // unless it is a latestTime fetch in which case it just uses the first time from the list
+    /*QVector<int> year   = {start.date().year(),   start.date().year()};
+    QVector<int> month  = {start.date().month(),  start.date().month()};
+    QVector<int> day    = {start.date().day(),    start.date().day()};
+    QVector<int> hour   = {start.time().hour(),   start.time().hour()-2};  // had to use 3 instead of 2 for this to work, when I was right at and close to the hour
+    QVector<int> minute = {start.time().minute(), start.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
+    // should die pretty hard
+    // well, it runs this part fine, just dies normally when run by the later fetch,
+    // unless it is a latestTime fetch in which case it just uses the first time from the list
+    /*QVector<int> year   = {end.date().year()+1,   end.date().year()};
+    QVector<int> month  = {end.date().month(),  end.date().month()};
+    QVector<int> day    = {end.date().day(),    end.date().day()};
+    QVector<int> hour   = {end.time().hour(),   end.time().hour()};
+    QVector<int> minute = {end.time().minute(), end.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
+    // should die pretty hard
+    // well, it runs this part fine, just dies normally when run by the later fetch,
+    // unless it is a latestTime fetch in which case it just uses the first time from the list
+    /*QVector<int> year   = {end.date().year(),   end.date().year()};
+    QVector<int> month  = {end.date().month(),  end.date().month()};
+    QVector<int> day    = {end.date().day(),    end.date().day()};
+    QVector<int> hour   = {end.time().hour()+1,   end.time().hour()};
+    QVector<int> minute = {end.time().minute(), end.time().minute()};
+    QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);*/
+
     NinjaErr ninjaErr = NinjaGetTimeList(
         year.data(), month.data(), day.data(),
         hour.data(), minute.data(),
@@ -110,18 +202,84 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         outHour.data(), outMinute.data(),
         2, DEMTimeZoneBytes.data()
         );
+    //NinjaErr ninjaErr = NinjaGetTimeList(
+    //    year.data(), month.data(), day.data(),
+    //    hour.data(), minute.data(),
+    //    outYear.data(), outMonth.data(), outDay.data(),
+    //    outHour.data(), outMinute.data(),
+    //    1, DEMTimeZoneBytes.data()
+    //    );  // this one shouldn't hurt anything, but want to see what happens  // turns out it runs fine for latestTime downloads, just a smaller list, but it seg faults no matter what on the bbox download, probably because that is setup to expect 2 times no matter what.  // now, it seg faults with an error message for non-latestTime downloads "Day of month value is out of range 1..31".
+    //NinjaErr ninjaErr = NinjaGetTimeList(
+    //    year.data(), month.data(), day.data(),
+    //    hour.data(), minute.data(),
+    //    outYear.data(), outMonth.data(), outDay.data(),
+    //    outHour.data(), outMinute.data(),
+    //    2, "fudge"
+    //    );  // should break, but probably won't, will probably be treated like the dem timezone  // turns out it breaks HARD, a smart pointer failing on assert somewhere along the pipeline, not sure if that occurs here, or later down the pipeline. Definitely a break not necessarily related directly with the dem, breaks probably because of something sized wrong because of the dem being off, or it breaks because it IS trying to read the dem even though it shouldn't.
     if(ninjaErr != NINJA_SUCCESS)
     {
-        printf("NinjaGetTimeList: ninjaErr = %d\n", ninjaErr);
+        qDebug() << "NinjaGetTimeList: ninjaErr =" << ninjaErr;
+
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText("Close");
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+
+        // do cleanup before the return, similar to finishedSolve()
+
+        //disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+//        char **papszOptions = nullptr;
+//        int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+//        if(ninjaErr != NINJA_SUCCESS)
+//        {
+//            printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+//        }
+
+        // clear the progress values for the next set of runs
+        //runProgress.clear();
+
+        //futureWatcher->deleteLater();
+
+        return;
     }
 
     if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration (someone downloads too much data)
     {
         char ** options = nullptr;
+        //outYear[0] = outYear[1]-2;  // doing more than a year worth of time SHOULD be what triggers it, this is NOT a check on the times themselves  // hrm, it returns an error code of 8, but no ninjaCom seems to be sent so it leaves it hanging without a proper message. runs fine for a latestTime simulation.
+        //outYear[1] = outYear[0]+2;  // not sure if it can even handle when the endYear goes past the current year  // same result as the above test.
         int ninjaErr = NinjaCheckTimeDuration(outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, options);
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaCheckTimeDuration ninjaErr=" << ninjaErr;
+
+            progress->setWindowTitle(tr("Error"));
+            progress->setCancelButtonText("Close");
+            progress->setAutoClose(false);
+            progress->setAutoReset(false);
+            progress->setRange(0, 1);
+            progress->setValue(progress->maximum());
+
+            // do cleanup before the return, similar to finishedSolve()
+
+            //disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+//            char **papszOptions = nullptr;
+//            int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+//            if(ninjaErr != NINJA_SUCCESS)
+//            {
+//                printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+//            }
+
+            // clear the progress values for the next set of runs
+            //runProgress.clear();
+
+            //futureWatcher->deleteLater();
+
+            return;
         }
     }
 
@@ -129,20 +287,13 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QString outputPath = ui->outputDirectoryLineEdit->text();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
 
-    progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setCancelButton(nullptr);
-    progress->setMinimumDuration(0);
-    progress->setAutoClose(true);
-    progress->show();
-
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future;
     if(ui->weatherStationDataSourceComboBox->currentIndex() == 0)
     {
         QString units = ui->downloadFromDEMComboBox->currentText();
         double buffer = ui->downloadFromDEMSpinBox->value();
-        future = QtConcurrent::run(&PointInitializationInput::fetchStationFromBbox,
+        future = QtConcurrent::run(&PointInitializationInput::fetchStationFromBbox, this,
                                    outYear, outMonth, outDay, outHour, outMinute,
                                    elevationFile, buffer, units,
                                    DEMTimeZone, fetchLatestFlag, outputPath);
@@ -150,13 +301,93 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     else
     {
         QString stationList = ui->downloadFromStationIDLineEdit->text();
-        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName,outYear, outMonth, outDay, outHour, outMinute,
+        future = QtConcurrent::run(&PointInitializationInput::fetchStationByName, this,
+                                   outYear, outMonth, outDay, outHour, outMinute,
                                    elevationFile, stationList,
                                    DEMTimeZone, fetchLatestFlag, outputPath);
     }
     futureWatcher->setFuture(future);
 
-    connect(futureWatcher, &QFutureWatcher<int>::finished,this, &PointInitializationInput::fetchStationDataFinished);
+    connect(futureWatcher, &QFutureWatcher<int>::finished, this, &PointInitializationInput::fetchStationDataFinished);
+}
+
+void PointInitializationInput::updateProgressMessage(const QString message)
+{
+//    QMessageBox::critical(
+//        nullptr,
+//        QApplication::tr("Error"),
+//        message
+//    );
+    progress->setLabelText(message);
+    progress->setWindowTitle(tr("Error"));
+    progress->setCancelButtonText(tr("Close"));
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setRange(0, 1);
+    progress->setValue(progress->maximum());
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    PointInitializationInput *self = static_cast<PointInitializationInput*>(pUser);
+
+    std::string msg = pszMessage;
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("StationFetch ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown StationFetch error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("StationFetch ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("StationFetch error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("StationFetch ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("StationFetch warning: "+clipStr), Qt::yellow);
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
 }
 
 int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
@@ -171,6 +402,41 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
                                                    bool fetchLatestFlag,
                                                    QString outputPath)
 {
+    // apparently if it is a latestTime run, changing the times means nothing, they get ignored
+    // though looks like the values that find themselves in there before editing for a latestTime run,
+    // are   endDateTime of current time         , in UTC
+    // and startDateTime of current time - 1 hour, in UTC
+    // meaning that setting a latestTime run to a multi-time series, just runs fine and acts like a multi-time series
+    // hrm, when redownloading of the same type, multi-time series, but differing times, the same folder and sometimes filenames end up getting used, from the first download attempt. Seems like badly defined behavior, might be related to the stations info being a set of static variables? I'm not sure what is going on there, the inputs to the function ARE the proper updated set of times.
+    // hrm, in all cases, failing or otherwise, the wxStation folder ends up still getting written, does not end up getting cleaned up after the failing of the run.
+
+    //fetchLatestFlag = TRUE;  // on a single-time series, what will happen?  // Turns out it runs fine, just uses the start time of the multi-time series. So kind of a useless test.
+    //fetchLatestFlag = FALSE;  // try on a multi-time series, with good inputs or no, what will happen?  // Turns out it runs fine, because the default values are a time series that is normally ignored. kind of behaves like a useful test, though that depends on how the inputs could change.
+
+    //year[1] = year[0]-1;  // throws an error as expected
+    //hour[1] = hour[0]-1;  // apparently this test SHOULD break, but something must be up in how it is handled within the ninja code because it ends up just downloading a single dateTime, of the earliest of the two sets of times.
+    //hour[1] = hour[0]-2;  // this one throws an error as expected, I guess just have to keep the two times a decent enough distance past enough other the wrong way to trigger the errors.
+    //year[0] = year[1]+1;  // throws an error as expected
+    //hour[0] = hour[1]+1;  // this one throws an error as expected, interesting that going this direction one dateTime past the other, it doesn't succeed like it does for the other direction.
+    //elevationFile = "fudge";  // throws error as expected, after a message of "ERROR 4: fudge: No such file or directory"
+    //buffer = -1;  // runs fine, no error messages, just downloads the data within the area of the dem
+    //units = "fudge";  // runs fine, no error messages, just downloads the data within the area of the dem
+    //osTimeZone = "fudge";  // runs fine, no error messages, seems to just download the data assuming the timezone of the dem
+
+    //year[0] = 9999;  // throws an error as expected
+    //hour[0] = 9999;  // throws an error as expected
+    //year[1] = 9999;  // throws an error as expected
+    //hour[1] = 9999;  // um, this one did NOT throw an error, but actually ran successfully, creating data as if the endTime was the same thing as the startTime
+    //year[0] = -1;  // throws an error, and seg faults, as expected
+    //hour[0] = -1;  // um, this one did NOT throw an error, but actually ran successfully, creating data as if the startHour was the same thing as the endHour
+    //year[1] = -1;  // throws an error, and seg faults, as expected
+    //hour[1] = -1;  // um, this one did NOT throw an error, but actually ran successfully, creating data as if the endHour was the same thing as the startHour
+    //year[0] = 0;  // throws an error, and seg faults, as expected
+    //year[1] = 0;  // throws an error, and seg faults, as expected
+
+    qDebug() << "year[0] month[0] day[0] hour[0] minute[0] =" << year[0] << month[0] << day[0] << hour[0] << minute[0];
+    qDebug() << "year[1] month[1] day[1] hour[1] minute[1] =" << year[1] << month[1] << day[1] << hour[1] << minute[1];
+
     char ** options = NULL;
     NinjaErr ninjaErr = NinjaFetchStationFromBBox(
         year.data(), month.data(), day.data(),
@@ -182,7 +448,9 @@ int PointInitializationInput::fetchStationFromBbox(QVector<int> year,
         );
 
     if (ninjaErr != NINJA_SUCCESS)
+    {
         qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
+    }
 
     return ninjaErr;
 }
@@ -198,6 +466,27 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
                                                  bool fetchLatestFlag,
                                                  QString outputPath)
 {
+    //year[1] = year[0]-1;
+    //hour[1] = hour[0]-1;
+    //year[0] = year[1]+1;
+    //hour[0] = hour[1]+1;
+    //elevationFile = "fudge";
+    //stationList = "fudge";
+    //osTimeZone = "fudge";
+    //fetchLatestFlag = TRUE;  // on a single-time series, what will happen?
+
+    //year[0] = 9999;
+    //hour[0] = 9999;
+    //year[1] = 9999;
+    //hour[1] = 9999;
+    //year[0] = -1;
+    //hour[0] = -1;
+    //year[1] = -1;
+    //hour[1] = -1;
+    //year[0] = 0;
+    //year[1] = 0;
+    //fetchLatestFlag = FALSE;  // try on a multi-time series, with good inputs or no, what will happen?
+
     char ** options = NULL;
     NinjaErr ninjaErr = NinjaFetchStationByName(
         year.data(), month.data(), day.data(),
@@ -208,26 +497,42 @@ int PointInitializationInput::fetchStationByName(QVector<int> year,
         );
 
     if (ninjaErr != NINJA_SUCCESS)
+    {
         qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
+    }
 
     return ninjaErr;
 }
 
 void PointInitializationInput::fetchStationDataFinished()
 {
-    if (progress)
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    if(result == NINJA_SUCCESS)
     {
-        progress->close();
-        progress->deleteLater();
-        progress = nullptr;
+        emit writeToConsoleSignal("Finished fetching station data.", Qt::darkGreen);
+
+        if (progress)
+        {
+            progress->close();
+            progress->deleteLater();
+            progress = nullptr;
+        }
+
+        ui->inputsStackedWidget->setCurrentIndex(10);
+
+    } else
+    {
+        emit writeToConsoleSignal("Failed to fetch station data.");
     }
+
+    // delete the futureWatcher every time, whether success or failure
     if (futureWatcher)
     {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;
     }
-
-    ui->inputsStackedWidget->setCurrentIndex(10);
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
@@ -297,13 +602,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
 
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
         stationFiles.push_back(recentFileSelected);
-        qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
+        //qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
 
         QByteArray filePathBytes = recentFileSelected.toUtf8();
         const char* filePath = filePathBytes.constData();
         char** options = nullptr;
         int stationHeader = NinjaGetWxStationHeaderVersion(filePath, options);
-        qDebug() << "[GUI-Point] Station Header: " << stationHeader;
+        //qDebug() << "[GUI-Point] Station Header: " << stationHeader;
 
         bool timeSeriesFlag = true;
         if (stationHeader != 1)
@@ -319,25 +624,25 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             OGRLayer* poLayer = hDS->GetLayer(0);
             poLayer->ResetReading();
             qint64 lastIndex = poLayer->GetFeatureCount();
-            qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
+            //qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
 
             OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, row 1 is first time in series
             QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th (last) column (0-14)
-            qDebug() << "[GUI-Point] Station start time:" << startDateTime;
+            //qDebug() << "[GUI-Point] Station start time:" << startDateTime;
 
             poFeature = poLayer->GetFeature(lastIndex);             // last time in series
             QString stopDateTime(poFeature->GetFieldAsString(15));
-            qDebug() << "[GUI-Point] Station end Time:" << stopDateTime;
+            //qDebug() << "[GUI-Point] Station end Time:" << stopDateTime;
 
             if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
             {
-                qDebug() << "[GUI-Point] File cannot be used for Time Series";
+                //qDebug() << "[GUI-Point] File cannot be used for Time Series";
                 timeSeriesFlag = false;
                 stationFileTypes.push_back(0);
             }
             else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
             {
-                qDebug() << "[GUI-Point] File can be used for Time Series, suggesting time series parameters...";
+                //qDebug() << "[GUI-Point] File can be used for Time Series, suggesting time series parameters...";
                 readStationTime(startDateTime, stopDateTime);
                 stationFileTypes.push_back(1);
             }
@@ -422,8 +727,8 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
         maxStationTime = DEMEndTime;
     }
 
-    qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
-    qDebug() << "[GUI-Point] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
+    //qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
+    //qDebug() << "[GUI-Point] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
 
     ui->weatherStationMinTimeLabel->setText("Current Min Time: " + minStationTime.toString());
     ui->weatherStationMaxTimeLabel->setText("Current Min Time: " + maxStationTime.toString());
@@ -439,7 +744,7 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
 
     int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
-    qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
+    //qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
 }
 
 void PointInitializationInput::pointInitializationSelectNoneButtonClicked()

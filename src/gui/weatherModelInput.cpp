@@ -61,14 +61,14 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 {
     emit writeToConsoleSignal("Fetching weather model data...");
 
-    int hours = ui->weatherModelSpinBox->value();
-
     progress = new QProgressDialog("Fetching Forecast Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
     progress->setAutoClose(true);
     progress->show();
+
+    int hours = ui->weatherModelSpinBox->value();
 
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future;
@@ -156,13 +156,13 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Cannot determine exception type." )
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error"));
-            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
+            emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown WeatherModelFetch error"), Qt::red);
         }
         else
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr));
-            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
+            emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch error: "+clipStr), Qt::red);
         }
     }
     else if( msg.find("Warning: ") != msg.npos )
@@ -176,8 +176,8 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr));
-        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), Qt::yellow);
+        emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch warning: "+clipStr), Qt::yellow);
     }
     else
     {

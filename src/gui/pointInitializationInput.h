@@ -49,9 +49,10 @@ public:
     PointInitializationInput(Ui::MainWindow* ui, QObject* parent = nullptr);
     QVector<QString> getStationFiles();
 
-
 signals:
     void updateState();
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
 
 public slots:
     void updateTreeView();
@@ -69,6 +70,7 @@ private slots:
     void folderExpanded(const QModelIndex &index);
     void folderCollapsed(const QModelIndex &index);
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
+    void updateProgressMessage(const QString message);
 
 private:
     Ui::MainWindow *ui;
@@ -83,27 +85,27 @@ private:
     QVector<int> stationFileTypes;
     QVector<QString> openStationFolders;
 
-    static int fetchStationFromBbox(QVector<int> year,
-                                    QVector<int> month,
-                                    QVector<int> day,
-                                    QVector<int> hour,
-                                    QVector<int> minute,
-                                    QString elevationFile,
-                                    double buffer,
-                                    QString units,
-                                    QString osTimeZone,
-                                    bool fetchLatestFlag,
-                                    QString outputPath);
-    static int fetchStationByName(QVector<int> year,
-                                  QVector<int> month,
-                                  QVector<int> day,
-                                  QVector<int> hour,
-                                  QVector<int> minute,
-                                  QString elevationFile,
-                                  QString stationList,
-                                  QString osTimeZone,
-                                  bool fetchLatestFlag,
-                                  QString outputPath);
+    int fetchStationFromBbox(QVector<int> year,
+                             QVector<int> month,
+                             QVector<int> day,
+                             QVector<int> hour,
+                             QVector<int> minute,
+                             QString elevationFile,
+                             double buffer,
+                             QString units,
+                             QString osTimeZone,
+                             bool fetchLatestFlag,
+                             QString outputPath);
+    int fetchStationByName(QVector<int> year,
+                           QVector<int> month,
+                           QVector<int> day,
+                           QVector<int> hour,
+                           QVector<int> minute,
+                           QString elevationFile,
+                           QString stationList,
+                           QString osTimeZone,
+                           bool fetchLatestFlag,
+                           QString outputPath);
     void fetchStationDataFinished();
     bool readTimeSeries(QModelIndex row);
     void readStationTime(QString startDateTime, QString stopDateTime);

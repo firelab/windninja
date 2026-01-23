@@ -40,7 +40,6 @@
 #include <QFutureWatcher>
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
-#include <QMessageBox>
 #include <QObject>
 
 class WeatherModelInput : public QObject
