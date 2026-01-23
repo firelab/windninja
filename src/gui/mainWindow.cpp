@@ -92,6 +92,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);
     ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
 
+    ui->treeWidget->topLevelItem(0)->setSelected(true);
+
+
     int nCPUs = QThread::idealThreadCount();
     ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
