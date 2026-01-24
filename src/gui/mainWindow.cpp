@@ -500,6 +500,14 @@ void MainWindow::solveButtonClicked()
     {
         initializationMethod = "point";
 
+        NinjaToolsH* ninjaTools = NinjaMakeTools();
+
+        ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
+        }
+
         QVector<QString> stationFiles = pointInitializationInput->getStationFiles();
         QString DEMTimeZone = ui->timeZoneComboBox->currentText();
         QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
@@ -547,6 +555,7 @@ void MainWindow::solveButtonClicked()
                 int endYear, endMonth, endDay, endHour, endMinute;
 
                 ninjaErr = NinjaGenerateSingleTimeObject(
+                    ninjaTools,
                     startYear, startMonth, startDay, startHour, startMinute,
                     timeZoneBytes.constData(),
                     &endYear, &endMonth, &endDay, &endHour, &endMinute
@@ -565,6 +574,7 @@ void MainWindow::solveButtonClicked()
             else
             {
                 ninjaErr = NinjaGetTimeList(
+                    ninjaTools,
                     year.data(), month.data(), day.data(),
                     hour.data(), minute.data(),
                     outYear.data(), outMonth.data(), outDay.data(),
@@ -593,6 +603,17 @@ void MainWindow::solveButtonClicked()
                     qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
                 }
             }
+
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                // do cleanup before the return, similar to finishedSolve()
+
+//                ninjaErr = NinjaDestroyTools(ninjaTools, papszOptions);
+//                if(ninjaErr != NINJA_SUCCESS)
+//                {
+//                    printf("NinjaDestroyTools: ninjaErr = %d\n", ninjaErr);
+//                }
+            }
         }
         else
         {
@@ -607,6 +628,7 @@ void MainWindow::solveButtonClicked()
             int outYear, outMonth, outDay, outHour, outMinute;
 
             ninjaErr = NinjaGenerateSingleTimeObject(
+                ninjaTools,
                 year, month, day, hour, minute,
                 timeZoneBytes.constData(),
                 &outYear, &outMonth, &outDay, &outHour, &outMinute

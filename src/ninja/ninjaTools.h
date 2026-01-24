@@ -3,6 +3,8 @@
 
 #include "nomads_wx_init.h"
 #include "wxModelInitializationFactory.h"
+#include "wxStation.h"
+#include "pointInitialization.h"
 
 #include "ninja_errors.h"
 
@@ -28,6 +30,12 @@ public:
     std::vector<std::string> getTimeList(const char* modelName, std::string timeZone);
     int getStartHour(const char*modelIdentifier);
     int getEndHour(const char* modelIdentifer);
+
+    int fetchStationFromBBox( const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** papszOptions=NULL );
+    int fetchStationByName( const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** papszOptions=NULL );
+    int getTimeList( const int * inputYearList, const int * inputMonthList, const int * inputDayList, const int * inputHourList, const int * inputMinuteList, int * outputYearList, int* outputMonthList, int * outputDayList, int * outputHourList, int* outputMinuteList, int nTimeSteps, const char* timeZone );
+    int generateSingleTimeObject( int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone, int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute );
+    int checkTimeDuration( int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions=NULL );
 
 private:
     int nomadsCount;

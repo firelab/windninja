@@ -85,7 +85,8 @@ private:
     QVector<int> stationFileTypes;
     QVector<QString> openStationFolders;
 
-    int fetchStationFromBbox(QVector<int> year,
+    int fetchStationFromBbox(NinjaToolsH* ninjaTools,
+                             QVector<int> year,
                              QVector<int> month,
                              QVector<int> day,
                              QVector<int> hour,
@@ -96,7 +97,8 @@ private:
                              QString osTimeZone,
                              bool fetchLatestFlag,
                              QString outputPath);
-    int fetchStationByName(QVector<int> year,
+    int fetchStationByName(NinjaToolsH* ninjaTools,
+                           QVector<int> year,
                            QVector<int> month,
                            QVector<int> day,
                            QVector<int> hour,

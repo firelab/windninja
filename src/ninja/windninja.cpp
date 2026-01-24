@@ -335,6 +335,7 @@ WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
  *
  * This method will fetch a forecast file from the UCAR/THREDDS server, also can be from the NOMADS server.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param modelName A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM").
  * \param demFile A valid path to an elevation file.
  * \param hours Number of hours to be requested (the forecast duration).
@@ -573,6 +574,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
  *                             None
  *                             TODO: Add option parameter to specify a buffer to use in station fetching
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
@@ -600,46 +602,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
  *             
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
-    (const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
+    (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
-    //if(!tools)
-    //{
-    //    return NINJA_E_NULL_PTR;
-    //}
-
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<size; i++){
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
-    }
-
-    wxStation::SetStationFormat(wxStation::newFormat);
-
-    if(!fetchLatestFlag)
+    if(!tools)
     {
-        boost::local_time::tz_database tz_db;
-        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-        boost::local_time::time_zone_ptr timeZonePtr;
-        timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-        boost::local_time::local_date_time start(timeList[0], timeZonePtr);
-        boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
-
-        pointInitialization::setLocalStartAndStopTimes(start, stop);
+        return NINJA_E_NULL_PTR;
     }
 
-    //Generate a directory to store downloaded station data
-    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
-    pointInitialization::SetRawStationFilename(stationPathName);
-    pointInitialization::setStationBuffer(buffer, units);
-    bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
-    if(!success){
-        return NINJA_E_INVALID;
-    }
-    if(locationFileFlag) {
-        pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
-    }
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchStationFromBBox(yearList, monthList, dayList, hourList, minuteList, size, elevationFile, buffer, units, timeZone, fetchLatestFlag, outputPath, locationFileFlag, options);
 }
 
 /**
@@ -648,6 +618,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
  * Avaliable Creation Options:
  *                             None
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
@@ -674,45 +645,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
  *
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName
-    (const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
+    (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
-    //if(!tools)
-    //{
-    //    return NINJA_E_NULL_PTR;
-    //}
-
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<size; i++){
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
-    }
-
-    wxStation::SetStationFormat(wxStation::newFormat);
-
-    if(!fetchLatestFlag)
+    if(!tools)
     {
-        boost::local_time::tz_database tz_db;
-        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-        boost::local_time::time_zone_ptr timeZonePtr;
-        timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-        boost::local_time::local_date_time start(timeList[0], timeZonePtr);
-        boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
-
-        pointInitialization::setLocalStartAndStopTimes(start, stop);
+        return NINJA_E_NULL_PTR;
     }
 
-    //Generate a directory to store downloaded station data
-    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
-    pointInitialization::SetRawStationFilename(stationPathName);
-    bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
-    if(!success){
-        return NINJA_E_INVALID;
-    }
-    if(locationFileFlag) {
-        pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
-    }
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchStationByName(yearList, monthList, dayList, hourList, minuteList, size, elevationFile, stationList, timeZone, fetchLatestFlag, outputPath, locationFileFlag, options);
 }
 
 
@@ -2561,6 +2501,7 @@ WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * stationPath,
 /**
  * \brief Get a time series in UTC with a specific number time steps between the inputted start and stop times.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param inputYearList    A pointer to an array of input years.
  * \param inputMonthList   A pointer to an array of input months.
  * \param inputDayList     A pointer to an array of input days.
@@ -2577,40 +2518,25 @@ WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * stationPath,
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
+    NinjaToolsH* tools,
     const int * inputYearList, const int * inputMonthList, const int * inputDayList,
     const int * inputHourList, const int * inputMinuteList,
     int * outputYearList, int* outputMonthList, int * outputDayList,
     int * outputHourList, int* outputMinuteList,
     int nTimeSteps, const char* timeZone)
 {
-    std::vector<boost::posix_time::ptime> timeList =
-        pointInitialization::getTimeList(
-            inputYearList[0], inputMonthList[0], inputDayList[0],
-            inputHourList[0], inputMinuteList[0],
-            inputYearList[1], inputMonthList[1], inputDayList[1],
-            inputHourList[1], inputMinuteList[1],
-            nTimeSteps, std::string(timeZone)
-            );
-
-    for (int i = 0; i < nTimeSteps; ++i)
+    if(!tools)
     {
-        const boost::posix_time::ptime& time = timeList[i];
-        boost::gregorian::date date = time.date();
-        boost::posix_time::time_duration timeDuration = time.time_of_day();
-
-        outputYearList[i]   = static_cast<int>(date.year());
-        outputMonthList[i]  = static_cast<int>(date.month());
-        outputDayList[i]    = static_cast<int>(date.day());
-        outputHourList[i]   = timeDuration.hours();
-        outputMinuteList[i] = timeDuration.minutes();
+        return NINJA_E_NULL_PTR;
     }
 
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->getTimeList(inputYearList, inputMonthList, inputDayList, inputHourList, inputMinuteList, outputYearList, outputMonthList, outputDayList, outputHourList, outputMinuteList, nTimeSteps, timeZone);
 }
 
 /**
  * \brief Get a date time in UTC from an inpute date time in a specified timezone.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param inputYear    An input year.
  * \param inputMonth   An input month.
  * \param inputDay     An input day.
@@ -2626,32 +2552,22 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
+    NinjaToolsH* tools,
     int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone,
     int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute)
 {
-    if (!outYear || !outMonth || !outDay || !outHour || !outMinute)
+    if(!outYear || !outMonth || !outDay || !outHour || !outMinute)
     {
         return NINJA_E_OTHER;
     }
 
-    boost::posix_time::ptime timeObject =
-        pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
-
-    const boost::gregorian::date& date = timeObject.date();
-    const boost::posix_time::time_duration& td = timeObject.time_of_day();
-
-    *outYear   = static_cast<int>(date.year());
-    *outMonth  = static_cast<int>(date.month());
-    *outDay    = static_cast<int>(date.day());
-    *outHour   = td.hours();
-    *outMinute = td.minutes();
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, timeZone, outYear, outMonth, outDay, outHour, outMinute);
 }
 
 /**
  * \brief Get a time series in UTC with a specific number of time steps between the inputted start and stop times.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList   A pointer to an array of years.
  * \param monthList  A pointer to an array of months.
  * \param dayList    A pointer to an array of days.
@@ -2662,24 +2578,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
-    (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
+    (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
 {
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i < listSize; i++)
-    {
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
-    }
-
-    int isValid = pointInitialization::checkFetchTimeDuration(timeList);
-
-    if(isValid == -2)
-    {
-        return NINJA_E_OTHER;
-    }
-    else
-    {
-        return NINJA_SUCCESS;
-    }
+    return reinterpret_cast<ninjaTools*>( tools )->checkTimeDuration( yearList, monthList, dayList, minuteList, hourList, listSize, papszOptions );
 }
 
 /**

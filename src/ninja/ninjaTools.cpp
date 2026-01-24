@@ -90,7 +90,8 @@ void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFil
 
         model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
 
-        if (!model) {
+        if(!model)
+        {
             throw std::runtime_error(std::string("Weather model not found: ") + modelName);
         }
 
@@ -232,6 +233,240 @@ int ninjaTools::getEndHour(const char* modelIdentifier)
     wxModelInitialization *model = NULL;
     model = wxModelInitializationFactory::makeWxInitializationFromId(modelIdentifier);
     return model->getEndHour();
+}
+
+
+int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** papszOptions )
+{
+    try
+    {
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i<size; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
+        }
+
+        wxStation::SetStationFormat(wxStation::newFormat);
+
+        if(!fetchLatestFlag)
+        {
+            boost::local_time::tz_database tz_db;
+            tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+            boost::local_time::time_zone_ptr timeZonePtr;
+            timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+            boost::local_time::local_date_time start(timeList[0], timeZonePtr);
+            boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
+
+            pointInitialization::setLocalStartAndStopTimes(start, stop);
+        }
+
+        //Generate a directory to store downloaded station data
+        std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
+        pointInitialization::SetRawStationFilename(stationPathName);
+        pointInitialization::setStationBuffer(buffer, units);
+        bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
+        if(!success)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationFromBbox() failed.");
+            return NINJA_E_INVALID;
+        }
+        if(locationFileFlag)
+        {
+            pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+        }
+
+        return NINJA_SUCCESS;
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+}
+
+int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** papszOptions )
+{
+    try
+    {
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i<size; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
+        }
+
+        wxStation::SetStationFormat(wxStation::newFormat);
+
+        if(!fetchLatestFlag)
+        {
+            boost::local_time::tz_database tz_db;
+            tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
+            boost::local_time::time_zone_ptr timeZonePtr;
+            timeZonePtr = tz_db.time_zone_from_region(timeZone);
+
+            boost::local_time::local_date_time start(timeList[0], timeZonePtr);
+            boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
+
+            pointInitialization::setLocalStartAndStopTimes(start, stop);
+        }
+
+        //Generate a directory to store downloaded station data
+        std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
+        pointInitialization::SetRawStationFilename(stationPathName);
+        bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
+        if(!success)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationByName() failed.");
+            return NINJA_E_INVALID;
+        }
+        if(locationFileFlag)
+        {
+            pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
+        }
+
+        return NINJA_SUCCESS;
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+}
+
+int ninjaTools::getTimeList( const int * inputYearList, const int * inputMonthList, const int * inputDayList, const int * inputHourList, const int * inputMinuteList, int * outputYearList, int* outputMonthList, int * outputDayList, int * outputHourList, int* outputMinuteList, int nTimeSteps, const char* timeZone )
+{
+    try
+    {
+        std::vector<boost::posix_time::ptime> timeList =
+            pointInitialization::getTimeList(
+                inputYearList[0], inputMonthList[0], inputDayList[0],
+                inputHourList[0], inputMinuteList[0],
+                inputYearList[1], inputMonthList[1], inputDayList[1],
+                inputHourList[1], inputMinuteList[1],
+                nTimeSteps, std::string(timeZone)
+                );
+
+        for (int i = 0; i < nTimeSteps; ++i)
+        {
+            const boost::posix_time::ptime& time = timeList[i];
+            boost::gregorian::date date = time.date();
+            boost::posix_time::time_duration timeDuration = time.time_of_day();
+
+            outputYearList[i]   = static_cast<int>(date.year());
+            outputMonthList[i]  = static_cast<int>(date.month());
+            outputDayList[i]    = static_cast<int>(date.day());
+            outputHourList[i]   = timeDuration.hours();
+            outputMinuteList[i] = timeDuration.minutes();
+        }
+
+        return NINJA_SUCCESS;
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+}
+
+int ninjaTools::generateSingleTimeObject( int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone, int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute )
+{
+    try
+    {
+        boost::posix_time::ptime timeObject =
+            pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
+
+        const boost::gregorian::date& date = timeObject.date();
+        const boost::posix_time::time_duration& td = timeObject.time_of_day();
+
+        *outYear   = static_cast<int>(date.year());
+        *outMonth  = static_cast<int>(date.month());
+        *outDay    = static_cast<int>(date.day());
+        *outHour   = td.hours();
+        *outMinute = td.minutes();
+
+        return NINJA_SUCCESS;
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+}
+
+int ninjaTools::checkTimeDuration( int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions )
+{
+    try
+    {
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i < listSize; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        }
+
+        int isValid = pointInitialization::checkFetchTimeDuration(timeList);
+        if(isValid == -2)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::checkFetchTimeDuration() failed.");
+            return NINJA_E_OTHER;
+        }
+
+        return NINJA_SUCCESS;
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
 }
 
 /*-----------------------------------------------------------------------------
