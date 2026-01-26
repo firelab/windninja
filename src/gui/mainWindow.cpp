@@ -73,30 +73,30 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
-    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);
-    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);
-    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
-    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);
-    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);
-    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);
-    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);
+    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
+    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 2);
+    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 3);
+    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 3);
+    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 4);
+    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 5);
+    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 6);
     QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
-    windInputItem->child(0)->setData(0, Qt::UserRole, 9);
-    windInputItem->child(1)->setData(0, Qt::UserRole, 10);
-    windInputItem->child(2)->setData(0, Qt::UserRole, 11);
-    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
-    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);
-    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);
-    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 15);
-    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);
-    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
+    windInputItem->child(0)->setData(0, Qt::UserRole, 6);
+    windInputItem->child(1)->setData(0, Qt::UserRole, 7);
+    windInputItem->child(2)->setData(0, Qt::UserRole, 8);
+    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 9);
+    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 10);
+    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 11);
+    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 12);
+    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
+    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 15);
 
     ui->treeWidget->topLevelItem(0)->setSelected(true);
 
 
     int nCPUs = QThread::idealThreadCount();
-    ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
@@ -598,7 +598,7 @@ void MainWindow::solveButtonClicked()
         else
         {
             int year, month, day, hour, minute;
-            QDateTime date = ui->weatherStationDataTextEdit->property("simulationTime").toDateTime();
+            QDateTime date = ui->weatherStationDataLabel->property("simulationTime").toDateTime();
             year = date.date().year();
             month = date.date().month();
             day = date.date().day();
