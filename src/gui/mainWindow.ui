@@ -578,14 +578,38 @@
     <string notr="true"/>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_9">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QSplitter" name="mapSplitter">
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
+      <property name="handleWidth">
+       <number>4</number>
+      </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
       <widget class="QSplitter" name="inputsStackedWidgetSplitter">
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
+       </property>
+       <property name="childrenCollapsible">
+        <bool>false</bool>
        </property>
        <widget class="QTreeWidget" name="treeWidget">
         <property name="sizePolicy">
@@ -1702,7 +1726,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <x>0</x>
                <y>0</y>
                <width>586</width>
-               <height>488</height>
+               <height>498</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_31">
@@ -2145,8 +2169,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>586</width>
-               <height>488</height>
+               <width>502</width>
+               <height>399</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -2589,7 +2613,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>572</width>
+               <width>358</width>
                <height>713</height>
               </rect>
              </property>
