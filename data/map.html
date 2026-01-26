@@ -87,7 +87,7 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    pointer-events: none; /* optional, avoids interfering with map clicks */
+    pointer-events: none;
 }
 
 .kmz-top-center-legend img {
@@ -291,7 +291,7 @@
     img2.style.transform = 'translateX(-50%)';
     img2.style.maxWidth = '90%'; // prevents it from overflowing the map
     img2.style.height = 'auto';
-    img2.style.zIndex = '1000';
+    img2.style.zIndex = '600';
     img2.className = 'kmz-time-series-legend';
 
     // Append directly to the map container
