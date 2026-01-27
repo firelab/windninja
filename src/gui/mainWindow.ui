@@ -802,7 +802,7 @@
        </widget>
        <widget class="QStackedWidget" name="inputsStackedWidget">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>7</number>
+         <number>13</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -982,6 +982,9 @@
           </property>
           <item>
            <widget class="QScrollArea" name="surfaceInputScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -990,8 +993,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>596</width>
-               <height>406</height>
+               <width>598</width>
+               <height>510</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1666,6 +1669,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QScrollArea" name="domainAverageScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
+            <property name="lineWidth">
+             <number>1</number>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -1674,8 +1683,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>596</width>
-               <height>406</height>
+               <width>598</width>
+               <height>510</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_31">
@@ -2131,6 +2140,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QScrollArea" name="pointInitializationScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -2142,8 +2154,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>596</width>
-               <height>508</height>
+               <width>598</width>
+               <height>510</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2629,6 +2641,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QScrollArea" name="weatherModelScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -2637,7 +2652,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>582</width>
+               <width>584</width>
                <height>681</height>
               </rect>
              </property>
@@ -3211,6 +3226,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -3219,8 +3237,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>596</width>
-               <height>508</height>
+               <width>598</width>
+               <height>510</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4114,6 +4132,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QScrollArea" name="geospatialPDFFilesScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -4122,8 +4143,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>596</width>
-               <height>508</height>
+               <width>598</width>
+               <height>408</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41">
@@ -4370,7 +4391,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QGroupBox" name="geospatialPDFFilesResolutionGroupBox">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>

@@ -227,7 +227,7 @@ void PointInitializationInput::fetchStationDataFinished()
         futureWatcher = nullptr;
     }
 
-    ui->inputsStackedWidget->setCurrentIndex(10);
+    ui->inputsStackedWidget->setCurrentIndex(7);
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)

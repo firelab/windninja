@@ -359,7 +359,7 @@ void SurfaceInput::fetchDEMFinished()
     }
 
     ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-    ui->inputsStackedWidget->setCurrentIndex(5);
+    ui->inputsStackedWidget->setCurrentIndex(3);
 }
 
 void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)

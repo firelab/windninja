@@ -71,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
     weatherModelInput = new WeatherModelInput(ui, this);
     outputs = new Outputs(ui, this);
 
-    ui->inputsStackedWidget->setCurrentIndex(0);
+    ui->inputsStackedWidget->setCurrentIndex(1);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 2);
@@ -93,7 +93,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 15);
 
     ui->treeWidget->topLevelItem(0)->setSelected(true);
-
 
     int nCPUs = QThread::idealThreadCount();
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCPUs));
