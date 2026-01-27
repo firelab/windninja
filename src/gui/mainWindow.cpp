@@ -71,7 +71,6 @@ MainWindow::MainWindow(QWidget *parent)
     weatherModelInput = new WeatherModelInput(ui, this);
     outputs = new Outputs(ui, this);
 
-    ui->inputsStackedWidget->setCurrentIndex(1);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 2);
@@ -92,14 +91,15 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
     ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 15);
 
+    connectSignals();
+
     ui->treeWidget->topLevelItem(0)->setSelected(true);
+    ui->inputsStackedWidget->setCurrentIndex(1); // setSelected shows the blank page, have to have this to show proper page
 
     int nCPUs = QThread::idealThreadCount();
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCPUs));
     ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
     ui->numberOfProcessorsSpinBox->setValue(nCPUs);
-
-    connectSignals();
 
     QString version(NINJA_VERSION_STRING);
     version = "Welcome to WindNinja " + version;
@@ -117,6 +117,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectSignals()
 {
+    connect(ui->inputsStackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::inputsStackedWidgetcurrentChanged);
     connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
     connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
@@ -139,6 +140,14 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
     connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+}
+
+void MainWindow::inputsStackedWidgetcurrentChanged(int index)
+{
+    QWidget *page = ui->inputsStackedWidget->widget(index);
+
+    ui->inputsStackedWidget->setMaximumHeight(page->maximumHeight());
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -303,7 +312,7 @@ void MainWindow::cancelSolve()
 void MainWindow::treeWidgetItemSelectionChanged()
 {
     int column = ui->treeWidget->currentColumn();
-    int pageIndex = ui->treeWidget->selectedItems()[0]->data(column, Qt::UserRole).toInt(); // assume 0 since no multi selection
+    int pageIndex = ui->treeWidget->selectedItems().first()->data(column, Qt::UserRole).toInt(); // assume 0 since no multi selection
     ui->inputsStackedWidget->setCurrentIndex(pageIndex);
 }
 
