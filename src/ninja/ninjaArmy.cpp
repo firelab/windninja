@@ -107,6 +107,13 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 //Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
 //throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
+
+    if( nSize < 1 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
+        throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize));
+    }
+
     int i;
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
@@ -140,6 +147,13 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
 //Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
 //throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
+
+    if( timeList.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+        throw std::runtime_error("Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+    }
+
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
@@ -154,7 +168,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
     {
         stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
     }
-    
+
     ninjas.resize(timeList.size());
 
     for(unsigned int i=0; i<timeList.size(); i++)
@@ -356,6 +370,13 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 //Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
 //throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
+
+    if( times.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+        throw std::runtime_error("Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+    }
+
     wxModelInitialization* model;
     
     tz = timeZone;

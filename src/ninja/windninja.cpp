@@ -150,17 +150,38 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
     {
         reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
 
+        NinjaErr retval;
         for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++)
         {
-            reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            retval = reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                return retval;
+            }
 
-            reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
+            retval = reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                return retval;
+            }
 
-            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+            retval = reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+            if( retval != NINJA_SUCCESS )
+            {
+                return retval;
+            }
 
-            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            retval = reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                return retval;
+            }
 
-            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            retval = reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                return retval;
+            }
         }
     }
     catch( ... )
@@ -205,7 +226,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
         return NINJA_E_NULL_PTR;
     }
 
-    wxStation::SetStationFormat(wxStation::newFormat);
     if(momentumFlag == true)
     {
         throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
@@ -213,8 +233,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
 
     try
     {
+        wxStation::SetStationFormat(wxStation::newFormat);
+
         std::vector <boost::posix_time::ptime> timeList;
-        for(size_t i=0; i < timeListSize; i++){
+        for(size_t i=0; i < timeListSize; i++)
+        {
             timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
         }
 
@@ -225,22 +248,27 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
         }
         pointInitialization::storeFileNames(sFiles);
 
-        reinterpret_cast<ninjaArmy*>( army )->makePointArmy
-        (   timeList,
+        reinterpret_cast<ninjaArmy*>( army )->makePointArmy(
+            timeList,
             std::string(timeZone),
             sFiles[0],
             std::string(elevationFile),
             matchPointsFlag,
-            momentumFlag);
+            momentumFlag
+            );
     }
     catch( armyException & e )
     {
         return NINJA_E_INVALID;
     }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
+    catch( exception & e )
+    {
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        return NINJA_E_INVALID;
+    }
 
     return NINJA_SUCCESS;
 }
@@ -281,25 +309,25 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
     }
 #endif
 
-    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
-    std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
-    std::vector<blt::local_date_time> timeList;
-
-    for(int i = 0; i < fullTimeList.size(); i++)
-    {
-        for(int j = 0; j < size; j++)
-        {
-            std::string time1 = fullTimeList[i].to_string();
-            std::string time2(inputTimeList[j]);
-            if(time1 == time2)
-            {
-                timeList.push_back(fullTimeList[i]);
-            }
-        }
-    }
-
     try
     {
+        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+        std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+        std::vector<blt::local_date_time> timeList;
+
+        for(int i = 0; i < fullTimeList.size(); i++)
+        {
+            for(int j = 0; j < size; j++)
+            {
+                std::string time1 = fullTimeList[i].to_string();
+                std::string time2(inputTimeList[j]);
+                if(time1 == time2)
+                {
+                    timeList.push_back(fullTimeList[i]);
+                }
+            }
+        }
+
         reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
         (   std::string( forecastFilename ),
             std::string( timeZone ),
@@ -310,10 +338,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
     {
         return NINJA_E_INVALID;
     }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
+    catch( exception & e )
+    {
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        return NINJA_E_INVALID;
+    }
     
     return NINJA_SUCCESS;
 }
