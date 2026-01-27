@@ -117,7 +117,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectSignals()
 {
-    connect(ui->inputsStackedWidget, &QStackedWidget::currentChanged, this, &MainWindow::inputsStackedWidgetcurrentChanged);
     connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
     connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
@@ -141,13 +140,6 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 
-}
-
-void MainWindow::inputsStackedWidgetcurrentChanged(int index)
-{
-    QWidget *page = ui->inputsStackedWidget->widget(index);
-
-    ui->inputsStackedWidget->setMaximumHeight(page->maximumHeight());
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)

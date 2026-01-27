@@ -103,7 +103,6 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
-    void inputsStackedWidgetcurrentChanged(int index);
     void massSolverCheckBoxClicked();
     void momentumSolverCheckBoxClicked();
     void diurnalCheckBoxClicked();
