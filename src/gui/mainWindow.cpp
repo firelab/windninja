@@ -124,7 +124,7 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
-    connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
+    connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
 
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
@@ -300,9 +300,10 @@ void MainWindow::cancelSolve()
     }
 }
 
-void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
+void MainWindow::treeWidgetItemSelectionChanged()
 {
-    int pageIndex = item->data(column, Qt::UserRole).toInt();
+    int column = ui->treeWidget->currentColumn();
+    int pageIndex = ui->treeWidget->selectedItems()[0]->data(column, Qt::UserRole).toInt(); // assume 0 since no multi selection
     ui->inputsStackedWidget->setCurrentIndex(pageIndex);
 }
 
