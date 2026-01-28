@@ -184,14 +184,12 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     return NINJA_SUCCESS;
 }
 
-void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, int hours)
+int ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, int hours)
 {
     try
     {
         wxModelInitialization *model = NULL;
-
         model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
-
         if(!model)
         {
             throw std::runtime_error(std::string("Weather model not found: ") + modelName);
@@ -200,32 +198,37 @@ void ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFil
         std::string forecastFileName = model->fetchForecast(demFile, hours);
         if(forecastFileName == "exception")
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: ninjaTools::fetchWeatherModelData() returned an invalid forecastFileName.");
-            return NINJA_E_INVALID;
+            throw std::runtime_error("ninjaTools::fetchWeatherModelData() returned an invalid forecastFileName.");
         }
     }
     catch(armyException &e)
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        throw;
+        return NINJA_E_INVALID;
     }
     catch( exception& e )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        throw;
+        return NINJA_E_INVALID;
     }
     catch( ... )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
-        throw;
+        return NINJA_E_INVALID;
     }
+
+    return NINJA_SUCCESS;
 }
 
-void ninjaTools::fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
+int ninjaTools::fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
 {
     try
     {
         wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+        if(!model)
+        {
+            throw std::runtime_error(std::string("Weather model not found: ") + modelName);
+        }
 
         boost::gregorian::date startDate(startYear, startMonth, startDay);
         boost::gregorian::date endDate(endYear, endMonth, endDay);
@@ -263,25 +266,26 @@ void ninjaTools::fetchArchiveWeatherModelData(const char* modelName, const char*
         std::string forecastFileName = forecastModel->fetchForecast(demFile, hours);
         if(forecastFileName == "exception")
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: ninjaTools::fetchArchiveWeatherModelData() returned an invalid forecastFileName.");
-            return NINJA_E_INVALID;
+            throw std::runtime_error("ninjaTools::fetchArchiveWeatherModelData() returned an invalid forecastFileName.");
         }
     }
     catch(armyException &e)
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        throw;
+        return NINJA_E_INVALID;
     }
     catch( exception& e )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        throw;
+        return NINJA_E_INVALID;
     }
     catch( ... )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
-        throw;
+        return NINJA_E_INVALID;
     }
+
+    return NINJA_SUCCESS;
 }
 
 std::vector<std::string> ninjaTools::getForecastIdentifiers()

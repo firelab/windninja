@@ -28,8 +28,8 @@ public:
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType, char ** papszOptions=NULL );
     int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions=NULL );
 
-    void fetchWeatherModelData(const char* modelName, const char* demFile, int hours);
-    void fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
+    int fetchWeatherModelData(const char* modelName, const char* demFile, int hours);
+    int fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
     std::vector<std::string> getForecastIdentifiers();
     std::vector<std::string> getTimeList(const char* modelName, std::string timeZone);
     int getStartHour(const char*modelIdentifier);

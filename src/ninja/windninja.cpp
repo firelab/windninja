@@ -227,24 +227,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
         return NINJA_E_NULL_PTR;
     }
 
-    try
-    {
-        reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
-    }
-    catch( armyException & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    catch( exception & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
@@ -255,24 +238,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
         return NINJA_E_NULL_PTR;
     }
 
-    try
-    {
-        reinterpret_cast<ninjaTools*>( tools )->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
-    }
-    catch( armyException & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    catch( exception & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
 }
 
 WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
