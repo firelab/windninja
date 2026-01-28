@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>13</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1017,8 +1017,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>530</width>
+               <height>385</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1765,7 +1765,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_31">
+             <layout class="QVBoxLayout" name="verticalLayout_31" stretch="1">
               <item>
                <widget class="QGroupBox" name="domainAverageGroupBox">
                 <property name="sizePolicy">
@@ -2036,7 +2036,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QTableWidget" name="domainAverageTable">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2050,7 +2050,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>16777215</height>
+                     <height>621</height>
                     </size>
                    </property>
                    <property name="frameShape">
@@ -4333,7 +4333,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <height>556</height>
               </rect>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_41">
+             <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QGroupBox" name="geospatialPDFFilesGroupBox">
                 <property name="sizePolicy">
