@@ -649,31 +649,29 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
 
 int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
 {
-    NinjaArmyH* ninjaArmy = NULL;
+    NinjaToolsH* ninjaTools = NULL;
     char ** papszOptions = NULL;
     NinjaErr ninjaErr = 0;
 
-    ninjaArmy = NinjaInitializeArmy();
+    ninjaTools = NinjaMakeTools();
 
-    ninjaErr = NinjaSetArmyComMessageHandler(ninjaArmy, &comMessageHandler, this, papszOptions);
+    ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetArmyComMessageHandler(): ninjaErr =" << ninjaErr;
+        qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
-    ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);  // some errors and warnings are caught, but only as error codes, not as messages. Would need to update how we do the messaging within the various SurfaceFetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom.
-    //ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), ".", resolution, strdup(fetchType.c_str()), papszOptions);  // error was caught, but message is not properly passed
-    //ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, "fudge", papszOptions);  // actually catches this error, with a good message
-    //ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), -10.0, strdup(fetchType.c_str()), papszOptions);  // error was caught, but not even a message to be passed around with this one
+    ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);  // some errors and warnings are caught, but only as error codes, not as messages. Would need to update how we do the messaging within the various SurfaceFetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom.
+    //ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), ".", resolution, strdup(fetchType.c_str()), papszOptions);  // error was caught, but message is not properly passed
+    //ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), resolution, "fudge", papszOptions);  // actually catches this error, with a good message
+    //ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), -10.0, strdup(fetchType.c_str()), papszOptions);  // error was caught, but not even a message to be passed around with this one
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFetchDEMBBox: ninjaErr =" << ninjaErr;
         return ninjaErr;
     }
-    else
-    {
-        return NINJA_SUCCESS;
-    }
+
+    return NINJA_SUCCESS;
 }
 
 void SurfaceInput::computeDEMFile(QString filePath)

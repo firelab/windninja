@@ -1,6 +1,7 @@
 #ifndef NINJATOOLS_H
 #define NINJATOOLS_H
 
+#include "fetch_factory.h"
 #include "nomads_wx_init.h"
 #include "wxModelInitializationFactory.h"
 #include "wxStation.h"
@@ -23,6 +24,9 @@ public:
 //    ninjaTools& operator=(ninjaTools const& A);
 
     ninjaComClass *Com;  // pointer to the ninjaTools level com handler
+
+    int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType, char ** papszOptions=NULL );
+    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions=NULL );
 
     void fetchWeatherModelData(const char* modelName, const char* demFile, int hours);
     void fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);

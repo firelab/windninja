@@ -116,10 +116,10 @@ typedef int  NinjaErr;
         (NinjaToolsH* tools, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, const char* stationList, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
-        (NinjaArmyH * ninjaArmy, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options );
+        (NinjaToolsH * tools, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
-        (NinjaArmyH * ninjaArmy, double * boundsBox, const char * fileName, double resolution, char * fetchType, char ** options );
+        (NinjaToolsH * tools, double * boundsBox, const char * fileName, double resolution, char * fetchType, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaArmyH * ninjaArmy, char ** options );

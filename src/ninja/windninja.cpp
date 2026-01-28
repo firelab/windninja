@@ -405,20 +405,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  * \param dfCellSize The resolution of the DEM file in meters.
  * \param pszDstFile Output file name
  * \param papszOptions options
- * 
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
-    (NinjaArmyH * army, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char* fetchType, char ** papszOptions )
+    (NinjaToolsH * tools, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char* fetchType, char ** papszOptions )
 {
-    if(!army)
+    if(!tools)
     {
         return NINJA_E_NULL_PTR;
     }
 
-    return reinterpret_cast<ninjaArmy*>( army )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
+    return reinterpret_cast<ninjaTools*>( tools )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
 }
+
 /**
  * \brief Fetch DEM file using a bounding box
  * 
@@ -431,17 +431,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
  * 
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
-    (NinjaArmyH * army, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions)
+    (NinjaToolsH * tools, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions)
 
 {
-    if(!army)
+    if(!tools)
     {
         return NINJA_E_NULL_PTR;
     }
 
-    return reinterpret_cast<ninjaArmy*>( army )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType);
+    return reinterpret_cast<ninjaTools*>( tools )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType, papszOptions);
 }
 
 /**
