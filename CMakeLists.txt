@@ -324,6 +324,11 @@ if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
 
+# Add the resource files for the .exe icon
+if (MSVC)
+    target_sources(WindNinja PRIVATE ${PROJECT_SOURCE_DIR}/wn-ms-resource.rc)
+endif()
+
 # Run windeployqt6.exe to provide all QT related DLLs
 if(MSVC)
     set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe")
@@ -438,12 +443,12 @@ install(FILES ${doc_files}
 
 # Install all tutorial files
 set(tutorial_files
-    tutorials/WindNinja_tutorial1.pdf
-    tutorials/WindNinja_tutorial2.pdf
-    tutorials/WindNinja_tutorial3.pdf
-    tutorials/WindNinja_tutorial4.pdf)
+    WindNinja_tutorial1.pdf
+    WindNinja_tutorial2.pdf
+    WindNinja_tutorial3.pdf
+    WindNinja_tutorial4.pdf)
 list(TRANSFORM tutorial_files PREPEND ${PROJECT_SOURCE_DIR}/doc/tutorials/)
-install(FILES ${tutorials}
+install(FILES ${tutorial_files}
         DESTINATION share/windninja/doc/tutorials
         COMPONENT apps)
 

@@ -81,6 +81,19 @@
             background: #0077ff;
             color: white;
         }
+        .leaflet-topcenter {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.kmz-top-center-legend img {
+    display: block;
+}
+
     </style>
 
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
@@ -140,6 +153,7 @@
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
         });
+        
 
         const mapRectangleLayer = new L.FeatureGroup();
         map.addLayer(mapRectangleLayer);
@@ -190,9 +204,11 @@
             }).addTo(mapRectangleLayer);
 
             setTimeout(() => {
-    map.fitBounds(rectangle.getBounds());
-}, 5000);
-    }
+                map.fitBounds(rectangle.getBounds());
+            }, 5000);
+
+            showCenterControl();
+        }
 
         function startRectangleDrawing() {
             mapRectangleLayer.clearLayers();
@@ -201,11 +217,16 @@
 
         function stopRectangleDrawing() {
             mapRectangleLayer.clearLayers();
+            if(!drawDEMCheck) {
+                hideCenterControl();
+            }
             rectangleDrawer.disable();
         }
 
-        async function loadKmzFromBase64(kmlData) {
-            console.log("running LoadKmzFromBase64");
+        let activeKmzLayer = null;
+
+        async function loadKmzFromBase64(kmlData, timeSeries) {
+            clearKmzBaseLayers();
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -236,23 +257,48 @@
                 const layerName = entry.name;
 
                 const legendControl = L.control({ position: 'bottomright' });
+                kmzLegendControls.push(legendControl);
+
                 legendControl.onAdd = function () {
                     const container = L.DomUtil.create('div', 'kmz-legend');
-                    container.style.background = 'white';
-                    container.style.padding = '4px';
-                    container.style.borderRadius = '6px';
-                    container.style.maxWidth = '250px';
-                    container.innerHTML = `<strong>${layerName}</strong><br>`;
+                    L.DomEvent.disableClickPropagation(container);
 
-                    legendEntries.forEach(async (legendEntry) => {
-                        const blob = await legendEntry.async('blob');
-                        const url = URL.createObjectURL(blob);
-                        const img = new Image();
-                        img.src = url;
-                        img.style.maxWidth = '80%';
-                        img.style.marginTop = '6px';
-                        container.appendChild(img);
-                    });
+
+                    if (legendEntries.length > 0) {
+                        (async () => {
+                            const legendEntry = legendEntries[0]; // Grabs only the legend
+                            const blob = await legendEntry.async('blob');
+                            const url = URL.createObjectURL(blob);
+
+                            const img = new Image();
+                            img.src = url;
+                            img.style.display = 'block';
+                            img.style.maxWidth = '150px'; 
+                            img.style.height = 'auto';
+
+                            container.appendChild(img);
+
+                    if (timeSeries && legendEntries.length > 1) {
+    const legendEntry2 = legendEntries[1];
+    const blob2 = await legendEntry2.async('blob');
+    const url2 = URL.createObjectURL(blob2);
+
+    const img2 = new Image();
+    img2.src = url2;
+    img2.style.position = 'absolute';
+    img2.style.top = '10px';
+    img2.style.left = '50%';
+    img2.style.transform = 'translateX(-50%)';
+    img2.style.maxWidth = '90%'; // prevents it from overflowing the map
+    img2.style.height = 'auto';
+    img2.style.zIndex = '600';
+    img2.className = 'kmz-time-series-legend';
+
+    // Append directly to the map container
+    map.getContainer().appendChild(img2);
+}
+                        })();
+                    }
 
                     return container;
                 };
@@ -260,8 +306,18 @@
                 kmlLegendLayer.on('add', () => legendControl.addTo(map));
                 kmlLegendLayer.on('remove', () => legendControl.remove());
 
-                layerControl.addOverlay(kmlLegendLayer, layerName);
-                kmlLegendLayer.addTo(map);
+                layerControl.addBaseLayer(kmlLegendLayer, layerName);
+                kmzBaseLayers.push(kmlLegendLayer);
+
+                if (!layerControlAdded) {
+                    layerControl.addTo(map);
+                    layerControlAdded = true;
+                }
+
+                if (!activeKmzLayer) {
+                    activeKmzLayer = kmlLegendLayer;
+                    kmlLegendLayer.addTo(map);
+                }
             }
         }
 
@@ -276,15 +332,37 @@
                 map.fitBounds(layer.getBounds());
             });
             map.fitBounds(layer.getBounds());
+            showCenterControl();
         });
+
+        function showCenterControl() {
+            if (!centerControlAdded) {
+                centerControl.addTo(map);
+                centerControlAdded = true;
+            }
+        }
+
+        function hideCenterControl() {
+            if (centerControlAdded) {
+                map.removeControl(centerControl);
+                centerControlAdded = false;
+            }
+        }
 
 
         const baseMaps = {};
         const overlayMaps = {};
-        const layerControl = L.control.layers(baseMaps, overlayMaps).addTo(map);
+        const layerControl = L.control.layers(baseMaps, overlayMaps);
+        let layerControlAdded = false;
+        let drawDEMCheck = false;
+
+        let kmzBaseLayers = [];
+let kmzLegendControls = [];
+        
         L.control.scale().addTo(map);
 
         const centerControl = L.control({ position: 'topleft' });
+        let centerControlAdded = false;
 
         centerControl.onAdd = function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
@@ -307,7 +385,22 @@
             return container;
         };
 
-        centerControl.addTo(map);
+        function clearKmzBaseLayers() {
+    kmzBaseLayers.forEach(layer => {
+        if (map.hasLayer(layer)) {
+            map.removeLayer(layer);
+        }
+        layerControl.removeLayer(layer);
+    });
+
+    kmzLegendControls.forEach(ctrl => {
+        map.removeControl(ctrl);
+    });
+
+    kmzBaseLayers = [];
+    kmzLegendControls = [];
+    activeKmzLayer = null;
+}
 
         if (window.qt) {
             new QWebChannel(qt.webChannelTransport, channel => {

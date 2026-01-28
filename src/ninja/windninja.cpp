@@ -2591,5 +2591,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmz
     return NINJA_SUCCESS;
 }
 
+WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions)
+{
+    std::string path = FindNinjaBinDir();
+    char* result = static_cast<char*>(std::malloc(path.size() + 1));
+    std::memcpy(result, path.c_str(), path.size() + 1);
+    return result;
+}
+
 
 } // extern "C"

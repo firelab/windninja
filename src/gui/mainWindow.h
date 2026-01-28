@@ -107,6 +107,7 @@ private slots:
     void momentumSolverCheckBoxClicked();
     void diurnalCheckBoxClicked();
     void stabilityCheckBoxClicked();
+    void treeWidgetItemSelectionChanged();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
@@ -149,7 +150,6 @@ private:
     QString currentDEMFilePath;
 
     void connectSignals();
-    void treeItemClicked(QTreeWidgetItem *item, int column);
     bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
     bool setOutputFlags(NinjaArmyH* ninjaArmy,
                         int i,

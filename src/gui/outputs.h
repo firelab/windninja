@@ -21,7 +21,7 @@ signals:
     void updateVTKState();
 
 private slots:
-    void googleEarthGroupBoxToggled(bool checked);
+    void googleEarthCheckBoxToggled(bool checked);
     void fireBehaviorGroupBoxToggled(bool checked);
     void shapeFilesGroupBoxToggled(bool checked);
     void geospatialPDFFilesGroupBoxToggled(bool checked);

@@ -71,33 +71,35 @@ MainWindow::MainWindow(QWidget *parent)
     weatherModelInput = new WeatherModelInput(ui, this);
     outputs = new Outputs(ui, this);
 
-    ui->inputsStackedWidget->setCurrentIndex(0);
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
-    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 2);
-    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 3);
-    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 4);
-    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 5);
-    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 6);
-    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 7);
-    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 8);
+    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
+    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 2);
+    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 3);
+    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 3);
+    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 4);
+    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 5);
+    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 6);
     QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
-    windInputItem->child(0)->setData(0, Qt::UserRole, 9);
-    windInputItem->child(1)->setData(0, Qt::UserRole, 10);
-    windInputItem->child(2)->setData(0, Qt::UserRole, 11);
-    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 12);
-    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 13);
-    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 14);
-    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 15);
-    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 16);
-    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 17);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 18);
-
-    int nCPUs = QThread::idealThreadCount();
-    ui->availableProcessorsTextEdit->setPlainText("Available Processors:  " + QString::number(nCPUs));
-    ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
-    ui->numberOfProcessorsSpinBox->setValue(nCPUs);
+    windInputItem->child(0)->setData(0, Qt::UserRole, 6);
+    windInputItem->child(1)->setData(0, Qt::UserRole, 7);
+    windInputItem->child(2)->setData(0, Qt::UserRole, 8);
+    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 9);
+    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 10);
+    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 11);
+    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 12);
+    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
+    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 15);
 
     connectSignals();
+
+    ui->treeWidget->topLevelItem(0)->setSelected(true);
+    ui->inputsStackedWidget->setCurrentIndex(1); // setSelected shows the blank page, have to have this to show proper page
+
+    int nCPUs = QThread::idealThreadCount();
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCPUs));
+    ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
+    ui->numberOfProcessorsSpinBox->setValue(nCPUs);
 
     QString version(NINJA_VERSION_STRING);
     version = "Welcome to WindNinja " + version;
@@ -122,7 +124,7 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
-    connect(ui->treeWidget, &QTreeWidget::itemClicked, this, &MainWindow::treeItemClicked);
+    connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
 
     connect(menuBar, &MenuBar::writeToConsole, this, &MainWindow::writeToConsole);
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
@@ -300,9 +302,10 @@ void MainWindow::cancelSolve()
     }
 }
 
-void MainWindow::treeItemClicked(QTreeWidgetItem *item, int column)
+void MainWindow::treeWidgetItemSelectionChanged()
 {
-    int pageIndex = item->data(column, Qt::UserRole).toInt();
+    int column = ui->treeWidget->currentColumn();
+    int pageIndex = ui->treeWidget->selectedItems().first()->data(column, Qt::UserRole).toInt(); // assume 0 since no multi selection
     ui->inputsStackedWidget->setCurrentIndex(pageIndex);
 }
 
@@ -744,7 +747,7 @@ void MainWindow::solveButtonClicked()
         else
         {
             int year, month, day, hour, minute;
-            QDateTime date = ui->weatherStationDataTextEdit->property("simulationTime").toDateTime();
+            QDateTime date = ui->weatherStationDataLabel->property("simulationTime").toDateTime();
             year = date.date().year();
             month = date.date().month();
             day = date.date().day();
@@ -1033,7 +1036,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Google Earth")
     {
-        ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
+        ui->googleEarthCheckBox->setChecked(!ui->googleEarthCheckBox->isChecked());
     }
     else if (item->text(0) == "Fire Behavior")
     {
@@ -1251,8 +1254,8 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthGroupBox->isChecked(), papszOptions);  // test error handling
+    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1398,7 +1401,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
 
     if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
     {
-        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1479,7 +1482,7 @@ void MainWindow::plotKmzOutputs()
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
 
-    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
     {
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
@@ -1545,7 +1548,11 @@ void MainWindow::plotKmzOutputs()
             QByteArray data = outFile.readAll();
             QString base64 = data.toBase64();
 
-            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+            bool timeSeries = !ui->domainAverageGroupBox->isChecked();
+
+            webEngineView->page()->runJavaScript(
+                "loadKmzFromBase64('" + base64 + "', " + (timeSeries ? "true" : "false") + ");"
+            );
 
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
@@ -1568,7 +1575,7 @@ void MainWindow::plotKmzOutputs()
 
             // if it is a weather model run, and weather model kmzs were created for the run,
             // plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthGroupBox->isChecked())
+            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
@@ -1588,7 +1595,7 @@ void MainWindow::plotKmzOutputs()
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
 }
 
 void MainWindow::writeSettings()

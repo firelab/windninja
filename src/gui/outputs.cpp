@@ -32,7 +32,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->legendComboBox->setItemData(0, "equal_interval");
     ui->legendComboBox->setItemData(1, "equal_color");
 
-    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthGroupBoxToggled);
+    connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
@@ -48,9 +48,10 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
+
 }
 
-void Outputs::googleEarthGroupBoxToggled(bool checked)
+void Outputs::googleEarthCheckBoxToggled(bool checked)
 {
     AppState& state = AppState::instance();
     state.isGoogleEarthToggled = checked;
