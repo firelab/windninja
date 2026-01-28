@@ -69,6 +69,11 @@ NinjaErr handleException()
 extern "C"
 {
 
+/**
+ * \brief Automatically allocate an empty ninjaArmy.
+ *
+ * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
 {
     NinjaArmyH* army;
@@ -77,7 +82,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
 }
 
 /**
- * \brief Create a new suite of domain average windninja runs.
+ * \brief Generate a new suite of domain average windninja runs.
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
@@ -107,63 +112,22 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  * \param cloudCoverUnits String indicating cloud cover units ("fraction" or "percent"), can be NULL.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
-    ( NinjaArmyH * army, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
+    ( NinjaArmyH * army, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
       const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
-
-#ifndef NINJAFOAM
-    if(momentumFlag == true)
+    if(!army)
     {
-        throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
-    }
-#endif
-
-    //Get the number of elements in the arrays
-/*     size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
-    size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
-//    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
-//    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
-//    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
-//    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
-//    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
-//    size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
-//    size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
-//
-//    if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
-//    {
-//        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
-//   
-
-    try
-    {
-        reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
-
-        for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++)
-        {
-            reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
-
-            reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
-
-            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
-
-            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
-
-            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
-        }
-    }
-    catch( ... )
-    {
-        return NINJA_E_INVALID;
+        return NINJA_E_NULL_PTR;
     }
 
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, yearList, monthList, dayList, hourList, minuteList, timeZone, airTempList, airTempUnits, cloudCoverList, cloudCoverUnits, options);
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a weather station file.
+ * \brief Generate a ninjaArmy from a weather station file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * a weather station file and list of datetimes specified by arrays of years, months, days, and hours 
@@ -186,53 +150,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
  * \param momentumFlag A flag representing whether to use the momentum solver or not (the momentum solver is not currently supported in point initializations). Default is false.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
     ( NinjaArmyH * army, int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
 {
-    wxStation::SetStationFormat(wxStation::newFormat);
-    if(momentumFlag == true)
+    if(!army)
     {
-        throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
+        return NINJA_E_NULL_PTR;
     }
 
-    try
-    {
-        std::vector <boost::posix_time::ptime> timeList;
-        for(size_t i=0; i < timeListSize; i++){
-            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
-        }
-
-        std::vector<std::string> sFiles;
-        for (int i = 0; i < numStationFiles; i++)
-        {
-            sFiles.emplace_back(stationFileNames[i]);
-        }
-        pointInitialization::storeFileNames(sFiles);
-
-        reinterpret_cast<ninjaArmy*>( army )->makePointArmy
-        (   timeList,
-            std::string(timeZone),
-            sFiles[0],
-            std::string(elevationFile),
-            matchPointsFlag,
-            momentumFlag);
-    }
-    catch( armyException & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakePointArmy(yearList, monthList, dayList, hourList, minuteList, timeListSize, timeZone, stationFileNames, numStationFiles, elevationFile, matchPointsFlag, momentumFlag, options);
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
+ * \brief Generate a ninjaArmy from a forecast file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * the weather forecast file.  One run is done for each timestep in the forecast 
@@ -250,55 +182,24 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
  * \param momentumFlag A flag representing whether to use the momentum solver or not.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
     ( NinjaArmyH * army, const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
 {
-#ifndef NINJAFOAM
-    if(momentumFlag == true)
+    if(!army)
     {
-        throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
-    }
-#endif
-
-    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
-    std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
-    std::vector<blt::local_date_time> timeList;
-
-    for(int i = 0; i < fullTimeList.size(); i++)
-    {
-        for(int j = 0; j < size; j++)
-        {
-            std::string time1 = fullTimeList[i].to_string();
-            std::string time2(inputTimeList[j]);
-            if(time1 == time2)
-            {
-                timeList.push_back(fullTimeList[i]);
-            }
-        }
+        return NINJA_E_NULL_PTR;
     }
 
-    try
-    {
-        reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
-        (   std::string( forecastFilename ),
-            std::string( timeZone ),
-            timeList,
-            momentumFlag );
-    }
-    catch( armyException & e )
-    {
-        return NINJA_E_INVALID;
-    }
-    //catch( ... )
-    //{
-    //    return NINJA_E_INVALID;
-    //}
-    
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeWeatherModelArmy(forecastFilename, timeZone, inputTimeList, size, momentumFlag, options);
 }
 
+/**
+ * \brief Automatically allocate a ninjaTools.
+ *
+ * \return An opaque handle to a ninjaTools on success, NULL otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
 {
     NinjaToolsH* army;
@@ -306,67 +207,52 @@ WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
     return army;
 }
 
+/**
+ * \brief Fetch Forecast file from UCAR/THREDDS server, or from NOMADS server.
+ *
+ * This method will fetch a forecast file from the UCAR/THREDDS server, also can be from the NOMADS server.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param modelName A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM").
+ * \param demFile A valid path to an elevation file.
+ * \param hours Number of hours to be requested (the forecast duration).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
     (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
 {
-    if(tools != NULL)
-    {
-        reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
-        return NINJA_SUCCESS;
-    }
-    else
+    if(!tools)
     {
         return NINJA_E_NULL_PTR;
     }
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
     (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
 {
-    wxModelInitialization *model = wxModelInitializationFactory::makeWxInitializationFromId(std::string(modelName));
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
 
-    boost::gregorian::date startDate(startYear, startMonth, startDay);
-    boost::gregorian::date endDate(endYear, endMonth, endDay);
-
-    boost::local_time::tz_database tz_db;
-    tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-    boost::local_time::time_zone_ptr timeZonePtr;
-    timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-    boost::local_time::local_date_time ldtStart(
-        startDate,
-        boost::posix_time::hours(startHour),
-        timeZonePtr,
-        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
-        );
-
-    boost::local_time::local_date_time ldtEnd(
-        endDate,
-        boost::posix_time::hours(endHour),
-        timeZonePtr,
-        boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR
-        );
-
-    boost::posix_time::ptime startUTC = ldtStart.utc_time();
-    boost::posix_time::ptime endUTC   = ldtEnd.utc_time();
-
-    int hours = 0;
-
-    auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
-    forecastModel->setDateTime(startUTC.date(),
-                               endUTC.date(),
-                               boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
-                               boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
-    forecastModel->fetchForecast(demFile, hours);
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
 }
 
 WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
     (NinjaToolsH* tools, int* count)
 {
-    if (!tools || !count)
+    if(!tools)
+    {
         return nullptr;
+    }
+
+    if(!count)
+    {
+        return nullptr;
+    }
 
     std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getForecastIdentifiers();
     *count = static_cast<int>(temp.size());
@@ -385,7 +271,7 @@ WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
 WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
     (const char** identifiers, int count)
 {
-    if (!identifiers)
+    if(!identifiers)
     {
         return NINJA_E_NULL_PTR;
     }
@@ -403,8 +289,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
 WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
     (NinjaToolsH* tools, int* count, const char* fileName, const char* timeZone)
 {
-    if (!tools)
+    if(!tools)
+    {
         return nullptr;
+    }
 
     std:string timeZoneString = timeZone;
     std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getTimeList(fileName, timeZoneString);
@@ -424,7 +312,7 @@ WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
 WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
     (const char** timeList, int timeListSize)
 {
-    if (!timeList)
+    if(!timeList)
     {
         return NINJA_E_NULL_PTR;
     }
@@ -442,8 +330,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
 WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
     (NinjaToolsH* tools, const char* modelIdentifier, int* startHour, int* endHour)
 {
-    if (!tools || !startHour || !endHour)
+    if(!tools)
+    {
         return NINJA_E_NULL_PTR;
+    }
+
+    if(!startHour || !endHour)
+    {
+        return NINJA_E_NULL_PTR;
+    }
 
     *startHour = reinterpret_cast<ninjaTools*>(tools)->getStartHour(modelIdentifier);
     *endHour = reinterpret_cast<ninjaTools*>(tools)->getEndHour(modelIdentifier);
@@ -466,16 +361,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
 WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
     ( NinjaArmyH * army, char ** options )
 {
-    if( NULL != army )
-    {
-       delete reinterpret_cast<ninjaArmy*>( army );
-       army = NULL;
-       return NINJA_SUCCESS;
-    }
-    else
+    if(!army)
     {
         return NINJA_E_NULL_PTR;
     }
+
+    delete reinterpret_cast<ninjaArmy*>( army );
+    army = NULL;
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -487,13 +381,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  * \param dfCellSize The resolution of the DEM file in meters.
  * \param pszDstFile Output file name
  * \param papszOptions options
- * 
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaArmyH * army, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char* fetchType, char ** papszOptions ){
-    return reinterpret_cast<ninjaArmy*>( army )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
+    (NinjaToolsH * tools, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char* fetchType, char ** papszOptions )
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
 }
+
 /**
  * \brief Fetch DEM file using a bounding box
  * 
@@ -506,38 +407,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaArmyH * army, double * adfP
  * 
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(NinjaArmyH * army, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions){
-    return reinterpret_cast<ninjaArmy*>( army )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType);
-}
-
-/**
- * \brief Fetch Forecast file from UCAR/THREDDS server.
- *
- * This method will fetch a forecast file from the UCAR/THREDDS server.
- *
- * \param wx_model_type A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM")
- * \param numNinjas Number of Ninjas
- * \param elevation_file A valid path to an elevation file.
- *
- * \return Forecast file name on success, "exception" otherwise.
- */
-
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast(NinjaArmyH * army, const char* wxModelType,  unsigned int nHours, const char * elevationFile, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
+    (NinjaToolsH * tools, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions)
 {
-    wxModelInitialization *model;
-    try
+    if(!tools)
     {
-        model = wxModelInitializationFactory::makeWxInitializationFromId(wxModelType);
-        model->fetchForecast(elevationFile, nHours);
-        return NINJA_SUCCESS;
-    }
-    catch(armyException &e)
-    {
-        return NINJA_E_INVALID;
+        return NINJA_E_NULL_PTR;
     }
 
-    //return reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wx_model_type, numNinjas, elevation_file);
+    return reinterpret_cast<ninjaTools*>( tools )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType, papszOptions);
 }
 
 /**
@@ -547,6 +425,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast(NinjaArmyH * army, const char* w
  *                             None
  *                             TODO: Add option parameter to specify a buffer to use in station fetching
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
@@ -573,41 +452,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast(NinjaArmyH * army, const char* w
  *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
  *             
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
-                                               const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
+    (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<size; i++){
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
-    }
-
-    wxStation::SetStationFormat(wxStation::newFormat);
-
-    if(!fetchLatestFlag)
+    if(!tools)
     {
-        boost::local_time::tz_database tz_db;
-        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-        boost::local_time::time_zone_ptr timeZonePtr;
-        timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-        boost::local_time::local_date_time start(timeList[0], timeZonePtr);
-        boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
-
-        pointInitialization::setLocalStartAndStopTimes(start, stop);
+        return NINJA_E_NULL_PTR;
     }
 
-    //Generate a directory to store downloaded station data
-    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
-    pointInitialization::SetRawStationFilename(stationPathName);
-    pointInitialization::setStationBuffer(buffer, units);
-    bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
-    if(!success){
-        return NINJA_E_INVALID;
-    }
-    if(locationFileFlag) {
-        pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
-    }
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchStationFromBBox(yearList, monthList, dayList, hourList, minuteList, size, elevationFile, buffer, units, timeZone, fetchLatestFlag, outputPath, locationFileFlag, options);
 }
 
 /**
@@ -616,6 +469,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox(const int* yearList, cons
  * Avaliable Creation Options:
  *                             None
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
@@ -641,40 +495,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox(const int* yearList, cons
  *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
  *
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
-                                                       const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName
+    (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<size; i++){
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
-    }
-
-    wxStation::SetStationFormat(wxStation::newFormat);
-
-    if(!fetchLatestFlag)
+    if(!tools)
     {
-        boost::local_time::tz_database tz_db;
-        tz_db.load_from_file( FindDataPath("date_time_zonespec.csv") );
-        boost::local_time::time_zone_ptr timeZonePtr;
-        timeZonePtr = tz_db.time_zone_from_region(timeZone);
-
-        boost::local_time::local_date_time start(timeList[0], timeZonePtr);
-        boost::local_time::local_date_time stop(timeList[1], timeZonePtr);
-
-        pointInitialization::setLocalStartAndStopTimes(start, stop);
+        return NINJA_E_NULL_PTR;
     }
 
-    //Generate a directory to store downloaded station data
-    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
-    pointInitialization::SetRawStationFilename(stationPathName);
-    bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
-    if(!success){
-        return NINJA_E_INVALID;
-    }
-    if(locationFileFlag) {
-        pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
-    }
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchStationByName(yearList, monthList, dayList, hourList, minuteList, size, elevationFile, stationList, timeZone, fetchLatestFlag, outputPath, locationFileFlag, options);
 }
 
 
@@ -692,21 +521,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName(const int* yearList, const 
 WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
     ( NinjaArmyH * army, const unsigned int nprocessors, char ** papszOptions )
 {
-    if( NULL != army )
-    {
-        try
-        {
-            return reinterpret_cast<ninjaArmy*>( army )->startRuns( nprocessors );
-        }
-        catch( ... )
-        {
-            return handleException();
-        }
-    }
-    else
+    if(!army)
     {
         return NINJA_E_NULL_PTR;
     }
+
+    try
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->startRuns( nprocessors );
+    }
+    catch( ... )
+    {
+        return handleException();
+    }
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -800,19 +629,23 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 }
 
 /**
- * \brief Set a comProgressFunction handler for simulations.
+ * \brief Set a ninjaComMessageHandler callback function, for message communications during simulations, to the ninjaArmy level ninjaCom.
+ *
+ * Allows the caller to receive status, progress, informational messages, and error
+ * messages generated during simulations via a user-provided callback function.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- *
+ * \param pMsgHandler A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+ * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
-    ( NinjaArmyH * army, ProgressFunc func, void *pUser, char ** papszOptions )
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComMessageHandler
+    ( NinjaArmyH * army, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComProgressFunc
-            ( func, pUser );
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComMessageHandler
+            ( pMsgHandler, pUser );
     }
     else
     {
@@ -821,14 +654,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
 }
 
 /**
- * \brief Set the multi-stream FILE, for message communications during simulations.
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations, to the ninjaArmy level ninjaCom.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param stream The message communication FILE to send multi-stream messages to.
+ * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
     ( NinjaArmyH * army, FILE* stream, char ** papszOptions )
 {
     if( NULL != army )
@@ -840,6 +673,47 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
     {
         return NULL;
     }
+}
+
+/**
+ * \brief Set a ninjaComMessageHandler callback function, for message communications during simulations, to the ninjaTools level ninjaCom
+ *
+ * Allows the caller to receive status, progress, informational messages, and error
+ * messages generated during simulations via a user-provided callback function.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param pMsgHandler A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+ * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
+    ( NinjaToolsH * tools, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->setNinjaComMessageHandler( pMsgHandler, pUser );
+}
+
+/**
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations, to the ninjaTools level ninjaCom
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsMultiComStream
+    ( NinjaToolsH * tools, FILE* stream, char ** papszOptions )
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->setNinjaMultiComStream( stream );
 }
 
 /**
@@ -2472,6 +2346,7 @@ WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * stationPath,
 /**
  * \brief Get a time series in UTC with a specific number time steps between the inputted start and stop times.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param inputYearList    A pointer to an array of input years.
  * \param inputMonthList   A pointer to an array of input months.
  * \param inputDayList     A pointer to an array of input days.
@@ -2488,40 +2363,25 @@ WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * stationPath,
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
+    NinjaToolsH* tools,
     const int * inputYearList, const int * inputMonthList, const int * inputDayList,
     const int * inputHourList, const int * inputMinuteList,
     int * outputYearList, int* outputMonthList, int * outputDayList,
     int * outputHourList, int* outputMinuteList,
     int nTimeSteps, const char* timeZone)
 {
-    std::vector<boost::posix_time::ptime> timeList =
-        pointInitialization::getTimeList(
-            inputYearList[0], inputMonthList[0], inputDayList[0],
-            inputHourList[0], inputMinuteList[0],
-            inputYearList[1], inputMonthList[1], inputDayList[1],
-            inputHourList[1], inputMinuteList[1],
-            nTimeSteps, std::string(timeZone)
-            );
-
-    for (int i = 0; i < nTimeSteps; ++i)
+    if(!tools)
     {
-        const boost::posix_time::ptime& time = timeList[i];
-        boost::gregorian::date date = time.date();
-        boost::posix_time::time_duration timeDuration = time.time_of_day();
-
-        outputYearList[i]   = static_cast<int>(date.year());
-        outputMonthList[i]  = static_cast<int>(date.month());
-        outputDayList[i]    = static_cast<int>(date.day());
-        outputHourList[i]   = timeDuration.hours();
-        outputMinuteList[i] = timeDuration.minutes();
+        return NINJA_E_NULL_PTR;
     }
 
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->getTimeList(inputYearList, inputMonthList, inputDayList, inputHourList, inputMinuteList, outputYearList, outputMonthList, outputDayList, outputHourList, outputMinuteList, nTimeSteps, timeZone);
 }
 
 /**
  * \brief Get a date time in UTC from an inpute date time in a specified timezone.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param inputYear    An input year.
  * \param inputMonth   An input month.
  * \param inputDay     An input day.
@@ -2537,32 +2397,22 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
+    NinjaToolsH* tools,
     int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone,
     int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute)
 {
-    if (!outYear || !outMonth || !outDay || !outHour || !outMinute)
+    if(!tools)
     {
-        return NINJA_E_OTHER;
+        return NINJA_E_NULL_PTR;
     }
 
-    boost::posix_time::ptime timeObject =
-        pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
-
-    const boost::gregorian::date& date = timeObject.date();
-    const boost::posix_time::time_duration& td = timeObject.time_of_day();
-
-    *outYear   = static_cast<int>(date.year());
-    *outMonth  = static_cast<int>(date.month());
-    *outDay    = static_cast<int>(date.day());
-    *outHour   = td.hours();
-    *outMinute = td.minutes();
-
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, timeZone, outYear, outMonth, outDay, outHour, outMinute);
 }
 
 /**
  * \brief Get a time series in UTC with a specific number of time steps between the inputted start and stop times.
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList   A pointer to an array of years.
  * \param monthList  A pointer to an array of months.
  * \param dayList    A pointer to an array of days.
@@ -2573,24 +2423,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
-    (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
+    (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
 {
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i < listSize; i++)
+    if(!tools)
     {
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        return NINJA_E_NULL_PTR;
     }
 
-    int isValid = pointInitialization::checkFetchTimeDuration(timeList);
-
-    if(isValid == -2)
-    {
-        return NINJA_E_OTHER;
-    }
-    else
-    {
-        return NINJA_SUCCESS;
-    }
+    return reinterpret_cast<ninjaTools*>( tools )->checkTimeDuration( yearList, monthList, dayList, minuteList, hourList, listSize, papszOptions );
 }
 
 /**

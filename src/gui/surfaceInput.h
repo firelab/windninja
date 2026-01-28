@@ -60,6 +60,8 @@ public:
 signals:
     void updateState();
     void updateTreeView();
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);
@@ -79,6 +81,7 @@ private slots:
     void timeZoneDetailsCheckBoxClicked();
     void timeZoneComboBoxCurrentIndexChanged(int index);
     void timeZoneAllZonesCheckBoxClicked();
+    void updateProgressMessage(const QString message);
 
 private:
     Ui::MainWindow *ui;
@@ -95,7 +98,7 @@ private:
 
     QString fetchTimeZoneDetails(QString currentTimeZone);
     QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
-    static int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
     void computeDEMFile(QString filePath);
     void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
     void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);

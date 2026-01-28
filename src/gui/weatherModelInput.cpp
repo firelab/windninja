@@ -33,7 +33,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
-    ninjaTools = NinjaMakeTools();
+    initNinjaTools();
 
     ui->pastcastGroupBox->hide();
     int identifiersSize = 0;
@@ -53,11 +53,13 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
+
+    connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
 
 void WeatherModelInput::weatherModelDownloadButtonClicked()
-{   
-    int hours = ui->weatherModelSpinBox->value();
+{
+    emit writeToConsoleSignal("Fetching weather model data...");
 
     progress = new QProgressDialog("Fetching Forecast Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
@@ -65,6 +67,8 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     progress->setMinimumDuration(0);
     progress->setAutoClose(true);
     progress->show();
+
+    int hours = ui->weatherModelSpinBox->value();
 
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future;
@@ -77,7 +81,8 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
         QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
 
         future = QtConcurrent::run(
-            WeatherModelInput::fetchPastcastWeather,
+            &WeatherModelInput::fetchPastcastWeather,
+            this,
             ninjaTools,
             ui->weatherModelComboBox->currentText(),
             ui->elevationInputFileLineEdit->property("fullpath").toString(),
@@ -88,7 +93,8 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
     else
     {
         future = QtConcurrent::run(
-            WeatherModelInput::fetchForecastWeather,
+            &WeatherModelInput::fetchForecastWeather,
+            this,
             ninjaTools,
             ui->weatherModelComboBox->currentText(),
             ui->elevationInputFileLineEdit->property("fullpath").toString(),
@@ -99,6 +105,85 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
     connect(futureWatcher, &QFutureWatcher<int>::finished,
             this, &WeatherModelInput::weatherModelDownloadFinished);
+}
+
+void WeatherModelInput::updateProgressMessage(const QString message)
+{
+//    QMessageBox::critical(
+//        nullptr,
+//        QApplication::tr("Error"),
+//        message
+//    );
+    progress->setLabelText(message);
+    progress->setWindowTitle(tr("Error"));
+    progress->setCancelButtonText(tr("Close"));
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setRange(0, 1);
+    progress->setValue(progress->maximum());
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    WeatherModelInput *self = static_cast<WeatherModelInput*>(pUser);
+
+    std::string msg = pszMessage;
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown WeatherModelFetch error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch warning: "+clipStr), Qt::yellow);
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
 }
 
 int WeatherModelInput::fetchForecastWeather(
@@ -113,8 +198,12 @@ int WeatherModelInput::fetchForecastWeather(
     const char* modelIdentifier = modelIdentifierTemp.constData();
     const char* demFile = demFileTemp.constData();
 
-    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
-    if (ninjaErr != NINJA_SUCCESS)
+    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);  // some errors and warnings are caught, but only as error codes, not as messages, for instance "ERROR 1: HTTP error code : 404", "ERROR 1: Failed to download file.", "Warning 1: Failed to download forecast, stepping back one forecast run time step.". Would need to update how we do the messaging within the various wxModelInitialization fetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom.
+    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, "fudge", demFile, hours);  // works with proper error message, after non-caught message "ERROR 4: fudge: No such file or directory".
+    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, "fudge", hours);  // works with proper error message, after non-caught message "ERROR 4: fudge: No such file or directory".
+    ////NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, -1);  // um, this one somehow went forward as if it was a correct value? Stepped back one, but in the end I got a single weather model data file, not the usual 2 when it steps back like that.
+    //NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, 0);  // only works as a test for certain specific weather models, that have minimums of 3 or 6 hrs, like UCAR-NDFD-CONUS-2.5-KM (currently breaking as a model, even on qt4 gui), UCAR-NAM-CONUS-12-KM (this works great as a test)
+    if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFetchWeatherData: ninjaErr =" << ninjaErr;
     }
@@ -142,7 +231,32 @@ int WeatherModelInput::fetchPastcastWeather(
         ninjaTools, modelIdentifier, demFile, timeZone,
         startYear, startMonth, startDay, startHour,
         endYear, endMonth, endDay, endHour
-        );
+        );  // when run without authentication keys, I get the authentication key error when running this, which is correct. And now, with authentication keys set, it is no longer hanging. If the time is too late, it acts like it finishes while failing to download a file, no error message thrown. If using a good time, it downloads successfully. This was the old qt4 gui behavior.
+    //NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
+    //    ninjaTools, "fudge", demFile, timeZone,
+    //    startYear, startMonth, startDay, startHour,
+    //    endYear, endMonth, endDay, endHour
+    //    );  // works with proper error message.
+    //NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
+    //    ninjaTools, modelIdentifier, "fudge", timeZone,
+    //    startYear, startMonth, startDay, startHour,
+    //    endYear, endMonth, endDay, endHour
+    //    );  // works with proper error message, after non-caught message "ERROR 4: fudge: No such file or directory".
+    //NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
+    //    ninjaTools, modelIdentifier, demFile, "fudge",
+    //    startYear, startMonth, startDay, startHour,
+    //    endYear, endMonth, endDay, endHour
+    //    );  // no longer hangs, but it runs successfully, I guess maybe using the timezone of the dem, rather than throwing an error for having an incorrect timezone.
+    //NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
+    //    ninjaTools, modelIdentifier, demFile, timeZone,
+    //    startYear, startMonth, startDay, startHour,
+    //    startYear-1, startMonth, startDay, startHour
+    //    );  // it acts like it finishes while failing to download a file, no error message thrown.
+    //NinjaErr ninjaErr = NinjaFetchArchiveWeatherData(
+    //    ninjaTools, modelIdentifier, demFile, timeZone,
+    //    startYear, startMonth, startDay, startHour,
+    //    startYear, startMonth, startDay, startHour-1
+    //    );  // it acts like it finishes while failing to download a file, no error message thrown.
 
     if (ninjaErr != NINJA_SUCCESS)
     {
@@ -154,12 +268,25 @@ int WeatherModelInput::fetchPastcastWeather(
 
 void WeatherModelInput::weatherModelDownloadFinished()
 {
-    if (progress)
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    if(result == NINJA_SUCCESS)
     {
-        progress->close();
-        progress->deleteLater();
-        progress = nullptr;
+        emit writeToConsoleSignal("Finished fetching weather model data.", Qt::darkGreen);
+
+        if (progress)
+        {
+            progress->close();
+            progress->deleteLater();
+            progress = nullptr;
+        }
+    } else
+    {
+        emit writeToConsoleSignal("Failed to fetch weather model data.");
     }
+
+    // delete the futureWatcher every time, whether success or failure
     if (futureWatcher)
     {
         futureWatcher->deleteLater();
@@ -312,7 +439,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     ui->weatherModelTimeTreeView->selectAll();
 
     NinjaErr ninjaErr = NinjaFreeWeatherModelTimeList(timeList, timeListSize);
-    if(ninjaErr == NINJA_SUCCESS)
+    if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFreeWeatherModelTimeList: ninjaErr=" << ninjaErr;
     }
@@ -368,3 +495,14 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
     ui->pastcastEndDateTimeEdit->setDateTime(demTime);
 }
 
+void WeatherModelInput::initNinjaTools()
+{
+    ninjaTools = NinjaMakeTools();
+
+    char **papszOptions = NULL;
+    NinjaErr ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
+    }
+}

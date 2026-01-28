@@ -38,10 +38,11 @@ int main()
      * Setting up the simulation
      */
     NinjaArmyH* ninjaArmy = NULL; 
-    const int nCPUs = 4;
+    const int nCPUs = 3;
+    const char * runType = "C-API autotest";
     char ** papszOptions = NULL;
     NinjaErr err = 0;
-    err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
+    err = NinjaInit(runType, papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
     if(err != NINJA_SUCCESS)
     {
         printf("NinjaInit: err = %d\n", err);
@@ -116,10 +117,10 @@ int main()
     /*
      * Customize the ninja communication
      */
-    err = NinjaSetMultiComStream(ninjaArmy, multiStream, papszOptions);
+    err = NinjaSetArmyMultiComStream(ninjaArmy, multiStream, papszOptions);
     if(err != NINJA_SUCCESS)
     {
-        printf("NinjaSetMultiComStream: err = %d\n", err);
+        printf("NinjaSetArmyMultiComStream: err = %d\n", err);
     }
 
     /*

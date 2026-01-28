@@ -107,6 +107,13 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 //Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
 //throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
+
+    if( nSize < 1 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
+        throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize));
+    }
+
     int i;
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
@@ -140,6 +147,13 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
 //Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
 //throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
+
+    if( timeList.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+        throw std::runtime_error("Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+    }
+
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
@@ -154,7 +168,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
     {
         stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
     }
-    
+
     ninjas.resize(timeList.size());
 
     for(unsigned int i=0; i<timeList.size(); i++)
@@ -243,126 +257,6 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 }
 
 /**
- * @brief Fetches a DEM using a point.
- * 
- * @param adfPoint a x,y point in WGS 84 longitude, latitude
- * @param adfBuff length of a buffer in the x and y directions
- * @param units Units of buffer.
- * @param dfCellSize Cell size of DEM.
- * @param pszDstFile Destination file.
- * @param papszOptions Options for fetching DEM.
- * @param fetchType Type of DEM to fetch.
- * 
- * 
- */
-int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions){
-    if (pszDstFile == NULL)
-    {
-        return NINJA_E_INVALID;
-    }
-    SURF_FETCH_E retval = SURF_FETCH_E_NONE;
-    SurfaceFetch * fetcher;
-    if (strcmp(fetchType, "srtm") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
-    }
-    #ifdef HAVE_GMTED
-    else if (strcmp(fetchType, "gmted") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
-    }
-    #endif
-    else if (strcmp(fetchType, "relief") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
-    }
-    else if (strcmp(fetchType, "lcp") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
-    }
-    if (fetcher == NULL) {
-        delete fetcher;
-        return NINJA_E_INVALID;
-    }
-    lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
-    int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
-    if (result != 0)
-    {
-        delete fetcher;
-        return NINJA_E_INVALID;
-    }
-    delete fetcher;
-    return NINJA_SUCCESS;
-}
-/**
- * @brief Fetches a DEM using bounding box.
- * 
- * @param boundsBox Bounding box in the form of north, east, south, west.
- * @param fileName Name of DEM file.
- * @param resolution Resolution of DEM file.
- * @param fetchType Type of DEM file to fetch.
- * 
- */
-int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType)
-{
-        SURF_FETCH_E retval = SURF_FETCH_E_NONE;
-        SurfaceFetch * fetcher;
-        if (strcmp(fetchType, "srtm") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
-        }
-        #ifdef HAVE_GMTED
-        else if (strcmp(fetchType, "gmted") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
-        }
-        #endif
-        else if (strcmp(fetchType, "relief") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
-        }
-        else if (strcmp(fetchType, "lcp") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
-        }
-        if (fetcher == NULL) {
-            delete fetcher;
-            return NINJA_E_INVALID;
-        }
-        
-        double northBound = boundsBox[0];
-        double eastBound = boundsBox[1];
-        double southBound = boundsBox[2];
-        double westBound = boundsBox[3];
-        int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
-        if (result != 0)
-        {
-            delete fetcher;
-            return NINJA_E_INVALID;
-        }
-        delete fetcher;
-        return NINJA_SUCCESS;
-}
-
-/**
- * @brief Fetches a forecast file from UCAR/THREDDS server.
- * 
- * @param wx_model_type Type of weather model.
- * @param numNinjas Number of ninjas.
- * @param elevation_file Name of elevation file.
- * 
- * @return Name of forecast file.
- */
-const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int numNinjas, const char* elevation_file)
-{
-    wxModelInitialization *model;
-    try
-    {
-        model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
-        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);
-        delete model;
-        char* cstr = new char[forecastFileName.length() + 1];
-        std::strcpy(cstr, forecastFileName.c_str());
-        return cstr;
-    }
-    catch(armyException &e)
-    {
-        return "exception";
-    }
-}
-/**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
  * @param forecastFilename Name of forecast file.
@@ -375,6 +269,13 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 //Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
 //throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
+
+    if( times.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+        throw std::runtime_error("Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+    }
+
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -384,8 +285,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
         if(fcastList == NULL){
             Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
-            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
-                  std::string(" cannot be opened."));
+            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() + std::string(" cannot be opened."));
         }
         while(1){
             const char* f = CPLReadLine(fcastList);
@@ -1355,19 +1255,225 @@ void ninjaArmy::setAtmFlags()
 }
 
 /*-----------------------------------------------------------------------------
- *  Ninja Communication Methods
+ *  C-API makeArmy function calls
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaComProgressFunc( ProgressFunc func, void *pUser,
-                                        char ** papszOptions )
+int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
 {
     try
     {
-        Com->set_progressFunc(func, pUser);
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        if( numNinjas < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::NinjaMakeDomainAverageArmy()", numNinjas));
+        }
+
+        //Get the number of elements in the arrays
+/*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+        size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
+//        size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+//        size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+//        size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+//        size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+//        size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+//        size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+//        size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+//
+//        if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+//        {
+//            throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+//
+
+        makeDomainAverageArmy( numNinjas, momentumFlag );
+
+        int retval = NINJA_E_INVALID;
+        for(int i=0; i<getSize(); i++)
+        {
+            retval = setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputSpeed() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputDirection() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setDateTime() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniAirTemp() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniCloudCover() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+        }
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
     }
     catch( ... )
     {
-        std::cout << "!!!failed to set ninjaArmy level ninjaCom progress function!!!" << std::endl;
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions )
+{
+    try
+    {
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
+        }
+
+        if( timeListSize < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input timeListSize '%d' in ninjaArmy::NinjaMakePointArmy()", timeListSize));
+        }
+        if( numStationFiles < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numStationFiles '%d' in ninjaArmy::NinjaMakePointArmy()", numStationFiles));
+        }
+
+        wxStation::SetStationFormat(wxStation::newFormat);
+
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i < timeListSize; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        }
+
+        std::vector<std::string> sFiles;
+        for (int i = 0; i < numStationFiles; i++)
+        {
+            sFiles.emplace_back(stationFileNames[i]);
+        }
+        pointInitialization::storeFileNames(sFiles);
+
+        makePointArmy( timeList, std::string(timeZone), sFiles[0], std::string(elevationFile), matchPointsFlag, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        if( size < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input size '%d' in ninjaArmy::NinjaMakeWeatherModelArmy()", size));
+        }
+
+        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+        std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+        std::vector<blt::local_date_time> timeList;
+
+        for(int i = 0; i < fullTimeList.size(); i++)
+        {
+            for(int j = 0; j < size; j++)
+            {
+                std::string time1 = fullTimeList[i].to_string();
+                std::string time2(inputTimeList[j]);
+                if(time1 == time2)
+                {
+                    timeList.push_back(fullTimeList[i]);
+                }
+            }
+        }
+
+        makeWeatherModelArmy( std::string( forecastFilename ), std::string( timeZone ), timeList, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+/*-----------------------------------------------------------------------------
+ *  Ninja Communication Methods
+ *-----------------------------------------------------------------------------*/
+
+int ninjaArmy::setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                          char ** papszOptions )
+{
+    try
+    {
+        Com->set_messageHandler(pMsgHandler, pUser);
+    }
+    catch( ... )
+    {
+        std::cerr << "CRITICAL: ninjaArmy level ninjaComMessageHandler not set. Messages will NOT be delivered." << std::endl;
         return NINJA_E_INVALID;
     }
     return NINJA_SUCCESS;
@@ -1382,7 +1488,7 @@ int ninjaArmy::setNinjaMultiComStream( FILE* stream,
     }
     catch( ... )
     {
-        std::cout << "!!!failed to set ninjaArmy level ninjaCom multiStream FILE pointer!!!" << std::endl;
+        std::cerr << "ERROR: ninjaArmy level ninjaCom multiStream FILE pointer not set." << std::endl;
         return NINJA_E_INVALID;
     }
     return NINJA_SUCCESS;

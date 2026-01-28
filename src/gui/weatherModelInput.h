@@ -50,6 +50,8 @@ public:
 
 signals:
     void updateState();
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
 
 public slots:
     void updateTreeView();
@@ -63,6 +65,7 @@ private slots:
     void weatherModelGroupBoxToggled(bool toggled);
     void weatherModelComboBoxCurrentIndexChanged(int index);
     void weatherModelDownloadFinished();
+    void updateProgressMessage(const QString message);
 
 private:
     NinjaToolsH* ninjaTools;
@@ -88,19 +91,23 @@ private:
         "NBM=National Blend of Models"
     };
 
-    static int fetchForecastWeather(
+    int fetchForecastWeather(
         NinjaToolsH* ninjaTools,
         const QString& modelIdentifierStr,
         const QString& demFileStr,
         int hours);
 
-    static int fetchPastcastWeather(
+    int fetchPastcastWeather(
         NinjaToolsH* ninjaTools,
         const QString& modelIdentifierStr,
         const QString& demFileStr,
         const QString& timeZoneStr,
         int startYear, int startMonth, int startDay, int startHour,
         int endYear, int endMonth, int endDay, int endHour);
+
+    // this function is for trying to force the static comMessageHandler()
+    // to be defined BEFORE the constructor call, without reorganizing the code
+    void initNinjaTools();
 };
 
 #endif // WEATHERMODELINPUT_H

@@ -74,7 +74,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy();
 
     WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
-        ( NinjaArmyH * ninjaArmy, unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
+        ( NinjaArmyH * ninjaArmy, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
           const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char* airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options);
 
     //TODO: add helper function to generate arrays of years, months, days, hours, and minutes from a station file
@@ -110,19 +110,16 @@ typedef int  NinjaErr;
         (const char** timeList, int timeListSize);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
-        (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, double buffer, const char* units, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );
+        (NinjaToolsH* tools, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, double buffer, const char* units, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName
-        (const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, const char* stationList, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );
+        (NinjaToolsH* tools, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char * elevationFile, const char* stationList, const char * timeZone, bool fetchLatestFlag, const char * outputPath, bool locationFileFlag, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
-        (NinjaArmyH * ninjaArmy, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options );
+        (NinjaToolsH * tools, double * point, double * buff, const char * units, double cellSize, char * dstFile, char * fetchType, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
-        (NinjaArmyH * ninjaArmy, double * boundsBox, const char * fileName, double resolution, char * fetchType, char ** options );
-
-    WINDNINJADLL_EXPORT NinjaErr NinjaFetchForecast
-        (NinjaArmyH * ninjaArmy, const char * wx_model_type,  unsigned int nHours, const char * elevation_file, char ** options );
+        (NinjaToolsH * tools, double * boundsBox, const char * fileName, double resolution, char * fetchType, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
         ( NinjaArmyH * ninjaArmy, char ** options );
@@ -156,11 +153,17 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int nCPUs, char ** options );
 
     /*  Communication  */
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetComProgressFunc
-        ( NinjaArmyH * ninjaArmy, ProgressFunc func, void *pUser, char ** options );
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComMessageHandler
+        ( NinjaArmyH * ninjaArmy, ninjaComMessageHandler pMsgHandler, void *pUser, char ** options );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetMultiComStream
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
         ( NinjaArmyH * ninjaArmy, FILE* stream, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
+        ( NinjaToolsH * tools, ninjaComMessageHandler pMsgHandler, void *pUser, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsMultiComStream
+        ( NinjaToolsH * tools, FILE* stream, char ** options );
 
     /*  Input Parameters  */
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInputSpeed
@@ -379,16 +382,18 @@ typedef int  NinjaErr;
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * filePath, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
+        NinjaToolsH* tools,
         const int* inputYearList, const int* inputMonthList, const int* inputDayList,
         const int* inputHourList, const int* inputMinuteList,
         int* outputYearList, int* outputMonthList, int* outputDayList,
         int* outputHourList, int* outputMinuteList,
         int nTimeSteps, const char* timeZone);
     WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
+        NinjaToolsH* tools,
         int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char* timeZone,
         int* outYear, int* outMonth, int* outDay, int* outHour, int* outMinute);
     WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
-        (int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions);
+        (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions );
     WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *numRuns, char*** kmzFilenames, int *numStationKmls, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmzFilenames, int numStationKmls, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions);

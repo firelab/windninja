@@ -87,8 +87,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
  * 'func' is located inside a try-catch statement block so upon a thrown exception
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
-#ifdef C_API
-//#ifndef C_API
+//#ifdef C_API
+#ifndef C_API
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
@@ -161,14 +161,18 @@ public:
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> timeList, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions);
-    int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType);
-    const char* fetchForecast(const char* wx_model_type, unsigned int forecastDuration, const char* elevation_file);
     void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
     
     int ninjaInitialize();
+
+    /*-----------------------------------------------------------------------------
+     *  C-API makeArmy function calls
+     *-----------------------------------------------------------------------------*/
+    int NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions=NULL );
+    int NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions=NULL );
+    int NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papzOptions=NULL );
 
     /**
     * \brief Return the number of ninjas in the army
@@ -183,14 +187,27 @@ public:
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
 
-    int setNinjaComProgressFunc( ProgressFunc func, void *pUser,
-                                 char ** papszOptions = NULL);
+    /**
+    * \brief Set a ninjaComMessageHandler callback function to the ninjaArmy level ninjaCom
+    *
+    * \param pMsgHandler A pointer to a ninjaComMessageHandler callback function.
+    * \param pUser A pointer to the object or context associated with the callback function.
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                   char ** papszOptions = NULL);
 
+    /**
+    * \brief Set a ninjaCom multi-stream FILE handle to the ninjaArmy level ninjaCom
+    *
+    * \param stream A pointer to a multi-stream FILE handle/stream.
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
     int setNinjaMultiComStream( FILE* stream,
                                 char ** papszOptions = NULL);
 
     /**
-    * \brief Set the ninjaCom handler of a ninja, using the ninjaArmy level ninjaCom handler
+    * \brief Set the ninjaCom of a ninja, using the ninjaArmy level ninjaCom
     *  and set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja

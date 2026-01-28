@@ -65,6 +65,8 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
 
+    connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
+
     connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
 }
 
@@ -329,6 +331,8 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
 
 void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
 {
+    emit writeToConsoleSignal("Fetching DEM file...");
+
     progress = new QProgressDialog("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
@@ -337,7 +341,7 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
     progress->show();
 
     futureWatcher = new QFutureWatcher<int>(this);
-    QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, boundingBox, demFile, resolution, fetchType);
+    QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, this, boundingBox, demFile, resolution, fetchType);
     futureWatcher->setFuture(future);
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &SurfaceInput::fetchDEMFinished);
@@ -345,21 +349,34 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
 
 void SurfaceInput::fetchDEMFinished()
 {
-    if (progress)
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    if(result == NINJA_SUCCESS)
     {
-        progress->close();
-        progress->deleteLater();
-        progress = nullptr;
+        emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
+
+        if (progress)
+        {
+            progress->close();
+            progress->deleteLater();
+            progress = nullptr;
+        }
+
+        ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
+        ui->inputsStackedWidget->setCurrentIndex(3);
+
+    } else
+    {
+        emit writeToConsoleSignal("Failed to fetch DEM file.");
     }
 
+    // delete the futureWatcher every time, whether success or failure
     if (futureWatcher)
     {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;
     }
-
-    ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-    ui->inputsStackedWidget->setCurrentIndex(3);
 }
 
 void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
@@ -556,22 +573,105 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
     }
 }
 
+void SurfaceInput::updateProgressMessage(const QString message)
+{
+    progress->setLabelText(message);
+    progress->setWindowTitle(tr("Error"));
+    progress->setCancelButtonText(tr("Close"));
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->setRange(0, 1);
+    progress->setValue(progress->maximum());
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
+
+    std::string msg = pszMessage;
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), Qt::yellow);
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+}
+
 int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
 {
-    NinjaArmyH* ninjaArmy = NULL;
+    NinjaToolsH* ninjaTools = NULL;
     char ** papszOptions = NULL;
     NinjaErr ninjaErr = 0;
 
-    ninjaErr = NinjaFetchDEMBBox(ninjaArmy, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);
+    ninjaTools = NinjaMakeTools();
+
+    ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
+    }
+
+    ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);  // some errors and warnings are caught, but only as error codes, not as messages. Would need to update how we do the messaging within the various SurfaceFetch calls themselves. CPLError( CE_Warning, ...); and CPLError( CE_Failure, ...); with return of an error code seems hard to try/catch with ninjaCom.
+    //ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), ".", resolution, strdup(fetchType.c_str()), papszOptions);  // error was caught, but message is not properly passed
+    //ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), resolution, "fudge", papszOptions);  // actually catches this error, with a good message
+    //ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), -10.0, strdup(fetchType.c_str()), papszOptions);  // error was caught, but not even a message to be passed around with this one
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFetchDEMBBox: ninjaErr =" << ninjaErr;
         return ninjaErr;
     }
-    else
-    {
-        return NINJA_SUCCESS;
-    }
+
+    return NINJA_SUCCESS;
 }
 
 void SurfaceInput::computeDEMFile(QString filePath)
