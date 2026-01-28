@@ -100,17 +100,17 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
           pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
-                                 "240CH;240CBD;240CBH" ); //2024 data
+                                 "250CH;250CBD;250CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
           pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
-                                 "240CH;240CBD;240CBH" ); //2024 data
+                                 "250CH;250CBD;250CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "hi" ) )
         {
           pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
-                                 "240CH;240CBD;240CBH" ); //2024 data
+                                 "250CH;250CBD;250CBH" ); //2024 data
         }
         else
         {
