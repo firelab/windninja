@@ -244,7 +244,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
 WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
     (NinjaToolsH* tools, int* count)
 {
-    if(!tools || !count)
+    if(!tools)
+    {
+        return nullptr;
+    }
+
+    if(!count)
     {
         return nullptr;
     }
@@ -325,7 +330,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
 WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
     (NinjaToolsH* tools, const char* modelIdentifier, int* startHour, int* endHour)
 {
-    if(!tools || !startHour || !endHour)
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    if(!startHour || !endHour)
     {
         return NINJA_E_NULL_PTR;
     }
@@ -399,7 +409,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
     (NinjaToolsH * tools, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions)
-
 {
     if(!tools)
     {
@@ -680,15 +689,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
 WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
     ( NinjaToolsH * tools, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
 {
-    if( NULL != tools )
-    {
-        return reinterpret_cast<ninjaTools*>( tools )->setNinjaComMessageHandler
-            ( pMsgHandler, pUser );
-    }
-    else
+    if(!tools)
     {
         return NINJA_E_NULL_PTR;
     }
+
+    return reinterpret_cast<ninjaTools*>( tools )->setNinjaComMessageHandler( pMsgHandler, pUser );
 }
 
 /**
@@ -702,15 +708,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
 WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsMultiComStream
     ( NinjaToolsH * tools, FILE* stream, char ** papszOptions )
 {
-    if( NULL != tools )
+    if(!tools)
     {
-        return reinterpret_cast<ninjaTools*>( tools )->setNinjaMultiComStream
-            ( stream );
+        return NINJA_E_NULL_PTR;
     }
-    else
-    {
-        return NULL;
-    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->setNinjaMultiComStream( stream );
 }
 
 /**
@@ -2398,9 +2401,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
     int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone,
     int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute)
 {
-    if(!outYear || !outMonth || !outDay || !outHour || !outMinute)
+    if(!tools)
     {
-        return NINJA_E_OTHER;
+        return NINJA_E_NULL_PTR;
     }
 
     return reinterpret_cast<ninjaTools*>( tools )->generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, timeZone, outYear, outMonth, outDay, outHour, outMinute);
@@ -2422,6 +2425,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
 WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
     (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
 {
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
     return reinterpret_cast<ninjaTools*>( tools )->checkTimeDuration( yearList, monthList, dayList, minuteList, hourList, listSize, papszOptions );
 }
 

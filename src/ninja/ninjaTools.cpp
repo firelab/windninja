@@ -508,6 +508,12 @@ int ninjaTools::generateSingleTimeObject( int inputYear, int inputMonth, int inp
 {
     try
     {
+        if(!outYear || !outMonth || !outDay || !outHour || !outMinute)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input outYear, outMonth, outDay, outHour, or outMinute in ninjaTools::generateSingleTimeObject()");
+            return NINJA_E_OTHER;
+        }
+
         boost::posix_time::ptime timeObject =
             pointInitialization::generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, std::string(timeZone));
 
