@@ -578,18 +578,48 @@
     <string notr="true"/>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_9">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QSplitter" name="mapSplitter">
       <property name="orientation">
        <enum>Qt::Orientation::Horizontal</enum>
       </property>
+      <property name="handleWidth">
+       <number>4</number>
+      </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
       <widget class="QSplitter" name="inputsStackedWidgetSplitter">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="orientation">
         <enum>Qt::Orientation::Vertical</enum>
        </property>
+       <property name="childrenCollapsible">
+        <bool>false</bool>
+       </property>
        <widget class="QTreeWidget" name="treeWidget">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -603,7 +633,7 @@
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>16777215</height>
+          <height>362</height>
          </size>
         </property>
         <property name="font">
@@ -802,68 +832,9 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>9</number>
+         <number>6</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
-        <widget class="QWidget" name="solverMethodologyInformationPage">
-         <layout class="QVBoxLayout" name="verticalLayout_8">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item>
-           <widget class="QTextEdit" name="solverMethodologyInformationTextEdit">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="html">
-             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif';&quot;&gt;A solution requires the selection of one (1) Solver Methodology:&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif';&quot;&gt;    1. Conservation of Mass (faster, less accurate)&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif';&quot;&gt;    2. Conservation of Mass and Momentum (slower, more accurate)&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif';&quot;&gt;Select either option for more detail.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="textInteractionFlags">
-             <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="solverMethodologyInformationPageSpacer">
-            <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
         <widget class="QWidget" name="massSolverPage">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -871,7 +842,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,0,1">
+          <property name="spacing">
+           <number>6</number>
+          </property>
           <property name="leftMargin">
            <number>5</number>
           </property>
@@ -898,24 +884,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item>
-           <widget class="QTextEdit" name="massSolverTextEdit">
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
+           <widget class="QLabel" name="massSolverLabel">
+            <property name="text">
+             <string>This is the native WindNinja solver. It solves a conservation of mass equation, but not a conservation of momentum equation. This solver is fast-running, but may give less accurate wind predictions in regions where momentum effects are important, for example on the lee side of terrain obstacles.</string>
             </property>
-            <property name="html">
-             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:9pt;&quot;&gt;This is the native WindNinja solver. It solves a conservation of mass equation, but not a conservation of momentum equation. This solver is fast-running, but may give less accurate wind predictions in regions where momentum effects are important, for example on the lee side of terrain obstacles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <property name="scaledContents">
+             <bool>false</bool>
             </property>
-            <property name="textInteractionFlags">
-             <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -941,6 +918,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,1">
           <property name="leftMargin">
            <number>5</number>
@@ -965,27 +948,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item>
-           <widget class="QTextEdit" name="momentumSolverTextEdit">
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
+           <widget class="QLabel" name="momentumSolverLabel">
+            <property name="text">
+             <string>This solver conserves both mass and momentum. It is based on the OpenFOAM CFD toolbox. This solver should give more accurate wind predictions in regions where momentum effects are important, such as on the lee side of terrain obstacles. Because this solver is more computationally intensive than the conservation of mass solver, simulation times will be longer. Typical simulation times for this solver range from 10-30 minutes, but will depend on your domain, resolution, and computational resources. Note that some options (e.g., point initialization and non-neutral stability) are not available for this solver at this time. We plan to make these options available in future releases.</string>
             </property>
-            <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
-            </property>
-            <property name="html">
-             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:9pt;&quot;&gt;This solver conserves both mass and momentum. It is based on the OpenFOAM CFD toolbox. This solver should give more accurate wind predictions in regions where momentum effects are important, such as on the lee side of terrain obstacles. Because this solver is more computationally intensive than the conservation of mass solver, simulation times will be longer. Typical simulation times for this solver range from 10-30 minutes, but will depend on your domain, resolution, and computational resources. Note that some options (e.g., point initialization and non-neutral stability) are not available for this solver at this time. We plan to make these options available in future releases.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="textInteractionFlags">
-             <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -1004,69 +972,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="inputsInformationPage">
-         <layout class="QVBoxLayout" name="verticalLayout_12" stretch="0,1">
-          <property name="leftMargin">
-           <number>5</number>
-          </property>
-          <property name="topMargin">
-           <number>5</number>
-          </property>
-          <property name="rightMargin">
-           <number>5</number>
-          </property>
-          <property name="bottomMargin">
-           <number>5</number>
-          </property>
-          <item>
-           <widget class="QTextEdit" name="inputsInformationPageTextEdit">
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
-            </property>
-            <property name="html">
-             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;This is where input parameters are defined. Analysis requires:&lt;/span&gt;  &lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;      &lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;        &lt;span style=&quot; font-family:'Sans Serif'; font-size:10pt;&quot;&gt;1. Surface Input (.tif) file:&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:30px; margin-right:0px; -qt-block-indent:1; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:10pt;&quot;&gt;- Can be uploaded from a computer or downloaded using the map on the right&lt;/span&gt;        &lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:30px; margin-right:0px; -qt-block-indent:1; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:10pt;&quot;&gt;- Optional diurnal and stability analysis&lt;/span&gt;        &lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;        &lt;span style=&quot; font-family:'Sans Serif'; font-size:10pt;&quot;&gt;2. Wind Input:&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:30px; margin-right:0px; -qt-block-indent:1; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans Serif'; font-size:10pt;&quot;&gt;- Requires one (1) of the three (3) options available: Domain Average Wind, Point Initialization, or Weather Model&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="textInteractionFlags">
-             <set>Qt::TextInteractionFlag::TextSelectableByKeyboard|Qt::TextInteractionFlag::TextSelectableByMouse</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="inputsInformationPageSpacer">
-            <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
         <widget class="QWidget" name="surfaceInputPage">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -1077,9 +985,30 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <height>0</height>
           </size>
          </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
            <widget class="QScrollArea" name="surfaceInputScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -1088,8 +1017,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>538</width>
-               <height>419</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1098,7 +1027,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,1">
+             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0">
+              <property name="spacing">
+               <number>6</number>
+              </property>
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QGroupBox" name="elevationInputFileGroupBox">
                 <property name="sizePolicy">
@@ -1110,11 +1054,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>70</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
                  <string>Elevation Input File</string>
+                </property>
+                <property name="flat">
+                 <bool>false</bool>
+                </property>
+                <property name="checkable">
+                 <bool>false</bool>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
                  <property name="leftMargin">
@@ -1200,13 +1153,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>70</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
                  <string>Vegetation</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QStackedWidget" name="vegetationStackedWidget">
                    <property name="sizePolicy">
@@ -1216,10 +1181,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </sizepolicy>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="vegetationSelectionPage">
                     <layout class="QHBoxLayout" name="horizontalLayout_14">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
                      <item>
                       <widget class="QComboBox" name="vegetationComboBox">
                        <property name="sizePolicy">
@@ -1265,6 +1242,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </widget>
                    <widget class="QWidget" name="vegetationLCPPage">
                     <layout class="QHBoxLayout" name="horizontalLayout_22">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
                      <item>
                       <widget class="QLabel" name="vegetationLCPLabel">
                        <property name="sizePolicy">
@@ -1309,13 +1298,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>70</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
                  <string>Mesh Resolution</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QComboBox" name="meshResolutionComboBox">
                    <property name="sizePolicy">
@@ -1410,7 +1411,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <item>
                <widget class="QGroupBox" name="timeZoneGroupBox">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -1573,10 +1574,16 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </widget>
         <widget class="QWidget" name="diurnalInputPage">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,1">
           <property name="spacing">
@@ -1599,6 +1606,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QCheckBox" name="diurnalCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="cursor">
              <cursorShape>PointingHandCursor</cursorShape>
             </property>
@@ -1626,6 +1645,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="stabilityInputPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,1">
           <property name="spacing">
            <number>0</number>
@@ -1645,7 +1676,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <widget class="QCheckBox" name="stabilityCheckBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -1673,26 +1704,49 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="windInputPage"/>
         <widget class="QWidget" name="domainAveragePage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0">
           <property name="spacing">
            <number>6</number>
           </property>
           <property name="leftMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="topMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="rightMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="bottomMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <item>
            <widget class="QScrollArea" name="domainAverageScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
+            <property name="lineWidth">
+             <number>1</number>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -1701,15 +1755,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>586</width>
-               <height>488</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_31">
               <item>
                <widget class="QGroupBox" name="domainAverageGroupBox">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -1723,7 +1783,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,0">
+                <layout class="QVBoxLayout" name="verticalLayout_26" stretch="0,0,1,0">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QGroupBox" name="inputWindHeightGroupBox">
                    <property name="sizePolicy">
@@ -1736,6 +1808,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <string>Input Wind Height</string>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_2">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
                     <item>
                      <widget class="QComboBox" name="inputWindHeightComboBox">
                       <property name="cursor">
@@ -1820,6 +1904,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <layout class="QHBoxLayout" name="tableLayout">
                    <item>
                     <widget class="QLabel" name="tableUnitLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>Table Units:</string>
                      </property>
@@ -1947,7 +2037,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <widget class="QTableWidget" name="domainAverageTable">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                     <horstretch>1</horstretch>
+                     <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
@@ -1956,6 +2046,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <width>0</width>
                      <height>0</height>
                     </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="frameShape">
+                    <enum>QFrame::Shape::StyledPanel</enum>
                    </property>
                    <property name="dragEnabled">
                     <bool>true</bool>
@@ -1973,11 +2072,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <bool>false</bool>
                    </property>
                    <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                   <property name="cornerButtonEnabled">
                     <bool>false</bool>
                    </property>
                    <property name="rowCount">
                     <number>30</number>
                    </property>
+                   <property name="supportedDragActions">
+                    <set>Qt::DropAction::IgnoreAction</set>
+                   </property>
+                   <attribute name="horizontalHeaderVisible">
+                    <bool>true</bool>
+                   </attribute>
                    <attribute name="horizontalHeaderCascadingSectionResizes">
                     <bool>false</bool>
                    </attribute>
@@ -2097,6 +2205,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </column>
                   </widget>
                  </item>
+                 <item>
+                  <spacer name="verticalSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Vertical</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
                 </layout>
                </widget>
               </item>
@@ -2108,32 +2229,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
         </widget>
         <widget class="QWidget" name="pointInitializationPage">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="maximumSize">
           <size>
-           <width>1000</width>
+           <width>16777215</width>
            <height>16777215</height>
           </size>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_15">
           <property name="leftMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="topMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="rightMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="bottomMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <item>
            <widget class="QScrollArea" name="pointInitializationScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -2145,9 +2269,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>586</width>
-               <height>488</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_19">
               <item>
@@ -2180,6 +2310,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <bool>false</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_42" stretch="0,0,0,0,0,0,0,0,0,0">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <layout class="QHBoxLayout" name="pointInitializationDownloadLayout">
                    <item>
@@ -2327,6 +2469,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="Line" name="pointInitializationLine2">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="orientation">
                     <enum>Qt::Orientation::Horizontal</enum>
                    </property>
@@ -2335,7 +2483,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QStackedWidget" name="pointInitializationDataTimeStackedWidget">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2343,7 +2491,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>80</height>
+                     <height>0</height>
                     </size>
                    </property>
                    <property name="maximumSize">
@@ -2353,7 +2501,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="weatherStationDataTimeDatesPage">
                     <property name="sizePolicy">
@@ -2363,6 +2511,24 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </sizepolicy>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_5">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="horizontalSpacing">
+                      <number>6</number>
+                     </property>
+                     <property name="verticalSpacing">
+                      <number>0</number>
+                     </property>
                      <item row="1" column="1">
                       <widget class="QLabel" name="weatherStationDataEndTimeLabel">
                        <property name="sizePolicy">
@@ -2470,19 +2636,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </sizepolicy>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_16">
+                     <property name="leftMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="topMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="rightMargin">
+                      <number>0</number>
+                     </property>
+                     <property name="bottomMargin">
+                      <number>0</number>
+                     </property>
                      <item>
-                      <widget class="QTextEdit" name="weatherStationDataTextEdit">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>16777215</width>
-                         <height>30</height>
-                        </size>
+                      <widget class="QLabel" name="weatherStationDataLabel">
+                       <property name="text">
+                        <string>Placeholder Text</string>
                        </property>
                       </widget>
                      </item>
@@ -2493,7 +2662,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QLabel" name="weatherStationTimeZoneLabel">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2506,7 +2675,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QLabel" name="weatherStationMinTimeLabel">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2519,7 +2688,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QLabel" name="weatherStationMaxTimeLabel">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2531,6 +2700,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="Line" name="pointInitializationLine1">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="orientation">
                     <enum>Qt::Orientation::Horizontal</enum>
                    </property>
@@ -2539,7 +2714,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <item>
                   <widget class="QCheckBox" name="pointInitializationWriteStationKMLCheckBox">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2566,21 +2741,36 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="weatherModelPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_24" stretch="0">
           <property name="leftMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="topMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="rightMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <property name="bottomMargin">
-           <number>5</number>
+           <number>0</number>
           </property>
           <item>
            <widget class="QScrollArea" name="weatherModelScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -2589,13 +2779,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>572</width>
-               <height>713</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_22" stretch="0,1">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_22" stretch="0">
               <item>
                <widget class="QGroupBox" name="weatherModelGroupBox">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="title">
                  <string>Weather Model Initialization</string>
                 </property>
@@ -2606,10 +2808,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <bool>false</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_43" stretch="0,0,1">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QGroupBox" name="weatherModelDownloadGroupBox">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
@@ -2618,6 +2832,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <string>Download Weather Data</string>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_11">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
                     <item>
                      <widget class="QComboBox" name="weatherModelComboBox">
                       <property name="sizePolicy">
@@ -2658,6 +2884,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </item>
                     <item>
                      <widget class="QPushButton" name="weatherModelDownloadButton">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
                       <property name="cursor">
                        <cursorShape>PointingHandCursor</cursorShape>
                       </property>
@@ -2688,6 +2920,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <bool>false</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_15">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastStartDateTimeEdit">
                       <property name="showGroupSeparator" stdset="0">
@@ -2736,21 +2980,21 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_25" stretch="0,0">
                     <property name="leftMargin">
-                     <number>0</number>
+                     <number>5</number>
                     </property>
                     <property name="topMargin">
-                     <number>0</number>
+                     <number>5</number>
                     </property>
                     <property name="rightMargin">
-                     <number>0</number>
+                     <number>5</number>
                     </property>
                     <property name="bottomMargin">
-                     <number>0</number>
+                     <number>5</number>
                     </property>
                     <item>
                      <widget class="QTreeView" name="weatherModelFileTreeView">
                       <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
@@ -2763,7 +3007,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <item>
                      <widget class="QGroupBox" name="weatherModelTimeGroupBox">
                       <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
@@ -2778,10 +3022,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>false</bool>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_45">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
                        <item>
                         <widget class="QTreeView" name="weatherModelTimeTreeView">
                          <property name="sizePolicy">
-                          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                            <horstretch>0</horstretch>
                            <verstretch>0</verstretch>
                           </sizepolicy>
@@ -2831,19 +3087,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </widget>
               </item>
-              <item>
-               <spacer name="weatherModelScrollAreaWidgetSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
             </widget>
            </widget>
@@ -2851,7 +3094,31 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="outputsPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QGroupBox" name="outputWindHeightGroupBox">
             <property name="sizePolicy">
@@ -2870,6 +3137,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <string>Output Wind Height</string>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item>
               <widget class="QComboBox" name="outputWindHeightComboBox">
                <property name="cursor">
@@ -3070,7 +3349,31 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="googleEarthPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_13" stretch="0">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
            <widget class="QScrollArea" name="googleEarthScrollArea">
             <property name="sizePolicy">
@@ -3078,6 +3381,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -3087,8 +3393,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>390</width>
-               <height>468</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3100,30 +3406,32 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <property name="layoutDirection">
               <enum>Qt::LayoutDirection::LeftToRight</enum>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,1">
+             <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0">
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
               <item>
-               <widget class="QTextEdit" name="googleEarthTextEdit">
+               <widget class="QLabel" name="googleEarthLabel">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="undoRedoEnabled">
-                 <bool>false</bool>
+                <property name="text">
+                 <string>NOTE: Version 4.0.0 requires Google Earth (KML/KMZ) files to display simulations on the map. This requirement will be removed in version 4.0.1.</string>
                 </property>
-                <property name="lineWrapColumnOrWidth">
-                 <number>0</number>
-                </property>
-                <property name="html">
-                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Version 4.0.0 requires Google Earth (KML/KMZ) files to display simulations on the map. This requirement will be removed in version 4.0.1. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <property name="wordWrap">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -3131,6 +3439,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <widget class="QCheckBox" name="googleEarthCheckBox">
                 <property name="enabled">
                  <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
                 <property name="text">
                  <string>Create Google Earth Files (*.kmz)</string>
@@ -3151,13 +3465,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>69</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
                  <string>Legend</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QComboBox" name="legendComboBox">
                    <property name="sizePolicy">
@@ -3218,7 +3544,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>70</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
@@ -3227,6 +3553,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <layout class="QHBoxLayout" name="horizontalLayout_6">
                  <property name="sizeConstraint">
                   <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+                 </property>
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
                  </property>
                  <item>
                   <widget class="QLabel" name="googleEarthVectorsLabel">
@@ -3282,13 +3620,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>114</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
                  <string>Resolution</string>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_37">
+                 <property name="spacing">
+                  <number>6</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item>
                   <widget class="QGroupBox" name="googleEarthMeshResolutionGroupBox">
                    <property name="sizePolicy">
@@ -3310,6 +3663,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <bool>true</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_16">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
                     <item>
                      <widget class="QDoubleSpinBox" name="googleEarthMeshResolutionSpinBox">
                       <property name="enabled">
@@ -3388,7 +3753,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>69</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
@@ -3401,6 +3766,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <bool>false</bool>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_8">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QComboBox" name="alternativeColorSchemeComboBox">
                    <property name="sizePolicy">
@@ -3468,7 +3845,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
               </item>
               <item>
-               <spacer name="verticalSpacer_4">
+               <spacer name="googleEarthSpacer">
                 <property name="orientation">
                  <enum>Qt::Orientation::Vertical</enum>
                 </property>
@@ -3487,11 +3864,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="fireBehaviorPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_27" stretch="0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QGroupBox" name="fireBehaviorGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -3499,7 +3900,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>186</height>
+              <height>0</height>
              </size>
             </property>
             <property name="title">
@@ -3512,6 +3913,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <bool>false</bool>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_28">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item>
               <widget class="QGroupBox" name="fireBehaviorResolutionGroupBox">
                <property name="sizePolicy">
@@ -3530,6 +3943,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <string>Resolution</string>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_38">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
                 <item>
                  <widget class="QGroupBox" name="fireBehaviorMeshResolutionGroupBox">
                   <property name="sizePolicy">
@@ -3551,6 +3976,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <bool>true</bool>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_19">
+                   <property name="leftMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>5</number>
+                   </property>
                    <item>
                     <widget class="QDoubleSpinBox" name="fireBehaviorMeshResolutionSpinBox">
                      <property name="enabled">
@@ -3644,11 +4081,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="shapeFilesPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_35" stretch="0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QGroupBox" name="shapeFilesGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -3656,7 +4117,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>158</height>
+              <height>0</height>
              </size>
             </property>
             <property name="title">
@@ -3669,6 +4130,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <bool>false</bool>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_30">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item>
               <widget class="QGroupBox" name="shapeFilesResolutionGroupBox">
                <property name="sizePolicy">
@@ -3680,13 +4153,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="minimumSize">
                 <size>
                  <width>0</width>
-                 <height>114</height>
+                 <height>0</height>
                 </size>
                </property>
                <property name="title">
                 <string>Resolution</string>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_39">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
                 <item>
                  <widget class="QGroupBox" name="shapeFilesMeshResolutionGroupBox">
                   <property name="sizePolicy">
@@ -3708,6 +4193,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <bool>true</bool>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_20">
+                   <property name="leftMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>5</number>
+                   </property>
                    <item>
                     <widget class="QDoubleSpinBox" name="shapeFilesMeshResolutionSpinBox">
                      <property name="enabled">
@@ -3794,9 +4291,36 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="geospatialPDFFilesPage">
-         <layout class="QVBoxLayout" name="verticalLayout_34" stretch="0,1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_34" stretch="0">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
            <widget class="QScrollArea" name="geospatialPDFFilesScrollArea">
+            <property name="frameShape">
+             <enum>QFrame::Shape::NoFrame</enum>
+            </property>
             <property name="widgetResizable">
              <bool>true</bool>
             </property>
@@ -3805,15 +4329,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>381</width>
-               <height>318</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41">
               <item>
                <widget class="QGroupBox" name="geospatialPDFFilesGroupBox">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -3821,7 +4345,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>300</height>
+                  <height>0</height>
                  </size>
                 </property>
                 <property name="title">
@@ -3834,6 +4358,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <bool>false</bool>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_32" stretch="0,0,0,0">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QGroupBox" name="geospatialPDFFilesVectorsGroupBox">
                    <property name="sizePolicy">
@@ -3845,15 +4381,33 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>70</height>
+                     <height>0</height>
                     </size>
                    </property>
                    <property name="title">
                     <string>Vectors</string>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_13">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
                     <item>
                      <widget class="QLabel" name="geospatialPDFfilesVectorsLabel">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
                       <property name="text">
                        <string>Line Width:</string>
                       </property>
@@ -4031,13 +4585,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>114</height>
+                     <height>0</height>
                     </size>
                    </property>
                    <property name="title">
                     <string>Resolution</string>
                    </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_40">
+                   <layout class="QVBoxLayout" name="verticalLayout_18">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
                     <item>
                      <widget class="QGroupBox" name="geospatialPDFFilesMeshResolutionGroupBox">
                       <property name="sizePolicy">
@@ -4049,7 +4615,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>70</height>
+                        <height>0</height>
                        </size>
                       </property>
                       <property name="title">
@@ -4059,10 +4625,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>true</bool>
                       </property>
                       <layout class="QHBoxLayout" name="horizontalLayout_21">
+                       <property name="leftMargin">
+                        <number>5</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>5</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>5</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>5</number>
+                       </property>
                        <item>
                         <widget class="QDoubleSpinBox" name="geospatialPDFFilesMeshResolutionSpinBox">
                          <property name="enabled">
                           <bool>false</bool>
+                         </property>
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
                          </property>
                          <property name="maximum">
                           <double>5000.000000000000000</double>
@@ -4129,27 +4713,51 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </widget>
               </item>
+              <item>
+               <spacer name="verticalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Orientation::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
              </layout>
             </widget>
            </widget>
           </item>
-          <item>
-           <spacer name="verticalSpacer_3">
-            <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
          </layout>
         </widget>
         <widget class="QWidget" name="VTKFilesPage">
-         <layout class="QVBoxLayout" name="verticalLayout_36" stretch="0,0,1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_36" stretch="0,0,0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QCheckBox" name="VTKFilesCheckBox">
             <property name="sizePolicy">
@@ -4164,24 +4772,20 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item>
-           <widget class="QTextEdit" name="VTKFilesTextEdit">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+           <widget class="QLabel" name="VTKFilesLabel">
+            <property name="text">
+             <string>Write VTK surface and volume files
+</string>
             </property>
-            <property name="html">
-             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Write VTK surface and volume files&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;Note that *vtk files are for advanced users and are rarely used by fire managers/modelers&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="VTKFilesNoteLabel">
+            <property name="text">
+             <string>Note that *vtk files are for advanced users and are rarely used by fire managers/modelers</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
@@ -4201,6 +4805,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="solverPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,1">
           <property name="sizeConstraint">
            <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
@@ -4218,35 +4834,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <number>5</number>
           </property>
           <item>
-           <widget class="QPlainTextEdit" name="availableProcessorsTextEdit">
+           <widget class="QLabel" name="availableProcessorsLabel">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>25</height>
-             </size>
+            <property name="text">
+             <string>Placeholder Text</string>
             </property>
-            <property name="baseSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
-            </property>
-            <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-            </property>
-            <property name="readOnly">
+            <property name="wordWrap">
              <bool>true</bool>
             </property>
            </widget>
@@ -4254,38 +4852,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <layout class="QHBoxLayout" name="numberOfProcessorsLayout">
             <item>
-             <widget class="QPlainTextEdit" name="numberOfProcessorsTextEdit">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>175</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="baseSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::Shape::NoFrame</enum>
-              </property>
-              <property name="verticalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-              </property>
-              <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
-              </property>
-              <property name="readOnly">
-               <bool>true</bool>
-              </property>
-              <property name="plainText">
+             <widget class="QLabel" name="numberOfProcessorsLabel">
+              <property name="text">
                <string>Number of Processors:</string>
               </property>
              </widget>
@@ -4317,6 +4885,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <property name="text">
                <string>Solve</string>
               </property>
+              <property name="icon">
+               <iconset resource="../../wn-resources.qrc">
+                <normaloff>:/cog_go.png</normaloff>:/cog_go.png</iconset>
+              </property>
              </widget>
             </item>
             <item>
@@ -4346,6 +4918,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <string>Output Directory</string>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_18">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item>
               <widget class="QLineEdit" name="outputDirectoryLineEdit">
                <property name="readOnly">
@@ -4359,7 +4943,11 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
                <property name="text">
-                <string>Output Location</string>
+                <string>Save output in...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../../wn-resources.qrc">
+                 <normaloff>:/folder.png</normaloff>:/folder.png</iconset>
                </property>
               </widget>
              </item>
@@ -4395,7 +4983,31 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="surfaceInputDownloadPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0,0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QGroupBox" name="elevationInputTypeGroupBox">
             <property name="sizePolicy">
@@ -4408,6 +5020,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <string>Elevation Input Type</string>
             </property>
             <layout class="QGridLayout" name="gridLayout">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item row="0" column="0">
               <layout class="QHBoxLayout" name="elevationInputTypeLayout">
                <item>
@@ -4496,10 +5120,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </sizepolicy>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="boundingBoxPage">
                 <layout class="QGridLayout" name="gridLayout_3">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item row="0" column="0">
                   <widget class="QLabel" name="boundingBoxNorthLabel">
                    <property name="text">
@@ -4544,6 +5180,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
                <widget class="QWidget" name="pointRadiusPage">
                 <layout class="QGridLayout" name="gridLayout_4">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item row="0" column="0">
                   <widget class="QLabel" name="pointRadiusLatLabel">
                    <property name="sizePolicy">
@@ -4663,11 +5311,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
          </layout>
         </widget>
         <widget class="QWidget" name="pointInitializationDownloadPage">
-         <layout class="QVBoxLayout" name="verticalLayout_10" stretch="0,0,1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_10" stretch="0,0,0">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item>
            <widget class="QGroupBox" name="weatherStationDataGroupBox">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -4675,13 +5347,25 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>250</height>
+              <height>0</height>
              </size>
             </property>
             <property name="title">
              <string>Fetch Station Data</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_17">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
              <item>
               <widget class="QComboBox" name="weatherStationDataSourceComboBox">
                <property name="sizePolicy">
@@ -4714,7 +5398,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <item>
               <widget class="QStackedWidget" name="weatherStationDataSourceStackedWidget">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -4739,8 +5423,26 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </property>
                <widget class="QWidget" name="downloadFromDEMPage">
                 <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
                  <item>
                   <widget class="QLabel" name="downloadFromDEMLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Buffer Around DEM</string>
                    </property>
@@ -4755,6 +5457,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QComboBox" name="downloadFromDEMComboBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
@@ -4786,9 +5494,36 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </layout>
                </widget>
                <widget class="QWidget" name="downloadFromStationIDPage">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="cursor">
+                 <cursorShape>SizeBDiagCursor</cursorShape>
+                </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="0,0,0">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <widget class="QLabel" name="downloadFromStationIDLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Input Station IDs</string>
                    </property>
@@ -4847,7 +5582,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <item>
               <widget class="QStackedWidget" name="weatherStationDataTimeStackedWidget">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -4861,43 +5596,36 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>80</height>
+                 <height>16777215</height>
                 </size>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="downloadMostRecentPage">
                 <layout class="QVBoxLayout" name="verticalLayout_21" stretch="0">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
-                  <widget class="QTextEdit" name="downloadMostRecentTextEdit">
+                  <widget class="QLabel" name="downloadMostRecentLabel">
                    <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>16777215</height>
-                    </size>
-                   </property>
-                   <property name="html">
-                    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Download the most recent weather data for a single time step simulation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   <property name="text">
+                    <string>Download the most recent weather data for a single time step simulation</string>
                    </property>
                   </widget>
                  </item>
@@ -4905,10 +5633,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </widget>
                <widget class="QWidget" name="downloadBetweenDatesPage">
                 <layout class="QVBoxLayout" name="verticalLayout_20">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
                  <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_12">
                    <item>
                     <widget class="QLabel" name="downloadBetweenDatesStartTimeLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>Start Time:</string>
                      </property>
@@ -4923,6 +5669,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </item>
                    <item>
                     <widget class="QLabel" name="downloadBetweenDatesEndTimeLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
                      <property name="text">
                       <string>End Time:</string>
                      </property>
@@ -4952,6 +5704,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QLabel" name="downloadBetweenDatesTimeZoneLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
                    <property name="text">
                     <string>Current Time Zone: </string>
                    </property>
@@ -5045,7 +5803,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
        </widget>
        <widget class="QTextEdit" name="consoleTextEdit">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -5059,7 +5817,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>16777215</height>
+          <height>150</height>
          </size>
         </property>
         <property name="readOnly">

@@ -80,13 +80,13 @@ void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
     ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
     ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
-    ui->inputsStackedWidget->setCurrentIndex(20);
+    ui->inputsStackedWidget->setCurrentIndex(17);
 }
 
 void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 {
     ui->pointInitializationTreeView->collapseAll();
-    ui->inputsStackedWidget->setCurrentIndex(10);
+    ui->inputsStackedWidget->setCurrentIndex(7);
 }
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
@@ -227,7 +227,7 @@ void PointInitializationInput::fetchStationDataFinished()
         futureWatcher = nullptr;
     }
 
-    ui->inputsStackedWidget->setCurrentIndex(10);
+    ui->inputsStackedWidget->setCurrentIndex(7);
 }
 
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
@@ -348,8 +348,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         if (!timeSeriesFlag)
         {
             QDateTime dateModified = QFileInfo(recentFileSelected).birthTime();
-            ui->weatherStationDataTextEdit->setText("Simulation time set to: " + dateModified.toString());
-            ui->weatherStationDataTextEdit->setProperty("simulationTime", dateModified);
+            ui->weatherStationDataLabel->setText("Simulation time set to: " + dateModified.toString());
+            ui->weatherStationDataLabel->setProperty("simulationTime", dateModified);
         }
         ui->pointInitializationTreeView->setProperty("timeSeriesFlag", timeSeriesFlag);
     }

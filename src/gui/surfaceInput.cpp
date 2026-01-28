@@ -175,7 +175,7 @@ void SurfaceInput::pointRadiusLineEditsTextChanged()
 
 void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
 {
-    ui->inputsStackedWidget->setCurrentIndex(5);
+    ui->inputsStackedWidget->setCurrentIndex(3);
 
     ui->elevationInputTypeComboBox->setCurrentIndex(0);
     ui->elevationFileTypeComboBox->setCurrentIndex(0);
@@ -248,7 +248,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
 
 void SurfaceInput::elevationInputFileDownloadButtonClicked()
 {
-    ui->inputsStackedWidget->setCurrentIndex(19);
+    ui->inputsStackedWidget->setCurrentIndex(16);
 }
 
 void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
@@ -359,7 +359,7 @@ void SurfaceInput::fetchDEMFinished()
     }
 
     ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-    ui->inputsStackedWidget->setCurrentIndex(5);
+    ui->inputsStackedWidget->setCurrentIndex(3);
 }
 
 void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)

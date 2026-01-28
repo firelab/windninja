@@ -52,7 +52,11 @@ void ServerBridge::checkMessages(void)
             if (papszMsg != NULL)
             {
                 mbox.setTextFormat(Qt::RichText);
-                mbox.setText(papszMsg);
+
+                QString formattedMsg = QString(
+                                           "<div style='line-height:1.5;'>%1</div>"
+                                           ).arg(papszMsg);
+                mbox.setText(formattedMsg);
                 mbox.setTextInteractionFlags(Qt::TextBrowserInteraction);
                 mbox.setStandardButtons(QMessageBox::Ok);
                 mbox.setWindowModality(Qt::ApplicationModal);
