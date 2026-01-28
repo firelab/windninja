@@ -110,7 +110,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArm
 
     if( nSize < 1 )
     {
-        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
         throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize));
     }
 
@@ -150,7 +150,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
 
     if( timeList.size() == 0 )
     {
-        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
         throw std::runtime_error("Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
     }
 
@@ -373,7 +373,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
 
     if( times.size() == 0 )
     {
-        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
         throw std::runtime_error("Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
     }
 
@@ -1359,7 +1359,7 @@ void ninjaArmy::setAtmFlags()
  *  C-API makeArmy function calls
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::NinjaMakeDomainAverageArmy( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
+int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
 {
     try
     {
@@ -1370,6 +1370,11 @@ int ninjaArmy::NinjaMakeDomainAverageArmy( unsigned int numNinjas, bool momentum
             throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
         }
 #endif
+
+        if( numNinjas < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::NinjaMakeDomainAverageArmy()", numNinjas));
+        }
 
         //Get the number of elements in the arrays
 /*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
@@ -1456,6 +1461,15 @@ int ninjaArmy::NinjaMakePointArmy( int * yearList, int * monthList, int * dayLis
             throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
         }
 
+        if( timeListSize < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input timeListSize '%d' in ninjaArmy::NinjaMakePointArmy()", timeListSize));
+        }
+        if( numStationFiles < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numStationFiles '%d' in ninjaArmy::NinjaMakePointArmy()", numStationFiles));
+        }
+
         wxStation::SetStationFormat(wxStation::newFormat);
 
         std::vector <boost::posix_time::ptime> timeList;
@@ -1503,6 +1517,11 @@ int ninjaArmy::NinjaMakeWeatherModelArmy( const char * forecastFilename, const c
             throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
         }
 #endif
+
+        if( size < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input size '%d' in ninjaArmy::NinjaMakeWeatherModelArmy()", size));
+        }
 
         wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
         std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));

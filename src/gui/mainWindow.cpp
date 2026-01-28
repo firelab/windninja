@@ -491,8 +491,8 @@ void MainWindow::solveButtonClicked()
 
 //        ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);
         ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeDomainAverageArmy
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeDomainAverageArmy
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
         //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), "fudge", airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h, but then catches error as expected, well it technically throws two separate error messages, but both are caught properly
         if(ninjaErr != NINJA_SUCCESS)
         {
@@ -681,28 +681,28 @@ void MainWindow::solveButtonClicked()
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    stationFileNames.size(), DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected, though month or date out of range wasn't quite the error I was expecting
+                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error, and instead of the single unexpected month or date out of range error that was seen for this case.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), 0,
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    stationFileNames.size(), DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makePointArmy
+                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), nTimeSteps,
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    -1, DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //    );  // hard core seg faults
+                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), nTimeSteps,
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    0, DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //    );  // hard core seg faults
+                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), nTimeSteps,
@@ -817,7 +817,7 @@ void MainWindow::solveButtonClicked()
                 //    static_cast<int>(stationFileNames.size()),
                 //    DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //);  // catches error as expected, though month or date out of range wasn't quite the error I was expecting
+                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error, and instead of the single unexpected month or date out of range error that was seen for this case.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), 0,
@@ -826,7 +826,7 @@ void MainWindow::solveButtonClicked()
                 //    static_cast<int>(stationFileNames.size()),
                 //    DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makePointArmy
+                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), nTimeSteps,
@@ -835,7 +835,7 @@ void MainWindow::solveButtonClicked()
                 //    -1,
                 //    DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //);  // hard core seg faults
+                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), nTimeSteps,
@@ -844,7 +844,7 @@ void MainWindow::solveButtonClicked()
                 //    0,
                 //    DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //);  // hard core seg faults
+                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), nTimeSteps,
@@ -902,8 +902,8 @@ void MainWindow::solveButtonClicked()
         }
 
         ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, -1, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeWeatherArmy
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, 0, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeWeatherArmy
+        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, -1, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeWeatherModelArmy() single messaging error, instead of the double messaging makeWeatherArmy() error.
+        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, 0, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeWeatherModelArmy() single messaging error, instead of the double messaging makeWeatherArmy() error.
         //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, "fudge", timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
         //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), "fudge", inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
         if(ninjaErr != NINJA_SUCCESS)

@@ -172,7 +172,7 @@ public:
     /*-----------------------------------------------------------------------------
      *  C-API makeArmy function calls
      *-----------------------------------------------------------------------------*/
-    int NinjaMakeDomainAverageArmy( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions=NULL );
+    int NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions=NULL );
     int NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions=NULL );
     int NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papzOptions=NULL );
 
