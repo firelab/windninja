@@ -491,9 +491,9 @@ void MainWindow::solveButtonClicked()
 
 //        ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);
         ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), "fudge", airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h, but then catches error as expected
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeDomainAverageArmy
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeDomainAverageArmy
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), "fudge", airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h, but then catches error as expected, well it technically throws two separate error messages, but both are caught properly
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaMakeDomainAverageArmy: ninjaErr =" << ninjaErr;
@@ -540,7 +540,7 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = { start.time().minute(), end.time().minute() };
 
             // runs fine for the single time run, as expected,
-            // but errors without a proper ninjaCom message for the multi-time run
+            // and, errors and is properly caught for the multi-time run
             /*QVector<int> year   = {start.date().year(),   start.date().year()};
             QVector<int> month  = {start.date().month(),  start.date().month()};
             QVector<int> day    = {start.date().day(),    start.date().day()};
@@ -548,7 +548,7 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = {start.time().minute(), start.time().minute()};*/
 
             // runs fine for the single time run, as expected,
-            // but errors without a proper ninjaCom message for the multi-time run
+            // and, errors and is properly caught for the multi-time run
             /*QVector<int> year   = {end.date().year(),   end.date().year()};
             QVector<int> month  = {end.date().month(),  end.date().month()};
             QVector<int> day    = {end.date().day(),    end.date().day()};
@@ -556,7 +556,7 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = {end.time().minute(), end.time().minute()};*/
 
             // runs fine for the single time run, as expected,
-            // but errors without a proper ninjaCom message for the multi-time run
+            // and, errors and is properly caught for the multi-time run
             /*QVector<int> year   = {start.date().year(),   start.date().year()-1};
             QVector<int> month  = {start.date().month(),  start.date().month()};
             QVector<int> day    = {start.date().day(),    start.date().day()};
@@ -564,9 +564,9 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = {start.time().minute(), start.time().minute()};*/
 
             // runs fine for the single time run, as expected,
-            // but errors without a proper ninjaCom message for the multi-time run,
-            //  which is interesting because the download without extra time difference should also error but does not always error,
-            //  implies the time checking for this or the run from this, runs better
+            // and, errors and is properly caught for the multi-time run
+            //  which is interesting because the download without an additional hour time difference should also error but does not always error,
+            //  so this implies the time checking for the run from this, is more strict, and better
             /*QVector<int> year   = {start.date().year(),   start.date().year()};
             QVector<int> month  = {start.date().month(),  start.date().month()};
             QVector<int> day    = {start.date().day(),    start.date().day()};
@@ -574,7 +574,7 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = {start.time().minute(), start.time().minute()};*/
 
             // errors for both the single time run AND the multi-time run,
-            // but errors without a proper ninjaCom message for both cases
+            // and errors are properly caught for both cases
             /*QVector<int> year   = {end.date().year()+1,   end.date().year()};
             QVector<int> month  = {end.date().month(),  end.date().month()};
             QVector<int> day    = {end.date().day(),    end.date().day()};
@@ -582,7 +582,7 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = {end.time().minute(), end.time().minute()};*/
 
             // errors for both the single time run AND the multi-time run,
-            // but errors without a proper ninjaCom message for both cases
+            // and errors are properly caught for both cases
             /*QVector<int> year   = {end.date().year(),   end.date().year()};
             QVector<int> month  = {end.date().month(),  end.date().month()};
             QVector<int> day    = {end.date().day(),    end.date().day()};
@@ -590,8 +590,8 @@ void MainWindow::solveButtonClicked()
             QVector<int> minute = {end.time().minute(), end.time().minute()};*/
 
             int nTimeSteps = ui->weatherStationDataTimestepsSpinBox->value();
-            //int nTimeSteps = 1;  // runs fine for the single time, throws an error properly for multi-times, well the error implies out of index but maybe not at the proper step ("NinjaSetNumberCPUS", "Run 0: ERROR: Exception caught: invalid index 1". But an error is still at least caught.
-            //int nTimeSteps = 2;   // runs fine for multi-times, but for the single time, an error is getting thrown, but apparently the solver isn't stopping because it is an error on just one single thread???? Quirky behavior that is not good. "ERROR 4: : No such file or directory, Run 1: ERROR: Exception caught: Cannot open input file for reading in ninja::readInputFile()." but then it continues with the run0 info to completion, then it ends hanging because it didn't stop at the error message and it finds it DID have some kind of error at the end. Ugh.
+            //int nTimeSteps = 1;  // runs fine for the single time, properly throws an error for multi-times, well the error implies out of index but maybe not at the proper step ("NinjaSetNumberCPUS", "Run 0: ERROR: Exception caught: invalid index 1". But the error is at least properly caught.
+            //int nTimeSteps = 2;   // runs fine for 2 timestep multi-times, but for 1 timestep multi-times, an error is getting thrown, but apparently the solver isn't stopping because it is an error on just one single thread???? Quirky behavior that is not good. "ERROR 4: : No such file or directory, Run 1: ERROR: Exception caught: Cannot open input file for reading in ninja::readInputFile()." but then it continues with the run0 info to completion, then it ends hanging because it didn't stop at the error message and it finds it DID have some kind of error at the end. Ugh. I do see that it printed red, so it SAW that it was an error message, but I guess it wasn't a THROWN error message or something? So it didn't properly stop the solver?? Not sure what is going on here.
 
             QVector<int> outYear(nTimeSteps);
             QVector<int> outMonth(nTimeSteps);
@@ -649,7 +649,7 @@ void MainWindow::solveButtonClicked()
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(),
                 //    1, timeZoneBytes.data()
-                //    );  // seems to run this function fine, but then it confuses the makePointArmy(), but where it is left hanging rather than dying properly with an error message
+                //    );  // catches error as expected, though month or date out of range wasn't quite the error I was expecting
                 //ninjaErr = NinjaGetTimeList(
                 //    ninjaTools,
                 //    year.data(), month.data(), day.data(),
@@ -681,14 +681,14 @@ void MainWindow::solveButtonClicked()
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    stationFileNames.size(), DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //    );  // ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+                //    );  // catches error as expected, though month or date out of range wasn't quite the error I was expecting
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), 0,
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    stationFileNames.size(), DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected
+                //    );  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makePointArmy
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), nTimeSteps,
@@ -709,7 +709,7 @@ void MainWindow::solveButtonClicked()
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    stationFileNames.size(), "fudge",
                 //    true, momentumFlag, papszOptions
-                //    );  // um, it warns that the dem doesn't exist, but then continues on without throwing an error or a ninjaCom, so the solver continues as if everything is normal
+                //    );  // um, it warns that the dem doesn't exist, but then continues on without throwing an error or a ninjaCom, so the solver continues as if everything is normal. The warning is "ERROR 4: fudge: No such file or directory" four times, yet still it continues as if nothing went wrong.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    outYear.data(), outMonth.data(), outDay.data(),
                 //    outHour.data(), outMinute.data(), nTimeSteps,
@@ -723,7 +723,7 @@ void MainWindow::solveButtonClicked()
                 //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
                 //    stationFileNames.size(), DEMPath.toUtf8().data(),
                 //    true, true, papszOptions
-                //    );  // throws the error, code isn't setup well to catch the error yet
+                //    );  // catches error as expected
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
@@ -764,11 +764,11 @@ void MainWindow::solveButtonClicked()
             //day = 0;  // catches error as expected
             //day = 33;  // catches error as expected
 
-            //hour = -1;  // this one SHOULD error, but runs fine somehow, no errors thrown
-            //hour = 26;  // this one SHOULD error, but runs fine somehow, no errors thrown
+            //hour = -1;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
+            //hour = 26;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
 
-            //minute = -1;  // this one SHOULD error, but runs fine somehow, no errors thrown
-            //minute = 78;  // this one SHOULD error, but runs fine somehow, no errors thrown
+            //minute = -1;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
+            //minute = 78;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
 
             int outYear, outMonth, outDay, outHour, outMinute;
 
@@ -817,7 +817,7 @@ void MainWindow::solveButtonClicked()
                 //    static_cast<int>(stationFileNames.size()),
                 //    DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //);  // ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+                //);  // catches error as expected, though month or date out of range wasn't quite the error I was expecting
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), 0,
@@ -826,7 +826,7 @@ void MainWindow::solveButtonClicked()
                 //    static_cast<int>(stationFileNames.size()),
                 //    DEMPath.toUtf8().data(),
                 //    true, momentumFlag, papszOptions
-                //);  // catches error as expected
+                //);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makePointArmy
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), nTimeSteps,
@@ -853,7 +853,7 @@ void MainWindow::solveButtonClicked()
                 //    static_cast<int>(stationFileNames.size()),
                 //    "fudge",
                 //    true, momentumFlag, papszOptions
-                //);  // um, it warns that the dem doesn't exist, but then continues on without throwing an error or a ninjaCom, so the solver continues as if everything is normal
+                //);  // um, it warns that the dem doesn't exist, but then continues on without throwing an error or a ninjaCom, so the solver continues as if everything is normal. The warning is "ERROR 4: fudge: No such file or directory" four times, yet still it continues as if nothing went wrong.
                 //ninjaErr = NinjaMakePointArmy( ninjaArmy,
                 //    yearVec.data(), monthVec.data(), dayVec.data(),
                 //    hourVec.data(), minuteVec.data(), nTimeSteps,
@@ -871,7 +871,7 @@ void MainWindow::solveButtonClicked()
                 //    static_cast<int>(stationFileNames.size()),
                 //    DEMPath.toUtf8().data(),
                 //    true, true, papszOptions
-                //);  // throws the error, code isn't setup well to catch the error yet
+                //);  // catches error as expected
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy ninjaErr =" << ninjaErr;
@@ -902,10 +902,10 @@ void MainWindow::solveButtonClicked()
         }
 
         ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, -1, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, 0, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, "fudge", timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), "fudge", inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, -1, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeWeatherArmy
+        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, 0, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, well replicates the error twice unless I comment out the extra ninjaCom instance in makeWeatherArmy
+        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, "fudge", timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
+        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), "fudge", inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaMakeWeatherModelArmy ninjaErr =" << ninjaErr;

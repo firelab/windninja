@@ -110,7 +110,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArm
 
     if( nSize < 1 )
     {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
+        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
         throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize));
     }
 
@@ -150,7 +150,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
 
     if( timeList.size() == 0 )
     {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
         throw std::runtime_error("Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
     }
 
@@ -373,7 +373,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
 
     if( times.size() == 0 )
     {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+        //Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
         throw std::runtime_error("Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
     }
 
@@ -386,8 +386,7 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
         if(fcastList == NULL){
             Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
-            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
-                  std::string(" cannot be opened."));
+            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() + std::string(" cannot be opened."));
         }
         while(1){
             const char* f = CPLReadLine(fcastList);
@@ -1354,6 +1353,193 @@ void ninjaArmy::setAtmFlags()
             }
         }
     }
+}
+
+/*-----------------------------------------------------------------------------
+ *  C-API makeArmy function calls
+ *-----------------------------------------------------------------------------*/
+
+int ninjaArmy::NinjaMakeDomainAverageArmy( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        //Get the number of elements in the arrays
+/*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+        size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
+//        size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+//        size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+//        size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+//        size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+//        size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+//        size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+//        size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+//
+//        if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+//        {
+//            throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+//
+
+        makeDomainAverageArmy( numNinjas, momentumFlag );
+
+        int retval = NINJA_E_INVALID;
+        for(int i=0; i<getSize(); i++)
+        {
+            retval = setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputSpeed() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputDirection() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setDateTime() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniAirTemp() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniCloudCover() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+        }
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions )
+{
+    try
+    {
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
+        }
+
+        wxStation::SetStationFormat(wxStation::newFormat);
+
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i < timeListSize; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        }
+
+        std::vector<std::string> sFiles;
+        for (int i = 0; i < numStationFiles; i++)
+        {
+            sFiles.emplace_back(stationFileNames[i]);
+        }
+        pointInitialization::storeFileNames(sFiles);
+
+        makePointArmy( timeList, std::string(timeZone), sFiles[0], std::string(elevationFile), matchPointsFlag, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+        std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+        std::vector<blt::local_date_time> timeList;
+
+        for(int i = 0; i < fullTimeList.size(); i++)
+        {
+            for(int j = 0; j < size; j++)
+            {
+                std::string time1 = fullTimeList[i].to_string();
+                std::string time2(inputTimeList[j]);
+                if(time1 == time2)
+                {
+                    timeList.push_back(fullTimeList[i]);
+                }
+            }
+        }
+
+        makeWeatherModelArmy( std::string( forecastFilename ), std::string( timeZone ), timeList, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
 }
 
 /*-----------------------------------------------------------------------------
