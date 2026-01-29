@@ -1254,6 +1254,16 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
+    ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, ui->clipOutputSpinBox->value(), papszOptions);
+    //ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i+10, ui->clipOutputSpinBox->value(), papszOptions);  // test error handling, looks good
+    //ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, -1, papszOptions);  // test error handling
+    //ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, 50, papszOptions);  // test error handling, message might need improved, but it IS an error, as it should be
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputBufferClipping: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
     ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
     //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)

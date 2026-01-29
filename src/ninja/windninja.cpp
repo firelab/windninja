@@ -1629,14 +1629,12 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
     ( NinjaArmyH * army, const int nIndex, const double percent, char ** papszOptions )
 {
-    if( NULL != army )
+    if(!army)
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setOutputBufferClipping( nIndex, percent );
+        NINJA_E_NULL_PTR;
     }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
+
+    return reinterpret_cast<ninjaArmy*>( army )->setOutputBufferClipping( nIndex, percent );
 }
 
 /**
