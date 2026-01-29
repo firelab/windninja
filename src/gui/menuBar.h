@@ -51,7 +51,7 @@ public:
     MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 signals:
-    void writeToConsole(QString message, QColor color = Qt::white);
+    void writeToConsoleSignal(QString message, QColor color=Qt::black);
 
 private slots:
     // functions for Menu actions

@@ -96,7 +96,7 @@ signals:
     void updateMetholodyState();
     void updateProgressValueSignal(int run, int progress);
     void updateProgressMessageSignal(const QString &msg);
-    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
+    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
 
 protected:
     void showEvent(QShowEvent *event) override;
@@ -111,7 +111,7 @@ private slots:
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
-    void writeToConsole(QString message, QColor color = Qt::white);
+    void writeToConsole(QString message, QColor color=Qt::black);
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);
     void cancelSolve();

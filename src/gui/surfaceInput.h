@@ -61,7 +61,7 @@ signals:
     void updateState();
     void updateTreeView();
     void updateProgressMessageSignal(const QString &msg);
-    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
+    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);

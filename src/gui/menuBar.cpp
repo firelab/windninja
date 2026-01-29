@@ -79,22 +79,22 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
 
 void MenuBar::newProjectActionTriggered()
 {
-    emit writeToConsole("MenuBar: newProject() triggered");
+    emit writeToConsoleSignal("MenuBar: newProject() triggered");
 }
 
 void MenuBar::openProjectActionTriggered()
 {
-    emit writeToConsole("MenuBar: openProject() triggered");
+    emit writeToConsoleSignal("MenuBar: openProject() triggered");
 }
 
 void MenuBar::exportSolutionActionTriggered()
 {
-    emit writeToConsole("MenuBar: exportSolution() triggered");
+    emit writeToConsoleSignal("MenuBar: exportSolution() triggered");
 }
 
 void MenuBar::closeProjectActionTriggered()
 {
-    emit writeToConsole("MenuBar: closeProject() triggered");
+    emit writeToConsoleSignal("MenuBar: closeProject() triggered");
 }
 
 void MenuBar::writeConsoleOutputActionTriggered()
@@ -109,13 +109,13 @@ void MenuBar::writeConsoleOutputActionTriggered()
     if (!fileName.isEmpty())
     {
         QDateTime currentTime = QDateTime::currentDateTime();
-        emit writeToConsole("writing console output to " + fileName, Qt::darkGreen);
-        emit writeToConsole("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
+        emit writeToConsoleSignal("writing console output to " + fileName, Qt::darkGreen);
+        emit writeToConsoleSignal("current time is " + currentTime.toString("MM/dd/yyyy hh:mm:ss t"), Qt::darkGreen);
 
         QFile file(fileName);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
         {
-            emit writeToConsole("Cannot open " + fileName + " for writing.", Qt::red);
+            emit writeToConsoleSignal("Cannot open " + fileName + " for writing.", Qt::red);
             return;
         }
 
@@ -135,14 +135,14 @@ void MenuBar::writeBlankStationFileActionTriggered()
 
     if(!fileName.isEmpty())
     {
-        emit writeToConsole("writing blank station file to " + fileName, Qt::darkGreen);
+        emit writeToConsoleSignal("writing blank station file to " + fileName, Qt::darkGreen);
 
         char** papszOptions = nullptr;
         int ninjaErr = NinjaWriteBlankWxStationFile(fileName.toStdString().c_str(), papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaWriteBlankWxStationFile: ninjaErr=" << ninjaErr;
-            emit writeToConsole("failed to write blank station file!", Qt::red);
+            emit writeToConsoleSignal("failed to write blank station file!", Qt::red);
         }
     }
 }
@@ -161,7 +161,7 @@ void MenuBar::setConfigurationOptionActionTriggered()
         return;
 
     qDebug() << "Setting configuration option" << key << "to" << val;
-    emit writeToConsole("Setting configuration option " + key + " to " + val);
+    emit writeToConsoleSignal("Setting configuration option " + key + " to " + val);
 
     CPLSetConfigOption(
         key.toUtf8().constData(),
@@ -174,7 +174,7 @@ void MenuBar::displayArcGISProGuideActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/displaying_wind_vectors_in_ArcGIS_Pro.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if(!QDesktopServices::openUrl(QUrl(displayFile)))
     {
         QMessageBox::warning(
@@ -190,7 +190,7 @@ void MenuBar::displayTutorial1ActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial1.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(
@@ -207,7 +207,7 @@ void MenuBar::displayTutorial2ActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial2.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(
@@ -224,7 +224,7 @@ void MenuBar::displayTutorial3ActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial3.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(
@@ -241,7 +241,7 @@ void MenuBar::displayTutorial4ActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/tutorials/WindNinja_tutorial4.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(
@@ -258,7 +258,7 @@ void MenuBar::displayDemDownloadInstructionsActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/download_elevation_file.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(
@@ -275,7 +275,7 @@ void MenuBar::displayFetchDemInstructionsActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/fetch_dem_instructions.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(
@@ -292,7 +292,7 @@ void MenuBar::displayCommandLineInterfaceInstructionsActionTriggered()
     QString displayFile = dataPath.absoluteFilePath("../share/windninja/doc/CLI_instructions.pdf");
     displayFile = QDir::cleanPath(displayFile);
 
-    emit writeToConsole("Opening " + displayFile);
+    emit writeToConsoleSignal("Opening " + displayFile);
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(displayFile)))
     {
         QMessageBox::warning(

@@ -52,7 +52,7 @@ public:
 signals:
     void updateState();
     void updateProgressMessageSignal(const QString &msg);
-    void writeToConsoleSignal(const QString &msg, QColor color = Qt::white);
+    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
 
 public slots:
     void updateTreeView();
