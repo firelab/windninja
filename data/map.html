@@ -35,7 +35,8 @@
     <meta charset="UTF-8">
     <title>Leaflet Map</title>
     <style>
-        html, body {
+        html, body 
+        {
             height: 100%;
             width: 100%;
             margin: 0;
@@ -43,57 +44,12 @@
             overflow: hidden;
             box-sizing: border-box;
         }
-        #map {
+        #map 
+        {
             height: 100%;
             width: 100%;
             box-sizing: border-box;
         }
-        .leaflet-div-icon {
-            background: white;
-            border: 2px solid #0077ff;
-            border-radius: 50%;
-            width: 10px !important;
-            height: 10px !important;
-            margin-left: -5px !important;
-            margin-top: -5px !important;
-            box-shadow: 0 0 1px #000;
-        }
-        .leaflet-drag-target {
-            cursor: move !important;
-        }
-        .leaflet-control-center {
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        .leaflet-control-center a {
-            display: block;
-            text-align: center;
-            color: #0077ff;
-            font-size: 20px;
-            line-height: 26px;
-            width: 28px;
-            height: 28px;
-            text-decoration: none;
-        }
-        .leaflet-control-center a:hover {
-            background: #0077ff;
-            color: white;
-        }
-        .leaflet-topcenter {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    pointer-events: none;
-}
-
-.kmz-top-center-legend img {
-    display: block;
-}
-
     </style>
 
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
