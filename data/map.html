@@ -52,49 +52,42 @@
         }
     </style>
 
+    <!-- Leaflet stylesheets -->
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
     <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
 
+    <!-- Leaflet and Draw dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <!-- Leaflet and Draw dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <script src="./leaflet/leaflet-src.js"></script>
     <script src="./leaflet/L.KML.js"></script>
 
     <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
     <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Poly.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Marker.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.CircleMarker.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Circle.js"></script>
+
     <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Polyline.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Polygon.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Circle.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Marker.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.CircleMarker.js"></script>
-    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
-    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
-    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
-    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
-    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
-    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+
+    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+
     <script src="./leaflet/draw/src/Control.Draw.js"></script>
-    <script src="./leaflet/draw/src/Tooltip.js"></script>
     <script src="./leaflet/draw/src/Toolbar.js"></script>
     <script src="./leaflet/draw/src/draw/DrawToolbar.js"></script>
     <script src="./leaflet/draw/src/edit/EditToolbar.js"></script>
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
+
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
     <script>
+
+        // Script variables
         const apiKey = "pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ";
 
         const mapBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
@@ -110,12 +103,25 @@
             zoom: 8
         });
         
-
         const mapRectangleLayer = new L.FeatureGroup();
         map.addLayer(mapRectangleLayer);
-
         const rectangleDrawer = new L.Draw.Rectangle(map);
+        let activeKmzLayer = null;
+        const baseMaps = {};
+        const overlayMaps = {};
+        const layerControl = L.control.layers(baseMaps, overlayMaps);
+        let layerControlAdded = false;
+        let drawDEMCheck = false;
 
+        let kmzBaseLayers = [];
+        let kmzLegendControls = [];
+        
+        L.control.scale().addTo(map);
+
+        const centerControl = L.control({ position: 'topleft' });
+        let centerControlAdded = false;
+
+        // Script functions
         function sendBoundingBox(layer) {
             const bounds = layer.getBounds();
             const bboxData = {
@@ -124,6 +130,7 @@
                 east: bounds.getEast(),
                 west: bounds.getWest()
             };
+
             if (window.bridge?.receiveBoundingBox) {
                 window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
             }
@@ -137,8 +144,8 @@
             sendBoundingBox(rectangle);
             map.fitBounds(rectangle.getBounds());
             rectangle.on('edit', () => {
-                sendBoundingBox(rectangle);
-                map.fitBounds(rectangle.getBounds()); 
+                    sendBoundingBox(rectangle);
+                    map.fitBounds(rectangle.getBounds()); 
             });
         }
 
@@ -173,13 +180,62 @@
 
         function stopRectangleDrawing() {
             mapRectangleLayer.clearLayers();
+            
             if(!drawDEMCheck) {
                 hideCenterControl();
             }
+            
             rectangleDrawer.disable();
         }
 
-        let activeKmzLayer = null;
+        map.on('draw:created', ({ layer }) => {
+            mapRectangleLayer.clearLayers();
+            mapRectangleLayer.addLayer(layer);
+            layer.editing.enable();
+            sendBoundingBox(layer);
+            layer.on('edit', () => 
+            {
+                sendBoundingBox(layer);
+                map.fitBounds(layer.getBounds());
+            });
+            map.fitBounds(layer.getBounds());
+            showCenterControl();
+        });
+
+        function showCenterControl() {
+            if (!centerControlAdded) {
+                centerControl.addTo(map);
+                centerControlAdded = true;
+            }
+        }
+
+        function hideCenterControl() {
+            if (centerControlAdded) {
+                map.removeControl(centerControl);
+                centerControlAdded = false;
+            }
+        }
+
+        centerControl.onAdd = function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
+            const button = L.DomUtil.create('a', '', container);
+            button.innerHTML = '⌖';
+            button.title = 'Center on current shape';
+            button.href = '#';
+
+            L.DomEvent.on(button, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                if (mapRectangleLayer.getLayers().length > 0) {
+                    const layer = mapRectangleLayer.getLayers()[0];
+                    if (layer.getBounds) {
+                        map.fitBounds(layer.getBounds());
+                    }
+                }
+            });
+
+            return container;
+        };
 
         async function loadKmzFromBase64(kmlData, timeSeries) {
             clearKmzBaseLayers();
@@ -276,70 +332,6 @@
                 }
             }
         }
-
-
-        map.on('draw:created', ({ layer }) => {
-            mapRectangleLayer.clearLayers();
-            mapRectangleLayer.addLayer(layer);
-            layer.editing.enable();
-            sendBoundingBox(layer);
-            layer.on('edit', () => {
-                sendBoundingBox(layer);
-                map.fitBounds(layer.getBounds());
-            });
-            map.fitBounds(layer.getBounds());
-            showCenterControl();
-        });
-
-        function showCenterControl() {
-            if (!centerControlAdded) {
-                centerControl.addTo(map);
-                centerControlAdded = true;
-            }
-        }
-
-        function hideCenterControl() {
-            if (centerControlAdded) {
-                map.removeControl(centerControl);
-                centerControlAdded = false;
-            }
-        }
-
-
-        const baseMaps = {};
-        const overlayMaps = {};
-        const layerControl = L.control.layers(baseMaps, overlayMaps);
-        let layerControlAdded = false;
-        let drawDEMCheck = false;
-
-        let kmzBaseLayers = [];
-let kmzLegendControls = [];
-        
-        L.control.scale().addTo(map);
-
-        const centerControl = L.control({ position: 'topleft' });
-        let centerControlAdded = false;
-
-        centerControl.onAdd = function(map) {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
-            const button = L.DomUtil.create('a', '', container);
-            button.innerHTML = '⌖';
-            button.title = 'Center on current shape';
-            button.href = '#';
-
-            L.DomEvent.on(button, 'click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                L.DomEvent.preventDefault(e);
-                if (mapRectangleLayer.getLayers().length > 0) {
-                    const layer = mapRectangleLayer.getLayers()[0];
-                    if (layer.getBounds) {
-                        map.fitBounds(layer.getBounds());
-                    }
-                }
-            });
-
-            return container;
-        };
 
         function clearKmzBaseLayers() {
     kmzBaseLayers.forEach(layer => {
