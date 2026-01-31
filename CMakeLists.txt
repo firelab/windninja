@@ -197,17 +197,20 @@ endif(PHONE_HOME_QUERIES)
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
 if(NINJAFOAM)
-    add_definitions(-DNINJAFOAM)
+    add_compile_definitions(NINJAFOAM)
     if(WIN32 AND FIRELAB_PACKAGE)
-        add_definitions(-DFIRELAB_PACKAGE)
+        add_compile_definitions(FIRELAB_PACKAGE)
         find_path(FOAM_MINGW_PATH OpenFOAM-2.2.x
                   DOC "Path to x-compiled OpenFOAM directory")
-        if(FOAM_MINGW_PATH-NOTFOUND)
-            message(FATAL_ERROR "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
-        endif(FOAM_MINGW_PATH-NOTFOUND)
-    endif(WIN32 AND FIRELAB_PACKAGE)
-endif(NINJAFOAM)
-string(REGEX REPLACE "\\\\" "/" FOAM_MINGW_PATH "${FOAM_MINGW_PATH}")
+
+        if(NOT FOAM_MINGW_PATH)
+            message(FATAL_ERROR
+                "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
+        endif()
+
+        string(REGEX REPLACE "\\\\" "/" FOAM_MINGW_PATH "${FOAM_MINGW_PATH}")
+    endif()
+endif()
 
 # Miscellaneous options
 option(NINJA_SPEED_TESTING "Enable initialization speed dampening" OFF)
@@ -331,13 +334,18 @@ endif()
 
 # Run windeployqt6.exe to provide all QT related DLLs
 if(MSVC)
-    set(WINDEPLOYQT_EXE "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin/windeployqt6.exe")
+    find_program(WINDEPLOYQT_EXE
+        NAMES windeployqt6 windeployqt
+        HINTS "${Qt6_DIR}/../../../bin"
+        REQUIRED
+    )
+
     add_custom_target(deploy_windninja ALL
-        COMMAND "${WINDEPLOYQT_EXE}"  
+        COMMAND "${WINDEPLOYQT_EXE}"
                 "$<TARGET_FILE:WindNinja>"
         DEPENDS WindNinja
     )
-endif(MSVC)
+endif()
 
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
@@ -485,6 +493,11 @@ if(WIN32)
         DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/proj/"
         DESTINATION share/windninja/proj-data/data
         COMPONENT apps)
+
+    if(NINJAFOAM)
+        install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
+        install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
+    endif(NINJAFOAM)
 endif(WIN32)
 
 set(ZIPFILES "")
