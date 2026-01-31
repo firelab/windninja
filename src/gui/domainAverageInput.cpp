@@ -234,5 +234,22 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         airTempSpin->setRange(-40, 200);
         table->setCellWidget(row, 5, airTempSpin);
     }
+
+    if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
+    {
+        table->showColumn(2);
+        table->showColumn(3);
+        table->showColumn(4);
+        table->showColumn(5);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    }
+    else
+    {
+        table->hideColumn(2);
+        table->hideColumn(3);
+        table->hideColumn(4);
+        table->hideColumn(5);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    }
 }
 

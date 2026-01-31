@@ -353,21 +353,21 @@ void MainWindow::diurnalCheckBoxClicked()
     state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
     QTableWidget* table = ui->domainAverageTable;
-    if(!ui->diurnalCheckBox->isChecked())
-    {
-        table->hideColumn(2);
-        table->hideColumn(3);
-        table->hideColumn(4);
-        table->hideColumn(5);
-        ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    }
-    else
+    if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
     {
         table->showColumn(2);
         table->showColumn(3);
         table->showColumn(4);
         table->showColumn(5);
-        ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    }
+    else
+    {
+        table->hideColumn(2);
+        table->hideColumn(3);
+        table->hideColumn(4);
+        table->hideColumn(5);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     }
 
     emit updateDirunalState();
@@ -377,6 +377,24 @@ void MainWindow::stabilityCheckBoxClicked()
 {
     AppState& state = AppState::instance();
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
+
+    QTableWidget* table = ui->domainAverageTable;
+    if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
+    {
+        table->showColumn(2);
+        table->showColumn(3);
+        table->showColumn(4);
+        table->showColumn(5);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    }
+    else
+    {
+        table->hideColumn(2);
+        table->hideColumn(3);
+        table->hideColumn(4);
+        table->hideColumn(5);
+        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    }
 
     emit updateStabilityState();
 }
