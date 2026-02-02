@@ -450,13 +450,15 @@ void MainWindow::solveButtonClicked()
         initializationMethod = "domain_average";
         QList<double> speeds;
         QList<double> directions;
-//        QList<int> years;
-//        QList<int> months;
-//        QList<int> days;
-//        QList<int> hours;
-//        QList<int> minutes;
-//        QList<double> airTemps;
-//        QList<double> cloudCovers;
+        QList<int> years;
+        QList<int> months;
+        QList<int> days;
+        QList<int> hours;
+        QList<int> minutes;
+        QList<double> cloudCovers;
+        QList<double> airTemps;
+
+        QString DEMTimeZone = ui->timeZoneComboBox->currentText();
 
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row)
@@ -464,57 +466,43 @@ void MainWindow::solveButtonClicked()
             QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
             QTableWidgetItem* directionItem = ui->domainAverageTable->item(row, 1);
 
-            if (speedItem && directionItem) {
+            if(speedItem && directionItem)
+            {
                 speeds << speedItem->text().toDouble();
                 directions << directionItem->text().toDouble();
+            }
+
+            QTableWidgetItem* timeItem = ui->domainAverageTable->item(row, 2);
+            QTableWidgetItem* dateItem = ui->domainAverageTable->item(row, 3);
+            QTableWidgetItem* cloudCoverItem = ui->domainAverageTable->item(row, 4);
+            QTableWidgetItem* airTempItem = ui->domainAverageTable->item(row, 5);
+
+            if(timeItem && dateItem && cloudCoverItem && airTempItem)
+            {
+                QTime currentTime = QTime::fromString(timeItem->text(), "HH:mm");
+                QDate currentDate = QDate::fromString(dateItem->text(), "MM/dd/yyyy");
+                // constructs using machine local time, may need to convert from machine local time to UTC time
+                QDateTime currentDateTime = QDateTime(currentDate, currentTime);
+
+                years << currentDateTime.date().year();
+                months << currentDateTime.date().month();
+                days << currentDateTime.date().day();
+                hours << currentDateTime.time().hour();
+                minutes << currentDateTime.time().minute();
+                cloudCovers << cloudCoverItem->text().toDouble();
+                airTemps << airTempItem->text().toDouble();
             }
         }
         numNinjas = speeds.size();
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
         QString speedUnits =  ui->tableSpeedUnits->currentText();
-//        QString DEMTimeZone = ui->timeZoneComboBox->currentText();
-//        QString airTempUnits =  ui->tableAirTempUnits->currentText();
-//        QString cloudCoverUnits =  ui->tableCloudCoverUnits->currentText();
+        QString airTempUnits =  ui->tableTempUnits->currentText().remove("°");
+        QString cloudCoverUnits = "percent";
 
-        QDateTime currentDateTimeUtc = QDateTime::currentDateTimeUtc();
-        QDate currentDateUtc = currentDateTimeUtc.date();
-        QTime currentTimeUtc = currentDateTimeUtc.time();
-        int currentYearUtc = currentDateUtc.year();
-        int currentMonthUtc = currentDateUtc.month();
-        int currentDayUtc = currentDateUtc.day();
-        int currentHoursUtc = currentTimeUtc.hour();
-        int currentMinutesUtc = currentTimeUtc.minute();
-
-        QList<int> years(numNinjas, currentYearUtc);
-        QList<int> months(numNinjas, currentMonthUtc);
-        QList<int> days(numNinjas, currentDayUtc);
-        QList<int> hours(numNinjas, currentHoursUtc);
-        QList<int> minutes(numNinjas, 0);
-        const char * timeZoneUtc = "UTC";
-        QList<double> airTemps(numNinjas, 72.0);
-        const char * airTempUnits = "F";
-        QList<double> cloudCovers(numNinjas, 15.0);
-        const char * cloudCoverUnits = "percent";
-        for(size_t ninjaIdx = 1; ninjaIdx < numNinjas; ninjaIdx++)
-        {
-            minutes[ninjaIdx] = minutes[ninjaIdx] + 1;
-            // better not get more than 60 ninjas during our simple tests, cause this would break down really fast ...
-            //if( minutes[ninjaIdx] > 59 )
-            //{
-            //    minutes[ninjaIdx] = minutes[ninjaIdx] - 60;
-            //    hours[ninjaIdx] = hours[ninjaIdx] + 1;
-            //    if( hours[ninjaIdx] > 23 )
-            //    {
-            //        hours[ninjaIdx] = hours[ninjaIdx] - 24;
-            //    }
-            //}
-        }
-
-//        ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);
-        ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), timeZoneUtc, airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
-        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), "fudge", airTemps.data(), airTempUnits, cloudCovers.data(), cloudCoverUnits, papszOptions);  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h, but then catches error as expected, well it technically throws two separate error messages, but both are caught properly
+        ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
+        //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), "fudge", airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h, but then catches error as expected, well it technically throws two separate error messages, but both are caught properly
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaMakeDomainAverageArmy: ninjaErr =" << ninjaErr;
