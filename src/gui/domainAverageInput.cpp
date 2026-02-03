@@ -40,6 +40,9 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
+    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::scheduleRowCheck);
+    connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::scheduleRowCheck);
+    connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::scheduleRowCheck);
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
     connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
 }
@@ -120,6 +123,7 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
             double dbl = value.toDouble(&valid);
             if (!valid || dbl < -40.0 || dbl > 200.0)
             {
+                valid = false;
                 errorMessage = "Must be a number between -40.0 and 200.0";
             }
             break;
@@ -148,10 +152,66 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
     emit updateState();
 }
 
+void DomainAverageInput::scheduleRowCheck()
+{
+    QTimer::singleShot(0, this, &DomainAverageInput::domainAverageTableCheckRows);
+}
+
+void DomainAverageInput::domainAverageTableCheckRows()
+{
+    QTableWidget* table = ui->domainAverageTable;
+
+    int numTableCols = 6;  // table->columnCount()
+    if(!ui->diurnalCheckBox->isChecked() && !ui->stabilityCheckBox->isChecked())
+    {
+        numTableCols = 2;
+    }
+
+    int existingRowsCount = 0;
+    int filledRowsCount = 0;
+    for(int rowIdx = 0; rowIdx < table->rowCount(); rowIdx++)
+    {
+        int numFilledTableCols = 0;
+        for(int colIdx = 0; colIdx < numTableCols; colIdx++)
+        {
+            QTableWidgetItem* tableItem = table->item(rowIdx, colIdx);
+            if(tableItem && !tableItem->text().trimmed().isEmpty())
+            {
+                numFilledTableCols = numFilledTableCols + 1;
+            }
+        }
+
+        if(numFilledTableCols != 0)
+        {
+            existingRowsCount = existingRowsCount + 1;
+        }
+        if(numFilledTableCols == numTableCols)
+        {
+            filledRowsCount = filledRowsCount + 1;
+        }
+    }
+
+    //qDebug() << "existingRowsCount = " << existingRowsCount << ", filledRowsCount = " << filledRowsCount << ", invalidDAWCells.size() = " << invalidDAWCells.size();
+
+    bool valid = true;
+    if(!invalidDAWCells.isEmpty())
+    {
+        valid = false;
+    }
+    if(filledRowsCount != existingRowsCount)
+    {
+        valid = false;
+    }
+
+    AppState::instance().isDomainAverageWindInputTableValid = valid;
+
+    emit updateState();
+}
+
 void DomainAverageInput::clearTableButtonClicked()
 {
     AppState& state = AppState::instance();
-    AppState::instance().isDomainAverageWindInputTableValid = true;
+    AppState::instance().isDomainAverageWindInputTableValid = false;
 
     ui->domainAverageTable->clearContents();
     invalidDAWCells.clear();
