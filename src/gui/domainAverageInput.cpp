@@ -169,6 +169,7 @@ void DomainAverageInput::domainAverageTableCheckRows()
 
     int existingRowsCount = 0;
     int filledRowsCount = 0;
+    int invalidCellsCount = 0;
     for(int rowIdx = 0; rowIdx < table->rowCount(); rowIdx++)
     {
         int numFilledTableCols = 0;
@@ -189,12 +190,20 @@ void DomainAverageInput::domainAverageTableCheckRows()
         {
             filledRowsCount = filledRowsCount + 1;
         }
+
+        for(const QPair<int,int>& cell : invalidDAWCells)
+        {
+            if(rowIdx == cell.first && cell.second < numTableCols)
+            {
+                invalidCellsCount = invalidCellsCount + 1;
+            }
+        }
     }
 
-    //qDebug() << "existingRowsCount = " << existingRowsCount << ", filledRowsCount = " << filledRowsCount << ", invalidDAWCells.size() = " << invalidDAWCells.size();
+    //qDebug() << "existingRowsCount = " << existingRowsCount << ", filledRowsCount = " << filledRowsCount << ", invalidCellsCount = " << invalidCellsCount;
 
     bool valid = true;
-    if(!invalidDAWCells.isEmpty())
+    if(invalidCellsCount != 0)
     {
         valid = false;
     }
