@@ -50,7 +50,7 @@ public:
 private slots:
     void setupDomainAverageTableWidgets();
     void domainAverageTableCellChanged(int row, int column);
-    void scheduleRowCheck();
+    void domainAverageTableCheckRows();
     void clearTableButtonClicked();
     void domainAverageGroupBoxToggled();
     void windHeightComboBoxCurrentIndexChanged(int index);
@@ -58,8 +58,6 @@ private slots:
 private:
     QSet<QPair<int, int>> invalidDAWCells;
     Ui::MainWindow *ui;
-
-    void domainAverageTableCheckRows();
 
 };
 

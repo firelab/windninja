@@ -40,9 +40,8 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
-    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::scheduleRowCheck);
-    connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::scheduleRowCheck);
-    connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::scheduleRowCheck);
+    connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::domainAverageTableCheckRows);
+    connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::domainAverageTableCheckRows);
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
     connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
 }
@@ -51,110 +50,106 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
 {
     QTableWidget* table = ui->domainAverageTable;
     QTableWidgetItem* item = table->item(row, column);
-    if (!item)
+    if(item)
     {
-        return;
-    }
-    QString value = item->text().trimmed();
-    bool valid = false;
-    QString errorMessage;
+        QString value = item->text().trimmed();
+        bool valid = false;
+        QString errorMessage;
 
-    // Allow empty input
-    if (value.isEmpty())
-    {
-        valid = true;
-    }
-    else
-    {
-        switch (column)
+        // Allow empty input
+        if (value.isEmpty())
         {
-        case 0:
-        {
-            double dbl = value.toDouble(&valid);
-            if (!valid || dbl < 0.0)
-            {
-                valid = false;
-                errorMessage = "Must be a positive number";
-            }
-            break;
-        }
-        case 1:
-        {
-            double dbl = value.toDouble(&valid);
-            if (!valid || dbl < 0.0 || dbl > 359.9)
-            {
-                valid = false;
-                errorMessage = "Must be a number between 0.0 and 359.9";
-            }
-            break;
-        }
-        case 2:
-        {
-            QTime t = QTime::fromString(value, "HH:mm");
-            valid = t.isValid();
-            if (!valid)
-            {
-                errorMessage = "Must be a valid 24h time (HH:mm)";
-            }
-            break;
-        }
-        case 3:
-        {
-            QDate d = QDate::fromString(value, "MM/dd/yyyy");
-            valid = d.isValid();
-            if (!valid)
-            {
-                errorMessage = "Must be a valid date (MM/dd/yyyy)";
-            }
-            break;
-        }
-        case 4:
-        {
-            double dbl = value.toDouble(&valid);
-            if (!valid || dbl < 0.0 || dbl > 100.0)
-            {
-                valid = false;
-                errorMessage = "Must be a number between 0.0 and 100.0";
-            }
-            break;
-        }
-        case 5:
-        {
-            double dbl = value.toDouble(&valid);
-            if (!valid || dbl < -40.0 || dbl > 200.0)
-            {
-                valid = false;
-                errorMessage = "Must be a number between -40.0 and 200.0";
-            }
-            break;
-        }
-        default:
             valid = true;
         }
-    }
+        else
+        {
+            switch (column)
+            {
+            case 0:
+            {
+                double dbl = value.toDouble(&valid);
+                if (!valid || dbl < 0.0)
+                {
+                    valid = false;
+                    errorMessage = "Must be a positive number";
+                }
+                break;
+            }
+            case 1:
+            {
+                double dbl = value.toDouble(&valid);
+                if (!valid || dbl < 0.0 || dbl > 359.9)
+                {
+                    valid = false;
+                    errorMessage = "Must be a number between 0.0 and 359.9";
+                }
+                break;
+            }
+            case 2:
+            {
+                QTime t = QTime::fromString(value, "HH:mm");
+                valid = t.isValid();
+                if (!valid)
+                {
+                    errorMessage = "Must be a valid 24h time (HH:mm)";
+                }
+                break;
+            }
+            case 3:
+            {
+                QDate d = QDate::fromString(value, "MM/dd/yyyy");
+                valid = d.isValid();
+                if (!valid)
+                {
+                    errorMessage = "Must be a valid date (MM/dd/yyyy)";
+                }
+                break;
+            }
+            case 4:
+            {
+                double dbl = value.toDouble(&valid);
+                if (!valid || dbl < 0.0 || dbl > 100.0)
+                {
+                    valid = false;
+                    errorMessage = "Must be a number between 0.0 and 100.0";
+                }
+                break;
+            }
+            case 5:
+            {
+                double dbl = value.toDouble(&valid);
+                if (!valid || dbl < -40.0 || dbl > 200.0)
+                {
+                    valid = false;
+                    errorMessage = "Must be a number between -40.0 and 200.0";
+                }
+                break;
+            }
+            default:
+                valid = true;
+            }
+        }
 
-    QPair<int, int> cell(row, column);
-    if (!valid)
-    {
-        invalidDAWCells.insert(cell);
-        item->setBackground(Qt::red);
-        item->setToolTip(errorMessage);
-    }
-    else
-    {
-        invalidDAWCells.remove(cell);
-        item->setBackground(QBrush());  // Reset to default
-        item->setToolTip("");
-    }
+        QPair<int, int> cell(row, column);
+        if (!valid)
+        {
+            invalidDAWCells.insert(cell);
+            item->setBackground(Qt::red);
+            item->setToolTip(errorMessage);
+        }
+        else
+        {
+            invalidDAWCells.remove(cell);
+            item->setBackground(QBrush());  // Reset to default
+            item->setToolTip("");
+        }
+    }  // if(item)
 
     AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
 
     emit updateState();
-}
 
-void DomainAverageInput::scheduleRowCheck()
-{
-    QTimer::singleShot(0, this, &DomainAverageInput::domainAverageTableCheckRows);
+    domainAverageTableCheckRows();
 }
 
 void DomainAverageInput::domainAverageTableCheckRows()
@@ -199,8 +194,6 @@ void DomainAverageInput::domainAverageTableCheckRows()
             }
         }
     }
-
-    //qDebug() << "existingRowsCount = " << existingRowsCount << ", filledRowsCount = " << filledRowsCount << ", invalidCellsCount = " << invalidCellsCount;
 
     bool valid = true;
     if(invalidCellsCount != 0)
