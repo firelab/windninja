@@ -67,8 +67,8 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
         {
         case 0:
         {
-            double d = value.toDouble(&valid);
-            if (!valid || d <= 0)
+            double dbl = value.toDouble(&valid);
+            if (!valid || dbl < 0.0)
             {
                 valid = false;
                 errorMessage = "Must be a positive number";
@@ -77,21 +77,21 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
         }
         case 1:
         {
-            int i = value.toDouble(&valid);
-            if (!valid || i < 0 || i > 359.9)
+            double dbl = value.toDouble(&valid);
+            if (!valid || dbl < 0.0 || dbl > 359.9)
             {
                 valid = false;
-                errorMessage = "Must be a number between 0 and 359";
+                errorMessage = "Must be a number between 0.0 and 359.9";
             }
             break;
         }
         case 2:
         {
-            QTime t = QTime::fromString(value, "hh:mm");
+            QTime t = QTime::fromString(value, "HH:mm");
             valid = t.isValid();
             if (!valid)
             {
-                errorMessage = "Must be a valid 24h time (hh:mm)";
+                errorMessage = "Must be a valid 24h time (HH:mm)";
             }
             break;
         }
@@ -101,26 +101,26 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
             valid = d.isValid();
             if (!valid)
             {
-                errorMessage = "Must be a valid date (MM/DD/YYYY)";
+                errorMessage = "Must be a valid date (MM/dd/yyyy)";
             }
             break;
         }
         case 4:
         {
-            int i = value.toDouble(&valid);
-            if (!valid || i < 0 || i > 100)
+            double dbl = value.toDouble(&valid);
+            if (!valid || dbl < 0.0 || dbl > 100.0)
             {
                 valid = false;
-                errorMessage = "Must be a number between 0 and 100";
+                errorMessage = "Must be a number between 0.0 and 100.0";
             }
             break;
         }
         case 5:
         {
-            value.toInt(&valid);
-            if (!valid)
+            double dbl = value.toDouble(&valid);
+            if (!valid || dbl < -40.0 || dbl > 200.0)
             {
-                errorMessage = "Must be an integer";
+                errorMessage = "Must be a number between -40.0 and 200.0";
             }
             break;
         }
@@ -147,7 +147,6 @@ void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
 
     emit updateState();
 }
-
 
 void DomainAverageInput::clearTableButtonClicked()
 {
@@ -208,14 +207,14 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
 
     for (int row = 0; row < rows; ++row)
     {
-
         QDoubleSpinBox* speedSpin = new QDoubleSpinBox(table);
         speedSpin->setRange(0.0, 500.0);
         speedSpin->setDecimals(2);
         table->setCellWidget(row, 0, speedSpin);
 
-        QSpinBox* dirSpin = new QSpinBox(table);
-        dirSpin->setRange(0, 359);
+        QDoubleSpinBox* dirSpin = new QDoubleSpinBox(table);
+        dirSpin->setRange(0.0, 359.9);
+        dirSpin->setDecimals(0);
         table->setCellWidget(row, 1, dirSpin);
 
         QTimeEdit* timeEdit = new QTimeEdit(QTime::currentTime(), table);
@@ -224,14 +223,18 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
 
         QDateEdit* dateEdit = new QDateEdit(QDate::currentDate(), table);
         dateEdit->setCalendarPopup(true);
+        dateEdit->setDisplayFormat("MM/dd/yyyy");
         table->setCellWidget(row, 3, dateEdit);
 
-        QSpinBox* cloudSpin = new QSpinBox(table);
-        cloudSpin->setRange(0, 100);
+        QDoubleSpinBox* cloudSpin = new QDoubleSpinBox(table);
+        cloudSpin->setRange(0.0, 100.0);
+        cloudSpin->setDecimals(0);
         table->setCellWidget(row, 4, cloudSpin);
 
-        QSpinBox* airTempSpin = new QSpinBox(table);
-        airTempSpin->setRange(-40, 200);
+        QDoubleSpinBox* airTempSpin = new QDoubleSpinBox(table);
+        airTempSpin->setRange(-40.0, 200.0);
+        airTempSpin->setDecimals(0);
+        airTempSpin->setValue(72.0);
         table->setCellWidget(row, 5, airTempSpin);
     }
 

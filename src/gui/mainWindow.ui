@@ -2185,7 +2185,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </column>
                    <column>
                     <property name="text">
-                     <string>Cloud Cover</string>
+                     <string>Cloud Cover (%)</string>
                     </property>
                     <property name="font">
                      <font>
