@@ -55,6 +55,7 @@
     <!-- Leaflet stylesheets -->
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
     <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
+    <link rel="stylesheet" href="leaflet/L.Control.Layers.Tree.css" />
 
     <!-- Leaflet and Draw dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -63,6 +64,8 @@
 
     <script src="./leaflet/leaflet-src.js"></script>
     <script src="./leaflet/L.KML.js"></script>
+
+    <script src="./leaflet/L.Control.Layers.Tree.js"></script>
 
     <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
     <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
@@ -81,6 +84,8 @@
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
 
+    
+
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
@@ -90,15 +95,22 @@
         // Script variables
         const apiKey = "pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ";
 
-        const mapBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+        const topoBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
             tileSize: 512,
             maxZoom: 18,
             zoomOffset: -1,
             id: 'mapbox/streets-v11'
         });
 
+        const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+            tileSize: 512,
+            maxZoom: 18,
+            zoomOffset: -1,
+            id: 'mapbox/satellite-v9'
+        });
+
         const map = new L.Map('map', {
-            layers: [mapBaseLayer],
+            layers: [topoBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
         });
@@ -107,9 +119,39 @@
         map.addLayer(mapRectangleLayer);
         const rectangleDrawer = new L.Draw.Rectangle(map);
         let activeKmzLayer = null;
-        const baseMaps = {};
-        const overlayMaps = {};
-        const layerControl = L.control.layers(baseMaps, overlayMaps);
+        
+        const baseTree = {
+            label: 'Base Maps',
+            children: [
+                {
+                    label: 'Mapbox Streets',
+                    layer: topoBaseLayer
+                },
+                {
+                    label: 'Satellite',
+                    layer: satelliteBaseLayer
+                }
+            ]
+        };
+
+        const overlayTree = {
+            label: 'Overlays',
+            children: [
+                {
+                    label: 'Bounding Box',
+                    layer: mapRectangleLayer
+                }
+            ]
+        };
+
+        const layerControl = L.control.layers.tree(
+            baseTree,
+            overlayTree,
+            {
+                collapsed: false
+            }
+        );
+
         let layerControlAdded = false;
         let drawDEMCheck = false;
 
@@ -355,6 +397,8 @@
                 window.bridge = channel.objects.bridge;
             });
         }
+
+        layerControl.addTo(map);
         
     </script>
 </body>
