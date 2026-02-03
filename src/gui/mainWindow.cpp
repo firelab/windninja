@@ -475,14 +475,14 @@ void MainWindow::solveButtonClicked()
             QTableWidgetItem* cloudCoverItem = ui->domainAverageTable->item(row, 4);
             QTableWidgetItem* airTempItem = ui->domainAverageTable->item(row, 5);
 
-            if(speedItem && directionItem)
+            if(speedItem && directionItem && !speedItem->text().trimmed().isEmpty() && !directionItem->text().trimmed().isEmpty())
             {
                 speeds << speedItem->text().toDouble();
                 directions << directionItem->text().toDouble();
 
                 if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
                 {
-                    if(timeItem && dateItem && cloudCoverItem && airTempItem)
+                    if(timeItem && dateItem && cloudCoverItem && airTempItem && !timeItem->text().trimmed().isEmpty() && !dateItem->text().trimmed().isEmpty() && !cloudCoverItem->text().trimmed().isEmpty() && !airTempItem->text().trimmed().isEmpty())
                     {
                         QTime currentTime = QTime::fromString(timeItem->text(), "HH:mm");
                         QDate currentDate = QDate::fromString(dateItem->text(), "MM/dd/yyyy");

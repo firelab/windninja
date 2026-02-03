@@ -200,6 +200,10 @@ void DomainAverageInput::domainAverageTableCheckRows()
     {
         valid = false;
     }
+    if(filledRowsCount == 0)
+    {
+        valid = false;
+    }
     if(filledRowsCount != existingRowsCount)
     {
         valid = false;
