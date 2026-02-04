@@ -130,31 +130,13 @@ qDebug() << "appState =" << valid;
 
 void DomainAverageInput::clearTableButtonClicked()
 {
-    AppState& state = AppState::instance();
     AppState::instance().isDomainAverageWindInputTableValid = false;
-
-    for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
-    {
-        QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 0));
-        QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 1));
-        QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 2));
-        QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 3));
-        QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 4));
-        QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 5));
-
-        disconnect(speedSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        disconnect(directionSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        disconnect(timeEdit, &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        disconnect(dateEdit, &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        disconnect(cloudCoverSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        disconnect(airTempSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-
-        //tableWidget->setCellWidget(rowIdx, colIdx, nullptr); // Destroys the old widget connections
-    }
 
     ui->domainAverageTable->clearContents();
 
     setupDomainAverageTableWidgets();
+
+    domainAverageTableCheckRows();
 
     emit updateState();
 }
