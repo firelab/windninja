@@ -50,6 +50,39 @@
             width: 100%;
             box-sizing: border-box;
         }
+      .leaflet-div-icon {
+            background: white;
+            border: 2px solid #0077ff;
+            border-radius: 50%;
+            width: 10px !important;
+            height: 10px !important;
+            margin-left: -5px !important;
+            margin-top: -5px !important;
+            box-shadow: 0 0 1px #000;
+        }
+        .leaflet-drag-target {
+            cursor: move !important;
+        }
+        .leaflet-control-center {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .leaflet-control-center a {
+            display: block;
+            text-align: center;
+            color: #0077ff;
+            font-size: 20px;
+            line-height: 26px;
+            width: 28px;
+            height: 28px;
+            text-decoration: none;
+        }
+        .leaflet-control-center a:hover {
+            background: #0077ff;
+            color: white;
+        }
     </style>
 
     <!-- Leaflet stylesheets -->
@@ -70,6 +103,13 @@
     <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
     <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
 
+    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="./leaflet/draw/src/Tooltip.js"></script>
+    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
@@ -139,7 +179,7 @@
         };
 
         const initializationOutputTree= {
-            label: 'DEM Simulations',
+            label: 'Weather Model Output',
             children: []
         };
 
@@ -155,23 +195,18 @@
 
         const layerControl = L.control.layers.tree(
             baseTree,
-            [
-                overlayTree,          
-            ],
+            [],
             {
                 collapsed: true
             }
         ).addTo(map);
 
-        let drawDEMCheck = false;
 
-        let kmzBaseLayers = [];
+        let drawDEMCheck = false;
         let kmzLegendControls = [];
-        
         let centerControlAdded = false;
 
         // Script functions
-
         function sendBoundingBox(layer) {
             const bounds = layer.getBounds();
             const bboxData = {
@@ -187,7 +222,7 @@
         }
 
         function drawBoundingBox(north, south, east, west) {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
             rectangle.editing.enable();
@@ -200,7 +235,7 @@
         }
 
         function drawDEM(DEMCorners) {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
 
             const rectangleCorners = [
                 [DEMCorners[1], DEMCorners[0]], // NE
@@ -221,15 +256,28 @@
             }, 5000);
 
             showCenterControl();
+
+            if (layerControl && layerControl.setOverlayTree && windninjaOutputTree.children.length > 1) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,
+                    overlayTree
+                ]);
+            }
+            else {
+                layerControl.setOverlayTree([
+                    overlayTree
+                ]);
+            }
         }
 
         function startRectangleDrawing() {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             rectangleDrawer.enable();
         }
 
         function stopRectangleDrawing() {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             
             if(!drawDEMCheck) {
                 hideCenterControl();
@@ -239,7 +287,7 @@
         }
 
         map.on('draw:created', ({ layer }) => {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             mapRectangleLayer.addLayer(layer);
             layer.editing.enable();
             sendBoundingBox(layer);
@@ -299,7 +347,6 @@
             
             const zip = await JSZip.loadAsync(bytes.buffer);
 
-            // 2. Identify Files
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
             );
@@ -312,18 +359,15 @@
                 return;
             }
 
-            // Process kmz file
             const entry = kmlEntries[0]; 
             const kmlText = await entry.async('string');
             const parser = new DOMParser();
             const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
             
-            // Create leaflet layer
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = entry.name;
 
-            // 4. Legend Logic
             const legendControl = L.control({ position: 'bottomright' });
             kmzLegendControls.push(legendControl);
 
@@ -369,18 +413,15 @@
                 kmlLegendLayer.addTo(map);
             }
 
-            // 5. Update the Tree Control
             windninjaOutputTree.children.push({
                 label: layerName,
                 layer: kmlLegendLayer
             });
 
-            // Save reference for cleanup
-            kmzBaseLayers.push(kmlLegendLayer);
-
             if (layerControl && layerControl.setOverlayTree) {
                 layerControl.setOverlayTree([
                     windninjaOutputTree,
+                    initializationOutputTree,
                     overlayTree
                 ]);
             }
@@ -390,14 +431,12 @@
 
             clearInitializationOutputTree();
 
-            // 1. Decode the Base64 data passed in via 'data'
             const binary = atob(data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
                 bytes[i] = binary.charCodeAt(i);
             }
 
-            // 2. Load the ZIP and extract entries
             const zip = await JSZip.loadAsync(bytes.buffer);
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
@@ -408,35 +447,25 @@
                 return;
             }
 
-            // 3. Process the first KML entry
             const entry = kmlEntries[0]; 
             const kmlText = await entry.async('string');
             const parser = new DOMParser();
             const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
             
-            // 4. Create Leaflet Layer
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = entry.name;
 
-            // 5. Logic for "Only First Selected"
-            // Note: Checking initializationOutputTree.children.length specifically for this branch
             const isFirstLayer = initializationOutputTree.children.length === 0;
-
             if (isFirstLayer) {
                 kmlLegendLayer.addTo(map);
             }
 
-            // 6. Push to the DEM Tree branch
             initializationOutputTree.children.push({
                 label: layerName,
                 layer: kmlLegendLayer
             });
 
-            // Save reference for cleanup
-            kmzBaseLayers.push(kmlLegendLayer);
-
-            // 7. Refresh the UI
             if (layerControl && layerControl.setOverlayTree) {
                 layerControl.setOverlayTree([
                     windninjaOutputTree,
@@ -456,7 +485,7 @@
             windninjaOutputTree.children = [];
 
             if (layerControl) {
-                layerControl.setOverlayTree([overlayTree, windninjaOutputTree, initializationOutputTree]);
+                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
             }
         }
 
@@ -470,12 +499,20 @@
             initializationOutputTree.children = [];
 
             if (layerControl) {
-                layerControl.setOverlayTree([overlayTree, windninjaOutputTree, initializationOutputTree]);
+                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
             }
         }
 
-        // Script Main
+        function clearRectangleLayer() {
+            mapRectangleLayer.eachLayer(layer => {
+                if (layer.editing) {
+                    layer.editing.disable();
+                }
+            });
+            mapRectangleLayer.clearLayers();        
+        }
 
+        // Script Main
         if (window.qt) {
             new QWebChannel(qt.webChannelTransport, channel => {
                 window.bridge = channel.objects.bridge;
@@ -486,6 +523,8 @@
 
         layerControl.addTo(map);
         L.control.scale().addTo(map);
+
+        
 
     </script>
 </body>
