@@ -37,6 +37,7 @@ AppState& AppState::instance()
 
 AppState::AppState()
     : tickIcon(":/tick.png"),
+    warnIcon(":/jason_caution.png"),
     crossIcon(":/cross.png"),
     bulletIcon(":/bullet_blue.png")
 {}

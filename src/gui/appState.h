@@ -95,6 +95,7 @@ private:
     Ui::MainWindow *ui;
 
     QIcon tickIcon;
+    QIcon warnIcon;
     QIcon crossIcon;
     QIcon bulletIcon;
 

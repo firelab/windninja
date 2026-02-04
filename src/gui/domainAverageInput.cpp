@@ -49,8 +49,82 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
 
 void DomainAverageInput::domainAverageTableCheckRows()
 {
-    AppState::instance().isDomainAverageWindInputTableValid = true;
+    //bool valid = false;
+    // count numRuns
+    int numRuns = 0;
+    for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
+    {
+        QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 0));
+        QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 1));
+        QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 2));
+        QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 3));
+        QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 4));
+        QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 5));
 
+        if(!speedSpin || !directionSpin || !timeEdit || !dateEdit || !cloudCoverSpin || !airTempSpin)
+        {
+            continue;
+        }
+
+        if(speedSpin->value() != 0.0 || directionSpin->value() != 0.0)
+        {
+            numRuns = numRuns + 1;
+        }
+    }
+
+    bool valid = true;
+    if(numRuns == 0 && ui->diurnalCheckBox->isChecked() == false)
+    {
+        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
+        qDebug() << "No runs have been added, diurnal is not active";
+        valid = false;
+    }
+    else if(numRuns == 0 && ui->diurnalCheckBox->isChecked() == true)
+    {
+        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
+        qDebug() << "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal";
+        valid = true;
+    }
+    else
+    {
+        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
+        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs");
+        qDebug() << QString::number(numRuns)+" runs";
+        valid = true;
+        // override if any 0.0 wind speed runs are detected, warn and run if diurnal, stop if not diurnal
+        for(int runIdx=0; runIdx < numRuns; runIdx++)
+        {
+            QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 0));
+            if(!speedSpin)
+            {
+                continue;
+            }
+
+            if(speedSpin->value() == 0.0)
+            {
+                if(ui->diurnalCheckBox->isChecked() == false)
+                {
+                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, but detecting at least one 0.0 wind speed run without diurnal being active");
+                    qDebug() << QString::number(numRuns)+" runs have been added, but detecting at least one 0.0 wind speed run without diurnal being active";
+                    valid = false;
+                }
+                else  // if(ui->diurnalCheckBox->isChecked() == true)
+                {
+                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, detecting at least one 0.0 wind speed run, diurnal is active so will continue the runs");
+                    qDebug() << QString::number(numRuns)+" runs have been added, detecting at least one 0.0 wind speed run, diurnal is active so will continue the runs";
+                    valid = true;
+                }
+                break;
+            }
+        }
+    }
+
+    AppState::instance().isDomainAverageWindInputTableValid = valid;
+qDebug() << "appState =" << valid;
     emit updateState();
 }
 
