@@ -44,6 +44,13 @@ signals:
 public:
     DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
+    QVector<QDoubleSpinBox*> speedSpins;
+    QVector<QDoubleSpinBox*> dirSpins;
+    QVector<QTimeEdit*>      timeEdits;
+    QVector<QDateEdit*>      dateEdits;
+    QVector<QDoubleSpinBox*> cloudSpins;
+    QVector<QDoubleSpinBox*> airTempSpins;
+
 private slots:
     void setupDomainAverageTableWidgets();
     void domainAverageTableCheckRows();

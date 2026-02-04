@@ -469,19 +469,7 @@ void MainWindow::solveButtonClicked()
         int numRuns = 0;
         for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
         {
-            QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 0));
-            QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 1));
-            QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 2));
-            QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 3));
-            QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 4));
-            QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 5));
-
-            if(!speedSpin || !directionSpin || !timeEdit || !dateEdit || !cloudCoverSpin || !airTempSpin)
-            {
-                continue;
-            }
-
-            if(speedSpin->value() != 0.0 || directionSpin->value() != 0.0)
+            if(domainAverageInput->speedSpins[rowIdx]->value() != 0.0 || domainAverageInput->dirSpins[rowIdx]->value() != 0.0)
             {
                 //numRuns = numRuns + 1;  // numActiveRows
                 numRuns = rowIdx + 1;  // lastActiveRowPlusOne
@@ -495,26 +483,14 @@ void MainWindow::solveButtonClicked()
 
         for(int runIdx = 0; runIdx < numRuns; runIdx++)
         {
-            QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 0));
-            QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 1));
-            QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(runIdx, 2));
-            QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(runIdx, 3));
-            QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 4));
-            QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 5));
-
-            if(!speedSpin || !directionSpin || !timeEdit || !dateEdit || !cloudCoverSpin || !airTempSpin)
-            {
-                continue;
-            }
-
-            speeds << speedSpin->value();
-            directions << directionSpin->value();
+            speeds << domainAverageInput->speedSpins[runIdx]->value();
+            directions << domainAverageInput->dirSpins[runIdx]->value();
 
             // always grab the values from the diurnal/stability inputs,
             // whether they are the default values, or whatever the user has changed them to be
 
             // constructs using machine local time, may need to convert from machine local time to UTC time
-            QDateTime currentDateTime = QDateTime(dateEdit->date(), timeEdit->time());
+            QDateTime currentDateTime = QDateTime(domainAverageInput->dateEdits[runIdx]->date(), domainAverageInput->timeEdits[runIdx]->time());
 
             years << currentDateTime.date().year();
             months << currentDateTime.date().month();
@@ -522,8 +498,8 @@ void MainWindow::solveButtonClicked()
             hours << currentDateTime.time().hour();
             minutes << currentDateTime.time().minute();
 
-            cloudCovers << cloudCoverSpin->value();
-            airTemps << airTempSpin->value();
+            cloudCovers << domainAverageInput->cloudSpins[runIdx]->value();
+            airTemps << domainAverageInput->airTempSpins[runIdx]->value();
         }
 
         numNinjas = speeds.size();  // SHOULD be the same as numRuns

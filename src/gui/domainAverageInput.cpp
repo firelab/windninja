@@ -54,19 +54,7 @@ void DomainAverageInput::domainAverageTableCheckRows()
     int numRuns = 0;
     for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
     {
-        QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 0));
-        QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 1));
-        QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 2));
-        QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 3));
-        QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 4));
-        QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 5));
-
-        if(!speedSpin || !directionSpin || !timeEdit || !dateEdit || !cloudCoverSpin || !airTempSpin)
-        {
-            continue;
-        }
-
-        if(speedSpin->value() != 0.0 || directionSpin->value() != 0.0)
+        if(speedSpins[rowIdx]->value() != 0.0 || dirSpins[rowIdx]->value() != 0.0)
         {
             //numRuns = numRuns + 1;  // numActiveRows
             numRuns = rowIdx + 1;  // lastActiveRowPlusOne
@@ -97,13 +85,7 @@ void DomainAverageInput::domainAverageTableCheckRows()
         // override if any 0.0 wind speed runs are detected, warn and run if diurnal, stop if not diurnal
         for(int runIdx = 0; runIdx < numRuns; runIdx++)
         {
-            QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 0));
-            if(!speedSpin)
-            {
-                continue;
-            }
-
-            if(speedSpin->value() == 0.0)
+            if(speedSpins[runIdx]->value() == 0.0)
             {
                 if(ui->diurnalCheckBox->isChecked() == false)
                 {
@@ -132,6 +114,13 @@ qDebug() << "appState =" << valid;
 void DomainAverageInput::clearTableButtonClicked()
 {
     AppState::instance().isDomainAverageWindInputTableValid = false;
+
+    speedSpins.clear();
+    dirSpins.clear();
+    timeEdits.clear();
+    dateEdits.clear();
+    cloudSpins.clear();
+    airTempSpins.clear();
 
     ui->domainAverageTable->clearContents();
 
@@ -188,56 +177,52 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
     QTableWidget* table = ui->domainAverageTable;
     int rows = table->rowCount();
 
-    for (int row = 0; row < rows; ++row)
+    speedSpins.resize(rows);
+    dirSpins.resize(rows);
+    timeEdits.resize(rows);
+    dateEdits.resize(rows);
+    cloudSpins.resize(rows);
+    airTempSpins.resize(rows);
+
+    for(int row = 0; row < rows; row++)
     {
-        QDoubleSpinBox* speedSpin = new QDoubleSpinBox(table);
-        speedSpin->setRange(0.0, 500.0);
-        speedSpin->setDecimals(2);
-        table->setCellWidget(row, 0, speedSpin);
+        speedSpins[row] = new QDoubleSpinBox(table);
+        speedSpins[row]->setRange(0.0, 500.0);
+        speedSpins[row]->setDecimals(2);
+        table->setCellWidget(row, 0, speedSpins[row]);
 
-        QDoubleSpinBox* dirSpin = new QDoubleSpinBox(table);
-        dirSpin->setRange(0.0, 359.9);
-        dirSpin->setDecimals(0);
-        table->setCellWidget(row, 1, dirSpin);
+        dirSpins[row] = new QDoubleSpinBox(table);
+        dirSpins[row]->setRange(0.0, 359.9);
+        dirSpins[row]->setDecimals(0);
+        table->setCellWidget(row, 1, dirSpins[row]);
 
-        QTimeEdit* timeEdit = new QTimeEdit(QTime::currentTime(), table);
-        timeEdit->setDisplayFormat("HH:mm");
-        table->setCellWidget(row, 2, timeEdit);
+        timeEdits[row] = new QTimeEdit(QTime::currentTime(), table);
+        timeEdits[row]->setDisplayFormat("HH:mm");
+        table->setCellWidget(row, 2, timeEdits[row]);
 
-        QDateEdit* dateEdit = new QDateEdit(QDate::currentDate(), table);
-        dateEdit->setCalendarPopup(true);
-        dateEdit->setDisplayFormat("MM/dd/yyyy");
-        table->setCellWidget(row, 3, dateEdit);
+        dateEdits[row] = new QDateEdit(QDate::currentDate(), table);
+        dateEdits[row]->setCalendarPopup(true);
+        dateEdits[row]->setDisplayFormat("MM/dd/yyyy");
+        table->setCellWidget(row, 3, dateEdits[row]);
 
-        QDoubleSpinBox* cloudSpin = new QDoubleSpinBox(table);
-        cloudSpin->setRange(0.0, 100.0);
-        cloudSpin->setDecimals(0);
-        table->setCellWidget(row, 4, cloudSpin);
+        cloudSpins[row] = new QDoubleSpinBox(table);
+        cloudSpins[row]->setRange(0.0, 100.0);
+        cloudSpins[row]->setDecimals(0);
+        table->setCellWidget(row, 4, cloudSpins[row]);
 
-        QDoubleSpinBox* airTempSpin = new QDoubleSpinBox(table);
-        airTempSpin->setRange(-40.0, 200.0);
-        airTempSpin->setDecimals(0);
-        airTempSpin->setValue(72.0);
-        table->setCellWidget(row, 5, airTempSpin);
+        airTempSpins[row] = new QDoubleSpinBox(table);
+        airTempSpins[row]->setRange(-40.0, 200.0);
+        airTempSpins[row]->setDecimals(0);
+        airTempSpins[row]->setValue(72.0);
+        table->setCellWidget(row, 5, airTempSpins[row]);
 
-        connect(speedSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        connect(dirSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        connect(timeEdit, &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        connect(dateEdit, &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        connect(cloudSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-        connect(airTempSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(speedSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(dirSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(timeEdits[row], &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(dateEdits[row], &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(cloudSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(airTempSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
     }
-
-    //connect(speedSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &DomainAverageInput::domainAverageTableCheckRows);
-    //connect(dirSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &DomainAverageInput::domainAverageTableCheckRows);
-    //connect(timeEdit, &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-    //connect(dateEdit, &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
-
-    //for(int rowIdx = 0; rowIdx < rows; rowIdx++)
-    //{
-    //    connect(tree->wind->windTable->speed[i], SIGNAL(valueChanged(double)), this, &DomainAverageInput::domainAverageTableCheckRows);
-    //    connect(tree->wind->windTable->dir[i], SIGNAL(valueChanged(int)), this, &DomainAverageInput::domainAverageTableCheckRows);
-    //}
 
     if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
     {
