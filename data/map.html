@@ -95,7 +95,7 @@
         // Script variables
         const apiKey = "pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ";
 
-        const topoBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+        const streetBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
             tileSize: 512,
             maxZoom: 18,
             zoomOffset: -1,
@@ -110,28 +110,37 @@
         });
 
         const map = new L.Map('map', {
-            layers: [topoBaseLayer],
+            layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
         });
         
         const mapRectangleLayer = new L.FeatureGroup();
-        map.addLayer(mapRectangleLayer);
         const rectangleDrawer = new L.Draw.Rectangle(map);
-        let activeKmzLayer = null;
+        const centerControl = L.control({ position: 'topleft' });
         
         const baseTree = {
             label: 'Base Maps',
             children: [
                 {
                     label: 'Mapbox Streets',
-                    layer: topoBaseLayer
+                    layer: streetBaseLayer
                 },
                 {
                     label: 'Satellite',
                     layer: satelliteBaseLayer
                 }
             ]
+        };
+
+        const simulationTree = {
+            label: 'Forecast Simulations',
+            children: []
+        };
+
+        const demTree= {
+            label: 'DEM Simulations',
+            children: []
         };
 
         const overlayTree = {
@@ -148,22 +157,19 @@
             baseTree,
             overlayTree,
             {
-                collapsed: false
+                collapsed: true
             }
         );
 
-        let layerControlAdded = false;
         let drawDEMCheck = false;
 
         let kmzBaseLayers = [];
         let kmzLegendControls = [];
         
-        L.control.scale().addTo(map);
-
-        const centerControl = L.control({ position: 'topleft' });
         let centerControlAdded = false;
 
         // Script functions
+
         function sendBoundingBox(layer) {
             const bounds = layer.getBounds();
             const bboxData = {
@@ -333,23 +339,23 @@
                             container.appendChild(img);
 
                     if (timeSeries && legendEntries.length > 1) {
-    const legendEntry2 = legendEntries[1];
-    const blob2 = await legendEntry2.async('blob');
-    const url2 = URL.createObjectURL(blob2);
+                        const legendEntry2 = legendEntries[1];
+                        const blob2 = await legendEntry2.async('blob');
+                        const url2 = URL.createObjectURL(blob2);
 
-    const img2 = new Image();
-    img2.src = url2;
-    img2.style.position = 'absolute';
-    img2.style.top = '10px';
-    img2.style.left = '50%';
-    img2.style.transform = 'translateX(-50%)';
-    img2.style.maxWidth = '90%'; // prevents it from overflowing the map
-    img2.style.height = 'auto';
-    img2.style.zIndex = '600';
-    img2.className = 'kmz-time-series-legend';
+                        const img2 = new Image();
+                        img2.src = url2;
+                        img2.style.position = 'absolute';
+                        img2.style.top = '10px';
+                        img2.style.left = '50%';
+                        img2.style.transform = 'translateX(-50%)';
+                        img2.style.maxWidth = '90%'; // prevents it from overflowing the map
+                        img2.style.height = 'auto';
+                        img2.style.zIndex = '600';
+                        img2.className = 'kmz-time-series-legend';
 
-    // Append directly to the map container
-    map.getContainer().appendChild(img2);
+                        // Append directly to the map container
+                        map.getContainer().appendChild(img2);
 }
                         })();
                     }
@@ -363,42 +369,22 @@
                 layerControl.addBaseLayer(kmlLegendLayer, layerName);
                 kmzBaseLayers.push(kmlLegendLayer);
 
-                if (!layerControlAdded) {
-                    layerControl.addTo(map);
-                    layerControlAdded = true;
-                }
-
-                if (!activeKmzLayer) {
-                    activeKmzLayer = kmlLegendLayer;
-                    kmlLegendLayer.addTo(map);
-                }
             }
         }
 
-        function clearKmzBaseLayers() {
-    kmzBaseLayers.forEach(layer => {
-        if (map.hasLayer(layer)) {
-            map.removeLayer(layer);
-        }
-        layerControl.removeLayer(layer);
-    });
-
-    kmzLegendControls.forEach(ctrl => {
-        map.removeControl(ctrl);
-    });
-
-    kmzBaseLayers = [];
-    kmzLegendControls = [];
-    activeKmzLayer = null;
-}
+        // Main
 
         if (window.qt) {
             new QWebChannel(qt.webChannelTransport, channel => {
                 window.bridge = channel.objects.bridge;
             });
         }
+        
+        map.addLayer(mapRectangleLayer);
 
         layerControl.addTo(map);
+        L.control.scale().addTo(map);
+
         
     </script>
 </body>
