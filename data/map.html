@@ -133,18 +133,18 @@
             ]
         };
 
-        const simulationTree = {
-            label: 'Forecast Simulations',
+        const windninjaOutputTree = {
+            label: 'WindNinja Output',
             children: []
         };
 
-        const demTree= {
+        const initializationOutputTree= {
             label: 'DEM Simulations',
             children: []
         };
 
         const overlayTree = {
-            label: 'Overlays',
+            label: 'WindNinja Overlays',
             children: [
                 {
                     label: 'Bounding Box',
@@ -289,7 +289,8 @@
 
         async function loadKmzFromBase64(kmlData, timeSeries) {
             // Setup & Cleanup
-            //clearKmzBaseLayers();
+            clearWindNinjaOutputTree();
+
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -362,14 +363,14 @@
             kmlLegendLayer.on('add', () => legendControl.addTo(map));
             kmlLegendLayer.on('remove', () => legendControl.remove());
 
-            const isFirstLayer = simulationTree.children.length === 0;
+            const isFirstLayer = windninjaOutputTree.children.length === 0;
 
             if (isFirstLayer) {
                 kmlLegendLayer.addTo(map);
             }
 
             // 5. Update the Tree Control
-            simulationTree.children.push({
+            windninjaOutputTree.children.push({
                 label: layerName,
                 layer: kmlLegendLayer
             });
@@ -379,9 +380,97 @@
 
             if (layerControl && layerControl.setOverlayTree) {
                 layerControl.setOverlayTree([
-                    simulationTree,
+                    windninjaOutputTree,
                     overlayTree
                 ]);
+            }
+        }
+
+        async function loadOutputFromBase64(data) {
+
+            clearInitializationOutputTree();
+
+            // 1. Decode the Base64 data passed in via 'data'
+            const binary = atob(data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            // 2. Load the ZIP and extract entries
+            const zip = await JSZip.loadAsync(bytes.buffer);
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+
+            if (kmlEntries.length === 0) {
+                console.error('No KML files found in this output.');
+                return;
+            }
+
+            // 3. Process the first KML entry
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            // 4. Create Leaflet Layer
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = entry.name;
+
+            // 5. Logic for "Only First Selected"
+            // Note: Checking initializationOutputTree.children.length specifically for this branch
+            const isFirstLayer = initializationOutputTree.children.length === 0;
+
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
+
+            // 6. Push to the DEM Tree branch
+            initializationOutputTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer
+            });
+
+            // Save reference for cleanup
+            kmzBaseLayers.push(kmlLegendLayer);
+
+            // 7. Refresh the UI
+            if (layerControl && layerControl.setOverlayTree) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,    
+                    overlayTree
+                ]);
+            }
+        }
+
+        function clearWindNinjaOutputTree() {
+            windninjaOutputTree.children.forEach(item => {
+                if (item.layer) {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            windninjaOutputTree.children = [];
+
+            if (layerControl) {
+                layerControl.setOverlayTree([overlayTree, windninjaOutputTree, initializationOutputTree]);
+            }
+        }
+
+        function clearInitializationOutputTree() {
+            initializationOutputTree.children.forEach(item => {
+                if (item.layer) {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            initializationOutputTree.children = [];
+
+            if (layerControl) {
+                layerControl.setOverlayTree([overlayTree, windninjaOutputTree, initializationOutputTree]);
             }
         }
 

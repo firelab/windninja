@@ -1561,31 +1561,31 @@ void MainWindow::plotKmzOutputs()
             bool timeSeries = !ui->domainAverageGroupBox->isChecked();
 
             webEngineView->page()->runJavaScript(
-                "loadKmzFromBase64('" + base64 + "', " + (timeSeries ? "true" : "false") + ");"
+                "loadKmzFromBase64('"+base64+"', "+(timeSeries ? "true" : "false")+");"
             );
 
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
             // (first run, because station kmls are SHARED across runs)
-            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
-            {
-                for(int j = 0; j < numStationKmls; j++)
-                {
-                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
-                    qDebug() << "station kml outFile =" << outFileStr;
-                    QFile outFile(outFileStr);
+            // if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
+            // {
+            //     for(int j = 0; j < numStationKmls; j++)
+            //     {
+            //         QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
+            //         qDebug() << "station kml outFile =" << outFileStr;
+            //         QFile outFile(outFileStr);
 
-                    outFile.open(QIODevice::ReadOnly);
-                    QByteArray data = outFile.readAll();
-                    QString base64 = data.toBase64();
+            //         outFile.open(QIODevice::ReadOnly);
+            //         QByteArray data = outFile.readAll();
+            //         QString base64 = data.toBase64();
 
-                    webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-                }
-            }
+            //         webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+            //     }
+            // }
 
-            // if it is a weather model run, and weather model kmzs were created for the run,
-            // plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
+            // // if it is a weather model run, and weather model kmzs were created for the run,
+            // // plot the weather model kmz of the run
+            // if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
@@ -1595,7 +1595,7 @@ void MainWindow::plotKmzOutputs()
                 QByteArray data = outFile.readAll();
                 QString base64 = data.toBase64();
 
-                webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
+                webEngineView->page()->runJavaScript("loadOutputFromBase64('"+base64+"')");
             }
         }
 
