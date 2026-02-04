@@ -68,7 +68,8 @@ void DomainAverageInput::domainAverageTableCheckRows()
 
         if(speedSpin->value() != 0.0 || directionSpin->value() != 0.0)
         {
-            numRuns = numRuns + 1;
+            //numRuns = numRuns + 1;  // numActiveRows
+            numRuns = rowIdx + 1;  // lastActiveRowPlusOne
         }
     }
 
@@ -94,7 +95,7 @@ void DomainAverageInput::domainAverageTableCheckRows()
         qDebug() << QString::number(numRuns)+" runs";
         valid = true;
         // override if any 0.0 wind speed runs are detected, warn and run if diurnal, stop if not diurnal
-        for(int runIdx=0; runIdx < numRuns; runIdx++)
+        for(int runIdx = 0; runIdx < numRuns; runIdx++)
         {
             QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(runIdx, 0));
             if(!speedSpin)
