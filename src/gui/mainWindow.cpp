@@ -468,57 +468,37 @@ void MainWindow::solveButtonClicked()
         int rowCount = ui->domainAverageTable->rowCount();
         for (int row = 0; row < rowCount; ++row)
         {
-            QTableWidgetItem* speedItem = ui->domainAverageTable->item(row, 0);
-            QTableWidgetItem* directionItem = ui->domainAverageTable->item(row, 1);
-            QTableWidgetItem* timeItem = ui->domainAverageTable->item(row, 2);
-            QTableWidgetItem* dateItem = ui->domainAverageTable->item(row, 3);
-            QTableWidgetItem* cloudCoverItem = ui->domainAverageTable->item(row, 4);
-            QTableWidgetItem* airTempItem = ui->domainAverageTable->item(row, 5);
+            QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(row, 0));
+            QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(row, 1));
+            QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(row, 2));
+            QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(row, 3));
+            QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(row, 4));
+            QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(row, 5));
 
-            if(speedItem && directionItem && !speedItem->text().trimmed().isEmpty() && !directionItem->text().trimmed().isEmpty())
+            if(!speedSpin || !directionSpin || !timeEdit || !dateEdit || !cloudCoverSpin || !airTempSpin)
             {
-                speeds << speedItem->text().toDouble();
-                directions << directionItem->text().toDouble();
+                continue;
+            }
 
-                if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
-                {
-                    if(timeItem && dateItem && cloudCoverItem && airTempItem && !timeItem->text().trimmed().isEmpty() && !dateItem->text().trimmed().isEmpty() && !cloudCoverItem->text().trimmed().isEmpty() && !airTempItem->text().trimmed().isEmpty())
-                    {
-                        QTime currentTime = QTime::fromString(timeItem->text(), "HH:mm");
-                        QDate currentDate = QDate::fromString(dateItem->text(), "MM/dd/yyyy");
-                        // constructs using machine local time, may need to convert from machine local time to UTC time
-                        QDateTime currentDateTime = QDateTime(currentDate, currentTime);
+            if(speedSpin->value() != 0.0 || directionSpin->value() != 0.0)
+            {
+                speeds << speedSpin->value();
+                directions << directionSpin->value();
 
-                        years << currentDateTime.date().year();
-                        months << currentDateTime.date().month();
-                        days << currentDateTime.date().day();
-                        hours << currentDateTime.time().hour();
-                        minutes << currentDateTime.time().minute();
+                // always grab the values from the diurnal/stability inputs,
+                // whether they are the default values, or whatever the user has changed them to be
 
-                        cloudCovers << cloudCoverItem->text().toDouble();
-                        airTemps << airTempItem->text().toDouble();
-                    } else
-                    {
-                        ninjaErr = NINJA_E_INVALID;
-                        qDebug() << "Failed to read diurnal/stability inputs from domainAvgInputTable: ninjaErr =" << ninjaErr;
-                        comMessageHandler("ERROR: Failed to read diurnal/stability inputs from domainAvgInputTable.", this);
-                        progressDialog->setMinimumSize(400, 120);  // using comMessageHandler in this way resizes the progressDialog weirdly without this
-                        break;
-                    }
-                } else  // if not stability or diurnal, still need to feed in some kind of values
-                {
-                    // throw in some generic values
-                    QDateTime currentDateTime = QDateTime::currentDateTimeUtc();
+                // constructs using machine local time, may need to convert from machine local time to UTC time
+                QDateTime currentDateTime = QDateTime(dateEdit->date(), timeEdit->time());
 
-                    years << currentDateTime.date().year();
-                    months << currentDateTime.date().month();
-                    days << currentDateTime.date().day();
-                    hours << currentDateTime.time().hour();
-                    minutes << currentDateTime.time().minute();
+                years << currentDateTime.date().year();
+                months << currentDateTime.date().month();
+                days << currentDateTime.date().day();
+                hours << currentDateTime.time().hour();
+                minutes << currentDateTime.time().minute();
 
-                    cloudCovers << 15.0;
-                    airTemps << 72.0;
-                }
+                cloudCovers << cloudCoverSpin->value();
+                airTemps << airTempSpin->value();
             }
         }
         numNinjas = speeds.size();

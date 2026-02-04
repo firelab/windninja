@@ -39,177 +39,17 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
 
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
-    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCellChanged);
+    connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
     connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::domainAverageTableCheckRows);
     connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &DomainAverageInput::domainAverageTableCheckRows);
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
+    connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageTableCheckRows);
     connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
-}
-
-void DomainAverageInput::domainAverageTableCellChanged(int row, int column)
-{
-    QTableWidget* table = ui->domainAverageTable;
-    QTableWidgetItem* item = table->item(row, column);
-    if(item)
-    {
-        QString value = item->text().trimmed();
-        bool valid = false;
-        QString errorMessage;
-
-        // Allow empty input
-        if (value.isEmpty())
-        {
-            valid = true;
-        }
-        else
-        {
-            switch (column)
-            {
-            case 0:
-            {
-                double dbl = value.toDouble(&valid);
-                if (!valid || dbl < 0.0)
-                {
-                    valid = false;
-                    errorMessage = "Must be a positive number";
-                }
-                break;
-            }
-            case 1:
-            {
-                double dbl = value.toDouble(&valid);
-                if (!valid || dbl < 0.0 || dbl > 359.9)
-                {
-                    valid = false;
-                    errorMessage = "Must be a number between 0.0 and 359.9";
-                }
-                break;
-            }
-            case 2:
-            {
-                QTime t = QTime::fromString(value, "HH:mm");
-                valid = t.isValid();
-                if (!valid)
-                {
-                    errorMessage = "Must be a valid 24h time (HH:mm)";
-                }
-                break;
-            }
-            case 3:
-            {
-                QDate d = QDate::fromString(value, "MM/dd/yyyy");
-                valid = d.isValid();
-                if (!valid)
-                {
-                    errorMessage = "Must be a valid date (MM/dd/yyyy)";
-                }
-                break;
-            }
-            case 4:
-            {
-                double dbl = value.toDouble(&valid);
-                if (!valid || dbl < 0.0 || dbl > 100.0)
-                {
-                    valid = false;
-                    errorMessage = "Must be a number between 0.0 and 100.0";
-                }
-                break;
-            }
-            case 5:
-            {
-                double dbl = value.toDouble(&valid);
-                if (!valid || dbl < -40.0 || dbl > 200.0)
-                {
-                    valid = false;
-                    errorMessage = "Must be a number between -40.0 and 200.0";
-                }
-                break;
-            }
-            default:
-                valid = true;
-            }
-        }
-
-        QPair<int, int> cell(row, column);
-        if (!valid)
-        {
-            invalidDAWCells.insert(cell);
-            item->setBackground(Qt::red);
-            item->setToolTip(errorMessage);
-        }
-        else
-        {
-            invalidDAWCells.remove(cell);
-            item->setBackground(QBrush());  // Reset to default
-            item->setToolTip("");
-        }
-    }  // if(item)
-
-    AppState::instance().isDomainAverageWindInputTableValid = invalidDAWCells.isEmpty();
-
-    emit updateState();
-
-    domainAverageTableCheckRows();
 }
 
 void DomainAverageInput::domainAverageTableCheckRows()
 {
-    QTableWidget* table = ui->domainAverageTable;
-
-    int numTableCols = 6;  // table->columnCount()
-    if(!ui->diurnalCheckBox->isChecked() && !ui->stabilityCheckBox->isChecked())
-    {
-        numTableCols = 2;
-    }
-
-    int existingRowsCount = 0;
-    int filledRowsCount = 0;
-    int invalidCellsCount = 0;
-    for(int rowIdx = 0; rowIdx < table->rowCount(); rowIdx++)
-    {
-        int numFilledTableCols = 0;
-        for(int colIdx = 0; colIdx < numTableCols; colIdx++)
-        {
-            QTableWidgetItem* tableItem = table->item(rowIdx, colIdx);
-            if(tableItem && !tableItem->text().trimmed().isEmpty())
-            {
-                numFilledTableCols = numFilledTableCols + 1;
-            }
-        }
-
-        if(numFilledTableCols != 0)
-        {
-            existingRowsCount = existingRowsCount + 1;
-        }
-        if(numFilledTableCols == numTableCols)
-        {
-            filledRowsCount = filledRowsCount + 1;
-        }
-
-        for(const QPair<int,int>& cell : invalidDAWCells)
-        {
-            if(rowIdx == cell.first && cell.second < numTableCols)
-            {
-                invalidCellsCount = invalidCellsCount + 1;
-            }
-        }
-    }
-
-    bool valid = true;
-    if(invalidCellsCount != 0)
-    {
-        valid = false;
-    }
-    if(filledRowsCount == 0)
-    {
-        valid = false;
-    }
-    if(filledRowsCount != existingRowsCount)
-    {
-        valid = false;
-    }
-
-    AppState::instance().isDomainAverageWindInputTableValid = valid;
+    AppState::instance().isDomainAverageWindInputTableValid = true;
 
     emit updateState();
 }
@@ -219,8 +59,28 @@ void DomainAverageInput::clearTableButtonClicked()
     AppState& state = AppState::instance();
     AppState::instance().isDomainAverageWindInputTableValid = false;
 
+    for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
+    {
+        QDoubleSpinBox* speedSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 0));
+        QDoubleSpinBox* directionSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 1));
+        QTimeEdit* timeEdit = qobject_cast<QTimeEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 2));
+        QDateEdit* dateEdit = qobject_cast<QDateEdit*>(ui->domainAverageTable->cellWidget(rowIdx, 3));
+        QDoubleSpinBox* cloudCoverSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 4));
+        QDoubleSpinBox* airTempSpin = qobject_cast<QDoubleSpinBox*>(ui->domainAverageTable->cellWidget(rowIdx, 5));
+
+        disconnect(speedSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        disconnect(directionSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        disconnect(timeEdit, &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        disconnect(dateEdit, &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        disconnect(cloudCoverSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        disconnect(airTempSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+
+        //tableWidget->setCellWidget(rowIdx, colIdx, nullptr); // Destroys the old widget connections
+    }
+
     ui->domainAverageTable->clearContents();
-    invalidDAWCells.clear();
+
+    setupDomainAverageTableWidgets();
 
     emit updateState();
 }
@@ -302,7 +162,25 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         airTempSpin->setDecimals(0);
         airTempSpin->setValue(72.0);
         table->setCellWidget(row, 5, airTempSpin);
+
+        connect(speedSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(dirSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(timeEdit, &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(dateEdit, &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(cloudSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+        connect(airTempSpin, &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
     }
+
+    //connect(speedSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &DomainAverageInput::domainAverageTableCheckRows);
+    //connect(dirSpin, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &DomainAverageInput::domainAverageTableCheckRows);
+    //connect(timeEdit, &QTimeEdit::timeChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+    //connect(dateEdit, &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+
+    //for(int rowIdx = 0; rowIdx < rows; rowIdx++)
+    //{
+    //    connect(tree->wind->windTable->speed[i], SIGNAL(valueChanged(double)), this, &DomainAverageInput::domainAverageTableCheckRows);
+    //    connect(tree->wind->windTable->dir[i], SIGNAL(valueChanged(int)), this, &DomainAverageInput::domainAverageTableCheckRows);
+    //}
 
     if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
     {

@@ -33,9 +33,6 @@
 #include "appState.h"
 #include "ui_mainWindow.h"
 #include <QObject>
-#include <QPair>
-#include <QSet>
-#include <QTimer>
 
 class DomainAverageInput: public QObject
 {
@@ -49,14 +46,12 @@ public:
 
 private slots:
     void setupDomainAverageTableWidgets();
-    void domainAverageTableCellChanged(int row, int column);
     void domainAverageTableCheckRows();
     void clearTableButtonClicked();
     void domainAverageGroupBoxToggled();
     void windHeightComboBoxCurrentIndexChanged(int index);
 
 private:
-    QSet<QPair<int, int>> invalidDAWCells;
     Ui::MainWindow *ui;
 
 };
