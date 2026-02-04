@@ -155,11 +155,13 @@
 
         const layerControl = L.control.layers.tree(
             baseTree,
-            overlayTree,
+            [
+                overlayTree,          
+            ],
             {
                 collapsed: true
             }
-        );
+        ).addTo(map);
 
         let drawDEMCheck = false;
 
@@ -286,14 +288,17 @@
         };
 
         async function loadKmzFromBase64(kmlData, timeSeries) {
-            clearKmzBaseLayers();
+            // Setup & Cleanup
+            //clearKmzBaseLayers();
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
                 bytes[i] = binary.charCodeAt(i);
             }
+            
             const zip = await JSZip.loadAsync(bytes.buffer);
 
+            // 2. Identify Files
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
             );
@@ -302,77 +307,85 @@
             );
 
             if (kmlEntries.length === 0) {
-                alert('No KML files found in this KMZ.');
+                console.error('No KML files found in this KMZ.');
                 return;
             }
 
-            for (const entry of kmlEntries) {
-                const kmlText = await entry.async('string');
-                const parser = new DOMParser();
-                const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
-                const kmlLayer = new L.KML(kmlDoc);
+            // Process kmz file
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            // Create leaflet layer
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = entry.name;
 
-                const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            // 4. Legend Logic
+            const legendControl = L.control({ position: 'bottomright' });
+            kmzLegendControls.push(legendControl);
 
-                const layerName = entry.name;
+            legendControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'kmz-legend');
+                L.DomEvent.disableClickPropagation(container);
 
-                const legendControl = L.control({ position: 'bottomright' });
-                kmzLegendControls.push(legendControl);
+                if (legendEntries.length > 0) {
+                    (async () => {
+                        // Legend Key
+                        const blob = await legendEntries[0].async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.src = url;
+                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
+                        container.appendChild(img);
 
-                legendControl.onAdd = function () {
-                    const container = L.DomUtil.create('div', 'kmz-legend');
-                    L.DomEvent.disableClickPropagation(container);
+                        // Legend Time Series 
+                        if (timeSeries && legendEntries.length > 1) {
+                            const blob2 = await legendEntries[1].async('blob');
+                            const url2 = URL.createObjectURL(blob2);
+                            const img2 = new Image();
+                            img2.src = url2;
+                            img2.style.cssText = `
+                                position: absolute; top: 10px; left: 50%;
+                                transform: translateX(-50%); max-width: 90%;
+                                height: auto; z-index: 600;
+                            `;
+                            map.getContainer().appendChild(img2);
+                        }
+                    })();
+                }
+                return container;
+            };
 
+            // Toggle legend with layer
+            kmlLegendLayer.on('add', () => legendControl.addTo(map));
+            kmlLegendLayer.on('remove', () => legendControl.remove());
 
-                    if (legendEntries.length > 0) {
-                        (async () => {
-                            const legendEntry = legendEntries[0]; // Grabs only the legend
-                            const blob = await legendEntry.async('blob');
-                            const url = URL.createObjectURL(blob);
+            const isFirstLayer = simulationTree.children.length === 0;
 
-                            const img = new Image();
-                            img.src = url;
-                            img.style.display = 'block';
-                            img.style.maxWidth = '150px'; 
-                            img.style.height = 'auto';
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
 
-                            container.appendChild(img);
+            // 5. Update the Tree Control
+            simulationTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer
+            });
 
-                    if (timeSeries && legendEntries.length > 1) {
-                        const legendEntry2 = legendEntries[1];
-                        const blob2 = await legendEntry2.async('blob');
-                        const url2 = URL.createObjectURL(blob2);
+            // Save reference for cleanup
+            kmzBaseLayers.push(kmlLegendLayer);
 
-                        const img2 = new Image();
-                        img2.src = url2;
-                        img2.style.position = 'absolute';
-                        img2.style.top = '10px';
-                        img2.style.left = '50%';
-                        img2.style.transform = 'translateX(-50%)';
-                        img2.style.maxWidth = '90%'; // prevents it from overflowing the map
-                        img2.style.height = 'auto';
-                        img2.style.zIndex = '600';
-                        img2.className = 'kmz-time-series-legend';
-
-                        // Append directly to the map container
-                        map.getContainer().appendChild(img2);
-}
-                        })();
-                    }
-
-                    return container;
-                };
-
-                kmlLegendLayer.on('add', () => legendControl.addTo(map));
-                kmlLegendLayer.on('remove', () => legendControl.remove());
-
-                layerControl.addBaseLayer(kmlLegendLayer, layerName);
-                kmzBaseLayers.push(kmlLegendLayer);
-
+            if (layerControl && layerControl.setOverlayTree) {
+                layerControl.setOverlayTree([
+                    simulationTree,
+                    overlayTree
+                ]);
             }
         }
 
-        // Main
+        // Script Main
 
         if (window.qt) {
             new QWebChannel(qt.webChannelTransport, channel => {
@@ -385,7 +398,6 @@
         layerControl.addTo(map);
         L.control.scale().addTo(map);
 
-        
     </script>
 </body>
 </html>
