@@ -5,6 +5,8 @@ setConfigurationOptionDialog::setConfigurationOptionDialog(QWidget *parent) :
     ui(new Ui::setConfigurationOptionDialog)
 {
     ui->setupUi(this);
+
+    ui->keyLineEdit->setFocus();
 }
 
 setConfigurationOptionDialog::~setConfigurationOptionDialog()

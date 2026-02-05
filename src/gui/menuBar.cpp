@@ -160,8 +160,8 @@ void MenuBar::setConfigurationOptionActionTriggered()
     if (key.isEmpty())
         return;
 
-    qDebug() << "Setting configuration option" << key << "to" << val;
-    emit writeToConsoleSignal("Setting configuration option " + key + " to " + val);
+    qDebug() << "Setting configuration option "+key+"="+val;
+    emit writeToConsoleSignal("Setting configuration option " + key + "=" + val);
 
     CPLSetConfigOption(
         key.toUtf8().constData(),
