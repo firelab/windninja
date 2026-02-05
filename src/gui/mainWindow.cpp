@@ -352,22 +352,25 @@ void MainWindow::diurnalCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
-    QTableWidget* table = ui->domainAverageTable;
     if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
     {
-        table->showColumn(2);
-        table->showColumn(3);
-        table->showColumn(4);
-        table->showColumn(5);
-        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
+        {
+            domainAverageInput->timeEdits[row]->setEnabled(true);
+            domainAverageInput->dateEdits[row]->setEnabled(true);
+            domainAverageInput->cloudSpins[row]->setEnabled(true);
+            domainAverageInput->airTempSpins[row]->setEnabled(true);
+        }
     }
     else
     {
-        table->hideColumn(2);
-        table->hideColumn(3);
-        table->hideColumn(4);
-        table->hideColumn(5);
-        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
+        {
+            domainAverageInput->timeEdits[row]->setEnabled(false);
+            domainAverageInput->dateEdits[row]->setEnabled(false);
+            domainAverageInput->cloudSpins[row]->setEnabled(false);
+            domainAverageInput->airTempSpins[row]->setEnabled(false);
+        }
     }
 
     emit updateDirunalState();
@@ -378,22 +381,25 @@ void MainWindow::stabilityCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
-    QTableWidget* table = ui->domainAverageTable;
     if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
     {
-        table->showColumn(2);
-        table->showColumn(3);
-        table->showColumn(4);
-        table->showColumn(5);
-        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
+        {
+            domainAverageInput->timeEdits[row]->setEnabled(true);
+            domainAverageInput->dateEdits[row]->setEnabled(true);
+            domainAverageInput->cloudSpins[row]->setEnabled(true);
+            domainAverageInput->airTempSpins[row]->setEnabled(true);
+        }
     }
     else
     {
-        table->hideColumn(2);
-        table->hideColumn(3);
-        table->hideColumn(4);
-        table->hideColumn(5);
-        table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
+        {
+            domainAverageInput->timeEdits[row]->setEnabled(false);
+            domainAverageInput->dateEdits[row]->setEnabled(false);
+            domainAverageInput->cloudSpins[row]->setEnabled(false);
+            domainAverageInput->airTempSpins[row]->setEnabled(false);
+        }
     }
 
     emit updateStabilityState();
