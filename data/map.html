@@ -35,7 +35,8 @@
     <meta charset="UTF-8">
     <title>Leaflet Map</title>
     <style>
-        html, body {
+        html, body 
+        {
             height: 100%;
             width: 100%;
             margin: 0;
@@ -43,12 +44,13 @@
             overflow: hidden;
             box-sizing: border-box;
         }
-        #map {
+        #map 
+        {
             height: 100%;
             width: 100%;
             box-sizing: border-box;
         }
-        .leaflet-div-icon {
+      .leaflet-div-icon {
             background: white;
             border: 2px solid #0077ff;
             border-radius: 50%;
@@ -81,85 +83,142 @@
             background: #0077ff;
             color: white;
         }
-        .leaflet-topcenter {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    pointer-events: none;
-}
-
-.kmz-top-center-legend img {
-    display: block;
-}
-
     </style>
 
+    <!-- Leaflet stylesheets -->
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
     <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
+    <link rel="stylesheet" href="leaflet/L.Control.Layers.Tree.css" />
+
+    <!-- Leaflet and Draw dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <!-- Leaflet and Draw dependencies -->
     <script src="./leaflet/leaflet-src.js"></script>
     <script src="./leaflet/L.KML.js"></script>
 
+    <script src="./leaflet/L.Control.Layers.Tree.js"></script>
+
     <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
     <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Poly.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Marker.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.CircleMarker.js"></script>
-    <script src="./leaflet/draw/src/edit/handler/Edit.Circle.js"></script>
+
+    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="./leaflet/draw/src/Tooltip.js"></script>
+    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Polyline.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Polygon.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
     <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Circle.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.Marker.js"></script>
-    <script src="./leaflet/draw/src/draw/handler/Draw.CircleMarker.js"></script>
-    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
-    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
-    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
-    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
-    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
-    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+
+    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+
     <script src="./leaflet/draw/src/Control.Draw.js"></script>
-    <script src="./leaflet/draw/src/Tooltip.js"></script>
     <script src="./leaflet/draw/src/Toolbar.js"></script>
     <script src="./leaflet/draw/src/draw/DrawToolbar.js"></script>
     <script src="./leaflet/draw/src/edit/EditToolbar.js"></script>
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
+
+    
+
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
     <script>
+
+        // Script variables
         const apiKey = "pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ";
 
-        const mapBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+        const streetBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
             tileSize: 512,
             maxZoom: 18,
             zoomOffset: -1,
             id: 'mapbox/streets-v11'
         });
 
+        const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+            tileSize: 512,
+            maxZoom: 18,
+            zoomOffset: -1,
+            id: 'mapbox/satellite-v9'
+        });
+
         const map = new L.Map('map', {
-            layers: [mapBaseLayer],
+            layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
         });
         
-
         const mapRectangleLayer = new L.FeatureGroup();
-        map.addLayer(mapRectangleLayer);
-
         const rectangleDrawer = new L.Draw.Rectangle(map);
+        const centerControl = L.control({ position: 'topleft' });
+        
+        const baseTree = {
+            label: 'Base Maps',
+            children: [
+                {
+                    label: 'Mapbox Streets',
+                    layer: streetBaseLayer
+                },
+                {
+                    label: 'Satellite',
+                    layer: satelliteBaseLayer
+                }
+            ]
+        };
 
+        const windninjaOutputTree = {
+            label: 'WindNinja Output',
+            children: [
+                {
+                    label: 'None',
+                    layer: L.layerGroup([]), // Dummy empty layer
+                    radioGroup: 'windninjaOutputs'
+                }
+            ]
+        };
+
+        const initializationOutputTree = {
+            label: 'Weather Model Output',
+            children: [
+                {
+                    label: 'None',
+                    layer: L.layerGroup([]), // Dummy empty layer
+                    radioGroup: 'initializationOutput'
+                }
+            ]
+        };
+
+        const overlayTree = {
+            label: 'WindNinja Overlays',
+            children: [
+                {
+                    label: 'Bounding Box',
+                    layer: mapRectangleLayer
+                }
+            ]
+        };
+
+        const layerControl = L.control.layers.tree(
+            baseTree,
+            [],
+            {
+                collapsed: true
+            }
+        ).addTo(map);
+
+
+        let drawDEMCheck = false;
+        let kmzLegendControls = [];
+        let centerControlAdded = false;
+
+        // Script functions
         function sendBoundingBox(layer) {
             const bounds = layer.getBounds();
             const bboxData = {
@@ -168,26 +227,27 @@
                 east: bounds.getEast(),
                 west: bounds.getWest()
             };
+
             if (window.bridge?.receiveBoundingBox) {
                 window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
             }
         }
 
         function drawBoundingBox(north, south, east, west) {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
             rectangle.editing.enable();
             sendBoundingBox(rectangle);
             map.fitBounds(rectangle.getBounds());
             rectangle.on('edit', () => {
-                sendBoundingBox(rectangle);
-                map.fitBounds(rectangle.getBounds()); 
+                    sendBoundingBox(rectangle);
+                    map.fitBounds(rectangle.getBounds()); 
             });
         }
 
         function drawDEM(DEMCorners) {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
 
             const rectangleCorners = [
                 [DEMCorners[1], DEMCorners[0]], // NE
@@ -205,129 +265,46 @@
 
             setTimeout(() => {
                 map.fitBounds(rectangle.getBounds());
-            }, 5000);
+            }, 10);
 
             showCenterControl();
+
+            if (layerControl && layerControl.setOverlayTree && windninjaOutputTree.children.length > 1) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,
+                    overlayTree
+                ]);
+            }
+            else {
+                layerControl.setOverlayTree([
+                    overlayTree
+                ]);
+            }
         }
 
         function startRectangleDrawing() {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             rectangleDrawer.enable();
         }
 
         function stopRectangleDrawing() {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
+            
             if(!drawDEMCheck) {
                 hideCenterControl();
             }
+            
             rectangleDrawer.disable();
         }
 
-        let activeKmzLayer = null;
-
-        async function loadKmzFromBase64(kmlData, timeSeries) {
-            clearKmzBaseLayers();
-            const binary = atob(kmlData);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            const zip = await JSZip.loadAsync(bytes.buffer);
-
-            const kmlEntries = Object.values(zip.files).filter(entry =>
-                entry.name.toLowerCase().endsWith('.kml')
-            );
-            const legendEntries = Object.values(zip.files).filter(entry =>
-                entry.name.toLowerCase().endsWith('.bmp')
-            );
-
-            if (kmlEntries.length === 0) {
-                alert('No KML files found in this KMZ.');
-                return;
-            }
-
-            for (const entry of kmlEntries) {
-                const kmlText = await entry.async('string');
-                const parser = new DOMParser();
-                const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
-                const kmlLayer = new L.KML(kmlDoc);
-
-                const kmlLegendLayer = L.layerGroup([kmlLayer]);
-
-                const layerName = entry.name;
-
-                const legendControl = L.control({ position: 'bottomright' });
-                kmzLegendControls.push(legendControl);
-
-                legendControl.onAdd = function () {
-                    const container = L.DomUtil.create('div', 'kmz-legend');
-                    L.DomEvent.disableClickPropagation(container);
-
-
-                    if (legendEntries.length > 0) {
-                        (async () => {
-                            const legendEntry = legendEntries[0]; // Grabs only the legend
-                            const blob = await legendEntry.async('blob');
-                            const url = URL.createObjectURL(blob);
-
-                            const img = new Image();
-                            img.src = url;
-                            img.style.display = 'block';
-                            img.style.maxWidth = '150px'; 
-                            img.style.height = 'auto';
-
-                            container.appendChild(img);
-
-                    if (timeSeries && legendEntries.length > 1) {
-    const legendEntry2 = legendEntries[1];
-    const blob2 = await legendEntry2.async('blob');
-    const url2 = URL.createObjectURL(blob2);
-
-    const img2 = new Image();
-    img2.src = url2;
-    img2.style.position = 'absolute';
-    img2.style.top = '10px';
-    img2.style.left = '50%';
-    img2.style.transform = 'translateX(-50%)';
-    img2.style.maxWidth = '90%'; // prevents it from overflowing the map
-    img2.style.height = 'auto';
-    img2.style.zIndex = '600';
-    img2.className = 'kmz-time-series-legend';
-
-    // Append directly to the map container
-    map.getContainer().appendChild(img2);
-}
-                        })();
-                    }
-
-                    return container;
-                };
-
-                kmlLegendLayer.on('add', () => legendControl.addTo(map));
-                kmlLegendLayer.on('remove', () => legendControl.remove());
-
-                layerControl.addBaseLayer(kmlLegendLayer, layerName);
-                kmzBaseLayers.push(kmlLegendLayer);
-
-                if (!layerControlAdded) {
-                    layerControl.addTo(map);
-                    layerControlAdded = true;
-                }
-
-                if (!activeKmzLayer) {
-                    activeKmzLayer = kmlLegendLayer;
-                    kmlLegendLayer.addTo(map);
-                }
-            }
-        }
-
-
         map.on('draw:created', ({ layer }) => {
-            mapRectangleLayer.clearLayers();
+            clearRectangleLayer();
             mapRectangleLayer.addLayer(layer);
             layer.editing.enable();
             sendBoundingBox(layer);
-            layer.on('edit', () => {
+            layer.on('edit', () => 
+            {
                 sendBoundingBox(layer);
                 map.fitBounds(layer.getBounds());
             });
@@ -348,21 +325,6 @@
                 centerControlAdded = false;
             }
         }
-
-
-        const baseMaps = {};
-        const overlayMaps = {};
-        const layerControl = L.control.layers(baseMaps, overlayMaps);
-        let layerControlAdded = false;
-        let drawDEMCheck = false;
-
-        let kmzBaseLayers = [];
-let kmzLegendControls = [];
-        
-        L.control.scale().addTo(map);
-
-        const centerControl = L.control({ position: 'topleft' });
-        let centerControlAdded = false;
 
         centerControl.onAdd = function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
@@ -385,29 +347,209 @@ let kmzLegendControls = [];
             return container;
         };
 
-        function clearKmzBaseLayers() {
-    kmzBaseLayers.forEach(layer => {
-        if (map.hasLayer(layer)) {
-            map.removeLayer(layer);
+        async function loadKmzFromBase64(kmlData, timeSeries) {
+            // Setup & Cleanup
+            clearWindNinjaOutputTree();
+
+            const binary = atob(kmlData);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            
+            const zip = await JSZip.loadAsync(bytes.buffer);
+
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+            const legendEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.bmp')
+            );
+
+            if (kmlEntries.length === 0) {
+                console.error('No KML files found in this KMZ.');
+                return;
+            }
+
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = entry.name;
+
+            const legendControl = L.control({ position: 'bottomright' });
+            kmzLegendControls.push(legendControl);
+
+            legendControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'kmz-legend');
+                L.DomEvent.disableClickPropagation(container);
+
+                if (legendEntries.length > 0) {
+                    (async () => {
+                        // Legend Key
+                        const blob = await legendEntries[0].async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.src = url;
+                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
+                        container.appendChild(img);
+
+                        // Legend Time Series 
+                        if (timeSeries && legendEntries.length > 1) {
+                            const blob2 = await legendEntries[1].async('blob');
+                            const url2 = URL.createObjectURL(blob2);
+                            const img2 = new Image();
+                            img2.src = url2;
+                            img2.style.cssText = `
+                                position: absolute; top: 10px; left: 50%;
+                                transform: translateX(-50%); max-width: 90%;
+                                height: auto; z-index: 600;
+                            `;
+                            map.getContainer().appendChild(img2);
+                        }
+                    })();
+                }
+                return container;
+            };
+
+            // Toggle legend with layer
+            kmlLegendLayer.on('add', () => legendControl.addTo(map));
+            kmlLegendLayer.on('remove', () => legendControl.remove());
+
+            const isFirstLayer = windninjaOutputTree.children.length === 1;
+
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
+
+            windninjaOutputTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer,
+                radioGroup: 'windninjaOutputs'
+            });
+
+            if (layerControl && layerControl.setOverlayTree) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,
+                    overlayTree
+                ]);
+            }
         }
-        layerControl.removeLayer(layer);
-    });
 
-    kmzLegendControls.forEach(ctrl => {
-        map.removeControl(ctrl);
-    });
+        async function loadOutputFromBase64(data) {
 
-    kmzBaseLayers = [];
-    kmzLegendControls = [];
-    activeKmzLayer = null;
-}
+            clearInitializationOutputTree();
 
+            const binary = atob(data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            const zip = await JSZip.loadAsync(bytes.buffer);
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+
+            if (kmlEntries.length === 0) {
+                console.error('No KML files found in this output.');
+                return;
+            }
+
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = entry.name;
+
+            const isFirstLayer = initializationOutputTree.children.length === 1;
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
+
+            initializationOutputTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer,
+                radioGroup: 'initializationOutput'
+            });
+
+            if (layerControl && layerControl.setOverlayTree) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,    
+                    overlayTree
+                ]);
+            }
+        }
+
+        function clearWindNinjaOutputTree() {
+            windninjaOutputTree.children.forEach(item => {
+                // Only remove layers that aren't the "None" placeholder
+                if (item.layer && item.label !== 'None') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            // Reset to just the None option
+            windninjaOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'windninjaOutputs'
+            }];
+
+            if (layerControl) {
+                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
+            }
+        }
+
+        function clearInitializationOutputTree() {
+            initializationOutputTree.children.forEach(item => {
+                if (item.layer && item.label !== 'None') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            initializationOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'initializationOutput'
+            }];
+
+            if (layerControl) {
+                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
+            }
+        }
+
+        function clearRectangleLayer() {
+            mapRectangleLayer.eachLayer(layer => {
+                if (layer.editing) {
+                    layer.editing.disable();
+                }
+            });
+            mapRectangleLayer.clearLayers();        
+        }
+
+        // Script Main
         if (window.qt) {
             new QWebChannel(qt.webChannelTransport, channel => {
                 window.bridge = channel.objects.bridge;
             });
         }
         
+        map.addLayer(mapRectangleLayer);
+
+        layerControl.addTo(map);
+        L.control.scale().addTo(map);
+
+        
+
     </script>
 </body>
 </html>
