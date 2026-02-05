@@ -175,12 +175,24 @@
 
         const windninjaOutputTree = {
             label: 'WindNinja Output',
-            children: []
+            children: [
+                {
+                    label: 'None',
+                    layer: L.layerGroup([]), // Dummy empty layer
+                    radioGroup: 'windninjaOutputs'
+                }
+            ]
         };
 
-        const initializationOutputTree= {
+        const initializationOutputTree = {
             label: 'Weather Model Output',
-            children: []
+            children: [
+                {
+                    label: 'None',
+                    layer: L.layerGroup([]), // Dummy empty layer
+                    radioGroup: 'initializationOutput'
+                }
+            ]
         };
 
         const overlayTree = {
@@ -407,7 +419,7 @@
             kmlLegendLayer.on('add', () => legendControl.addTo(map));
             kmlLegendLayer.on('remove', () => legendControl.remove());
 
-            const isFirstLayer = windninjaOutputTree.children.length === 0;
+            const isFirstLayer = windninjaOutputTree.children.length === 1;
 
             if (isFirstLayer) {
                 kmlLegendLayer.addTo(map);
@@ -457,7 +469,7 @@
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = entry.name;
 
-            const isFirstLayer = initializationOutputTree.children.length === 0;
+            const isFirstLayer = initializationOutputTree.children.length === 1;
             if (isFirstLayer) {
                 kmlLegendLayer.addTo(map);
             }
@@ -479,12 +491,18 @@
 
         function clearWindNinjaOutputTree() {
             windninjaOutputTree.children.forEach(item => {
-                if (item.layer) {
+                // Only remove layers that aren't the "None" placeholder
+                if (item.layer && item.label !== 'None') {
                     map.removeLayer(item.layer);
                 }
             });
 
-            windninjaOutputTree.children = [];
+            // Reset to just the None option
+            windninjaOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'windninjaOutputs'
+            }];
 
             if (layerControl) {
                 layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
@@ -493,12 +511,16 @@
 
         function clearInitializationOutputTree() {
             initializationOutputTree.children.forEach(item => {
-                if (item.layer) {
+                if (item.layer && item.label !== 'None') {
                     map.removeLayer(item.layer);
                 }
             });
 
-            initializationOutputTree.children = [];
+            initializationOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'initializationOutput'
+            }];
 
             if (layerControl) {
                 layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
