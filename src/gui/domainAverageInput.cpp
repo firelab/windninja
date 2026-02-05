@@ -128,7 +128,8 @@ qDebug() << "appState =" << valid;
 
 void DomainAverageInput::clearTableButtonClicked()
 {
-    AppState::instance().isDomainAverageWindInputTableValid = false;
+    // AppState::instance().isDomainAverageWindInputTableValid is set
+    // and updateState() is emitted here, by the call to the domainAverageTableCheckRows() function
 
     speedSpins.clear();
     dirSpins.clear();
@@ -142,8 +143,6 @@ void DomainAverageInput::clearTableButtonClicked()
     setupDomainAverageTableWidgets();
 
     domainAverageTableCheckRows();
-
-    emit updateState();
 }
 
 void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)

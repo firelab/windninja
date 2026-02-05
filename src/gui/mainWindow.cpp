@@ -465,16 +465,15 @@ void MainWindow::solveButtonClicked()
 
         QString DEMTimeZone = ui->timeZoneComboBox->currentText();
 
-        int numRuns = domainAverageInput->countNumRuns();
+        numNinjas = domainAverageInput->countNumRuns();
 
-        // countNumRuns() returns a 0 when ALL rows are 0.0, 0.0 spd, dir rows, but
         // if diurnal is checked, we actually DO want to run that first 0.0, 0.0 spd, dir row as a single run
-        if(numRuns == 0 && ui->diurnalCheckBox->isChecked() == true)
+        if(numNinjas == 0 && ui->diurnalCheckBox->isChecked() == true)
         {
-            numRuns = 1;
+            numNinjas = 1;
         }
 
-        for(int runIdx = 0; runIdx < numRuns; runIdx++)
+        for(int runIdx = 0; runIdx < numNinjas; runIdx++)
         {
             speeds << domainAverageInput->speedSpins[runIdx]->value();
             directions << domainAverageInput->dirSpins[runIdx]->value();
@@ -494,9 +493,6 @@ void MainWindow::solveButtonClicked()
             cloudCovers << domainAverageInput->cloudSpins[runIdx]->value();
             airTemps << domainAverageInput->airTempSpins[runIdx]->value();
         }
-
-        numNinjas = speeds.size();  // SHOULD be the same as numRuns
-        qDebug() << "numRuns = " << numRuns << ", numNinjas = " << numNinjas;
 
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
         QString speedUnits =  ui->tableSpeedUnits->currentText();
