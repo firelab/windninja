@@ -3500,12 +3500,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </property>
                    <item>
                     <property name="text">
-                     <string>Equal Count</string>
+                     <string>Uniform Range</string>
                     </property>
                    </item>
                    <item>
                     <property name="text">
-                     <string>Uniform Range</string>
+                     <string>Equal Count</string>
                     </property>
                    </item>
                   </widget>

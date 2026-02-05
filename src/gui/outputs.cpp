@@ -29,8 +29,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->alternativeColorSchemeComboBox->setItemData(5, "greens");
     ui->alternativeColorSchemeComboBox->setItemData(6, "magic_beans");
     ui->alternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
-    ui->legendComboBox->setItemData(0, "equal_color");
-    ui->legendComboBox->setItemData(1, "equal_interval");
+    ui->legendComboBox->setItemData(0, "equal_interval");
+    ui->legendComboBox->setItemData(1, "equal_color");
 
     connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
