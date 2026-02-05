@@ -119,7 +119,6 @@ void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)
     case 2:
         ui->inputWindHeightSpinBox->setValue(0.00);
         ui->inputWindHeightSpinBox->setEnabled(true);
-        ui->inputWindHeightUnitsComboBox->setCurrentIndex(0);
         ui->inputWindHeightUnitsComboBox->setEnabled(true);
         break;
     }

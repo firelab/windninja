@@ -21,6 +21,7 @@ signals:
     void updateVTKState();
 
 private slots:
+    void windHeightComboBoxCurrentIndexChanged(int index);
     void googleEarthCheckBoxToggled(bool checked);
     void fireBehaviorGroupBoxToggled(bool checked);
     void shapeFilesGroupBoxToggled(bool checked);

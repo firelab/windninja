@@ -34,6 +34,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->legendComboBox->setItemData(0, "equal_interval");
     ui->legendComboBox->setItemData(1, "equal_color");
 
+    connect(ui->outputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightComboBoxCurrentIndexChanged);
     connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
@@ -51,6 +52,30 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
 
+}
+
+void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
+{
+    switch(index)
+    {
+    case 0:
+        ui->outputWindHeightSpinBox->setValue(20.00);
+        ui->outputWindHeightSpinBox->setEnabled(false);
+        ui->outputWindHeightUnitsComboBox->setCurrentIndex(0);
+        break;
+
+    case 1:
+        ui->outputWindHeightSpinBox->setValue(10.00);
+        ui->outputWindHeightSpinBox->setEnabled(false);
+        ui->outputWindHeightUnitsComboBox->setCurrentIndex(1);
+        break;
+
+    case 2:
+        ui->outputWindHeightSpinBox->setValue(0.00);
+        ui->outputWindHeightSpinBox->setEnabled(true);
+        ui->outputWindHeightUnitsComboBox->setEnabled(true);
+        break;
+    }
 }
 
 void Outputs::googleEarthCheckBoxToggled(bool checked)
