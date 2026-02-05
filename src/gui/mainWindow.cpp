@@ -352,25 +352,13 @@ void MainWindow::diurnalCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
 
-    if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
+    bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
-        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
-        {
-            domainAverageInput->timeEdits[row]->setEnabled(true);
-            domainAverageInput->dateEdits[row]->setEnabled(true);
-            domainAverageInput->cloudSpins[row]->setEnabled(true);
-            domainAverageInput->airTempSpins[row]->setEnabled(true);
-        }
-    }
-    else
-    {
-        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
-        {
-            domainAverageInput->timeEdits[row]->setEnabled(false);
-            domainAverageInput->dateEdits[row]->setEnabled(false);
-            domainAverageInput->cloudSpins[row]->setEnabled(false);
-            domainAverageInput->airTempSpins[row]->setEnabled(false);
-        }
+        domainAverageInput->timeEdits[row]->setEnabled(enabled);
+        domainAverageInput->dateEdits[row]->setEnabled(enabled);
+        domainAverageInput->cloudSpins[row]->setEnabled(enabled);
+        domainAverageInput->airTempSpins[row]->setEnabled(enabled);
     }
 
     emit updateDirunalState();
@@ -381,25 +369,13 @@ void MainWindow::stabilityCheckBoxClicked()
     AppState& state = AppState::instance();
     state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
 
-    if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
+    bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
-        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
-        {
-            domainAverageInput->timeEdits[row]->setEnabled(true);
-            domainAverageInput->dateEdits[row]->setEnabled(true);
-            domainAverageInput->cloudSpins[row]->setEnabled(true);
-            domainAverageInput->airTempSpins[row]->setEnabled(true);
-        }
-    }
-    else
-    {
-        for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
-        {
-            domainAverageInput->timeEdits[row]->setEnabled(false);
-            domainAverageInput->dateEdits[row]->setEnabled(false);
-            domainAverageInput->cloudSpins[row]->setEnabled(false);
-            domainAverageInput->airTempSpins[row]->setEnabled(false);
-        }
+        domainAverageInput->timeEdits[row]->setEnabled(enabled);
+        domainAverageInput->dateEdits[row]->setEnabled(enabled);
+        domainAverageInput->cloudSpins[row]->setEnabled(enabled);
+        domainAverageInput->airTempSpins[row]->setEnabled(enabled);
     }
 
     emit updateStabilityState();

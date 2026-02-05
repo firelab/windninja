@@ -193,25 +193,13 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         connect(airTempSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
     }
 
-    if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
+    bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    for(int row = 0; row < rows; row++)
     {
-        for(int row = 0; row < rows; row++)
-        {
-            timeEdits[row]->setEnabled(true);
-            dateEdits[row]->setEnabled(true);
-            cloudSpins[row]->setEnabled(true);
-            airTempSpins[row]->setEnabled(true);
-        }
-    }
-    else
-    {
-        for(int row = 0; row < rows; row++)
-        {
-            timeEdits[row]->setEnabled(false);
-            dateEdits[row]->setEnabled(false);
-            cloudSpins[row]->setEnabled(false);
-            airTempSpins[row]->setEnabled(false);
-        }
+        timeEdits[row]->setEnabled(enabled);
+        dateEdits[row]->setEnabled(enabled);
+        cloudSpins[row]->setEnabled(enabled);
+        airTempSpins[row]->setEnabled(enabled);
     }
 }
 
