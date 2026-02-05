@@ -53,7 +53,8 @@ public:
 
     bool isWindInputValid = false;
     bool isDomainAverageInitializationToggled = false;
-    bool isDomainAverageWindInputTableValid = false;
+    int DomainAvgTableNumRuns = 0;
+    int DomainAvgTableNumZeroRuns = 0;
     bool isDomainAverageInitializationValid = false;
     bool isPointInitializationToggled = false;
     bool isStationFileSelected = false;

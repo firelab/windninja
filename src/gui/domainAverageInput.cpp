@@ -75,60 +75,15 @@ void DomainAverageInput::domainAverageTableCheckRows()
         }
     }
 
-    bool valid = true;
-    if(numRuns == 0)
-    {
-        if(ui->diurnalCheckBox->isChecked() == false)
-        {
-            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
-            qDebug() << "No runs have been added, diurnal is not active";
-            valid = false;
-        }
-        else // if(ui->diurnalCheckBox->isChecked() == true)
-        {
-            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
-            qDebug() << "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal";
-            valid = true;
-        }
-    }
-    else // if(numRuns != 0)
-    {
-        if(numZeroRuns == 0)
-        {
-            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs");
-            qDebug() << QString::number(numRuns)+" runs";
-            valid = true;
-        }
-        else // if(numZeroRuns != 0)
-        {
-            if(ui->diurnalCheckBox->isChecked() == true)
-            {
-                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, detecting "+QString::number(numZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
-                qDebug() << QString::number(numRuns)+" runs have been added, detecting "+QString::number(numZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs";
-                valid = true;
-            }
-            else // if(ui->diurnalCheckBox->isChecked() == false)
-            {
-                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, but detecting "+QString::number(numZeroRuns)+" zero wind speed runs without diurnal being active");
-                qDebug() << QString::number(numRuns)+" runs have been added, but detecting "+QString::number(numZeroRuns)+" zero wind speed runs without diurnal being active";
-                valid = false;
-            }
-        }
-    }
+    AppState::instance().DomainAvgTableNumRuns = numRuns;
+    AppState::instance().DomainAvgTableNumZeroRuns = numZeroRuns;
 
-    AppState::instance().isDomainAverageWindInputTableValid = valid;
-qDebug() << "appState =" << valid;
     emit updateState();
 }
 
 void DomainAverageInput::clearTableButtonClicked()
 {
-    // AppState::instance().isDomainAverageWindInputTableValid is set
+    // AppState::instance().DomainAvgTableNumRuns and AppState::instance().DomainAvgTableNumZeroRuns are set
     // and updateState() is emitted here, by the call to the domainAverageTableCheckRows() function
 
     speedSpins.clear();

@@ -147,17 +147,47 @@ void AppState::updateStabilityInputState()
 
 void AppState::updateDomainAverageInputState()
 {
-    if (isDomainAverageInitializationToggled && isDomainAverageWindInputTableValid)
+    if(isDomainAverageInitializationToggled)
     {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Valid");
-        isDomainAverageInitializationValid = true;
-    }
-    else if (isDomainAverageInitializationToggled && !isDomainAverageWindInputTableValid)
-    {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Bad wind inputs");
-        isDomainAverageInitializationValid = false;
+        if(DomainAvgTableNumRuns == 0)
+        {
+            if(ui->diurnalCheckBox->isChecked() == false)
+            {
+                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
+                isDomainAverageInitializationValid = false;
+            }
+            else // if(ui->diurnalCheckBox->isChecked() == true)
+            {
+                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
+                isDomainAverageInitializationValid = true;
+            }
+        }
+        else // if(DomainAvgTableNumRuns != 0)
+        {
+            if(DomainAvgTableNumZeroRuns == 0)
+            {
+                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs");
+                isDomainAverageInitializationValid = true;
+            }
+            else // if(DomainAvgTableNumZeroRuns != 0)
+            {
+                if(ui->diurnalCheckBox->isChecked() == true)
+                {
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
+                    isDomainAverageInitializationValid = true;
+                }
+                else // if(ui->diurnalCheckBox->isChecked() == false)
+                {
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, but detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs without diurnal being active");
+                    isDomainAverageInitializationValid = false;
+                }
+            }
+        }
     }
     else
     {

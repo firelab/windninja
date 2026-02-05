@@ -467,7 +467,8 @@ void MainWindow::solveButtonClicked()
 
         numNinjas = domainAverageInput->countNumRuns();
 
-        // if diurnal is checked, we actually DO want to run that first 0.0, 0.0 spd, dir row as a single run
+        // countNumRuns() returns 0 when ALL rows are 0.0, 0.0 spd, dir rows,
+        // but if diurnal is checked, we actually DO want to run that first 0.0, 0.0 spd, dir row as a single run
         if(numNinjas == 0 && ui->diurnalCheckBox->isChecked() == true)
         {
             numNinjas = 1;
