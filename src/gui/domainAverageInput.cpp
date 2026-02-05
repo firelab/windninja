@@ -47,61 +47,76 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
 }
 
-void DomainAverageInput::domainAverageTableCheckRows()
+int DomainAverageInput::countNumRuns()
 {
-    //bool valid = false;
-    // count numRuns
-    int numRuns = 0;
+    int numActiveRows = 0;
     for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
     {
         if(speedSpins[rowIdx]->value() != 0.0 || dirSpins[rowIdx]->value() != 0.0)
         {
-            //numRuns = numRuns + 1;  // numActiveRows
-            numRuns = rowIdx + 1;  // lastActiveRowPlusOne
+            //numActiveRows = numActiveRows + 1;  // this method skips adding up the in between 0.0, 0.0 spd, dir rows
+            numActiveRows = rowIdx + 1;  // last active row, as a 1 to N count, rather than as a 0 to N-1 rowIdx, this method properly grabs the in between 0.0, 0.0 spd, dir rows
+        }
+    }
+
+    return numActiveRows;
+}
+
+void DomainAverageInput::domainAverageTableCheckRows()
+{
+    int numRuns = countNumRuns();
+
+    int numZeroRuns = 0;
+    for(int runIdx = 0; runIdx < numRuns; runIdx++)
+    {
+        if(speedSpins[runIdx]->value() == 0.0)
+        {
+            numZeroRuns = numZeroRuns + 1;
         }
     }
 
     bool valid = true;
-    if(numRuns == 0 && ui->diurnalCheckBox->isChecked() == false)
+    if(numRuns == 0)
     {
-        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
-        qDebug() << "No runs have been added, diurnal is not active";
-        valid = false;
-    }
-    else if(numRuns == 0 && ui->diurnalCheckBox->isChecked() == true)
-    {
-        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
-        qDebug() << "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal";
-        valid = true;
-    }
-    else
-    {
-        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-        //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs");
-        qDebug() << QString::number(numRuns)+" runs";
-        valid = true;
-        // override if any 0.0 wind speed runs are detected, warn and run if diurnal, stop if not diurnal
-        for(int runIdx = 0; runIdx < numRuns; runIdx++)
+        if(ui->diurnalCheckBox->isChecked() == false)
         {
-            if(speedSpins[runIdx]->value() == 0.0)
+            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
+            qDebug() << "No runs have been added, diurnal is not active";
+            valid = false;
+        }
+        else // if(ui->diurnalCheckBox->isChecked() == true)
+        {
+            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
+            qDebug() << "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal";
+            valid = true;
+        }
+    }
+    else // if(numRuns != 0)
+    {
+        if(numZeroRuns == 0)
+        {
+            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
+            //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs");
+            qDebug() << QString::number(numRuns)+" runs";
+            valid = true;
+        }
+        else // if(numZeroRuns != 0)
+        {
+            if(ui->diurnalCheckBox->isChecked() == true)
             {
-                if(ui->diurnalCheckBox->isChecked() == false)
-                {
-                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, but detecting at least one 0.0 wind speed run without diurnal being active");
-                    qDebug() << QString::number(numRuns)+" runs have been added, but detecting at least one 0.0 wind speed run without diurnal being active";
-                    valid = false;
-                }
-                else  // if(ui->diurnalCheckBox->isChecked() == true)
-                {
-                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-                    //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, detecting at least one 0.0 wind speed run, diurnal is active so will continue the runs");
-                    qDebug() << QString::number(numRuns)+" runs have been added, detecting at least one 0.0 wind speed run, diurnal is active so will continue the runs";
-                    valid = true;
-                }
-                break;
+                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, detecting "+QString::number(numZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
+                qDebug() << QString::number(numRuns)+" runs have been added, detecting "+QString::number(numZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs";
+                valid = true;
+            }
+            else // if(ui->diurnalCheckBox->isChecked() == false)
+            {
+                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                //ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(numRuns)+" runs have been added, but detecting "+QString::number(numZeroRuns)+" zero wind speed runs without diurnal being active");
+                qDebug() << QString::number(numRuns)+" runs have been added, but detecting "+QString::number(numZeroRuns)+" zero wind speed runs without diurnal being active";
+                valid = false;
             }
         }
     }

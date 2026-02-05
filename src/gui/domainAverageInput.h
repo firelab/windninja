@@ -44,6 +44,8 @@ signals:
 public:
     DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
+    int countNumRuns();
+
     QVector<QDoubleSpinBox*> speedSpins;
     QVector<QDoubleSpinBox*> dirSpins;
     QVector<QTimeEdit*>      timeEdits;

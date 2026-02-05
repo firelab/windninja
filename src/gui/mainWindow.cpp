@@ -465,17 +465,10 @@ void MainWindow::solveButtonClicked()
 
         QString DEMTimeZone = ui->timeZoneComboBox->currentText();
 
-        // count numRuns
-        int numRuns = 0;
-        for(int rowIdx = 0; rowIdx < ui->domainAverageTable->rowCount(); rowIdx++)
-        {
-            if(domainAverageInput->speedSpins[rowIdx]->value() != 0.0 || domainAverageInput->dirSpins[rowIdx]->value() != 0.0)
-            {
-                //numRuns = numRuns + 1;  // numActiveRows
-                numRuns = rowIdx + 1;  // lastActiveRowPlusOne
-            }
-        }
-        // the above count gets off by 1 when no runs are selected. If diurnal is checked, we actually DO want to run that first zero valued run.
+        int numRuns = domainAverageInput->countNumRuns();
+
+        // countNumRuns() returns a 0 when ALL rows are 0.0, 0.0 spd, dir rows, but
+        // if diurnal is checked, we actually DO want to run that first 0.0, 0.0 spd, dir row as a single run
         if(numRuns == 0 && ui->diurnalCheckBox->isChecked() == true)
         {
             numRuns = 1;
