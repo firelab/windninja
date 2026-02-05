@@ -254,7 +254,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         if( clipStr == "Simulation was cancelled by the user." )
         {
             emit self->updateProgressMessageSignal(QString::fromStdString("Simulation cancelled"));
-            emit self->writeToConsoleSignal(QString::fromStdString("Simulation cancelled by user"), QColor("orange"));
+            emit self->writeToConsoleSignal(QString::fromStdString("Simulation cancelled by user"), QColor("orange").darker(150));
         }
         else if( clipStr == "Cannot determine exception type." )
         {
@@ -279,7 +279,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         emit self->updateProgressMessageSignal(QString::fromStdString("Solver ended in warning:\n"+clipStr));
-        emit self->writeToConsoleSignal(QString::fromStdString("Solver warning: "+clipStr), QColor("orange"));
+        emit self->writeToConsoleSignal(QString::fromStdString("Solver warning: "+clipStr), QColor("orange").darker(150));
     }
     else
     {
@@ -292,7 +292,7 @@ void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
     //qDebug() << "Canceling...";
-    //writeToConsole( "Canceling...", QColor("orange"));
+    //writeToConsole( "Canceling...", QColor("orange").darker(150);
 
     char **papszOptions = nullptr;
     ninjaErr  = NinjaCancel(ninjaArmy, papszOptions);
