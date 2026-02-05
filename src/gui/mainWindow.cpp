@@ -1574,7 +1574,7 @@ void MainWindow::plotKmzOutputs()
 
             // // if it is a weather model run, and weather model kmzs were created for the run,
             // // plot the weather model kmz of the run
-            // if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
+            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
