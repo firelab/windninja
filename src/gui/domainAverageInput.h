@@ -33,8 +33,6 @@
 #include "appState.h"
 #include "ui_mainWindow.h"
 #include <QObject>
-#include <QPair>
-#include <QSet>
 
 class DomainAverageInput: public QObject
 {
@@ -46,15 +44,23 @@ signals:
 public:
     DomainAverageInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
+    int countNumRuns();
+
+    QVector<QDoubleSpinBox*> speedSpins;
+    QVector<QDoubleSpinBox*> dirSpins;
+    QVector<QTimeEdit*>      timeEdits;
+    QVector<QDateEdit*>      dateEdits;
+    QVector<QDoubleSpinBox*> cloudSpins;
+    QVector<QDoubleSpinBox*> airTempSpins;
+
 private slots:
     void setupDomainAverageTableWidgets();
-    void domainAverageTableCellChanged(int row, int column);
+    void domainAverageTableCheckRows();
     void clearTableButtonClicked();
     void domainAverageGroupBoxToggled();
     void windHeightComboBoxCurrentIndexChanged(int index);
 
 private:
-    QSet<QPair<int, int>> invalidDAWCells;
     Ui::MainWindow *ui;
 
 };

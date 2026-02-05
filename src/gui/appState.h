@@ -53,7 +53,8 @@ public:
 
     bool isWindInputValid = false;
     bool isDomainAverageInitializationToggled = false;
-    bool isDomainAverageWindInputTableValid = true;
+    int DomainAvgTableNumRuns = 0;
+    int DomainAvgTableNumZeroRuns = 0;
     bool isDomainAverageInitializationValid = false;
     bool isPointInitializationToggled = false;
     bool isStationFileSelected = false;
@@ -95,6 +96,7 @@ private:
     Ui::MainWindow *ui;
 
     QIcon tickIcon;
+    QIcon warnIcon;
     QIcon crossIcon;
     QIcon bulletIcon;
 
