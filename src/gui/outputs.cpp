@@ -9,6 +9,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->outputDirectoryLineEdit->setText(downloadsPath);
     ui->outputDirectoryButton->setIcon(QIcon(":/folder.png"));
 
+    ui->inputWindHeightUnitsComboBox->setItemData(0, "ft");
+    ui->inputWindHeightUnitsComboBox->setItemData(1, "m");
     ui->outputWindHeightUnitsComboBox->setItemData(0, "ft");
     ui->outputWindHeightUnitsComboBox->setItemData(1, "m");
     ui->meshResolutionUnitsComboBox->setItemData(0, "m");

@@ -1139,10 +1139,10 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
-        ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "m", papszOptions);
-        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i+10, ui->inputWindHeightSpinBox->value(), "m", papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
+        ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i+10, ui->inputWindHeightSpinBox->value(), ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
         //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
-        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, -1, "m", papszOptions);  // test error handling
+        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, -1, ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInputWindHeight: ninjaErr =" << ninjaErr;
