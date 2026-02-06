@@ -350,6 +350,7 @@
         async function loadKmzFromBase64(kmlData, timeSeries) {
             // Setup & Cleanup
             clearWindNinjaOutputTree();
+            clearInitializationOutputTree();
 
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
