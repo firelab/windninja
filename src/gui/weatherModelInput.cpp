@@ -53,7 +53,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
-    connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
+    //connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
