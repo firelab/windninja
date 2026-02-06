@@ -234,8 +234,6 @@
         }
 
         function drawBoundingBox(north, south, east, west) {
-            clearWindNinjaOutputTree();
-            clearInitializationOutputTree();
             clearRectangleLayer();
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
@@ -249,8 +247,6 @@
         }
 
         function drawDEM(DEMCorners) {
-            clearWindNinjaOutputTree();
-            clearInitializationOutputTree();
             clearRectangleLayer();
 
             const rectangleCorners = [
@@ -397,6 +393,9 @@
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = entry.name;
 
+            let timeSeriesImg = null;
+            let timeSeriesImgUrl = null;
+
             const legendControl = L.control({ position: 'bottomright' });
             kmzLegendControls.push(legendControl);
 
@@ -414,20 +413,35 @@
                         img.style.cssText = 'display: block; max-width: 150px; height: auto;';
                         container.appendChild(img);
 
-                        if (timeSeries && legendEntries.length > 1) {
-                            const blob2 = await legendEntries[1].async('blob');
-                            kmzTimeSeriesImgUrl = URL.createObjectURL(blob2);
+                        if (timeSeries && legendEntries.length > 1 && !timeSeriesImg) {
+                            const blob = await legendEntries[1].async('blob');
+                            timeSeriesImgUrl = URL.createObjectURL(blob);
 
-                            kmzTimeSeriesImg = new Image();
-                            kmzTimeSeriesImg.src = kmzTimeSeriesImgUrl;
-                            kmzTimeSeriesImg.style.cssText = `
-                                position: absolute; top: 10px; left: 50%;
-                                transform: translateX(-50%); max-width: 90%;
-                                height: auto; z-index: 600;
+                            timeSeriesImg = new Image();
+                            timeSeriesImg.src = timeSeriesImgUrl;
+                            timeSeriesImg.style.cssText = `
+                                position: absolute;
+                                top: 10px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                max-width: 90%;
+                                height: auto;
+                                z-index: 600;
                             `;
-                            map.getContainer().appendChild(kmzTimeSeriesImg);
-                        }
+
+                            map.getContainer().appendChild(timeSeriesImg);
+                        }   
                     })();
+                    kmlLegendLayer.on('remove', () => {
+                        if (timeSeriesImg) {
+                            timeSeriesImg.remove();
+                            timeSeriesImg = null;
+                        }
+                        if (timeSeriesImgUrl) {
+                            URL.revokeObjectURL(timeSeriesImgUrl);
+                            timeSeriesImgUrl = null;
+                        }
+                    });
                 }
                 return container;
             };
