@@ -35,8 +35,7 @@ endif(WIN32)
 
 add_executable(fetch_dem fetch_dem.cpp)
 
-target_link_libraries(fetch_dem ${LINK_LIBS})
+target_link_libraries(fetch_dem ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(fetch_dem ninja)
 
 install(TARGETS fetch_dem DESTINATION bin COMPONENT apps)
-

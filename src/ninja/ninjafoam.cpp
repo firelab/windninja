@@ -245,7 +245,9 @@ bool NinjaFoam::simulate_wind()
     CPLDebug("NINJAFOAM", "z0 = %lf", input.surface.Roughness(0,0));
     CPLDebug("NINJAFOAM", "input wind height = %lf", input.inputWindHeight);
     CPLDebug("NINJAFOAM", "input speed = %lf", input.inputSpeed);
-    CPLDebug("NINJAFOAM", "input direction = %lf", input.inputDirection);
+    CPLDebug("NINJAFOAM", "input direction (geographic coordinates) = %lf", input.inputDirection_geog);
+    CPLDebug("NINJAFOAM", "angleFromNorth = %lf", input.dem.getAngleFromNorth());
+    CPLDebug("NINJAFOAM", "input direction (projection coordinates) = %lf", input.inputDirection_proj);
     CPLDebug("NINJAFOAM", "foam direction = (%lf, %lf, %lf)", direction[0], direction[1], direction[2]);
     CPLDebug("NINJAFOAM", "number of inlets = %ld", inlets.size());
     CPLDebug("NINJAFOAM", "Roughness = %f", input.surface.Roughness.get_meanValue());
@@ -888,7 +890,7 @@ void NinjaFoam::SetBcs()
 
 void NinjaFoam::SetInlets()
 {
-    double d = input.inputDirection;
+    double d = input.inputDirection_proj;
     if(d == 0 || d == 360){
         inlets.push_back("north_face");
     }
@@ -923,7 +925,8 @@ void NinjaFoam::ComputeDirection()
 {
     double d, d1, d2, dx, dy; //CW, d1 is first angle, d2 is second angle
 
-    d = input.inputDirection - 180; //convert wind direction from --> wind direction to
+    d = input.inputDirection_proj;
+    d = d - 180; //convert wind direction from --> wind direction to
     if(d < 0){
         d += 360;
     }
@@ -3382,11 +3385,11 @@ void NinjaFoam::SetOutputFilenames()
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_kmz << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
 
     double meshResolutionTemp = input.dem.get_cellSize();
@@ -3520,9 +3523,7 @@ void NinjaFoam::WriteOutputFiles()
                             velTempGrid->BufferToOverlapGrid(demGrid);
                         }
 
-			tempCloud.write_Grid(input.cldFile.c_str(), 1);
-			angTempGrid->write_Grid(input.angFile.c_str(), 0);
-			velTempGrid->write_Grid(input.velFile.c_str(), 2);
+			ninja::writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
 
 			if(angTempGrid)
 			{
@@ -3643,6 +3644,7 @@ void NinjaFoam::WriteOutputFiles()
 			ninjaKmlFiles.setLegendFile(input.legFile);
 			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
 			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+			ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
 			ninjaKmlFiles.setDirGrid(*angTempGrid);
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
@@ -3747,10 +3749,10 @@ void NinjaFoam::writeMassMeshVtkOutput()
     CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
     
     try {
-        bool vtk_out_as_utm = false;
-	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+        bool vtk_out_as_ninja_mesh_coordinates = false;
+	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE")))
         {
-            vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
+            vtk_out_as_ninja_mesh_coordinates = CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE");
         }
         // can pick between "ascii" and "binary" format for the vtk write format
         std::string vtkWriteFormat = "binary";//"binary";//"ascii";
@@ -3759,7 +3761,7 @@ void NinjaFoam::writeMassMeshVtkOutput()
         {
             vtkWriteFormat = found_vtkWriteFormat;
         }
-		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
+		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_ninja_mesh_coordinates);
 	} catch (exception& e) {
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
 	} catch (...) {

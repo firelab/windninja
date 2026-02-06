@@ -63,10 +63,14 @@ public:
 	void read_elevation(std::string filename, eElevDistanceUnits elev_units);
 	std::string fileName;
 	eElevDistanceUnits elevationUnits;	//these are the vertical units, ALL HORIZONTAL UNITS MUST ALWAYS BE IN METERS, INCLUDING WHEN THEY ARE READ IN!
-        GDALDatasetH hDS; //in-memory dataset for DEM for API
-	bool grid_made;
-
+    GDALDatasetH hDS; //in-memory dataset for DEM for API
+    bool grid_made;	
+    void setAngleFromNorth(double angle);
+    double getAngleFromNorth();
     void smooth_elevation(const int smoothDist);
+
+private:
+    double angleFromNorth; //angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
 };
 
 #endif	//ELEVATION_H

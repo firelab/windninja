@@ -35,8 +35,7 @@ endif(WIN32)
 
 add_executable(fetch_station fetch_station.cpp)
 
-target_link_libraries(fetch_station ${LINK_LIBS})
+target_link_libraries(fetch_station ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(fetch_station ninja)
 
 install(TARGETS fetch_station DESTINATION bin COMPONENT apps)
-

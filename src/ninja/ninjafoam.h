@@ -48,7 +48,7 @@
                            "    <SrcDataSource>%s</SrcDataSource>" \
                            "    <SrcLayer>%s</SrcLayer>" \
                            "    <GeometryType>wkbPoint</GeometryType>" \
-                           "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\" k=\"k\"/>"  \
+                           "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\"/>"  \
                            "    <Field name=\"X\" src=\"x\" type=\"Real\"/>" \
                            "    <Field name=\"Y\" src=\"y\" type=\"Real\"/>" \
                            "    <Field name=\"Z\" src=\"z\" type=\"Real\"/>" \

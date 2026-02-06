@@ -38,11 +38,12 @@ set(STL_SOURCES convert_output.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Font.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninjaMathUtility.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/ninjaUnits.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/LineStyle.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
 add_executable(convert_output ${STL_SOURCES})
-target_link_libraries(convert_output ${LINK_LIBS})
+target_link_libraries(convert_output ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS convert_output DESTINATION bin COMPONENT apps)
 

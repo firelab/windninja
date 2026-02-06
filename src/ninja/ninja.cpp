@@ -320,6 +320,25 @@ bool ninja::simulate_wind()
 
 if(input.initializationMethod == WindNinjaInputs::pointInitializationFlag)
 {
+    // update loop station data to be in projected coordinates, rather than geographic coordinates
+    // note that the raw station data is left alone here, left as geographic coordinates, it's adjusted as needed in the solve loop
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "doing angleFromNorth correction of initial station data" );
+
+    // index for storing data back in wxstation object
+    int dataIndex = input.inputsRunNumber;
+    double dir;
+    for(unsigned int ii=0; ii<input.stations.size(); ii++)
+    {
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.stations[%d].get_speed() = %lf", ii, input.stations[ii].get_speed() );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.stations[%d].get_direction() (geographic coordinates) = %lf", ii, input.stations[ii].get_direction() );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.dem.getAngleFromNorth() = %lf", input.dem.getAngleFromNorth() );
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "input.stations[%d].get_direction() (projection coordinates) = %lf", ii, wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ) );
+        dir = wrap0to360( input.stations[ii].get_direction() - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
+        input.stationsScratch[ii].update_direction(dir,dataIndex);
+        input.stationsOldInput[ii].update_direction(dir,dataIndex);
+        input.stationsOldOutput[ii].update_direction(dir,dataIndex);
+    }
+
 	if(input.matchWxStations == true)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaNone, "Starting outer wx station \"matching\" loop...");
@@ -2451,6 +2470,7 @@ bool ninja::matched(int iter)
 {
 	if(input.matchWxStations == true)
 	{
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "matched() iter = %d", iter );
 
 		element elem(&mesh);
 		double x, y, z;
@@ -2493,7 +2513,7 @@ bool ninja::matched(int iter)
             try_output_w = w.interpolate(elem, cell_i, cell_j, cell_k, u_loc, v_loc, w_loc);
 
 			//Convert true station values to u, v for comparison below
-            wind_sd_to_uv(input.stations[i].get_speed(), input.stations[i].get_direction(), &true_u, &true_v);
+            wind_sd_to_uv(input.stations[i].get_speed(), wrap0to360( input.stations[i].get_direction() - input.dem.getAngleFromNorth() ), &true_u, &true_v); //convert FROM geographic TO projected coordinates, to match the loop station data coordinates
 			true_w = input.stations[i].get_w_speed();
 
 			//Check if we're within the tolerance
@@ -2540,6 +2560,29 @@ bool ninja::matched(int iter)
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_u = %lf\tu_solve = %lf\tu_true = %lf", try_input_u, try_output_u, true_u);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_v = %lf\tv_solve = %lf\tv_true = %lf", try_input_v, try_output_v, true_v);
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "try_input_w = %lf\tw_solve = %lf\tw_true = %lf", try_input_w, try_output_w, true_w);
+
+            double try_input_spd, try_input_dir, try_output_spd, try_output_dir, true_spd, true_dir;
+            wind_uv_to_sd(try_input_u, try_input_v, &try_input_spd, &try_input_dir);
+            wind_uv_to_sd(try_output_u, try_output_v, &try_output_spd, &try_output_dir);
+            wind_uv_to_sd(true_u, true_v, &true_spd, &true_dir);
+            // angle diff method, to get the shortest signed angle difference
+            // if (360.0 - fabs(dir_diff)) is smaller than fabs(dir_diff), then the dir_diff value should actually be
+            //  the value of (360.0 - fabs(dir_diff)) but with the opposite sign of the original dir_diff
+            // if (360.0 - fabs(dir_diff)) is  bigger than fabs(dir_diff), then the dir_diff value and sign are already good to go
+            double dir_diff = true_dir - try_output_dir;
+            if( (360.0 - fabs(dir_diff)) < fabs(dir_diff) )
+            {
+                if( dir_diff < 0.0 )
+                {
+                    dir_diff = (360.0 - fabs(dir_diff));
+                } else // dir_diff > 0.0
+                {
+                    dir_diff = -1*(360.0 - fabs(dir_diff));
+                }
+            }
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\t%s\tspd_diff = %lf\tdir_diff = %lf", i, input.stations[i].get_stationName().c_str(), true_spd - try_output_spd, dir_diff );
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\ttry_input_spd = %lf\tspd_solve = %lf\tspd_true = %lf", i, try_input_spd, try_output_spd, true_spd );
+            CPLDebug( "COORD_TRANSFORM_ANGLES", "%i\ttry_input_dir = %lf\tdir_solve = %lf\tdir_true = %lf", i, try_input_dir, try_output_dir, true_dir );
 
 			//Compute new values using formula (from Lopes (2003)):
 			//
@@ -2754,92 +2797,178 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
-
-void ninja::writeAsciiOutputFiles (AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
 {
+    AsciiGrid<double> uGrid;
+    AsciiGrid<double> vGrid;
+    AsciiGrid<double> uGrid_latlon;
+    AsciiGrid<double> vGrid_latlon;
+    AsciiGrid<double> velGrid_latlon;
+    AsciiGrid<double> angGrid_latlon;
+    AsciiGrid<double> cldGrid_latlon;
+
+    // fill the u,v grids, for uv output in dem projection coordinates, or for warping to geographic coordinates
+    // always warp u,v NOT angGrid, to avoid angle interpolation issues with gdal
+    if(input.asciiGeogOutFlag == true || input.asciiUvOutFlag == true)
+    {
+        uGrid.set_headerData(angGrid);
+        vGrid.set_headerData(angGrid);
+        for(int i=0; i<angGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<angGrid.get_nCols(); j++)
+            {
+                wind_sd_to_uv(velGrid(i,j), angGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+            }
+        }
+    }
+
+    // warp the u,v grids to geographic coordinates, calculate geographic spd,dir grids from warped u,v grids
+    // adjusting u,v and spd,dir grids by the corresponding coordinateTransformAngle
+    if(input.asciiGeogOutFlag == true)
+    {
+        GDALDatasetH uGrid_hDS = uGrid.ascii2GDAL();
+        GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
+        GDALDatasetH cldGrid_hDS = cldGrid.ascii2GDAL();
+
+        // no need to calculate the coordinateTransformAngle FROM projected TO geographic, already have the angleFromNorth value
+        // still need the pszDstWkt for warping the datasets though
+
+        char* pszDstWkt;
+        OGRSpatialReferenceH hTargetSRS;
+        hTargetSRS = OSRNewSpatialReference(NULL);
+        OSRImportFromEPSG(hTargetSRS, 4326);
+        OSRExportToWkt( hTargetSRS, (char**)&pszDstWkt );
+
+        GDALDatasetH uGrid_hVrtDS;
+        GDALDatasetH vGrid_hVrtDS;
+        GDALDatasetH cldGrid_hVrtDS;
+
+        // warp the u and v grids FROM dem projection coordinates TO geographic coordinates
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( uGrid_hDS, 1, uGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the output velocity and angle grids (uGrid).");
+        }
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( vGrid_hDS, 1, vGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the output velocity and angle grids (vGrid).");
+        }
+        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( cldGrid_hDS, 1, cldGrid_hVrtDS, pszDstWkt ))
+        {
+            throw std::runtime_error("Could not warp the output cloud grid.");
+        }
+
+        GDAL2AsciiGrid( (GDALDataset*)uGrid_hVrtDS, 1, uGrid_latlon );
+        GDAL2AsciiGrid( (GDALDataset*)vGrid_hVrtDS, 1, vGrid_latlon );
+        GDAL2AsciiGrid( (GDALDataset*)cldGrid_hVrtDS, 1, cldGrid_latlon );
+
+        // attempt to crop NO_DATA off the warped datasets before continuing on, if required
+        int asciiOutputNoDataCropThreshold = 0;
+        std::string found_asciiOutputNoDataCropThreshold_str = CPLGetConfigOption("ASCII_OUTPUT_GEOG_NO_DATA_CROP_THRESHOLD", "");
+        if( found_asciiOutputNoDataCropThreshold_str != "" )
+        {
+            asciiOutputNoDataCropThreshold = atoi(found_asciiOutputNoDataCropThreshold_str.c_str());
+            std::cout << "set ASCII_OUTPUT_GEOG_NO_DATA_CROP_THRESHOLD to " << asciiOutputNoDataCropThreshold << std::endl;
+        }
+        if( asciiOutputNoDataCropThreshold > 0 )
+        {
+            if(!uGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
+            {
+                std::cerr << "failed to crop the warped output velocity and angle grids (uGrid)." << std::endl;
+            }
+            if(!vGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
+            {
+                std::cerr << "failed to crop the warped output velocity and angle grids (vGrid)." << std::endl;
+            }
+            if(!cldGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
+            {
+                std::cerr << "warning, failed to crop the warped output cloud grid." << std::endl;
+            }
+        }
+
+        velGrid_latlon.set_headerData(uGrid_latlon);
+        angGrid_latlon.set_headerData(uGrid_latlon);
+        for(int i=0; i<uGrid_latlon.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid_latlon.get_nCols(); j++)
+            {
+                if( uGrid_latlon(i,j) == uGrid_latlon.get_NoDataValue() || vGrid_latlon(i,j) == vGrid_latlon.get_NoDataValue() )
+                {
+                    velGrid_latlon(i,j) = velGrid_latlon.get_NoDataValue();
+                    angGrid_latlon(i,j) = angGrid_latlon.get_NoDataValue();
+                } else
+                {
+                    // fill the grids with the raw values before the angle correction
+                    wind_uv_to_sd(uGrid_latlon(i,j), vGrid_latlon(i,j), &(velGrid_latlon)(i,j), &(angGrid_latlon)(i,j));
+
+                    angGrid_latlon(i,j) = wrap0to360( angGrid_latlon(i,j) + input.dem.getAngleFromNorth() ); //convert FROM dem projection coordinates TO geographic coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(velGrid_latlon(i,j), angGrid_latlon(i,j), &(uGrid_latlon)(i,j), &(vGrid_latlon)(i,j));
+                }
+            }
+        }
+
+        // close the gdal datasets
+        GDALClose(cldGrid_hVrtDS);
+        GDALClose(uGrid_hVrtDS);
+        GDALClose(vGrid_hVrtDS);
+        GDALClose(uGrid_hDS);
+        GDALClose(vGrid_hDS);
+
+        // cleanup the spatial references
+        CPLFree(pszDstWkt);
+        OSRDestroySpatialReference(hTargetSRS);
+    }
+
     if (input.asciiAaigridOutFlag) {
-        if (input.asciiUtmOutFlag) {
+        if (input.asciiProjOutFlag) {
             cldGrid.write_Grid( input.cldFile.c_str(), 1);
             angGrid.write_Grid( input.angFile.c_str(), 0);
             velGrid.write_Grid( input.velFile.c_str(), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
+                vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
+            }
         }
-        if (input.ascii4326OutFlag){
-            cldGrid.write_ascii_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
-            angGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
-            velGrid.write_ascii_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+        if (input.asciiGeogOutFlag){
+            cldGrid_latlon.write_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
+            angGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
+            velGrid_latlon.write_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
+                vGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
+            }
         }
     }
 
     if (input.asciiJsonOutFlag) {
-        if (input.asciiUtmOutFlag) {
+        if (input.asciiProjOutFlag) {
             cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
             angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
             velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
+                vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
+            }
         }
-        if (input.ascii4326OutFlag){
-            cldGrid.write_json_4326_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
-            angGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
-            velGrid.write_json_4326_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
-        }
-    }
-
-    if (input.asciiUvOutFlag) {
-        writeAsciiUvOutputFiles( angGrid, velGrid);
-    }
-}
-
-// write u,v wind vector output files
-void ninja::writeAsciiUvOutputFiles (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
-{
-    AsciiGrid<double> uGrid(angGrid);
-    AsciiGrid<double> vGrid(angGrid);
-    setUvGrids( angGrid, velGrid, uGrid, vGrid);
-
-    if (input.asciiAaigridOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            uGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u.$1").c_str(), 2);
-            vGrid.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v.$1").c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            uGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_u-4326.$1").c_str(), 2);
-            vGrid.write_ascii_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.([^.]+)$", "_v-4326.$1").c_str(), 2);
+        if (input.asciiGeogOutFlag){
+            cldGrid_latlon.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
+            angGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
+            velGrid_latlon.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
+            if (input.asciiUvOutFlag) {
+                uGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
+                vGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
+            }
         }
     }
 
-    if (input.asciiJsonOutFlag) {
-        if (input.asciiUtmOutFlag) {
-            uGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u.json").c_str(), 2);
-            vGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v.json").c_str(), 2);
-        }
-        if (input.ascii4326OutFlag){
-            uGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_u-4326.json").c_str(), 2);
-            vGrid.write_json_4326_Grid( derived_pathname( input.angFile.c_str(), NULL, "(?:_[^_]+)?\\.[^.]+$", "_v-4326.json").c_str(), 2);
-        }
-    }
-}
-
-void ninja::setUvGrids (AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid, AsciiGrid<double>& uGrid, AsciiGrid<double>& vGrid)
-{
-    int nRows = angGrid.get_nRows();
-    int nCols = angGrid.get_nCols();
-    double pi180 = M_PI / 180;
-
-    for (int m=0; m<nRows; m++){
-        for (int n=0; n<nCols; n++) {
-            double vel = velGrid.get_cellValue(m,n);
-            double ang = angGrid.get_cellValue(m,n);
-
-            double deg = 270.0 - ang;  // uv angle is ccw from W
-            if (deg < 0) deg += 360;
-            double rad = deg * pi180;
-
-            double u = cos(rad) * vel;
-            double v = sin(rad) * vel;
-
-            uGrid.set_cellValue(m,n,u);
-            vGrid.set_cellValue(m,n,v);
-        }
-    }
+    // cleanup the finished use ascii grids
+    cldGrid_latlon.deallocate();
+    velGrid_latlon.deallocate();
+    angGrid_latlon.deallocate();
+    uGrid_latlon.deallocate();
+    vGrid_latlon.deallocate();
+    uGrid.deallocate();
+    vGrid.deallocate();
 }
 
 /**Writes output files.
@@ -2854,10 +2983,10 @@ void ninja::writeOutputFiles()
 	if(input.volVTKOutFlag)
 	{
 		try{
-            bool vtk_out_as_utm = false;
-		    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE")))
+            bool vtk_out_as_ninja_mesh_coordinates = false;
+		    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE")))
             {
-                vtk_out_as_utm = CPLGetConfigOption("VTK_OUT_AS_UTM", "FALSE");
+                vtk_out_as_ninja_mesh_coordinates = CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE");
             }
             // can pick between "ascii" and "binary" format for the vtk write format
             std::string vtkWriteFormat = "binary";//"binary";//"ascii";
@@ -2866,7 +2995,7 @@ void ninja::writeOutputFiles()
             {
                 vtkWriteFormat = found_vtkWriteFormat;
             }
-			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_utm);
+			volVTK VTK(u, v, w, mesh.XORD, mesh.YORD, mesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), mesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_ninja_mesh_coordinates);
 		}catch (exception& e)
 		{
 			input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
@@ -3124,6 +3253,7 @@ void ninja::writeOutputFiles()
 			ninjaKmlFiles.setLegendFile(input.legFile);
 			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
 			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+			ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
 			ninjaKmlFiles.setDirGrid(*angTempGrid);
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
@@ -3191,8 +3321,6 @@ void ninja::writeOutputFiles()
             output.setDPI(input.pdfDPI);
             output.setSize(input.pdfWidth, input.pdfHeight);
             output.write(input.pdfFile, "PDF");
-
-
 
 			if(angTempGrid)
 			{
@@ -4083,7 +4211,9 @@ void ninja::set_inputDirection(double direction)
     if(direction<0.0 || direction>360.0)	//error checking
         throw std::range_error("Wind direction is less than zero or greater than 360 in ninja::set_inputDirection().");
 
-    input.inputDirection = direction;
+    input.inputDirection_geog = direction;
+    // the angleFromNorth value is not calculated/stored yet, so can't calculate/set input.inputDirection_proj yet,
+    // so do it in the various initialize functions, where/when input.inputDirection_geog/_proj are set/used for the first time
 }
 
 void ninja::set_inputWindHeight(double height, lengthUnits::eLengthUnits units)
@@ -4802,6 +4932,26 @@ void ninja::set_asciiOutFlag(bool flag)
 {
     input.asciiOutFlag = flag;
 }
+void ninja::set_asciiAaigridOutFlag(bool flag)
+{
+    input.asciiAaigridOutFlag = flag;
+}
+void ninja::set_asciiJsonOutFlag(bool flag)
+{
+    input.asciiJsonOutFlag = flag;
+}
+void ninja::set_asciiProjOutFlag(bool flag)
+{
+    input.asciiProjOutFlag = flag;
+}
+void ninja::set_asciiGeogOutFlag(bool flag)
+{
+    input.asciiGeogOutFlag = flag;
+}
+void ninja::set_asciiUvOutFlag(bool flag)
+{
+    input.asciiUvOutFlag = flag;
+}
 
 void ninja::set_wxModelAsciiOutFlag(bool flag)
 {
@@ -4965,11 +5115,11 @@ void ninja::set_outputFilenames(double& meshResolution,
     {
         double tempSpeed = input.inputSpeed;
         velocityUnits::fromBaseUnits(tempSpeed, input.inputSpeedUnits);
-        os << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_kmz << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_shp << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_ascii << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
-        os_pdf << "_" << (long) (input.inputDirection+0.5) << "_" << (long) (tempSpeed+0.5);
+        os << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_kmz << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
@@ -5223,7 +5373,7 @@ void ninja::checkInputs()
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag )	//single domain-averaged input speed and direction
     {	if( input.inputSpeed < 0.0 )
             throw std::out_of_range("The input speed should be greater than 0.");
-        if( input.inputDirection < 0.0 || input.inputDirection > 360.0 )
+        if( input.inputDirection_geog < 0.0 || input.inputDirection_geog > 360.0 )
             throw std::out_of_range("The input direction is less than 0 or greater than 360.");
         if( input.inputWindHeight < 0.0 )
             throw std::out_of_range("The input wind height should be greater than 0.");

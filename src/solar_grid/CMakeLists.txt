@@ -41,11 +41,11 @@ set(SOLAR_GRID_SRC solar_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Aspect.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Shade.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
-                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp)
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
 add_executable(solar_grid ${SOLAR_GRID_SRC})
 
-target_link_libraries(solar_grid ${LINK_LIBS})
+target_link_libraries(solar_grid ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS solar_grid DESTINATION bin COMPONENT apps)
-

@@ -33,6 +33,7 @@ Elevation::Elevation():AsciiGrid<double>()
 {
 	grid_made = false;
 	elevationUnits = meters;
+        angleFromNorth = 0.0;
 }
 
 Elevation::Elevation(std::string filename):AsciiGrid<double>()
@@ -41,6 +42,7 @@ Elevation::Elevation(std::string filename):AsciiGrid<double>()
 	read_Grid(filename);
 	grid_made = true;
 	elevationUnits = meters;
+        angleFromNorth = 0.0;
 }
 
 Elevation::Elevation(std::string filename, eElevDistanceUnits elev_units):AsciiGrid<double>()
@@ -49,6 +51,7 @@ Elevation::Elevation(std::string filename, eElevDistanceUnits elev_units):AsciiG
 	read_Grid(filename);
 	grid_made = true;
 	elevationUnits = elev_units;
+        angleFromNorth = 0.0;
 
 	if(grid_made)
 	{
@@ -62,19 +65,35 @@ Elevation::Elevation(std::string filename, eElevDistanceUnits elev_units):AsciiG
 Elevation::Elevation(int nC, int nR, double xL, double yL, double cS, 
 		     double nDV, eElevDistanceUnits units) : AsciiGrid<double>(nC, nR, xL, yL, cS, nDV)
 {
-  elevationUnits = units;
+    elevationUnits = units;
+    angleFromNorth = 0.0;
 }
 
 Elevation::Elevation(const Elevation &rhs) : AsciiGrid<double>(rhs)
 {
-  fileName = rhs.fileName;
-  grid_made = rhs.grid_made;
-  elevationUnits = rhs.elevationUnits;
+    fileName = rhs.fileName;
+    grid_made = rhs.grid_made;
+    elevationUnits = rhs.elevationUnits;
+    angleFromNorth = rhs.angleFromNorth;
 }
 
 Elevation::~Elevation()
 {
 	
+}
+
+Elevation &Elevation::operator=(const Elevation &rhs)
+{
+    if(&rhs != this)
+    {
+        AsciiGrid<double>::operator=(rhs);
+
+        fileName = rhs.fileName;
+        grid_made = rhs.grid_made;
+        elevationUnits = rhs.elevationUnits;
+        angleFromNorth = rhs.angleFromNorth;
+    }
+    return *this;
 }
 
 void Elevation::readFromMemory(const double* dem, const int nXSize, const int nYSize,
@@ -131,7 +150,6 @@ void Elevation::read_elevation(std::string filename)
 	elevationUnits = meters;
 }
 
-
 void Elevation::read_elevation(std::string filename, eElevDistanceUnits elev_units)
 {
     read_Grid(filename);
@@ -144,17 +162,14 @@ void Elevation::read_elevation(std::string filename, eElevDistanceUnits elev_uni
         throw std::runtime_error("Problem with units in Elevation::read_elevation().");
 }
 
-Elevation &Elevation::operator=(const Elevation &rhs)
+void Elevation::setAngleFromNorth(double angle)
 {
-    if(&rhs != this)
-    {
-        AsciiGrid<double>::operator=(rhs);
+    angleFromNorth = angle;
+}
 
-        fileName = rhs.fileName;
-        grid_made = rhs.grid_made;
-        elevationUnits = rhs.elevationUnits;
-    }
-    return *this;
+double Elevation::getAngleFromNorth()
+{
+    return angleFromNorth;
 }
 
 /**

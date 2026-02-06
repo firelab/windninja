@@ -41,13 +41,13 @@ endif()
 
 add_executable(WindNinja_cli cmake_cli.cpp)
 
-add_dependencies(WindNinja_cli ninja)
 
 if(WIN32)
   target_link_libraries(WindNinja_cli PRIVATE shapelib::shp GDAL::GDAL)
 endif()
 
-target_link_libraries(WindNinja_cli PRIVATE ${LINK_LIBS})
+target_link_libraries(WindNinja_cli ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
+add_dependencies(WindNinja_cli ninja)
 
 if(MSVC)
     target_compile_definitions(WindNinja_cli
@@ -57,4 +57,3 @@ if(MSVC)
 endif()
 
 install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
-

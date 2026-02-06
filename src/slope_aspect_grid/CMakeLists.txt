@@ -37,7 +37,6 @@ set(SLOPE_ASPECT_GRID_SRC slope_aspect_grid.cpp
 
 add_executable(slope_aspect_grid ${SLOPE_ASPECT_GRID_SRC})
 
-target_link_libraries(slope_aspect_grid ${LINK_LIBS})
+target_link_libraries(slope_aspect_grid ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS slope_aspect_grid DESTINATION bin COMPONENT apps)
-

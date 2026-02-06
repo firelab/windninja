@@ -15,15 +15,14 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 2.6)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/ninja
-                    ${GDAL_SYSTEM_INCLUDE} 
-                    ${Boost_INCLUDE_DIRS} 
-                    ${GDAL_INCLUDE_DIR})
+                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
+                    ${Boost_INCLUDE_DIRS})
 
-set(LINK_LIBS ${Boost_LIBRARIES}
-              ${GDAL_LIBRARY})
+set(LINK_LIBS ${GDAL_LIBRARY}
+              ${Boost_LIBRARIES})
 
 set(SURFACE_INPUT_NODATA_FILLER_SRC surface_input_nodata_filler.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
@@ -38,7 +37,6 @@ set(SURFACE_INPUT_NODATA_FILLER_SRC surface_input_nodata_filler.cpp
 
 add_executable(surface_input_nodata_filler ${SURFACE_INPUT_NODATA_FILLER_SRC})
 
-target_link_libraries(surface_input_nodata_filler ${LINK_LIBS})
+target_link_libraries(surface_input_nodata_filler ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS surface_input_nodata_filler DESTINATION bin COMPONENT apps)
-

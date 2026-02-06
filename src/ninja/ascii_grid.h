@@ -61,6 +61,8 @@
 #include "EasyBMP_DataStructures.h"  //nsw
 #include "EasyBMP_Geometry.h"  //nsw
 
+#include "cplIsNan.h"
+
 
 /**
  * Class that stores 2-dimensional arrays of data for mostly spatial
@@ -150,6 +152,7 @@ public:
 
     double get_meanValue() const;
     bool fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
+    bool fillNoDataValuesAngle( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
     bool fillNoDataValuesCategorical( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
 
     bool find_firstValue(T m, T buffer, int *k, int *l);
@@ -193,9 +196,6 @@ public:
     void write_fpGridData(FILE *fileOut, int numDecimals);
     void write_Grid(std::string outputFile, int numDecimals);
     void write_json_Grid(std::string outputFile, int numDecimals);
-
-    void write_ascii_4326_Grid (std::string outputFile, int numDecimals);
-    void write_json_4326_Grid(std::string outputFile, int numDecimals);
 
     bool crop_noData(int noDataThreshold);
 
@@ -271,7 +271,6 @@ private:
     //at some point.  *sigh* leave it in.  My bad -kss.
     static const int magicNumber = 0x3634af3;
 
-    void write_4326_Grid (std::string& filename, int precision, void (AsciiGrid<T>::*write_grid)(std::string,int));
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

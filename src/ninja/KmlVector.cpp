@@ -41,6 +41,7 @@ KmlVector::KmlVector()
     speedUnits = velocityUnits::milesPerHour;
     timeDateLegendFile = "";
     wxModelName = "";
+    angleFromNorth = 0.0;
     turbulenceFlag = false;
     colMaxFlag = false;
     colMax_colHeightAGL = -1.0;
@@ -89,6 +90,11 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
             }
         }
     }
+}
+
+void KmlVector::setAngleFromNorth(const double angFromNorth)
+{
+	angleFromNorth = angFromNorth;
 }
 
 void KmlVector::setDirGrid(AsciiGrid<double> &d)
@@ -585,8 +591,28 @@ bool KmlVector::writeRegion(VSILFILE *fileOut)
 
     if(coordTransform != 0)
     {
-        coordTransform->Transform(1, &westExtent, &southExtent);
-        coordTransform->Transform(1, &eastExtent, &northExtent);
+        double xll = westExtent;
+        double yll = southExtent;
+        double xul = westExtent;
+        double yul = northExtent;
+        double xur = eastExtent;
+        double yur = northExtent;
+        double xlr = eastExtent;
+        double ylr = southExtent;
+        coordTransform->Transform(1, &xll, &yll);
+        coordTransform->Transform(1, &xul, &yul);
+        coordTransform->Transform(1, &xur, &yur);
+        coordTransform->Transform(1, &xlr, &ylr);
+        northExtent = std::max(yul,yur);
+        southExtent = std::min(yll,ylr);
+        // calculating for east and west gets more complicated for the rare case that it crosses between -180 and 180 degrees
+        eastExtent = std::max(xlr,xur);
+        westExtent = std::min(xll,xul);
+        // check if crosses between -180 and 180 degrees, swap min for max or max for min if swapped dirs around circle
+        if ( std::max(xlr,xur) - std::min(xlr,xur) > 180 )
+            eastExtent = std::min(xlr,xur);
+        if ( std::max(xll,xul) - std::min(xll,xul) > 180 )
+            westExtent = std::max(xll,xul);
     }
 
     VSIFPrintfL(fileOut, "\n<Region>");
@@ -1163,6 +1189,10 @@ bool KmlVector::writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut)
 
     //make bitmap
     int legendWidth = 11.25 * wxModelName.size();
+    if(legendWidth < 285)
+    {
+      legendWidth = 285;
+    }
     int legendHeight = 78;
     BMP legend;
 
@@ -1794,6 +1824,11 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
     nR = spd.get_nRows();
     nC = spd.get_nCols();
 
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "KmlVector::writeVectors()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() (projection coordinates) = %lf", dir.get_meanValue() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", angleFromNorth );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() (geographic coordinates) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ) );  // see below for the calculation formula
+
     //double PI = acos(-1.0);
     geTheta = 0;
     for(int i = 0;i < nR;i++)
@@ -1802,7 +1837,14 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
         {
             yScale = 0.5;
             s = spd(i,j);
-            geTheta = dir(i,j);
+            // geTheta is the printed value (geographic coordinates), theta is the drawn value (projected coordinates) which is then reprojected (from projected to geographic coordinates)
+            // the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
+            // but in this case, prj1 = dem, prj2 = kmz, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
+            // this is because angleFromNorth is stored as a value going FROM N TO dem, but here we are going FROM dem TO N,
+            // so we need to use a negative value for angleFromNorth rather than a positive value
+            // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
+            // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
+            geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM projected TO geographic coordinates
             theta = dir(i,j) + 180.0;
 
             if(s <= splitValue[1])

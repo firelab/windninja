@@ -42,7 +42,7 @@ set(HRRR_TO_KMZ_SRC hrrr_to_kmz.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninjaUnits.cpp)
 
 add_executable(hrrr_to_kmz ${HRRR_TO_KMZ_SRC})
-target_link_libraries(hrrr_to_kmz ${LINK_LIBS})
+target_link_libraries(hrrr_to_kmz ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS hrrr_to_kmz DESTINATION bin COMPONENT apps)
 

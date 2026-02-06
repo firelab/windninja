@@ -2471,13 +2471,13 @@ int ninjaArmy::setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** p
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiJsonOutFlag( flag ) );
 }
-int ninjaArmy::setAsciiUtmOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setAsciiProjOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUtmOutFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiProjOutFlag( flag ) );
 }
-int ninjaArmy::setAscii4326OutFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setAsciiGeogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_ascii4326OutFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiGeogOutFlag( flag ) );
 }
 int ninjaArmy::setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {

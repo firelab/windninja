@@ -202,6 +202,25 @@ void wind_uv_to_sd(T u, T v, T *s, T *d)
 	  inter_dir += 360.0;
   *d = xy_to_n(inter_dir);
 }
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Function corrects angle for wrap around between 0 and 360, both directions
+The returned angle is always between 0 and 360.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+template<class T>
+T wrap0to360(T angle)
+{
+  while( angle > 360.0 )
+  {
+    angle = angle - 360.0;
+  }
+  while( angle < 0.0 )
+  {
+    angle = angle + 360.0;
+  }
+  return angle;
+}
+
 /**
  * Function to test if 2 doubles are nearly equal.
  * The function AlmostEqual2sComplement() may be better, but this is simple.

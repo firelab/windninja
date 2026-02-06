@@ -25,7 +25,8 @@ $boundaryField$
     minZ
     {
         type            epsilonWallFunction;
-        Cmu             0.09;
+        Cmu             0.09;  // original, this is for regular k epsilon model
+        //Cmu             0.085;  // for RNG k epsilon model
         kappa           0.41;
         E               9.8;
         value           uniform 1;

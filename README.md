@@ -12,16 +12,9 @@ Source & wiki:
 https://github.com/firelab/windninja
 
 FAQ:
-https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions
+[https://ninjastorm.firelab.org/windninja/faq.html](https://ninjastorm.firelab.org/windninja/faq.html)
 
-IRC:
-irc://irc.freenode.net/#windninja
-
-[Linux build – Ubuntu 20.04](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-20.04)
-
-[Linux build – Ubuntu 22.04 (no GUI)](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux-22.04)
-
-[Building on Windows](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies)
+Install: https://github.com/firelab/windninja/wiki
 
 Directories:
  * autotest    -> testing suite
@@ -55,6 +48,7 @@ See CREDITS for authors
 
 See NEWS for release information
 
-=========
+Example Output
+===
 <img src="images/bsb.jpg" alt="Example output"  />
 

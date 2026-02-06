@@ -19,7 +19,8 @@ simulationType RAS;
 
 RAS
 {
-    model           kEpsilon;
+    //model           kEpsilon;
+    model           RNGkEpsilon;
 
     turbulence      on;
 
@@ -33,6 +34,17 @@ RAS
 	    alphak           1.0;
 	    alphaEps         0.76923;
 	}
+
+	RNGkEpsilonCoeffs
+    {
+         Cmu         0.085;
+         C1          0.92;
+         C2          1.68;
+         sigmak      0.7179;
+         sigmaEps    0.7179;
+         eta0        4.38;
+         beta        0.012;
+    }
 
 }
 

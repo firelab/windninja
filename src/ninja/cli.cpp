@@ -201,7 +201,7 @@ int windNinjaCLI(int argc, char* argv[])
             i++;
         }
 #endif /* WITH_NOMADS_SUPPORT */
-        osAvailableWx += std::string( ", PASTCAST-GCP-HRRR-CONUS-3KM" );
+        osAvailableWx += std::string( ", PASTCAST-GCP-HRRR-CONUS-3-KM" );
         osAvailableWx += ")";
 
         std::string osSurfaceSources = "source for downloading elevation data (srtm";
@@ -300,10 +300,10 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
                 ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
 
-                ("ascii_out_aaigrid", po::value<bool>()->default_value(true), "write ascii output as AAIGRID files (default: true, false)")
+                ("ascii_out_aaigrid", po::value<bool>()->default_value(true), "write ascii output as standard AAIGRID files (default: true, false)")
                 ("ascii_out_json", po::value<bool>()->default_value(false), "write ascii output as JSON files (true, default:false)")
-                ("ascii_out_4326", po::value<bool>()->default_value(false), "write ascii files as EPSG:4326 lat/lon grids (true, default:false)")
-                ("ascii_out_utm", po::value<bool>()->default_value(true), "write ascii files as UTM northing/easting grids (default: true, false)")
+                ("ascii_out_proj", po::value<bool>()->default_value(true), "write ascii files using dem projection coordinates (standard output). This is UTM northing/easting grids for WindNinja downloaded dems (default: true, false)")
+                ("ascii_out_geog", po::value<bool>()->default_value(false), "write ascii files using geographic coordinates, EPSG:4326 lat/lon grids (true, default:false)")
                 ("ascii_out_uv", po::value<bool>()->default_value(false), "write ascii files as u,v wind vector components (true, default:false)")
 
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
@@ -670,8 +670,9 @@ int windNinjaCLI(int argc, char* argv[])
                     fprintf(stderr, "Invalid DEM Source\n");
                     exit(1);
                 }
-            
-                int nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
+
+                double srtmRes = fetch->GetXRes();
+                int nSrtmError = fetch->FetchBoundingBox(bbox, srtmRes,
                                                      new_elev.c_str(), NULL);
                 delete fetch;
                                                      
@@ -761,7 +762,14 @@ int windNinjaCLI(int argc, char* argv[])
                 bbox[2] = south;
                 bbox[3] = west;
 
-                nSrtmError = fetch->FetchBoundingBox(bbox, 30.0,
+                double elevRes = fetch->GetXRes();
+                #ifdef HAVE_GMTED
+                if( EQUAL( source.c_str(), FetchFactory::WORLD_GMTED_STR.c_str() ) )
+                {
+                    elevRes = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+                }
+                #endif //HAVE_GMTED
+                nSrtmError = fetch->FetchBoundingBox(bbox, elevRes,
                                                      new_elev.c_str(), NULL);
                                                      
                 if(nSrtmError < 0)
@@ -812,8 +820,15 @@ int windNinjaCLI(int argc, char* argv[])
                 else
                     buffer_units = lengthUnits::kilometers;
 
+                double elevRes = fetch->GetXRes();
+                #ifdef HAVE_GMTED
+                if( EQUAL( source.c_str(), FetchFactory::WORLD_GMTED_STR.c_str() ) )
+                {
+                    elevRes = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+                }
+                #endif //HAVE_GMTED
                 nSrtmError = fetch->FetchPoint(center, buffer, buffer_units,
-                                               30.0, new_elev.c_str(), NULL);
+                                               elevRes, new_elev.c_str(), NULL);
             }
             delete fetch;
 
@@ -942,7 +957,7 @@ int windNinjaCLI(int argc, char* argv[])
             }
             if(vm.count("wx_model_type"))   //download forecast and make appropriate size ninjaArmy
             {
-                if (vm["wx_model_type"].as<std::string>() != "PASTCAST-GCP-HRRR-CONUS-3KM")
+                if (vm["wx_model_type"].as<std::string>() != "PASTCAST-GCP-HRRR-CONUS-3-KM")
                 {
                     option_dependency(vm, "wx_model_type", "forecast_duration");
                 }
@@ -951,7 +966,7 @@ int windNinjaCLI(int argc, char* argv[])
                 std::string forecastFileName;
                 try
                 {
-                  if (model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3KM")
+                  if (model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3-KM")
                   {
                     std::cout << "Downloading forecast data..." << std::endl;
                     forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
@@ -1048,7 +1063,7 @@ int windNinjaCLI(int argc, char* argv[])
                     std::cout << "Download complete." << std::endl;
                   }
 
-                    if(vm.count("start_year") && model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3KM")
+                    if(vm.count("start_year") && model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3-KM")
                     {
                         conflicting_options(vm, "forecast_time", "start_year");
                         verify_option_set(vm, "start_month");
@@ -1974,15 +1989,47 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setShpResolution( i_, vm["shape_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_shape_out_resolution"].as<std::string>()));
             }
-            // those are all AAIGRID variants (in different projections and text formats)
-            if(option_val<bool>(vm,"write_ascii_output"))
+            option_dependency(vm, "ascii_out_aaigrid", "write_ascii_output");
+            option_dependency(vm, "ascii_out_json", "write_ascii_output");
+            option_dependency(vm, "ascii_out_proj", "write_ascii_output");
+            option_dependency(vm, "ascii_out_geog", "write_ascii_output");
+            option_dependency(vm, "ascii_out_uv", "write_ascii_output");
+            if(vm["write_ascii_output"].as<bool>())
             {
                 windsim.setAsciiOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_aaigrid")) windsim.setAsciiAaigridOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_json")) windsim.setAsciiJsonOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_4326")) windsim.setAscii4326OutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_utm")) windsim.setAsciiUtmOutFlag( i_, true );
-                if (option_val<bool>(vm,"ascii_out_uv")) windsim.setAsciiUvOutFlag( i_, true );
+
+                // those are all AAIGRID variants (in different projections and text formats)
+                if(vm["ascii_out_aaigrid"].as<bool>())
+                {
+                    windsim.setAsciiAaigridOutFlag( i_, true );
+                }
+                if(vm["ascii_out_json"].as<bool>())
+                {
+                    windsim.setAsciiJsonOutFlag( i_, true );
+                }
+                if(vm["ascii_out_proj"].as<bool>())
+                {
+                    windsim.setAsciiProjOutFlag( i_, true );
+                }
+                if(vm["ascii_out_geog"].as<bool>())
+                {
+                    windsim.setAsciiGeogOutFlag( i_, true );
+                }
+                if(vm["ascii_out_uv"].as<bool>())
+                {
+                    windsim.setAsciiUvOutFlag( i_, true );
+                }
+
+                if(vm["ascii_out_aaigrid"].as<bool>() == false && vm["ascii_out_json"].as<bool>() == false)
+                {
+                    cout << "both 'ascii_out_aaigrid' and 'ascii_out_json' set to 'false', setting 'ascii_out_aaigrid' to 'true'" << std::endl;
+                    windsim.setAsciiAaigridOutFlag( i_, true );
+                }
+                if(vm["ascii_out_proj"].as<bool>() == false && vm["ascii_out_geog"].as<bool>() == false)
+                {
+                    cout << "both 'ascii_out_proj' and 'ascii_out_geog' set to 'false', setting 'ascii_out_proj' to 'true'" << std::endl;
+                    windsim.setAsciiProjOutFlag( i_, true );
+                }
 
                 option_dependency(vm, "ascii_out_resolution", "units_ascii_out_resolution");
                 windsim.setAsciiResolution( i_, vm["ascii_out_resolution"].as<double>(),

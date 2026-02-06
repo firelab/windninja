@@ -1050,4 +1050,3 @@ void wxStation::writeKMZFile(std::vector<wxStation> stations, string basePath, s
 
 
 }
-

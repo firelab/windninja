@@ -91,6 +91,22 @@ void ninja::readInputFile()
     else
         importSingleBand(poDataset);
 
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the dem, in ninja::readInputFile()");
+
+        // direct calculation of FROM geo TO dem, already has the appropriate sign
+        if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))  // this is FROM geo TO dem
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
+        }
+    }
+
+    //set the value for angleFromNorth member in the Elevation class
+    input.dem.setAngleFromNorth(angleFromNorth);
+
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);
 
@@ -101,7 +117,6 @@ void ninja::readInputFile()
         if( input.dem.checkForNoDataValues() )
             throw std::runtime_error("NO_DATA values found in elevation file.");
     }
-
 }
 
 /**
@@ -537,4 +552,5 @@ void ninja::importGeoTIFF(GDALDataset* poDataset)
     //try filling nodata here
     if(!input.dem.fillNoDataValues(1, 99.0, nC * nR))
         throw std::runtime_error("Could not fill no data values in AsciiGrid::fillNoDataValues()");
+
 }

@@ -121,8 +121,6 @@ class initialize
         windProfile profile;
 
     private:
- 
-
 };
 
 #endif /* INITIALIZE_H */
