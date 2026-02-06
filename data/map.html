@@ -234,6 +234,8 @@
         }
 
         function drawBoundingBox(north, south, east, west) {
+            clearWindNinjaOutputTree();
+            clearInitializationOutputTree();
             clearRectangleLayer();
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
@@ -247,6 +249,8 @@
         }
 
         function drawDEM(DEMCorners) {
+            clearWindNinjaOutputTree();
+            clearInitializationOutputTree();
             clearRectangleLayer();
 
             const rectangleCorners = [
