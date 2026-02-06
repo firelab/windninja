@@ -347,10 +347,22 @@
             return container;
         };
 
+        let kmzTimeSeriesImg = null;
+        let kmzTimeSeriesImgUrl = null;
+
         async function loadKmzFromBase64(kmlData, timeSeries) {
             // Setup & Cleanup
             clearWindNinjaOutputTree();
             clearInitializationOutputTree();
+
+            if (kmzTimeSeriesImg) {
+                kmzTimeSeriesImg.remove();
+                kmzTimeSeriesImg = null;
+            }
+            if (kmzTimeSeriesImgUrl) {
+                URL.revokeObjectURL(kmzTimeSeriesImgUrl);
+                kmzTimeSeriesImgUrl = null;
+            }
 
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
@@ -398,18 +410,18 @@
                         img.style.cssText = 'display: block; max-width: 150px; height: auto;';
                         container.appendChild(img);
 
-                        // Legend Time Series 
                         if (timeSeries && legendEntries.length > 1) {
                             const blob2 = await legendEntries[1].async('blob');
-                            const url2 = URL.createObjectURL(blob2);
-                            const img2 = new Image();
-                            img2.src = url2;
-                            img2.style.cssText = `
+                            kmzTimeSeriesImgUrl = URL.createObjectURL(blob2);
+
+                            kmzTimeSeriesImg = new Image();
+                            kmzTimeSeriesImg.src = kmzTimeSeriesImgUrl;
+                            kmzTimeSeriesImg.style.cssText = `
                                 position: absolute; top: 10px; left: 50%;
                                 transform: translateX(-50%); max-width: 90%;
                                 height: auto; z-index: 600;
                             `;
-                            map.getContainer().appendChild(img2);
+                            map.getContainer().appendChild(kmzTimeSeriesImg);
                         }
                     })();
                 }
