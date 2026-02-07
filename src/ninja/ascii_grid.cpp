@@ -26,7 +26,6 @@ template<> inline int epsClr<int>() { return 1; }
 template<> inline short epsClr<short>() { return 1; }
 
 
-
 /**
  * @brief Create an empty grid
  * Create an empty grid with no header data and no data

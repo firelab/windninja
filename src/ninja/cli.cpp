@@ -648,7 +648,7 @@ int windNinjaCLI(int argc, char* argv[])
             OGRPointToLatLon(bbox[1], bbox[0], hDS, "WGS84");
             OGRPointToLatLon(bbox[3], bbox[2], hDS, "WGS84");
             
-            OGR_DS_Destroy(hDS);
+            GDALClose(hDS);
 
             //add a buffer
             bbox[0] += 0.009; //north
@@ -1450,21 +1450,10 @@ int windNinjaCLI(int argc, char* argv[])
         }
 //STATION_FETCH
 
-        /*
-        windsim.Com = new ninjaCLIComHandler();
-        int r = -1;
-        windsim.Com->runNumber = &r;
-        char msg[1024];
-        windsim.Com->lastMsg = msg;
-        */
-
         //For loop over all ninjas (just 1 ninja unless it's a weather model run)--------------------
 
         for(int i_ = 0; i_ < windsim.getSize(); i_++)
         {
-            //Set ninja communication----------------------------------------------------------
-            windsim.setNinjaCommunication(i_, i_, ninjaComClass::ninjaCLICom );
-
             windsim.setNumberCPUs( i_, vm["num_threads"].as<int>() );
 
             //windsim.ninjas[i_].readInputFile(*elevation_file);

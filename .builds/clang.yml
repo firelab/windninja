@@ -33,7 +33,7 @@ tasks:
         -D CMAKE_C_COMPILER=clang \
         -D CMAKE_CXX_COMPILER=clang++ \
         -D OPENMP_SUPPORT=OFF \
-        -D NINJA_QTGUI=OFF \
+        -D NINJA_GUI=OFF \
         ..
       make -j 3
 

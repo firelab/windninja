@@ -38,17 +38,13 @@ doxy.tag
 *.swp
 *~
 
-# Qt Creator files
+# Qt Creator files & user files
 *.config
 *.creator*
 *.files
 *.includes
-
-# Weather model files
-*UCAR*
-*NCAR*
-*NCEP*
-*NOMADS*
+*.user
+*.user*
 
 # OpenFOAM
 *.dep

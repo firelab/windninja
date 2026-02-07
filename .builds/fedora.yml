@@ -27,7 +27,7 @@ tasks:
         -D DISABLE_THREDDS_UPDATE=ON \
         -D RUN_CFG_TESTS=ON \
         -D STABILITY=ON \
-        -D NINJA_QTGUI=OFF \
+        -D NINJA_GUI=OFF \
         -D CMAKE_BUILD_TYPE=debug \
         ..
       make -j 3

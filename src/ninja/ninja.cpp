@@ -76,13 +76,6 @@ ninja::ninja()
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
-
-    //ninjaCom stuff
-    input.lastComString[0] = '\0';
-    input.inputsRunNumber = 0;
-    input.inputsComType = ninjaComClass::ninjaDefaultCom;
-    input.Com = new ninjaDefaultComHandler();
-
 }
 
 /**Ninja destructor
@@ -90,8 +83,7 @@ ninja::ninja()
  */
 ninja::~ninja()
 {
-	deleteDynamicMemory();
-        delete input.Com;
+    deleteDynamicMemory();
 }
 
 /**
@@ -125,12 +117,6 @@ ninja::ninja(const ninja &rhs)
 , mesh(rhs.mesh)
 , input(rhs.input)
 {
-    input.Com = NULL;   //must be set to null!
-    set_ninjaCommunication(rhs.get_inputsRunNumber(), rhs.get_inputsComType());
-    strcpy( input.lastComString, rhs.get_lastComString() );
-    input.Com->fpLog = rhs.get_ComLogFp();
-
-
     cancel = rhs.cancel;
     alphaH = rhs.alphaH;
     isNullRun = rhs.isNullRun;
@@ -261,7 +247,9 @@ bool ninja::simulate_wind()
 	checkCancel();
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
-	
+
+//throw std::runtime_error("I WANT CHOCOLATE!!! Yum.");
+
 	readInputFile();
 	set_position();
 
@@ -3670,46 +3658,16 @@ void ninja::set_DEM(const double* dem, const int nXSize, const int nYSize,
     input.dem.readFromMemory(dem, nXSize, nYSize, geoRef, prj);
 }
 
-int ninja::get_inputsRunNumber() const
+void ninja::set_ninjaCommunication(const ninjaComClass* Com)
 {
-    return input.inputsRunNumber;
+    *input.Com = *Com;
+    input.Com->printRunNumber = true;
 }
 
-ninjaComClass::eNinjaCom ninja::get_inputsComType() const
+void ninja::set_ninjaComRunNumber(int RunNumber)
 {
-    return input.inputsComType;
-}
-
-char * ninja::get_lastComString() const
-{
-    return (char*)input.lastComString;
-}
-
-FILE * ninja::get_ComLogFp() const
-{
-    return input.Com->fpLog;
-}
-ninjaComClass * ninja::get_Com() const
-{
-    return input.Com;
-}
-
-#ifdef NINJA_GUI
-int ninja::get_ComNumRuns() const
-{
-    return input.Com->nRuns;
-}
-
-void ninja::set_ComNumRuns( int nRuns )
-{
-    input.Com->nRuns = nRuns;
-}
-
-#endif //NINJA_GUI
-
-double ninja::get_progressWeight()
-{
-    return input.Com->progressWeight;
+    input.inputsRunNumber = RunNumber;
+    input.Com->runNumber = input.inputsRunNumber;
 }
 
 void ninja::set_progressWeight(double progressWeight)
@@ -3849,7 +3807,9 @@ WindNinjaInputs::eNinjafoamMeshChoice ninja::get_eNinjafoamMeshChoice(std::strin
         return WindNinjaInputs::fine;
     }
     else{
-        throw std::logic_error("Problem with mesh type string in ninja::get_eMeshType().");
+        throw std::invalid_argument( "Invalid input '" + meshChoice +
+                                     "' in ninja::get_eMeshType()" +
+                                     "\nchoices are: 'coarse', 'medium', or 'fine'" );
     }
 }
 
@@ -4523,7 +4483,8 @@ void ninja::set_meshResChoice( std::string choice )
     }
     else
         throw std::invalid_argument( "Invalid input '" + choice +
-                                    "' in ninja::set_meshResChoice" );
+                                     "' in ninja::set_meshResChoice()" +
+                                     "\nchoices are: 'coarse', 'medium', or 'fine'" );
 }
 void ninja::set_meshResChoice( const Mesh::eMeshChoice choice )
 {
@@ -5391,33 +5352,6 @@ double ninja::getFuelBedDepth(int fuelModel)
 
     //multiply by 0.3048 to convert from feet to meters
     return (depthInFeet * 0.3048);
-}
-
-void ninja::set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType)
-{
-    input.inputsComType = comType;
-
-    if(input.Com)
-        delete input.Com;
-
-    if(comType == ninjaComClass::ninjaDefaultCom)
-        input.Com = new ninjaDefaultComHandler();
-    else if(comType == ninjaComClass::ninjaQuietCom)
-        input.Com = new ninjaQuietComHandler();
-    else if(comType == ninjaComClass::ninjaLoggingCom)
-        input.Com = new ninjaLoggingComHandler();
-    else if(comType == ninjaComClass::ninjaGUICom)
-        input.Com = new ninjaGUIComHandler();
-    else if(comType == ninjaComClass::WFDSSCom)
-        input.Com = new ninjaWFDSSComHandler();
-    else if(comType == ninjaComClass::ninjaCLICom)
-        input.Com = new ninjaCLIComHandler();
-    else
-        input.Com = new ninjaDefaultComHandler();
-
-    input.inputsRunNumber = RunNumber;
-    input.Com->runNumber = &input.inputsRunNumber;
-    input.Com->lastMsg = input.lastComString;
 }
 
 void ninja::checkInputs()

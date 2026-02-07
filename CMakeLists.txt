@@ -15,12 +15,21 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.16)
+
+# Check if the user is using VCPKG on Windows
+if(WIN32)
+    if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg.cmake")
+        message(FATAL_ERROR
+            "WindNinja requires the Visual C++ Package Manager VCPKG.\n"
+        )
+    endif()
+endif(WIN32)
 
 project(WindNinja)
 
-# let cmake figure out how to set the C++ level
-set(CMAKE_CXX_STANDARD 11)
+# Set C++ version for CMake
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
@@ -30,7 +39,7 @@ option(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab mac
 mark_as_advanced(FIRELAB_PACKAGE)
 
 if(FIRELAB_PACKAGE)
-    set(NINJA_QTGUI ON)
+    set(NINJA_GUI ON)
     set(NINJA_CLI ON)
 endif(FIRELAB_PACKAGE)
 
@@ -82,96 +91,30 @@ set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
 message(STATUS "PKG VERSION: ${WINDNINJA_VERSION_NAME}")
 
-# Locate third party libs
-include(FindBoost)
-set(Boost_DEBUG OFF)
-if(WIN32)
-    set(Boost_USE_STATIC_LIBS ON)
-else(WIN32)
-    set(Boost_USE_STATIC_LIBS OFF)
-endif(WIN32)
-set(Boost_USE_MULTITHREAD OFF)
-find_package(Boost 1.41.1 COMPONENTS date_time program_options
-                                     unit_test_framework REQUIRED)
-
-# All GIS related libs.  Windows uses GIS_INTERNALS_HOME
-if(WIN32)
-    option(USE_GIS_INTERNALS "Use dependencies (as many as possible) from gisinternals.com" OFF)
-    if(USE_GIS_INTERNALS)
-        find_path(GIS_INTERNALS_HOME gdal CACHE PATH)
-    file(TO_NATIVE_PATH ${GIS_INTERNALS_HOME} GIS_INTERNALS_HOME)
-    string(REGEX REPLACE "\\\\" "/" GIS_INTERNALS_HOME "${GIS_INTERNALS_HOME}")
-    endif(USE_GIS_INTERNALS)
-endif(WIN32)
-
-option(USE_VCPKG "Use VCPKG for boost and GDAL" )
-if(USE_VCPKG)
-    message("Using VCPKG")
+# Find Dependencies: VCPKG for Windows and ATP for Linux
+if(MSVC)
+    find_package(shapelib CONFIG REQUIRED)
     find_package(GDAL CONFIG REQUIRED)
-    find_package(NETCDF CONFIG REQUIRED)
-#    target_link_libraries(main PRIVATE GDAL::GDAL)
-ELSE(USE_VCPKG)
-    include(FindNetCDF)
-    include(FindGDAL)
-    if(WIN32)
-        if(NOT GIS_INTERNALS_HOME)
-            find_package(NetCDF REQUIRED)
-            find_package(GDAL REQUIRED)
-        else(NOT GIS_INTERNALS_HOME)
-            find_package(NetCDF)
-            find_package(GDAL)
-        endif(NOT GIS_INTERNALS_HOME)
-    else(WIN32)
-        find_package(NetCDF REQUIRED)
-        find_package(GDAL REQUIRED)
-    endif(WIN32)
-endif(USE_VCPKG)
-option(NINJA_QT5GUI "build Qt5 experimental GUI" OFF)
-if(NINJA_QT5GUI)
-    message("building qt5 gui")
-    add_subdirectory(src/gui/ui)
-endif(NINJA_QT5GUI)
-
-if(USE_VCPKG)
+    find_package(netCDF CONFIG REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS date_time program_options unit_test_framework)
     set(GDAL_LIBRARY GDAL::GDAL)
     set(NETCDF_LIBRARIES_C netCDF::netcdf)
-ELSE(USE_VCPKG)
-    if(WIN32)
-        if(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
-            set(NETCDF_INCLUDES ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
-            set(NETCDF_LIBRARIES NOT_USED CACHE TYPE PATH FORCE)
-            set(NETCDF_LIBRARIES_C ${GIS_INTERNALS_HOME}/lib/netcdf.lib CACHE TYPE NAME FORCE)
-            set(NETCDF_INCLUDES-FOUND TRUE)
-            set(NETCDF_LIBRARIES_C-FOUND TRUE)
-       endif(NOT NETCDF_INCLUDES-NOTFOUND AND GIS_INTERNALS_HOME)
-    endif(WIN32)
-    if(WIN32)
-        if(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
-            set(GDAL_INCLUDE_DIR ${GIS_INTERNALS_HOME}/include CACHE TYPE PATH FORCE)
-            set(GDAL_LIBRARY ${GIS_INTERNALS_HOME}/lib/gdal_i.lib CACHE TYPE NAME FORCE)
-            set(GDAL_INCLUDE_DIR-FOUND TRUE)
-            set(GDAL_LIBRARY-FOUND TRUE)
-        endif(NOT GDAL_INCLUDE_DIR-NOTFOUND AND GIS_INTERNALS_HOME)
-    endif(WIN32)
-ENDIF(USE_VCPKG)
+    set(Boost_DEBUG OFF)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_USE_MULTITHREAD OFF)
+else()
+    include(FindBoost)
+    set(Boost_DEBUG OFF)
+    set(Boost_USE_STATIC_LIBS OFF)
+    set(Boost_USE_MULTITHREAD OFF)
+    find_package(Boost 1.41.1 COMPONENTS date_time program_options unit_test_framework REQUIRED)
+    include(FindNetCDF)
+    include(FindGDAL)
+    find_package(NetCDF)
+endif(MSVC)
 
 # Ninja executables
-option(NINJA_QTGUI "Build Qt GUI" ON)
-if(NINJA_QTGUI)
-    set(QT_USE_QTMAIN_LIBRARY 1)
-    include(FindQt4)
-    find_package(Qt4 COMPONENTS QtCore QtGui QtWebKit QtNetwork REQUIRED)
-    include(${QT_USE_FILE})
-    add_definitions(-DNINJA_GUI)
-    if(WIN32)
-        option(ENABLE_CONSOLE "Show the console for CLI/GUI runs" OFF)
-        option(ENABLE_FIDDLER "Use Fiddler2 proxy to monitor web traffic" OFF)
-    endif(WIN32)
-    if(ENABLE_FIDDLER)
-        add_definitions(-DENABLE_FIDDLER)
-    endif(ENABLE_FIDDLER)
-endif(NINJA_QTGUI)
-
+option(NINJA_GUI "Build Qt GUI" ON)
 option(NINJA_CLI "Build Command Line Interface" ON)
 
 # Weather related options
@@ -186,30 +129,37 @@ if(WITH_NOMADS_SUPPORT)
     if(NOT HAVE_TIMEGM)
         add_definitions(-DUSE_INTERNAL_TIME_GM)
     endif(NOT HAVE_TIMEGM)
+
     option(NOMADS_USE_VSI_READ "Use VSI*L api instead of CPLHTTPFetch" OFF)
     if(NOMADS_USE_VSI_READ)
         add_definitions(-DNOMADS_USE_VSI_READ)
     endif(NOMADS_USE_VSI_READ)
+
     option(NOMADS_RTMA "Enable the RTMA forecasts" OFF)
     if(NOMADS_RTMA)
         add_definitions(-DNOMADS_RTMA)
     endif(NOMADS_RTMA)
+
     option(NOMADS_EXPER_FORECASTS "Enable NARRE and NEST forecasts." OFF)
     if(NOMADS_EXPER_FORECASTS)
         add_definitions(-DNOMADS_EXPER_FORECASTS)
     endif(NOMADS_EXPER_FORECASTS)
+
     option(NOMADS_ENABLE_ASYNC "Enable multi-threading for NOMADS download" ON)
     if(NOMADS_ENABLE_ASYNC)
         add_definitions(-DNOMADS_ENABLE_ASYNC)
     endif(NOMADS_ENABLE_ASYNC)
+
     option(NOMADS_USE_IP "Use the ip address for the nomads server, not a host" OFF)
     if(NOMADS_USE_IP)
         add_definitions(-DNOMADS_USE_IP)
     endif(NOMADS_USE_IP)
+
     option(NOMADS_ENABLE_3D "Enable 3d initialization using NOMADS data." OFF)
     if(NOMADS_ENABLE_3D)
         add_definitions(-DNOMADS_ENABLE_3D)
     endif(NOMADS_ENABLE_3D)
+
     option(NOMADS_INTERNAL_VRT "Use an internal copy of GDALAutoCreateVRT that allows for band subsetting" OFF)
     if(NOMADS_INTERNAL_VRT)
         add_definitions(-DNOMADS_INTERNAL_VRT)
@@ -232,36 +182,35 @@ if(WITH_LCP_CLIENT)
     add_definitions(-DWITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
 
-#disable for exception handling in the GUI and CLI
-option(C_API "Enable WindNinja C API" OFF)
-if(C_API)
-    add_definitions(-DC_API)
-endif(C_API)
+# Disable for exception handling in the GUI and CLI
+# option(C_API "Enable WindNinja C API" OFF)
+# if(C_API)
+#     add_definitions(-DC_API)
+# endif(C_API)
 
 # Enable phone home and message server startup
 option(PHONE_HOME_QUERIES "Enable Phone Home Queries" ON)
-
 if (PHONE_HOME_QUERIES)
     add_definitions(-DPHONE_HOME_QUERIES_ENABLED)
-    message(STATUS "Phone Home Queries are enabled.")
-else()
-    message(STATUS "Phone Home Queries are disabled.")
-endif()
+endif(PHONE_HOME_QUERIES)
 
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
 if(NINJAFOAM)
-    add_definitions(-DNINJAFOAM)
+    add_compile_definitions(NINJAFOAM)
     if(WIN32 AND FIRELAB_PACKAGE)
-        add_definitions(-DFIRELAB_PACKAGE)
+        add_compile_definitions(FIRELAB_PACKAGE)
         find_path(FOAM_MINGW_PATH OpenFOAM-2.2.x
                   DOC "Path to x-compiled OpenFOAM directory")
-        if(FOAM_MINGW_PATH-NOTFOUND)
-            message(FATAL_ERROR "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
-        endif(FOAM_MINGW_PATH-NOTFOUND)
-    endif(WIN32 AND FIRELAB_PACKAGE)
-endif(NINJAFOAM)
-string(REGEX REPLACE "\\\\" "/" FOAM_MINGW_PATH "${FOAM_MINGW_PATH}")
+
+        if(NOT FOAM_MINGW_PATH)
+            message(FATAL_ERROR
+                "You must provide a path to a cross-compiled OpenFOAM directory for NINJAFOAM support and package building")
+        endif()
+
+        string(REGEX REPLACE "\\\\" "/" FOAM_MINGW_PATH "${FOAM_MINGW_PATH}")
+    endif()
+endif()
 
 # Miscellaneous options
 option(NINJA_SPEED_TESTING "Enable initialization speed dampening" OFF)
@@ -336,18 +285,26 @@ endif(NOT WIN32)
 
 # Optional utilities
 option(BUILD_FETCH_DEM "Build a standalone command line interface DEM utility" OFF)
+
 option(BUILD_STL_CONVERTER "Build a standalone command line interface for STL file conversions" OFF )
+
 option(BUILD_CONVERT_OUTPUT "Build a standalone command line interface for xyz file conversions" OFF )
+
 option(BUILD_WRF_TO_KMZ "Build a standalone command line interface for converting WRF output to kmz" OFF )
 mark_as_advanced(BUILD_WRF_TO_KMZ)
+
 option(BUILD_HRRR_TO_KMZ "Build a standalone command line interface for converting hrrr output runs to kmz, without running full WindNinja" OFF )
 mark_as_advanced(BUILD_HRRR_TO_KMZ)
+
 option(BUILD_SLOPE_ASPECT_GRID "Build an application for building slope and aspect grids from a dem" OFF)
 mark_as_advanced(BUILD_SLOPE_ASPECT_GRID)
+
 option(BUILD_FLOW_SEPARATION_GRID "Build an application for building flow separation" OFF)
 mark_as_advanced(BUILD_FLOW_SEPARATION_GRID)
+
 option(BUILD_SOLAR_GRID "Build a application for building solar grids" OFF)
 mark_as_advanced(BUILD_SOLAR_GRID)
+
 option(BUILD_SURFACE_INPUT_NODATA_FILLER "Build an application for filling input surface no data values" ON)
 mark_as_advanced(BUILD_SURFACE_INPUT_NODATA_FILLER)
 
@@ -356,8 +313,6 @@ mark_as_advanced(NINJA_GDAL_OUTPUT)
 if(NINJA_GDAL_OUTPUT)
   add_definitions(-DNINJA_GDAL_OUTPUT)
 endif()
-
-option(FIRE_BEHAVIOR_DATA_INSTALL "Only install files necessary for FireBehaviorModels" OFF)
 
 # Recurse into subdirectories
 add_subdirectory(src)
@@ -372,6 +327,26 @@ if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
 
+# Add the resource files for the .exe icon
+if (MSVC)
+    target_sources(WindNinja PRIVATE ${PROJECT_SOURCE_DIR}/wn-ms-resource.rc)
+endif()
+
+# Run windeployqt6.exe to provide all QT related DLLs
+if(MSVC)
+    find_program(WINDEPLOYQT_EXE
+        NAMES windeployqt6 windeployqt
+        HINTS "${Qt6_DIR}/../../../bin"
+        REQUIRED
+    )
+
+    add_custom_target(deploy_windninja ALL
+        COMMAND "${WINDEPLOYQT_EXE}"
+                "$<TARGET_FILE:WindNinja>"
+        DEPENDS WindNinja
+    )
+endif()
+
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
 mark_as_advanced(PACKAGE_DEBUG)
@@ -381,18 +356,6 @@ if(CMAKE_SIZEOF_VOID_P MATCHES "8")
     add_definitions(-DNINJA_64BIT=1)
     if(PACKAGE_DEBUG)
         message(STATUS "Building 64-bit installer")
-    endif(PACKAGE_DEBUG)
-elseif(CMAKE_SIZEOF_VOID_P MATCHES "4")
-    set(BUILD_64 FALSE)
-    add_definitions(-DNINJA_32BIT=1)
-    if(PACKAGE_DEBUG)
-        message(STATUS "Building 32-bit installer")
-    endif(PACKAGE_DEBUG)
-else(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    set(BUILD_64 FALSE)
-    add_definitions(-DNINJA_32BIT=1)
-    if(PACKAGE_DEBUG)
-        message(STATUS "Cannot determine architecture, using 32-bit by default")
     endif(PACKAGE_DEBUG)
 endif(CMAKE_SIZEOF_VOID_P MATCHES "8")
 
@@ -410,93 +373,92 @@ if(VERBOSE_CMAKE)
     include(CMakePrintSystemInformation)
 endif(VERBOSE_CMAKE)
 
-if(FIRE_BEHAVIOR_DATA_INSTALL)
-    #FireBehaviorModels only requires date_time_zonespec.csv and tz_world.zip
-    message("Only installing data files necessary for FireBehaviorModels")
-    set(fire_behavior_model_files date_time_zonespec.csv tz_world.zip)
-    foreach(f ${fire_behavior_model_files})
-        install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-                share/windninja COMPONENT apps)
-    endforeach(f ${fire_behavior_model_files})
+# Install DEM and configuration files
+set(etc_files
+    missoula_valley.tif
+    example_lcp.tif
+    cli_domainAverage.cfg
+    cli_domainAverage_diurnal.cfg
+    cli_pointInitialization_diurnal.cfg
+    cli_wxModelInitialization_diurnal.cfg
+    cli_momentumSolver_diurnal.cfg)
+list(TRANSFORM etc_files PREPEND ${PROJECT_SOURCE_DIR}/data/)
+install(FILES ${etc_files}
+        DESTINATION etc/windninja/example-files
+        COMPONENT apps)
 
-else(FIRE_BEHAVIOR_DATA_INSTALL)
-# install target related files
-set(etc_files missoula_valley.tif
-                  example_lcp.tif
-                  cli_domainAverage.cfg
-                  cli_domainAverage_diurnal.cfg
-                  cli_pointInitialization_diurnal.cfg
-                  cli_wxModelInitialization_diurnal.cfg
-                  cli_momentumSolver_diurnal.cfg)
-foreach(f ${etc_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            etc/windninja/example-files COMPONENT apps)
-endforeach(f ${etc_files})
+# Install wxstation current files (add weather station files to example files)
+set(wx_station_current_files
+    missoula_valley_stations_4.csv
+    KMSO-2018-06-25_1237-0.csv
+    PNTM8-2018-06-25_1237-2.csv
+    TR266-2018-06-25_1237-3.csv
+    TS934-2018-06-25_1237-1.csv)
+list(TRANSFORM wx_station_current_files
+     PREPEND ${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/)
+install(FILES ${wx_station_current_files}
+        DESTINATION etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley
+        COMPONENT apps)
 
-#add weather station files to example files
-set(wx_station_current_files  WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv
-                              WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv)
-foreach(f ${wx_station_current_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley COMPONENT apps)
-endforeach(f ${wx_station_current_files})
+# Install wxstation files (add weather station time series files)
+set(wx_station_ts_files
+    missoula_valley_stations_4.csv
+    KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
+    PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
+    TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
+    TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
+list(TRANSFORM wx_station_ts_files
+     PREPEND ${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/)
+install(FILES ${wx_station_ts_files}
+        DESTINATION etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley
+        COMPONENT apps)
 
-#add weather station time series files
-set(wx_station_ts_files  WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
-                         WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
-foreach(f ${wx_station_ts_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley COMPONENT apps)
-endforeach(f ${wx_station_ts_files})
+# Install all share files 
+set(share_files
+    date_time_zonespec.csv
+    config_options.csv
+    tz_world.zip
+    landfire.zip
+    map.html
+    qt_certs_bundle.pem
+    thredds.csv
+    surface_data.zip
+    srtm_region.geojson
+    us_srtm_region.dbf
+    us_srtm_region.prj
+    us_srtm_region.shp
+    us_srtm_region.shx)
+list(TRANSFORM share_files PREPEND ${PROJECT_SOURCE_DIR}/data/)
+install(FILES ${share_files}
+        DESTINATION share/windninja
+        COMPONENT apps)
 
-set(share_files date_time_zonespec.csv
-                config_options.csv
-                tz_world.zip
-                landfire.zip
-                map.htm
-                qt_certs_bundle.pem
-                thredds.csv
-                surface_data.zip
-                srtm_region.geojson
-                us_srtm_region.dbf
-                us_srtm_region.prj
-                us_srtm_region.shp
-                us_srtm_region.shx)
-foreach(f ${share_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/data/${f} DESTINATION
-            share/windninja COMPONENT apps)
-endforeach(f ${share_files})
-
-# Leaflet data
+# Install Leaflet data
 if(WIN32 AND FIRELAB_PACKAGE)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share)
-else(WIN32 AND FIRELAB_PACKAGE)
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 endif(WIN32 AND FIRELAB_PACKAGE)
 
-set(doc_files CLI_instructions.pdf
-              displaying_wind_vectors_in_ArcGIS_Pro.pdf
-              download_elevation_file.pdf
-              fetch_dem_instructions.pdf)
-foreach(f ${doc_files})
-    install(FILES ${PROJECT_SOURCE_DIR}/doc/${f} DESTINATION
-            share/windninja/doc COMPONENT apps)
-endforeach(f ${doc_files})
+# Install all documentation files
+set(doc_files
+    CLI_instructions.pdf
+    displaying_wind_vectors_in_ArcGIS_Pro.pdf
+    download_elevation_file.pdf
+    fetch_dem_instructions.pdf)
+list(TRANSFORM doc_files PREPEND ${PROJECT_SOURCE_DIR}/doc/)
+install(FILES ${doc_files}
+        DESTINATION share/windninja/doc
+        COMPONENT apps)
 
-set(tutorials tutorials/WindNinja_tutorial1.pdf
-              tutorials/WindNinja_tutorial2.pdf
-              tutorials/WindNinja_tutorial3.pdf
-              tutorials/WindNinja_tutorial4.pdf)
-foreach(f ${tutorials})
-    install(FILES ${PROJECT_SOURCE_DIR}/doc/${f} DESTINATION
-            share/windninja/doc/tutorials COMPONENT apps)
-endforeach(f ${tutorials})
+# Install all tutorial files
+set(tutorial_files
+    WindNinja_tutorial1.pdf
+    WindNinja_tutorial2.pdf
+    WindNinja_tutorial3.pdf
+    WindNinja_tutorial4.pdf)
+list(TRANSFORM tutorial_files PREPEND ${PROJECT_SOURCE_DIR}/doc/tutorials/)
+install(FILES ${tutorial_files}
+        DESTINATION share/windninja/doc/tutorials
+        COMPONENT apps)
 
 # Install the ninjafoam data
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)
@@ -506,18 +468,45 @@ install(FILES ${PROJECT_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windnin
 install(FILES ${PROJECT_SOURCE_DIR}/data/relief.xml DESTINATION share/windninja)
 install(FILES ${PROJECT_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/windninja)
 
-set(ZIPFILES "")
+# Installs specific to Windows NSIS installer
+if(WIN32)
+    # Install DLLS for WindNinja.exe to the bin directory
+    install(
+    DIRECTORY "${CMAKE_BINARY_DIR}/src/gui/"
+    DESTINATION bin
+    FILES_MATCHING
+        PATTERN "*.exe"
+        PATTERN "*.dll"
+        PATTERN "plugins/*"
+        PATTERN "platforms/*"
+        PATTERN "resources/*"
+        PATTERN "*.qm")
 
-# GDAL data
-if(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
-    install(DIRECTORY "${GIS_INTERNALS_HOME}/bin/gdal-data/" DESTINATION share/windninja/gdal-data/data)
-endif(WIN32 AND FIRELAB_PACKAGE AND MSVC AND GIS_INTERNALS_HOME)
+    # Installs GDAL data from VCPKG to the gdal-data/data directory
+    install(
+        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/gdal/"
+        DESTINATION share/windninja/gdal-data/data
+        COMPONENT apps)
+
+    # Installs PROJ data from VCPKG to the proj-data/data directory
+    install(
+        DIRECTORY "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/share/proj/"
+        DESTINATION share/windninja/proj-data/data
+        COMPONENT apps)
+
+    if(NINJAFOAM)
+        install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
+        install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
+    endif(NINJAFOAM)
+endif(WIN32)
+
+set(ZIPFILES "")
 
 if(BUILD_TYPE MATCHES "debug")
     if(PACKAGE_DEBUG)
         message(STATUS "Copying boost date time file into build/src/gui and build/src/cli")
     endif(PACKAGE_DEBUG)
-    file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/gui")
+    file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/gui/qt6")
     file(COPY "${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv" DESTINATION "${PROJECT_BINARY_DIR}/src/cli")
 endif(BUILD_TYPE MATCHES "debug")
 
@@ -549,7 +538,7 @@ CreateDirectory \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 1.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial1.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 2.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial2.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 3.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial3.pdf\\\"
-CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 4.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial4.pdf\\\" 
+CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Tutorials\\\\Tutorial 4.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\tutorials\\\\WindNinja_Tutorial4.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\CLI Instructions.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\CLI_instructions.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\ArcMap Instructions.lnk\\\"  \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\Displaying_wind_vectors_in_ArcMap.pdf\\\"
 CreateShortCut \\\"$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Documents\\\\DEM Download Instructions.lnk\\\" \\\"$INSTDIR\\\\share\\\\windninja\\\\doc\\\\download_elevation_file.pdf\\\"
@@ -567,74 +556,26 @@ Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Example Files.lnk\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Tutorials\\\"
 RMDir \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Documents\\\" ")
 
-# Build the nsis installer on the firelab machine(s).  Not for external use.
-if(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
-    # Install the CURL_CA_BUNDLE file from the bin folder, and drop it in data/
-    install(FILES ${GIS_INTERNALS_HOME}/bin/curl/curl-ca-bundle.crt DESTINATION
-            share/windninja COMPONENT apps)
-    # Install the dlls GDAL depends on
-    file(GLOB dlls ${GIS_INTERNALS_HOME}/bin/*.dll)
-    foreach(dll ${dlls})
-        install(PROGRAMS ${dll} DESTINATION bin COMPONENT apps)
-    endforeach(dll ${dlls})
-    install(PROGRAMS ${GIS_INTERNALS_HOME}/bin/gdal/plugins/gdal_netCDF.dll DESTINATION bin/gdalplugins COMPONENT app)
-    get_filename_component(qtbin ${QT_QMAKE_EXECUTABLE} DIRECTORY)
-    string(REGEX REPLACE "\\\\" "/" qtbin "${qtbin}")
-    if(BUILD_TYPE MATCHES "release")
-        install(PROGRAMS "${qtbin}/qtgui4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtcore4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtwebkit4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/phonon4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtnetwork4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${QT_PLUGINS_DIR}/imageformats/qjpeg4.dll" DESTINATION bin/imageformats)
-    else(BUILD_TYPE MATCHES "release")
-        install(PROGRAMS "${qtbin}/qtguid4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtcored4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtwebkitd4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/phonond4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${qtbin}/qtnetworkd4.dll" DESTINATION bin COMPONENT apps)
-        install(PROGRAMS "${QT_PLUGINS_DIR}/imageformats/qjpegd4.dll" DESTINATION bin/imageformats)
-    endif( BUILD_TYPE MATCHES "release")
-    # HACK FOR OPENMP
-    if(BUILD_64)
-        install(PROGRAMS ${MSVC_REDIST_DIR}/x64/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
-    else(BUILD_64)
-        install(PROGRAMS ${MSVC_REDIST_DIR}/x86/Microsoft.VC100.OPENMP/vcomp100.dll DESTINATION bin COMPONENT apps)
-    endif(BUILD_64)
-    if(NINJAFOAM)
-        install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
-        install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
-    endif(NINJAFOAM)
-endif(FIRELAB_PACKAGE AND WIN32 AND MSVC AND GIS_INTERNALS_HOME)
 set(CPACK_COMPONENT_APPS_REQUIRED TRUE)
 set(CPACK_COMPONENT_LIBS_HIDDEN TRUE)
 set(CPACK_COMPONENT_LIBS_DISABLED TRUE)
 set(CPACK_COMPONENT_INCLUDES_HIDDEN TRUE)
 set(CPACK_COMPONENT_INCLUDES_DISABLED TRUE)
 
-# *****************************************************************************
 # CPack call
-# *****************************************************************************
 include(CPack)
 include(CTest)
 
-# *****************************************************************************
-# CPack groupings
-# *****************************************************************************
+# CPack Groupings
 CPACK_ADD_COMPONENT(apps
                     DISPLAY_NAME "WindNinja"
                     DESCRIPTION "WindNinja binaries and documentation"
-                    GROUP Application
-                    )
+                    GROUP Application)
+
 CPACK_ADD_COMPONENT(libs
                     DISPLAY_NAME "WindNinja Libraries"
-                    DESCRIPTION "Development libraries"
-                    #GROUP Development
-                    )
+                    DESCRIPTION "Development libraries")
+
 CPACK_ADD_COMPONENT(includes
                     DISPLAY_NAME "WindNinja Headers"
-                    DESCRIPTION "Development include files"
-                    #GROUP Development
-                    )
-
-endif(FIRE_BEHAVIOR_DATA_INSTALL)
+                    DESCRIPTION "Development include files")

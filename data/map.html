@@ -1,0 +1,554 @@
+<!--
+******************************************************************************
+*
+* $Id: map.html
+*
+* Project:  WindNinja
+* Purpose:  Map Layer used to download and display landscape data
+* Author:   Mason Willman <mason.willman@usda.gov>
+*
+******************************************************************************
+*
+* THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
+* MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+* IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+* OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+* PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+* LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+* PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
+* RELIABILITY, OR ANY OTHER CHARACTERISTIC.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+* OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+* THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+* DEALINGS IN THE SOFTWARE.
+*
+******************************************************************************
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Leaflet Map</title>
+    <style>
+        html, body 
+        {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        #map 
+        {
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+      .leaflet-div-icon {
+            background: white;
+            border: 2px solid #0077ff;
+            border-radius: 50%;
+            width: 10px !important;
+            height: 10px !important;
+            margin-left: -5px !important;
+            margin-top: -5px !important;
+            box-shadow: 0 0 1px #000;
+        }
+        .leaflet-drag-target {
+            cursor: move !important;
+        }
+        .leaflet-control-center {
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .leaflet-control-center a {
+            display: block;
+            text-align: center;
+            color: #0077ff;
+            font-size: 20px;
+            line-height: 26px;
+            width: 28px;
+            height: 28px;
+            text-decoration: none;
+        }
+        .leaflet-control-center a:hover {
+            background: #0077ff;
+            color: white;
+        }
+    </style>
+
+    <!-- Leaflet stylesheets -->
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="leaflet/draw/src/leaflet.draw.css"/>
+    <link rel="stylesheet" href="leaflet/L.Control.Layers.Tree.css" />
+
+    <!-- Leaflet and Draw dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="./leaflet/leaflet-src.js"></script>
+    <script src="./leaflet/L.KML.js"></script>
+
+    <script src="./leaflet/L.Control.Layers.Tree.js"></script>
+
+    <script src="./leaflet/draw/src/Leaflet.draw.js"></script>
+    <script src="./leaflet/draw/src/Leaflet.Draw.Event.js"></script>
+
+    <script src="./leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="./leaflet/draw/src/Tooltip.js"></script>
+    <script src="./leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="./leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+    <script src="./leaflet/draw/src/ext/Polyline.Intersect.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
+
+    <script src="./leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+
+    <script src="./leaflet/draw/src/Control.Draw.js"></script>
+    <script src="./leaflet/draw/src/Toolbar.js"></script>
+    <script src="./leaflet/draw/src/draw/DrawToolbar.js"></script>
+    <script src="./leaflet/draw/src/edit/EditToolbar.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
+    <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
+
+    
+
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+    <div id="map" style="border: 1px solid #ccc"></div>
+    <script>
+
+        // Script variables
+        const apiKey = "pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ";
+
+        const streetBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+            tileSize: 512,
+            maxZoom: 18,
+            zoomOffset: -1,
+            id: 'mapbox/streets-v11'
+        });
+
+        const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
+            tileSize: 512,
+            maxZoom: 18,
+            zoomOffset: -1,
+            id: 'mapbox/satellite-v9'
+        });
+
+        const map = new L.Map('map', {
+            layers: [streetBaseLayer],
+            center: new L.LatLng(43.62455, -113.2971),
+            zoom: 8
+        });
+        
+        const mapRectangleLayer = new L.FeatureGroup();
+        const rectangleDrawer = new L.Draw.Rectangle(map);
+        const centerControl = L.control({ position: 'topleft' });
+        
+        const baseTree = {
+            label: 'Base Maps',
+            children: [
+                {
+                    label: 'Mapbox Streets',
+                    layer: streetBaseLayer
+                },
+                {
+                    label: 'Satellite',
+                    layer: satelliteBaseLayer
+                }
+            ]
+        };
+
+        const windninjaOutputTree = {
+            label: 'WindNinja Output',
+            children: [
+                {
+                    label: 'None',
+                    layer: L.layerGroup([]), // Dummy empty layer
+                    radioGroup: 'windninjaOutputs'
+                }
+            ]
+        };
+
+        const initializationOutputTree = {
+            label: 'Weather Model Output',
+            children: [
+                {
+                    label: 'None',
+                    layer: L.layerGroup([]), // Dummy empty layer
+                    radioGroup: 'initializationOutput'
+                }
+            ]
+        };
+
+        const overlayTree = {
+            label: 'WindNinja Overlays',
+            children: [
+                {
+                    label: 'Bounding Box',
+                    layer: mapRectangleLayer
+                }
+            ]
+        };
+
+        const layerControl = L.control.layers.tree(
+            baseTree,
+            [],
+            {
+                collapsed: true
+            }
+        ).addTo(map);
+
+
+        let drawDEMCheck = false;
+        let kmzLegendControls = [];
+        let centerControlAdded = false;
+
+        // Script functions
+        function sendBoundingBox(layer) {
+            const bounds = layer.getBounds();
+            const bboxData = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
+
+            if (window.bridge?.receiveBoundingBox) {
+                window.bridge.receiveBoundingBox(JSON.stringify(bboxData));
+            }
+        }
+
+        function drawBoundingBox(north, south, east, west) {
+            clearRectangleLayer();
+            const bounds = [[south, west], [north, east]];
+            const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
+            rectangle.editing.enable();
+            sendBoundingBox(rectangle);
+            map.fitBounds(rectangle.getBounds());
+            rectangle.on('edit', () => {
+                    sendBoundingBox(rectangle);
+                    map.fitBounds(rectangle.getBounds()); 
+            });
+        }
+
+        function drawDEM(DEMCorners) {
+            clearRectangleLayer();
+
+            const rectangleCorners = [
+                [DEMCorners[1], DEMCorners[0]], // NE
+                [DEMCorners[3], DEMCorners[2]], // SE
+                [DEMCorners[5], DEMCorners[4]], // SW
+                [DEMCorners[7], DEMCorners[6]], // NW
+                [DEMCorners[1], DEMCorners[0]]  // NE
+            ];
+
+            const rectangle = L.polygon(rectangleCorners, {
+                color: 'black',
+                weight: 2,
+                fill: false
+            }).addTo(mapRectangleLayer);
+
+            setTimeout(() => {
+                map.fitBounds(rectangle.getBounds());
+            }, 10);
+
+            showCenterControl();
+
+            if (layerControl && layerControl.setOverlayTree && windninjaOutputTree.children.length > 1) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,
+                    overlayTree
+                ]);
+            }
+            else {
+                layerControl.setOverlayTree([
+                    overlayTree
+                ]);
+            }
+        }
+
+        function startRectangleDrawing() {
+            clearRectangleLayer();
+            rectangleDrawer.enable();
+        }
+
+        function stopRectangleDrawing() {
+            clearRectangleLayer();
+            
+            if(!drawDEMCheck) {
+                hideCenterControl();
+            }
+            
+            rectangleDrawer.disable();
+        }
+
+        map.on('draw:created', ({ layer }) => {
+            clearRectangleLayer();
+            mapRectangleLayer.addLayer(layer);
+            layer.editing.enable();
+            sendBoundingBox(layer);
+            layer.on('edit', () => 
+            {
+                sendBoundingBox(layer);
+                map.fitBounds(layer.getBounds());
+            });
+            map.fitBounds(layer.getBounds());
+            showCenterControl();
+        });
+
+        function showCenterControl() {
+            if (!centerControlAdded) {
+                centerControl.addTo(map);
+                centerControlAdded = true;
+            }
+        }
+
+        function hideCenterControl() {
+            if (centerControlAdded) {
+                map.removeControl(centerControl);
+                centerControlAdded = false;
+            }
+        }
+
+        centerControl.onAdd = function(map) {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
+            const button = L.DomUtil.create('a', '', container);
+            button.innerHTML = '⌖';
+            button.title = 'Center on current shape';
+            button.href = '#';
+
+            L.DomEvent.on(button, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+                if (mapRectangleLayer.getLayers().length > 0) {
+                    const layer = mapRectangleLayer.getLayers()[0];
+                    if (layer.getBounds) {
+                        map.fitBounds(layer.getBounds());
+                    }
+                }
+            });
+
+            return container;
+        };
+
+        async function loadKmzFromBase64(kmlData, timeSeries) {
+            // Setup & Cleanup
+            clearWindNinjaOutputTree();
+
+            const binary = atob(kmlData);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            
+            const zip = await JSZip.loadAsync(bytes.buffer);
+
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+            const legendEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.bmp')
+            );
+
+            if (kmlEntries.length === 0) {
+                console.error('No KML files found in this KMZ.');
+                return;
+            }
+
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = entry.name;
+
+            const legendControl = L.control({ position: 'bottomright' });
+            kmzLegendControls.push(legendControl);
+
+            legendControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'kmz-legend');
+                L.DomEvent.disableClickPropagation(container);
+
+                if (legendEntries.length > 0) {
+                    (async () => {
+                        // Legend Key
+                        const blob = await legendEntries[0].async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.src = url;
+                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
+                        container.appendChild(img);
+
+                        // Legend Time Series 
+                        if (timeSeries && legendEntries.length > 1) {
+                            const blob2 = await legendEntries[1].async('blob');
+                            const url2 = URL.createObjectURL(blob2);
+                            const img2 = new Image();
+                            img2.src = url2;
+                            img2.style.cssText = `
+                                position: absolute; top: 10px; left: 50%;
+                                transform: translateX(-50%); max-width: 90%;
+                                height: auto; z-index: 600;
+                            `;
+                            map.getContainer().appendChild(img2);
+                        }
+                    })();
+                }
+                return container;
+            };
+
+            // Toggle legend with layer
+            kmlLegendLayer.on('add', () => legendControl.addTo(map));
+            kmlLegendLayer.on('remove', () => legendControl.remove());
+
+            const isFirstLayer = windninjaOutputTree.children.length === 1;
+
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
+
+            windninjaOutputTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer,
+                radioGroup: 'windninjaOutputs'
+            });
+
+            if (layerControl && layerControl.setOverlayTree) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    overlayTree
+                ]);
+            }
+        }
+
+        async function loadOutputFromBase64(data) {
+
+            clearInitializationOutputTree();
+
+            const binary = atob(data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            const zip = await JSZip.loadAsync(bytes.buffer);
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+
+            if (kmlEntries.length === 0) {
+                console.error('No KML files found in this output.');
+                return;
+            }
+
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = entry.name;
+
+            const isFirstLayer = initializationOutputTree.children.length === 1;
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
+
+            initializationOutputTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer,
+                radioGroup: 'initializationOutput'
+            });
+
+            if (layerControl && layerControl.setOverlayTree) {
+                layerControl.setOverlayTree([
+                    windninjaOutputTree,
+                    initializationOutputTree,    
+                    overlayTree
+                ]);
+            }
+        }
+
+        function clearWindNinjaOutputTree() {
+            windninjaOutputTree.children.forEach(item => {
+                // Only remove layers that aren't the "None" placeholder
+                if (item.layer && item.label !== 'None') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            // Reset to just the None option
+            windninjaOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'windninjaOutputs'
+            }];
+
+            if (layerControl) {
+                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
+            }
+        }
+
+        function clearInitializationOutputTree() {
+            initializationOutputTree.children.forEach(item => {
+                if (item.layer && item.label !== 'None') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            initializationOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'initializationOutput'
+            }];
+
+            if (layerControl) {
+                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
+            }
+        }
+
+        function clearRectangleLayer() {
+            mapRectangleLayer.eachLayer(layer => {
+                if (layer.editing) {
+                    layer.editing.disable();
+                }
+            });
+            mapRectangleLayer.clearLayers();        
+        }
+
+        // Script Main
+        if (window.qt) {
+            new QWebChannel(qt.webChannelTransport, channel => {
+                window.bridge = channel.objects.bridge;
+            });
+        }
+        
+        map.addLayer(mapRectangleLayer);
+
+        layerControl.addTo(map);
+        L.control.scale().addTo(map);
+
+        
+
+    </script>
+</body>
+</html>

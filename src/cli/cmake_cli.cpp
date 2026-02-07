@@ -2,7 +2,7 @@
  *
  * $Id:$
  *
- * Project:  WindNinja Qt GUI
+ * Project:  WindNinja cli
  * Purpose:  main() function to initiate cli
  * Author:   Kyle Shannon <ksshannon@gmail.com>
  *

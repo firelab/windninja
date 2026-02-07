@@ -182,7 +182,7 @@ void wrfSurfInitialization::checkForValidData()
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = cplIsNan(dfNoData);
+                noDataIsNan = std::isnan(dfNoData);
             }
 
             //set the data
@@ -196,7 +196,7 @@ void wrfSurfInitialization::checkForValidData()
                 {
                     if(noDataIsNan)
                     {
-                        if(cplIsNan(padfScanline[k]))
+                        if(std::isnan(padfScanline[k]))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -743,7 +743,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         
         if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( wrpDS, 12, tempGrid );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 tempGrid.set_noDataValue(-9999.0);
                 tempGrid.replaceNan( -9999.0 );
             }
@@ -762,28 +762,28 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         airGrid.set_noDataValue(-9999.0);
         airGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "V10" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         vGrid.set_noDataValue(-9999.0);
         vGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         uGrid.set_noDataValue(-9999.0);
         uGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "QCLOUD" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         cloudGrid.set_noDataValue(-9999.0);
         cloudGrid.replaceNan( -9999.0 );
         }

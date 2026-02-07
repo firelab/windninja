@@ -35,6 +35,10 @@
 ninjaArmy::ninjaArmy()
 : writeFarsiteAtmFile(false)
 {
+    Com = new ninjaComClass();
+    Com->runNumber = 9999;
+    Com->printRunNumber = false;
+
 //    ninjas.push_back(new ninja());
     initLocalData();
 }
@@ -46,6 +50,8 @@ ninjaArmy::ninjaArmy()
 */
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
+    Com = new ninjaComClass(*A.Com);
+
     writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
     copyLocalData( A );
@@ -62,6 +68,7 @@ ninjaArmy::~ninjaArmy()
         delete ninjas[0];
     }
     destoryLocalData();
+    delete Com;
 }
 
 /**
@@ -74,6 +81,10 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
 {
     if(&A != this)
     {
+        delete Com;
+        Com = new ninjaComClass();
+        *Com = *A.Com;
+
         writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
         copyLocalData( A );
@@ -93,6 +104,16 @@ int ninjaArmy::getSize()
 
 void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
+
+    if( nSize < 1 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
+        throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize));
+    }
+
     int i;
     for( i=0; i < ninjas.size();i ++) 
         delete ninjas[i];
@@ -107,6 +128,8 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 #else
         ninjas[i] = new ninja();
 #endif //NINJAFOAM
+
+        setNinjaCommunication( i, i );
     }
 }
 
@@ -121,6 +144,16 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
                              string demFile, bool matchPoints, bool momentumFlag)
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
+
+    if( timeList.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+        throw std::runtime_error("Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+    }
+
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
@@ -135,12 +168,14 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
     {
         stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
     }
-    
+
     ninjas.resize(timeList.size());
 
     for(unsigned int i=0; i<timeList.size(); i++)
     {
         ninjas[i] = new ninja();
+
+        setNinjaCommunication( i, i );
     }
 
     boost::local_time::tz_database tz_db;
@@ -222,119 +257,6 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 }
 
 /**
- * @brief Fetches a DEM using a point.
- * 
- * @param adfPoint a x,y point in WGS 84 longitude, latitude
- * @param adfBuff length of a buffer in the x and y directions
- * @param units Units of buffer.
- * @param dfCellSize Cell size of DEM.
- * @param pszDstFile Destination file.
- * @param papszOptions Options for fetching DEM.
- * @param fetchType Type of DEM to fetch.
- * 
- * 
- */
-int ninjaArmy::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions){
-    if (pszDstFile == NULL)
-    {
-        return NINJA_E_INVALID;
-    }
-    SURF_FETCH_E retval = SURF_FETCH_E_NONE;
-    SurfaceFetch * fetcher;
-    if (strcmp(fetchType, "srtm") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
-    }
-    #ifdef HAVE_GMTED
-    else if (strcmp(fetchType, "gmted") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
-    }
-    #endif
-    else if (strcmp(fetchType, "relief") == 0){
-        fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
-    }
-    else{
-        delete fetcher;
-        return NINJA_E_INVALID;
-    }
-    lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
-    int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
-    if (result != 0)
-    {
-        delete fetcher;
-        return NINJA_E_INVALID;
-    }
-    delete fetcher;
-    return NINJA_SUCCESS;
-}
-/**
- * @brief Fetches a DEM using bounding box.
- * 
- * @param boundsBox Bounding box in the form of north, east, south, west.
- * @param fileName Name of DEM file.
- * @param resolution Resolution of DEM file.
- * @param fetchType Type of DEM file to fetch.
- * 
- */
-int ninjaArmy::fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType)
-{
-        SURF_FETCH_E retval = SURF_FETCH_E_NONE;
-        SurfaceFetch * fetcher;
-        if (strcmp(fetchType, "srtm") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
-        }
-        #ifdef HAVE_GMTED
-        else if (strcmp(fetchType, "gmted") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
-        }
-        #endif
-        else if (strcmp(fetchType, "relief") == 0){
-            fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
-        }
-        if (fetcher == NULL) {
-            return NINJA_E_INVALID;  
-        }
-        
-        double northBound = boundsBox[0];
-        double eastBound = boundsBox[1];
-        double southBound = boundsBox[2];
-        double westBound = boundsBox[3];
-        int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
-        delete fetcher;
-        if (result != 0)
-        {
-            return NINJA_E_INVALID;
-        }
-        return NINJA_SUCCESS;
-        
-}
-
-/**
- * @brief Fetches a forecast file from UCAR/THREDDS server.
- * 
- * @param wx_model_type Type of weather model.
- * @param numNinjas Number of ninjas.
- * @param elevation_file Name of elevation file.
- * 
- * @return Name of forecast file.
- */
-const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int numNinjas, const char* elevation_file)
-{
-    wxModelInitialization *model;
-    try
-    {
-        model = wxModelInitializationFactory::makeWxInitializationFromId(wx_model_type);
-        std::string forecastFileName = model->fetchForecast(elevation_file, numNinjas-2);
-        delete model;
-        char* cstr = new char[forecastFileName.length() + 1];
-        std::strcpy(cstr, forecastFileName.c_str());
-        return cstr;
-    }
-    catch(armyException &e)
-    {
-        return "exception";
-    }
-}
-/**
  * @brief Makes an army (array) of ninjas for a weather forecast run.
  *
  * @param forecastFilename Name of forecast file.
@@ -344,6 +266,16 @@ const char* ninjaArmy::fetchForecast(const char* wx_model_type, unsigned int num
  */
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
+//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
+//throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
+Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
+
+    if( times.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+        throw std::runtime_error("Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
+    }
+
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -352,8 +284,8 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
     if( strstr( forecastFilename.c_str(), ".csv" ) ){
         FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
         if(fcastList == NULL){
-            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
-                  std::string(" cannot be opened."));
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
+            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() + std::string(" cannot be opened."));
         }
         while(1){
             const char* f = CPLReadLine(fcastList);
@@ -380,6 +312,8 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 #else
             ninjas[i] = new ninja();
 #endif //NINJAFOAM
+
+            setNinjaCommunication( i, i );
         }
         
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -405,7 +339,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
         }
         catch(armyException &e)
         {
-            std::cout << "Bad forecast file, exiting" << endl;
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
             throw;
         }
         std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
@@ -426,6 +360,8 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 #else
             ninjas[i] = new ninja();
 #endif
+
+            setNinjaCommunication( i, i );
         }
 
 
@@ -469,22 +405,20 @@ bool ninjaArmy::startRuns(int numProcessors)
 
     //check for duplicate runs before we start the simulations
     //this is mostly for batch domain avg runs in the GUI and the API
-    try{
-        if(ninjas.size() > 1){
-            for(unsigned int i=0; i<ninjas.size()-1; i++){
-                for(unsigned int j=i+1; j<ninjas.size(); j++){
-                    if(ninjas[i]->input == ninjas[j]->input &&
-                       ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
-                            throw std::runtime_error("Multiple runs were requested with the same input parameters.");
-                    }
+    if(ninjas.size() > 1)
+    {
+        for(unsigned int i=0; i<ninjas.size()-1; i++)
+        {
+            for(unsigned int j=i+1; j<ninjas.size(); j++)
+            {
+                if(ninjas[i]->input == ninjas[j]->input && ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag)
+                {
+                    ninjas[j]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Multiple runs were requested with the same input parameters.");
+                    status = false;
+                    throw std::runtime_error("Multiple runs were requested with the same input parameters.");
                 }
             }
         }
-    }catch (exception& e)
-    {
-        std::cout << "Exception caught: " << e.what() << endl;
-        status = false;
-        throw;
     }
 
 #ifdef NINJAFOAM
@@ -500,6 +434,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         int status = NinjaFoam::GenerateFoamDirectory(ninjas[0]->input.dem.fileName);
         if(status != 0){
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error generating the NINJAFOAM directory.");
             throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }
     }
@@ -634,6 +569,13 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
+    // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
+    // stationKmlfilenames is an exception, it is filled by appending the ninjas[0] set of station files,
+    // which are shared across runs. Appends within a single run don't mess up the ordering like they do across runs.
+    kmzFilenames.resize(ninjas.size());
+    stationKmlFilenames.clear();
+    wxModelKmzFilenames.resize(ninjas.size());
+
     if(ninjas.size() == 1)
     {
         //set number of threads for the run
@@ -694,25 +636,27 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(writeFarsiteAtmFile)
                 writeFarsiteAtmosphereFile();
 
+            //setup the run kmz filenames, for C-API calls
+            setCurrentRunKmzFilenames(0);
+
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -783,6 +727,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
 
+                //setup the run kmz filenames, for C-API calls
+                setCurrentRunKmzFilenames(i);
+
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
                 if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false )
@@ -793,21 +740,24 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             }catch (bad_alloc& e)
             {
-                std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-                std::cout << "WindNinja appears to have run out of memory." << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
                 status = false;
+                throw;
             }catch (cancelledByUser& e)
             {
-                std::cout << "Exception caught: " << e.what() << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
                 status = false;
+                throw;
             }catch (exception& e)
             {
-                std::cout << "Exception caught: " << e.what() << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
                 status = false;
+                throw;
             }catch (...)
             {
-                std::cout << "Exception caught: Cannot determine exception type." << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
                 status = false;
+                throw;
             }
         }
         try{
@@ -817,23 +767,22 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -905,6 +854,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                                      ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
                 }
 
+                //setup the run kmz filenames, for C-API calls
+                setCurrentRunKmzFilenames(i);
+
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
                 if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false )
@@ -915,6 +867,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             }catch (bad_alloc& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_BAD_ALLOC_EXC;
                 asMessages[omp_get_thread_num()] = "Exception bad_alloc caught:";
@@ -926,6 +879,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (logic_error& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception logic_error caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_LOGIC_EXC;
                 asMessages[omp_get_thread_num()] = "Exception logic_error caught:";
@@ -937,9 +891,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
              }catch (cancelledByUser& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception canceled by user caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = NINJA_CANCEL_USER_EXC;
-                asMessages[omp_get_thread_num()] = "Exception cacneled by user caught:";
+                asMessages[omp_get_thread_num()] = "Exception canceled by user caught:";
                 asMessages[omp_get_thread_num()] + e.what();
                 asMessages[omp_get_thread_num()] += "\n";
                 status = false;
@@ -948,6 +903,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (badForecastFile& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception badForecastFile caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = NINJA_BAD_FORECAST_EXC;
                 asMessages[omp_get_thread_num()] = "Exception badForecastFile caught:";
@@ -959,6 +915,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (exception& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_EXC;
                 asMessages[omp_get_thread_num()] = "Exception caught:";
@@ -970,6 +927,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (...)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_UNKNOWN_EXC;
                 asMessages[omp_get_thread_num()] = "Unknown Exception caught:";
@@ -990,23 +948,22 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -1157,23 +1114,22 @@ bool ninjaArmy::startRuns(int numProcessors)
         }
     }catch (bad_alloc& e)
     {
-        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-        std::cout << "WindNinja appears to have run out of memory." << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
         status = false;
         throw;
     }catch (cancelledByUser& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
         status = false;
         throw;
     }catch (exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         status = false;
         throw;
     }catch (...)
     {
-        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
         status = false;
         throw;
     }
@@ -1208,26 +1164,25 @@ bool ninjaArmy::startFirstRun()
     }
     catch (bad_alloc& e)
     {
-        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-        std::cout << "WindNinja appears to have run out of memory." << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
         status = false;
         throw;
     }
     catch (cancelledByUser& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
     catch (exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
     catch (...)
     {
-        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
         status = false;
         throw;
     }
@@ -1257,9 +1212,12 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
             std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
             int stringPos = fileroot.find_last_of('_');
             if(stringPos > 0)
+            {
                 fileroot.erase(stringPos);
-            else
+            } else
+            {
                 throw std::runtime_error("Problem writing FARSITE atmosphere file.  The ninja ASCII velocity filename appears to be malformed.");
+            }
 
             //Form atm filename
             std::string filename( CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm") );
@@ -1297,61 +1255,270 @@ void ninjaArmy::setAtmFlags()
 }
 
 /*-----------------------------------------------------------------------------
+ *  C-API makeArmy function calls
+ *-----------------------------------------------------------------------------*/
+
+int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        if( numNinjas < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::NinjaMakeDomainAverageArmy()", numNinjas));
+        }
+
+        //Get the number of elements in the arrays
+/*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+        size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
+//        size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+//        size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+//        size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+//        size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+//        size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+//        size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+//        size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+//
+//        if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+//        {
+//            throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+//
+
+        makeDomainAverageArmy( numNinjas, momentumFlag );
+
+        int retval = NINJA_E_INVALID;
+        for(int i=0; i<getSize(); i++)
+        {
+            retval = setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputSpeed() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputDirection() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setDateTime() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniAirTemp() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniCloudCover() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+        }
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions )
+{
+    try
+    {
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
+        }
+
+        if( timeListSize < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input timeListSize '%d' in ninjaArmy::NinjaMakePointArmy()", timeListSize));
+        }
+        if( numStationFiles < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numStationFiles '%d' in ninjaArmy::NinjaMakePointArmy()", numStationFiles));
+        }
+
+        wxStation::SetStationFormat(wxStation::newFormat);
+
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i < timeListSize; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        }
+
+        std::vector<std::string> sFiles;
+        for (int i = 0; i < numStationFiles; i++)
+        {
+            sFiles.emplace_back(stationFileNames[i]);
+        }
+        pointInitialization::storeFileNames(sFiles);
+
+        makePointArmy( timeList, std::string(timeZone), sFiles[0], std::string(elevationFile), matchPointsFlag, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        if( size < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input size '%d' in ninjaArmy::NinjaMakeWeatherModelArmy()", size));
+        }
+
+        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+        std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+        std::vector<blt::local_date_time> timeList;
+
+        for(int i = 0; i < fullTimeList.size(); i++)
+        {
+            for(int j = 0; j < size; j++)
+            {
+                std::string time1 = fullTimeList[i].to_string();
+                std::string time2(inputTimeList[j]);
+                if(time1 == time2)
+                {
+                    timeList.push_back(fullTimeList[i]);
+                }
+            }
+        }
+
+        makeWeatherModelArmy( std::string( forecastFilename ), std::string( timeZone ), timeList, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+/*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
-                           const ninjaComClass::eNinjaCom comType,
-                           char ** papszOptions )
+int ninjaArmy::setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                          char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
+    try
+    {
+        Com->set_messageHandler(pMsgHandler, pUser);
+    }
+    catch( ... )
+    {
+        std::cerr << "CRITICAL: ninjaArmy level ninjaComMessageHandler not set. Messages will NOT be delivered." << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
 }
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
-                           char ** papszOptions )
+int ninjaArmy::setNinjaMultiComStream( FILE* stream,
+                                       char ** papszOptions )
+{
+    try
+    {
+        Com->multiStream = stream;
+    }
+    catch( ... )
+    {
+        std::cerr << "ERROR: ninjaArmy level ninjaCom multiStream FILE pointer not set." << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
+                                      char ** papszOptions )
 {
     int retval = NINJA_E_INVALID;
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
-        if( comType == "ninjaCLICom" || comType == "cli" )
+        try
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaCLICom );
+            ninjas[ nIndex ]->set_ninjaCommunication( Com );
+            ninjas[ nIndex ]->set_ninjaComRunNumber( RunNumber );
             retval = NINJA_SUCCESS;
         }
-        else if( comType == "ninjaQuietCom" || comType == "quiet" )
+        catch( std::exception &e )
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaQuietCom );
-            retval = NINJA_SUCCESS;
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s, Failed to set ninjas[%d] level ninjaCom", e.what(), RunNumber);
+            retval = NINJA_E_INVALID;
         }
-        else
+        catch( ... )
         {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to set ninjas[%d] level ninjaCom", RunNumber);
             retval = NINJA_E_INVALID;
         }
     }
     return retval;
 }
-
-#ifdef NINJA_GUI
-int ninjaArmy::setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                                   char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ComNumRuns( RunNumber ) );
-}
-
-ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
-{
-    IF_VALID_INDEX( nIndex, ninjas )
-    {
-        return ninjas[ nIndex ]->get_Com();
-    }
-    return NULL; //if not valid index
-}
-#endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------
  *  Ninja Speed Testing Methods
@@ -1611,6 +1778,11 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
 #endif
         else
         {
+#ifdef NINJAFOAM
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input initialization_method '%s' in ninjaArmy::setInitializationMethod()\nchoices are: 'domain_average', 'domainAverage', 'domainaverageinitializationflag', 'domain',\n'point', 'pointinitializationflag', 'wxmodel', 'wxmodelinitializationflag', 'griddedInitialization'", method.c_str());
+#else
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input initialization_method '%s' in ninjaArmy::setInitializationMethod()\nchoices are: 'domain_average', 'domainAverage', 'domainaverageinitializationflag', 'domain',\n'point', 'pointinitializationflag', 'wxmodel', 'wxmodelinitializationflag', 'griddedInitialization', 'foamDomainAverageInitialization'", method.c_str());
+#endif
             retval = NINJA_E_INVALID;
         }
     }
@@ -1664,8 +1836,15 @@ int ninjaArmy::setInputWindHeight( const int nIndex, const double height,
            ninjas[ nIndex ]->set_inputWindHeight( height, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
        }
-       catch( std::logic_error &e )
+       /*catch( std::range_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }*/
+       //catch( std::logic_error &e )
+       catch( std::exception &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -1696,13 +1875,29 @@ int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
            ninjas[ nIndex ]->set_outputWindHeight( height, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
        }
-       catch( std::logic_error &e )
+       /*catch( std::range_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }*/
+       //catch( std::logic_error &e )
+       catch( std::exception &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
    return retval;
 }
+
+//int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
+//                                    std::string units, char ** papszOptions )
+//{
+//    //Parse units so it contains only lowercase letters
+//    std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+//
+//    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputWindHeight( height, lengthUnits::getUnit( units ) ) );
+//}
 
 int ninjaArmy::setOutputSpeedUnits( const int nIndex, const velocityUnits::eVelocityUnits units,
                              char ** papszOptions )
@@ -1724,6 +1919,7 @@ int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char **
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -1849,6 +2045,7 @@ int ninjaArmy::setUniVegetation( const int nIndex, std::string vegetation,
         }
         else
         {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input vegation '%s' in ninjaArmy::setUniVegetation()\nchoices are: 'grass', 'g', 'brush', 'b', 'trees', 't'", vegetation.c_str());
             retval = NINJA_E_INVALID;
         }
     }
@@ -1863,8 +2060,39 @@ int ninjaArmy::setUniVegetation( const int nIndex, char ** papszOptions )
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const std::string choice,
                                         char ** papszOptions )
 {
+#ifndef NINJAFOAM
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_meshResChoice( choice ) );
+#else
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        try
+        {
+            if( ninjas[ nIndex ]->identify() == "ninja" )
+            {
+                ninjas[ nIndex ]->set_meshResChoice( choice );
+                retval = NINJA_SUCCESS;
+            } else if( ninjas[ nIndex ]->identify() == "ninjafoam" )
+            {
+                ninjas[ nIndex ]->set_MeshCount( ninja::get_eNinjafoamMeshChoice(choice) );
+                retval = NINJA_SUCCESS;
+            }
+            else
+            {
+                throw std::invalid_argument( "invalid ninja->identify() '" + choice +
+                                             "' in ninjaArmy::setMeshResolutionChoice()" +
+                                             "\nshould be: 'ninja' or 'ninjafoam'" );
+            }
+        }
+        catch( std::logic_error &e )
+        {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
+#endif
 }
 
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const Mesh::eMeshChoice choice,
@@ -1896,6 +2124,7 @@ int ninjaArmy::setMeshResolution( const int nIndex, const double resolution,
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -2148,6 +2377,7 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -2180,8 +2410,8 @@ int ninjaArmy::setGoogSpeedScaling
        }
        else
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid speed scale '%s' in ninjaArmy::setGoogSpeedScaling()\nchoices are: 'equal_color', 'color', 'equal_interval', 'interval'", scaling.c_str());
            retval = NINJA_E_INVALID;
-
        }
     }
     return retval;
@@ -2222,6 +2452,7 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -2276,6 +2507,7 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -2327,6 +2559,7 @@ int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
        } 
        catch( std::logic_error &e ) 
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -2359,6 +2592,17 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
     }
     return std::string("");
 }
+
+int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+                                   std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions )
+{
+    kmzFilenamesStr = kmzFilenames;
+    stationKmlFilenamesStr = stationKmlFilenames;
+    wxModelKmzFilenamesStr = wxModelKmzFilenames;
+
+    return NINJA_SUCCESS;
+}
+
 /**
  * @brief Reset the army in able to reinitialize needed parameters
  *
@@ -2382,6 +2626,43 @@ void ninjaArmy::cancelAndReset()
 {
     cancel();
     reset();
+}
+
+void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
+{
+    kmzFilenames[runNumber] = ninjas[runNumber]->input.kmzFile;
+
+    // assume all the other stations across all the other stations storage, are the exact same list as that of the first station
+    // SHOULD be true, seems like the idea of the storage was to make sure each station had access to the same copy of data, so a form of SHARED storage
+    // still, it's one of the quirkiest code setups that I've seen in a while
+    if(runNumber == 0)
+    {
+        if(ninjas[runNumber]->input.stations.size() == 0)
+        {
+            stationKmlFilenames.push_back( "" );
+        } else
+        {
+            if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
+            {
+                stationKmlFilenames.push_back( "" );
+            } else
+            {
+                for(int j = 0; j < ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size(); j++)
+                {
+                    stationKmlFilenames.push_back( ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] );
+                }
+            }
+        }
+    }
+
+    // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
+    if(ninjas[runNumber]->input.wxModelKmzFile == "!set")
+    {
+        wxModelKmzFilenames[runNumber] = "";
+    } else
+    {
+        wxModelKmzFilenames[runNumber] = ninjas[runNumber]->input.wxModelKmzFile;
+    }
 }
 
 void ninjaArmy::initLocalData(void)

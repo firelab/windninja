@@ -15,13 +15,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 3.16)
 
 add_subdirectory(ninja)
 
-if(NINJA_QTGUI)
+if(NINJA_GUI)
     add_subdirectory(gui)
-endif(NINJA_QTGUI)
+endif(NINJA_GUI)
 if(NINJA_CLI)
     add_subdirectory(cli)
 endif(NINJA_CLI)
