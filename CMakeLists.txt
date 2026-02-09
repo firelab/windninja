@@ -503,6 +503,8 @@ if(WIN32)
         install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
         install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
     endif(NINJAFOAM)
+
+    install(PROGRAMS ${MSVC_REDIST_DIR}/x64/Microsoft.VC143.OpenMP/vcomp140.dll DESTINATION bin COMPONENT apps)
 endif(WIN32)
 
 set(ZIPFILES "")
