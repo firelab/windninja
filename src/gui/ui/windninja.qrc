@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/icons">
-        <file alias="new.svg">icons/scalable/actions/document-new.svg</file>
-        <file alias="open.svg">icons/scalable/actions/document-open.svg</file>
-        <file alias="save.svg">icons/scalable/actions/document-save.svg</file>
-        <file alias="save-as.svg">icons/scalable/actions/document-save-as.svg</file>
-        <file alias="add.svg">icons/scalable/actions/list-add.svg</file>
-    </qresource>
-</RCC>

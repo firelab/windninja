@@ -2250,7 +2250,7 @@ int NinjaFoam::SampleCloud()
     }
     OGR_G_DestroyGeometry( hGeometry );
     OGR_F_Destroy( hFeature );
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
     GDALClose( hGriddedDS );
 
     return 0;
@@ -2404,7 +2404,7 @@ int NinjaFoam::SampleCloudGrid()
     CPLFree( (void*)padfData );
     OGR_G_DestroyGeometry( hGeometry );
     OGR_F_Destroy( hFeature );
-    OGR_DS_Destroy( hDS );
+    GDALClose( hDS );
     GDALClose( hGriddedDS );
 
     return 0;

@@ -19,6 +19,8 @@ sudo apt install -y libfontconfig1-dev \
                     libopenjp2-7-dev \
                     libtiff-dev
 
+# Install qt6 libs
+sudo apt install qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
 
 # Install Poppler for PDF support in GDAL
 wget https://poppler.freedesktop.org/$POPPLER.tar.xz
@@ -53,13 +55,6 @@ cd $GDAL/
 make -j$(nproc)
 sudo make install
 cd ..
-
-# Add qt4 libs from ppa
-# See here for more info:
-# https://ubuntuhandbook.org/index.php/2020/07/install-qt4-ubuntu-20-04/
-sudo add-apt-repository ppa:ubuntuhandbook1/ppa
-sudo apt update
-sudo apt install -y libqt4-dev libqtwebkit-dev
 
 # Use OpenFOAM 9; OpenFOAM 8 not available for Ubuntu 22.04
 # add the dl.openfoam.org repo and install OpenFOAM 9

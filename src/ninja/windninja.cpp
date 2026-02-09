@@ -29,8 +29,8 @@
 
 #include "windninja.h"
 #include "ninjaArmy.h"
+#include "ninjaTools.h"
 #include "ninjaException.h"
-#include <string>
 
 #ifdef _OPENMP
     omp_lock_t netCDF_lock;
@@ -68,8 +68,21 @@ NinjaErr handleException()
 
 extern "C"
 {
+
 /**
- * \brief Create a new suite of domain average windninja runs.
+ * \brief Automatically allocate an empty ninjaArmy.
+ *
+ * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
+{
+    NinjaArmyH* army;
+    army = reinterpret_cast<NinjaArmyH*>(new ninjaArmy());
+    return army;
+}
+
+/**
+ * \brief Generate a new suite of domain average windninja runs.
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
@@ -81,6 +94,7 @@ extern "C"
  * Avaliable Creation Options:
  *                             None
  *
+ * \param army An opaque handle to a valid ninjaArmy.
  * \param numNinjas The number of runs to create.
  * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
  * \param speedList List of wind speeds to simulate.
@@ -98,68 +112,22 @@ extern "C"
  * \param cloudCoverUnits String indicating cloud cover units ("fraction" or "percent"), can be NULL.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
-    ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
-//    ( unsigned int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, 
-//      const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
+    ( NinjaArmyH * army, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
+      const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
-
-#ifndef NINJAFOAM
-    if(momentumFlag == true)
+    if(!army)
     {
-        throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        return NINJA_E_NULL_PTR;
     }
-#endif
 
-    //Get the number of elements in the arrays
-/*     size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
-    size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
-//    size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
-//    size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
-//    size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
-//    size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
-//    size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
-//    size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
-//    size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
-//
-//    if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
-//    {
-//        throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
-//   
-
-    NinjaArmyH* army;
-
-    try
-    {
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
-        reinterpret_cast<ninjaArmy*>( army )->makeDomainAverageArmy( numNinjas, momentumFlag);
-
-        for(int i=0; i<reinterpret_cast<ninjaArmy*>( army )->getSize(); i++) 
-        {
-            reinterpret_cast<ninjaArmy*>( army )->setInputSpeed( i, speedList[i], std::string( speedUnits ) );
-            
-            reinterpret_cast<ninjaArmy*>( army )->setInputDirection( i, directionList[i] );
-
-//            reinterpret_cast<ninjaArmy*>( army )->setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
-//
-//            reinterpret_cast<ninjaArmy*>( army )->setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
-//            
-//            reinterpret_cast<ninjaArmy*>( army )->setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
-        }
-
-        return army;
-    }
-    catch( bad_alloc& )
-    {
-        return NULL;
-    }
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, yearList, monthList, dayList, hourList, minuteList, timeZone, airTempList, airTempUnits, cloudCoverList, cloudCoverUnits, options);
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a weather station file.
+ * \brief Generate a ninjaArmy from a weather station file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * a weather station file and list of datetimes specified by arrays of years, months, days, and hours 
@@ -169,6 +137,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
  * Avaliable Creation Options:
  *                             None
  *
+ * \param army An opaque handle to a valid ninjaArmy.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
@@ -181,53 +150,21 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeDomainAverageArmy
  * \param momentumFlag A flag representing whether to use the momentum solver or not (the momentum solver is not currently supported in point initializations). Default is false.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
-    (  int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int size, char * timeZone, char * stationFileName, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
+    ( NinjaArmyH * army, int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** options)
 {
-    if(momentumFlag == true)
+    if(!army)
     {
-        throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
+        return NINJA_E_NULL_PTR;
     }
 
-    //Get the number of elements in the arrays
-
-    NinjaArmyH* army;
-    try{
-        std::vector <boost::posix_time::ptime> timeList;
-        for(size_t i=0; i<size; i++){
-            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
-        }
-
-        pointInitialization::SetRawStationFilename(stationFileName);
-
-        std::vector<std::string> sFiles;
-        sFiles.push_back(stationFileName);
-        pointInitialization::storeFileNames(sFiles);
-
-        // TODO: Include check for using multiple .csv files
-        //sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
-        //pointInitialization::storeFileNames(sFiles);
-        
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
-        reinterpret_cast<ninjaArmy*>( army )->makePointArmy
-        (   timeList,
-            std::string(timeZone),
-            std::string(stationFileName),
-            std::string(elevationFile),
-            matchPointsFlag,
-            momentumFlag);
-        return army;
-    }
-    catch( armyException & e ){
-        return NULL;
-    }
-    return NULL;
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakePointArmy(yearList, monthList, dayList, hourList, minuteList, timeListSize, timeZone, stationFileNames, numStationFiles, elevationFile, matchPointsFlag, momentumFlag, options);
 }
 
 /**
- * \brief Automatically allocate and generate a ninjaArmy from a forecast file.
+ * \brief Generate a ninjaArmy from a forecast file.
  *
  * This method will create a set of runs for windninja based on the contents of
  * the weather forecast file.  One run is done for each timestep in the forecast 
@@ -237,6 +174,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
  *                             None
  *                             TODO: include parameters for start/stop times and a list of timesteps as options->for cases where you don't want to simulate every time step in the forecast file
  *
+ * \param army An opaque handle to a valid ninjaArmy.
  * \param forecastFilename A valid NOMADS/UCAR based weather model file.
  * \param timezone a timezone string representing a valid timezone, e.g.
  *                 America/Boise.
@@ -244,35 +182,168 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakePointArmy
  * \param momentumFlag A flag representing whether to use the momentum solver or not.
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
- * \return An opaque handle to a ninjaArmy on success, NULL otherwise.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
-    ( const char * forecastFilename, const char * timezone, bool momentumFlag, char ** options )
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeWeatherModelArmy
+    ( NinjaArmyH * army, const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** options )
 {
-#ifndef NINJAFOAM
-    if(momentumFlag == true)
+    if(!army)
     {
-        throw std::runtime_error("bMomentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        return NINJA_E_NULL_PTR;
     }
-#endif
 
-    NinjaArmyH* army;
-    try
-    {
-        army = reinterpret_cast<NinjaArmyH*>( new ninjaArmy() );
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeWeatherModelArmy(forecastFilename, timeZone, inputTimeList, size, momentumFlag, options);
+}
 
-        reinterpret_cast<ninjaArmy*>( army )->makeWeatherModelArmy
-        (   std::string( forecastFilename ),
-            std::string( timezone ),
-            momentumFlag );
-        return army;
-    }
-    catch( armyException & e )
+/**
+ * \brief Automatically allocate a ninjaTools.
+ *
+ * \return An opaque handle to a ninjaTools on success, NULL otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
+{
+    NinjaToolsH* army;
+    army = reinterpret_cast<NinjaToolsH*>(new ninjaTools());
+    return army;
+}
+
+/**
+ * \brief Fetch Forecast file from UCAR/THREDDS server, or from NOMADS server.
+ *
+ * This method will fetch a forecast file from the UCAR/THREDDS server, also can be from the NOMADS server.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param modelName A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM").
+ * \param demFile A valid path to an elevation file.
+ * \param hours Number of hours to be requested (the forecast duration).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
+{
+    if(!tools)
     {
-        return NULL;
+        return NINJA_E_NULL_PTR;
     }
-    
-    return NULL;
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
+}
+
+WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
+    (NinjaToolsH* tools, int* count)
+{
+    if(!tools)
+    {
+        return nullptr;
+    }
+
+    if(!count)
+    {
+        return nullptr;
+    }
+
+    std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getForecastIdentifiers();
+    *count = static_cast<int>(temp.size());
+
+    const char** identifiers = new const char*[*count];
+    for (int i = 0; i < *count; i++)
+    {
+        char* identifier = new char[temp[i].size() + 1];
+        std::strcpy(identifier, temp[i].c_str());
+        identifiers[i] = identifier;
+    }
+
+    return identifiers;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFreeAllWeatherModelIdentifiers
+    (const char** identifiers, int count)
+{
+    if(!identifiers)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    char** ids = (char**)identifiers;
+    for (int i = 0; i < count; i++)
+    {
+        delete[] ids[i];
+    }
+    delete[] ids;
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT const char** NinjaGetWeatherModelTimeList
+    (NinjaToolsH* tools, int* count, const char* fileName, const char* timeZone)
+{
+    if(!tools)
+    {
+        return nullptr;
+    }
+
+    std:string timeZoneString = timeZone;
+    std::vector<std::string> temp = reinterpret_cast<ninjaTools*>(tools)->getTimeList(fileName, timeZoneString);
+    *count = static_cast<int>(temp.size());
+
+    const char** timeList = new const char*[*count];
+    for (int i = 0; i < *count; i++)
+    {
+        char* time = new char[temp[i].size() + 1];
+        std::strcpy(time, temp[i].c_str());
+        timeList[i] = time;
+    }
+
+    return timeList;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
+    (const char** timeList, int timeListSize)
+{
+    if(!timeList)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    char** times = (char**)timeList;
+    for (int i = 0; i < timeListSize; i++)
+    {
+        delete[] times[i];
+    }
+    delete[] times;
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaGetWeatherModelHours
+    (NinjaToolsH* tools, const char* modelIdentifier, int* startHour, int* endHour)
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    if(!startHour || !endHour)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    *startHour = reinterpret_cast<ninjaTools*>(tools)->getStartHour(modelIdentifier);
+    *endHour = reinterpret_cast<ninjaTools*>(tools)->getEndHour(modelIdentifier);
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -290,16 +361,15 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaMakeWeatherModelArmy
 WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
     ( NinjaArmyH * army, char ** options )
 {
-    if( NULL != army )
-    {
-       delete reinterpret_cast<ninjaArmy*>( army );
-       army = NULL;
-       return NINJA_SUCCESS;
-    }
-    else
+    if(!army)
     {
         return NINJA_E_NULL_PTR;
     }
+
+    delete reinterpret_cast<ninjaArmy*>( army );
+    army = NULL;
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -311,13 +381,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  * \param dfCellSize The resolution of the DEM file in meters.
  * \param pszDstFile Output file name
  * \param papszOptions options
- * 
  *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaArmyH * army, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char* fetchType, char ** papszOptions ){
-    return reinterpret_cast<ninjaArmy*>( army )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
+    (NinjaToolsH * tools, double * adfPoint, double *adfBuff, const char* units, double dfCellSize, char * pszDstFile, char* fetchType, char ** papszOptions )
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchDEMPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
 }
+
 /**
  * \brief Fetch DEM file using a bounding box
  * 
@@ -330,27 +407,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint(NinjaArmyH * army, double * adfP
  * 
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
-
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox(NinjaArmyH * army, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions){
-    return reinterpret_cast<ninjaArmy*>( army )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType);
-}
-
-/**
- * \brief Fetch Forecast file from UCAR/THREDDS server.
- *
- * This method will fetch a forecast file from the UCAR/THREDDS server.
- *
- * \param wx_model_type A string representing a valid weather model type (e.g. "NOMADS-HRRR-CONUS-3-KM")
- * \param numNinjas Number of Ninjas
- * \param elevation_file A valid path to an elevation file.
- *
- * \return Forecast file name on success, "exception" otherwise.
- */
-
-WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char*wx_model_type,  unsigned int numNinjas, const char * elevation_file, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
+    (NinjaToolsH * tools, double *boundsBox, const char *fileName, double resolution, char * fetchType, char ** papszOptions)
 {
-    return reinterpret_cast<ninjaArmy*>( army )->fetchForecast(wx_model_type, numNinjas, elevation_file);
-    
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchDEMBBox(boundsBox, fileName, resolution, fetchType, papszOptions);
 }
 
 /**
@@ -360,15 +425,20 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *                             None
  *                             TODO: Add option parameter to specify a buffer to use in station fetching
  *
+ * \param tools An opaque handle to a valid ninjaTools.
  * \param yearList A pointer to an array of years.
  * \param monthList A pointer to an array of months.
  * \param dayList A pointer to an array of days.
  * \param hourList A pointer to an array of hours.
  * \param minuteList A pointer to an array of minutes.
+ * \param size The size of time arrays
  * \param elevation_file A valid path to an elevation file.
+ * \param buffer The buffer around the elevation file
+ * \param units The units of the buffer
  * \param osTimeZone A string representing a valid timezone.
  * \param fetchLatestFlag An integer representing whether to fetch the latest forecast.
- * \param output_path An optional valid path to a custom output directory, can be NULL.
+ * \param outputPath An optional valid path to a custom output directory, can be NULL.
+ * \param locationFileFlag An integer representing whether to write location file for station data
  * \param options Key, value option pairs from the options listed above, can be NULL.
  *
  * \return Station file name on success, "exception" otherwise.
@@ -382,27 +452,60 @@ WINDNINJADLL_EXPORT const char* NinjaFetchForecast(NinjaArmyH * army, const char
  *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
  *             
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size,
-                                               const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, char ** options)
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
+    (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
 {
-    std::vector <boost::posix_time::ptime> timeList;
-    for(size_t i=0; i<size; i++){
-        timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
     }
 
-    wxStation::SetStationFormat(wxStation::newFormat);
-
-    //Generate a directory to store downloaded station data
-    std::string stationPathName = pointInitialization::generatePointDirectory(std::string(elevationFile), std::string(outputPath), fetchLatestFlag);
-    pointInitialization::SetRawStationFilename(stationPathName);
-    pointInitialization::setStationBuffer(buffer, units);
-    bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
-    if(!success){
-        return NINJA_E_INVALID;
-    }
-    pointInitialization::writeStationLocationFile(stationPathName, std::string(elevationFile), fetchLatestFlag);
-    return NINJA_SUCCESS;
+    return reinterpret_cast<ninjaTools*>( tools )->fetchStationFromBBox(yearList, monthList, dayList, hourList, minuteList, size, elevationFile, buffer, units, timeZone, fetchLatestFlag, outputPath, locationFileFlag, options);
 }
+
+/**
+ * \brief Fetch Station forecast files using station ID
+ *
+ * Avaliable Creation Options:
+ *                             None
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param yearList A pointer to an array of years.
+ * \param monthList A pointer to an array of months.
+ * \param dayList A pointer to an array of days.
+ * \param hourList A pointer to an array of hours.
+ * \param minuteList A pointer to an array of minutes.
+ * \param size The size of time arrays
+ * \param elevation_file A valid path to an elevation file.
+ * \param stationList A string containing station IDs in the format of "KMSO,PNTM8,..."
+ * \param osTimeZone A string representing a valid timezone.
+ * \param fetchLatestFlag An integer representing whether to fetch the latest forecast.
+ * \param outputPath An optional valid path to a custom output directory, can be NULL.
+ * \param locationFileFlag An integer representing whether to write location file for station data
+ * \param options Key, value option pairs from the options listed above, can be NULL.
+ *
+ * \return Station file name on success, "exception" otherwise.
+ * TODO: This function currently doesn't return a the path to a station file, need to determine what the proper behavior is
+ *       Note: the pointInitialization class currently only has static public functions. We should consider if this is the best
+ *             approach or if the class should be refactored. For example, I was going to add a function to return a path to
+ *             the stationLocationFilename (the path on disk to the list of station files that the user will need). But right
+ *             now this isn't possible since that path is created by a static function, writeStationLocationFile. If we change
+ *             these functions to non-static to enhance functionality, we'll need to add accessor functions in ninja/ninjaArmy to access
+ *             functions on the pointInitialziation object. Another option for this immediate use case is to just change writeStationLocationFile
+ *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
+ *
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationByName
+    (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, const char* stationList, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->fetchStationByName(yearList, monthList, dayList, hourList, minuteList, size, elevationFile, stationList, timeZone, fetchLatestFlag, outputPath, locationFileFlag, options);
+}
+
 
 /**
  * \brief Start the simulations.
@@ -418,21 +521,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchStation(const int* yearList, const int * 
 WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
     ( NinjaArmyH * army, const unsigned int nprocessors, char ** papszOptions )
 {
-    if( NULL != army )
-    {
-        try
-        {
-            return reinterpret_cast<ninjaArmy*>( army )->startRuns( nprocessors );
-        }
-        catch( ... )
-        {
-            return handleException();
-        }
-    }
-    else
+    if(!army)
     {
         return NINJA_E_NULL_PTR;
     }
+
+    try
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->startRuns( nprocessors );
+    }
+    catch( ... )
+    {
+        return handleException();
+    }
+
+    return NINJA_SUCCESS;
 }
 
 /**
@@ -478,12 +581,12 @@ WINDNINJADLL_EXPORT NinjaErr NinjaStartRuns
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
-    (NinjaArmyH * army, const int nIndex, const char * initializationMethod, char ** papszOptions )
+    (NinjaArmyH * army, const int nIndex, const char * initializationMethod, bool matchedPoints, char ** papszOptions )
 {
     if( NULL != army && NULL != initializationMethod )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setInitializationMethod
-            ( nIndex, std::string( initializationMethod ) );
+            ( nIndex, std::string( initializationMethod ), matchedPoints);
     }
     else
     {
@@ -492,11 +595,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
 }
         
 WINDNINJADLL_EXPORT NinjaErr NinjaInit
-    ( char ** papszOptions )
+    ( const char * runType, char ** papszOptions )
 {
     NinjaErr retval = NINJA_E_INVALID;
 
-    retval = NinjaInitialize();
+    retval = NinjaInitialize(runType);
 
     return retval;
 }
@@ -526,26 +629,91 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberCPUs
 }
 
 /**
- * \brief Set the communication handler for simulations.
+ * \brief Set a ninjaComMessageHandler callback function, for message communications during simulations, to the ninjaArmy level ninjaCom.
+ *
+ * Allows the caller to receive status, progress, informational messages, and error
+ * messages generated during simulations via a user-provided callback function.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * \param comType Type of communication. For now, comType is always "cli".
- *
+ * \param pMsgHandler A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+ * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetCommunication
-    ( NinjaArmyH * army, const int nIndex, const char * comType, char ** papszOptions )
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyComMessageHandler
+    ( NinjaArmyH * army, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setNinjaCommunication
-            ( nIndex, std::string( comType ) );
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaComMessageHandler
+            ( pMsgHandler, pUser );
     }
     else
     {
         return NINJA_E_NULL_PTR;
     }
+}
+
+/**
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations, to the ninjaArmy level ninjaCom.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
+    ( NinjaArmyH * army, FILE* stream, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNinjaMultiComStream
+            ( stream );
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+/**
+ * \brief Set a ninjaComMessageHandler callback function, for message communications during simulations, to the ninjaTools level ninjaCom
+ *
+ * Allows the caller to receive status, progress, informational messages, and error
+ * messages generated during simulations via a user-provided callback function.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param pMsgHandler A pointer to a user defined ninjaComMessageHandler callback function. If defined, ninjaCom sends messages to this callback function.
+ * \param pUser A pointer to a user-defined object or context associated with the callback function. This pointer is passed through to the callback function and allows forwarding of messages to this object or context.
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsComMessageHandler
+    ( NinjaToolsH * tools, ninjaComMessageHandler pMsgHandler, void *pUser, char ** papszOptions )
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->setNinjaComMessageHandler( pMsgHandler, pUser );
+}
+
+/**
+ * \brief Set a ninjaCom multi-stream FILE handle, for message communications during simulations, to the ninjaTools level ninjaCom
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param stream A pointer to a multi-stream FILE handle/stream. If defined, ninjaCom sends ALL messages to this stream, in addition to std::cout and std::cerr.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetToolsMultiComStream
+    ( NinjaToolsH * tools, FILE* stream, char ** papszOptions )
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->setNinjaMultiComStream( stream );
 }
 
 /**
@@ -1461,15 +1629,47 @@ WINDNINJADLL_EXPORT const int NinjaGetOutputGridnRows
 WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputBufferClipping
     ( NinjaArmyH * army, const int nIndex, const double percent, char ** papszOptions )
 {
+    if(!army)
+    {
+        NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaArmy*>( army )->setOutputBufferClipping( nIndex, percent );
+}
+
+/**
+ * \brief Set station kml output for a point initialization simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param demFileName The filepath of the simulation DEM.
+ * \param outputDirectory The outputDirectory location for this file.
+ * \param outputSpeedUnits The output speed units ("mph", "mps", "kph", "kts")
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetStationKML
+    ( NinjaArmyH * army, const int nIndex, const char * demFileName, const char * outputDirectory, const char * outputSpeedUnits, char ** papszOptions)
+{
+
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setOutputBufferClipping( nIndex, percent );
+        try
+        {
+            wxStation::writeKmlFile( reinterpret_cast<ninjaArmy*>( army )->getWxStations(nIndex), demFileName, outputDirectory, velocityUnits::getUnit(outputSpeedUnits));
+            return NINJA_SUCCESS;
+        }
+        catch (const std::exception& e)
+        {
+            return NINJA_E_OTHER;
+        }
     }
     else
     {
         return NINJA_E_NULL_PTR;
     }
 }
+
 
 /**
  * \brief Set the flag to write the weather model winds used for initialzation as
@@ -1615,7 +1815,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogResolution
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param scaling The scaling at which to write the Google Earth output.
+ * \param scaling The scaling at which to write the Google Earth output. ("equal_color", "color", "equal_interval", "interval")
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
@@ -1640,7 +1840,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogSpeedScaling
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param scaling The line width at which to write the Google Earth output.
+ * \param width The line width at which to write the Google Earth output.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
@@ -1650,6 +1850,56 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogLineWidth
     if( NULL != army )
     {
         return reinterpret_cast<ninjaArmy*>( army )->setGoogLineWidth( nIndex, width );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the Color Scheme of the Google Earth output for a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param colorScheme A string that specifies the color scheme ("default", "ROPGW", "oranges", "blues", "pinks", "greens", "magic_beans", "pink_to_greens").
+ * \param scaling The flag which determines if vector scaling will be used.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogColor
+    ( NinjaArmyH * army, const int nIndex, const char * colorScheme, bool scaling, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setGoogColor(nIndex, std::string( colorScheme ), scaling);
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the flag to use a Consistent Color Scheme for all Google Earth Outputs of a simulation.
+ *
+ * \note Only valid if NinjaSetGoogOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag that determines whether consistent color scaling will be used.
+ * \param numRuns The number of runs that will be simulated
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogConsistentColorScale
+    ( NinjaArmyH * army, const int nIndex, bool flag, int numRuns, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setGoogConsistentColorScale(nIndex, flag, numRuns);
     }
     else
     {
@@ -1731,6 +1981,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
     }
 }
 
+
 /**
  * \brief Set the resolution of the raster output for a simulation.
  *
@@ -1755,6 +2006,37 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
     else
     {
         return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the resolution of the raster output for a simulation.
+ *
+ * \note Only valid if NinjaSetAsciiOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param flag That flag that determines whether to write the .atm file.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
+    ( NinjaArmyH * army, bool flag, char ** papszOptions)
+{
+    if( NULL != army)
+    {
+        try
+        {
+            reinterpret_cast<ninjaArmy*>(army)->set_writeFarsiteAtmFile(flag);
+            return NINJA_SUCCESS;
+        }
+        catch (const std::exception& e)
+        {
+            return NINJA_E_OTHER;
+        }
+    }
+    else
+    {
+        return 1;
     }
 }
 
@@ -1816,7 +2098,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetTxtOutFlag
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
-    ( NinjaArmyH* army, const int nIndex, const bool flag, char ** options )
+    ( NinjaArmyH* army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
@@ -2044,4 +2326,276 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** pap
     }
 }
 
+/*-----------------------------------------------------------------------------
+*  Helper Methods
+*-----------------------------------------------------------------------------*/  
+/**
+ * \brief Get the header version for a weather station file.
+ *
+ * \param stationPath The file path for the weather station file.
+ *
+ * \return Header version number (1 = Old Format, 2 = New Format, 3 = csv list for time series, 4 = csv list for non time series)
+ */
+WINDNINJADLL_EXPORT int NinjaGetWxStationHeaderVersion(const char * stationPath, char ** options)
+{
+    return wxStation::GetHeaderVersion(stationPath);
 }
+
+/**
+ * \brief Get a time series in UTC with a specific number time steps between the inputted start and stop times.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param inputYearList    A pointer to an array of input years.
+ * \param inputMonthList   A pointer to an array of input months.
+ * \param inputDayList     A pointer to an array of input days.
+ * \param inputHourList    A pointer to an array of input hours.
+ * \param inputMinuteList  A pointer to an array of input minutes.
+ * \param outputYearList   A pointer to an array of output years in UTC.
+ * \param outputMonthList  A pointer to an array of output months in UTC.
+ * \param outputDayList    A pointer to an array of output days.
+ * \param outputHourList   A pointer to an array of output hours.
+ * \param outputMinuteList A pointer to an array of output minutes.
+ * \param nTimeSteps       Number of time steps wanted between output date times.
+ * \param timeZone         The time zone of input date times.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaGetTimeList(
+    NinjaToolsH* tools,
+    const int * inputYearList, const int * inputMonthList, const int * inputDayList,
+    const int * inputHourList, const int * inputMinuteList,
+    int * outputYearList, int* outputMonthList, int * outputDayList,
+    int * outputHourList, int* outputMinuteList,
+    int nTimeSteps, const char* timeZone)
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->getTimeList(inputYearList, inputMonthList, inputDayList, inputHourList, inputMinuteList, outputYearList, outputMonthList, outputDayList, outputHourList, outputMinuteList, nTimeSteps, timeZone);
+}
+
+/**
+ * \brief Get a date time in UTC from an inpute date time in a specified timezone.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param inputYear    An input year.
+ * \param inputMonth   An input month.
+ * \param inputDay     An input day.
+ * \param inputHour    An hour.
+ * \param inputMinute  An input minute.
+ * \param timeZone     The time zone of input date times.
+ * \param outputYear   A pointer to an output year in UTC.
+ * \param outputMonth  A pointer to an output month in UTC.
+ * \param outputDay    A pointer to an output day in UTC.
+ * \param outputHour   A pointer to an output hour in UTC.
+ * \param outputMinute A pointer to an output minute in UTC.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaGenerateSingleTimeObject(
+    NinjaToolsH* tools,
+    int inputYear, int inputMonth, int inputDay, int inputHour, int inputMinute, const char * timeZone,
+    int * outYear, int * outMonth, int* outDay, int * outHour, int * outMinute)
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->generateSingleTimeObject(inputYear, inputMonth, inputDay, inputHour, inputMinute, timeZone, outYear, outMonth, outDay, outHour, outMinute);
+}
+
+/**
+ * \brief Get a time series in UTC with a specific number of time steps between the inputted start and stop times.
+ *
+ * \param tools An opaque handle to a valid ninjaTools.
+ * \param yearList   A pointer to an array of years.
+ * \param monthList  A pointer to an array of months.
+ * \param dayList    A pointer to an array of days.
+ * \param hourList   A pointer to an array of hours.
+ * \param minuteList A pointer to an array of minutes.
+ * \param listSize   The number of elements in the input arrays.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
+    (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions)
+{
+    if(!tools)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaTools*>( tools )->checkTimeDuration( yearList, monthList, dayList, minuteList, hourList, listSize, papszOptions );
+}
+
+/**
+ * \brief calls wxStation::writeBlankStationFile(), which writes a weather station csv file with no data, just a header.
+ *
+ * \param outputStationFilename A csv file to write a blank weather station file to.
+ * \param papszOptions options
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions )
+{
+    wxStation::writeBlankStationFile(outputStationFilename);
+
+    bool doesOutputFileExist = CPLCheckForFile((char*)outputStationFilename, NULL);
+    if( doesOutputFileExist )
+    {
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief calls ninjaArmy::getRunKmzFilenames(), which gets the ninjas[i] output kmz filenames,
+ *        as well as ninjas[i] station kml filenames and ninjas[i] weather model filenames,
+ *        if they were created for the run.
+ *
+ * \note Must be called after NinjaStartRuns is called and finished successfully.
+ * \note NinjaDestroyRunKmzFilenames() must be called on the run kmz filenames when done with the filenames, to properly deallocate the filenames memory.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param numRuns The number of runs that were simulated, to be filled. Also the expected size of the filled filename arrays.
+ * \param kmzFilenames The ninjas[i] output kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns.
+ * \param numStationKmls The number of station kmls SHARED across each run, to be filled. Also the expected size of the filled stationKmlFilenames array.
+ * \param stationKmlFilenames The ninjas[i] station kml filenames array, as a NULL char**, to be created and filled, to be created of size numStationKmls. Runs without station kml file output use "" for the station kml filenames. Each run SHARES this same list of stationkmlFilenames.
+ * \param weatherModelKmzFilenames The ninjas[i] weather model kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+ * \param papszOptions options
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *numRuns, char*** kmzFilenames, int *numStationKmls, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions)
+{
+    std::vector<std::string> kmzFilenameStrings;
+    std::vector<std::string> stationKmlFilenameStrings;
+    std::vector<std::string> wxModelKmzFilenameStrings;
+
+    if( NULL != army )
+    {
+        NinjaErr retval = reinterpret_cast<ninjaArmy*>( army )->getRunKmzFilenames( kmzFilenameStrings, stationKmlFilenameStrings, wxModelKmzFilenameStrings );
+        if( retval != NINJA_SUCCESS )
+        {
+            return retval;
+        }
+
+        int n = (int)kmzFilenameStrings.size();
+        *numRuns = n;
+
+        *kmzFilenames = (char **)malloc(sizeof(char *) * n);
+        *weatherModelKmzFilenames = (char **)malloc(sizeof(char *) * n);
+
+        for(int i = 0; i < n; i++)
+        {
+            std::string kmzFilenameStr = kmzFilenameStrings[i];
+            std::string wxModelKmzFilenameStr = wxModelKmzFilenameStrings[i];
+
+            char *kmzFilename = (char *)malloc(kmzFilenameStr.size() + 1);
+            char *wxModelKmzFilename = (char *)malloc(wxModelKmzFilenameStr.size() + 1);
+
+            if(!kmzFilename || !wxModelKmzFilename)
+            {
+                return NINJA_E_BAD_ALLOC;
+            }
+
+            memcpy(kmzFilename, kmzFilenameStr.c_str(), kmzFilenameStr.size() + 1);
+            memcpy(wxModelKmzFilename, wxModelKmzFilenameStr.c_str(), wxModelKmzFilenameStr.size() + 1);
+
+            (*kmzFilenames)[i] = kmzFilename;
+            (*weatherModelKmzFilenames)[i] = wxModelKmzFilename;
+        }
+
+        int m = (int)stationKmlFilenameStrings.size();
+        *numStationKmls = m;
+
+        *stationKmlFilenames = (char **)malloc(sizeof(char *) * m);
+
+        for(int j = 0; j < m; j++)
+        {
+            std::string stationKmlFilenameStr = stationKmlFilenameStrings[j];
+
+            char *stationKmlFilename = (char *)malloc(stationKmlFilenameStr.size() + 1);
+
+            if(!stationKmlFilename)
+            {
+                return NINJA_E_BAD_ALLOC;
+            }
+
+            memcpy(stationKmlFilename, stationKmlFilenameStr.c_str(), stationKmlFilenameStr.size() + 1);
+
+            (*stationKmlFilenames)[j] = stationKmlFilename;
+        }
+
+        return NINJA_SUCCESS;
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmzFilenames, int numStationKmls, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions)
+{
+    for(int i = 0; i < numRuns; i++)
+    {
+        if(kmzFilenames)
+        {
+            if(kmzFilenames[i])
+            {
+                free(kmzFilenames[i]);
+            }
+        }
+
+        if(weatherModelKmzFilenames)
+        {
+            if(weatherModelKmzFilenames[i])
+            {
+                free(weatherModelKmzFilenames[i]);
+            }
+        }
+    }
+
+    for(int j = 0; j < numStationKmls; j++)
+    {
+        if(stationKmlFilenames)
+        {
+            if(stationKmlFilenames[j])
+            {
+                free(stationKmlFilenames[j]);
+            }
+        }
+    }
+
+    if(kmzFilenames)
+    {
+        free(kmzFilenames);
+    }
+    if(stationKmlFilenames)
+    {
+        free(stationKmlFilenames);
+    }
+    if(weatherModelKmzFilenames)
+    {
+        free(weatherModelKmzFilenames);
+    }
+
+    return NINJA_SUCCESS;
+}
+
+WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions)
+{
+    std::string path = FindNinjaBinDir();
+    char* result = static_cast<char*>(std::malloc(path.size() + 1));
+    std::memcpy(result, path.c_str(), path.size() + 1);
+    return result;
+}
+
+
+} // extern "C"

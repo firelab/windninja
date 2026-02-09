@@ -260,13 +260,20 @@ int NinjaInitialize(const char* typeofrun)
     CPLDebug( "WINDNINJA", "Setting GDAL_DATA:%s", pszGdalData );
     CPLSetConfigOption( "GDAL_DATA", pszGdalData );
 
+    CPLDebug( "WINDNINJA", "Setting GDAL_DATA..." );
+    std::string osProjData;
+    osProjData = FindDataPath( "proj-data/data/proj.db" );
+    const char *pszProjData = CPLGetPath( osProjData.c_str() );
+    CPLDebug( "WINDNINJA", "Setting PROJ_DATA:%s", pszProjData );
+    CPLSetConfigOption( "PROJ_LIB", pszProjData );
+
 #if defined(FIRELAB_PACKAGE)
     char szDriverPath[MAX_PATH+1];
     rc = CPLGetExecPath( szDriverPath, MAX_PATH+1);
     const char *pszPlugins = CPLSPrintf("%s/gdalplugins", CPLGetPath(szDriverPath));
-    CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
+    //CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
 
-    CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
+    //CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
 #endif /* defined(FIRELAB_PACKAGE) */
 
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)

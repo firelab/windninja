@@ -1,0 +1,22 @@
+{
+  "name": "windninja-deps",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "boost-date-time"
+    },
+    {
+      "name": "boost-program-options"
+    },
+    {
+      "name": "boost-test"
+    },
+    {
+      "name": "gdal",
+      "features": ["poppler", "netcdf", "openssl"]
+    },
+    {
+      "name": "shapelib"
+    }
+  ]
+}

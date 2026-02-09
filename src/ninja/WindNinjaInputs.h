@@ -54,7 +54,7 @@ public:
 
     WindNinjaInputs(const WindNinjaInputs &rhs);
     WindNinjaInputs &operator=(const WindNinjaInputs &rhs);
-    bool operator==(const WindNinjaInputs &rhs);
+    bool operator==(const WindNinjaInputs &rhs) const;
 
 
     /*-----------------------------------------------------------------------------
@@ -106,13 +106,10 @@ public:
      *  Base input data passed to "simulate_wind()"
      *-----------------------------------------------------------------------------*/
 
-    
-    ninjaComClass *Com;	//pointer to a com handler for the specific communication type desired
-    char lastComString[NINJA_MSG_SIZE];
+    ninjaComClass *Com;  // pointer to a given ninjas[i] level com handler
     int inputsRunNumber;
-    ninjaComClass::eNinjaCom inputsComType;
-    
-    int armySize; 
+
+    int armySize;
     GDALDatasetH hSpdMemDs;
     GDALDatasetH hDirMemDs;
     GDALDatasetH hDustMemDs;

@@ -207,7 +207,7 @@ void genericSurfInitialization::checkForValidData()
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = cplIsNan(dfNoData);
+                noDataIsNan = std::isnan(dfNoData);
             }
 
             //set the data
@@ -221,7 +221,7 @@ void genericSurfInitialization::checkForValidData()
                 {
                     if(noDataIsNan)
                     {
-                        if(cplIsNan(padfScanline[k]))
+                        if(std::isnan(padfScanline[k]))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -472,28 +472,28 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         if( varList[i] == "Temperature_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         airGrid.set_noDataValue(-9999.0);
         airGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "V-component_of_wind_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         vGrid.set_noDataValue(-9999.0);
         vGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "U-component_of_wind_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         uGrid.set_noDataValue(-9999.0);
         uGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "Total_cloud_cover" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
-        if( cplIsNan( dfNoData ) ) {
+        if( std::isnan( dfNoData ) ) {
         cloudGrid.set_noDataValue(-9999.0);
         cloudGrid.replaceNan( -9999.0 );
         }
