@@ -66,6 +66,7 @@ private slots:
     void weatherModelComboBoxCurrentIndexChanged(int index);
     void weatherModelDownloadFinished();
     void updateProgressMessage(const QString message);
+    void updateTreeViewTime();
 
 private:
     NinjaToolsH* ninjaTools;

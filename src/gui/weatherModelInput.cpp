@@ -53,6 +53,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
+    //connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -493,6 +494,13 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
 
     ui->pastcastStartDateTimeEdit->setDateTime(demTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demTime);
+}
+
+void WeatherModelInput::updateTreeViewTime()
+{
+    ui->weatherModelFileTreeView->clearSelection();
+    timeModel->clear();
+    emit updateState();
 }
 
 void WeatherModelInput::initNinjaTools()

@@ -347,9 +347,22 @@
             return container;
         };
 
+        let kmzTimeSeriesImg = null;
+        let kmzTimeSeriesImgUrl = null;
+
         async function loadKmzFromBase64(kmlData, timeSeries) {
             // Setup & Cleanup
             clearWindNinjaOutputTree();
+            clearInitializationOutputTree();
+
+            if (kmzTimeSeriesImg) {
+                kmzTimeSeriesImg.remove();
+                kmzTimeSeriesImg = null;
+            }
+            if (kmzTimeSeriesImgUrl) {
+                URL.revokeObjectURL(kmzTimeSeriesImgUrl);
+                kmzTimeSeriesImgUrl = null;
+            }
 
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
@@ -380,6 +393,9 @@
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = entry.name;
 
+            let timeSeriesImg = null;
+            let timeSeriesImgUrl = null;
+
             const legendControl = L.control({ position: 'bottomright' });
             kmzLegendControls.push(legendControl);
 
@@ -397,20 +413,35 @@
                         img.style.cssText = 'display: block; max-width: 150px; height: auto;';
                         container.appendChild(img);
 
-                        // Legend Time Series 
-                        if (timeSeries && legendEntries.length > 1) {
-                            const blob2 = await legendEntries[1].async('blob');
-                            const url2 = URL.createObjectURL(blob2);
-                            const img2 = new Image();
-                            img2.src = url2;
-                            img2.style.cssText = `
-                                position: absolute; top: 10px; left: 50%;
-                                transform: translateX(-50%); max-width: 90%;
-                                height: auto; z-index: 600;
+                        if (timeSeries && legendEntries.length > 1 && !timeSeriesImg) {
+                            const blob = await legendEntries[1].async('blob');
+                            timeSeriesImgUrl = URL.createObjectURL(blob);
+
+                            timeSeriesImg = new Image();
+                            timeSeriesImg.src = timeSeriesImgUrl;
+                            timeSeriesImg.style.cssText = `
+                                position: absolute;
+                                top: 10px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                max-width: 90%;
+                                height: auto;
+                                z-index: 600;
                             `;
-                            map.getContainer().appendChild(img2);
-                        }
+
+                            map.getContainer().appendChild(timeSeriesImg);
+                        }   
                     })();
+                    kmlLegendLayer.on('remove', () => {
+                        if (timeSeriesImg) {
+                            timeSeriesImg.remove();
+                            timeSeriesImg = null;
+                        }
+                        if (timeSeriesImgUrl) {
+                            URL.revokeObjectURL(timeSeriesImgUrl);
+                            timeSeriesImgUrl = null;
+                        }
+                    });
                 }
                 return container;
             };
