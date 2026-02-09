@@ -206,7 +206,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     inputSpeedUnits = rhs.inputSpeedUnits;
     outputSpeedUnits = rhs.outputSpeedUnits;
     inputSpeed = rhs.inputSpeed;
-    inputDirection = rhs.inputDirection;
+    inputDirection_geog = rhs.inputDirection_geog;
+    inputDirection_proj = rhs.inputDirection_proj;
     inputWindHeightUnits = rhs.inputWindHeightUnits;
     inputWindHeight = rhs.inputWindHeight;
     outputWindHeightUnits = rhs.outputWindHeightUnits;
@@ -284,8 +285,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     asciiOutFlag = rhs.asciiOutFlag;
     asciiAaigridOutFlag = rhs.asciiAaigridOutFlag;
     asciiJsonOutFlag = rhs.asciiJsonOutFlag;
-    asciiUtmOutFlag = rhs.asciiUtmOutFlag;
-    ascii4326OutFlag = rhs.ascii4326OutFlag;
+    asciiProjOutFlag = rhs.asciiProjOutFlag;
+    asciiGeogOutFlag = rhs.asciiGeogOutFlag;
     asciiUvOutFlag = rhs.asciiUvOutFlag;
 
     wxModelShpOutFlag = rhs.wxModelShpOutFlag;
