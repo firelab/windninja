@@ -925,7 +925,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     {
         for(int j = 0;j < data.get_numCols();j++)
         {
-            if(get_cellValue(i,j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
+            if(get_cellValue(i,j) == get_noDataValue() || std::isnan(get_cellValue(i,j)))
                 numNoDataValues++;
         }
     }
@@ -951,7 +951,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
             {
                 for(int j = 0;j < data.get_numCols();j++)
                 {
-                    if(get_cellValue(i, j) == noDataValue || cplIsNan(get_cellValue(i,j)))
+                    if(get_cellValue(i, j) == noDataValue || std::isnan(get_cellValue(i,j)))
                     {
                         sum = 0.0;
                         nValues = 0;
@@ -963,7 +963,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
                                     jj < 0 || jj >= get_nCols())
                                     continue;
 
-                                if(get_cellValue(ii, jj) == noDataValue || cplIsNan(get_cellValue(ii, jj)))
+                                if(get_cellValue(ii, jj) == noDataValue || std::isnan(get_cellValue(ii, jj)))
                                     continue;
 
                                 sum = sum + get_cellValue(ii, jj);
@@ -990,7 +990,7 @@ bool AsciiGrid<T>::fillNoDataValuesAngle( int minNeighborCells, double maxPercen
     {
         for(int j = 0;j < data.get_numCols();j++)
         {
-            if(get_cellValue(i,j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
+            if(get_cellValue(i,j) == get_noDataValue() || std::isnan(get_cellValue(i,j)))
                 numNoDataValues++;
         }
     }
@@ -1017,7 +1017,7 @@ bool AsciiGrid<T>::fillNoDataValuesAngle( int minNeighborCells, double maxPercen
             {
                 for(int j = 0;j < data.get_numCols();j++)
                 {
-                    if(get_cellValue(i, j) == noDataValue || cplIsNan(get_cellValue(i,j)))
+                    if(get_cellValue(i, j) == noDataValue || std::isnan(get_cellValue(i,j)))
                     {
                         sinSum = 0.0;
                         cosSum = 0.0;
@@ -1030,7 +1030,7 @@ bool AsciiGrid<T>::fillNoDataValuesAngle( int minNeighborCells, double maxPercen
                                     jj < 0 || jj >= get_nCols())
                                     continue;
 
-                                if(get_cellValue(ii, jj) == noDataValue || cplIsNan(get_cellValue(ii, jj)))
+                                if(get_cellValue(ii, jj) == noDataValue || std::isnan(get_cellValue(ii, jj)))
                                     continue;
 
                                 sinSum = sinSum + sin(get_cellValue(ii, jj)*pi/180.0);
@@ -1066,7 +1066,7 @@ bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double max
     {
         for(int j = 0;j < data.get_numCols();j++)
         {
-            if(get_cellValue(i,j) == get_noDataValue() || cplIsNan(get_cellValue(i,j)))
+            if(get_cellValue(i,j) == get_noDataValue() || std::isnan(get_cellValue(i,j)))
                 numNoDataValues++;
         }
     }
@@ -1093,7 +1093,7 @@ bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double max
             {
                 for(int j = 0;j < data.get_numCols();j++)
                 {
-                    if(get_cellValue(i, j) == noDataValue || cplIsNan(get_cellValue(i,j)))
+                    if(get_cellValue(i, j) == noDataValue || std::isnan(get_cellValue(i,j)))
                     {
                         sum = 0.0;
                         nValues = 0;
@@ -1107,7 +1107,7 @@ bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double max
                                     continue;
                                 }
 
-                                if(get_cellValue(ii, jj) == noDataValue || cplIsNan(get_cellValue(ii, jj)))
+                                if(get_cellValue(ii, jj) == noDataValue || std::isnan(get_cellValue(ii, jj)))
                                 {
                                     continue;
                                 }
@@ -1524,7 +1524,7 @@ void AsciiGrid<T>::replaceNan( T final )
     {
         for (int j = 0;j < data.get_numCols();j++)
         {
-            if( cplIsNan(data(i,j)) )
+            if( std::isnan(data(i,j)) )
             data(i,j) = final;
         }
     }
