@@ -499,6 +499,13 @@ if(WIN32)
         DESTINATION share/windninja/proj-data/data
         COMPONENT apps)
 
+    # Installs Boost from VCPKG to bin directory for WindNinja_cli
+    install(
+        FILES "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/boost_program_options-vc143-mt-x64-1_90.dll"
+        DESTINATION bin
+        COMPONENT apps)
+
+
     if(NINJAFOAM)
         install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
         install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
