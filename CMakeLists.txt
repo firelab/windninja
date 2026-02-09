@@ -26,6 +26,11 @@ if(WIN32)
     endif()
 endif(WIN32)
 
+if(DEFINED CMAKE_PROJECT_INCLUDE_BEFORE AND
+   NOT EXISTS "${CMAKE_PROJECT_INCLUDE_BEFORE}")
+  unset(CMAKE_PROJECT_INCLUDE_BEFORE CACHE)
+endif()
+
 project(WindNinja)
 
 # Set C++ version for CMake
@@ -33,7 +38,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # Needed for FindNetCDF and GET_DATE()
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 option(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
 mark_as_advanced(FIRELAB_PACKAGE)
@@ -44,7 +49,7 @@ if(FIRELAB_PACKAGE)
 endif(FIRELAB_PACKAGE)
 
 # Generate a current version file derived from VERSION
-file(READ ${PROJECT_SOURCE_DIR}/VERSION V)
+file(READ ${CMAKE_SOURCE_DIR}/VERSION V)
 string(REPLACE "\n" "" V ${V})
 if(V)
     string(REPLACE "." ";" VLIST ${V})
