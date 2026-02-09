@@ -147,7 +147,7 @@ if(WIN32)
         PUBLIC 
             WIN32_LEAN_AND_MEAN
     )
-    target_link_libraries(WindNinjadll ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
+    target_link_libraries(WindNinjadll PRIVATE ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 else()
     if(APPLE)
         add_library(ninja STATIC ${NINJA_SOURCES})
