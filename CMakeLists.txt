@@ -439,9 +439,7 @@ install(FILES ${share_files}
         COMPONENT apps)
 
 # Install Leaflet data
-if(WIN32 AND FIRELAB_PACKAGE)
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
-endif(WIN32 AND FIRELAB_PACKAGE)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 
 # Install all documentation files
 set(doc_files
