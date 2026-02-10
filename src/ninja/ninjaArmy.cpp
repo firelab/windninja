@@ -270,12 +270,6 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 //throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
 Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
 
-    if( times.size() == 0 )
-    {
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
-        throw std::runtime_error("Invalid 'empty' input times in ninjaArmy::makeWeatherModelArmy()");
-    }
-
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -1417,6 +1411,8 @@ int ninjaArmy::NinjaMakeWeatherModelArmy( const char * forecastFilename, const c
         }
 #endif
 
+        // TODO: need to make a better error check for this than to disallow an empty inputTimeList
+        // Need to setup a check to compare inputTimeList size to the input timeListSize
         if( size < 1 )
         {
             throw std::runtime_error(CPLSPrintf("Invalid input size '%d' in ninjaArmy::NinjaMakeWeatherModelArmy()", size));
