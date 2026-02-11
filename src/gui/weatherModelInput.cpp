@@ -484,16 +484,22 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
     QDate earliestDate(2014, 7, 30);
     QDateTime utcDateTime(earliestDate, QTime(18, 0), Qt::UTC);
     QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
-    ui->pastcastGroupBox->setTitle("Earliest Pastcast Datetime: " + localDateTime.toString("MM/dd/yyyy hh:mm"));
+    ui->pastcastGroupBox->setTitle(
+        "Earliest Pastcast Datetime: "
+        + localDateTime.toString("MM/dd/yyyy hh:mm")
+        + " " + timeZone.abbreviation(localDateTime)
+    );
     ui->pastcastGroupBox->updateGeometry();
 
     // Update Date Time Edits
-    QDateTime demTime = QDateTime::currentDateTime().toTimeZone(timeZone);
-    // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
-    demTime.setTimeSpec(Qt::LocalTime);
+    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QTime demTime = demDateTime.time();
+    demTime.setHMS(demTime.hour()-1, 0, 0, 0);
+    demDateTime.setTime(demTime);
+    demDateTime.setTimeSpec(Qt::LocalTime); // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
 
-    ui->pastcastStartDateTimeEdit->setDateTime(demTime);
-    ui->pastcastEndDateTimeEdit->setDateTime(demTime);
+    ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
 }
 
 void WeatherModelInput::updateTreeViewTime()
