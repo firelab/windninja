@@ -482,7 +482,11 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
 
     // Update Minimum Time
     QDate earliestDate(2014, 7, 30);
-    QDateTime utcDateTime(earliestDate, QTime(18, 0), Qt::UTC);
+    QDateTime utcDateTime(
+        earliestDate,
+        QTime(18, 0),
+        QTimeZone::UTC
+    );
     QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
     ui->pastcastGroupBox->setTitle(
         "Earliest Pastcast Datetime: "
@@ -496,7 +500,11 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
     QTime demTime = demDateTime.time();
     demTime.setHMS(demTime.hour()-1, 0, 0, 0);
     demDateTime.setTime(demTime);
-    demDateTime.setTimeSpec(Qt::LocalTime); // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
+    demDateTime = QDateTime(
+        demDateTime.date(),
+        demTime,
+        QTimeZone::systemTimeZone()
+    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
     ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
