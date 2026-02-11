@@ -36,8 +36,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
+
+    updateDownloadDateTimeEdits();
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
@@ -50,6 +50,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDownloadDateTimeEdits);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
@@ -78,9 +79,6 @@ void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
 
     ui->downloadFromStationIDLineEdit->clear();
     ui->downloadFromDEMSpinBox->setValue(0);
-
-    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
-    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
     ui->inputsStackedWidget->setCurrentIndex(17);
 }
@@ -790,6 +788,21 @@ void PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged(in
 QVector<QString> PointInitializationInput::getStationFiles()
 {
     return stationFiles;
+}
+
+void PointInitializationInput::updateDownloadDateTimeEdits()
+{
+    QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
+
+    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    demDateTime = QDateTime(
+        demDateTime.date(),
+        demDateTime.time(),
+        QTimeZone::systemTimeZone()
+    );
+
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(demDateTime.addDays(-1));
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(demDateTime);
 }
 
 
