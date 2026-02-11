@@ -52,7 +52,7 @@ int main()
      * Setting up a log file, for ninjaCom, if desired
      */
     FILE* multiStream = NULL;
-    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/output/ninja.log", "w+");
+    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
     if(multiStream == NULL)
     {
         printf("error opening log file\n");
@@ -99,7 +99,10 @@ int main()
     const double cloud[2] = {10.0, 10.0};
     const char * cloudUnits = "percent";
 
-    const double meshResolution = -1.0;  //set to value > 0.0 to override meshChoice with meshResolution value
+    //const int nIters = -1.0;  //set to value > 0.0 to override the default value of 1000. Used only by the conservation of momentum solver.
+    const int nIters = 300;  // the cli and the GUI use a value of 300 instead of the default value of 1000.
+
+    const double meshResolution = -1.0;  //set to value > 0.0 to override meshChoice with meshResolution value. Used only by the conservation of momentum solver.
     //const double meshResolution = 300.0;
     const char * meshResolutionUnits = "m";
 
@@ -194,7 +197,16 @@ int main()
         printf("NinjaSetUniVegetation: err = %d\n", err);
       }
 
-      if( meshResolution > 0.0 )
+      if(nIters > 0.0)
+      {
+        err = NinjaSetNumberOfIterations(ninjaArmy, i, nIters, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetNumberOfIterations: err = %d\n", err);
+        }
+      }
+
+      if(meshResolution > 0.0)
       {
         err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
         if(err != NINJA_SUCCESS)

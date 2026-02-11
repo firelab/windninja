@@ -242,8 +242,13 @@ typedef int  NinjaErr;
     /*-----------------------------------------------------------------------------
      *  NinjaFoam Methods
      *-----------------------------------------------------------------------------*/
+#ifdef NINJAFOAM
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberOfIterations
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const int nIterations, char ** options );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
         ( NinjaArmyH * ninjaArmy, const int nIndex, const int meshCount, char ** options );
+#endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
      *  Mesh Methods

@@ -1238,6 +1238,31 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAlphaStability
  *-----------------------------------------------------------------------------*/
 #ifdef NINJAFOAM
 /**
+ * \brief Set the number of iterations for a simulation.
+ *
+ * \note Only for use with the momentum solver.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param nIterations The number of iterations to use for the simulation.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetNumberOfIterations
+    ( NinjaArmyH * army, const int nIndex, const int nIterations, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setNumberOfIterations
+            ( nIndex, nIterations );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
  * \brief Set the mesh count for a simulation.
  *
  * \note Only for use with the momentum solver.

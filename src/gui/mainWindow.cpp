@@ -1169,6 +1169,19 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             }
         }
 
+        #ifdef NINJAFOAM
+        // the cli and the GUI use a value of 300 instead of the default value of 1000.
+        ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, 300, papszOptions);
+        //ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i+10, 300, papszOptions);  // catches the error, as expected, but only when using the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
+        //ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, -1, papszOptions);  // the code still needs a check against this, OpenFOAM itself is throwing the error right now, which is not an easy one to properly try/catch.
+        //ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, 0, papszOptions);  // the code still needs a check against this, OpenFOAM itself is throwing the error right now, which is not an easy one to properly try/catch.
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetNumberOfIterations: ninjaErr =" << ninjaErr;
+            return false;
+        }
+        #endif //NINJAFOAM
+
         if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
         {
             ninjaErr = NinjaSetMeshResolution(ninjaArmy, i, ui->meshResolutionSpinBox->value(), ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
