@@ -53,7 +53,6 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
-    //connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -393,6 +392,7 @@ void WeatherModelInput::updateTreeView()
     timeHeader->setVisible(false);
 
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
+    connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 }
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
@@ -484,23 +484,32 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
     QDate earliestDate(2014, 7, 30);
     QDateTime utcDateTime(earliestDate, QTime(18, 0), Qt::UTC);
     QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
-    ui->pastcastGroupBox->setTitle("Earliest Pastcast Datetime: " + localDateTime.toString("MM/dd/yyyy hh:mm"));
+    ui->pastcastGroupBox->setTitle(
+        "Earliest Pastcast Datetime: "
+        + localDateTime.toString("MM/dd/yyyy hh:mm")
+        + " " + timeZone.abbreviation(localDateTime)
+    );
     ui->pastcastGroupBox->updateGeometry();
 
     // Update Date Time Edits
-    QDateTime demTime = QDateTime::currentDateTime().toTimeZone(timeZone);
-    // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
-    demTime.setTimeSpec(Qt::LocalTime);
+    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QTime demTime = demDateTime.time();
+    demTime.setHMS(demTime.hour()-1, 0, 0, 0);
+    demDateTime.setTime(demTime);
+    demDateTime.setTimeSpec(Qt::LocalTime); // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
 
-    ui->pastcastStartDateTimeEdit->setDateTime(demTime);
-    ui->pastcastEndDateTimeEdit->setDateTime(demTime);
+    ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
 }
 
 void WeatherModelInput::updateTreeViewTime()
 {
-    ui->weatherModelFileTreeView->clearSelection();
-    timeModel->clear();
-    emit updateState();
+    if(ui->weatherModelFileTreeView->selectionModel()->hasSelection())
+    {
+        ui->weatherModelFileTreeView->clearSelection();
+        timeModel->clear();
+        emit updateState();
+    }
 }
 
 void WeatherModelInput::initNinjaTools()
