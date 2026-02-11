@@ -53,7 +53,6 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
     connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
-    //connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -393,6 +392,7 @@ void WeatherModelInput::updateTreeView()
     timeHeader->setVisible(false);
 
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
+    connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 }
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
@@ -498,9 +498,12 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
 
 void WeatherModelInput::updateTreeViewTime()
 {
-    ui->weatherModelFileTreeView->clearSelection();
-    timeModel->clear();
-    emit updateState();
+    if(ui->weatherModelFileTreeView->selectionModel()->hasSelection())
+    {
+        ui->weatherModelFileTreeView->clearSelection();
+        timeModel->clear();
+        emit updateState();
+    }
 }
 
 void WeatherModelInput::initNinjaTools()
