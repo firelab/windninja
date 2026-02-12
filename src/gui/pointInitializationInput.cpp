@@ -579,6 +579,7 @@ void PointInitializationInput::updateTreeView()
     stationFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     stationFileSystemModel->setNameFilterDisables(false);
 
+
     ui->pointInitializationTreeView->setModel(stationFileSystemModel);
     ui->pointInitializationTreeView->setRootIndex(stationFileSystemModel->index(fileInfo.absolutePath()));
     ui->pointInitializationTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
@@ -726,13 +727,13 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, Qt::ISODate);
 
     QDateTime demStartTime = startTimeUTC.toTimeZone(timeZone);
-    QDateTime demEndTime  = endTimeUTC.toTimeZone(timeZone);
+    QDateTime demEndTime   = endTimeUTC.toTimeZone(timeZone);
 
     if (minStationTime.isNull() || demStartTime < minStationTime)
     {
         minStationTime = demStartTime;
     }
-    if(maxStationTime.isNull() || demEndTime > maxStationTime)
+    if (maxStationTime.isNull() || demEndTime > maxStationTime)
     {
         maxStationTime = demEndTime;
     }
@@ -741,28 +742,26 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
         "Current Min Time: " +
         minStationTime.toString("MM/dd/yy hh:mm") +
         " " + timeZone.abbreviation(demStartTime)
-    );
+        );
     ui->weatherStationMaxTimeLabel->setText(
         "Current Max Time: " +
         maxStationTime.toString("MM/dd/yy hh:mm") +
         " " + timeZone.abbreviation(demEndTime)
-    );
+        );
 
     QDateTime start = QDateTime(
         minStationTime.date(),
         minStationTime.time(),
         QTimeZone::systemTimeZone()
-    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(start);
+        );
     QDateTime end = QDateTime(
         maxStationTime.date(),
         maxStationTime.time(),
         QTimeZone::systemTimeZone()
-    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(end);
+        );
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
-    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(start);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(end);
 
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
@@ -770,7 +769,6 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
     int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
     ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
-    //qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
 }
 
 void PointInitializationInput::pointInitializationSelectNoneButtonClicked()
@@ -801,6 +799,7 @@ QVector<QString> PointInitializationInput::getStationFiles()
 
 void PointInitializationInput::updateDownloadDateTimeEdits()
 {
+    // Update download QDateTimeEdits
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
     QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
@@ -812,6 +811,18 @@ void PointInitializationInput::updateDownloadDateTimeEdits()
 
     ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(demDateTime.addDays(-1));
     ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(demDateTime);
+
+
+    QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
+
+    // Update time series tree
+    if (!selectionModel || !selectionModel->hasSelection())
+        return;
+
+    pointInitializationTreeViewItemSelectionChanged(
+        selectionModel->selection(),
+        QItemSelection()
+    );
 }
 
 
