@@ -39,7 +39,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime());
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
-    updateDownloadDateTimeEdits();
+    updateDateTime();
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
@@ -52,7 +52,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
-    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDownloadDateTimeEdits);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
@@ -797,7 +797,7 @@ QVector<QString> PointInitializationInput::getStationFiles()
     return stationFiles;
 }
 
-void PointInitializationInput::updateDownloadDateTimeEdits()
+void PointInitializationInput::updateDateTime()
 {
     // Update download QDateTimeEdits
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());

@@ -45,14 +45,14 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
 
     weatherModelComboBoxCurrentIndexChanged(0);
-    updatePastcastDateTimeEdits();
+    updateDateTime();
 
     connect(ui->weatherModelGroupBox, &QGroupBox::toggled, this, &WeatherModelInput::weatherModelGroupBoxToggled);
     connect(ui->weatherModelDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDownloadButtonClicked);
     connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
-    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -151,7 +151,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
             startPos = pos+7;
         }
         clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //std::cout << "clipStr = \"" << clipStr << "\""MM/dd/yy hh:mm"" << std::endl;
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Cannot determine exception type." )
@@ -392,7 +392,6 @@ void WeatherModelInput::updateTreeView()
     timeHeader->setVisible(false);
 
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
-    connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 }
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
@@ -476,7 +475,7 @@ void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
     ui->weatherModelTimeTreeView->clearSelection();
 }
 
-void WeatherModelInput::updatePastcastDateTimeEdits()
+void WeatherModelInput::updateDateTime()
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
@@ -508,15 +507,31 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
 
     ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
-}
 
-void WeatherModelInput::updateTreeViewTime()
-{
-    if(ui->weatherModelFileTreeView->selectionModel()->hasSelection())
+    QItemSelectionModel *selectionModel = ui->weatherModelFileTreeView->selectionModel();
+    if (!selectionModel || !selectionModel->hasSelection())
+        return;
+
+    QItemSelectionModel *timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel();
+    if (!timeSelectionModel || !timeSelectionModel->hasSelection())
+        return;
+
+    QSet<int> timeTreeRowsSelection;
+    for(const QModelIndex &idx : timeSelectionModel->selectedRows())
     {
-        ui->weatherModelFileTreeView->clearSelection();
-        timeModel->clear();
-        emit updateState();
+        timeTreeRowsSelection.insert(idx.row());
+    }
+
+    weatherModelFileTreeViewItemSelectionChanged(
+        selectionModel->selection()
+    );
+
+    timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel();
+    timeSelectionModel->clearSelection();
+    for(int row : timeTreeRowsSelection)
+    {
+        QModelIndex idx = timeModel->index(row, 0);
+        timeSelectionModel->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
 }
 
