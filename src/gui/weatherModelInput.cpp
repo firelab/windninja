@@ -481,7 +481,7 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
     // Update Minimum Time
-    QDate earliestDate(2014, 7, 30);
+    QDate earliestDate(2014, 07, 30);
     QDateTime utcDateTime(
         earliestDate,
         QTime(18, 0),

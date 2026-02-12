@@ -36,6 +36,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime());
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
     updateDownloadDateTimeEdits();
 
@@ -718,49 +720,48 @@ void PointInitializationInput::pointInitializationSelectAllButtonClicked()
 
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
 {
-    QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
-    QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+    QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    QTimeZone timeZone(DEMTimeZone.toUtf8());
-    if (!timeZone.isValid()) {
-        qWarning() << "[GUI-Point] Invalid time zone:" << DEMTimeZone;
-        timeZone = QTimeZone::systemTimeZone();
-    }
+    QDateTime startTimeUTC = QDateTime::fromString(startDateTime, Qt::ISODate);
+    QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, Qt::ISODate);
 
-    QDateTime startTimeUTC = QDateTime::fromString(startDateTime, stationTimeFormat);
-    QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, stationTimeFormat);
-    startTimeUTC.setTimeSpec(Qt::UTC);
-    endTimeUTC.setTimeSpec(Qt::UTC);
+    QDateTime demStartTime = startTimeUTC.toTimeZone(timeZone);
+    QDateTime demEndTime  = endTimeUTC.toTimeZone(timeZone);
 
-    QDateTime DEMStartTime = startTimeUTC.toTimeZone(timeZone);
-    QDateTime DEMEndTime  = endTimeUTC.toTimeZone(timeZone);
-
-    if (minStationTime.isNull() || DEMStartTime < minStationTime)
+    if (minStationTime.isNull() || demStartTime < minStationTime)
     {
-        minStationTime = DEMStartTime;
+        minStationTime = demStartTime;
     }
-    if(maxStationTime.isNull() || DEMEndTime > maxStationTime)
+    if(maxStationTime.isNull() || demEndTime > maxStationTime)
     {
-        maxStationTime = DEMEndTime;
+        maxStationTime = demEndTime;
     }
-
-    //qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
-    //qDebug() << "[GUI-Point] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
 
     ui->weatherStationMinTimeLabel->setText("Current Min Time: " + minStationTime.toString());
     ui->weatherStationMaxTimeLabel->setText("Current Min Time: " + maxStationTime.toString());
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime(minStationTime.date(), minStationTime.time(), Qt::LocalTime));
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime(maxStationTime.date(), maxStationTime.time(), Qt::LocalTime));
+
+    QDateTime start = QDateTime(
+        minStationTime.date(),
+        minStationTime.time(),
+        QTimeZone::systemTimeZone()
+    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(start);
+    QDateTime end = QDateTime(
+        maxStationTime.date(),
+        maxStationTime.time(),
+        QTimeZone::systemTimeZone()
+    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(end);
+
     ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
     ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
-    ui->weatherStationDataStartDateTimeEdit->setCalendarPopup(false);
-    ui->weatherStationDataEndDateTimeEdit->setCalendarPopup(false);
+
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
-    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
 
     int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
     ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
+    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
     //qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
 }
 

@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>7</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1755,8 +1755,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>330</width>
-               <height>231</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2504,7 +2504,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="weatherStationDataTimeDatesPage">
                     <property name="sizePolicy">
@@ -2564,7 +2564,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <string>M/d/yy h:mm</string>
                        </property>
                        <property name="calendarPopup">
-                        <bool>true</bool>
+                        <bool>false</bool>
                        </property>
                       </widget>
                      </item>
@@ -2625,7 +2625,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <string>M/d/yy h:mm</string>
                        </property>
                        <property name="calendarPopup">
-                        <bool>true</bool>
+                        <bool>false</bool>
                        </property>
                       </widget>
                      </item>
