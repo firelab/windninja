@@ -737,8 +737,16 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
         maxStationTime = demEndTime;
     }
 
-    ui->weatherStationMinTimeLabel->setText("Current Min Time: " + minStationTime.toString());
-    ui->weatherStationMaxTimeLabel->setText("Current Min Time: " + maxStationTime.toString());
+    ui->weatherStationMinTimeLabel->setText(
+        "Current Min Time: " +
+        minStationTime.toString("MM/dd/yy hh:mm") +
+        " " + timeZone.abbreviation(demStartTime)
+    );
+    ui->weatherStationMaxTimeLabel->setText(
+        "Current Max Time: " +
+        maxStationTime.toString("MM/dd/yy hh:mm") +
+        " " + timeZone.abbreviation(demEndTime)
+    );
 
     QDateTime start = QDateTime(
         minStationTime.date(),
