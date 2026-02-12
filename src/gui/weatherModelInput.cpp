@@ -479,7 +479,7 @@ void WeatherModelInput::updateDateTime()
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    // Update Minimum Time
+    // Update PASCAST date time info
     QDate earliestDate(2014, 07, 30);
     QDateTime utcDateTime(
         earliestDate,
@@ -494,7 +494,6 @@ void WeatherModelInput::updateDateTime()
     );
     ui->pastcastGroupBox->updateGeometry();
 
-    // Update Date Time Edits
     QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
     QTime demTime = demDateTime.time();
     demTime.setHMS(demTime.hour()-1, 0, 0, 0);
@@ -508,27 +507,28 @@ void WeatherModelInput::updateDateTime()
     ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
 
-    QItemSelectionModel *selectionModel = ui->weatherModelFileTreeView->selectionModel();
-    if (!selectionModel || !selectionModel->hasSelection())
+    // Update selected wx model time series
+    QItemSelectionModel *fileSelectionModel = ui->weatherModelFileTreeView->selectionModel();
+    if (!fileSelectionModel || !fileSelectionModel->hasSelection())
         return;
 
     QItemSelectionModel *timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel();
     if (!timeSelectionModel || !timeSelectionModel->hasSelection())
         return;
 
-    QSet<int> timeTreeRowsSelection;
+    QSet<int> rowsSelected;
     for(const QModelIndex &idx : timeSelectionModel->selectedRows())
     {
-        timeTreeRowsSelection.insert(idx.row());
+        rowsSelected.insert(idx.row());
     }
 
     weatherModelFileTreeViewItemSelectionChanged(
-        selectionModel->selection()
+        fileSelectionModel->selection()
     );
 
-    timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel();
+    timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel(); // Set since updateTreeView will reset previous assignment
     timeSelectionModel->clearSelection();
-    for(int row : timeTreeRowsSelection)
+    for(int row : rowsSelected)
     {
         QModelIndex idx = timeModel->index(row, 0);
         timeSelectionModel->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);

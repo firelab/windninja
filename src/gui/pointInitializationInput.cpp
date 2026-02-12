@@ -799,7 +799,7 @@ QVector<QString> PointInitializationInput::getStationFiles()
 
 void PointInitializationInput::updateDateTime()
 {
-    // Update download QDateTimeEdits
+    // Update download date time info
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
     QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
@@ -812,10 +812,8 @@ void PointInitializationInput::updateDateTime()
     ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(demDateTime.addDays(-1));
     ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(demDateTime);
 
-
+    // Update selected station time series
     QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
-
-    // Update time series tree
     if (!selectionModel || !selectionModel->hasSelection())
         return;
 
