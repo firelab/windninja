@@ -1017,8 +1017,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>530</width>
+               <height>385</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1755,8 +1755,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>330</width>
+               <height>231</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2561,10 +2561,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </datetime>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yy h:mm</string>
+                        <string>M/d/yyyy h:mm</string>
                        </property>
                        <property name="calendarPopup">
-                        <bool>false</bool>
+                        <bool>true</bool>
                        </property>
                       </widget>
                      </item>
@@ -2622,10 +2622,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yy h:mm</string>
+                        <string>M/d/yyyy h:mm</string>
                        </property>
                        <property name="calendarPopup">
-                        <bool>false</bool>
+                        <bool>true</bool>
                        </property>
                       </widget>
                      </item>
@@ -2769,8 +2769,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>350</width>
-               <height>431</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2928,7 +2928,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>false</bool>
                       </property>
                       <property name="displayFormat">
-                       <string>M/d/yy h:mm </string>
+                       <string>M/d/yyyy h:mm </string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -2941,7 +2941,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
                       <property name="displayFormat">
-                       <string>M/d/yy h:mm </string>
+                       <string>M/d/yyyy h:mm </string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -5668,7 +5668,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yy h:mm </string>
+                      <string>M/d/yyyy h:mm </string>
                      </property>
                      <property name="calendarPopup">
                       <bool>true</bool>
@@ -5691,7 +5691,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yy H:mm</string>
+                      <string>M/d/yyyy H:mm</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>true</bool>

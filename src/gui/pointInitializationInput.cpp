@@ -52,6 +52,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
+    connect(ui->weatherStationDataStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataStartDateTimeEditChanged);
+    connect(ui->weatherStationDataEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 
@@ -760,15 +762,16 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
         QTimeZone::systemTimeZone()
         );
 
+    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(start, end);
+    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(start, end);
+
     ui->weatherStationDataStartDateTimeEdit->setDateTime(start);
     ui->weatherStationDataEndDateTimeEdit->setDateTime(end);
 
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
 
-    int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
-    ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
-    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
+    updateTimeSteps();
 }
 
 void PointInitializationInput::pointInitializationSelectNoneButtonClicked()
@@ -795,6 +798,52 @@ void PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged(in
 QVector<QString> PointInitializationInput::getStationFiles()
 {
     return stationFiles;
+}
+
+void PointInitializationInput::weatherStationDataStartDateTimeEditChanged()
+{
+    if(ui->weatherStationDataEndDateTimeEdit->dateTime() < ui->weatherStationDataStartDateTimeEdit->dateTime())
+    {
+        ui->weatherStationDataEndDateTimeEdit->setDateTime(ui->weatherStationDataStartDateTimeEdit->dateTime().addSecs(3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::weatherStationDataEndDateTimeEditChanged()
+{
+    if(ui->weatherStationDataEndDateTimeEdit->dateTime() < ui->weatherStationDataStartDateTimeEdit->dateTime())
+    {
+        ui->weatherStationDataStartDateTimeEdit->setDateTime(ui->weatherStationDataEndDateTimeEdit->dateTime().addSecs(-3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::updateTimeSteps()
+{
+    int timesteps;
+
+    if(ui->weatherStationDataStartDateTimeEdit->dateTime() == ui->weatherStationDataEndDateTimeEdit->dateTime())
+    {
+        timesteps = 1;
+    }
+    else
+    {
+        timesteps = qMax(2, static_cast<int>(ui->weatherStationDataStartDateTimeEdit->dateTime().secsTo(ui->weatherStationDataEndDateTimeEdit->dateTime()) / 3600));
+    }
+
+    ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
+    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
+
+    if(timesteps == 1)
+    {
+        ui->weatherStationDataEndDateTimeEdit->setEnabled(false);
+        ui->weatherStationDataEndDateTimeEdit->setToolTip("Stop time is disabled for 1 time step simulations");
+    }
+    else
+    {
+        ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
+        ui->weatherStationDataEndDateTimeEdit->setToolTip("Enter the simulation stop time");
+    }
 }
 
 void PointInitializationInput::updateDateTime()
