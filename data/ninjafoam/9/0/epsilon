@@ -25,7 +25,7 @@ $boundaryField$
     minZ
     {
         type            epsilonWallFunction;
-        Cmu             0.09;
+        Cmu             0.085;
         kappa           0.41;
         E               9.8;
         value           uniform 1;

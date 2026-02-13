@@ -45,6 +45,9 @@ boundaryField
     {
         type            nutkAtmRoughWallFunction;
         z0              uniform $z0$;
+        Cmu             0.085;
+        kappa           0.41;
+        E               9.8;
         value           uniform 0.1;    
     }
     maxZ
