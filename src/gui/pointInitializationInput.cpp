@@ -755,12 +755,12 @@ void PointInitializationInput::readStationTime(QString startDateTime, QString st
         minStationTime.date(),
         minStationTime.time(),
         QTimeZone::systemTimeZone()
-        );
+    );
     QDateTime end = QDateTime(
         maxStationTime.date(),
         maxStationTime.time(),
         QTimeZone::systemTimeZone()
-        );
+    );
 
     ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(start, end);
     ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(start, end);
@@ -863,8 +863,10 @@ void PointInitializationInput::updateDateTime()
 
     // Update selected station time series
     QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
-    if (!selectionModel || !selectionModel->hasSelection())
+    if(!selectionModel || !selectionModel->hasSelection())
+    {
         return;
+    }
 
     pointInitializationTreeViewItemSelectionChanged(
         selectionModel->selection(),

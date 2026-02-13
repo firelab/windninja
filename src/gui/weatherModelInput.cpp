@@ -509,12 +509,16 @@ void WeatherModelInput::updateDateTime()
 
     // Update selected wx model time series
     QItemSelectionModel *fileSelectionModel = ui->weatherModelFileTreeView->selectionModel();
-    if (!fileSelectionModel || !fileSelectionModel->hasSelection())
+    if(!fileSelectionModel || !fileSelectionModel->hasSelection())
+    {
         return;
+    }
 
     QItemSelectionModel *timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel();
-    if (!timeSelectionModel || !timeSelectionModel->hasSelection())
+    if(!timeSelectionModel || !timeSelectionModel->hasSelection())
+    {
         return;
+    }
 
     QSet<int> rowsSelected;
     for(const QModelIndex &idx : timeSelectionModel->selectedRows())
