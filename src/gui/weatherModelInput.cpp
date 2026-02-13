@@ -151,7 +151,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
             startPos = pos+7;
         }
         clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\""MM/dd/yy hh:mm"" << std::endl;
+        //std::cout << "clipStr = \"" << clipStr << "\" << std::endl;
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Cannot determine exception type." )
