@@ -384,8 +384,6 @@ void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
     QString currentTimeZone = ui->timeZoneComboBox->currentText();
     QString timeZoneDetails = fetchTimeZoneDetails(currentTimeZone);
     ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
-    ui->weatherStationTimeZoneLabel->setText("Current Time Zone: " + currentTimeZone);
-    ui->downloadBetweenDatesTimeZoneLabel->setText("Current Time Zone: " + currentTimeZone);
 }
 
 void SurfaceInput::timeZoneAllZonesCheckBoxClicked()

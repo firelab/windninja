@@ -71,6 +71,9 @@ private slots:
     void folderCollapsed(const QModelIndex &index);
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
     void updateProgressMessage(const QString message);
+    void weatherStationDataStartDateTimeEditChanged();
+    void weatherStationDataEndDateTimeEditChanged();
+    void updateDateTime();
 
 private:
     Ui::MainWindow *ui;

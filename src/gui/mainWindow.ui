@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>10</number>
+         <number>7</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1755,8 +1755,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>330</width>
+               <height>231</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2312,7 +2312,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <property name="checked">
                  <bool>false</bool>
                 </property>
-                <layout class="QVBoxLayout" name="verticalLayout_42" stretch="0,0,0,0,0,0,0,0,0,0">
+                <layout class="QVBoxLayout" name="verticalLayout_42" stretch="0,0,0,0,0,0,0,0,0">
                  <property name="leftMargin">
                   <number>5</number>
                  </property>
@@ -2504,7 +2504,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </size>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="weatherStationDataTimeDatesPage">
                     <property name="sizePolicy">
@@ -2561,7 +2561,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </datetime>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yy h:mm</string>
+                        <string>M/d/yyyy h:mm</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
@@ -2622,7 +2622,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yy h:mm</string>
+                        <string>M/d/yyyy h:mm</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
@@ -2660,19 +2660,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </item>
                     </layout>
                    </widget>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="weatherStationTimeZoneLabel">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Current Time Zone:</string>
-                   </property>
                   </widget>
                  </item>
                  <item>
@@ -2941,7 +2928,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>false</bool>
                       </property>
                       <property name="displayFormat">
-                       <string>M/d/yy h:mm </string>
+                       <string>M/d/yyyy h:mm </string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -2954,7 +2941,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
                       <property name="displayFormat">
-                       <string>M/d/yy h:mm </string>
+                       <string>M/d/yyyy h:mm </string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -5618,7 +5605,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </size>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="downloadMostRecentPage">
                 <layout class="QVBoxLayout" name="verticalLayout_21" stretch="0">
@@ -5681,7 +5668,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yy h:mm </string>
+                      <string>M/d/yyyy h:mm </string>
+                     </property>
+                     <property name="calendarPopup">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -5701,7 +5691,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yy h:mm </string>
+                      <string>M/d/yyyy H:mm</string>
+                     </property>
+                     <property name="calendarPopup">
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -5719,19 +5712,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </spacer>
                    </item>
                   </layout>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="downloadBetweenDatesTimeZoneLabel">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="text">
-                    <string>Current Time Zone: </string>
-                   </property>
-                  </widget>
                  </item>
                 </layout>
                </widget>

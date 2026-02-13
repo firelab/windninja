@@ -45,14 +45,14 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
 
     weatherModelComboBoxCurrentIndexChanged(0);
-    updatePastcastDateTimeEdits();
+    updateDateTime();
 
     connect(ui->weatherModelGroupBox, &QGroupBox::toggled, this, &WeatherModelInput::weatherModelGroupBoxToggled);
     connect(ui->weatherModelDownloadButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelDownloadButtonClicked);
     connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
-    connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updatePastcastDateTimeEdits);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -151,7 +151,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
             startPos = pos+7;
         }
         clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //std::cout << "clipStr = \"" << clipStr << "\" << std::endl;
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Cannot determine exception type." )
@@ -392,7 +392,6 @@ void WeatherModelInput::updateTreeView()
     timeHeader->setVisible(false);
 
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
-    connect(ui->timeZoneComboBox, &QComboBox::currentTextChanged, this, &WeatherModelInput::updateTreeViewTime);
 }
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
@@ -476,13 +475,17 @@ void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
     ui->weatherModelTimeTreeView->clearSelection();
 }
 
-void WeatherModelInput::updatePastcastDateTimeEdits()
+void WeatherModelInput::updateDateTime()
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    // Update Minimum Time
-    QDate earliestDate(2014, 7, 30);
-    QDateTime utcDateTime(earliestDate, QTime(18, 0), Qt::UTC);
+    // Update PASCAST date time info
+    QDate earliestDate(2014, 07, 30);
+    QDateTime utcDateTime(
+        earliestDate,
+        QTime(18, 0),
+        QTimeZone::UTC
+    );
     QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
     ui->pastcastGroupBox->setTitle(
         "Earliest Pastcast Datetime: "
@@ -491,24 +494,48 @@ void WeatherModelInput::updatePastcastDateTimeEdits()
     );
     ui->pastcastGroupBox->updateGeometry();
 
-    // Update Date Time Edits
     QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
     QTime demTime = demDateTime.time();
     demTime.setHMS(demTime.hour()-1, 0, 0, 0);
     demDateTime.setTime(demTime);
-    demDateTime.setTimeSpec(Qt::LocalTime); // Has to be set to avoid unnecessary conversions, use timeZoneComboBox for time zone info
+    demDateTime = QDateTime(
+        demDateTime.date(),
+        demTime,
+        QTimeZone::systemTimeZone()
+    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
     ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
-}
 
-void WeatherModelInput::updateTreeViewTime()
-{
-    if(ui->weatherModelFileTreeView->selectionModel()->hasSelection())
+    // Update selected wx model time series
+    QItemSelectionModel *fileSelectionModel = ui->weatherModelFileTreeView->selectionModel();
+    if(!fileSelectionModel || !fileSelectionModel->hasSelection())
     {
-        ui->weatherModelFileTreeView->clearSelection();
-        timeModel->clear();
-        emit updateState();
+        return;
+    }
+
+    QItemSelectionModel *timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel();
+    if(!timeSelectionModel || !timeSelectionModel->hasSelection())
+    {
+        return;
+    }
+
+    QSet<int> rowsSelected;
+    for(const QModelIndex &idx : timeSelectionModel->selectedRows())
+    {
+        rowsSelected.insert(idx.row());
+    }
+
+    weatherModelFileTreeViewItemSelectionChanged(
+        fileSelectionModel->selection()
+    );
+
+    timeSelectionModel = ui->weatherModelTimeTreeView->selectionModel(); // Set since updateTreeView will reset previous assignment
+    timeSelectionModel->clearSelection();
+    for(int row : rowsSelected)
+    {
+        QModelIndex idx = timeModel->index(row, 0);
+        timeSelectionModel->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
 }
 

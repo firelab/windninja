@@ -55,7 +55,6 @@ signals:
 
 public slots:
     void updateTreeView();
-    void updatePastcastDateTimeEdits();
 
 private slots:
     void weatherModelDownloadButtonClicked();
@@ -66,7 +65,8 @@ private slots:
     void weatherModelComboBoxCurrentIndexChanged(int index);
     void weatherModelDownloadFinished();
     void updateProgressMessage(const QString message);
-    void updateTreeViewTime();
+    void updateDateTime();
+
 
 private:
     NinjaToolsH* ninjaTools;

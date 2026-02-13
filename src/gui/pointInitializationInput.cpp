@@ -36,8 +36,10 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime::currentDateTime());
     ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime::currentDateTime());
+
+    updateDateTime();
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
@@ -50,6 +52,9 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->pointInitializationTreeView, &QTreeView::expanded, this, &PointInitializationInput::folderExpanded);
     connect(ui->pointInitializationTreeView, &QTreeView::collapsed, this, &PointInitializationInput::folderCollapsed);
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
+    connect(ui->weatherStationDataStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataStartDateTimeEditChanged);
+    connect(ui->weatherStationDataEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataEndDateTimeEditChanged);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
@@ -78,9 +83,6 @@ void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
 
     ui->downloadFromStationIDLineEdit->clear();
     ui->downloadFromDEMSpinBox->setValue(0);
-
-    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime().addDays(-1));
-    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(QDateTime::currentDateTime());
 
     ui->inputsStackedWidget->setCurrentIndex(17);
 }
@@ -579,6 +581,7 @@ void PointInitializationInput::updateTreeView()
     stationFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     stationFileSystemModel->setNameFilterDisables(false);
 
+
     ui->pointInitializationTreeView->setModel(stationFileSystemModel);
     ui->pointInitializationTreeView->setRootIndex(stationFileSystemModel->index(fileInfo.absolutePath()));
     ui->pointInitializationTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
@@ -720,50 +723,55 @@ void PointInitializationInput::pointInitializationSelectAllButtonClicked()
 
 void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
 {
-    QString stationTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
-    QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+    QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    QTimeZone timeZone(DEMTimeZone.toUtf8());
-    if (!timeZone.isValid()) {
-        qWarning() << "[GUI-Point] Invalid time zone:" << DEMTimeZone;
-        timeZone = QTimeZone::systemTimeZone();
-    }
+    QDateTime startTimeUTC = QDateTime::fromString(startDateTime, Qt::ISODate);
+    QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, Qt::ISODate);
 
-    QDateTime startTimeUTC = QDateTime::fromString(startDateTime, stationTimeFormat);
-    QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, stationTimeFormat);
-    startTimeUTC.setTimeSpec(Qt::UTC);
-    endTimeUTC.setTimeSpec(Qt::UTC);
+    QDateTime demStartTime = startTimeUTC.toTimeZone(timeZone);
+    QDateTime demEndTime   = endTimeUTC.toTimeZone(timeZone);
 
-    QDateTime DEMStartTime = startTimeUTC.toTimeZone(timeZone);
-    QDateTime DEMEndTime  = endTimeUTC.toTimeZone(timeZone);
-
-    if (minStationTime.isNull() || DEMStartTime < minStationTime)
+    if (minStationTime.isNull() || demStartTime < minStationTime)
     {
-        minStationTime = DEMStartTime;
+        minStationTime = demStartTime;
     }
-    if(maxStationTime.isNull() || DEMEndTime > maxStationTime)
+    if (maxStationTime.isNull() || demEndTime > maxStationTime)
     {
-        maxStationTime = DEMEndTime;
+        maxStationTime = demEndTime;
     }
 
-    //qDebug() << "[GUI-Point] Start Time (" << DEMTimeZone << "):" << minStationTime.toString();
-    //qDebug() << "[GUI-Point] Stop Time ("  << DEMTimeZone << "):"  << maxStationTime.toString();
+    ui->weatherStationMinTimeLabel->setText(
+        "Current Min Time: " +
+        minStationTime.toString("MM/dd/yy hh:mm") +
+        " " + timeZone.abbreviation(demStartTime)
+        );
+    ui->weatherStationMaxTimeLabel->setText(
+        "Current Max Time: " +
+        maxStationTime.toString("MM/dd/yy hh:mm") +
+        " " + timeZone.abbreviation(demEndTime)
+        );
 
-    ui->weatherStationMinTimeLabel->setText("Current Min Time: " + minStationTime.toString());
-    ui->weatherStationMaxTimeLabel->setText("Current Min Time: " + maxStationTime.toString());
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(QDateTime(minStationTime.date(), minStationTime.time(), Qt::LocalTime));
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(QDateTime(maxStationTime.date(), maxStationTime.time(), Qt::LocalTime));
-    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
-    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minStationTime, maxStationTime);
-    ui->weatherStationDataStartDateTimeEdit->setCalendarPopup(false);
-    ui->weatherStationDataEndDateTimeEdit->setCalendarPopup(false);
+    QDateTime start = QDateTime(
+        minStationTime.date(),
+        minStationTime.time(),
+        QTimeZone::systemTimeZone()
+    );
+    QDateTime end = QDateTime(
+        maxStationTime.date(),
+        maxStationTime.time(),
+        QTimeZone::systemTimeZone()
+    );
+
+    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(start, end);
+    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(start, end);
+
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(start);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(end);
+
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
-    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
 
-    int timesteps = qMax(2, static_cast<int>(minStationTime.secsTo(maxStationTime) / 3600));
-    ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
-    //qDebug() << "[GUI-Point] Suggested Timesteps:" << timesteps;
+    updateTimeSteps();
 }
 
 void PointInitializationInput::pointInitializationSelectNoneButtonClicked()
@@ -790,6 +798,80 @@ void PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged(in
 QVector<QString> PointInitializationInput::getStationFiles()
 {
     return stationFiles;
+}
+
+void PointInitializationInput::weatherStationDataStartDateTimeEditChanged()
+{
+    if(ui->weatherStationDataEndDateTimeEdit->dateTime() < ui->weatherStationDataStartDateTimeEdit->dateTime())
+    {
+        ui->weatherStationDataEndDateTimeEdit->setDateTime(ui->weatherStationDataStartDateTimeEdit->dateTime().addSecs(3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::weatherStationDataEndDateTimeEditChanged()
+{
+    if(ui->weatherStationDataEndDateTimeEdit->dateTime() < ui->weatherStationDataStartDateTimeEdit->dateTime())
+    {
+        ui->weatherStationDataStartDateTimeEdit->setDateTime(ui->weatherStationDataEndDateTimeEdit->dateTime().addSecs(-3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::updateTimeSteps()
+{
+    int timesteps;
+
+    if(ui->weatherStationDataStartDateTimeEdit->dateTime() == ui->weatherStationDataEndDateTimeEdit->dateTime())
+    {
+        timesteps = 1;
+    }
+    else
+    {
+        timesteps = qMax(2, static_cast<int>(ui->weatherStationDataStartDateTimeEdit->dateTime().secsTo(ui->weatherStationDataEndDateTimeEdit->dateTime()) / 3600));
+    }
+
+    ui->weatherStationDataTimestepsSpinBox->setValue(timesteps);
+    ui->weatherStationDataTimestepsSpinBox->setEnabled(true);
+
+    if(timesteps == 1)
+    {
+        ui->weatherStationDataEndDateTimeEdit->setEnabled(false);
+        ui->weatherStationDataEndDateTimeEdit->setToolTip("Stop time is disabled for 1 time step simulations");
+    }
+    else
+    {
+        ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
+        ui->weatherStationDataEndDateTimeEdit->setToolTip("Enter the simulation stop time");
+    }
+}
+
+void PointInitializationInput::updateDateTime()
+{
+    // Update download date time info
+    QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
+
+    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    demDateTime = QDateTime(
+        demDateTime.date(),
+        demDateTime.time(),
+        QTimeZone::systemTimeZone()
+    );
+
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(demDateTime.addDays(-1));
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(demDateTime);
+
+    // Update selected station time series
+    QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
+    if(!selectionModel || !selectionModel->hasSelection())
+    {
+        return;
+    }
+
+    pointInitializationTreeViewItemSelectionChanged(
+        selectionModel->selection(),
+        QItemSelection()
+    );
 }
 
 
