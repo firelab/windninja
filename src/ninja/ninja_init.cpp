@@ -272,8 +272,17 @@ int NinjaInitialize(const char* typeofrun)
     rc = CPLGetExecPath( szDriverPath, MAX_PATH+1);
     const char *pszPlugins = CPLSPrintf("%s/gdalplugins", CPLGetPath(szDriverPath));
     //CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
-
     //CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
+
+    CPLSetConfigOption("CUSTOM_SRTM_API_KEY", CUSTOM_SRTM_API_KEY);
+    CPLDebug("WINDNINJA", "Setting CUSTOM_SRTM_API_KEY to: %s", CUSTOM_SRTM_API_KEY);
+
+    CPLSetConfigOption("GS_SECRET_ACCESS_KEY", GS_SECRET_ACCESS_KEY);
+    CPLDebug("WINDNINJA", "Setting GS_SECRET_ACCESS_KEY to: %s", GS_SECRET_ACCESS_KEY);
+
+    CPLSetConfigOption("GS_ACCESS_KEY_ID", GS_ACCESS_KEY_ID);
+    CPLDebug("WINDNINJA", "Setting GS_ACCESS_KEY_ID to: %s", GS_ACCESS_KEY_ID);
+
 #endif /* defined(FIRELAB_PACKAGE) */
 
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
