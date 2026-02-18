@@ -46,8 +46,9 @@ SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
 ENV WM_PROJECT_INST_DIR /opt
 ENV WINDNINJA_DATA=/opt/src/windninja/data
+
 RUN dpkg-reconfigure debconf --frontend=noninteractive && \
-    apt-get update &&  \
+    apt-get update && \
     apt-get install -y wget gnupg2 cmake git apt-transport-https ca-certificates \
                        software-properties-common sudo build-essential \
                        pkg-config g++ libboost-program-options-dev \
@@ -57,13 +58,12 @@ RUN dpkg-reconfigure debconf --frontend=noninteractive && \
     rm -rf /var/lib/apt/lists
 
 RUN mkdir -p /opt/src/windninja/build && \
-    cd  /opt/src/windninja/build && \
-
+    cd /opt/src/windninja/build && \
     # Building the windninja with different funationalites
     cmake \
     # Just a flag to ignore some of the common warnings (required)
     -D SUPRESS_WARNINGS=ON \
-    # This flag  is responsible for Momentum solver (required)
+    # This flag is responsible for Momentum solver (required)
     -D NINJAFOAM=ON \
     # This Flag is required to allow the WindNinja to download DEM Files (optional)
     -D BUILD_FETCH_DEM=ON \
@@ -78,26 +78,26 @@ RUN mkdir -p /opt/src/windninja/build && \
     make -j12 && \
     make install && \
     ldconfig && \
-    cd /opt/src/windninja 
+    cd /opt/src/windninja
 
 
 # This segment is responsible for openfoam8
-RUN source /opt/openfoam8/etc/bashrc &&\
-mkdir -p $FOAM_RUN/../applications && \
-cp -r /opt/src/windninja/src/ninjafoam/8/* $FOAM_RUN/../applications && \
-cd $FOAM_RUN/../applications/ && \
-sed -i "s|export WM_PROJECT_INST_DIR=|export WM_PROJECT_INST_DIR=/opt|g" /opt/openfoam8/etc/bashrc && \
-sed -i "s|export WM_PROJECT_DIR=\$WM_PROJECT_INST_DIR/openfoam8|export WM_PROJECT_DIR=/opt/openfoam8|g" /opt/openfoam8/etc/bashrc && \
-. /opt/openfoam8/etc/bashrc && \
-wmake libso && \
-cd utility/applyInit && \
-wmake  &&\
-
-
-cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/lib/libWindNinja.so /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/ &&\
-cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/bin/applyInit /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/ &&\
-chmod 644 /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/libWindNinja.so &&\
-chmod 755 /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/applyInit 
+RUN source /opt/openfoam8/etc/bashrc && \
+    mkdir -p $FOAM_RUN/../applications && \
+    cp -r /opt/src/windninja/src/ninjafoam/8/* $FOAM_RUN/../applications && \
+    cd $FOAM_RUN/../applications/ && \
+    sed -i "s|export WM_PROJECT_INST_DIR=|export WM_PROJECT_INST_DIR=/opt|g" /opt/openfoam8/etc/bashrc && \
+    sed -i "s|export WM_PROJECT_DIR=\$WM_PROJECT_INST_DIR/openfoam8|export WM_PROJECT_DIR=/opt/openfoam8|g" /opt/openfoam8/etc/bashrc && \
+    . /opt/openfoam8/etc/bashrc && \
+    wmake libso && \
+    cd utility/applyInit && \
+    wmake && \
+    # copy custom libraries and binaries from $FOAM_USER_LIBBIN and $FOAM_USER_APPBIN to $FOAM_LIBBIN and $FOAM_APPBIN.
+    # required for OpenFOAM to work with Singularity, because Singularity drops the home directory where these files are normally located.
+    cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/lib/libWindNinja.so /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/ && \
+    cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/bin/applyInit /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/ && \
+    chmod 644 /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/libWindNinja.so && \
+    chmod 755 /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/applyInit
 
 # To create a Singularity image from this Dockerfile, run the following commands:
 # 1. Build the Docker image
