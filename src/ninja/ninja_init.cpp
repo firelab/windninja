@@ -275,13 +275,13 @@ int NinjaInitialize(const char* typeofrun)
     //CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
 
     CPLSetConfigOption("CUSTOM_SRTM_API_KEY", CUSTOM_SRTM_API_KEY);
-    CPLDebug("WINDNINJA", "Setting CUSTOM_SRTM_API_KEY to: %s", CUSTOM_SRTM_API_KEY);
+    CPLDebug("WINDNINJA", "Setting CUSTOM_SRTM_API_KEY=%s", CUSTOM_SRTM_API_KEY);
 
     CPLSetConfigOption("GS_SECRET_ACCESS_KEY", GS_SECRET_ACCESS_KEY);
-    CPLDebug("WINDNINJA", "Setting GS_SECRET_ACCESS_KEY to: %s", GS_SECRET_ACCESS_KEY);
+    CPLDebug("WINDNINJA", "Setting GS_SECRET_ACCESS_KEY=%s", GS_SECRET_ACCESS_KEY);
 
     CPLSetConfigOption("GS_ACCESS_KEY_ID", GS_ACCESS_KEY_ID);
-    CPLDebug("WINDNINJA", "Setting GS_ACCESS_KEY_ID to: %s", GS_ACCESS_KEY_ID);
+    CPLDebug("WINDNINJA", "Setting GS_ACCESS_KEY_ID=%s", GS_ACCESS_KEY_ID);
 
 #endif /* defined(FIRELAB_PACKAGE) */
 
