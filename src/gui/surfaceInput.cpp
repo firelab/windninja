@@ -304,9 +304,15 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
 void SurfaceInput::elevationInputFileOpenButtonClicked()
 {
     QString directoryPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
+
     if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
     {
         directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        directoryPath = inputFileDir;
     }
     else
     {
@@ -882,5 +888,10 @@ void SurfaceInput::computePointRadius(double north, double east, double south, d
     pointRadius[0] = centerLat;
     pointRadius[1] = centerLon;
     pointRadius[2] = radius;
+}
+
+void SurfaceInput::setInputFileDir(QString dir)
+{
+    inputFileDir = dir;
 }
 

@@ -56,6 +56,7 @@ public:
                     QObject* parent = nullptr);
     double computeMeshResolution(int index, bool isMomemtumChecked);
     void updateMeshResolutionByUnits();
+    void setInputFileDir(QString dir);
 
 signals:
     void updateState();
@@ -90,8 +91,8 @@ private:
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
 
-    QString currentDEMFilePath;
     QString demFileType;
+    QString inputFileDir;
     int GDALXSize, GDALYSize;
     double GDALCellSize, GDALMaxValue, GDALMinValue;
     double DEMCorners[8];

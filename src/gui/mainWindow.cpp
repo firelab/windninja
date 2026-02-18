@@ -1612,122 +1612,72 @@ void MainWindow::plotKmzOutputs()
 
 void MainWindow::writeSettings()
 {
-    // writeToConsole("Saving settings...");
+    writeToConsole("Saving settings...");
 
-    // QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
-    // settings.setDefaultFormat(QSettings::IniFormat);
-    // //qDebug() << "settings filename =" << settings.fileName();
+    QString app(NINJA_VERSION_STRING);
+    app = "WindNinja-" + app;
+    QSettings settings(QSettings::UserScope, "Firelab", app);
+    settings.setDefaultFormat(QSettings::IniFormat);
 
-    // //input file path
-    // settings.setValue("inputFileDir", ui->elevationInputFileLineEdit->property("fullpath"));
+    QString demFilePath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo demFileInfo(demFilePath);
+    settings.setValue("inputFileDir", demFileInfo.absolutePath());
+    settings.setValue("momentumFlag", ui->momentumSolverCheckBox->isChecked());
+    settings.setValue("vegChoice", ui->vegetationComboBox->currentIndex());
+    settings.setValue("meshChoice", ui->meshResolutionComboBox->currentIndex());
+    settings.setValue("meshUnits", ui->meshResolutionUnitsComboBox->currentIndex());
+    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
+    settings.setValue("nProcessors", ui->numberOfProcessorsSpinBox->value());
 
-    // //momentum flag
-    // settings.setValue("momentumFlag", ui->momentumSolverCheckBox->isChecked());
-    // //veg choice
-    // settings.setValue("vegChoice", ui->vegetationComboBox->currentIndex());
-    // //mesh choice
-    // settings.setValue("meshChoice", ui->meshResolutionComboBox->currentIndex());
-    // //mesh units
-    // settings.setValue("meshUnits", ui->meshResolutionUnitsComboBox->currentIndex());
-    // //number of processors
-    // settings.setValue("nProcessors", ui->numberOfProcessorsSpinBox->value());
-
-    // //time zone
-    // //settings.setValue("timeZone", ui->timeZoneComboBox->currentIndex());
-
-    // //settings.setValue("pointFile", tree->point->stationFileName );
-
-    // //if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
-    // //{
-    // //    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
-    // //}
-    // // need to write it every time, the past value will get left there without getting updated otherwise, doesn't delete past settings values
-    // settings.setValue("customRes", ui->meshResolutionSpinBox->value());
-
-    // writeToConsole("Settings saved.");
+    writeToConsole("Settings saved.");
 }
 
 void MainWindow::readSettings()
 {
-    // QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
-    // settings.setDefaultFormat(QSettings::IniFormat);
+    writeToConsole("Reading settings...");
 
-    // if(settings.contains("inputFileDir"))
-    // {
-    //     if(QFile::exists(settings.value("inputFileDir").toString()))
-    //     {
-    //         ui->elevationInputFileLineEdit->setText(settings.value("inputFileDir").toString());
-    //     }
-    // }
-    // else
-    // {
-    //     // std::string oTmpPath = FindNinjaRootDir();
-    //     // inputFileDir = CPLFormFilename(oTmpPath.c_str(), "etc/windninja/example-files", NULL);
-    // }
+    QString app(NINJA_VERSION_STRING);
+    app = "WindNinja-" + app;
+    QSettings settings(QSettings::UserScope, "Firelab", app);
+    settings.setDefaultFormat(QSettings::IniFormat);
 
-    // // TODO: some of the following might be overriding the values computed by inputFileDir, when the other way around might be better
-    // if(settings.contains("momentumFlag"))
-    // {
-    //     bool momentumFlag = settings.value("momentumFlag").toBool();
-    //     if(momentumFlag == true)
-    //     {
-    //         ui->momentumSolverCheckBox->setChecked(true);
-    //         emit momentumSolverCheckBoxClicked();
-    //     }
-    // }
-    // if(settings.contains("vegChoice"))
-    // {
-    //     ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
-    // }
-    // if(settings.contains("meshUnits"))  // putting this after loading meshChoice results in overwriting the value by an extra set of units
-    // {
-    //     ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
-    // }
-    // if(settings.contains("meshChoice"))
-    // {
-    //     int choice = settings.value("meshChoice").toInt();
-    //     ui->meshResolutionComboBox->setCurrentIndex(choice);
-    //     if(choice == 3)
-    //     {
-    //         if(!settings.contains("customRes"))
-    //         {
-    //             qDebug() << "Error. WindNinja settings does not contain \"customRes\"";
-    //         }
-    //         ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
-    //     }
-    // }
-    // if(settings.contains("nProcessors"))
-    // {
-    //     ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
-    // }
-    // // won't we want the timezone of the dem every time, to avoid accidentally doing a weird combination of time zones?
-    // if(settings.contains("timeZone"))
-    // {
-    //     // QString v = settings.value("timeZone").toString();
-    //     // int index = tree->surface->timeZone->tzComboBox->findText(v);
-    //     // if(index == -1)
-    //     //     tree->surface->timeZone->tzCheckBox->setChecked( true );
-    //     // index = tree->surface->timeZone->tzComboBox->findText(v);
-    //     // if( index == 0 )
-    //     //     tree->surface->timeZone->tzComboBox->setCurrentIndex(index +  1);
-    //     // true->surface->timeZone->tzComboBox->setCurrentIndex(index);
-    // }
-    // else
-    // {
-    //     // tree->surface->timeZone->tzComboBox->setCurrentIndex(2);
-    //     // tree->surface->timeZone->tzComboBox->setCurrentIndex(1);
-    // }
-    // if(settings.contains("pointFile"))
-    // {
-    //     // QString f = settings.value("pointFile").toString();
-    //     // tree->point->stationFileName = f;
-    // }
+    if(settings.contains("inputFileDir"))
+    {
+        QFileInfo dir(settings.value("inputFileDir").toString());
+        if (dir.exists())
+        {
+            surfaceInput->setInputFileDir(dir.absoluteFilePath());
+        }
+    }
+    if(settings.contains("momentumFlag") && settings.value("momentumFlag").toBool())
+    {
+        ui->momentumSolverCheckBox->click();
+    }
+    if(settings.contains("vegChoice"))
+    {
+        ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
+    }
+    if(settings.contains("meshChoice"))
+    {
+        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
+        int choice = settings.value("meshChoice", 0).toInt();
+        ui->meshResolutionComboBox->setCurrentIndex(choice);
+        if(choice == 3 && settings.contains("customRes"))
+        {
+            ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
+        }
+    }
+    if(settings.contains("nProcessors"))
+    {
+        ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
+    }
+
+    writeToConsole("Settings read.");
 }
 
 void MainWindow::showEvent(QShowEvent *event)
 {
     QMainWindow::showEvent(event);
-
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
