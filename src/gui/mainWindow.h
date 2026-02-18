@@ -147,8 +147,6 @@ private:
     std::vector<std::vector<std::string>> outputStationKmlFilenames;
     std::vector<std::vector<std::string>> outputWxModelKmzFilenames;
 
-    QString currentDEMFilePath;
-
     void connectSignals();
     bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
     bool setOutputFlags(NinjaArmyH* ninjaArmy,

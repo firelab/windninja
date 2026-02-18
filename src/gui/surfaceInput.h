@@ -91,7 +91,6 @@ private:
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
 
-    QString currentDEMFilePath;
     QString demFileType;
     QString inputFileDir;
     int GDALXSize, GDALYSize;

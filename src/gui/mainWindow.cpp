@@ -1643,11 +1643,15 @@ void MainWindow::readSettings()
 
     if(settings.contains("inputFileDir"))
     {
-        surfaceInput->setInputFileDir(settings.value("inputFileDir").toString());
+        QFileInfo dir(settings.value("inputFileDir").toString());
+        if (dir.exists())
+        {
+            surfaceInput->setInputFileDir(dir.absoluteFilePath());
+        }
     }
-    if(settings.contains("momentumFlag"))
+    if(settings.contains("momentumFlag") && settings.value("momentumFlag").toBool())
     {
-        ui->momentumSolverCheckBox->setChecked(settings.value("momentumFlag").toBool());
+        ui->momentumSolverCheckBox->click();
     }
     if(settings.contains("vegChoice"))
     {
