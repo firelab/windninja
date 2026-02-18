@@ -40,14 +40,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 # Needed for FindNetCDF and GET_DATE()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
-option(FIRELAB_PACKAGE "Build a windows installer with dlls from the firelab machine" OFF)
-mark_as_advanced(FIRELAB_PACKAGE)
-
-if(FIRELAB_PACKAGE)
-    set(NINJA_GUI ON)
-    set(NINJA_CLI ON)
-endif(FIRELAB_PACKAGE)
-
 # Generate a current version file derived from VERSION
 file(READ ${CMAKE_SOURCE_DIR}/VERSION V)
 string(REPLACE "\n" "" V ${V})
@@ -117,6 +109,24 @@ else()
     include(FindGDAL)
     find_package(NetCDF)
 endif(MSVC)
+
+# Environment Variables for NSIS installer
+option(FIRELAB_PACKAGE "CMake options for installer environment variables" OFF)
+mark_as_advanced(FIRELAB_PACKAGE)
+
+if(FIRELAB_PACKAGE)
+    set(CUSTOM_SRTM_API_KEY "" CACHE STRING "API key for downloading SRTM data")
+    mark_as_advanced(CUSTOM_SRTM_API_KEY)
+    add_definitions(-DCUSTOM_SRTM_API_KEY="${CUSTOM_SRTM_API_KEY}")
+
+    set(GS_SECRET_ACCESS_KEY "" CACHE STRING "Access Key for GCP")
+    mark_as_advanced(GS_SECRET_ACCESS_KEY)
+    add_definitions(-DGS_SECRET_ACCESS_KEY="${GS_SECRET_ACCESS_KEY}")
+
+    set(GS_ACCESS_KEY_ID "" CACHE STRING "Account ID Key for GCP")
+    mark_as_advanced(GS_ACCESS_KEY_ID)
+    add_definitions(-DGS_ACCESS_KEY_ID="${GS_ACCESS_KEY_ID}")
+endif(FIRELAB_PACKAGE)
 
 # Ninja executables
 option(NINJA_GUI "Build Qt GUI" ON)
