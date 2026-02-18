@@ -1671,6 +1671,8 @@ void MainWindow::readSettings()
     {
         ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
     }
+
+    writeToConsole("Settings read.");
 }
 
 void MainWindow::showEvent(QShowEvent *event)

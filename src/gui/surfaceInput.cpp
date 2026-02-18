@@ -304,14 +304,15 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
 void SurfaceInput::elevationInputFileOpenButtonClicked()
 {
     QString directoryPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
 
-    if(!inputFileDir.isEmpty())
-    {
-        directoryPath = inputFileDir;
-    }
-    else if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
     {
         directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        directoryPath = inputFileDir;
     }
     else
     {
