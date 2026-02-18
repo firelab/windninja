@@ -71,6 +71,8 @@ RUN mkdir -p /opt/src/windninja/build && \
     -D BUILD_SLOPE_ASPECT_GRID=ON \
     # This Flag is required to build the flow seperation grid utility (optional)
     -D BUILD_FLOW_SEPARATION_GRID=ON \
+    # This Flag is turns off the building of the GUI. Useful when only building the CLI
+    -D NINJA_GUI=OFF \
     # User can add their specific flag from the cmake here similarly from the above example
     .. && \
     make -j12 && \

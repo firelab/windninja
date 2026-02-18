@@ -57,12 +57,12 @@ make -j 8
 sudo make install
 cd ..
 
-#Add qt4 libs from ppa
-#See here for more info:
-#https://ubuntuhandbook.org/index.php/2020/07/install-qt4-ubuntu-20-04/
-sudo add-apt-repository ppa:rock-core/qt4
-sudo apt-get update
-sudo -E apt-get install -y libqt4-dev libqtwebkit-dev 
+##Add qt4 libs from ppa
+##See here for more info:
+##https://ubuntuhandbook.org/index.php/2020/07/install-qt4-ubuntu-20-04/
+#sudo add-apt-repository ppa:rock-core/qt4
+#sudo apt-get update
+#sudo -E apt-get install -y libqt4-dev libqtwebkit-dev 
 
 #Use OpenFOAM 8
 #add the dl.openfoam.org repo and install OpenFOAM 8
