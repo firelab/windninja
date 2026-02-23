@@ -2340,11 +2340,16 @@ int NinjaFoam::SampleCloudGrid()
     ** algorithm.
     ** XXX
     */
-    GDALGridNearestNeighborOptions sOptions;
-    sOptions.dfRadius1 = 0.;
-    sOptions.dfRadius2 = sOptions.dfRadius1;
-    sOptions.dfAngle = 0.;
-    sOptions.dfNoDataValue = -9999;
+    GDALGridNearestNeighborOptions sOptions{};
+#ifdef GDAL_COMPUTE_VERSION
+#if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,6,0)
+    sOptions.nSizeOfStructure = sizeof(GDALGridNearestNeighborOptions);
+#endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,6,0)
+#endif /// GDAL_COMPUTE_VERSION
+    sOptions.dfRadius1 = 0.0;
+    sOptions.dfRadius2 = 0.0;
+    sOptions.dfAngle = 0.0;
+    sOptions.dfNoDataValue = -9999.0;
 
     GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
     pszGridFilename = CPLStrdup( CPLSPrintf( "%s/foam.tif", pszFoamPath ) );
