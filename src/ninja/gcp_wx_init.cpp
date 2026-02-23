@@ -250,6 +250,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         VSIUnlink(localIdxPath.c_str());
     }
 
+    if(validTimes.size() == 0)
+    {
+        throw std::runtime_error("Failed to open any remote idx files.\nLikely input times are out of available data range.");
+    }
+
     std::vector<std::vector<std::string>> options = getOptions(fileBands, buffer);
 
 #ifdef _OPENMP
@@ -346,6 +351,20 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         throw std::runtime_error("Failed to read temporary directory: " + tmp);
     }
 
+    int numFiles = 0;
+    for(int fileIdx = 0; fileList[fileIdx] != nullptr; fileIdx++)
+    {
+        std::string fileName = fileList[fileIdx];
+        if(fileName != "." && fileName != "..")
+        {
+            numFiles++;
+        }
+    }
+    if(numFiles == 0)
+    {
+        throw badForecastFile("Failed to download any forecast files.");
+    }
+
     for (int i = 0; fileList[i] != nullptr; ++i) {
         std::string fileNameOnly = fileList[i];
         if (fileNameOnly == "." || fileNameOnly == "..") continue;
@@ -435,7 +454,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
 
     if (!hOutDS)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GCP, GDALTranslate Failed for %s", outFile.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "GCP, GDALTranslate failed for %s", outFile.c_str());
         return GCP_ERR;
     }
     GDALClose(hOutDS);
