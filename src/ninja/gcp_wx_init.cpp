@@ -571,6 +571,39 @@ void GCPWxModel::setDateTime(boost::gregorian::date date1, boost::gregorian::dat
     endDate = date2;
     starthours = hours1;
     endhours = hours2;
+
+    // now do some checks of the inputs
+    //
+    // inputs are already in UTC time, so using a standard boost::posix_time::ptime is good enough,
+    // no need for a boost::local_time::local_date_time or a boost::local_time::time_zone_ptr
+
+    boost::posix_time::ptime startDateTime(startDate, boost::posix_time::duration_from_string(starthours + ":00:00"));
+    boost::posix_time::ptime endDateTime(endDate, boost::posix_time::duration_from_string(endhours + ":00:00"));
+
+    boost::posix_time::ptime minDateTime(boost::gregorian::date(2014, 7, 30), boost::posix_time::hours(18));
+
+    // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
+    // will be more accurate across dates/times edge cases if the math is done right on the starting time structure
+    boost::posix_time::ptime currentLocalTime_UTC = boost::posix_time::second_clock::universal_time();
+    boost::posix_time::ptime maxDateTime = currentLocalTime_UTC - boost::posix_time::hours(1);
+
+    if(startDateTime < minDateTime || endDateTime > maxDateTime)
+    {
+        throw std::runtime_error(
+            "PASTCAST Datetime must be within the allowed range\n(from " +
+            boost::posix_time::to_simple_string(minDateTime) + " UTC to " +
+            boost::posix_time::to_simple_string(maxDateTime) + " UTC)."
+        );
+    }
+    if(startDateTime > endDateTime)
+    {
+        throw std::runtime_error("Start datetime cannot be after stop datetime.");
+    }
+    boost::posix_time::time_duration maxRange = endDateTime - startDateTime;
+    if(maxRange.hours() > 14 * 24)
+    {
+        throw std::runtime_error("Datetime range must not exceed 14 days.");
+    }
 }
 
 void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
