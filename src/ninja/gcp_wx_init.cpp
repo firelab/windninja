@@ -224,13 +224,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         VSILFILE *fpRemote = VSIFOpenL(("/vsicurl/" + idxUrl).c_str(), "r");
         if (!fpRemote) {
-            CPLDebug("IDXCache", "Failed to open remote idx file: %s", idxUrl.c_str());
+            CPLDebug("GCP", "Failed to open remote idx file: %s", idxUrl.c_str());
             continue;
         }
 
         VSILFILE *fpLocal = VSIFOpenL(localIdxPath.c_str(), "w");
         if (!fpLocal) {
-            CPLDebug("IDXCache", "Failed to create local idx file: %s", localIdxPath.c_str());
+            CPLDebug("GCP", "Failed to create local idx file: %s", localIdxPath.c_str());
             VSIFCloseL(fpRemote);
             continue;
         }
@@ -465,7 +465,7 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
     std::ifstream idxFile(idxFilePath.c_str());
     if (!idxFile.is_open())
     {
-        CPLDebug("IDXParse", "Failed to open cached .idx file: %s", idxFilePath.c_str());
+        CPLDebug("GCP", "Failed to open cached .idx file: %s", idxFilePath.c_str());
         return "";
     }
 
@@ -487,11 +487,11 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
                     if (iss >> band)
                     {
                         bandSet.push_back(band);
-                        CPLDebug("IDXParse", "Field '%s' is at band %d", var.c_str(), band);
+                        CPLDebug("GCP", "Field '%s' is at band %d", var.c_str(), band);
                     }
                     else
                     {
-                        CPLDebug("IDXParse", "Could not parse band number in line: %s", line.c_str());
+                        CPLDebug("GCP", "Could not parse band number in line: %s", line.c_str());
                     }
                 }
             }
