@@ -1,9 +1,11 @@
 #include "outputs.h"
 
 Outputs::Outputs(Ui::MainWindow *ui,
+                 QWebEngineView *webEngineView,
                  QObject* parent)
     : QObject(parent),
-    ui(ui)
+    ui(ui),
+    webEngineView(webEngineView)
 {
     QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     ui->outputDirectoryLineEdit->setText(downloadsPath);
@@ -51,6 +53,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
+    connect(ui->kmzOutputOpenFileButton, &QPushButton::clicked, this, &Outputs::kmzOutputOpenFileButtonClicked);
+    connect(ui->kmzOutputClearButton, &QPushButton::clicked, this, &Outputs::kmzOutputClearButtonClicked);
 
 }
 
@@ -193,4 +197,42 @@ void Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
     {
         ui->geospatialPDFFilesMeshResolutionComboBox->setCurrentIndex(index);
     }
+}
+
+void Outputs::kmzOutputOpenFileButtonClicked()
+{
+    QString dir = ui->outputDirectoryLineEdit->text();
+
+    QStringList files = QFileDialog::getOpenFileNames(
+        ui->centralwidget,
+        "Select files",
+        dir,
+        "KMZ Files (*.kmz);;All Files (*)"
+    );
+
+
+    bool timeSeries = !ui->domainAverageGroupBox->isChecked();
+
+    for (const QString &outFileStr : files)
+    {
+        qDebug() << "kmz outFile =" << outFileStr;
+
+        QFile outFile(outFileStr);
+        if (!outFile.open(QIODevice::ReadOnly))
+            continue; // or handle error
+
+        QByteArray data = outFile.readAll();
+        QString base64 = data.toBase64();
+
+        webEngineView->page()->runJavaScript(
+            "loadKmzFromBase64('" + base64 + "', " +
+            (timeSeries ? "true" : "false") + ");"
+            );
+    }
+}
+
+void Outputs::kmzOutputClearButtonClicked()
+{
+    webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+    webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
 }

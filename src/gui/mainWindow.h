@@ -49,7 +49,6 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTreeWidgetItem>
-#include <QtWebEngineWidgets/qwebengineview.h>
 #include <QDir>
 #include <QDirIterator>
 #include <QDateTime>

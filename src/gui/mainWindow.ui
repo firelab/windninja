@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>9</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -2769,8 +2769,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>374</width>
-               <height>431</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3096,7 +3096,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <height>16777215</height>
           </size>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,1">
+         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,0,1">
           <property name="leftMargin">
            <number>5</number>
           </property>
@@ -3321,6 +3321,62 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <property name="checked">
              <bool>true</bool>
             </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="kmzOutputGroupBox">
+            <property name="title">
+             <string>Load KMZ Output</string>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_23">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="kmzOutputOpenFileButton">
+               <property name="text">
+                <string>Open File</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../../wn-resources.qrc">
+                 <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="kmzOutputClearButton">
+               <property name="text">
+                <string>Clear</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../../wn-resources.qrc">
+                 <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <spacer name="kmzOutputSpacer">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
            </widget>
           </item>
           <item>

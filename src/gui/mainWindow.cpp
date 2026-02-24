@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, this);
     weatherModelInput = new WeatherModelInput(ui, this);
-    outputs = new Outputs(ui, this);
+    outputs = new Outputs(ui, webEngineView, this);
 
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
