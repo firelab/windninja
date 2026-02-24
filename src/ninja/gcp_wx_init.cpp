@@ -594,11 +594,18 @@ void GCPWxModel::setDateTime(boost::gregorian::date date1, boost::gregorian::dat
 
     if(startDateTime < minDateTime || endDateTime > maxDateTime)
     {
-        throw std::runtime_error(
-            "PASTCAST Datetime must be within the allowed range\n(from " +
-            boost::posix_time::to_simple_string(minDateTime) + " UTC to " +
-            boost::posix_time::to_simple_string(maxDateTime) + " UTC)."
-        );
+        std::locale timeLocale(std::locale::classic(), new boost::posix_time::time_facet("%m/%d/%Y %H:%M"));
+        ostringstream minDateTimeStream;
+        minDateTimeStream.imbue(timeLocale);
+        minDateTimeStream << minDateTime;
+        ostringstream maxDateTimeStream;
+        maxDateTimeStream.imbue(timeLocale);
+        maxDateTimeStream << maxDateTime;
+
+        ostringstream os;
+        os << "PASTCAST Datetime must be within the allowed range\n"
+           << "(from " << minDateTimeStream.str() << " UTC to " << maxDateTimeStream.str() << " UTC).";
+        throw std::runtime_error(os.str());
     }
     if(startDateTime > endDateTime)
     {

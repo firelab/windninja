@@ -1037,18 +1037,32 @@ int windNinjaCLI(int argc, char* argv[])
                         timeZone
                         );
 
-                    if (startDateTime < minDateTime || stopDateTime > maxDateTime) {
-                      throw std::runtime_error(
-                          "Datetime must be within the allowed range (from " +
-                          boost::posix_time::to_simple_string(minDateTime.local_time()) + " to " +
-                          boost::posix_time::to_simple_string(maxDateTime.local_time()) + ").");
-                    }
-                    if (startDateTime > stopDateTime) {
-                      throw std::runtime_error("Start datetime cannot be after stop datetime.");
-                    }
-                    boost::posix_time::time_duration range = stopDateTime - startDateTime;
-                    if (range.hours() > 14 * 24) {
-                      throw std::runtime_error("Datetime range must not exceed 14 days.");
+                    if(startDateTime < minDateTime || stopDateTime > maxDateTime)
+                    {
+                        boost::posix_time::time_facet* timeFacet = new boost::posix_time::time_facet("%m/%d/%Y %H:%M");
+                        ostringstream minDateTimeStream;
+                        minDateTimeStream.imbue(std::locale(std::locale::classic(), timeFacet));
+                        minDateTimeStream << minDateTime.local_time();
+                        ostringstream maxDateTimeStream;
+                        maxDateTimeStream.imbue(std::locale(std::locale::classic(), timeFacet));
+                        maxDateTimeStream << maxDateTime.local_time();
+
+                        // only works because boost::local_time::local_date_time() times were constructed properly using the time zone
+                        std::string minDateTimeAbbrev = timeZone->std_zone_abbrev();
+                        std::string maxDateTimeAbbrev = timeZone->std_zone_abbrev();
+                        if(minDateTime.is_dst())
+                        {
+                            minDateTimeAbbrev = timeZone->dst_zone_abbrev();
+                        }
+                        if(maxDateTime.is_dst())
+                        {
+                            maxDateTimeAbbrev = timeZone->dst_zone_abbrev();
+                        }
+
+                        ostringstream os;
+                        os << "PASTCAST Datetime must be within the allowed range\n"
+                           << "(from " << minDateTimeStream.str() << " " << minDateTimeAbbrev << " to " << maxDateTimeStream.str() << " " << maxDateTimeAbbrev << ").";
+                        throw std::runtime_error(os.str());
                     }
 
                     auto* forecastModel = dynamic_cast<GCPWxModel*>(model);
