@@ -304,6 +304,9 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
         return;
     }
 
+    ui->weatherModelSpinBox->setDisabled(false);
+    ui->pastcastGroupBox->setVisible(false);
+
     QStringList tooltipList;
     QString weatherModel = ui->weatherModelComboBox->currentText();
     for(int i = 0; i < modelGlossary.size(); i++)
@@ -401,6 +404,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     if (selected.indexes().empty())
     {
         state.isWeatherModelForecastValid = false;
+        emit updateState();
 
         return;
     }
