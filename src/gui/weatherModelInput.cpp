@@ -486,13 +486,13 @@ void WeatherModelInput::updateDateTime()
         QTime(18, 0),
         QTimeZone::UTC
     );
+
     QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
-    ui->pastcastGroupBox->setTitle(
-        "Earliest Pastcast Datetime: "
-        + localDateTime.toString("MM/dd/yyyy hh:mm")
-        + " " + timeZone.abbreviation(localDateTime)
-    );
-    ui->pastcastGroupBox->updateGeometry();
+    QDateTime minDemDateTime = QDateTime(
+        localDateTime.date(),
+        localDateTime.time(),
+        QTimeZone::systemTimeZone()
+    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
     QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
     QTime demTime = demDateTime.time();
@@ -504,11 +504,16 @@ void WeatherModelInput::updateDateTime()
         QTimeZone::systemTimeZone()
     ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
-    QDateTime minDemDateTime = QDateTime(
-        localDateTime.date(),
-        localDateTime.time(),
-        QTimeZone::systemTimeZone()
-    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
+    ui->pastcastGroupBox->setTitle(
+        "Earliest PASTCAST DateTime: "
+        + localDateTime.toString("MM/dd/yyyy hh:mm")
+        + " " + timeZone.abbreviation(localDateTime)
+//        + "\n"
+//        +", Latest PASTCAST DateTime: "
+//        + demDateTime.toString("MM/dd/yyyy hh:mm")
+//        + " " + timeZone.abbreviation(demDateTime)
+    );
+    ui->pastcastGroupBox->updateGeometry();
 
     ui->pastcastStartDateTimeEdit->setDateTimeRange(minDemDateTime, demDateTime);
     ui->pastcastEndDateTimeEdit->setDateTimeRange(minDemDateTime, demDateTime);
