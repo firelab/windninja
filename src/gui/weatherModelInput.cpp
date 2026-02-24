@@ -479,7 +479,7 @@ void WeatherModelInput::updateDateTime()
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    // Update PASCAST date time info
+    // Update PASTCAST date time info
     QDate earliestDate(2014, 07, 30);
     QDateTime utcDateTime(
         earliestDate,
@@ -503,6 +503,18 @@ void WeatherModelInput::updateDateTime()
         demTime,
         QTimeZone::systemTimeZone()
     ); // Time is set to dem local time, label as system time to prevent conversions via Qt
+
+    QDateTime minDemDateTime = QDateTime(
+        localDateTime.date(),
+        localDateTime.time(),
+        QTimeZone::systemTimeZone()
+    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
+
+    ui->pastcastStartDateTimeEdit->setDateTimeRange(minDemDateTime, demDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTimeRange(minDemDateTime, demDateTime);
+
+    ui->pastcastStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
+    ui->pastcastEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
 
     ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
     ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);

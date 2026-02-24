@@ -2561,7 +2561,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </datetime>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yyyy h:mm</string>
+                        <string>MM/dd/yyyy HH:mm</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
@@ -2622,7 +2622,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yyyy h:mm</string>
+                        <string>MM/dd/yyyy HH:mm</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
@@ -2928,7 +2928,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>false</bool>
                       </property>
                       <property name="displayFormat">
-                       <string>M/d/yyyy h:mm </string>
+                       <string>MM/dd/yyyy HH:mm</string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -2941,7 +2941,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
                       <property name="displayFormat">
-                       <string>M/d/yyyy h:mm </string>
+                       <string>MM/dd/yyyy HH:mm</string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -5668,7 +5668,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yyyy h:mm </string>
+                      <string>MM/dd/yyyy HH:mm</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>true</bool>
@@ -5691,7 +5691,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yyyy H:mm</string>
+                      <string>MM/dd/yyyy HH:mm</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>true</bool>
