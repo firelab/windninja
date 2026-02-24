@@ -200,8 +200,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     std::string fileName(CPLGetFilename(demFile.c_str()));
     std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
 
+    // Extract hour string: HH (zero-padded)
+    std::ostringstream hourStrStream;
+    hourStrStream << std::setw(2) << std::setfill('0') << startDateTime.time_of_day().hours();
+    std::string startHourStr = hourStrStream.str();
+
     std::string identifier = path + "/" + getForecastReadable() + "-" + fileName + "/";
-    std::string outFolder = identifier + startDateStr + "T" + starthours + "00/";
+    std::string outFolder = identifier + startDateStr + "T" + startHourStr + "00/";
     std::string tmp = outFolder + "tmp/";
     VSIMkdir(identifier.c_str(), 0777);
     VSIMkdir(outFolder.c_str(), 0777);
@@ -338,7 +343,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 #endif
 
     std::string zipFolder = outFolder;
-    std::string zipFilePath = zipFolder + startDateStr + "T" + starthours + "00" + ".zip";
+    std::string zipFilePath = zipFolder + startDateStr + "T" + startHourStr + "00" + ".zip";
     std::string zipVirtualPath = "/vsizip/" + zipFilePath;
 
     if( CPLCheckForFile((char*)zipFilePath.c_str(), NULL) )
