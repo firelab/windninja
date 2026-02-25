@@ -605,8 +605,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
     stationFiles.clear();
     stationFileTypes.clear();
 
-    maxStationTime = QDateTime();
-    minStationTime = QDateTime();
+    maxStationLocalDateTime = QDateTime();
+    minStationLocalDateTime = QDateTime();
 
     state.isStationFileSelected = false;
     if (selectedRows.count() > 0)
@@ -649,23 +649,23 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             //qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
 
             OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, row 1 is first time in series
-            QString startDateTime(poFeature->GetFieldAsString(15)); // Time should be in 15th (last) column (0-14)
-            //qDebug() << "[GUI-Point] Station start time:" << startDateTime;
+            QString startDateTimeStr(poFeature->GetFieldAsString(15)); // Time should be in 15th (last) column (0-14)
+            //qDebug() << "[GUI-Point] Station start time:" << startDateTimeStr;
 
             poFeature = poLayer->GetFeature(lastIndex);             // last time in series
-            QString stopDateTime(poFeature->GetFieldAsString(15));
-            //qDebug() << "[GUI-Point] Station end Time:" << stopDateTime;
+            QString stopDateTimeStr(poFeature->GetFieldAsString(15));
+            //qDebug() << "[GUI-Point] Station end Time:" << stopDateTimeStr;
 
-            if (startDateTime.isEmpty() && stopDateTime.isEmpty()) // No time series
+            if(startDateTimeStr.isEmpty() && stopDateTimeStr.isEmpty())  // No time series
             {
                 //qDebug() << "[GUI-Point] File cannot be used for Time Series";
                 timeSeriesFlag = false;
                 stationFileTypes.push_back(0);
             }
-            else if (!startDateTime.isEmpty() && !stopDateTime.isEmpty()) // Some type of time series
+            else if(!startDateTimeStr.isEmpty() && !stopDateTimeStr.isEmpty())  // Some type of time series
             {
                 //qDebug() << "[GUI-Point] File can be used for Time Series, suggesting time series parameters...";
-                readStationTime(startDateTime, stopDateTime);
+                readStationTime(startDateTimeStr, stopDateTimeStr);
                 stationFileTypes.push_back(1);
             }
         }
@@ -721,55 +721,55 @@ void PointInitializationInput::pointInitializationSelectAllButtonClicked()
     selectionModel->select(selection, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 }
 
-void PointInitializationInput::readStationTime(QString startDateTime, QString stopDateTime)
+void PointInitializationInput::readStationTime(QString startDateTimeStr, QString stopDateTimeStr)
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    QDateTime startTimeUTC = QDateTime::fromString(startDateTime, Qt::ISODate);
-    QDateTime endTimeUTC   = QDateTime::fromString(stopDateTime, Qt::ISODate);
+    QDateTime startUtcDateTime = QDateTime::fromString(startDateTimeStr, Qt::ISODate);
+    QDateTime stopUtcDateTime  = QDateTime::fromString( stopDateTimeStr, Qt::ISODate);
 
-    QDateTime demStartTime = startTimeUTC.toTimeZone(timeZone);
-    QDateTime demEndTime   = endTimeUTC.toTimeZone(timeZone);
+    QDateTime startLocalDateTime = startUtcDateTime.toTimeZone(timeZone);
+    QDateTime stopLocalDateTime  =  stopUtcDateTime.toTimeZone(timeZone);
 
-    if (minStationTime.isNull() || demStartTime < minStationTime)
+    if(minStationLocalDateTime.isNull() || startLocalDateTime < minStationLocalDateTime)
     {
-        minStationTime = demStartTime;
+        minStationLocalDateTime = startLocalDateTime;
     }
-    if (maxStationTime.isNull() || demEndTime > maxStationTime)
+    if(maxStationLocalDateTime.isNull() || stopLocalDateTime > maxStationLocalDateTime)
     {
-        maxStationTime = demEndTime;
+        maxStationLocalDateTime = stopLocalDateTime;
     }
 
     ui->weatherStationMinTimeLabel->setText(
         "Current Min Time: " +
-        minStationTime.toString("MM/dd/yy hh:mm") +
-        " " + timeZone.abbreviation(minStationTime)
-        );
+        minStationLocalDateTime.toString("MM/dd/yy hh:mm") +
+        " " + timeZone.abbreviation(minStationLocalDateTime)
+    );
     ui->weatherStationMaxTimeLabel->setText(
         "Current Max Time: " +
-        maxStationTime.toString("MM/dd/yy hh:mm") +
-        " " + timeZone.abbreviation(maxStationTime)
-        );
-
-    QDateTime start = QDateTime(
-        minStationTime.date(),
-        minStationTime.time(),
-        QTimeZone::systemTimeZone()
-    );
-    QDateTime end = QDateTime(
-        maxStationTime.date(),
-        maxStationTime.time(),
-        QTimeZone::systemTimeZone()
+        maxStationLocalDateTime.toString("MM/dd/yy hh:mm") +
+        " " + timeZone.abbreviation(maxStationLocalDateTime)
     );
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(start, end);
-    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(start, end);
+    QDateTime minLocalDateTimeForRange = QDateTime(
+        minStationLocalDateTime.date(),
+        minStationLocalDateTime.time(),
+        QTimeZone::systemTimeZone()
+    );
+    QDateTime maxLocalDateTimeForRange = QDateTime(
+        maxStationLocalDateTime.date(),
+        maxStationLocalDateTime.time(),
+        QTimeZone::systemTimeZone()
+    );
+
+    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
+    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
 
     ui->weatherStationDataStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
     ui->weatherStationDataEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(start);
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(end);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(minLocalDateTimeForRange);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxLocalDateTimeForRange);
 
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
@@ -854,15 +854,15 @@ void PointInitializationInput::updateDateTime()
     // Update download date time info
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
-    demDateTime = QDateTime(
-        demDateTime.date(),
-        demDateTime.time(),
+    QDateTime currentLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QDateTime currentLocalDateTimeForRange = QDateTime(
+        currentLocalDateTime.date(),
+        currentLocalDateTime.time(),
         QTimeZone::systemTimeZone()
     );
 
-    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(demDateTime.addDays(-1));
-    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(demDateTime);
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(currentLocalDateTimeForRange.addDays(-1));
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(currentLocalDateTimeForRange);
 
     // Update selected station time series
     QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
@@ -876,7 +876,5 @@ void PointInitializationInput::updateDateTime()
         QItemSelection()
     );
 }
-
-
 
 

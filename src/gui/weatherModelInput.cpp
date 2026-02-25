@@ -484,49 +484,49 @@ void WeatherModelInput::updateDateTime()
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
     // Update PASTCAST date time info
-    QDate earliestDate(2014, 07, 30);
-    QDateTime utcDateTime(
-        earliestDate,
+    QDate minDate(2014, 07, 30);
+    QDateTime minUtcDateTime(
+        minDate,
         QTime(18, 0),
         QTimeZone::UTC
     );
 
-    QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
-    QDateTime minDemDateTime = QDateTime(
-        localDateTime.date(),
-        localDateTime.time(),
+    QDateTime minLocalDateTime = minUtcDateTime.toTimeZone(timeZone);
+    QDateTime minLocalDateTimeForRange = QDateTime(
+        minLocalDateTime.date(),
+        minLocalDateTime.time(),
         QTimeZone::systemTimeZone()
     ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
-    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
-    QTime demTime = demDateTime.time();
-    demTime.setHMS(demTime.hour()-1, 0, 0, 0);
-    demDateTime.setTime(demTime);
-    demDateTime = QDateTime(
-        demDateTime.date(),
-        demTime,
+    QDateTime maxLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QTime maxTime = maxLocalDateTime.time();
+    maxTime.setHMS(maxTime.hour()-1, 0, 0, 0);
+    maxLocalDateTime.setTime(maxTime);
+    QDateTime maxLocalDateTimeForRange = QDateTime(
+        maxLocalDateTime.date(),
+        maxTime,
         QTimeZone::systemTimeZone()
     ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
     ui->pastcastGroupBox->setTitle(
         "Earliest PASTCAST DateTime: "
-        + localDateTime.toString("MM/dd/yyyy hh:mm")
-        + " " + timeZone.abbreviation(localDateTime)
+        + minLocalDateTime.toString("MM/dd/yyyy hh:mm")
+        + " " + timeZone.abbreviation(minLocalDateTime)
 //        + "\n"
-//        +", Latest PASTCAST DateTime: "
-//        + demDateTime.toString("MM/dd/yyyy hh:mm")
-//        + " " + timeZone.abbreviation(demDateTime)
+        +", Latest PASTCAST DateTime: "
+        + maxLocalDateTime.toString("MM/dd/yyyy hh:mm")
+        + " " + timeZone.abbreviation(maxLocalDateTime)
     );
     ui->pastcastGroupBox->updateGeometry();
 
-    ui->pastcastStartDateTimeEdit->setDateTimeRange(minDemDateTime, demDateTime);
-    ui->pastcastEndDateTimeEdit->setDateTimeRange(minDemDateTime, demDateTime);
+    ui->pastcastStartDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
+    ui->pastcastEndDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
 
     ui->pastcastStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
     ui->pastcastEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
 
-    ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
-    ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
+    ui->pastcastStartDateTimeEdit->setDateTime(maxLocalDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTime(maxLocalDateTime);
 
     // Update selected wx model time series
     QItemSelectionModel *fileSelectionModel = ui->weatherModelFileTreeView->selectionModel();

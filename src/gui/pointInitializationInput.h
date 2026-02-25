@@ -83,7 +83,7 @@ private:
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
     QFileSystemModel *stationFileSystemModel;
-    QDateTime maxStationTime, minStationTime;
+    QDateTime maxStationLocalDateTime, minStationLocalDateTime;
     QVector<QString> stationFiles;
     QVector<int> stationFileTypes;
     QVector<QString> openStationFolders;
@@ -113,7 +113,7 @@ private:
                            QString outputPath);
     void fetchStationDataFinished();
     bool readTimeSeries(QModelIndex row);
-    void readStationTime(QString startDateTime, QString stopDateTime);
+    void readStationTime(QString startDateTimeStr, QString stopDateTimeStr);
     void updateTimeSteps();
 };
 
