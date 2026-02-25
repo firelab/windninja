@@ -111,18 +111,24 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
 void WeatherModelInput::updateProgressMessage(const QString message)
 {
-//    QMessageBox::critical(
-//        nullptr,
-//        QApplication::tr("Error"),
-//        message
-//    );
-    progress->setLabelText(message);
-    progress->setWindowTitle(tr("Error"));
-    progress->setCancelButtonText(tr("Close"));
-    progress->setAutoClose(false);
-    progress->setAutoReset(false);
-    progress->setRange(0, 1);
-    progress->setValue(progress->maximum());
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message
+        );
+    }
 }
 
 static void comMessageHandler(const char *pszMessage, void *pUser)
@@ -432,7 +438,11 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     const char **timeList = NinjaGetWeatherModelTimeList(ninjaTools, &timeListSize, modelFilePath.c_str(), timeZone.c_str());
     if(timeList == NULL)
     {
-        qDebug() << "NinjaGetWeatherModelTimeList: Empty Time List";
+        qDebug() << "NinjaGetWeatherModelTimeList: Failed to fill timeList";
+    }
+    if(timeListSize == 0)
+    {
+        qDebug() << "NinjaGetWeatherModelTimeList: returned empty timeList";
     }
 
     timeModel->clear();
