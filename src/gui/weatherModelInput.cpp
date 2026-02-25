@@ -493,19 +493,16 @@ void WeatherModelInput::updateDateTime()
 
     QDateTime minLocalDateTime = minUtcDateTime.toTimeZone(timeZone);
 
-    QDateTime maxLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QDateTime currentLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QDateTime maxLocalDateTime = currentLocalDateTime.addSecs(-3600);
     QTime maxTime = maxLocalDateTime.time();
-    maxTime.setHMS(maxTime.hour()-1, 0, 0, 0);
+    maxTime.setHMS(maxTime.hour(), 0, 0, 0);
     maxLocalDateTime.setTime(maxTime);
 
     ui->pastcastGroupBox->setTitle(
         "Earliest PASTCAST DateTime: "
         + minLocalDateTime.toString("MM/dd/yyyy hh:mm")
         + " " + timeZone.abbreviation(minLocalDateTime)
-//        + "\n"
-        +", Latest PASTCAST DateTime: "
-        + maxLocalDateTime.toString("MM/dd/yyyy hh:mm")
-        + " " + timeZone.abbreviation(maxLocalDateTime)
     );
     ui->pastcastGroupBox->updateGeometry();
 
