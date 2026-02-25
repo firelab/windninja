@@ -492,21 +492,11 @@ void WeatherModelInput::updateDateTime()
     );
 
     QDateTime minLocalDateTime = minUtcDateTime.toTimeZone(timeZone);
-    QDateTime minLocalDateTimeForRange = QDateTime(
-        minLocalDateTime.date(),
-        minLocalDateTime.time(),
-        QTimeZone::systemTimeZone()
-    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
     QDateTime maxLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
     QTime maxTime = maxLocalDateTime.time();
     maxTime.setHMS(maxTime.hour()-1, 0, 0, 0);
     maxLocalDateTime.setTime(maxTime);
-    QDateTime maxLocalDateTimeForRange = QDateTime(
-        maxLocalDateTime.date(),
-        maxTime,
-        QTimeZone::systemTimeZone()
-    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
 
     ui->pastcastGroupBox->setTitle(
         "Earliest PASTCAST DateTime: "
@@ -519,8 +509,11 @@ void WeatherModelInput::updateDateTime()
     );
     ui->pastcastGroupBox->updateGeometry();
 
-    ui->pastcastStartDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
-    ui->pastcastEndDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
+    ui->pastcastStartDateTimeEdit->setTimeZone(timeZone);
+    ui->pastcastEndDateTimeEdit->setTimeZone(timeZone);
+
+    ui->pastcastStartDateTimeEdit->setDateTimeRange(minLocalDateTime, maxLocalDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTimeRange(minLocalDateTime, maxLocalDateTime);
 
     ui->pastcastStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
     ui->pastcastEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");

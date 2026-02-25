@@ -751,25 +751,17 @@ void PointInitializationInput::readStationTime(QString startDateTimeStr, QString
         " " + timeZone.abbreviation(maxStationLocalDateTime)
     );
 
-    QDateTime minLocalDateTimeForRange = QDateTime(
-        minStationLocalDateTime.date(),
-        minStationLocalDateTime.time(),
-        QTimeZone::systemTimeZone()
-    );
-    QDateTime maxLocalDateTimeForRange = QDateTime(
-        maxStationLocalDateTime.date(),
-        maxStationLocalDateTime.time(),
-        QTimeZone::systemTimeZone()
-    );
+    ui->weatherStationDataStartDateTimeEdit->setTimeZone(timeZone);
+    ui->weatherStationDataEndDateTimeEdit->setTimeZone(timeZone);
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
-    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minLocalDateTimeForRange, maxLocalDateTimeForRange);
+    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minStationLocalDateTime, maxStationLocalDateTime);
+    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minStationLocalDateTime, maxStationLocalDateTime);
 
     ui->weatherStationDataStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
     ui->weatherStationDataEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(minLocalDateTimeForRange);
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxLocalDateTimeForRange);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(minStationLocalDateTime);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxStationLocalDateTime);
 
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
@@ -855,14 +847,9 @@ void PointInitializationInput::updateDateTime()
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
     QDateTime currentLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
-    QDateTime currentLocalDateTimeForRange = QDateTime(
-        currentLocalDateTime.date(),
-        currentLocalDateTime.time(),
-        QTimeZone::systemTimeZone()
-    );
 
-    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(currentLocalDateTimeForRange.addDays(-1));
-    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(currentLocalDateTimeForRange);
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(currentLocalDateTime.addDays(-1));
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(currentLocalDateTime);
 
     // Update selected station time series
     QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
