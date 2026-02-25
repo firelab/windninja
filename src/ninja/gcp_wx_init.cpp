@@ -116,8 +116,9 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
         GDALDatasetH hDS = GDALOpen(filePath.c_str(), GA_ReadOnly);
         if (!hDS)
         {
-           CPLDebug("GCP", "Failed to open file: %s", filePath.c_str());
-           continue;
+            ostringstream os;
+            os << "Failed to open file: " << filePath << "\n";
+            throw badForecastFile( os.str() );
         }
 
         int nBandCount = GDALGetRasterCount(hDS);
@@ -162,16 +163,15 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     {
         if(CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", NULL) == NULL || CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", NULL) == NULL)
         {
-          throw std::runtime_error(
-              "Missing required GCS credentials. One of the following pairs of environment variables must be set:\n"
-              "GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID \n"
-              "                OR \n"
-              "GS_OAUTH2_PRIVATE_KEY_FILE and GS_OAUTH2_CLIENT_EMAIL"
-              );
+            throw std::runtime_error(
+                "Missing required GCS credentials. One of the following pairs of environment variables must be set:\n"
+                "GS_SECRET_ACCESS_KEY and GS_ACCESS_KEY_ID \n"
+                "                OR \n"
+                "GS_OAUTH2_PRIVATE_KEY_FILE and GS_OAUTH2_CLIENT_EMAIL"
+            );
         }
     }
 
-    CPLDebug( "GCP", "Starting download..." );
     if (pfnProgress)
     {
         pfnProgress(0.0, "Starting download...", NULL);
@@ -200,8 +200,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     std::string fileName(CPLGetFilename(demFile.c_str()));
     std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
 
+    // Extract hour string: HH (zero-padded)
+    std::ostringstream hourStrStream;
+    hourStrStream << std::setw(2) << std::setfill('0') << startDateTime.time_of_day().hours();
+    std::string startHourStr = hourStrStream.str();
+
     std::string identifier = path + "/" + getForecastReadable() + "-" + fileName + "/";
-    std::string outFolder = identifier + startDateStr + "T" + starthours + "00/";
+    std::string outFolder = identifier + startDateStr + "T" + startHourStr + "00/";
     std::string tmp = outFolder + "tmp/";
     VSIMkdir(identifier.c_str(), 0777);
     VSIMkdir(outFolder.c_str(), 0777);
@@ -224,13 +229,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         VSILFILE *fpRemote = VSIFOpenL(("/vsicurl/" + idxUrl).c_str(), "r");
         if (!fpRemote) {
-            CPLDebug("IDXCache", "Failed to open remote idx file: %s", idxUrl.c_str());
+            CPLError(CE_Warning, CPLE_AppDefined, "GCP, Failed to open remote idx file: %s", idxUrl.c_str());
             continue;
         }
 
         VSILFILE *fpLocal = VSIFOpenL(localIdxPath.c_str(), "w");
         if (!fpLocal) {
-            CPLDebug("IDXCache", "Failed to create local idx file: %s", localIdxPath.c_str());
+            CPLError(CE_Warning, CPLE_AppDefined, "GCP, Failed to create local idx file: %s", localIdxPath.c_str());
             VSIFCloseL(fpRemote);
             continue;
         }
@@ -250,6 +255,11 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         VSIUnlink(localIdxPath.c_str());
     }
 
+    if(validTimes.size() == 0)
+    {
+        throw std::runtime_error("Failed to open any remote idx files.\nLikely input times are out of available data range.");
+    }
+
     std::vector<std::vector<std::string>> options = getOptions(fileBands, buffer);
 
 #ifdef _OPENMP
@@ -264,8 +274,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
                          CPLSPrintf( "Downloading file 1 out of %d...\n This may take a few minutes...", validTimes.size() ),
                          NULL ) )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt,
-                      "Cancelled by user." );
+            CPLError( CE_Failure, CPLE_UserInterrupt, "Cancelled by user." );
             nrc = GCP_ERR;
             return "";
         }
@@ -301,7 +310,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         CPLJoinableThread* handle = CPLCreateJoinableThread(ThreadFunc, params);
         if (!handle) {
-            CPLDebug("GCP", "Failed to create thread");
+            CPLError(CE_Failure, CPLE_AppDefined, "GCP, Failed to create thread");
             delete params;
             break;
         }
@@ -318,8 +327,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
                              CPLSPrintf( "Downloading file %d out of %d...\n This may take a few minutes...", i+1, threadHandles.size() ),
                              NULL ) )
             {
-                CPLError( CE_Failure, CPLE_UserInterrupt,
-                          "Cancelled by user." );
+                CPLError( CE_Failure, CPLE_UserInterrupt, "Cancelled by user." );
                 nrc = GCP_ERR;
                 return "";
             }
@@ -335,7 +343,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 #endif
 
     std::string zipFolder = outFolder;
-    std::string zipFilePath = zipFolder + startDateStr + "T" + starthours + "00" + ".zip";
+    std::string zipFilePath = zipFolder + startDateStr + "T" + startHourStr + "00" + ".zip";
     std::string zipVirtualPath = "/vsizip/" + zipFilePath;
 
     if( CPLCheckForFile((char*)zipFilePath.c_str(), NULL) )
@@ -348,6 +356,20 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         throw std::runtime_error("Failed to read temporary directory: " + tmp);
     }
 
+    int numFiles = 0;
+    for(int fileIdx = 0; fileList[fileIdx] != nullptr; fileIdx++)
+    {
+        std::string fileName = fileList[fileIdx];
+        if(fileName != "." && fileName != "..")
+        {
+            numFiles++;
+        }
+    }
+    if(numFiles == 0)
+    {
+        throw badForecastFile("Failed to download any forecast files.");
+    }
+
     for (int i = 0; fileList[i] != nullptr; ++i) {
         std::string fileNameOnly = fileList[i];
         if (fileNameOnly == "." || fileNameOnly == "..") continue;
@@ -357,8 +379,9 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         VSILFILE* fpSrc = VSIFOpenL(filePath.c_str(), "rb");
         if (!fpSrc) {
-            CPLDebug("GCP", "Failed to open source file for zipping: %s", filePath.c_str());
-            continue;
+            ostringstream os;
+            os << "GCP, Failed to open source file for zipping: " << filePath << "\n";
+            throw badForecastFile( os.str() );
         }
 
         VSIFSeekL(fpSrc, 0, SEEK_END);
@@ -367,22 +390,26 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         std::vector<char> buffer(fileSize);
         if (VSIFReadL(buffer.data(), 1, fileSize, fpSrc) != fileSize) {
-            CPLDebug("GCP", "Failed to read complete file for zipping: %s", filePath.c_str());
             VSIFCloseL(fpSrc);
-            continue;
+            ostringstream os;
+            os << "GCP, Failed to read complete file for zipping: " << filePath << "\n";
+            throw badForecastFile( os.str() );
         }
         VSIFCloseL(fpSrc);
 
         VSILFILE* fpZip = VSIFOpenL(zipEntryPath.c_str(), "wb");
         if (!fpZip) {
-            CPLDebug("GCP", "Failed to create zip entry: %s", zipEntryPath.c_str());
-            continue;
+            ostringstream os;
+            os << "GCP, Failed to create zip entry: " << zipEntryPath << "\n";
+            throw badForecastFile( os.str() );
         }
 
         if (VSIFWriteL(buffer.data(), 1, fileSize, fpZip) != fileSize) {
-            CPLDebug("GCP", "Failed to write data to zip entry: %s", zipEntryPath.c_str());
+            VSIFCloseL(fpZip);
+            ostringstream os;
+            os << "GCP, Failed to write data to zip entry: " << zipEntryPath << "\n";
+            throw badForecastFile( os.str() );
         }
-
         VSIFCloseL(fpZip);
     }
     NinjaUnlinkTree(tmp.c_str());
@@ -421,7 +448,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
     GDALDatasetH hSrcDS = GDALOpen(srcFile.c_str(), GA_ReadOnly);
     if (!hSrcDS)
     {
-        CPLDebug("GCP", "Failed to open input dataset for %s", srcFile.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "GCP, Failed to open input dataset for %s", srcFile.c_str());
         GDALTranslateOptionsFree(transOptions);
         return GCP_ERR;
     }
@@ -432,7 +459,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
 
     if (!hOutDS)
     {
-        CPLDebug("GCP", "GDALTranslate Failed for %s", outFile.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "GCP, GDALTranslate failed for %s", outFile.c_str());
         return GCP_ERR;
     }
     GDALClose(hOutDS);
@@ -465,7 +492,7 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
     std::ifstream idxFile(idxFilePath.c_str());
     if (!idxFile.is_open())
     {
-        CPLDebug("IDXParse", "Failed to open cached .idx file: %s", idxFilePath.c_str());
+        CPLError(CE_Warning, CPLE_AppDefined, "GCP, Failed to open cached .idx file: %s", idxFilePath.c_str());
         return "";
     }
 
@@ -487,11 +514,11 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
                     if (iss >> band)
                     {
                         bandSet.push_back(band);
-                        CPLDebug("IDXParse", "Field '%s' is at band %d", var.c_str(), band);
+                        CPLDebug("GCP", "Field '%s' is at band %d", var.c_str(), band);
                     }
                     else
                     {
-                        CPLDebug("IDXParse", "Could not parse band number in line: %s", line.c_str());
+                        CPLError(CE_Warning, CPLE_AppDefined, "GCP, Could not parse band number in line: %s", line.c_str());
                     }
                 }
             }
@@ -549,6 +576,46 @@ void GCPWxModel::setDateTime(boost::gregorian::date date1, boost::gregorian::dat
     endDate = date2;
     starthours = hours1;
     endhours = hours2;
+
+    // now do some checks of the inputs
+    //
+    // inputs are already in UTC time, so using a standard boost::posix_time::ptime is good enough,
+    // no need for a boost::local_time::local_date_time or a boost::local_time::time_zone_ptr
+
+    boost::posix_time::ptime startDateTime(startDate, boost::posix_time::duration_from_string(starthours + ":00:00"));
+    boost::posix_time::ptime endDateTime(endDate, boost::posix_time::duration_from_string(endhours + ":00:00"));
+
+    boost::posix_time::ptime minDateTime(boost::gregorian::date(2014, 7, 30), boost::posix_time::hours(18));
+
+    // the max time should actually be 1 minus the hour of the current time, and 59 minutes, not the current time
+    // will be more accurate across dates/times edge cases if the math is done right on the starting time structure
+    boost::posix_time::ptime currentLocalTime_UTC = boost::posix_time::second_clock::universal_time();
+    boost::posix_time::ptime maxDateTime = currentLocalTime_UTC - boost::posix_time::hours(1);
+
+    if(startDateTime < minDateTime || endDateTime > maxDateTime)
+    {
+        std::locale timeLocale(std::locale::classic(), new boost::posix_time::time_facet("%m/%d/%Y %H:%M"));
+        ostringstream minDateTimeStream;
+        minDateTimeStream.imbue(timeLocale);
+        minDateTimeStream << minDateTime;
+        ostringstream maxDateTimeStream;
+        maxDateTimeStream.imbue(timeLocale);
+        maxDateTimeStream << maxDateTime;
+
+        ostringstream os;
+        os << "PASTCAST Datetime must be within the allowed range\n"
+           << "(from " << minDateTimeStream.str() << " UTC to " << maxDateTimeStream.str() << " UTC).";
+        throw std::runtime_error(os.str());
+    }
+    if(startDateTime > endDateTime)
+    {
+        throw std::runtime_error("Start datetime cannot be after stop datetime.");
+    }
+    boost::posix_time::time_duration maxRange = endDateTime - startDateTime;
+    if(maxRange.hours() > 14 * 24)
+    {
+        throw std::runtime_error("Datetime range must not exceed 14 days.");
+    }
 }
 
 void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,

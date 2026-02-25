@@ -2532,6 +2532,35 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <property name="verticalSpacing">
                       <number>0</number>
                      </property>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="weatherStationDataStartTimeLabel">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="text">
+                        <string>Start Time</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="0">
+                      <widget class="QDateTimeEdit" name="weatherStationDataStartDateTimeEdit">
+                       <property name="enabled">
+                        <bool>false</bool>
+                       </property>
+                       <property name="cursor">
+                        <cursorShape>PointingHandCursor</cursorShape>
+                       </property>
+                       <property name="displayFormat">
+                        <string>MM/dd/yyyy HH:mm</string>
+                       </property>
+                       <property name="calendarPopup">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
+                     </item>
                      <item row="1" column="1">
                       <widget class="QLabel" name="weatherStationDataEndTimeLabel">
                        <property name="sizePolicy">
@@ -2561,7 +2590,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                         </datetime>
                        </property>
                        <property name="displayFormat">
-                        <string>M/d/yyyy h:mm</string>
+                        <string>MM/dd/yyyy HH:mm</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
@@ -2581,19 +2610,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                       </widget>
                      </item>
-                     <item row="1" column="0">
-                      <widget class="QLabel" name="weatherStationDataStartTimeLabel">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="text">
-                        <string>Start Time</string>
-                       </property>
-                      </widget>
-                     </item>
                      <item row="2" column="2">
                       <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
                        <property name="enabled">
@@ -2610,22 +2626,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        </property>
                        <property name="value">
                         <number>24</number>
-                       </property>
-                      </widget>
-                     </item>
-                     <item row="2" column="0">
-                      <widget class="QDateTimeEdit" name="weatherStationDataStartDateTimeEdit">
-                       <property name="enabled">
-                        <bool>false</bool>
-                       </property>
-                       <property name="cursor">
-                        <cursorShape>PointingHandCursor</cursorShape>
-                       </property>
-                       <property name="displayFormat">
-                        <string>M/d/yyyy h:mm</string>
-                       </property>
-                       <property name="calendarPopup">
-                        <bool>true</bool>
                        </property>
                       </widget>
                      </item>
@@ -2928,7 +2928,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <bool>false</bool>
                       </property>
                       <property name="displayFormat">
-                       <string>M/d/yyyy h:mm </string>
+                       <string>MM/dd/yyyy HH:mm</string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -2941,7 +2941,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <item>
                      <widget class="QDateTimeEdit" name="pastcastEndDateTimeEdit">
                       <property name="displayFormat">
-                       <string>M/d/yyyy h:mm </string>
+                       <string>MM/dd/yyyy HH:mm</string>
                       </property>
                       <property name="calendarPopup">
                        <bool>true</bool>
@@ -5668,7 +5668,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesStartTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yyyy h:mm </string>
+                      <string>MM/dd/yyyy HH:mm</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>true</bool>
@@ -5691,7 +5691,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <widget class="QDateTimeEdit" name="downloadBetweenDatesEndTimeDateTimeEdit">
                      <property name="displayFormat">
-                      <string>M/d/yyyy H:mm</string>
+                      <string>MM/dd/yyyy HH:mm</string>
                      </property>
                      <property name="calendarPopup">
                       <bool>true</bool>

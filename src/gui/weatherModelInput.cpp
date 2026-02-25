@@ -52,6 +52,8 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
+    connect(ui->pastcastStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastStartDateTimeEditChanged);
+    connect(ui->pastcastEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
@@ -304,6 +306,9 @@ void WeatherModelInput::weatherModelComboBoxCurrentIndexChanged(int index)
         return;
     }
 
+    ui->weatherModelSpinBox->setDisabled(false);
+    ui->pastcastGroupBox->setVisible(false);
+
     QStringList tooltipList;
     QString weatherModel = ui->weatherModelComboBox->currentText();
     for(int i = 0; i < modelGlossary.size(); i++)
@@ -401,6 +406,7 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     if (selected.indexes().empty())
     {
         state.isWeatherModelForecastValid = false;
+        emit updateState();
 
         return;
     }
@@ -475,37 +481,60 @@ void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
     ui->weatherModelTimeTreeView->clearSelection();
 }
 
+void WeatherModelInput::pastcastStartDateTimeEditChanged()
+{
+    if(ui->pastcastEndDateTimeEdit->dateTime() < ui->pastcastStartDateTimeEdit->dateTime())
+    {
+        ui->pastcastEndDateTimeEdit->setDateTime(ui->pastcastStartDateTimeEdit->dateTime().addSecs(3600));
+    }
+}
+
+void WeatherModelInput::pastcastEndDateTimeEditChanged()
+{
+    if(ui->pastcastEndDateTimeEdit->dateTime() < ui->pastcastStartDateTimeEdit->dateTime())
+    {
+        ui->pastcastStartDateTimeEdit->setDateTime(ui->pastcastEndDateTimeEdit->dateTime().addSecs(-3600));
+    }
+}
+
 void WeatherModelInput::updateDateTime()
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    // Update PASCAST date time info
-    QDate earliestDate(2014, 07, 30);
-    QDateTime utcDateTime(
-        earliestDate,
+    // Update PASTCAST date time info
+    QDate minDate(2014, 07, 30);
+    QDateTime minUtcDateTime(
+        minDate,
         QTime(18, 0),
         QTimeZone::UTC
     );
-    QDateTime localDateTime = utcDateTime.toTimeZone(timeZone);
+
+    QDateTime minLocalDateTime = minUtcDateTime.toTimeZone(timeZone);
+
+    QDateTime currentLocalDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
+    QDateTime maxLocalDateTime = currentLocalDateTime.addSecs(-3600);
+    QTime maxTime = maxLocalDateTime.time();
+    maxTime.setHMS(maxTime.hour(), 0, 0, 0);
+    maxLocalDateTime.setTime(maxTime);
+
     ui->pastcastGroupBox->setTitle(
-        "Earliest Pastcast Datetime: "
-        + localDateTime.toString("MM/dd/yyyy hh:mm")
-        + " " + timeZone.abbreviation(localDateTime)
+        "Earliest PASTCAST DateTime: "
+        + minLocalDateTime.toString("MM/dd/yyyy hh:mm")
+        + " " + timeZone.abbreviation(minLocalDateTime)
     );
     ui->pastcastGroupBox->updateGeometry();
 
-    QDateTime demDateTime = QDateTime::currentDateTime().toTimeZone(timeZone);
-    QTime demTime = demDateTime.time();
-    demTime.setHMS(demTime.hour()-1, 0, 0, 0);
-    demDateTime.setTime(demTime);
-    demDateTime = QDateTime(
-        demDateTime.date(),
-        demTime,
-        QTimeZone::systemTimeZone()
-    ); // Time is set to dem local time, label as system time to prevent conversions via Qt
+    ui->pastcastStartDateTimeEdit->setTimeZone(timeZone);
+    ui->pastcastEndDateTimeEdit->setTimeZone(timeZone);
 
-    ui->pastcastStartDateTimeEdit->setDateTime(demDateTime);
-    ui->pastcastEndDateTimeEdit->setDateTime(demDateTime);
+    ui->pastcastStartDateTimeEdit->setDateTimeRange(minLocalDateTime, maxLocalDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTimeRange(minLocalDateTime, maxLocalDateTime);
+
+    ui->pastcastStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
+    ui->pastcastEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
+
+    ui->pastcastStartDateTimeEdit->setDateTime(maxLocalDateTime);
+    ui->pastcastEndDateTimeEdit->setDateTime(maxLocalDateTime);
 
     // Update selected wx model time series
     QItemSelectionModel *fileSelectionModel = ui->weatherModelFileTreeView->selectionModel();
