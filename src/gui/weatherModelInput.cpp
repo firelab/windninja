@@ -52,6 +52,8 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->weatherModelComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::weatherModelComboBoxCurrentIndexChanged);
     connect(ui->weatherModelTimeSelectAllButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectAllButtonClicked);
     connect(ui->weatherModelTimeSelectNoneButton, &QPushButton::clicked, this, &WeatherModelInput::weatherModelTimeSelectNoneButtonClicked);
+    connect(ui->pastcastStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastStartDateTimeEditChanged);
+    connect(ui->pastcastEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
@@ -477,6 +479,22 @@ void WeatherModelInput::weatherModelTimeSelectAllButtonClicked()
 void WeatherModelInput::weatherModelTimeSelectNoneButtonClicked()
 {
     ui->weatherModelTimeTreeView->clearSelection();
+}
+
+void WeatherModelInput::pastcastStartDateTimeEditChanged()
+{
+    if(ui->pastcastEndDateTimeEdit->dateTime() < ui->pastcastStartDateTimeEdit->dateTime())
+    {
+        ui->pastcastEndDateTimeEdit->setDateTime(ui->pastcastStartDateTimeEdit->dateTime().addSecs(3600));
+    }
+}
+
+void WeatherModelInput::pastcastEndDateTimeEditChanged()
+{
+    if(ui->pastcastEndDateTimeEdit->dateTime() < ui->pastcastStartDateTimeEdit->dateTime())
+    {
+        ui->pastcastStartDateTimeEdit->setDateTime(ui->pastcastEndDateTimeEdit->dateTime().addSecs(-3600));
+    }
 }
 
 void WeatherModelInput::updateDateTime()

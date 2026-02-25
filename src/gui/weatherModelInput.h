@@ -65,6 +65,8 @@ private slots:
     void weatherModelComboBoxCurrentIndexChanged(int index);
     void weatherModelDownloadFinished();
     void updateProgressMessage(const QString message);
+    void pastcastStartDateTimeEditChanged();
+    void pastcastEndDateTimeEditChanged();
     void updateDateTime();
 
 
