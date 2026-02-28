@@ -318,7 +318,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFreeWeatherModelTimeList
     }
 
     char** times = (char**)timeList;
-    for (int i = 0; i < timeListSize; i++)
+    for(int i = 0; i < timeListSize; i++)
     {
         if(times[i])
         {

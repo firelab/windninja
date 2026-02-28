@@ -33,6 +33,8 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
 {
+    progress = nullptr;
+
     initNinjaTools();
 
     ui->pastcastGroupBox->hide();
