@@ -314,14 +314,29 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
 
 std::vector<std::string> ninjaTools::getTimeList(const char* fileName, std::string timeZone)
 {
-    wxModelInitialization *model = NULL;
-    model = wxModelInitializationFactory::makeWxInitialization(fileName);
-    std::vector<blt::local_date_time> temp = model->getTimeList(timeZone);
     std::vector<std::string> timeList;
-
-    for(int i = 0; i < temp.size(); i++)
+    try
     {
-        timeList.push_back(temp[i].to_string());
+        wxModelInitialization *model = NULL;
+        model = wxModelInitializationFactory::makeWxInitialization(fileName);
+        std::vector<blt::local_date_time> temp = model->getTimeList(timeZone);
+
+        for(int i = 0; i < temp.size(); i++)
+        {
+            timeList.push_back(temp[i].to_string());
+        }
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+    }
+    catch( exception& e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
     }
 
     return timeList;

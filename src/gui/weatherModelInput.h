@@ -39,6 +39,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QProgressDialog>
+#include <QMessageBox>
 #include <QtConcurrent/QtConcurrent>
 #include <QObject>
 
