@@ -99,18 +99,18 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         //become available. See codes at https://lfps.usgs.gov/products
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
         {
-          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
-                                 "250CH;250CBD;250CBH" ); //2024 data
+          pszProduct = CPLStrdup( "LF2020_ELEV;LF2020_SLPD;LF2020_ASP;LF2024_FBFM40;LF2024_CC;" \
+                                 "LF2024_CH;LF2024_CBD;LF2024_CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "ak" ) )
         {
-          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
-                                 "250CH;250CBD;250CBH" ); //2024 data
+          pszProduct = CPLStrdup( "LF2020_ELEV;LF2020_SLPD;LF2020_ASP;LF2024_FBFM40;LF2024_CC;" \
+                                 "LF2024_CH;LF2024_CBD;LF2024_CBH" ); //2024 data
         }
         else if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "hi" ) )
         {
-          pszProduct = CPLStrdup( "ELEV2020;SLPD2020;ASP2020;240FBFM40;240CC;" \
-                                 "250CH;250CBD;250CBH" ); //2024 data
+          pszProduct = CPLStrdup( "LF2020_ELEV;LF2020_SLPD;LF2020_ASP;LF2024_FBFM40;LF2024_CC;" \
+                                 "LF2024_CH;LF2024_CBD;LF2024_CBH" ); //2024 data
         }
         else
         {
