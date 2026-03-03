@@ -260,7 +260,6 @@ void weatherModel::loadModelComboBox()
   QModelIndex index = modelComboBox->model()->index(modelComboBox->count() - 1, 0);
   modelComboBox->model()->setData(index, 0, Qt::UserRole - 1);
 
-  modelComboBox->addItem(QString::fromStdString(ndfd.getForecastIdentifier()));
   modelComboBox->addItem(QString::fromStdString(nam.getForecastIdentifier()));
   modelComboBox->addItem(QString::fromStdString(rap.getForecastIdentifier()));
   modelComboBox->addItem(QString::fromStdString(namAk.getForecastIdentifier()));
@@ -287,14 +286,12 @@ void weatherModel::loadModelComboBox()
 void weatherModel::setTimeLimits( int index )
 {
     if( index == 1 )
-        hourSpinBox->setRange( ndfd.getStartHour(), ndfd.getEndHour() );
-    else if( index == 2 )
         hourSpinBox->setRange( nam.getStartHour(), nam.getEndHour() );
-    else if( index == 3 )
+    else if( index == 2 )
         hourSpinBox->setRange( rap.getStartHour(), rap.getEndHour() );
-    else if( index == 4 )
+    else if( index == 3 )
         hourSpinBox->setRange( namAk.getStartHour(), namAk.getEndHour() );
-    else if( index == 5 )
+    else if( index == 4 )
         hourSpinBox->setRange( gfs.getStartHour(), gfs.getEndHour() );
     else if (index == modelComboBox->count() - 1) {
       return;
@@ -345,14 +342,12 @@ void weatherModel::getData()
       return;
     }
     if( modelChoice == 1 )
-        model = new ncepNdfdInitialization( ndfd );
-    else if( modelChoice == 2 )
         model = new ncepNamSurfInitialization( nam );
-    else if( modelChoice == 3 )
+    else if( modelChoice == 2 )
         model = new ncepRapSurfInitialization( rap );
-    else if( modelChoice == 4 )
+    else if( modelChoice == 3 )
         model = new ncepNamAlaskaSurfInitialization( namAk );
-    else if( modelChoice == 5 )
+    else if( modelChoice == 4 )
         model = new ncepGfsSurfInitialization( gfs );
     else if ( modelChoice == modelComboBox->count() - 1) {
       model = new GCPWxModel(archhrr);
@@ -486,9 +481,6 @@ void weatherModel::checkForModelData()
     QDir wd(cwd);
 
     QStringList filters;
-    /* ndfd */
-    filters << QString::fromStdString( ndfd.getForecastIdentifier() )
-               + "-" + QFileInfo( inputFile ).fileName();
     /* nam suface */
     filters << QString::fromStdString( nam.getForecastIdentifier() )
                + "-" + QFileInfo( inputFile ).fileName();

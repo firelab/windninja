@@ -185,8 +185,7 @@ int windNinjaCLI(int argc, char* argv[])
         */
         std::string osAvailableWx = "type of wx model to download (";
         osAvailableWx += std::string( "UCAR-NAM-CONUS-12-KM, UCAR-NAM-ALASKA-11-KM, " ) +
-                         std::string( "UCAR-NDFD-CONUS-2.5-KM, UCAR-RAP-CONUS-13-KM, " ) +
-                         std::string( "UCAR-GFS-GLOBAL-0.5-DEG" );
+                         std::string( "UCAR-RAP-CONUS-13-KM, UCAR-GFS-GLOBAL-0.5-DEG" );
 #ifdef WITH_NOMADS_SUPPORT
         int i = 0;
         char *pszNomadsName;
