@@ -210,24 +210,20 @@ void Outputs::kmzOutputOpenFileButtonClicked()
         "KMZ Files (*.kmz);;All Files (*)"
     );
 
-
-    bool timeSeries = !ui->domainAverageGroupBox->isChecked();
-
     for (const QString &outFileStr : files)
     {
         qDebug() << "kmz outFile =" << outFileStr;
 
         QFile outFile(outFileStr);
         if (!outFile.open(QIODevice::ReadOnly))
-            continue; // or handle error
+        {
+            continue;
+        }
 
         QByteArray data = outFile.readAll();
         QString base64 = data.toBase64();
 
-        webEngineView->page()->runJavaScript(
-            "loadKmzFromBase64('" + base64 + "', " +
-            (timeSeries ? "true" : "false") + ");"
-            );
+        webEngineView->page()->runJavaScript("loadKmzFromBase64('" + base64 + "');");
     }
 }
 

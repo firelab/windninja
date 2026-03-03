@@ -350,7 +350,7 @@
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
 
-        async function loadKmzFromBase64(kmlData, timeSeries) {
+        async function loadKmzFromBase64(kmlData) {
             // Setup & Cleanup
             clearWindNinjaOutputTree();
             clearInitializationOutputTree();
@@ -413,7 +413,7 @@
                         img.style.cssText = 'display: block; max-width: 150px; height: auto;';
                         container.appendChild(img);
 
-                        if (timeSeries && legendEntries.length > 1 && !timeSeriesImg) {
+                        if (legendEntries.length > 1) {
                             const blob = await legendEntries[1].async('blob');
                             timeSeriesImgUrl = URL.createObjectURL(blob);
 

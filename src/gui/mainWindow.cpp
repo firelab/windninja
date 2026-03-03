@@ -1560,11 +1560,7 @@ void MainWindow::plotKmzOutputs()
             QByteArray data = outFile.readAll();
             QString base64 = data.toBase64();
 
-            bool timeSeries = !ui->domainAverageGroupBox->isChecked();
-
-            webEngineView->page()->runJavaScript(
-                "loadKmzFromBase64('"+base64+"', "+(timeSeries ? "true" : "false")+");"
-            );
+            webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"');");
 
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
