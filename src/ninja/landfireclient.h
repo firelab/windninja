@@ -55,7 +55,7 @@
                             "api/job/submit?Email=wind.ninja.support@gmail.com" \
                             "&Output_Projection=%d&Layer_List=%s" \
                             "&Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
-                            "&Priority_Code=WNDNJA"
+                            "&Priority_Code=WNINJA"
 
 #define LF_GET_STATUS_TEMPLATE "https://lfps.usgs.gov/api/job/status?" \
                                "JobId=%s"
