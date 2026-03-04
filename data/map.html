@@ -158,6 +158,12 @@
         const mapRectangleLayer = new L.FeatureGroup();
         const rectangleDrawer = new L.Draw.Rectangle(map);
         const centerControl = L.control({ position: 'topleft' });
+
+        const windninjaLegendToggle = L.layerGroup([]);
+        let legendsEnabled = false;
+        let activeWindNinjaLayer = null;
+        let activeTimeSeriesImg = null;
+        let activeTimeSeriesUrl = null;
         
         const baseTree = {
             label: 'Base Maps',
@@ -212,6 +218,10 @@
                 {
                     label: 'Bounding Box',
                     layer: mapRectangleLayer
+                },
+                {
+                    label: 'WindNinja Legends',
+                    layer: windninjaLegendToggle
                 }
             ]
         };
@@ -499,6 +509,7 @@
                         container.appendChild(img);
 
                         if (legendEntries.length > 1) {
+
                             const blob = await legendEntries[1].async('blob');
                             timeSeriesImgUrl = URL.createObjectURL(blob);
 
@@ -513,9 +524,19 @@
                                 height: auto;
                                 z-index: 600;
                             `;
+                            timeSeriesImg.onload = () => {
 
-                            map.getContainer().appendChild(timeSeriesImg);
-                        }   
+                                if (legendsEnabled && activeWindNinjaLayer === kmlLegendLayer) {
+
+                                    if (activeTimeSeriesImg) {
+                                        activeTimeSeriesImg.remove();
+                                    }
+
+                                    map.getContainer().appendChild(timeSeriesImg);
+                                    activeTimeSeriesImg = timeSeriesImg;
+                                }
+                            };
+                        }
                     })();
                     kmlLegendLayer.on('remove', () => {
                         if (timeSeriesImg) {
@@ -532,8 +553,39 @@
             };
 
             // Toggle legend with layer
-            kmlLegendLayer.on('add', () => legendControl.addTo(map));
-            kmlLegendLayer.on('remove', () => legendControl.remove());
+            kmlLegendLayer.on('add', () => {
+
+                activeWindNinjaLayer = kmlLegendLayer;
+
+                kmzLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                if (activeTimeSeriesImg) {
+                    activeTimeSeriesImg.remove();
+                    activeTimeSeriesImg = null;
+                }
+
+                if (legendsEnabled) {
+                    legendControl.addTo(map);
+
+                    if (timeSeriesImg) {
+                        map.getContainer().appendChild(timeSeriesImg);
+                        activeTimeSeriesImg = timeSeriesImg;
+                    }
+                }
+            });
+
+            kmlLegendLayer.on('remove', () => {
+
+                map.removeControl(legendControl);
+
+                if (timeSeriesImg) {
+                    timeSeriesImg.remove();
+                }
+
+                if (activeWindNinjaLayer === kmlLegendLayer) {
+                    activeWindNinjaLayer = null;
+                }
+            });
 
             const isFirstLayer = windninjaOutputTree.children.length === 1;
 
@@ -659,6 +711,33 @@
 
             layerControl.setOverlayTree(displayTree);
         }
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === windninjaLegendToggle) {
+
+                legendsEnabled = true;
+
+                if (activeWindNinjaLayer) {
+                    activeWindNinjaLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === windninjaLegendToggle) {
+
+                legendsEnabled = false;
+
+                kmzLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                if (activeTimeSeriesImg) {
+                    activeTimeSeriesImg.remove();
+                    activeTimeSeriesImg = null;
+                }
+            }
+        });
 
         // Script Main
         if (window.qt) {
