@@ -532,6 +532,7 @@ bool KmlVector::writeHeader(VSILFILE* fileOut)
     VSIFPrintfL(fileOut,"\n<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\" xmlns:kml=\"http://www.opengis.net/kml/2.2\" xmlns:atom=\"http://www.w3.org/2005/Atom\">");
     VSIFPrintfL(fileOut,"\n<Document>");
     VSIFPrintfL(fileOut,"\n\t<name>%s</name>", shortName.c_str());
+    VSIFPrintfL(fileOut,"\n\t<atom:author><atom:name>WindNinja</atom:name></atom:author>");
 
     if(!wxModelName.empty())
     {
