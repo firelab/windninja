@@ -207,7 +207,7 @@ void Outputs::kmzOutputOpenFileButtonClicked()
         ui->centralwidget,
         "Select files",
         dir,
-        "KMZ Files (*.kmz);;All Files (*)"
+        "KML/KMZ Files (*.kml *.kmz);;All Files (*)"
     );
 
     for (const QString &outFileStr : files)
@@ -231,4 +231,5 @@ void Outputs::kmzOutputClearButtonClicked()
 {
     webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
     webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+    webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
 }

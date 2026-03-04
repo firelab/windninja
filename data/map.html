@@ -177,8 +177,8 @@
             label: 'WindNinja Output',
             children: [
                 {
-                    label: 'None',
-                    layer: L.layerGroup([]), // Dummy empty layer
+                    label: 'No Output',
+                    layer: L.layerGroup([]), 
                     radioGroup: 'windninjaOutputs'
                 }
             ]
@@ -188,9 +188,20 @@
             label: 'Weather Model Output',
             children: [
                 {
-                    label: 'None',
-                    layer: L.layerGroup([]), // Dummy empty layer
+                    label: 'No Output',
+                    layer: L.layerGroup([]), 
                     radioGroup: 'initializationOutput'
+                }
+            ]
+        };
+
+        const unknownOutputTree = {
+            label: 'Unknown Output',
+            children: [
+                {
+                    label: 'No Output',
+                    layer: L.layerGroup([]), 
+                    radioGroup: 'unknownOutput'
                 }
             ]
         };
@@ -351,10 +362,6 @@
         let kmzTimeSeriesImgUrl = null;
 
         async function loadKmzFromBase64(kmlData) {
-            // Setup & Cleanup
-            clearWindNinjaOutputTree();
-            clearInitializationOutputTree();
-
             if (kmzTimeSeriesImg) {
                 kmzTimeSeriesImg.remove();
                 kmzTimeSeriesImg = null;
@@ -364,6 +371,67 @@
                 kmzTimeSeriesImgUrl = null;
             }
 
+            const trimmedData = kmlData.trim();
+            const isRawKml = trimmedData.startsWith('<') || !trimmedData.startsWith('UEsDB'); // 'UEsDB' is base64 for 'PK'
+
+            if (isRawKml) {
+                console.info('Raw KML detected. Checking author metadata...');
+                const parser = new DOMParser();
+                const kmlDoc = parser.parseFromString(atob(kmlData), 'text/xml');
+                
+                const nameTag = kmlDoc.getElementsByTagName('name')[0];
+                let layerName = nameTag ? nameTag.textContent : "Imported Layer";
+
+                const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
+                const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
+
+                const kmlLayer = new L.KML(kmlDoc);
+                const kmlLegendLayer = L.layerGroup([kmlLayer]);
+
+                if (isWindNinja) {
+                    console.info('WindNinja KML detected.');
+
+                    const nameUpper = layerName.toUpperCase();
+                    const isSpecialSource =
+                        nameUpper.includes('NOMADS') ||
+                        nameUpper.includes('UCAR') ||
+                        nameUpper.includes('PASTCAST');
+
+                    if (!layerName.toLowerCase().endsWith('.kmz')) {
+                        layerName += '.kmz';
+                    }
+
+                    if (isSpecialSource) {
+
+                        initializationOutputTree.children.push({
+                            label: layerName,
+                            layer: kmlLegendLayer,
+                            radioGroup: 'initializationOutput'
+                        });
+
+                    } else {
+                        windninjaOutputTree.children.push({
+                            label: layerName,
+                            layer: kmlLegendLayer,
+                            radioGroup: 'windninjaOutputs'
+                        });
+                    }
+                } else {
+                    console.info('Unknown KML detected.');
+                    if (!layerName.toLowerCase().endsWith('.kml')) layerName += '.kml';
+                    
+                    unknownOutputTree.children.push({
+                        label: layerName,
+                        layer: kmlLegendLayer,
+                        radioGroup: 'unknownOutput'
+                    });
+                }
+
+                kmlLegendLayer.addTo(map);
+                updateOverlayTree();
+                return;
+            }
+
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -371,6 +439,16 @@
             }
             
             const zip = await JSZip.loadAsync(bytes.buffer);
+
+            const keywords = ["NOMADS", "UCAR", "PASTCAST"];
+            const containsKeyword = Object.keys(zip.files).some(fileName => 
+                keywords.some(keyword => fileName.toUpperCase().includes(keyword))
+            );
+
+            if (containsKeyword) {
+                loadOutputFromBase64(kmlData);
+                return; 
+            }
 
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
@@ -388,6 +466,13 @@
             const kmlText = await entry.async('string');
             const parser = new DOMParser();
             const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+
+            const authorNode = kmlDoc.querySelector('author');
+            const author = authorNode ? authorNode.textContent.trim() : null;
+
+            if (author !== 'WindNinja') {
+                return;
+            }
             
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
@@ -462,18 +547,10 @@
                 radioGroup: 'windninjaOutputs'
             });
 
-            if (layerControl && layerControl.setOverlayTree) {
-                layerControl.setOverlayTree([
-                    windninjaOutputTree,
-                    overlayTree
-                ]);
-            }
+            updateOverlayTree();
         }
 
         async function loadOutputFromBase64(data) {
-
-            clearInitializationOutputTree();
-
             const binary = atob(data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -510,38 +587,28 @@
                 radioGroup: 'initializationOutput'
             });
 
-            if (layerControl && layerControl.setOverlayTree) {
-                layerControl.setOverlayTree([
-                    windninjaOutputTree,
-                    initializationOutputTree,    
-                    overlayTree
-                ]);
-            }
+            updateOverlayTree();
         }
 
         function clearWindNinjaOutputTree() {
             windninjaOutputTree.children.forEach(item => {
-                // Only remove layers that aren't the "None" placeholder
-                if (item.layer && item.label !== 'None') {
+                if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
                 }
             });
 
-            // Reset to just the None option
             windninjaOutputTree.children = [{
                 label: 'No Output',
                 layer: L.layerGroup([]),
                 radioGroup: 'windninjaOutputs'
             }];
 
-            if (layerControl) {
-                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
-            }
+            updateOverlayTree();
         }
 
         function clearInitializationOutputTree() {
             initializationOutputTree.children.forEach(item => {
-                if (item.layer && item.label !== 'None') {
+                if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
                 }
             });
@@ -552,9 +619,23 @@
                 radioGroup: 'initializationOutput'
             }];
 
-            if (layerControl) {
-                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
-            }
+            updateOverlayTree();
+        }
+
+        function clearUnknownOutputTree() {
+            unknownOutputTree.children.forEach(item => {
+                if (item.layer && item.label !== 'No Output') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            unknownOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'unknownOutput'
+            }];
+
+            updateOverlayTree();
         }
 
         function clearRectangleLayer() {
@@ -564,6 +645,19 @@
                 }
             });
             mapRectangleLayer.clearLayers();        
+        }
+
+        function updateOverlayTree() {
+            if (!layerControl || !layerControl.setOverlayTree) return;
+
+            const displayTree = [];
+            
+            if (windninjaOutputTree.children.length > 1) displayTree.push(windninjaOutputTree);
+            if (initializationOutputTree.children.length > 1) displayTree.push(initializationOutputTree);
+            if (unknownOutputTree.children.length > 1) displayTree.push(unknownOutputTree);
+            if (overlayTree) displayTree.push(overlayTree);
+
+            layerControl.setOverlayTree(displayTree);
         }
 
         // Script Main
