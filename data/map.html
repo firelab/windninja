@@ -160,11 +160,20 @@
         const centerControl = L.control({ position: 'topleft' });
 
         const windninjaLegendToggle = L.layerGroup([]);
-        let legendsEnabled = false;
+        let windninjaLegendControls = [];
+        let windninjaLegendEnabled = false;
         let activeWindNinjaLayer = null;
-        let activeTimeSeriesImg = null;
-        let activeTimeSeriesUrl = null;
+        let activeWindNinjaTimeSeriesImg = null;
+        let activeWindNinjaTimeSeriesUrl = null;
+
+        const initializationLegendToggle = L.layerGroup([]);
+        let initializationLegendControls = [];
+        let initializationLegendEnabled = false;
+        let activeInitializationLayer = null;
+        let activeInitializationTimeSeriesImg = null;
+        let activeInitializationTimeSeriesUrl = null;
         
+
         const baseTree = {
             label: 'Base Maps',
             children: [
@@ -214,16 +223,7 @@
 
         const overlayTree = {
             label: 'WindNinja Overlays',
-            children: [
-                {
-                    label: 'Bounding Box',
-                    layer: mapRectangleLayer
-                },
-                {
-                    label: 'WindNinja Legends',
-                    layer: windninjaLegendToggle
-                }
-            ]
+            children: []
         };
 
         const layerControl = L.control.layers.tree(
@@ -236,7 +236,6 @@
 
 
         let drawDEMCheck = false;
-        let kmzLegendControls = [];
         let centerControlAdded = false;
 
         // Script functions
@@ -492,7 +491,7 @@
             let timeSeriesImgUrl = null;
 
             const legendControl = L.control({ position: 'bottomright' });
-            kmzLegendControls.push(legendControl);
+            windninjaLegendControls.push(legendControl);
 
             legendControl.onAdd = function () {
                 const container = L.DomUtil.create('div', 'kmz-legend');
@@ -526,14 +525,14 @@
                             `;
                             timeSeriesImg.onload = () => {
 
-                                if (legendsEnabled && activeWindNinjaLayer === kmlLegendLayer) {
+                                if (windninjaLegendEnabled && activeWindNinjaLayer === kmlLegendLayer) {
 
-                                    if (activeTimeSeriesImg) {
-                                        activeTimeSeriesImg.remove();
+                                    if (activeWindNinjaTimeSeriesImg) {
+                                        activeWindNinjaTimeSeriesImg.remove();
                                     }
 
                                     map.getContainer().appendChild(timeSeriesImg);
-                                    activeTimeSeriesImg = timeSeriesImg;
+                                    activeWindNinjaTimeSeriesImg = timeSeriesImg;
                                 }
                             };
                         }
@@ -557,19 +556,19 @@
 
                 activeWindNinjaLayer = kmlLegendLayer;
 
-                kmzLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
-                if (activeTimeSeriesImg) {
-                    activeTimeSeriesImg.remove();
-                    activeTimeSeriesImg = null;
+                if (activeWindNinjaTimeSeriesImg) {
+                    activeWindNinjaTimeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
                 }
 
-                if (legendsEnabled) {
+                if (windninjaLegendEnabled) {
                     legendControl.addTo(map);
 
                     if (timeSeriesImg) {
                         map.getContainer().appendChild(timeSeriesImg);
-                        activeTimeSeriesImg = timeSeriesImg;
+                        activeWindNinjaTimeSeriesImg = timeSeriesImg;
                     }
                 }
             });
@@ -613,6 +612,9 @@
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
             );
+            const legendEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.bmp')
+            );
 
             if (kmlEntries.length === 0) {
                 console.error('No KML files found in this output.');
@@ -627,6 +629,106 @@
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = entry.name;
+
+            let timeSeriesImg = null;
+            let timeSeriesImgUrl = null;
+
+            const legendControl = L.control({ position: 'bottomright' });
+            initializationLegendControls.push(legendControl);
+
+            legendControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'kmz-legend');
+                L.DomEvent.disableClickPropagation(container);
+
+                if (legendEntries.length > 0) {
+                    (async () => {
+                        // Legend Key
+                        const blob = await legendEntries[0].async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.src = url;
+                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
+                        container.appendChild(img);
+
+                        if (legendEntries.length > 1) {
+
+                            const blob = await legendEntries[1].async('blob');
+                            timeSeriesImgUrl = URL.createObjectURL(blob);
+
+                            timeSeriesImg = new Image();
+                            timeSeriesImg.src = timeSeriesImgUrl;
+                            timeSeriesImg.style.cssText = `
+                                position: absolute;
+                                top: 10px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                max-width: 90%;
+                                height: auto;
+                                z-index: 600;
+                            `;
+                            timeSeriesImg.onload = () => {
+
+                                if (initializationLegendEnabled && activeInitializationLayer === kmlLegendLayer) {
+
+                                    if (activeInitializationTimeSeriesImg) {
+                                        activeInitializationTimeSeriesImg.remove();
+                                    }
+
+                                    map.getContainer().appendChild(timeSeriesImg);
+                                    activeInitializationTimeSeriesImg = timeSeriesImg;
+                                }
+                            };
+                        }
+                    })();
+                    kmlLegendLayer.on('remove', () => {
+                        if (timeSeriesImg) {
+                            timeSeriesImg.remove();
+                            timeSeriesImg = null;
+                        }
+                        if (timeSeriesImgUrl) {
+                            URL.revokeObjectURL(timeSeriesImgUrl);
+                            timeSeriesImgUrl = null;
+                        }
+                    });
+                }
+                return container;
+            };
+
+            // Toggle legend with layer
+            kmlLegendLayer.on('add', () => {
+
+                activeInitializationLayer = kmlLegendLayer;
+
+                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                if (activeInitializationTimeSeriesImg) {
+                    activeInitializationTimeSeriesImg.remove();
+                    activeInitializationTimeSeriesImg = null;
+                }
+
+                if (initializationLegendEnabled) {
+
+                    legendControl.addTo(map);
+
+                    if (timeSeriesImg) {
+                        map.getContainer().appendChild(timeSeriesImg);
+                        activeInitializationTimeSeriesImg = timeSeriesImg;
+                    }
+                }
+            });
+
+            kmlLegendLayer.on('remove', () => {
+
+                map.removeControl(legendControl);
+
+                if (timeSeriesImg) {
+                    timeSeriesImg.remove();
+                }
+
+                if (activeInitializationLayer === kmlLegendLayer) {
+                    activeInitializationLayer = null;
+                }
+            });
 
             const isFirstLayer = initializationOutputTree.children.length === 1;
             if (isFirstLayer) {
@@ -703,11 +805,47 @@
             if (!layerControl || !layerControl.setOverlayTree) return;
 
             const displayTree = [];
-            
-            if (windninjaOutputTree.children.length > 1) displayTree.push(windninjaOutputTree);
-            if (initializationOutputTree.children.length > 1) displayTree.push(initializationOutputTree);
-            if (unknownOutputTree.children.length > 1) displayTree.push(unknownOutputTree);
-            if (overlayTree) displayTree.push(overlayTree);
+            const overlayChildren = [];
+
+            // Bounding box only if a shape exists
+            if (mapRectangleLayer.getLayers().length > 0) {
+                overlayChildren.push({
+                    label: 'Bounding Box',
+                    layer: mapRectangleLayer
+                });
+            }
+
+            // WindNinja legend toggle only if WindNinja outputs exist
+            if (windninjaOutputTree.children.length > 1) {
+                overlayChildren.push({
+                    label: 'WindNinja Legend',
+                    layer: windninjaLegendToggle
+                });
+            }
+
+            // Weather model legend toggle only if Weather outputs exist
+            if (initializationOutputTree.children.length > 1) {
+                overlayChildren.push({
+                    label: 'Weather Model Legend',
+                    layer: initializationLegendToggle
+                });
+            }
+
+            if (windninjaOutputTree.children.length > 1)
+                displayTree.push(windninjaOutputTree);
+
+            if (initializationOutputTree.children.length > 1)
+                displayTree.push(initializationOutputTree);
+
+            if (unknownOutputTree.children.length > 1)
+                displayTree.push(unknownOutputTree);
+
+            if (overlayChildren.length > 0) {
+                displayTree.push({
+                    label: 'WindNinja Overlays',
+                    children: overlayChildren
+                });
+            }
 
             layerControl.setOverlayTree(displayTree);
         }
@@ -716,7 +854,7 @@
 
             if (e.layer === windninjaLegendToggle) {
 
-                legendsEnabled = true;
+                windninjaLegendEnabled = true;
 
                 if (activeWindNinjaLayer) {
                     activeWindNinjaLayer.fire('add');
@@ -728,13 +866,40 @@
 
             if (e.layer === windninjaLegendToggle) {
 
-                legendsEnabled = false;
+                windninjaLegendEnabled = false;
 
-                kmzLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
-                if (activeTimeSeriesImg) {
-                    activeTimeSeriesImg.remove();
-                    activeTimeSeriesImg = null;
+                if (activeWindNinjaTimeSeriesImg) {
+                    activeWindNinjaTimeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
+                }
+            }
+        });
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === initializationLegendToggle) {
+
+                initializationLegendEnabled = true;
+
+                if (activeInitializationLayer) {
+                    activeInitializationLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === initializationLegendToggle) {
+
+                initializationLegendEnabled = false;
+
+                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                if (activeInitializationTimeSeriesImg) {
+                    activeInitializationTimeSeriesImg.remove();
+                    activeInitializationTimeSeriesImg = null;
                 }
             }
         });
