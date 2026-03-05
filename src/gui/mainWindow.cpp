@@ -1560,6 +1560,10 @@ void MainWindow::plotKmzOutputs()
             QByteArray data = outFile.readAll();
             QString base64 = data.toBase64();
 
+
+            webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+            webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+            webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
             webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"');");
 
             // if it is a point initialization run, and station kmls were created for the run,
