@@ -161,6 +161,8 @@
 
         const windninjaLegendToggle = L.layerGroup([]);
         let windninjaLegendControls = [];
+        const windninjaTimeSeriesToggle = L.layerGroup([]);
+        let windninjaTimeSeriesEnabled = false;
         let windninjaLegendEnabled = false;
         let activeWindNinjaLayer = null;
         let activeWindNinjaTimeSeriesImg = null;
@@ -168,6 +170,8 @@
 
         const initializationLegendToggle = L.layerGroup([]);
         let initializationLegendControls = [];
+        const initializationTimeSeriesToggle = L.layerGroup([]);
+        let initializationTimeSeriesEnabled = false;
         let initializationLegendEnabled = false;
         let activeInitializationLayer = null;
         let activeInitializationTimeSeriesImg = null;
@@ -525,7 +529,7 @@
                             `;
                             timeSeriesImg.onload = () => {
 
-                                if (windninjaLegendEnabled && activeWindNinjaLayer === kmlLegendLayer) {
+                                if (windninjaTimeSeriesEnabled && activeWindNinjaLayer === kmlLegendLayer) {
 
                                     if (activeWindNinjaTimeSeriesImg) {
                                         activeWindNinjaTimeSeriesImg.remove();
@@ -551,7 +555,6 @@
                 return container;
             };
 
-            // Toggle legend with layer
             kmlLegendLayer.on('add', () => {
 
                 activeWindNinjaLayer = kmlLegendLayer;
@@ -565,11 +568,11 @@
 
                 if (windninjaLegendEnabled) {
                     legendControl.addTo(map);
+                }
 
-                    if (timeSeriesImg) {
-                        map.getContainer().appendChild(timeSeriesImg);
-                        activeWindNinjaTimeSeriesImg = timeSeriesImg;
-                    }
+                if (windninjaTimeSeriesEnabled && timeSeriesImg) {
+                    map.getContainer().appendChild(timeSeriesImg);
+                    activeWindNinjaTimeSeriesImg = timeSeriesImg;
                 }
             });
 
@@ -668,7 +671,7 @@
                             `;
                             timeSeriesImg.onload = () => {
 
-                                if (initializationLegendEnabled && activeInitializationLayer === kmlLegendLayer) {
+                                if (initializationTimeSeriesEnabled && activeInitializationLayer === kmlLegendLayer) {
 
                                     if (activeInitializationTimeSeriesImg) {
                                         activeInitializationTimeSeriesImg.remove();
@@ -707,13 +710,12 @@
                 }
 
                 if (initializationLegendEnabled) {
-
                     legendControl.addTo(map);
+                }
 
-                    if (timeSeriesImg) {
-                        map.getContainer().appendChild(timeSeriesImg);
-                        activeInitializationTimeSeriesImg = timeSeriesImg;
-                    }
+                if (initializationTimeSeriesEnabled && timeSeriesImg) {
+                    map.getContainer().appendChild(timeSeriesImg);
+                    activeInitializationTimeSeriesImg = timeSeriesImg;
                 }
             });
 
@@ -807,7 +809,6 @@
             const displayTree = [];
             const overlayChildren = [];
 
-            // Bounding box only if a shape exists
             if (mapRectangleLayer.getLayers().length > 0) {
                 overlayChildren.push({
                     label: 'Bounding Box',
@@ -815,19 +816,27 @@
                 });
             }
 
-            // WindNinja legend toggle only if WindNinja outputs exist
             if (windninjaOutputTree.children.length > 1) {
                 overlayChildren.push({
                     label: 'WindNinja Legend',
                     layer: windninjaLegendToggle
                 });
+
+                overlayChildren.push({
+                    label: 'WindNinja Time Series',
+                    layer: windninjaTimeSeriesToggle
+                });
             }
 
-            // Weather model legend toggle only if Weather outputs exist
             if (initializationOutputTree.children.length > 1) {
                 overlayChildren.push({
                     label: 'Weather Model Legend',
                     layer: initializationLegendToggle
+                });
+
+                overlayChildren.push({
+                    label: 'Weather Model Time Series',
+                    layer: initializationTimeSeriesToggle
                 });
             }
 
@@ -869,11 +878,6 @@
                 windninjaLegendEnabled = false;
 
                 windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
-
-                if (activeWindNinjaTimeSeriesImg) {
-                    activeWindNinjaTimeSeriesImg.remove();
-                    activeWindNinjaTimeSeriesImg = null;
-                }
             }
         });
 
@@ -896,6 +900,51 @@
                 initializationLegendEnabled = false;
 
                 initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+            }
+        });
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === windninjaTimeSeriesToggle) {
+
+                windninjaTimeSeriesEnabled = true;
+
+                if (activeWindNinjaLayer) {
+                    activeWindNinjaLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === windninjaTimeSeriesToggle) {
+
+                windninjaTimeSeriesEnabled = false;
+
+                if (activeWindNinjaTimeSeriesImg) {
+                    activeWindNinjaTimeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
+                }
+            }
+        });
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === initializationTimeSeriesToggle) {
+
+                initializationTimeSeriesEnabled = true;
+
+                if (activeInitializationLayer) {
+                    activeInitializationLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === initializationTimeSeriesToggle) {
+
+                initializationTimeSeriesEnabled = false;
 
                 if (activeInitializationTimeSeriesImg) {
                     activeInitializationTimeSeriesImg.remove();
