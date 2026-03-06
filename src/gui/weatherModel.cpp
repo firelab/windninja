@@ -299,7 +299,7 @@ void weatherModel::setTimeLimits( int index )
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
-        int n = index - 6;
+        int n = index - 5;
         hourSpinBox->setRange( papoNomads[n]->getStartHour(),
                                papoNomads[n]->getEndHour() );
 #endif
@@ -360,7 +360,7 @@ void weatherModel::getData()
     else
     {
 #ifdef WITH_NOMADS_SUPPORT
-        model = papoNomads[modelChoice - 6];
+        model = papoNomads[modelChoice - 5];
         /*
         ** Disable progress on 32-bit windows as we segfault.
         */
@@ -468,7 +468,7 @@ void weatherModel::getData()
     setCursor(Qt::ArrowCursor);
 
     //connect with thread::finished()?
-    if( modelChoice < 6 )
+    if( modelChoice < 5 )
         delete model;
 }
 
