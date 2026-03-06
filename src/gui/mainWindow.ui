@@ -5125,7 +5125,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 </sizepolicy>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="boundingBoxPage">
                 <layout class="QGridLayout" name="gridLayout_3">

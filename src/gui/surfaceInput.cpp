@@ -38,6 +38,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
 {
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
+    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);
 
     timeZoneAllZonesCheckBoxClicked();
 
