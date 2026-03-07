@@ -36,6 +36,8 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       ui(ui),
       webEngineView(webEngineView)
 {
+    progress = nullptr;
+
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
     ui->elevationInputTypeStackedWidget->setCurrentIndex(0);
@@ -271,10 +273,17 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
+    bool retVal = loadDemMetadata(demFilePath);
+    if(retVal == false)
+    {
+        //ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
+        //ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
+        return;
+    }
+
     QFileInfo file(demFilePath);
     ui->outputDirectoryLineEdit->setText(file.absolutePath());
 
-    computeDEMFile(demFilePath);
     if(demFileType == "LCP")
     {
         ui->vegetationStackedWidget->setCurrentIndex(1);
@@ -580,13 +589,24 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
 
 void SurfaceInput::updateProgressMessage(const QString message)
 {
-    progress->setLabelText(message);
-    progress->setWindowTitle(tr("Error"));
-    progress->setCancelButtonText(tr("Close"));
-    progress->setAutoClose(false);
-    progress->setAutoReset(false);
-    progress->setRange(0, 1);
-    progress->setValue(progress->maximum());
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message
+        );
+    }
 }
 
 static void comMessageHandler(const char *pszMessage, void *pUser)
@@ -679,11 +699,17 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
     return NINJA_SUCCESS;
 }
 
-void SurfaceInput::computeDEMFile(QString filePath)
+bool SurfaceInput::loadDemMetadata(const QString demFilePath)
 {
     double adfGeoTransform[6];
     GDALDataset *poInputDS;
-    poInputDS = (GDALDataset*)GDALOpen(filePath.toStdString().c_str(), GA_ReadOnly);
+
+    poInputDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
+    if(poInputDS == nullptr)
+    {
+        updateProgressMessage("Cannot open dem file for reading in SurfaceInput::loadDemMetadata().");
+        return false;
+    }
 
     QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
     if(GDALDriverName == "AAIGrid")
@@ -748,6 +774,8 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
+
+    return true;
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)

@@ -44,6 +44,7 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QProgressDialog>
+#include <QMessageBox>
 #include <QtConcurrent/QtConcurrent>
 
 class SurfaceInput : public QObject
@@ -100,7 +101,7 @@ private:
     QString fetchTimeZoneDetails(QString currentTimeZone);
     QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
     int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
-    void computeDEMFile(QString filePath);
+    bool loadDemMetadata(const QString demFilePath);
     void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
     void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
     void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
