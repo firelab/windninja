@@ -1,63 +1,30 @@
- /******************************************************************************
- *
- * $Id$
- *
- * Project:  WindNinja Qt GUI
- * Purpose:  main() function to initiate Qt GUI
- * Author:   Mason Willman <mason.willman@usda.gov>
- *
- ******************************************************************************
- *
- * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
- * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
- * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
- * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
- * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
- * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
- * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
- * RELIABILITY, OR ANY OTHER CHARACTERISTIC.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
- *
- *****************************************************************************/
-
 #include "mainWindow.h"
 #include "windninja.h"
 #include <QApplication>
-#include <QTimer>
 #include <QSplashScreen>
 #include <QPixmap>
-#include <QGraphicsOpacityEffect>
-#include <QPropertyAnimation>
-#include <QMouseEvent>
 #include <QMessageBox>
-#include <QDebug>
+#include <QPropertyAnimation>
+#include <QGraphicsOpacityEffect>
 #include <QStyleFactory>
-#include "splashScreen.h"
-
+#include <QTimer>
+#include <QEventLoop>
+#include <QMouseEvent>
 
 int main(int argc, char *argv[])
 {
     setbuf(stdout, nullptr);
+    QApplication a(argc, argv);
 
-    int result;
-
-    char ** papszOptions = NULL;
-    const char * runType = "gui";
-    NinjaErr ninjaErr = 0;
-    ninjaErr = NinjaInit(runType, papszOptions);
+    // Initialize as a GUI run
+    char ** options = NULL;
+    NinjaErr ninjaErr = NinjaInit("gui", options);
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaInit: ninjaErr =" << ninjaErr;
     }
-
-    QApplication a(argc, argv);
+    
+    // Set icon and application settings
     QIcon icon(":/wn-icon.png");
     QString ver = NINJA_VERSION_STRING;
     a.setWindowIcon(icon);
@@ -65,35 +32,80 @@ int main(int argc, char *argv[])
     a.setApplicationVersion(ver);
     a.setStyle(QStyleFactory::create("Fusion"));
 
+    // Initialize mainwindow (for the version message)
     MainWindow* w = nullptr;
-    try
-    {
+    try {
         w = new MainWindow;
-    }
-    catch (...)
-    {
-        QMessageBox::critical(nullptr, "Initialization Error",
-                              "WindNinja failed to initialize. Most likely cause is failure to find data "
-                              "dependencies. Try setting the environment variable WINDNINJA_DATA");
+    } catch (...) {
         return 1;
     }
 
-    QPixmap bigSplashPixmap(":wn-splash.png");
-    QSize splashSize(1200, 320);
-    QPixmap smallSplashPixmap;
-    smallSplashPixmap = bigSplashPixmap.scaled(splashSize,
-                                             Qt::KeepAspectRatioByExpanding);
-    QStringList list;
-    list << "Loading WindNinja " + ver + "...";
-    list << "Loading mesh generator...";
-    list << "Loading conjugate gradient solver...";
-    list << "Loading preconditioner...";
-    list << "WindNinja " + ver + " loaded.";
+    // Set the Splash Screen
+    QPixmap pix(":wn-splash.png");
+    QSplashScreen *splash = new QSplashScreen(pix.scaled(1200, 320, Qt::KeepAspectRatioByExpanding));
+    
+    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(splash);
+    splash->setGraphicsEffect(effect);
+    splash->show();
 
-    SplashScreen *splash = new SplashScreen(smallSplashPixmap, list, 1000);
-    splash->display();
-    QObject::connect(splash, SIGNAL(done()), w, SLOT(show()));
+    // Fade In Animation
+    QPropertyAnimation *fadeIn = new QPropertyAnimation(effect, "opacity");
+    fadeIn->setDuration(800);
+    fadeIn->setStartValue(0.0);
+    fadeIn->setEndValue(1.0);
+    fadeIn->start(QAbstractAnimation::DeleteWhenStopped);
 
-    result = a.exec();
-    return result;
+    // Messages and Timer
+    QStringList messages;
+    messages << "Loading WindNinja " + ver + "..."
+             << "Loading mesh generator..."
+             << "Loading conjugate gradient solver..."
+             << "Loading preconditioner..."
+             << "WindNinja " + ver + " loaded.";
+    int messageIndex = 0;
+    QTimer messageTimer;
+    
+    QObject::connect(&messageTimer, &QTimer::timeout, [&]() {
+        if (messageIndex < messages.size()) {
+            splash->showMessage(messages[messageIndex], 
+                                Qt::AlignBottom | Qt::AlignLeft, 
+                                Qt::gray);
+            messageIndex++;
+        } else {
+            messageTimer.stop();
+        }
+    });
+    messageTimer.start(600); 
+
+    // Event Loop for splash screen
+    QEventLoop loop;
+    QTimer::singleShot(3500, &loop, &QEventLoop::quit);
+
+    // Detect user click and skip splash screen
+    QObject::connect(splash, &QSplashScreen::messageChanged, [&](){
+        if (!splash->isVisible()) loop.quit();
+    });
+
+    loop.exec();
+
+    // Transition from fade in to fade out
+    messageTimer.stop();
+    if (splash->isVisible()) {
+        QPropertyAnimation *fadeOut = new QPropertyAnimation(effect, "opacity");
+        fadeOut->setDuration(400); // Shorter fade for transition
+        fadeOut->setStartValue(effect->opacity());
+        fadeOut->setEndValue(0.0);
+        
+        QObject::connect(fadeOut, &QPropertyAnimation::finished, [w, splash]() {
+            w->show();
+            splash->finish(w);
+            splash->deleteLater();
+        });
+        fadeOut->start(QAbstractAnimation::DeleteWhenStopped);
+    } else {
+        w->show();
+        splash->deleteLater();
+    }
+
+    return a.exec();
 }
