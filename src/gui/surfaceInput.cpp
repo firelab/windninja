@@ -225,13 +225,15 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
     QDir dir(downloadsPath);
     QString fullPath = dir.filePath(defaultName);
     QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", fullPath, "TIF Files (*.tif)");
-    if (demFilePath.isEmpty()) {
+    if(demFilePath.isEmpty())
+    {
         return;
     }
-    if (!demFilePath.endsWith(".tif", Qt::CaseInsensitive)) {
+
+    if(!demFilePath.endsWith(".tif", Qt::CaseInsensitive))
+    {
         demFilePath += ".tif";
     }
-    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     std::string demFile = demFilePath.toStdString();
 
     std::string fetchType;
@@ -273,15 +275,8 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
-    bool retVal = loadDemMetadata(demFilePath);
-    if(retVal == false)
-    {
-        //ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-        //ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
-        return;
-    }
-
-    QFileInfo file(demFilePath);
+    QString fullPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo file(fullPath);
     ui->outputDirectoryLineEdit->setText(file.absolutePath());
 
     if(demFileType == "LCP")
@@ -301,11 +296,6 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
         cornerStrs << QString::number(DEMCorners[i], 'f', 8);
     QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
     webEngineView->page()->runJavaScript(js);
-
-    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
-    QSignalBlocker blocker(ui->elevationInputFileLineEdit);
-    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
-    ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 
     emit updateState();
     emit updateTreeView();
@@ -331,17 +321,25 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
 
     QString demFilePath = QFileDialog::getOpenFileName(ui->centralwidget, "Select a file", directoryPath, "(*.tif);;All Files (*)");
 
-    if (demFilePath.isEmpty())
+    if(demFilePath.isEmpty())
     {
-        if (!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+        if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
         {
-            ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
+            ui->elevationInputFileLineEdit->setProperty("fullpath", ui->elevationInputFileLineEdit->property("fullpath").toString());
+            ui->elevationInputFileLineEdit->setText(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
             ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
         }
         return;
     }
 
-    ui->elevationInputFileLineEdit->setText(demFilePath);
+    bool retVal = loadDemMetadata(demFilePath);
+    if(retVal == false)
+    {
+        return;
+    }
+
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
+    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
 
@@ -355,6 +353,8 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
     progress->setMinimumDuration(0);
     progress->setAutoClose(true);
     progress->show();
+
+    pendingDownloadDemFilePath = QString::fromStdString(demFile);
 
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, this, boundingBox, demFile, resolution, fetchType);
@@ -372,23 +372,35 @@ void SurfaceInput::fetchDEMFinished()
     {
         emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
 
-        if (progress)
+        bool retVal = loadDemMetadata(pendingDownloadDemFilePath);
+        if(retVal == true)
+        {
+            ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
+            ui->elevationInputFileLineEdit->setText(QFileInfo(pendingDownloadDemFilePath).fileName());
+            ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
+            ui->inputsStackedWidget->setCurrentIndex(3);
+        }
+        //else  // if(retVal == false)
+        //{
+        //    // message is handled in loadDemMetadata()
+        //    // don't want to return here, need to wrap up all the other todos of this function or things won't close properly
+        //    //return;
+        //}
+
+        if(progress)
         {
             progress->close();
             progress->deleteLater();
             progress = nullptr;
         }
-
-        ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-        ui->inputsStackedWidget->setCurrentIndex(3);
-
-    } else
+    }
+    else
     {
         emit writeToConsoleSignal("Failed to fetch DEM file.");
     }
 
     // delete the futureWatcher every time, whether success or failure
-    if (futureWatcher)
+    if(futureWatcher)
     {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;

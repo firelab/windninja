@@ -92,6 +92,8 @@ private:
     QProgressDialog *progress;
     QFutureWatcher<int> *futureWatcher;
 
+    QString pendingDownloadDemFilePath;
+
     QString demFileType;
     QString inputFileDir;
     int GDALXSize, GDALYSize;
