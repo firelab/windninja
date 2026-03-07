@@ -176,7 +176,23 @@
         let activeInitializationLayer = null;
         let activeInitializationTimeSeriesImg = null;
         let activeInitializationTimeSeriesUrl = null;
-        
+
+        const timeSeriesContainer = document.createElement('div');
+        timeSeriesContainer.style.cssText = `
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+            z-index: 1000;
+        `;
+
+        map.whenReady(() => {
+            map.getContainer().appendChild(timeSeriesContainer);
+        });        
 
         const baseTree = {
             label: 'Base Maps',
@@ -519,13 +535,9 @@
                             timeSeriesImg = new Image();
                             timeSeriesImg.src = timeSeriesImgUrl;
                             timeSeriesImg.style.cssText = `
-                                position: absolute;
-                                top: 10px;
-                                left: 50%;
-                                transform: translateX(-50%);
-                                max-width: 90%;
+                                max-width: 500px;
                                 height: auto;
-                                z-index: 600;
+                                pointer-events: auto;
                             `;
                             timeSeriesImg.onload = () => {
 
@@ -535,7 +547,7 @@
                                         activeWindNinjaTimeSeriesImg.remove();
                                     }
 
-                                    map.getContainer().appendChild(timeSeriesImg);
+                                    timeSeriesContainer.prepend(timeSeriesImg);
                                     activeWindNinjaTimeSeriesImg = timeSeriesImg;
                                 }
                             };
@@ -561,17 +573,12 @@
 
                 windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
-                if (activeWindNinjaTimeSeriesImg) {
-                    activeWindNinjaTimeSeriesImg.remove();
-                    activeWindNinjaTimeSeriesImg = null;
-                }
-
                 if (windninjaLegendEnabled) {
                     legendControl.addTo(map);
                 }
 
                 if (windninjaTimeSeriesEnabled && timeSeriesImg) {
-                    map.getContainer().appendChild(timeSeriesImg);
+                    timeSeriesContainer.prepend(timeSeriesImg);
                     activeWindNinjaTimeSeriesImg = timeSeriesImg;
                 }
             });
@@ -661,13 +668,9 @@
                             timeSeriesImg = new Image();
                             timeSeriesImg.src = timeSeriesImgUrl;
                             timeSeriesImg.style.cssText = `
-                                position: absolute;
-                                top: 10px;
-                                left: 50%;
-                                transform: translateX(-50%);
-                                max-width: 90%;
+                                max-width: 500px;
                                 height: auto;
-                                z-index: 600;
+                                pointer-events: auto;
                             `;
                             timeSeriesImg.onload = () => {
 
@@ -677,7 +680,7 @@
                                         activeInitializationTimeSeriesImg.remove();
                                     }
 
-                                    map.getContainer().appendChild(timeSeriesImg);
+                                    timeSeriesContainer.prepend(timeSeriesImg);                                    
                                     activeInitializationTimeSeriesImg = timeSeriesImg;
                                 }
                             };
@@ -704,17 +707,12 @@
 
                 initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
-                if (activeInitializationTimeSeriesImg) {
-                    activeInitializationTimeSeriesImg.remove();
-                    activeInitializationTimeSeriesImg = null;
-                }
-
                 if (initializationLegendEnabled) {
                     legendControl.addTo(map);
                 }
 
                 if (initializationTimeSeriesEnabled && timeSeriesImg) {
-                    map.getContainer().appendChild(timeSeriesImg);
+                    timeSeriesContainer.prepend(timeSeriesImg);
                     activeInitializationTimeSeriesImg = timeSeriesImg;
                 }
             });
