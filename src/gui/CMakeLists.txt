@@ -26,8 +26,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
         appState.h
         appState.cpp
-        splashScreen.h
-        splashScreen.cpp
         surfaceInput.h
         surfaceInput.cpp
         setConfigurationDialogOption.h
