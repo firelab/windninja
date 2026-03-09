@@ -153,6 +153,15 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     CHECK_HTTP_RESULT( "Failed to get download URL" );
     CPLDebug( "LCP_CLIENT", "Request URL: %s", pszUrl );
 
+    if( strstr((const char*)m_poResult->pabyData, "\"success\":\"false\"") )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined,
+                 "Landfire server returned error: %s",
+                 (const char*)m_poResult->pabyData );
+        CPLHTTPDestroyResult(m_poResult);
+        return SURF_FETCH_E_IO_ERR;
+    }
+
      /*-----------------------------------------------------------------------------
      *  Parse the JSON result of the request
      *-----------------------------------------------------------------------------*/
