@@ -36,8 +36,11 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       ui(ui),
       webEngineView(webEngineView)
 {
+    progress = nullptr;
+
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
+    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);
 
     timeZoneAllZonesCheckBoxClicked();
 
@@ -222,13 +225,15 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
     QDir dir(downloadsPath);
     QString fullPath = dir.filePath(defaultName);
     QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", fullPath, "TIF Files (*.tif)");
-    if (demFilePath.isEmpty()) {
+    if(demFilePath.isEmpty())
+    {
         return;
     }
-    if (!demFilePath.endsWith(".tif", Qt::CaseInsensitive)) {
+
+    if(!demFilePath.endsWith(".tif", Qt::CaseInsensitive))
+    {
         demFilePath += ".tif";
     }
-    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     std::string demFile = demFilePath.toStdString();
 
     std::string fetchType;
@@ -270,10 +275,10 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
-    QFileInfo file(demFilePath);
+    QString fullPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo file(fullPath);
     ui->outputDirectoryLineEdit->setText(file.absolutePath());
 
-    computeDEMFile(demFilePath);
     if(demFileType == "LCP")
     {
         ui->vegetationStackedWidget->setCurrentIndex(1);
@@ -291,11 +296,6 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
         cornerStrs << QString::number(DEMCorners[i], 'f', 8);
     QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
     webEngineView->page()->runJavaScript(js);
-
-    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
-    QSignalBlocker blocker(ui->elevationInputFileLineEdit);
-    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
-    ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 
     emit updateState();
     emit updateTreeView();
@@ -321,17 +321,25 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
 
     QString demFilePath = QFileDialog::getOpenFileName(ui->centralwidget, "Select a file", directoryPath, "(*.tif);;All Files (*)");
 
-    if (demFilePath.isEmpty())
+    if(demFilePath.isEmpty())
     {
-        if (!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+        if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
         {
-            ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
+            ui->elevationInputFileLineEdit->setProperty("fullpath", ui->elevationInputFileLineEdit->property("fullpath").toString());
+            ui->elevationInputFileLineEdit->setText(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
             ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
         }
         return;
     }
 
-    ui->elevationInputFileLineEdit->setText(demFilePath);
+    bool retVal = loadDemMetadata(demFilePath);
+    if(retVal == false)
+    {
+        return;
+    }
+
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
+    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
 
@@ -345,6 +353,8 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
     progress->setMinimumDuration(0);
     progress->setAutoClose(true);
     progress->show();
+
+    pendingDownloadDemFilePath = QString::fromStdString(demFile);
 
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, this, boundingBox, demFile, resolution, fetchType);
@@ -362,23 +372,35 @@ void SurfaceInput::fetchDEMFinished()
     {
         emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
 
-        if (progress)
+        bool retVal = loadDemMetadata(pendingDownloadDemFilePath);
+        if(retVal == true)
+        {
+            ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
+            ui->elevationInputFileLineEdit->setText(QFileInfo(pendingDownloadDemFilePath).fileName());
+            ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
+            ui->inputsStackedWidget->setCurrentIndex(3);
+        }
+        //else  // if(retVal == false)
+        //{
+        //    // message is handled in loadDemMetadata()
+        //    // don't want to return here, need to wrap up all the other todos of this function or things won't close properly
+        //    //return;
+        //}
+
+        if(progress)
         {
             progress->close();
             progress->deleteLater();
             progress = nullptr;
         }
-
-        ui->elevationInputFileLineEdit->setText(ui->elevationInputFileLineEdit->property("fullpath").toString());
-        ui->inputsStackedWidget->setCurrentIndex(3);
-
-    } else
+    }
+    else
     {
         emit writeToConsoleSignal("Failed to fetch DEM file.");
     }
 
     // delete the futureWatcher every time, whether success or failure
-    if (futureWatcher)
+    if(futureWatcher)
     {
         futureWatcher->deleteLater();
         futureWatcher = nullptr;
@@ -579,13 +601,24 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
 
 void SurfaceInput::updateProgressMessage(const QString message)
 {
-    progress->setLabelText(message);
-    progress->setWindowTitle(tr("Error"));
-    progress->setCancelButtonText(tr("Close"));
-    progress->setAutoClose(false);
-    progress->setAutoReset(false);
-    progress->setRange(0, 1);
-    progress->setValue(progress->maximum());
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message
+        );
+    }
 }
 
 static void comMessageHandler(const char *pszMessage, void *pUser)
@@ -593,6 +626,12 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
     SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
 
     std::string msg = pszMessage;
+
+    // hrm, this was the old stuff, that was put in because ninjaCom likes to add "\n" to stuff
+    // and the writeToConsole() function does NOT like having a "\n" on the end, it adds extra empty lines all over the place
+    // but now we are running into an issue where QMessageBox gets confused about how to size things,
+    // UNLESS an extra "\n" is in the text. So annoying and confusing.
+    // hrm, this means that I actually need BOTH functionalities, strip the "\n" for writeToConsole(), add a "\n" for updateProgressMessage() stuff.
     if( msg.substr(msg.size()-1, 1) == "\n")
     {
         msg = msg.substr(0, msg.size()-1);
@@ -617,16 +656,16 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         }
         clipStr = msg.substr(startPos);
         //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Cannot determine exception type." )
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error"));
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error")+"\n");
             emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
         }
         else
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr));
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr+"\n"));
             emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
         }
     }
@@ -641,12 +680,12 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr+"\n"));
         emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), Qt::yellow);
     }
     else
     {
-        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg)+"\n");
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
 }
@@ -678,11 +717,18 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
     return NINJA_SUCCESS;
 }
 
-void SurfaceInput::computeDEMFile(QString filePath)
+bool SurfaceInput::loadDemMetadata(const QString demFilePath)
 {
     double adfGeoTransform[6];
     GDALDataset *poInputDS;
-    poInputDS = (GDALDataset*)GDALOpen(filePath.toStdString().c_str(), GA_ReadOnly);
+
+    poInputDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
+    if(poInputDS == nullptr)
+    {
+        qCritical() << "ERROR: Cannot open dem file for reading in SurfaceInput::loadDemMetadata().";
+        comMessageHandler("ERROR: Cannot open dem file for reading in SurfaceInput::loadDemMetadata().", this);
+        return false;
+    }
 
     QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
     if(GDALDriverName == "AAIGrid")
@@ -747,6 +793,8 @@ void SurfaceInput::computeDEMFile(QString filePath)
     GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
+
+    return true;
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
