@@ -623,7 +623,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         }
 
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
-        stationFiles.push_back(recentFileSelected);
+        stationFiles.push_back(recentFileSelected);  // note, selected vs valid are two separate things
         //qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
 
         QByteArray filePathBytes = recentFileSelected.toUtf8();
@@ -632,8 +632,15 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         int stationHeader = NinjaGetWxStationHeaderVersion(filePath, options);
         //qDebug() << "[GUI-Point] Station Header: " << stationHeader;
 
+        if(stationHeader == 1)
+        {
+            writeToConsoleSignal("Station has old station format, which is no longer allowed!");
+            state.isStationFileSelectionValid = false;
+            return;
+        }
+
         bool timeSeriesFlag = true;
-        if (stationHeader != 1)
+        if(stationHeader != 1)
         {
             GDALDataset* hDS = (GDALDataset*) GDALOpenEx(
                 filePath,
@@ -643,12 +650,26 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
                 NULL
             );
 
+            if(hDS == NULL)
+            {
+                writeToConsoleSignal("Cannot open station file!");
+                state.isStationFileSelectionValid = false;
+                return;
+            }
+
             OGRLayer* poLayer = hDS->GetLayer(0);
             poLayer->ResetReading();
             qint64 lastIndex = poLayer->GetFeatureCount();
             //qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
 
             OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, row 1 is first time in series
+            if(poFeature == NULL)
+            {
+                writeToConsoleSignal("No Stations Found in file!");
+                state.isStationFileSelectionValid = false;
+                return;
+            }
+
             QString startDateTimeStr(poFeature->GetFieldAsString(15)); // Time should be in 15th (last) column (0-14)
             //qDebug() << "[GUI-Point] Station start time:" << startDateTimeStr;
 
