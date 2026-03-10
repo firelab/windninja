@@ -478,15 +478,23 @@ void WidgetDownloadDEM::demSelectedUpdate(bool selected)
  */
 void WidgetDownloadDEM::fillNoDataValues(const char* file)
 {
+  QMessageBox::information(this,
+                           tr("WindNinja"),
+                           tr("The downloaded DEM contains no data values. Please Click OK to proceed with filling."));
+
     GDALDataset *poDS;
     poDS = (GDALDataset*)GDALOpen(demFile, GA_Update);
     int nNoDataValues;
     if(GDALHasNoData(poDS, 1))
     {
         nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
-        /* Should we fill again? */
         if(nNoDataValues)
-        {}
+        {
+          QMessageBox::warning( this, tr ("WindNinja" ),
+                               tr( "Could not fill no data pixels, too many pixels "
+                                  "were invalid." ),
+                               QMessageBox::Ok );
+        }
     }
     GDALClose((GDALDatasetH)poDS);
 }
