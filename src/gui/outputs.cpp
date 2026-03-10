@@ -214,6 +214,9 @@ void Outputs::kmzOutputOpenFileButtonClicked()
     {
         qDebug() << "kmz outFile =" << outFileStr;
 
+        QFileInfo fileInfo(outFileStr);
+        QString fileName = fileInfo.fileName();
+
         QFile outFile(outFileStr);
         if (!outFile.open(QIODevice::ReadOnly))
         {
@@ -223,7 +226,8 @@ void Outputs::kmzOutputOpenFileButtonClicked()
         QByteArray data = outFile.readAll();
         QString base64 = data.toBase64();
 
-        webEngineView->page()->runJavaScript("loadKmzFromBase64('" + base64 + "');");
+        QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+        webEngineView->page()->runJavaScript(jsCall);
     }
 }
 

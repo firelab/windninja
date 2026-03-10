@@ -390,7 +390,7 @@
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
 
-        async function loadKmzFromBase64(kmlData) {
+        async function loadKmzFromBase64(kmlData, fileName) {
             if (kmzTimeSeriesImg) {
                 kmzTimeSeriesImg.remove();
                 kmzTimeSeriesImg = null;
@@ -410,7 +410,7 @@
                 
                 const nameTag = kmlDoc.getElementsByTagName('name')[0];
                 let layerName = fileName;
-                
+
                 const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
                 const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
 
@@ -505,7 +505,7 @@
             
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
-            const layerName = entry.name;
+            const layerName = fileName;
 
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
@@ -611,7 +611,7 @@
             updateOverlayTree();
         }
 
-        async function loadOutputFromBase64(data) {
+        async function loadOutputFromBase64(data, fileName) {
             const binary = atob(data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -638,7 +638,7 @@
             
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
-            const layerName = entry.name;
+            const layerName = fileName;
 
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
