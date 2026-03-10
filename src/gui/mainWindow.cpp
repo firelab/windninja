@@ -143,7 +143,7 @@ void MainWindow::connectSignals()
     connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(pointInitializationInput, &PointInitializationInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
-
+    connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)

@@ -34,6 +34,9 @@
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QTextDocument>
+#include <QTextBlock>
+#include <QMessageBox>
 
 class MapBridge : public QObject
 {
@@ -44,13 +47,11 @@ public:
 
 signals:
     void boundingBoxReceived(double north, double south, double east, double west);
-    void ready();
-
+    void writeToConsoleSignal(QString message, QColor color=Qt::black);
 
 public slots:
     void receiveBoundingBox(const QString &jsonCoords);
-    void notifyReady();
-
+    void invalidKMZ(const QString &fileName);
 };
 
 #endif // BRIDGE_H

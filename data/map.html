@@ -500,6 +500,11 @@
             const author = authorNode ? authorNode.textContent.trim() : null;
 
             if (author !== 'WindNinja') {
+                
+                if (window.bridge?.invalidKMZ) {
+                    window.bridge.invalidKMZ(JSON.stringify(fileName));
+                }
+
                 return;
             }
             

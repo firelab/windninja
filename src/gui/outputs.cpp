@@ -55,7 +55,6 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->kmzOutputOpenFileButton, &QPushButton::clicked, this, &Outputs::kmzOutputOpenFileButtonClicked);
     connect(ui->kmzOutputClearButton, &QPushButton::clicked, this, &Outputs::kmzOutputClearButtonClicked);
-
 }
 
 void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
