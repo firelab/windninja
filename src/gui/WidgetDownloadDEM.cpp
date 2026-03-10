@@ -480,7 +480,7 @@ void WidgetDownloadDEM::fillNoDataValues(const char* file)
 {
   QMessageBox::information(this,
                            tr("WindNinja"),
-                           tr("The downloaded DEM contains no data values. Please Click OK to proceed with filling."));
+                           tr("The downloaded file contains no data values. WindNinja will attempt to fill with valid data. Please click OK to proceed."));
 
     GDALDataset *poDS;
     poDS = (GDALDataset*)GDALOpen(demFile, GA_Update);
