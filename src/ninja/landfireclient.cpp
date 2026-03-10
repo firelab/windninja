@@ -314,12 +314,40 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_IO_ERR;
     }
 
+    GDALDatasetH hCheckDS = GDALOpen(filename, GA_ReadOnly);
+    int nNoDataCount = 0;
+    if(hCheckDS != NULL)
+    {
+        GDALRasterBandH hBand = GDALGetRasterBand(hCheckDS, 1);
+        int nPixels = GDALGetRasterXSize(hCheckDS);
+        int nLines = GDALGetRasterYSize(hCheckDS);
+        double dfNoData = GDALGetRasterNoDataValue(hBand, NULL);
+
+        double *padfScanline;
+        padfScanline = (double *) CPLMalloc(sizeof(double) * nPixels);
+
+        for(int i = 0; i < nLines; i++)
+        {
+            GDALRasterIO(hBand, GF_Read, 0, i, nPixels, 1,
+                         padfScanline, nPixels, 1, GDT_Float64, 0, 0);
+            for(int j = 0; j < nPixels; j++)
+            {
+                if(CPLIsEqual(padfScanline[j], dfNoData))
+                    nNoDataCount++;
+            }
+        }
+        CPLFree(padfScanline);
+        GDALClose(hCheckDS);
+    }
+
     if( !CSLTestBoolean( CPLGetConfigOption( "LCP_KEEP_ARCHIVE", "FALSE" ) ) )
     {
         VSIUnlink( pszTmpZip );
     }
 
-    return SURF_FETCH_E_NONE;
+
+
+    return nNoDataCount;
 }
 
 #endif /* WITH_LCP_CLIENT */
