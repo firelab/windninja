@@ -409,8 +409,8 @@
                 const kmlDoc = parser.parseFromString(atob(kmlData), 'text/xml');
                 
                 const nameTag = kmlDoc.getElementsByTagName('name')[0];
-                let layerName = nameTag ? nameTag.textContent : "Imported Layer";
-
+                let layerName = fileName;
+                
                 const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
                 const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
 
