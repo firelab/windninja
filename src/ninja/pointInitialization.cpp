@@ -613,7 +613,7 @@ vector<wxStation> pointInitialization::readWxStations(string demFileName, string
     vector<string>wxLoc; //list of station locations
     wxLoc.push_back(rawStationFilename); //add the one file to the list
     storeFileNames(wxLoc); //store the file for later
-    
+
     vector<string>stationLocs; //get the id for each station
     stationLocs=fetchWxStationID();
     
@@ -1063,15 +1063,30 @@ vector<std::string> pointInitialization::fetchWxStationID()
     {
         OGRDataSourceH hDS;
         hDS = OGROpen(stationFiles[k].c_str(), FALSE, NULL);
+        if(hDS == NULL)
+        {
+            error_msg = "Cannot open stationFile '"+stationFiles[k]+"'.";
+            throw( std::runtime_error( error_msg ) );
+        }
 
         OGRLayer *poLayer;
         OGRFeature *poFeature;
         poLayer = (OGRLayer *) OGR_DS_GetLayer(hDS, 0);
+        if(poLayer == NULL)
+        {
+            error_msg = "Cannot read OGRLayer in stationFile '"+stationFiles[k]+"'.";
+            throw( std::runtime_error( error_msg ) );
+        }
 
         std::string oStationName;
 
         OGRLayerH hLayer;
         hLayer = OGR_DS_GetLayer(hDS, 0);
+        if(hLayer == NULL)
+        {
+            error_msg = "Cannot read OGRLayerH in stationFile '"+stationFiles[k]+"'.";
+            throw( std::runtime_error( error_msg ) );
+        }
         OGR_L_ResetReading(hLayer);
 
         poLayer->ResetReading();
