@@ -2753,6 +2753,7 @@ void pointInitialization::storeTZAbbrev(string tzAbbr)
  */
 void pointInitialization::setLocalStartAndStopTimes(blt::local_date_time start, boost::local_time::local_date_time stop)
 {
+    start_and_stop_times.clear(); // Need to always clear these times before adding new ones, to allow multiple downloads and later runs to work properly
     start_and_stop_times.push_back(start);
     start_and_stop_times.push_back(stop);
 }
