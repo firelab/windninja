@@ -69,7 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, this);
     weatherModelInput = new WeatherModelInput(ui, this);
-    outputs = new Outputs(ui, this);
+    outputs = new Outputs(ui, webEngineView, this);
 
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
@@ -143,6 +143,7 @@ void MainWindow::connectSignals()
     connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(pointInitializationInput, &PointInitializationInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -1555,16 +1556,18 @@ void MainWindow::plotKmzOutputs()
             QString outFileStr = QString::fromStdString(kmzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
             QFile outFile(outFileStr);
+            QString fileName = outFile.fileName();
 
             outFile.open(QIODevice::ReadOnly);
             QByteArray data = outFile.readAll();
             QString base64 = data.toBase64();
 
-            bool timeSeries = !ui->domainAverageGroupBox->isChecked();
 
-            webEngineView->page()->runJavaScript(
-                "loadKmzFromBase64('"+base64+"', "+(timeSeries ? "true" : "false")+");"
-            );
+            webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+            webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+            webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
+            QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+            webEngineView->page()->runJavaScript(jsCall);
 
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
@@ -1587,7 +1590,7 @@ void MainWindow::plotKmzOutputs()
 
             // // if it is a weather model run, and weather model kmzs were created for the run,
             // // plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked())
+            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;

@@ -1,9 +1,11 @@
 #include "outputs.h"
 
 Outputs::Outputs(Ui::MainWindow *ui,
+                 QWebEngineView *webEngineView,
                  QObject* parent)
     : QObject(parent),
-    ui(ui)
+    ui(ui),
+    webEngineView(webEngineView)
 {
     QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     ui->outputDirectoryLineEdit->setText(downloadsPath);
@@ -51,7 +53,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
-
+    connect(ui->kmzOutputOpenFileButton, &QPushButton::clicked, this, &Outputs::kmzOutputOpenFileButtonClicked);
+    connect(ui->kmzOutputClearButton, &QPushButton::clicked, this, &Outputs::kmzOutputClearButtonClicked);
 }
 
 void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
@@ -193,4 +196,43 @@ void Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
     {
         ui->geospatialPDFFilesMeshResolutionComboBox->setCurrentIndex(index);
     }
+}
+
+void Outputs::kmzOutputOpenFileButtonClicked()
+{
+    QString dir = ui->outputDirectoryLineEdit->text();
+
+    QStringList files = QFileDialog::getOpenFileNames(
+        ui->centralwidget,
+        "Select files",
+        dir,
+        "KML/KMZ Files (*.kml *.kmz);;All Files (*)"
+    );
+
+    for (const QString &outFileStr : files)
+    {
+        qDebug() << "kmz outFile =" << outFileStr;
+
+        QFileInfo fileInfo(outFileStr);
+        QString fileName = fileInfo.fileName();
+
+        QFile outFile(outFileStr);
+        if (!outFile.open(QIODevice::ReadOnly))
+        {
+            continue;
+        }
+
+        QByteArray data = outFile.readAll();
+        QString base64 = data.toBase64();
+
+        QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+        webEngineView->page()->runJavaScript(jsCall);
+    }
+}
+
+void Outputs::kmzOutputClearButtonClicked()
+{
+    webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+    webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+    webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
 }

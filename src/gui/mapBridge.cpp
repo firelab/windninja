@@ -52,7 +52,9 @@ void MapBridge::receiveBoundingBox(const QString &jsonCoords)
     emit boundingBoxReceived(north, south, east, west);
 }
 
-void MapBridge::notifyReady()
+void MapBridge::invalidKMZ(const QString &fileName)
 {
-    emit ready();
+    const QString message = QString("Unable to load kml/kmz: %1").arg(fileName);
+    qDebug() << message;
+    emit writeToConsoleSignal(message, Qt::red);
 }

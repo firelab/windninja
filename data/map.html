@@ -158,7 +158,42 @@
         const mapRectangleLayer = new L.FeatureGroup();
         const rectangleDrawer = new L.Draw.Rectangle(map);
         const centerControl = L.control({ position: 'topleft' });
-        
+
+        const windninjaLegendToggle = L.layerGroup([]);
+        let windninjaLegendControls = [];
+        const windninjaTimeSeriesToggle = L.layerGroup([]);
+        let windninjaTimeSeriesEnabled = false;
+        let windninjaLegendEnabled = false;
+        let activeWindNinjaLayer = null;
+        let activeWindNinjaTimeSeriesImg = null;
+        let activeWindNinjaTimeSeriesUrl = null;
+
+        const initializationLegendToggle = L.layerGroup([]);
+        let initializationLegendControls = [];
+        const initializationTimeSeriesToggle = L.layerGroup([]);
+        let initializationTimeSeriesEnabled = false;
+        let initializationLegendEnabled = false;
+        let activeInitializationLayer = null;
+        let activeInitializationTimeSeriesImg = null;
+        let activeInitializationTimeSeriesUrl = null;
+
+        const timeSeriesContainer = document.createElement('div');
+        timeSeriesContainer.style.cssText = `
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+            z-index: 1000;
+        `;
+
+        map.whenReady(() => {
+            map.getContainer().appendChild(timeSeriesContainer);
+        });        
+
         const baseTree = {
             label: 'Base Maps',
             children: [
@@ -177,8 +212,8 @@
             label: 'WindNinja Output',
             children: [
                 {
-                    label: 'None',
-                    layer: L.layerGroup([]), // Dummy empty layer
+                    label: 'No Output',
+                    layer: L.layerGroup([]), 
                     radioGroup: 'windninjaOutputs'
                 }
             ]
@@ -188,21 +223,27 @@
             label: 'Weather Model Output',
             children: [
                 {
-                    label: 'None',
-                    layer: L.layerGroup([]), // Dummy empty layer
+                    label: 'No Output',
+                    layer: L.layerGroup([]), 
                     radioGroup: 'initializationOutput'
+                }
+            ]
+        };
+
+        const unknownOutputTree = {
+            label: 'Unknown Output',
+            children: [
+                {
+                    label: 'No Output',
+                    layer: L.layerGroup([]), 
+                    radioGroup: 'unknownOutput'
                 }
             ]
         };
 
         const overlayTree = {
             label: 'WindNinja Overlays',
-            children: [
-                {
-                    label: 'Bounding Box',
-                    layer: mapRectangleLayer
-                }
-            ]
+            children: []
         };
 
         const layerControl = L.control.layers.tree(
@@ -215,7 +256,6 @@
 
 
         let drawDEMCheck = false;
-        let kmzLegendControls = [];
         let centerControlAdded = false;
 
         // Script functions
@@ -350,11 +390,7 @@
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
 
-        async function loadKmzFromBase64(kmlData, timeSeries) {
-            // Setup & Cleanup
-            clearWindNinjaOutputTree();
-            clearInitializationOutputTree();
-
+        async function loadKmzFromBase64(kmlData, fileName) {
             if (kmzTimeSeriesImg) {
                 kmzTimeSeriesImg.remove();
                 kmzTimeSeriesImg = null;
@@ -364,6 +400,67 @@
                 kmzTimeSeriesImgUrl = null;
             }
 
+            const trimmedData = kmlData.trim();
+            const isRawKml = trimmedData.startsWith('<') || !trimmedData.startsWith('UEsDB'); // 'UEsDB' is base64 for 'PK'
+
+            if (isRawKml) {
+                console.info('Raw KML detected. Checking author metadata...');
+                const parser = new DOMParser();
+                const kmlDoc = parser.parseFromString(atob(kmlData), 'text/xml');
+                
+                const nameTag = kmlDoc.getElementsByTagName('name')[0];
+                let layerName = fileName;
+
+                const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
+                const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
+
+                const kmlLayer = new L.KML(kmlDoc);
+                const kmlLegendLayer = L.layerGroup([kmlLayer]);
+
+                if (isWindNinja) {
+                    console.info('WindNinja KML detected.');
+
+                    const nameUpper = layerName.toUpperCase();
+                    const isSpecialSource =
+                        nameUpper.includes('NOMADS') ||
+                        nameUpper.includes('UCAR') ||
+                        nameUpper.includes('PASTCAST');
+
+                    if (!layerName.toLowerCase().endsWith('.kmz')) {
+                        layerName += '.kmz';
+                    }
+
+                    if (isSpecialSource) {
+
+                        initializationOutputTree.children.push({
+                            label: layerName,
+                            layer: kmlLegendLayer,
+                            radioGroup: 'initializationOutput'
+                        });
+
+                    } else {
+                        windninjaOutputTree.children.push({
+                            label: layerName,
+                            layer: kmlLegendLayer,
+                            radioGroup: 'windninjaOutputs'
+                        });
+                    }
+                } else {
+                    console.info('Unknown KML detected.');
+                    if (!layerName.toLowerCase().endsWith('.kml')) layerName += '.kml';
+                    
+                    unknownOutputTree.children.push({
+                        label: layerName,
+                        layer: kmlLegendLayer,
+                        radioGroup: 'unknownOutput'
+                    });
+                }
+
+                kmlLegendLayer.addTo(map);
+                updateOverlayTree();
+                return;
+            }
+
             const binary = atob(kmlData);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -371,6 +468,16 @@
             }
             
             const zip = await JSZip.loadAsync(bytes.buffer);
+
+            const keywords = ["NOMADS", "UCAR", "PASTCAST"];
+            const containsKeyword = Object.keys(zip.files).some(fileName => 
+                keywords.some(keyword => fileName.toUpperCase().includes(keyword))
+            );
+
+            if (containsKeyword) {
+                loadOutputFromBase64(kmlData, fileName);
+                return; 
+            }
 
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
@@ -388,16 +495,28 @@
             const kmlText = await entry.async('string');
             const parser = new DOMParser();
             const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+
+            const authorNode = kmlDoc.querySelector('author');
+            const author = authorNode ? authorNode.textContent.trim() : null;
+
+            if (author !== 'WindNinja') {
+                
+                if (window.bridge?.invalidKMZ) {
+                    window.bridge.invalidKMZ(JSON.stringify(fileName));
+                }
+
+                return;
+            }
             
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
-            const layerName = entry.name;
+            const layerName = fileName;
 
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
 
             const legendControl = L.control({ position: 'bottomright' });
-            kmzLegendControls.push(legendControl);
+            windninjaLegendControls.push(legendControl);
 
             legendControl.onAdd = function () {
                 const container = L.DomUtil.create('div', 'kmz-legend');
@@ -413,24 +532,164 @@
                         img.style.cssText = 'display: block; max-width: 150px; height: auto;';
                         container.appendChild(img);
 
-                        if (timeSeries && legendEntries.length > 1 && !timeSeriesImg) {
+                        if (legendEntries.length > 1) {
+
                             const blob = await legendEntries[1].async('blob');
                             timeSeriesImgUrl = URL.createObjectURL(blob);
 
                             timeSeriesImg = new Image();
                             timeSeriesImg.src = timeSeriesImgUrl;
                             timeSeriesImg.style.cssText = `
-                                position: absolute;
-                                top: 10px;
-                                left: 50%;
-                                transform: translateX(-50%);
-                                max-width: 90%;
+                                max-width: 500px;
                                 height: auto;
-                                z-index: 600;
+                                pointer-events: auto;
                             `;
+                            timeSeriesImg.onload = () => {
 
-                            map.getContainer().appendChild(timeSeriesImg);
-                        }   
+                                if (windninjaTimeSeriesEnabled && activeWindNinjaLayer === kmlLegendLayer) {
+
+                                    if (activeWindNinjaTimeSeriesImg) {
+                                        activeWindNinjaTimeSeriesImg.remove();
+                                    }
+
+                                    timeSeriesContainer.prepend(timeSeriesImg);
+                                    activeWindNinjaTimeSeriesImg = timeSeriesImg;
+                                }
+                            };
+                        }
+                    })();
+                    kmlLegendLayer.on('remove', () => {
+                        if (timeSeriesImg) {
+                            timeSeriesImg.remove();
+                            timeSeriesImg = null;
+                        }
+                        if (timeSeriesImgUrl) {
+                            URL.revokeObjectURL(timeSeriesImgUrl);
+                            timeSeriesImgUrl = null;
+                        }
+                    });
+                }
+                return container;
+            };
+
+            kmlLegendLayer.on('add', () => {
+
+                activeWindNinjaLayer = kmlLegendLayer;
+
+                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                if (windninjaLegendEnabled) {
+                    legendControl.addTo(map);
+                }
+
+                if (windninjaTimeSeriesEnabled && timeSeriesImg) {
+                    timeSeriesContainer.prepend(timeSeriesImg);
+                    activeWindNinjaTimeSeriesImg = timeSeriesImg;
+                }
+            });
+
+            kmlLegendLayer.on('remove', () => {
+
+                map.removeControl(legendControl);
+
+                if (timeSeriesImg) {
+                    timeSeriesImg.remove();
+                }
+
+                if (activeWindNinjaLayer === kmlLegendLayer) {
+                    activeWindNinjaLayer = null;
+                }
+            });
+
+            const isFirstLayer = windninjaOutputTree.children.length === 1;
+
+            if (isFirstLayer) {
+                kmlLegendLayer.addTo(map);
+            }
+
+            windninjaOutputTree.children.push({
+                label: layerName,
+                layer: kmlLegendLayer,
+                radioGroup: 'windninjaOutputs'
+            });
+
+            updateOverlayTree();
+        }
+
+        async function loadOutputFromBase64(data, fileName) {
+            const binary = atob(data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            const zip = await JSZip.loadAsync(bytes.buffer);
+            const kmlEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.kml')
+            );
+            const legendEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.bmp')
+            );
+
+            if (kmlEntries.length === 0) {
+                console.error('No KML files found in this output.');
+                return;
+            }
+
+            const entry = kmlEntries[0]; 
+            const kmlText = await entry.async('string');
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
+            
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+            const layerName = fileName;
+
+            let timeSeriesImg = null;
+            let timeSeriesImgUrl = null;
+
+            const legendControl = L.control({ position: 'bottomright' });
+            initializationLegendControls.push(legendControl);
+
+            legendControl.onAdd = function () {
+                const container = L.DomUtil.create('div', 'kmz-legend');
+                L.DomEvent.disableClickPropagation(container);
+
+                if (legendEntries.length > 0) {
+                    (async () => {
+                        // Legend Key
+                        const blob = await legendEntries[0].async('blob');
+                        const url = URL.createObjectURL(blob);
+                        const img = new Image();
+                        img.src = url;
+                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
+                        container.appendChild(img);
+
+                        if (legendEntries.length > 1) {
+
+                            const blob = await legendEntries[1].async('blob');
+                            timeSeriesImgUrl = URL.createObjectURL(blob);
+
+                            timeSeriesImg = new Image();
+                            timeSeriesImg.src = timeSeriesImgUrl;
+                            timeSeriesImg.style.cssText = `
+                                max-width: 500px;
+                                height: auto;
+                                pointer-events: auto;
+                            `;
+                            timeSeriesImg.onload = () => {
+
+                                if (initializationTimeSeriesEnabled && activeInitializationLayer === kmlLegendLayer) {
+
+                                    if (activeInitializationTimeSeriesImg) {
+                                        activeInitializationTimeSeriesImg.remove();
+                                    }
+
+                                    timeSeriesContainer.prepend(timeSeriesImg);                                    
+                                    activeInitializationTimeSeriesImg = timeSeriesImg;
+                                }
+                            };
+                        }
                     })();
                     kmlLegendLayer.on('remove', () => {
                         if (timeSeriesImg) {
@@ -447,57 +706,34 @@
             };
 
             // Toggle legend with layer
-            kmlLegendLayer.on('add', () => legendControl.addTo(map));
-            kmlLegendLayer.on('remove', () => legendControl.remove());
+            kmlLegendLayer.on('add', () => {
 
-            const isFirstLayer = windninjaOutputTree.children.length === 1;
+                activeInitializationLayer = kmlLegendLayer;
 
-            if (isFirstLayer) {
-                kmlLegendLayer.addTo(map);
-            }
+                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
-            windninjaOutputTree.children.push({
-                label: layerName,
-                layer: kmlLegendLayer,
-                radioGroup: 'windninjaOutputs'
+                if (initializationLegendEnabled) {
+                    legendControl.addTo(map);
+                }
+
+                if (initializationTimeSeriesEnabled && timeSeriesImg) {
+                    timeSeriesContainer.prepend(timeSeriesImg);
+                    activeInitializationTimeSeriesImg = timeSeriesImg;
+                }
             });
 
-            if (layerControl && layerControl.setOverlayTree) {
-                layerControl.setOverlayTree([
-                    windninjaOutputTree,
-                    overlayTree
-                ]);
-            }
-        }
+            kmlLegendLayer.on('remove', () => {
 
-        async function loadOutputFromBase64(data) {
+                map.removeControl(legendControl);
 
-            clearInitializationOutputTree();
+                if (timeSeriesImg) {
+                    timeSeriesImg.remove();
+                }
 
-            const binary = atob(data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-
-            const zip = await JSZip.loadAsync(bytes.buffer);
-            const kmlEntries = Object.values(zip.files).filter(entry =>
-                entry.name.toLowerCase().endsWith('.kml')
-            );
-
-            if (kmlEntries.length === 0) {
-                console.error('No KML files found in this output.');
-                return;
-            }
-
-            const entry = kmlEntries[0]; 
-            const kmlText = await entry.async('string');
-            const parser = new DOMParser();
-            const kmlDoc = parser.parseFromString(kmlText, 'text/xml');
-            
-            const kmlLayer = new L.KML(kmlDoc);
-            const kmlLegendLayer = L.layerGroup([kmlLayer]);
-            const layerName = entry.name;
+                if (activeInitializationLayer === kmlLegendLayer) {
+                    activeInitializationLayer = null;
+                }
+            });
 
             const isFirstLayer = initializationOutputTree.children.length === 1;
             if (isFirstLayer) {
@@ -510,38 +746,28 @@
                 radioGroup: 'initializationOutput'
             });
 
-            if (layerControl && layerControl.setOverlayTree) {
-                layerControl.setOverlayTree([
-                    windninjaOutputTree,
-                    initializationOutputTree,    
-                    overlayTree
-                ]);
-            }
+            updateOverlayTree();
         }
 
         function clearWindNinjaOutputTree() {
             windninjaOutputTree.children.forEach(item => {
-                // Only remove layers that aren't the "None" placeholder
-                if (item.layer && item.label !== 'None') {
+                if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
                 }
             });
 
-            // Reset to just the None option
             windninjaOutputTree.children = [{
                 label: 'No Output',
                 layer: L.layerGroup([]),
                 radioGroup: 'windninjaOutputs'
             }];
 
-            if (layerControl) {
-                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
-            }
+            updateOverlayTree();
         }
 
         function clearInitializationOutputTree() {
             initializationOutputTree.children.forEach(item => {
-                if (item.layer && item.label !== 'None') {
+                if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
                 }
             });
@@ -552,9 +778,23 @@
                 radioGroup: 'initializationOutput'
             }];
 
-            if (layerControl) {
-                layerControl.setOverlayTree([windninjaOutputTree, initializationOutputTree, overlayTree]);
-            }
+            updateOverlayTree();
+        }
+
+        function clearUnknownOutputTree() {
+            unknownOutputTree.children.forEach(item => {
+                if (item.layer && item.label !== 'No Output') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            unknownOutputTree.children = [{
+                label: 'No Output',
+                layer: L.layerGroup([]),
+                radioGroup: 'unknownOutput'
+            }];
+
+            updateOverlayTree();
         }
 
         function clearRectangleLayer() {
@@ -565,6 +805,156 @@
             });
             mapRectangleLayer.clearLayers();        
         }
+
+        function updateOverlayTree() {
+            if (!layerControl || !layerControl.setOverlayTree) return;
+
+            const displayTree = [];
+            const overlayChildren = [];
+
+            if (mapRectangleLayer.getLayers().length > 0) {
+                overlayChildren.push({
+                    label: 'Bounding Box',
+                    layer: mapRectangleLayer
+                });
+            }
+
+            if (windninjaOutputTree.children.length > 1) {
+                overlayChildren.push({
+                    label: 'WindNinja Legend',
+                    layer: windninjaLegendToggle
+                });
+
+                overlayChildren.push({
+                    label: 'WindNinja Time Series',
+                    layer: windninjaTimeSeriesToggle
+                });
+            }
+
+            if (initializationOutputTree.children.length > 1) {
+                overlayChildren.push({
+                    label: 'Weather Model Legend',
+                    layer: initializationLegendToggle
+                });
+
+                overlayChildren.push({
+                    label: 'Weather Model Time Series',
+                    layer: initializationTimeSeriesToggle
+                });
+            }
+
+            if (windninjaOutputTree.children.length > 1)
+                displayTree.push(windninjaOutputTree);
+
+            if (initializationOutputTree.children.length > 1)
+                displayTree.push(initializationOutputTree);
+
+            if (unknownOutputTree.children.length > 1)
+                displayTree.push(unknownOutputTree);
+
+            if (overlayChildren.length > 0) {
+                displayTree.push({
+                    label: 'WindNinja Overlays',
+                    children: overlayChildren
+                });
+            }
+
+            layerControl.setOverlayTree(displayTree);
+        }
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === windninjaLegendToggle) {
+
+                windninjaLegendEnabled = true;
+
+                if (activeWindNinjaLayer) {
+                    activeWindNinjaLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === windninjaLegendToggle) {
+
+                windninjaLegendEnabled = false;
+
+                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
+            }
+        });
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === initializationLegendToggle) {
+
+                initializationLegendEnabled = true;
+
+                if (activeInitializationLayer) {
+                    activeInitializationLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === initializationLegendToggle) {
+
+                initializationLegendEnabled = false;
+
+                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+            }
+        });
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === windninjaTimeSeriesToggle) {
+
+                windninjaTimeSeriesEnabled = true;
+
+                if (activeWindNinjaLayer) {
+                    activeWindNinjaLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === windninjaTimeSeriesToggle) {
+
+                windninjaTimeSeriesEnabled = false;
+
+                if (activeWindNinjaTimeSeriesImg) {
+                    activeWindNinjaTimeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
+                }
+            }
+        });
+
+        map.on('overlayadd', e => {
+
+            if (e.layer === initializationTimeSeriesToggle) {
+
+                initializationTimeSeriesEnabled = true;
+
+                if (activeInitializationLayer) {
+                    activeInitializationLayer.fire('add');
+                }
+            }
+        });
+
+        map.on('overlayremove', e => {
+
+            if (e.layer === initializationTimeSeriesToggle) {
+
+                initializationTimeSeriesEnabled = false;
+
+                if (activeInitializationTimeSeriesImg) {
+                    activeInitializationTimeSeriesImg.remove();
+                    activeInitializationTimeSeriesImg = null;
+                }
+            }
+        });
 
         // Script Main
         if (window.qt) {
