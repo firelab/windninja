@@ -1258,7 +1258,7 @@ void ninjaArmy::setAtmFlags()
  *  C-API makeArmy function calls
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
+int ninjaArmy::NinjaMakeDomainAverageArmyThermalParameterization( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
 {
     try
     {
@@ -1328,6 +1328,79 @@ int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, con
             if( retval != NINJA_SUCCESS )
             {
                 Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniCloudCover() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+        }
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+
+int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        if( numNinjas < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::NinjaMakeDomainAverageArmy()", numNinjas));
+        }
+
+        //Get the number of elements in the arrays
+        /*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+        size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
+        //        size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+        //        size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+        //        size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+        //        size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+        //        size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+        //        size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+        //        size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+        //
+        //        if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+        //        {
+        //            throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+        //
+
+        makeDomainAverageArmy( numNinjas, momentumFlag );
+
+        int retval = NINJA_E_INVALID;
+        for(int i=0; i<getSize(); i++)
+        {
+            retval = setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputSpeed() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputDirection() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
                 return retval;
             }
         }

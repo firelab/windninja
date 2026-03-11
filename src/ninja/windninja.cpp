@@ -82,7 +82,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
 }
 
 /**
- * \brief Generate a new suite of domain average windninja runs.
+ * \brief Generate a new suite of domain average windninja runs using thermal parameterization.
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
@@ -114,7 +114,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmyThermalParameterization
     ( NinjaArmyH * army, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
       const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
@@ -123,7 +123,40 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
         return NINJA_E_NULL_PTR;
     }
 
-    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, yearList, monthList, dayList, hourList, minuteList, timeZone, airTempList, airTempUnits, cloudCoverList, cloudCoverUnits, options);
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmyThermalParameterization(numNinjas, momentumFlag, speedList, speedUnits, directionList, yearList, monthList, dayList, hourList, minuteList, timeZone, airTempList, airTempUnits, cloudCoverList, cloudCoverUnits, options);
+}
+
+/**
+ * \brief Generate a new suite of domain average windninja runs.
+ *
+ * Use this method to create a finite, known number of runs for windninja.
+ * There are other creation methods that automatically allocate the correct
+ * number of runs for the input type.
+ *
+ * \see NinjaMakeWeatherModelArmy
+ * \see NinjaMakePointArmy
+ *
+ * Avaliable Creation Options:
+ *                             None
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param numNinjas The number of runs to create.
+ * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
+ * \param speedList List of wind speeds to simulate.
+ * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "knots").
+ * \param directionList List of wind directions to simulate in degrees.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
+    ( NinjaArmyH * army, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
+{
+    if(!army)
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, options);
 }
 
 /**
