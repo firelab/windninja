@@ -82,7 +82,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
 }
 
 /**
- * \brief Generate a new suite of domain average windninja runs.
+ * \brief Generate a new suite of domain average windninja runs using thermal parameterization.
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
@@ -114,7 +114,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmyThermalParameterization
     ( NinjaArmyH * army, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList,
       const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** options )
 {
@@ -123,7 +123,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
         return NINJA_E_NULL_PTR;
     }
 
-    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, yearList, monthList, dayList, hourList, minuteList, timeZone, airTempList, airTempUnits, cloudCoverList, cloudCoverUnits, options);
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmyThermalParameterization(numNinjas, momentumFlag, speedList, speedUnits, directionList, yearList, monthList, dayList, hourList, minuteList, timeZone, airTempList, airTempUnits, cloudCoverList, cloudCoverUnits, options);
 }
 
 /**
@@ -145,21 +145,10 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
  * \param speedList List of wind speeds to simulate.
  * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "knots").
  * \param directionList List of wind directions to simulate in degrees.
- * \param yearList List of years to simulate (only needed if diurnal or stability is going to be used), can be NULL.
- * \param monthList List of months to simulate (only needed if diurnal or stability is going to be used), can be NULL.
- * \param dayList List of days to simulate (only needed if diurnal or stability is going to be used), can be NULL.
- * \param hourList List of hours to simulate (only needed if diurnal or stability is going to be used), can be NULL.
- * \param minuteList List of minutes to simulate (only needed if diurnal or stability is going to be used), can be NULL.
- * \param timeZone A string representing a valid timezone.
- * \param airTempList List of air temperatures (only needed if diurnal or stability is going to be used), can be NULL.
- * \param airTempUnits String indicating air temperature units ("F", "C", or "K"), can be NULL.
- * \param cloudCoverList List of cloud covers (only needed if diurnal or stability is going to be used), can be NULL.
- * \param cloudCoverUnits String indicating cloud cover units ("fraction" or "percent"), can be NULL.
- * \param options Key, value option pairs from the options listed above, can be NULL.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy2
+WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
     ( NinjaArmyH * army, int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** options )
 {
     if(!army)
@@ -167,7 +156,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy2
         return NINJA_E_NULL_PTR;
     }
 
-    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy2(numNinjas, momentumFlag, speedList, speedUnits, directionList, options);
+    return reinterpret_cast<ninjaArmy*>( army )->NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, options);
 }
 
 /**

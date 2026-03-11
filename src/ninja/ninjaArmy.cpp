@@ -1258,7 +1258,7 @@ void ninjaArmy::setAtmFlags()
  *  C-API makeArmy function calls
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
+int ninjaArmy::NinjaMakeDomainAverageArmyThermalParameterization( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
 {
     try
     {
@@ -1352,7 +1352,7 @@ int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, con
 }
 
 
-int ninjaArmy::NinjaMakeDomainAverageArmy2( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** papszOptions )
+int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** papszOptions )
 {
     try
     {
