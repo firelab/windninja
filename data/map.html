@@ -273,12 +273,11 @@
             }
         }
 
-        function drawBoundingBox(north, south, east, west) {
+        function drawBoundingBox(north, south, east, west, send) {
             clearRectangleLayer();
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
             rectangle.editing.enable();
-            sendBoundingBox(rectangle);
             map.fitBounds(rectangle.getBounds());
             rectangle.on('edit', () => {
                     sendBoundingBox(rectangle);
