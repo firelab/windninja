@@ -1335,6 +1335,22 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
+    ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiAaigridOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiProjOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
     ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
     //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
     //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
