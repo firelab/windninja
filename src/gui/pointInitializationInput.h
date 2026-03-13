@@ -60,6 +60,8 @@ public slots:
 private slots:
     void pointInitializationGroupBoxToggled(bool toggled);
     void pointInitializationDownloadDataButtonClicked();
+    void weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged();
+    void weatherStationDownloadBetweenDatesEndTimeDateTimeEditChanged();
     void weatherStationDataDownloadCancelButtonClicked();
     void weatherStationDataSourceComboBoxCurrentIndexChanged(int index);
     void weatherStationDataTimeComboBoxCurrentIndexChanged(int index);

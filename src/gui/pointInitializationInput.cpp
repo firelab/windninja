@@ -43,6 +43,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
 
     connect(ui->pointInitializationGroupBox, &QGroupBox::toggled, this, &PointInitializationInput::pointInitializationGroupBoxToggled);
     connect(ui->pointInitializationDownloadDataButton, &QPushButton::clicked, this, &PointInitializationInput::pointInitializationDownloadDataButtonClicked);
+    connect(ui->downloadBetweenDatesStartTimeDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged);
+    connect(ui->downloadBetweenDatesEndTimeDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDownloadBetweenDatesEndTimeDateTimeEditChanged);
     connect(ui->weatherStationDataDownloadCancelButton, &QPushButton::clicked, this, &PointInitializationInput::weatherStationDataDownloadCancelButtonClicked);
     connect(ui->weatherStationDataSourceComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged);
     connect(ui->weatherStationDataTimeComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged);
@@ -85,6 +87,24 @@ void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
     ui->downloadFromDEMSpinBox->setValue(0);
 
     ui->inputsStackedWidget->setCurrentIndex(17);
+}
+
+void PointInitializationInput::weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged()
+{
+    if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
+    {
+        ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime().addSecs(3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::weatherStationDownloadBetweenDatesEndTimeDateTimeEditChanged()
+{
+    if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
+    {
+        ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime().addSecs(-3600));
+    }
+    updateTimeSteps();
 }
 
 void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
@@ -871,6 +891,9 @@ void PointInitializationInput::updateDateTime()
 
     ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(currentLocalDateTime.addDays(-1));
     ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(currentLocalDateTime);
+
+    ui->downloadBetweenDatesStartTimeDateTimeEdit->setMaximumDateTime(currentLocalDateTime);
+    ui->downloadBetweenDatesEndTimeDateTimeEdit->setMaximumDateTime(currentLocalDateTime);
 
     // Update selected station time series
     QItemSelectionModel *selectionModel = ui->pointInitializationTreeView->selectionModel();
