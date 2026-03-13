@@ -485,15 +485,17 @@ install(FILES ${PROJECT_SOURCE_DIR}/data/topofire_logo.png DESTINATION share/win
 if(WIN32)
     # Install DLLS for WindNinja.exe to the bin directory
     install(
-    DIRECTORY "${CMAKE_BINARY_DIR}/src/gui/"
-    DESTINATION bin
-    FILES_MATCHING
-        PATTERN "*.exe"
-        PATTERN "*.dll"
-        PATTERN "plugins/*"
-        PATTERN "platforms/*"
-        PATTERN "resources/*"
-        PATTERN "*.qm")
+        DIRECTORY "${CMAKE_BINARY_DIR}/src/gui/"
+        DESTINATION bin
+        FILES_MATCHING
+            PATTERN "*.exe"
+            PATTERN "*.dll"
+            PATTERN "*.pak"
+            PATTERN "plugins/*"
+            PATTERN "platforms/*"
+            PATTERN "resources/*"
+            PATTERN "translations/*"
+            PATTERN "*.qm")
 
     # Installs GDAL data from VCPKG to the gdal-data/data directory
     install(
@@ -513,7 +515,7 @@ if(WIN32)
         DESTINATION bin
         COMPONENT apps)
 
-
+    # Installs openFOAM from the OpenFOAM-2.2.x directory
     if(NINJAFOAM)
         install(DIRECTORY "${FOAM_MINGW_PATH}/etc" DESTINATION bin)
         install(DIRECTORY "${FOAM_MINGW_PATH}/platforms" DESTINATION bin)
