@@ -109,6 +109,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
     connect(futureWatcher, &QFutureWatcher<int>::finished,
             this, &WeatherModelInput::weatherModelDownloadFinished);
+    connect(progress, &QProgressDialog::canceled, this, &WeatherModelInput::weatherModelDownloadFinished);
 }
 
 void WeatherModelInput::updateProgressMessage(const QString message)
@@ -278,29 +279,41 @@ int WeatherModelInput::fetchPastcastWeather(
 
 void WeatherModelInput::weatherModelDownloadFinished()
 {
-    // get the return value of the QtConcurrent::run() function
-    int result = futureWatcher->future().result();
-
-    if(result == NINJA_SUCCESS)
+    if(!futureWatcher)
     {
-        emit writeToConsoleSignal("Finished fetching weather model data.", Qt::darkGreen);
-
-        if (progress)
-        {
-            progress->close();
-            progress->deleteLater();
-            progress = nullptr;
-        }
-    } else
-    {
-        emit writeToConsoleSignal("Failed to fetch weather model data.");
+        return;
     }
 
-    // delete the futureWatcher every time, whether success or failure
-    if (futureWatcher)
+    if(progress && progress->wasCanceled())
     {
-        futureWatcher->deleteLater();
-        futureWatcher = nullptr;
+        futureWatcher->waitForFinished();
+    }
+    else
+    {
+        // get the return value of the QtConcurrent::run() function
+        int result = futureWatcher->future().result();
+
+        if(result == NINJA_SUCCESS)
+        {
+            emit writeToConsoleSignal("Finished fetching weather model data.", Qt::darkGreen);
+
+            if (progress)
+            {
+                progress->close();
+                progress->deleteLater();
+                progress = nullptr;
+            }
+        } else
+        {
+            emit writeToConsoleSignal("Failed to fetch weather model data.");
+        }
+
+        // delete the futureWatcher every time, whether success or failure
+        if (futureWatcher)
+        {
+            futureWatcher->deleteLater();
+            futureWatcher = nullptr;
+        }
     }
 }
 

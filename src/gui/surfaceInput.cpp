@@ -361,49 +361,62 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
     futureWatcher->setFuture(future);
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &SurfaceInput::fetchDEMFinished);
+    connect(progress, &QProgressDialog::canceled, this, &SurfaceInput::fetchDEMFinished);
 }
 
 void SurfaceInput::fetchDEMFinished()
 {
-    // get the return value of the QtConcurrent::run() function
-    int result = futureWatcher->future().result();
-
-    if(result == NINJA_SUCCESS)
+    if(!futureWatcher)
     {
-        emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
+        return;
+    }
 
-        bool retVal = loadDemMetadata(pendingDownloadDemFilePath);
-        if(retVal == true)
-        {
-            ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
-            ui->elevationInputFileLineEdit->setText(QFileInfo(pendingDownloadDemFilePath).fileName());
-            ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
-            ui->inputsStackedWidget->setCurrentIndex(3);
-        }
-        //else  // if(retVal == false)
-        //{
-        //    // message is handled in loadDemMetadata()
-        //    // don't want to return here, need to wrap up all the other todos of this function or things won't close properly
-        //    //return;
-        //}
-
-        if(progress)
-        {
-            progress->close();
-            progress->deleteLater();
-            progress = nullptr;
-        }
+    if(progress && progress->wasCanceled())
+    {
+        futureWatcher->waitForFinished();
     }
     else
     {
-        emit writeToConsoleSignal("Failed to fetch DEM file.");
-    }
+        // get the return value of the QtConcurrent::run() function
+        int result = futureWatcher->future().result();
 
-    // delete the futureWatcher every time, whether success or failure
-    if(futureWatcher)
-    {
-        futureWatcher->deleteLater();
-        futureWatcher = nullptr;
+        if(result == NINJA_SUCCESS)
+        {
+            emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
+
+            bool retVal = loadDemMetadata(pendingDownloadDemFilePath);
+            if(retVal == true)
+            {
+                ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
+                ui->elevationInputFileLineEdit->setText(QFileInfo(pendingDownloadDemFilePath).fileName());
+                ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
+                ui->inputsStackedWidget->setCurrentIndex(3);
+            }
+            //else  // if(retVal == false)
+            //{
+            //    // message is handled in loadDemMetadata()
+            //    // don't want to return here, need to wrap up all the other todos of this function or things won't close properly
+            //    //return;
+            //}
+
+            if(progress)
+            {
+                progress->close();
+                progress->deleteLater();
+                progress = nullptr;
+            }
+        }
+        else
+        {
+            emit writeToConsoleSignal("Failed to fetch DEM file.");
+        }
+
+        // delete the futureWatcher every time, whether success or failure
+        if(futureWatcher)
+        {
+            futureWatcher->deleteLater();
+            futureWatcher = nullptr;
+        }
     }
 }
 
@@ -719,6 +732,8 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
 
 bool SurfaceInput::loadDemMetadata(const QString demFilePath)
 {
+    CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
+
     double adfGeoTransform[6];
     GDALDataset *poInputDS;
 
@@ -793,6 +808,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
+
+    CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
 
     return true;
 }

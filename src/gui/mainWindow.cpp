@@ -93,8 +93,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectSignals();
 
+    ui->treeWidget->blockSignals(true);
     ui->treeWidget->topLevelItem(0)->setSelected(true);
-    ui->inputsStackedWidget->setCurrentIndex(1); // setSelected shows the blank page, have to have this to show proper page
+    ui->inputsStackedWidget->setCurrentIndex(1);
+    ui->treeWidget->blockSignals(false);
 
     int nCPUs = QThread::idealThreadCount();
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCPUs));
@@ -305,6 +307,8 @@ void MainWindow::cancelSolve()
 
 void MainWindow::treeWidgetItemSelectionChanged()
 {
+    webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+
     int column = ui->treeWidget->currentColumn();
     int pageIndex = ui->treeWidget->selectedItems().first()->data(column, Qt::UserRole).toInt(); // assume 0 since no multi selection
     ui->inputsStackedWidget->setCurrentIndex(pageIndex);
@@ -1332,6 +1336,22 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiAaigridOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    //ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiProjOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 

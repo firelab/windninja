@@ -407,6 +407,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     futureWatcher->setFuture(future);
 
     connect(futureWatcher, &QFutureWatcher<int>::finished, this, &PointInitializationInput::fetchStationDataFinished);
+    connect(progress, &QProgressDialog::canceled, this, &PointInitializationInput::fetchStationDataFinished);
 }
 
 int PointInitializationInput::fetchStationFromBbox(NinjaToolsH* ninjaTools,
@@ -547,27 +548,38 @@ int PointInitializationInput::fetchStationByName(NinjaToolsH* ninjaTools,
 
 void PointInitializationInput::fetchStationDataFinished()
 {
-    // get the return value of the QtConcurrent::run() function
-    int result = futureWatcher->future().result();
-
-    if(result == NINJA_SUCCESS)
+    if(!futureWatcher)
     {
-        emit writeToConsoleSignal("Finished fetching station data.", Qt::darkGreen);
-
-        if (progress)
-        {
-            progress->close();
-            progress->deleteLater();
-            progress = nullptr;
-        }
-
-        ui->inputsStackedWidget->setCurrentIndex(7);
-
-    } else
-    {
-        emit writeToConsoleSignal("Failed to fetch station data.");
+        return;
     }
 
+    if(progress && progress->wasCanceled())
+    {
+        futureWatcher->waitForFinished();
+    }
+    else
+    {
+        // get the return value of the QtConcurrent::run() function
+        int result = futureWatcher->future().result();
+
+        if(result == NINJA_SUCCESS)
+        {
+            emit writeToConsoleSignal("Finished fetching station data.", Qt::darkGreen);
+
+            if (progress)
+            {
+                progress->close();
+                progress->deleteLater();
+                progress = nullptr;
+            }
+
+            ui->inputsStackedWidget->setCurrentIndex(7);
+
+        } else
+        {
+            emit writeToConsoleSignal("Failed to fetch station data.");
+        }
+    }
     // delete the futureWatcher every time, whether success or failure
     if (futureWatcher)
     {

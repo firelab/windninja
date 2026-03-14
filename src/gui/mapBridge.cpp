@@ -45,10 +45,6 @@ void MapBridge::receiveBoundingBox(const QString &jsonCoords)
     double east = obj["east"].toDouble();
     double west = obj["west"].toDouble();
 
-    qDebug() << "Bounding box received:";
-    qDebug() << "North:" << north << "South:" << south;
-    qDebug() << "East:" << east << "West:" << west;
-
     emit boundingBoxReceived(north, south, east, west);
 }
 

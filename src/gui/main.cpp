@@ -36,13 +36,15 @@ int main(int argc, char *argv[])
     MainWindow* w = nullptr;
     try {
         w = new MainWindow;
+        w->setMinimumSize(800, 600);
+        w->resize(800, 600);
     } catch (...) {
         return 1;
     }
 
     // Set the Splash Screen
     QPixmap pix(":wn-splash.png");
-    QSplashScreen *splash = new QSplashScreen(pix.scaled(1200, 320, Qt::KeepAspectRatioByExpanding));
+    QSplashScreen *splash = new QSplashScreen(pix.scaled(600, 160, Qt::KeepAspectRatioByExpanding));
     
     QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(splash);
     splash->setGraphicsEffect(effect);

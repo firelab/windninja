@@ -342,6 +342,12 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAaigridOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiProjOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );

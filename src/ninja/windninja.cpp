@@ -2042,6 +2042,31 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiOutFlag
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAaigridOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setAsciiAaigridOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiProjOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setAsciiProjOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
 
 /**
  * \brief Set the resolution of the raster output for a simulation.
