@@ -1583,7 +1583,8 @@ void MainWindow::plotKmzOutputs()
             QString outFileStr = QString::fromStdString(kmzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
             QFile outFile(outFileStr);
-            QString fileName = outFile.fileName();
+            QFileInfo info(outFileStr);
+            QString fileName = info.fileName();
 
             outFile.open(QIODevice::ReadOnly);
             QByteArray data = outFile.readAll();
@@ -1622,12 +1623,15 @@ void MainWindow::plotKmzOutputs()
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
                 QFile outFile(outFileStr);
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
 
                 outFile.open(QIODevice::ReadOnly);
                 QByteArray data = outFile.readAll();
                 QString base64 = data.toBase64();
 
-                webEngineView->page()->runJavaScript("loadOutputFromBase64('"+base64+"')");
+                QString jsCall2 = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+                webEngineView->page()->runJavaScript(jsCall2);
             }
         }
 
