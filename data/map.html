@@ -155,7 +155,8 @@
             zoom: 8
         });
         
-        const mapRectangleLayer = new L.FeatureGroup();
+        const boundingBoxLayer = new L.FeatureGroup();
+        const demLayer = new L.FeatureGroup();
         const rectangleDrawer = new L.Draw.Rectangle(map);
         const centerControl = L.control({ position: 'topleft' });
 
@@ -274,9 +275,9 @@
         }
 
         function drawBoundingBox(north, south, east, west, send) {
-            clearRectangleLayer();
+            clearBoundingBoxLayer();
             const bounds = [[south, west], [north, east]];
-            const rectangle = L.rectangle(bounds).addTo(mapRectangleLayer);
+            const rectangle = L.rectangle(bounds).addTo(boundingBoxLayer);
             rectangle.editing.enable();
             map.fitBounds(rectangle.getBounds());
             rectangle.on('edit', () => {
@@ -286,7 +287,7 @@
         }
 
         function drawDEM(DEMCorners) {
-            clearRectangleLayer();
+            clearDEMLayer();
 
             const rectangleCorners = [
                 [DEMCorners[1], DEMCorners[0]], // NE
@@ -300,7 +301,7 @@
                 color: 'black',
                 weight: 2,
                 fill: false
-            }).addTo(mapRectangleLayer);
+            }).addTo(demLayer);
 
             setTimeout(() => {
                 map.fitBounds(rectangle.getBounds());
@@ -323,23 +324,18 @@
         }
 
         function startRectangleDrawing() {
-            clearRectangleLayer();
+            clearBoundingBoxLayer();
             rectangleDrawer.enable();
         }
 
         function stopRectangleDrawing() {
-            clearRectangleLayer();
-            
-            if(!drawDEMCheck) {
-                hideCenterControl();
-            }
-            
+            clearBoundingBoxLayer();            
             rectangleDrawer.disable();
         }
 
         map.on('draw:created', ({ layer }) => {
-            clearRectangleLayer();
-            mapRectangleLayer.addLayer(layer);
+            clearBoundingBoxLayer();
+            boundingBoxLayer.addLayer(layer);
             layer.editing.enable();
             sendBoundingBox(layer);
             layer.on('edit', () => 
@@ -375,16 +371,23 @@
             L.DomEvent.on(button, 'click', (e) => {
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
-                if (mapRectangleLayer.getLayers().length > 0) {
-                    const layer = mapRectangleLayer.getLayers()[0];
-                    if (layer.getBounds) {
-                        map.fitBounds(layer.getBounds());
-                    }
+
+                let layer = null;
+
+                if (boundingBoxLayer.getLayers().length > 0) {
+                    layer = boundingBoxLayer.getLayers()[0];
+                }
+                else if (demLayer.getLayers().length > 0) {
+                    layer = demLayer.getLayers()[0];
+                }
+
+                if (layer && layer.getBounds) {
+                    map.fitBounds(layer.getBounds());
                 }
             });
 
             return container;
-        };
+            };
 
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
@@ -796,13 +799,15 @@
             updateOverlayTree();
         }
 
-        function clearRectangleLayer() {
-            mapRectangleLayer.eachLayer(layer => {
-                if (layer.editing) {
-                    layer.editing.disable();
-                }
+        function clearBoundingBoxLayer() {
+            boundingBoxLayer.eachLayer(layer => {
+                if (layer.editing) layer.editing.disable();
             });
-            mapRectangleLayer.clearLayers();        
+            boundingBoxLayer.clearLayers();
+        }
+
+        function clearDEMLayer() {
+            demLayer.clearLayers();
         }
 
         function updateOverlayTree() {
@@ -811,10 +816,17 @@
             const displayTree = [];
             const overlayChildren = [];
 
-            if (mapRectangleLayer.getLayers().length > 0) {
+            if (boundingBoxLayer.getLayers().length > 0) {
                 overlayChildren.push({
                     label: 'Bounding Box',
-                    layer: mapRectangleLayer
+                    layer: boundingBoxLayer
+                });
+            }
+
+            if (demLayer.getLayers().length > 0) {
+                overlayChildren.push({
+                    label: 'DEM',
+                    layer: demLayer
                 });
             }
 
@@ -962,7 +974,8 @@
             });
         }
         
-        map.addLayer(mapRectangleLayer);
+        map.addLayer(boundingBoxLayer);
+        map.addLayer(demLayer);
 
         layerControl.addTo(map);
         L.control.scale().addTo(map);

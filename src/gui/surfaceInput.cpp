@@ -286,6 +286,8 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
+    webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+
     QString fullPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
     QFileInfo file(fullPath);
     ui->outputDirectoryLineEdit->setText(file.absolutePath());
