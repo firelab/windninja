@@ -221,10 +221,21 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
     double resolution = 30;
 
     QString defaultName = "";
-    QString downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    QDir dir(downloadsPath);
-    QString fullPath = dir.filePath(defaultName);
-    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", fullPath, "TIF Files (*.tif)");
+    QString downloadsPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    {
+        downloadsPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        downloadsPath = inputFileDir;
+    }
+    else
+    {
+        downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    }
+    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", downloadsPath, "TIF Files (*.tif)");
     if(demFilePath.isEmpty())
     {
         return;
