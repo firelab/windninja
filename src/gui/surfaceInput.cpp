@@ -727,6 +727,8 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
 
 bool SurfaceInput::loadDemMetadata(const QString demFilePath)
 {
+    CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
+
     double adfGeoTransform[6];
     GDALDataset *poInputDS;
 
@@ -801,6 +803,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
+
+    CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
 
     return true;
 }
