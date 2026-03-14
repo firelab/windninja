@@ -279,7 +279,12 @@ int WeatherModelInput::fetchPastcastWeather(
 
 void WeatherModelInput::weatherModelDownloadFinished()
 {
-    if(progress->wasCanceled())
+    if(!futureWatcher)
+    {
+        return;
+    }
+
+    if(progress && progress->wasCanceled())
     {
         futureWatcher->waitForFinished();
     }

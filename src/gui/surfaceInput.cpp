@@ -366,7 +366,12 @@ void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFil
 
 void SurfaceInput::fetchDEMFinished()
 {
-    if(progress->wasCanceled())
+    if(!futureWatcher)
+    {
+        return;
+    }
+
+    if(progress && progress->wasCanceled())
     {
         futureWatcher->waitForFinished();
     }

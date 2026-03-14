@@ -548,7 +548,12 @@ int PointInitializationInput::fetchStationByName(NinjaToolsH* ninjaTools,
 
 void PointInitializationInput::fetchStationDataFinished()
 {
-    if(progress->wasCanceled())
+    if(!futureWatcher)
+    {
+        return;
+    }
+
+    if(progress && progress->wasCanceled())
     {
         futureWatcher->waitForFinished();
     }
