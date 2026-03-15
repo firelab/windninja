@@ -601,8 +601,15 @@
                     legendControl.addTo(map);
                 }
 
-                if (windninjaTimeSeriesEnabled && timeSeriesImg) {
-                    showWindNinjaTimeSeries(timeSeriesImg);
+                if (windninjaTimeSeriesEnabled) {
+
+                    if (timeSeriesImg) {
+                        showWindNinjaTimeSeries(timeSeriesImg);
+                    } else if (activeWindNinjaTimeSeriesImg) {
+                        activeWindNinjaTimeSeriesImg.remove();
+                        activeWindNinjaTimeSeriesImg = null;
+                    }
+
                 }
             });
 
