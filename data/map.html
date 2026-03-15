@@ -544,10 +544,9 @@
 
                             if (activeWindNinjaTimeSeriesImg) {
                                 activeWindNinjaTimeSeriesImg.remove();
+                                activeWindNinjaTimeSeriesImg = null;
                             }
-                            clearTimeSeriesContainer();
-                            timeSeriesContainer.prepend(timeSeriesImg);
-                            activeWindNinjaTimeSeriesImg = timeSeriesImg;
+                            showWindNinjaTimeSeries(timeSeriesImg);
                         }
                     };
                 })();
@@ -603,9 +602,7 @@
                 }
 
                 if (windninjaTimeSeriesEnabled && timeSeriesImg) {
-                    clearTimeSeriesContainer();
-                    timeSeriesContainer.prepend(timeSeriesImg);
-                    activeWindNinjaTimeSeriesImg = timeSeriesImg;
+                    showWindNinjaTimeSeries(timeSeriesImg);
                 }
             });
 
@@ -692,10 +689,9 @@
 
                             if (activeInitializationTimeSeriesImg) {
                                 activeInitializationTimeSeriesImg.remove();
+                                activeInitializationTimeSeriesImg = null;
                             }
-                            clearTimeSeriesContainer();
-                            timeSeriesContainer.prepend(timeSeriesImg);
-                            activeInitializationTimeSeriesImg = timeSeriesImg;
+                            showInitializationTimeSeries(timeSeriesImg);
                         }
                     };
 
@@ -750,9 +746,7 @@
                 }
 
                 if (initializationTimeSeriesEnabled && timeSeriesImg) {
-                    clearTimeSeriesContainer();
-                    timeSeriesContainer.prepend(timeSeriesImg);
-                    activeInitializationTimeSeriesImg = timeSeriesImg;
+                    showInitializationTimeSeries(timeSeriesImg);
                 }
             });
 
@@ -1028,15 +1022,33 @@
     });
 
     function clearTimeSeriesContainer() {
-
-        // remove all cards from the DOM
         while (timeSeriesContainer.firstChild) {
             timeSeriesContainer.removeChild(timeSeriesContainer.firstChild);
         }
+    }
 
-        // reset active references
-        activeWindNinjaTimeSeriesImg = null;
-        activeInitializationTimeSeriesImg = null;
+    function showWindNinjaTimeSeries(img) {
+
+        if (!windninjaTimeSeriesEnabled || !img) return;
+
+        if (activeWindNinjaTimeSeriesImg) {
+            activeWindNinjaTimeSeriesImg.remove();
+        }
+
+        timeSeriesContainer.appendChild(img);
+        activeWindNinjaTimeSeriesImg = img;
+    }
+
+    function showInitializationTimeSeries(img) {
+
+        if (!initializationTimeSeriesEnabled || !img) return;
+
+        if (activeInitializationTimeSeriesImg) {
+            activeInitializationTimeSeriesImg.remove();
+        }
+
+        timeSeriesContainer.appendChild(img);
+        activeInitializationTimeSeriesImg = img;
     }
 
 
