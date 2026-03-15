@@ -186,7 +186,7 @@
             flex-direction: column;
             gap: 12px;
             align-items: flex-start;
-            z-index: 1000;
+            z-index: 400;
         `;
 
         map.whenReady(() => {
@@ -560,6 +560,7 @@
 
                     const img = new Image();
                     img.src = url;
+                    img.onload = () => URL.revokeObjectURL(url);
                     img.style.cssText = 'display:block;max-width:150px;height:auto;';
 
                     container.appendChild(img);
@@ -571,14 +572,16 @@
 
             kmlLegendLayer.on('remove', () => {
 
-                if (timeSeriesImg) {
-                    timeSeriesImg.remove();
-                    timeSeriesImg = null;
+                map.removeControl(legendControl);
+
+                if (activeWindNinjaLayer === kmlLegendLayer) {
+                    activeWindNinjaLayer = null;
                 }
 
-                if (timeSeriesImgUrl) {
-                    URL.revokeObjectURL(timeSeriesImgUrl);
-                    timeSeriesImgUrl = null;
+                // only remove image if the overlay itself is disabled
+                if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
+                    timeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
                 }
             });
 
@@ -602,7 +605,7 @@
 
                 map.removeControl(legendControl);
 
-                if (timeSeriesImg) {
+                if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
                     timeSeriesImg.remove();
                 }
 
@@ -705,6 +708,7 @@
 
                     const img = new Image();
                     img.src = url;
+                    img.onload = () => URL.revokeObjectURL(url);
                     img.style.cssText = 'display:block;max-width:150px;height:auto;';
 
                     container.appendChild(img);
@@ -716,9 +720,8 @@
 
             kmlLegendLayer.on('remove', () => {
 
-                if (timeSeriesImg) {
+                if (!initializationTimeSeriesEnabled && timeSeriesImg) {
                     timeSeriesImg.remove();
-                    timeSeriesImg = null;
                 }
 
                 if (timeSeriesImgUrl) {
@@ -987,7 +990,32 @@
             }
         });
 
-        img.onload = () => URL.revokeObjectURL(url);
+        map.on('overlayadd', e => {
+
+        // WindNinja "No Output"
+        if (e.layer === windninjaOutputTree.children[0].layer) {
+
+            if (activeWindNinjaTimeSeriesImg) {
+                activeWindNinjaTimeSeriesImg.remove();
+                activeWindNinjaTimeSeriesImg = null;
+            }
+
+            activeWindNinjaLayer = null;
+        }
+
+        // Weather Model "No Output"
+        if (e.layer === initializationOutputTree.children[0].layer) {
+
+            if (activeInitializationTimeSeriesImg) {
+                activeInitializationTimeSeriesImg.remove();
+                activeInitializationTimeSeriesImg = null;
+            }
+
+            activeInitializationLayer = null;
+        }
+
+    });
+
 
         // Script Main
         if (window.qt) {
