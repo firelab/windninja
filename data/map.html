@@ -545,7 +545,7 @@
                             if (activeWindNinjaTimeSeriesImg) {
                                 activeWindNinjaTimeSeriesImg.remove();
                             }
-
+                            clearTimeSeriesContainer();
                             timeSeriesContainer.prepend(timeSeriesImg);
                             activeWindNinjaTimeSeriesImg = timeSeriesImg;
                         }
@@ -603,6 +603,7 @@
                 }
 
                 if (windninjaTimeSeriesEnabled && timeSeriesImg) {
+                    clearTimeSeriesContainer();
                     timeSeriesContainer.prepend(timeSeriesImg);
                     activeWindNinjaTimeSeriesImg = timeSeriesImg;
                 }
@@ -692,7 +693,7 @@
                             if (activeInitializationTimeSeriesImg) {
                                 activeInitializationTimeSeriesImg.remove();
                             }
-
+                            clearTimeSeriesContainer();
                             timeSeriesContainer.prepend(timeSeriesImg);
                             activeInitializationTimeSeriesImg = timeSeriesImg;
                         }
@@ -749,6 +750,7 @@
                 }
 
                 if (initializationTimeSeriesEnabled && timeSeriesImg) {
+                    clearTimeSeriesContainer();
                     timeSeriesContainer.prepend(timeSeriesImg);
                     activeInitializationTimeSeriesImg = timeSeriesImg;
                 }
@@ -782,6 +784,7 @@
         }
 
         function clearWindNinjaOutputTree() {
+            clearTimeSeriesContainer();
             windninjaOutputTree.children.forEach(item => {
                 if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
@@ -798,6 +801,7 @@
         }
 
         function clearInitializationOutputTree() {
+            clearTimeSeriesContainer();
             initializationOutputTree.children.forEach(item => {
                 if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
@@ -1022,6 +1026,18 @@
         }
 
     });
+
+    function clearTimeSeriesContainer() {
+
+        // remove all cards from the DOM
+        while (timeSeriesContainer.firstChild) {
+            timeSeriesContainer.removeChild(timeSeriesContainer.firstChild);
+        }
+
+        // reset active references
+        activeWindNinjaTimeSeriesImg = null;
+        activeInitializationTimeSeriesImg = null;
+    }
 
 
         // Script Main
