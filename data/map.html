@@ -93,8 +93,6 @@
     <!-- Leaflet and Draw dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
     <script src="./leaflet/leaflet-src.js"></script>
     <script src="./leaflet/L.KML.js"></script>
 
@@ -520,59 +518,69 @@
             const legendControl = L.control({ position: 'bottomright' });
             windninjaLegendControls.push(legendControl);
 
+            if (legendEntries.length > 1) {
+                (async () => {
+                    const blob = await legendEntries[1].async('blob');
+                    timeSeriesImgUrl = URL.createObjectURL(blob);
+
+                    timeSeriesImg = new Image();
+                    timeSeriesImg.src = timeSeriesImgUrl;
+                    timeSeriesImg.style.cssText = `
+                        max-width: 500px;
+                        height: auto;
+                        pointer-events: auto;
+                    `;
+
+                    timeSeriesImg.onload = () => {
+
+                        if (windninjaTimeSeriesEnabled && activeWindNinjaLayer === kmlLegendLayer) {
+
+                            if (activeWindNinjaTimeSeriesImg) {
+                                activeWindNinjaTimeSeriesImg.remove();
+                            }
+
+                            timeSeriesContainer.prepend(timeSeriesImg);
+                            activeWindNinjaTimeSeriesImg = timeSeriesImg;
+                        }
+                    };
+                })();
+            }
+
             legendControl.onAdd = function () {
+
                 const container = L.DomUtil.create('div', 'kmz-legend');
                 L.DomEvent.disableClickPropagation(container);
 
-                if (legendEntries.length > 0) {
-                    (async () => {
-                        // Legend Key
-                        const blob = await legendEntries[0].async('blob');
-                        const url = URL.createObjectURL(blob);
-                        const img = new Image();
-                        img.src = url;
-                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
-                        container.appendChild(img);
+                if (legendEntries.length === 0) return container;
 
-                        if (legendEntries.length > 1) {
+                (async () => {
 
-                            const blob = await legendEntries[1].async('blob');
-                            timeSeriesImgUrl = URL.createObjectURL(blob);
+                    const blob = await legendEntries[0].async('blob');
+                    const url = URL.createObjectURL(blob);
 
-                            timeSeriesImg = new Image();
-                            timeSeriesImg.src = timeSeriesImgUrl;
-                            timeSeriesImg.style.cssText = `
-                                max-width: 500px;
-                                height: auto;
-                                pointer-events: auto;
-                            `;
-                            timeSeriesImg.onload = () => {
+                    const img = new Image();
+                    img.src = url;
+                    img.style.cssText = 'display:block;max-width:150px;height:auto;';
 
-                                if (windninjaTimeSeriesEnabled && activeWindNinjaLayer === kmlLegendLayer) {
+                    container.appendChild(img);
 
-                                    if (activeWindNinjaTimeSeriesImg) {
-                                        activeWindNinjaTimeSeriesImg.remove();
-                                    }
+                })();
 
-                                    timeSeriesContainer.prepend(timeSeriesImg);
-                                    activeWindNinjaTimeSeriesImg = timeSeriesImg;
-                                }
-                            };
-                        }
-                    })();
-                    kmlLegendLayer.on('remove', () => {
-                        if (timeSeriesImg) {
-                            timeSeriesImg.remove();
-                            timeSeriesImg = null;
-                        }
-                        if (timeSeriesImgUrl) {
-                            URL.revokeObjectURL(timeSeriesImgUrl);
-                            timeSeriesImgUrl = null;
-                        }
-                    });
-                }
                 return container;
             };
+
+            kmlLegendLayer.on('remove', () => {
+
+                if (timeSeriesImg) {
+                    timeSeriesImg.remove();
+                    timeSeriesImg = null;
+                }
+
+                if (timeSeriesImgUrl) {
+                    URL.revokeObjectURL(timeSeriesImgUrl);
+                    timeSeriesImgUrl = null;
+                }
+            });
 
             kmlLegendLayer.on('add', () => {
 
@@ -652,61 +660,73 @@
 
             const legendControl = L.control({ position: 'bottomright' });
             initializationLegendControls.push(legendControl);
+            
+            if (legendEntries.length > 1) {
+                (async () => {
+
+                    const blob = await legendEntries[1].async('blob');
+                    timeSeriesImgUrl = URL.createObjectURL(blob);
+
+                    timeSeriesImg = new Image();
+                    timeSeriesImg.src = timeSeriesImgUrl;
+                    timeSeriesImg.style.cssText = `
+                        max-width: 500px;
+                        height: auto;
+                        pointer-events: auto;
+                    `;
+
+                    timeSeriesImg.onload = () => {
+
+                        if (initializationTimeSeriesEnabled && activeInitializationLayer === kmlLegendLayer) {
+
+                            if (activeInitializationTimeSeriesImg) {
+                                activeInitializationTimeSeriesImg.remove();
+                            }
+
+                            timeSeriesContainer.prepend(timeSeriesImg);
+                            activeInitializationTimeSeriesImg = timeSeriesImg;
+                        }
+                    };
+
+                })();
+            }
 
             legendControl.onAdd = function () {
+
                 const container = L.DomUtil.create('div', 'kmz-legend');
                 L.DomEvent.disableClickPropagation(container);
 
-                if (legendEntries.length > 0) {
-                    (async () => {
-                        // Legend Key
-                        const blob = await legendEntries[0].async('blob');
-                        const url = URL.createObjectURL(blob);
-                        const img = new Image();
-                        img.src = url;
-                        img.style.cssText = 'display: block; max-width: 150px; height: auto;';
-                        container.appendChild(img);
+                if (legendEntries.length === 0) return container;
 
-                        if (legendEntries.length > 1) {
+                (async () => {
 
-                            const blob = await legendEntries[1].async('blob');
-                            timeSeriesImgUrl = URL.createObjectURL(blob);
+                    const blob = await legendEntries[0].async('blob');
+                    const url = URL.createObjectURL(blob);
 
-                            timeSeriesImg = new Image();
-                            timeSeriesImg.src = timeSeriesImgUrl;
-                            timeSeriesImg.style.cssText = `
-                                max-width: 500px;
-                                height: auto;
-                                pointer-events: auto;
-                            `;
-                            timeSeriesImg.onload = () => {
+                    const img = new Image();
+                    img.src = url;
+                    img.style.cssText = 'display:block;max-width:150px;height:auto;';
 
-                                if (initializationTimeSeriesEnabled && activeInitializationLayer === kmlLegendLayer) {
+                    container.appendChild(img);
 
-                                    if (activeInitializationTimeSeriesImg) {
-                                        activeInitializationTimeSeriesImg.remove();
-                                    }
+                })();
 
-                                    timeSeriesContainer.prepend(timeSeriesImg);                                    
-                                    activeInitializationTimeSeriesImg = timeSeriesImg;
-                                }
-                            };
-                        }
-                    })();
-                    kmlLegendLayer.on('remove', () => {
-                        if (timeSeriesImg) {
-                            timeSeriesImg.remove();
-                            timeSeriesImg = null;
-                        }
-                        if (timeSeriesImgUrl) {
-                            URL.revokeObjectURL(timeSeriesImgUrl);
-                            timeSeriesImgUrl = null;
-                        }
-                    });
-                }
                 return container;
             };
 
+            kmlLegendLayer.on('remove', () => {
+
+                if (timeSeriesImg) {
+                    timeSeriesImg.remove();
+                    timeSeriesImg = null;
+                }
+
+                if (timeSeriesImgUrl) {
+                    URL.revokeObjectURL(timeSeriesImgUrl);
+                    timeSeriesImgUrl = null;
+                }
+            });
+         
             // Toggle legend with layer
             kmlLegendLayer.on('add', () => {
 
@@ -966,6 +986,8 @@
                 }
             }
         });
+
+        img.onload = () => URL.revokeObjectURL(url);
 
         // Script Main
         if (window.qt) {
