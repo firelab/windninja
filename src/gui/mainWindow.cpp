@@ -1169,6 +1169,14 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
+        ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i+10, ui->diurnalCheckBox->isChecked(), papszOptions);  // test error handling
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetStabilityFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
         if(ui->vegetationStackedWidget->currentIndex() == 0)
         {
             ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
