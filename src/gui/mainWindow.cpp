@@ -1169,8 +1169,8 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
-        ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i+10, ui->diurnalCheckBox->isChecked(), papszOptions);  // test error handling
+        ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i, ui->stabilityCheckBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i+10, ui->stabilityCheckBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetStabilityFlag: ninjaErr =" << ninjaErr;
