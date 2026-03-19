@@ -99,6 +99,28 @@ void SurfaceInput::elevationInputTypePushButtonClicked()
 
 void SurfaceInput::boundingBoxReceived(double north, double south, double east, double west)
 {
+    // old code, not really applicable anymore with these fancy slot signal methods
+    // in the old code, the "mbr()" function, was the equivalent of calling the new function "sendBoundingBox()", so this boundingBoxReceived() function
+    /*QVariant mbr = wvGoogleMaps->page()->mainFrame()->evaluateJavaScript("mbr()");
+    if(mbr.isNull())
+    {
+        qDebug() << "no mbr";  // aka no data response from boundingBoxReceived()
+        QMessageBox mbox;
+        mbox.setText("DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.\n");
+        mbox.exec();
+        return;
+    }
+    QVariantList mbrl = mbr.toList();
+    if(mbrl.size() == 0)
+    {
+        QMessageBox mbox;
+        mbox.setText("DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.\n");
+        mbox.exec();
+        return;
+    }*/
+
+    qDebug() << "north south east west =" << QString::number(north) << QString::number(south) << QString::number(east) << QString::number(west);
+
     ui->boundingBoxNorthLineEdit->blockSignals(true);
     ui->boundingBoxEastLineEdit->blockSignals(true);
     ui->boundingBoxSouthLineEdit->blockSignals(true);
@@ -319,6 +341,8 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     QString directoryPath;
     QFileInfo inputFileDirInfo(inputFileDir);
 
+    emit writeToConsoleSignal("inputFileDir="+inputFileDirInfo.absolutePath());
+
     if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
     {
         directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
@@ -333,6 +357,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     }
 
     QString demFilePath = QFileDialog::getOpenFileName(ui->centralwidget, "Select a file", directoryPath, "(*.tif);;All Files (*)");
+    emit writeToConsoleSignal("demFilePath="+demFilePath);
 
     if(demFilePath.isEmpty())
     {
@@ -615,6 +640,97 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
 
     file.close();
 
+    // the above code already defined the smaller "default" list, now called the "americaData" list,
+    // by looking through the full list and grabbing any instances of "America" and "Pacific/Honolulu" from the full list.
+    // the old code did something different for this, it manually defined the "America" and "Pacific/Honolulu" default smaller list
+    // using keys and value parts manually setup as large lists. It then checked if the sizes of the lists matched, to make sure they were edited together
+    // then checked whether they were a part of the originally read in full boost list, before adding.
+    // So these commented out messages and code make little to no sense anymore, just adding to remember them.
+    QStringList tzStringList;  // List of zones read from boost
+    ////std::vector<std::string> boost_tz_list = globalTimeZoneDB.region_list();  // Ninja function
+    std::vector<std::string> boost_tz_list;
+    for(unsigned int i = 0; i < boost_tz_list.size(); i++)
+    {
+        tzStringList << QString::fromStdString(boost_tz_list[i]);
+    }
+    QStringList tz_list, display_list;
+    tz_list << "America/Anchorage"
+        << "America/Boise"
+        << "America/Chicago"
+        << "America/Denver"
+        << "America/Detroit"
+        << "America/Indiana/Indianapolis"
+        << "America/Indiana/Knox"
+        << "America/Indiana/Marengo"
+        << "America/Indiana/Vevay"
+        << "America/Indianapolis"
+        << "America/Juneau"
+        << "America/Kentucky/Louisville"
+        << "America/Kentucky/Monticello"
+        << "America/Los_Angeles"
+        << "America/Louisville"
+        << "America/New_York"
+        << "America/Nome"
+        << "America/North_Dakota/Center"
+        << "America/Phoenix"
+        << "Pacific/Honolulu";
+    display_list << "America/Anchorage(Alaska Time)"
+         << "America/Boise"
+         << "America/Chicago(Central Time)"
+         << "America/Denver(Mountain Time)"
+         << "America/Detroit"
+         << "America/Indiana/Indianapolis"
+         << "America/Indiana/Knox"
+         << "America/Indiana/Marengo"
+         << "America/Indiana/Vevay"
+         << "America/Indianapolis"
+         << "America/Juneau"
+         << "America/Kentucky/Louisville"
+         << "America/Kentucky/Monticello"
+         << "America/Los_Angeles(Pacific Time)"
+         << "America/Louisville"
+         << "America/New_York(Eastern Time)"
+         << "America/Nome"
+         << "America/North_Dakota/Center"
+         << "America/Phoenix"
+         << "Pacific/Honolulu(Hawaii Time)";
+    if(tz_list.size() != display_list.size())
+    {
+        qDebug() << "diurnalInput::loadDefaultTimeZones(): Wrong list size.";
+    }
+    // Check and make sure it's valid and on the boost list (in this case, the full Qt read in list)
+    for(int i = 0; i < tz_list.size(); i++)
+    {
+        ////if(!tzStringList.contains(tz_list[i]))  // old method, was comparing against a flat list, where now we are dealing with a list of lists
+        ////if(!fullData.contains(tz_list[i]))  // list of lists vs list, this code isn't going to work
+        bool found = false;
+        for(const auto& row : fullData)
+        {
+            if(!row.isEmpty() && row[0] == tz_list[i])
+            {
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+        {
+            qDebug() << "Time Zone does not exist!" << tz_list[i];
+        }
+        else
+        {
+            //tzComboBox->addItem(display_list[i], QVariant(tz_list[i]));
+            // hrm, vector of vector of string, not sure if putting the two data types together
+            // like a key and value is the right way to do this or not, hopefully this is the proper way of setting up this data
+            QVector<QString> row;
+            row.append(tz_list[i]);
+            row.append(display_list[i]);
+            // but we DON'T actually want to append this row of data, it is already included
+            // in the dataset from before, this list of values is already setup fully
+            // but if we were starting out with an empty americaData list, this check thingee is kind of how it would be generated from those manual lists
+            ////americaData.append(row);
+        }
+    }
+
     if (isShowAllTimeZonesSelected)
     {
         return fullData;
@@ -745,6 +861,8 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
 
 bool SurfaceInput::loadDemMetadata(const QString demFilePath)
 {
+    emit writeToConsoleSignal("Opening dataset...");
+
     CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
 
     double adfGeoTransform[6];
@@ -753,10 +871,14 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     poInputDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
     if(poInputDS == nullptr)
     {
+        emit writeToConsoleSignal("Cannot open the input file.", Qt::red);
         qCritical() << "ERROR: Cannot open dem file for reading in SurfaceInput::loadDemMetadata().";
         comMessageHandler("ERROR: Cannot open dem file for reading in SurfaceInput::loadDemMetadata().", this);
         return false;
     }
+
+    QString GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
+    emit writeToConsoleSignal("Reading "+GDALDriverLongName+"...");
 
     // set the file type here
     QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
@@ -794,8 +916,14 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     if(!GDALTestSRS(poInputDS))
     {
         hasPrj = false;
-        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.";
-        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.", this);
+        //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.";
+        //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.", this);
+        emit writeToConsoleSignal("Invalid Spatial Reference (prj), cannot do a simulation with the supplied DEM", Qt::red);
+        QMessageBox::warning(nullptr, tr("WindNinja"),
+                             "The DEM does not contain a proper spatial reference "
+                             "system. WindNinja only supports DEM files "
+                             "with projected coordinate systems (e.g., UTM)\n",
+                             QMessageBox::Ok | QMessageBox::Default);
         GDALClose((GDALDatasetH)poInputDS);
         return false;
     }
@@ -809,8 +937,13 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         if(GDALProjRef == "")
         {
             hasPrj = false;
-            qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.";
-            comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.", this);
+            //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.";
+            //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.", this);
+            QMessageBox::warning(nullptr, tr("WindNinja"),
+                                 "The DEM does not contain a proper spatial reference "
+                                 "system. WindNinja only supports DEM files "
+                                 "with projected coordinate systems (e.g., UTM)\n",
+                                 QMessageBox::Ok | QMessageBox::Default);
             GDALClose((GDALDatasetH)poInputDS);
             return false;
         }
@@ -818,8 +951,16 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         else if(oSRS.IsGeographic())
         {
             hasPrj = false;
-            qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)";
-            comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)", this);
+            //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)";
+            //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)", this);
+            QMessageBox::warning(nullptr, tr("WindNinja"),
+                                 "The DEM coordinated system is in a "
+                                 "geographic projection (latitude/longitude). "
+                                 "WindNinja only supports projected "
+                                 "coordinate systems (e.g., UTM)\n",
+                                 QMessageBox::Ok | QMessageBox::Default);
+            emit writeToConsoleSignal("Invalid Spatial Reference (prj), cannot do a simulation with the supplied DEM", Qt::red);
+            //tree->surface->inputFileLineEdit->setText("");
             GDALClose((GDALDatasetH)poInputDS);
             return false;
         }
@@ -833,8 +974,12 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     //if(!checkForNoData(poInputDS))
     if(GDALHasNoData(poInputDS, 1))
     {
-        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the input file contains NO_DATA values, cannot use.";
-        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the input file contains NO_DATA values, cannot use.", this);
+        //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the input file contains NO_DATA values, cannot use.";
+        //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the input file contains NO_DATA values, cannot use.", this);
+        emit writeToConsoleSignal("The input file contains no data values, cannot use", Qt::red);
+        QMessageBox::warning(nullptr, tr("WindNinja"),  // I added this message box, for testing
+                                 "The input file contains no data values, cannot use\n",
+                                 QMessageBox::Ok | QMessageBox::Default);
         GDALClose((GDALDatasetH)poInputDS);
         return false;
     }
@@ -843,8 +988,9 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     //if(!GDALGetCorners(poInputDS, DEMCorners))  // this actually returns 0 when success, rather than 1, so strange
     if(GDALGetCorners(poInputDS, DEMCorners))
     {
-        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), cannot get the corners of the input file, cannot use.";
-        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), cannot get the corners of the input file, cannot use.", this);
+        //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), cannot get the corners of the input file, cannot use.";
+        //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), cannot get the corners of the input file, cannot use.", this);
+        emit writeToConsoleSignal("Cannot get corners of the input file, cannot use", Qt::red);
         GDALClose((GDALDatasetH)poInputDS);
         return false;
     }
@@ -853,17 +999,24 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     double latitude, longitude;
     if(!GDALGetCenter(poInputDS, &longitude, &latitude))
     {
-        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), cannot get the center of the input file, cannot use.";
-        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), cannot get the center of the input file, cannot use.", this);
+        //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), cannot get the center of the input file, cannot use.";
+        //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), cannot get the center of the input file, cannot use.", this);
+        emit writeToConsoleSignal("Cannot get center of the input file, cannot use", Qt::red);
         GDALClose((GDALDatasetH)poInputDS);
         return false;
     }
+
+    // set diurnal location, also set DD.DDDDD
+    //emit latLonChanged( ll[0], ll[1], false );  // not sure which is first, lat or lon, of our actual variables
 
     // get dem timezone
     std::string timeZone = FetchTimeZone(longitude, latitude, NULL);
     int index = ui->timeZoneComboBox->findText(QString::fromStdString(timeZone));
     if(index >= 0)
     {
+        //// Show all time zones, so we can search all time zones
+        //tree->surface->timeZone->tzCheckBox->setChecked(true);
+        //int nIndex = tree->surface->timeZone->tzComboBox->findText(oTimeZone);
         ui->timeZoneComboBox->setCurrentIndex(index);
     }
 
@@ -879,8 +1032,9 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         }
         else
         {
-            qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the input file has non-square cell size, cannot use.";
-            comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the input file has non-square cell size, cannot use.", this);
+            //qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the input file has non-square cell size, cannot use.";
+            //comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the input file has non-square cell size, cannot use.", this);
+            emit writeToConsoleSignal("Invalid cell size, invalid file");
             GDALClose((GDALDatasetH)poInputDS);
             return false;
         }
@@ -902,6 +1056,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     GDALClose((GDALDatasetH)poInputDS);
 
     CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
+
+    emit writeToConsoleSignal("File Opened.", Qt::darkGreen);
 
     return true;
 }
@@ -1007,6 +1163,8 @@ void SurfaceInput::updateMeshResolutionByUnits()
             ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
         }
     }
+
+    emit writeToConsoleSignal("Mesh Resolution set to "+QString::number(ui->meshResolutionSpinBox->value())+" "+ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData());  // old gui this was so annoying, might be good to just have this always commented out
 }
 
 void SurfaceInput::computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4])
