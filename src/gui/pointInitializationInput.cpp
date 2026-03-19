@@ -619,10 +619,7 @@ void PointInitializationInput::fetchStationDataFinished()
 
         } else
         {
-            // If there are no stations, tell the user
             emit writeToConsoleSignal("Failed to fetch station data.");
-            emit writeToConsoleSignal("Could not read station File: Possibly no stations exist for request");  // old qui methods
-            ////pointInitialization::removeBadDirectory(stationPathName);  // Ninja function
         }
     }
     // delete the futureWatcher every time, whether success or failure

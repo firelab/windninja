@@ -390,6 +390,9 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
         if(!success)
         {
             Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationFromBbox() failed.");
+            // If there are no stations, tell the user
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Could not read station File: Possibly no stations exist for request");  // old qui methods
+            pointInitialization::removeBadDirectory(stationPathName);
             return NINJA_E_INVALID;
         }
         if(locationFileFlag)
@@ -448,6 +451,9 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
         if(!success)
         {
             Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationByName() failed.");
+            // If there are no stations, tell the user
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Could not read station File: Possibly no stations exist for request");  // old qui methods
+            pointInitialization::removeBadDirectory(stationPathName);
             return NINJA_E_INVALID;
         }
         if(locationFileFlag)

@@ -108,7 +108,15 @@ MainWindow::MainWindow(QWidget *parent)
     writeToConsole(version, Qt::blue);
     writeToConsole("WINDNINJA_DATA=" + dataPath);
     writeToConsole("current_dir="+QDir::current().path());
-    ////writeToConsole("bin_dir="+QString::fromStdString(FindNinjaBinDir()));  // this is a Ninja function
+    try
+    {
+        char **papszOptions = nullptr;
+        writeToConsole("running from '"+QString::fromStdString(NinjaFindBinDir(papszOptions))+"/WindNinja'");
+    }
+    catch (...)
+    {
+        qDebug() << "NinjaFindBinDir: ended in error";
+    }
 
     state.setState();
 }
@@ -548,7 +556,7 @@ void MainWindow::solveButtonClicked()
         std::vector<int> formatVec;
         for(int i = 0; i < stationFiles.size(); i++)  // Get the file type for all selected stations
         {
-            ////formatVec.push_back(wxStation::GetHeaderVersion(stationFiles[i].toStdString().c_str()));  // Ninja function
+            formatVec.push_back(NinjaGetWxStationHeaderVersion(stationFiles[i].toStdString().c_str(), papszOptions));
         }
         if(!std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin()))  // Make sure all the header versions are equal, in case one of them gets past all the gui checks
         {
