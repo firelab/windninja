@@ -758,6 +758,7 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         return false;
     }
 
+    // set the file type here
     QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
     if(GDALDriverName == "AAIGrid")
     {
@@ -770,7 +771,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     else if (GDALDriverName == "GTiff")
     {
         int bandCount = GDALGetRasterCount(poInputDS);
-        if(bandCount >1)
+        // if it's a multi-band GeoTIFF, it's an lcp
+        if(bandCount > 1)
         {
             demFileType = "LCP";
         }
@@ -784,36 +786,113 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         demFileType = "IMG";
     }
 
+    // get x and y dimension
     GDALXSize = poInputDS->GetRasterXSize();
     GDALYSize = poInputDS->GetRasterYSize();
-    GDALGetCorners(poInputDS, DEMCorners);
 
+    bool hasPrj = false;
+    if(!GDALTestSRS(poInputDS))
+    {
+        hasPrj = false;
+        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.";
+        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+    else
+    {
+        std::string GDALProjRef = poInputDS->GetProjectionRef();
+        const char *pszProjRef;
+        OGRSpatialReference oSRS;
+        pszProjRef = GDALProjRef.c_str();
+        oSRS.importFromWkt((char**)&pszProjRef);
+        if(GDALProjRef == "")
+        {
+            hasPrj = false;
+            qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.";
+            comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), dem file has no spatial reference (proj), cannot do a simulation with the supplied dem file.", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+        // Check for geographic.  Separate case as we may allow support later on.
+        else if(oSRS.IsGeographic())
+        {
+            hasPrj = false;
+            qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)";
+            comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+        else
+        {
+            hasPrj = true;
+        }
+    }
+
+    // check for ndv
+    //if(!checkForNoData(poInputDS))
+    if(GDALHasNoData(poInputDS, 1))
+    {
+        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the input file contains NO_DATA values, cannot use.";
+        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the input file contains NO_DATA values, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get dem corners
+    //if(!GDALGetCorners(poInputDS, DEMCorners))  // this actually returns 0 when success, rather than 1, so strange
+    if(GDALGetCorners(poInputDS, DEMCorners))
+    {
+        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), cannot get the corners of the input file, cannot use.";
+        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), cannot get the corners of the input file, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get center of the dem
     double latitude, longitude;
-    GDALGetCenter(poInputDS, &longitude, &latitude);
+    if(!GDALGetCenter(poInputDS, &longitude, &latitude))
+    {
+        qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), cannot get the center of the input file, cannot use.";
+        comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), cannot get the center of the input file, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get dem timezone
     std::string timeZone = FetchTimeZone(longitude, latitude, NULL);
     int index = ui->timeZoneComboBox->findText(QString::fromStdString(timeZone));
-    if (index >= 0)
+    if(index >= 0)
     {
         ui->timeZoneComboBox->setCurrentIndex(index);
     }
 
+    // get the geo-transform, get the cell size, check the dem has square cell size
     if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
         double c1, c2;
         c1 = adfGeoTransform[1];
         c2 = adfGeoTransform[5];
-        if (abs(c1) == abs(c2)) {
+        if(abs(c1) == abs(c2))
+        {
             GDALCellSize = abs(c1);
-        } else {
+        }
+        else
+        {
+            qCritical() << "ERROR: in SurfaceInput::loadDemMetadata(), the input file has non-square cell size, cannot use.";
+            comMessageHandler("ERROR: in SurfaceInput::loadDemMetadata(), the input file has non-square cell size, cannot use.", this);
             GDALClose((GDALDatasetH)poInputDS);
+            return false;
         }
     }
 
+    // get min/max values
     GDALRasterBand* band = poInputDS->GetRasterBand(1);
     int gotMin = 0, gotMax = 0;
     double minVal = band->GetMinimum(&gotMin);
     double maxVal = band->GetMaximum(&gotMax);
-    if (!gotMin || !gotMax) {
+    if(!gotMin || !gotMax)
+    {
         band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
     }
 
