@@ -231,16 +231,6 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     CPLDebug("STATION_FETCH", "---------------------------------------");
     CPLDebug("STATION_FETCH", "USING DEM: %s", ui->elevationInputFileLineEdit->text().toStdString().c_str());
 
-    // Custom API_KEY STUFF
-    const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
-    if(api_key_conf_opt != "FALSE")
-    {
-        std::ostringstream api_stream;
-        api_stream << api_key_conf_opt;
-        //pointInitialization::setCustomAPIKey(api_stream.str());  // Ninja function
-    }
-    // End Custom API_KEY STUFF
-
     QVector<int> year   = {start.date().year(),   end.date().year()};
     QVector<int> month  = {start.date().month(),  end.date().month()};
     QVector<int> day    = {start.date().day(),    end.date().day()};
