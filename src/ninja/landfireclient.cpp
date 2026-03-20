@@ -345,8 +345,6 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         VSIUnlink( pszTmpZip );
     }
 
-
-
     return nNoDataCount;
 }
 

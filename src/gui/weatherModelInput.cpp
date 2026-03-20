@@ -63,9 +63,9 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
 
 void WeatherModelInput::weatherModelDownloadButtonClicked()
 {
-    emit writeToConsoleSignal("Fetching weather model data...");
+    emit writeToConsoleSignal("Downloading weather model data...");
 
-    progress = new QProgressDialog("Fetching Forecast Data...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Downloading Forecast Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
@@ -79,7 +79,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
 
     if (ui->weatherModelComboBox->currentText().contains("PASTCAST"))
     {
-        progress->setLabelText("Fetching Pastcast Data...");
+        progress->setLabelText("Downloading Pastcast Data...");
 
         QDateTime start = ui->pastcastStartDateTimeEdit->dateTime();
         QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
@@ -188,7 +188,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended in warning:\n"+clipStr));
-        emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch warning: "+clipStr), Qt::yellow);
+        emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch warning: "+clipStr), QColor(255, 140, 0));
     }
     else
     {
@@ -295,7 +295,7 @@ void WeatherModelInput::weatherModelDownloadFinished()
 
         if(result == NINJA_SUCCESS)
         {
-            emit writeToConsoleSignal("Finished fetching weather model data.", Qt::darkGreen);
+            emit writeToConsoleSignal("Finished downloading weather model data.", Qt::darkGreen);
 
             if (progress)
             {
@@ -305,7 +305,7 @@ void WeatherModelInput::weatherModelDownloadFinished()
             }
         } else
         {
-            emit writeToConsoleSignal("Failed to fetch weather model data.");
+            emit writeToConsoleSignal("Failed to download weather model data.");
         }
 
         // delete the futureWatcher every time, whether success or failure

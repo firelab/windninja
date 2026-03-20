@@ -536,6 +536,8 @@ void MainWindow::solveButtonClicked()
 
         if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
         {
+            CPLDebug("STATION_FETCH", "Time Series option selected...");
+
             QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
             QDateTime end   = ui->weatherStationDataEndDateTimeEdit->dateTime();
 
@@ -607,6 +609,8 @@ void MainWindow::solveButtonClicked()
 
             if(nTimeSteps == 1)
             {
+                CPLDebug("STATION_FETCH", "USER WANTS 1 STEP, USING START TIME...");
+
                 int startYear = year[0];
                 int startMonth = month[0];
                 int startDay = day[0];
@@ -640,6 +644,8 @@ void MainWindow::solveButtonClicked()
             }
             else
             {
+                CPLDebug("STATION_FETCH", "USING TIME LIST...");
+
                 ninjaErr = NinjaGetTimeList(
                     ninjaTools,
                     year.data(), month.data(), day.data(),
@@ -672,6 +678,8 @@ void MainWindow::solveButtonClicked()
 
             if(ninjaErr == NINJA_SUCCESS)
             {
+                CPLDebug("STATION_FETCH", "TIME LIST GENERATED...");
+
                 numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
 
                 ninjaErr = NinjaMakePointArmy( ninjaArmy,
@@ -749,6 +757,8 @@ void MainWindow::solveButtonClicked()
         }
         else
         {
+            CPLDebug("STATION_FETCH", "USING CURRENT/LATEST TIME DATA...");
+
             int year, month, day, hour, minute;
             QDateTime date = ui->weatherStationDataLabel->property("simulationTime").toDateTime();
             year = date.date().year();
@@ -806,6 +816,8 @@ void MainWindow::solveButtonClicked()
 
             if(ninjaErr == NINJA_SUCCESS)
             {
+                CPLDebug("STATION_FETCH", "TIME LIST GENERATED...");
+
                 ninjaErr = NinjaMakePointArmy( ninjaArmy,
                     yearVec.data(), monthVec.data(), dayVec.data(),
                     hourVec.data(), minuteVec.data(), nTimeSteps,
@@ -1102,6 +1114,10 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
+                if(i == 0)
+                {
+                    writeToConsole("Writing Weather Station .kml");
+                }
                 // function needs MAJOR rework to get the testing to work, direct call to non-ninjaArmy function makes this process tougher
                 ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
                 //ninjaErr = NinjaSetStationKML(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
@@ -1166,6 +1182,14 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDiurnalWinds: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i, ui->stabilityCheckBox->isChecked(), papszOptions);
+        //ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i+10, ui->stabilityCheckBox->isChecked(), papszOptions);  // test error handling
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetStabilityFlag: ninjaErr =" << ninjaErr;
             return false;
         }
 
@@ -1663,7 +1687,7 @@ void MainWindow::writeSettings()
     settings.setValue("customRes", ui->meshResolutionSpinBox->value());
     settings.setValue("nProcessors", ui->numberOfProcessorsSpinBox->value());
 
-    writeToConsole("Settings saved.");
+    writeToConsole("Settings saved successfully.", Qt::darkGreen);
 }
 
 void MainWindow::readSettings()
@@ -1706,7 +1730,7 @@ void MainWindow::readSettings()
         ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
     }
 
-    writeToConsole("Settings read.");
+    writeToConsole("Settings read successfully.", Qt::darkGreen);
 }
 
 void MainWindow::showEvent(QShowEvent *event)
