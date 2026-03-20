@@ -316,6 +316,8 @@ void MainWindow::treeWidgetItemSelectionChanged()
 
 void MainWindow::massSolverCheckBoxClicked()
 {
+    ui->stabilityCheckBox->setDisabled(false);
+
     AppState& state = AppState::instance();
 
     if (state.isMomentumSolverToggled)
@@ -335,6 +337,9 @@ void MainWindow::massSolverCheckBoxClicked()
 
 void MainWindow::momentumSolverCheckBoxClicked()
 {
+    ui->stabilityCheckBox->setChecked(false);
+    ui->stabilityCheckBox->setDisabled(true);
+
     AppState& state = AppState::instance();
 
     if (state.isMassSolverToggled)
@@ -350,6 +355,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
         surfaceInput->updateMeshResolutionByUnits();
     }
     emit updateMetholodyState();
+    emit updateStabilityState();
 }
 
 void MainWindow::diurnalCheckBoxClicked()
