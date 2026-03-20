@@ -6017,7 +6017,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="citeWindNinjaAction"/>
     <addaction name="supportEmailAction"/>
     <addaction name="submitBugReportAction"/>
-    <addaction name="aboutQtAction"/>
    </widget>
    <addaction name="fileMenu"/>
    <addaction name="optionsMenu"/>
@@ -6267,17 +6266,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
    </property>
    <property name="shortcut">
     <string>Ctrl+B</string>
-   </property>
-  </action>
-  <action name="aboutQtAction">
-   <property name="icon">
-    <iconset theme="dialog-information"/>
-   </property>
-   <property name="text">
-    <string>About &amp;Qt</string>
-   </property>
-   <property name="toolTip">
-    <string>Show the Qt library's About box</string>
    </property>
   </action>
  </widget>
