@@ -126,6 +126,7 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
+    connect(ui->outputDirectoryOpenButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryOpenButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
 
     connect(menuBar, &MenuBar::writeToConsoleSignal, this, &MainWindow::writeToConsole);
@@ -406,6 +407,11 @@ void MainWindow::outputDirectoryButtonClicked()
         ui->outputDirectoryLineEdit->setText(currentPath);
         ui->outputDirectoryLineEdit->setToolTip(currentPath);
     }
+}
+
+void MainWindow::outputDirectoryOpenButtonClicked()
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(outputDir.absolutePath()));
 }
 
 void MainWindow::solveButtonClicked()
@@ -1004,7 +1010,6 @@ void MainWindow::solveButtonClicked()
 
     QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
     futureWatcher->setFuture(future);
-
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -1506,6 +1511,9 @@ void MainWindow::finishedSolve()
     }
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+    ui->outputDirectoryOpenButton->setDisabled(false);
+    outputDir.setPath(ui->outputDirectoryLineEdit->text());
 
     // one more process to do after finishedSolve() stuff
     plotKmzOutputs();

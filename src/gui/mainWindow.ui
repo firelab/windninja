@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>9</number>
+         <number>15</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -5005,6 +5005,23 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </property>
                <property name="text">
                 <string>Save output in...</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../../wn-resources.qrc">
+                 <normaloff>:/folder.png</normaloff>:/folder.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="outputDirectoryOpenButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="text">
+                <string>Open Output Files Path</string>
                </property>
                <property name="icon">
                 <iconset resource="../../wn-resources.qrc">
