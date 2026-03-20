@@ -362,9 +362,9 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
 
 void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
 {
-    emit writeToConsoleSignal("Fetching DEM file...");
+    emit writeToConsoleSignal("Downloading DEM file...");
 
-    progress = new QProgressDialog("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Downloading DEM file...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
@@ -399,7 +399,7 @@ void SurfaceInput::fetchDEMFinished()
 
         if(result == NINJA_SUCCESS)
         {
-            emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
+            emit writeToConsoleSignal("Finished downloading DEM file.", Qt::darkGreen);
 
             bool retVal = loadDemMetadata(pendingDownloadDemFilePath);
             if(retVal == true)
@@ -425,7 +425,7 @@ void SurfaceInput::fetchDEMFinished()
         }
         else
         {
-            emit writeToConsoleSignal("Failed to fetch DEM file.");
+            emit writeToConsoleSignal("Failed to download DEM file.");
         }
 
         // delete the futureWatcher every time, whether success or failure
@@ -805,11 +805,6 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     {
         qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";
         comMessageHandler("ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.", this);
-        //QMessageBox::warning(nullptr, tr("WindNinja"),
-        //                     "The DEM does not contain a proper spatial reference "
-        //                     "system. WindNinja only supports DEM files "
-        //                     "with projected coordinate systems (e.g., UTM)\n",
-        //                     QMessageBox::Ok | QMessageBox::Default);
         GDALClose((GDALDatasetH)poInputDS);
         return false;
     }
@@ -824,11 +819,6 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         {
             qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";
             comMessageHandler("ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.", this);
-            //QMessageBox::warning(nullptr, tr("WindNinja"),
-            //                     "The DEM does not contain a proper spatial reference "
-            //                     "system. WindNinja only supports DEM files "
-            //                     "with projected coordinate systems (e.g., UTM)\n",
-            //                     QMessageBox::Ok | QMessageBox::Default);
             GDALClose((GDALDatasetH)poInputDS);
             return false;
         }
@@ -838,12 +828,6 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         {
             qCritical() << "ERROR: The dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)";
             comMessageHandler("ERROR: The dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)", this);
-            //QMessageBox::warning(nullptr, tr("WindNinja"),
-            //                     "The DEM coordinated system is in a "
-            //                     "geographic projection (latitude/longitude). "
-            //                     "WindNinja only supports projected "
-            //                     "coordinate systems (e.g., UTM)\n",
-            //                     QMessageBox::Ok | QMessageBox::Default);
             GDALClose((GDALDatasetH)poInputDS);
             return false;
         }
@@ -851,8 +835,7 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         // if it gets here, it has a valid projected coordinate system
     }
 
-    // check for ndv
-    //if(!checkForNoData(poInputDS))  // ninja ascii_grid function
+    // check for no data values
     if(GDALHasNoData(poInputDS, 1))
     {
         qCritical() << "ERROR: The dem file contains NO_DATA values, cannot use.";
@@ -1032,7 +1015,6 @@ void SurfaceInput::updateMeshResolutionByUnits()
         }
     }
 
-    // the old gui doing this all the time was so annoying, might be good to just have this always commented out
     emit writeToConsoleSignal("Mesh Resolution set to "+QString::number(ui->meshResolutionSpinBox->value())+" "+ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData());
 }
 

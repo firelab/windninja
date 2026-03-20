@@ -198,10 +198,9 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
-    emit writeToConsoleSignal("Fetching station data...");
-    //emit writeToConsoleSignal("Downloading Station Data...");  // old GUI form
+    emit writeToConsoleSignal("Downloading station data...");
 
-    progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Downloading Station Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
@@ -606,7 +605,7 @@ void PointInitializationInput::fetchStationDataFinished()
 
         if(result == NINJA_SUCCESS)
         {
-            emit writeToConsoleSignal("Finished fetching station data.", Qt::darkGreen);
+            emit writeToConsoleSignal("Finished downloading station data.", Qt::darkGreen);
 
             if (progress)
             {
@@ -619,7 +618,7 @@ void PointInitializationInput::fetchStationDataFinished()
 
         } else
         {
-            emit writeToConsoleSignal("Failed to fetch station data.");
+            emit writeToConsoleSignal("Failed to download station data.");
         }
     }
     // delete the futureWatcher every time, whether success or failure
@@ -674,7 +673,7 @@ void PointInitializationInput::updateTreeView()
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
     AppState& state = AppState::instance();
-    QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();  // Get the number of selected files
+    QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
     CPLDebug("STATION_FETCH", "========================================");
     CPLDebug("STATION_FETCH", "NUMBER OF SELECTED STATIONS: %lli", selectedRows.count());
 
@@ -696,8 +695,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         if(stationFileSystemModel->isDir(selectedRows[i]))
         {
             CPLDebug("STATION_FETCH", "IGNORING SELECTED DIRECTORY!");
-            ui->pointInitializationTreeView->selectionModel()->select(selectedRows[i], QItemSelectionModel::Deselect | QItemSelectionModel::Rows); // Deselect entire row by calling ::Rows otherwise it looks messy
-            return;  // hrm, old one did this PRE the loop, without a return, so more like a "continue" I guess, not sure how we should refactor this yet.
+            ui->pointInitializationTreeView->selectionModel()->select(selectedRows[i], QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+            return;
         }
 
         CPLDebug("STATION_FETCH", "----------------------------------------");
@@ -802,12 +801,6 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         {
             CPLDebug("STATION_FETCH", "found unique stationFileType at: %i", i);
             CPLDebug("STATION_FETCH", "WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
-            //QMessageBox::critical(this,tr("Failure."),
-            //                      "An error occured in deteriming data types This is "
-            //                      "usually due to a failure in reading a "
-            //                      "weather station file. Check your files and "
-            //                      "try again\n",
-            //                      QMessageBox::Ok | QMessageBox::Default);
             state.isStationFileSelectionValid = false;
             break;
         }
@@ -894,7 +887,6 @@ void PointInitializationInput::readStationTime(QString startDateTimeStr, QString
     emit writeToConsoleSignal("Start Time (local): "+minStationLocalDateTime.toString());
     emit writeToConsoleSignal("End   Time (local): "+maxStationLocalDateTime.toString());
 
-    // Calculate how many steps we can do between the start and stop time
     updateTimeSteps();
 }
 

@@ -741,20 +741,6 @@ void MainWindow::solveButtonClicked()
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
-                    // this tries to use the catch error message, which we don't have anymore
-                    //QMessageBox::critical(this,tr("Failure."),
-                    //                      "An error occured in makePointArmy() - timeSeries! This is "
-                    //                      "usually due to a failure in reading a "
-                    //                      "weather station file. Check your files and "
-                    //                      "try again - Error Info: "+QString(e.what())+"\n",
-                    //                      QMessageBox::Ok | QMessageBox::Default);
-                    // this tries to use the pointInitialization stored error message string, may or may not be reliable, is a ninja function either way
-                    //QMessageBox::critical(this,tr("Failure."),
-                    //                      "An error occured in makePointArmy() - timeSeries! This is "
-                    //                      "usually due to a failure in reading a "
-                    //                      "weather station file. Check your files and "
-                    //                      "try again - Error Info: "+QString(pointInitialization::error_msg.c_str())+"\n",
-                    //                      QMessageBox::Ok | QMessageBox::Default);
                 }
             }
 
@@ -907,20 +893,6 @@ void MainWindow::solveButtonClicked()
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy ninjaErr =" << ninjaErr;
-                    // this tries to use the catch error message, which we don't have anymore
-                    //QMessageBox::critical(this,tr("Failure."),
-                    //                      "An error occured in makePointArmy() - currentwxdata! This is "
-                    //                      "usually due to a failure in reading a "
-                    //                      "weather station file. Check your files and "
-                    //                      "try again - Error Info: "+QString(e.what())+"\n",
-                    //                      QMessageBox::Ok | QMessageBox::Default);
-                    // this tries to use the pointInitialization stored error message string, may or may not be reliable, is a ninja function either way
-                    //QMessageBox::critical(this,tr("Failure."),
-                    //                      "An error occured in makePointArmy() - currentwxdata! This is "
-                    //                      "usually due to a failure in reading a "
-                    //                      "weather station file. Check your files and "
-                    //                      "try again - Error Info: "+QString(pointInitialization::error_msg.c_str())+"\n",
-                    //                      QMessageBox::Ok | QMessageBox::Default);
                 }
             }
         }
