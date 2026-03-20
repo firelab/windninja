@@ -56,10 +56,10 @@ signals:
 private slots:
     // functions for Menu actions
     // functions for QMenu fileMenu "File" actions
-    void newProjectActionTriggered();
-    void openProjectActionTriggered();
-    void exportSolutionActionTriggered();
-    void closeProjectActionTriggered();
+    // void newProjectActionTriggered();
+    // void openProjectActionTriggered();
+    // void exportSolutionActionTriggered();
+    // void closeProjectActionTriggered();
     // functions for QMenu optionsMenu "Options" actions
     void writeConsoleOutputActionTriggered();
     // functions for QMenu toolsMenu "Tools" actions

@@ -37,10 +37,10 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     dataPath = QDir(QString::fromUtf8(tmp));
 
     // QMenu fileMenu "File" actions
-    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
-    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
-    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
-    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
+    // connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
+    // connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
+    // connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
+    // connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
 
     // QMenu optionsMenu "Options" actions
@@ -77,25 +77,25 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->enableConsoleOutputAction, &QAction::toggled, this, &MenuBar::enableConsoleOutputActionToggled);
 }
 
-void MenuBar::newProjectActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: newProject() triggered");
-}
+// void MenuBar::newProjectActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: newProject() triggered");
+// }
 
-void MenuBar::openProjectActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: openProject() triggered");
-}
+// void MenuBar::openProjectActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: openProject() triggered");
+// }
 
-void MenuBar::exportSolutionActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: exportSolution() triggered");
-}
+// void MenuBar::exportSolutionActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: exportSolution() triggered");
+// }
 
-void MenuBar::closeProjectActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: closeProject() triggered");
-}
+// void MenuBar::closeProjectActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: closeProject() triggered");
+// }
 
 void MenuBar::writeConsoleOutputActionTriggered()
 {
