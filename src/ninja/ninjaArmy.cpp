@@ -1456,6 +1456,7 @@ int ninjaArmy::NinjaMakePointArmy( int * yearList, int * monthList, int * dayLis
             sFiles.emplace_back(stationFileNames[i]);
         }
         pointInitialization::storeFileNames(sFiles);
+        CPLDebug("STATION_FETCH", "FILES STORED...");
 
         makePointArmy( timeList, std::string(timeZone), sFiles[0], std::string(elevationFile), matchPointsFlag, momentumFlag );
     }

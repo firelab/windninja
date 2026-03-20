@@ -107,16 +107,6 @@ MainWindow::MainWindow(QWidget *parent)
     version = "Welcome to WindNinja " + version;
     writeToConsole(version, Qt::blue);
     writeToConsole("WINDNINJA_DATA=" + dataPath);
-    writeToConsole("current_dir="+QDir::current().path());
-    try
-    {
-        char **papszOptions = nullptr;
-        writeToConsole("running from '"+QString::fromStdString(NinjaFindBinDir(papszOptions))+"/WindNinja'");
-    }
-    catch (...)
-    {
-        qDebug() << "NinjaFindBinDir: ended in error";
-    }
 
     state.setState();
 }
@@ -519,12 +509,6 @@ void MainWindow::solveButtonClicked()
     {
         initializationMethod = "point";
 
-        // ignore the OLD FORMAT path/methods through the code
-        ////CPLDebug("STATION_FETCH", "USING OLD FORMAT...");
-        CPLDebug("STATION_FETCH", "NEW FORMAT...");
-        // no need to check whether all the files have the same format, already handled in pointInitializationInput.cpp
-        ////CPLDebug("STATION_FETCH", "HEADER VERSIONS ARE GOOD...");
-
         NinjaToolsH* ninjaTools = NinjaMakeTools();
 
         ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
@@ -550,35 +534,9 @@ void MainWindow::solveButtonClicked()
         QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
 
-        // the old one did this check yet again, our status stuff in pointInitializationInput.cpp should avoid needing this check
-        // besides, we would need to kick out here, without continuing on, the code isn't currently setup well to do that.
-        // well, except if the proper cleanup gets done at the end, with a return, guess that COULD work then.
-        std::vector<int> formatVec;
-        for(int i = 0; i < stationFiles.size(); i++)  // Get the file type for all selected stations
-        {
-            formatVec.push_back(NinjaGetWxStationHeaderVersion(stationFiles[i].toStdString().c_str(), papszOptions));
-        }
-        if(!std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin()))  // Make sure all the header versions are equal, in case one of them gets past all the gui checks
-        {
-            // Note that This error is not normally reachable if all other error handling works correctly
-            CPLDebug("STATION_FETCH", "WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
-            QMessageBox::critical(this,tr("Failure."),
-                                  "An error occured in deteriming data types This is "
-                                  "usually due to a failure in reading a "
-                                  "weather station file. Check your files and "
-                                  "try again\n",
-                                  QMessageBox::Ok | QMessageBox::Default);
-            /*disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            setCursor(Qt::ArrowCursor);
-            progressDialog->cancel();
-            progressDialog->hide();
-            delete army;
-            return false;*/
-        }
-
         if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
         {
-            CPLDebug("STATION_FETCH", "Time List Option Selected...");
+            CPLDebug("STATION_FETCH", "Time Series option selected...");
 
             QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
             QDateTime end   = ui->weatherStationDataEndDateTimeEdit->dateTime();
@@ -721,8 +679,6 @@ void MainWindow::solveButtonClicked()
             if(ninjaErr == NINJA_SUCCESS)
             {
                 CPLDebug("STATION_FETCH", "TIME LIST GENERATED...");
-                // file list storage is done within NinjaMakePointArmy()
-                ////CPLDebug("STATION_FETCH", "FILES STORED...");
 
                 numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
 
@@ -785,36 +741,20 @@ void MainWindow::solveButtonClicked()
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
-
-                    /*}catch (exception& e)
-                    {
-                        QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makePointArmy() - timeSeries! This is "
-                                              "usually due to a failure in reading a "
-                                              "weather station file. Check your files and "
-                                              "try again - Error Info: "+QString(e.what())+"\n",
-                                              QMessageBox::Ok | QMessageBox::Default);
-                        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-                        setCursor(Qt::ArrowCursor);
-                        progressDialog->cancel();
-                        progressDialog->hide();
-                        delete army;
-                        return false;
-                    }catch(...){ //catch any and all exceptions and tell the user
-
-                        QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makePointArmy() - timeSeries! This is "
-                                              "usually due to a failure in reading a "
-                                              "weather station file. Check your files and "
-                                              "try again - Error Info: "+QString(pointInitialization::error_msg.c_str())+"\n",
-                                              QMessageBox::Ok | QMessageBox::Default);
-                        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-                        setCursor(Qt::ArrowCursor);
-                        progressDialog->cancel();
-                        progressDialog->hide();
-                        delete army;
-                        return false;
-                    }*/
+                    // this tries to use the catch error message, which we don't have anymore
+                    //QMessageBox::critical(this,tr("Failure."),
+                    //                      "An error occured in makePointArmy() - timeSeries! This is "
+                    //                      "usually due to a failure in reading a "
+                    //                      "weather station file. Check your files and "
+                    //                      "try again - Error Info: "+QString(e.what())+"\n",
+                    //                      QMessageBox::Ok | QMessageBox::Default);
+                    // this tries to use the pointInitialization stored error message string, may or may not be reliable, is a ninja function either way
+                    //QMessageBox::critical(this,tr("Failure."),
+                    //                      "An error occured in makePointArmy() - timeSeries! This is "
+                    //                      "usually due to a failure in reading a "
+                    //                      "weather station file. Check your files and "
+                    //                      "try again - Error Info: "+QString(pointInitialization::error_msg.c_str())+"\n",
+                    //                      QMessageBox::Ok | QMessageBox::Default);
                 }
             }
 
@@ -831,7 +771,7 @@ void MainWindow::solveButtonClicked()
         }
         else
         {
-            CPLDebug("STATION_FETCH", "USING CURRENT WEATHER DATA...");
+            CPLDebug("STATION_FETCH", "USING CURRENT/LATEST TIME DATA...");
 
             int year, month, day, hour, minute;
             QDateTime date = ui->weatherStationDataLabel->property("simulationTime").toDateTime();
@@ -891,8 +831,6 @@ void MainWindow::solveButtonClicked()
             if(ninjaErr == NINJA_SUCCESS)
             {
                 CPLDebug("STATION_FETCH", "TIME LIST GENERATED...");
-                // file list storage is done within NinjaMakePointArmy()
-                ////CPLDebug("STATION_FETCH", "FILES STORED...");
 
                 ninjaErr = NinjaMakePointArmy( ninjaArmy,
                     yearVec.data(), monthVec.data(), dayVec.data(),
@@ -969,36 +907,20 @@ void MainWindow::solveButtonClicked()
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy ninjaErr =" << ninjaErr;
-
-                    /*}catch (exception& e)
-                    {
-                        QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makePointArmy() - currentwxdata! This is "
-                                              "usually due to a failure in reading a "
-                                              "weather station file. Check your files and "
-                                              "try again - Error Info: "+QString(e.what())+"\n",
-                                              QMessageBox::Ok | QMessageBox::Default);
-                        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-                        setCursor(Qt::ArrowCursor);
-                        progressDialog->cancel();
-                        progressDialog->hide();
-                        delete army;
-                        return false;
-                    }catch(...){ //catch any and all exceptions and tell the user
-
-                        QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makePointArmy() - currentwxdata! This is "
-                                              "usually due to a failure in reading a "
-                                              "weather station file. Check your files and "
-                                              "try again - Error Info: "+QString(pointInitialization::error_msg.c_str())+"\n",
-                                              QMessageBox::Ok | QMessageBox::Default);
-                        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-                        setCursor(Qt::ArrowCursor);
-                        progressDialog->cancel();
-                        progressDialog->hide();
-                        delete army;
-                        return false;
-                    }*/
+                    // this tries to use the catch error message, which we don't have anymore
+                    //QMessageBox::critical(this,tr("Failure."),
+                    //                      "An error occured in makePointArmy() - currentwxdata! This is "
+                    //                      "usually due to a failure in reading a "
+                    //                      "weather station file. Check your files and "
+                    //                      "try again - Error Info: "+QString(e.what())+"\n",
+                    //                      QMessageBox::Ok | QMessageBox::Default);
+                    // this tries to use the pointInitialization stored error message string, may or may not be reliable, is a ninja function either way
+                    //QMessageBox::critical(this,tr("Failure."),
+                    //                      "An error occured in makePointArmy() - currentwxdata! This is "
+                    //                      "usually due to a failure in reading a "
+                    //                      "weather station file. Check your files and "
+                    //                      "try again - Error Info: "+QString(pointInitialization::error_msg.c_str())+"\n",
+                    //                      QMessageBox::Ok | QMessageBox::Default);
                 }
             }
         }
