@@ -188,7 +188,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         emit self->updateProgressMessageSignal(QString::fromStdString("WeatherModelFetch ended in warning:\n"+clipStr));
-        emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch warning: "+clipStr), Qt::yellow);
+        emit self->writeToConsoleSignal(QString::fromStdString("WeatherModelFetch warning: "+clipStr), QColor(255, 140, 0));
     }
     else
     {

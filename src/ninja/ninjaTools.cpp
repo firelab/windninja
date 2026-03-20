@@ -120,7 +120,8 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     double southBound = boundsBox[2];
     double westBound = boundsBox[3];
     int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
-    if (result != 0)
+    //if(result != 0)
+    if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), fetching failed!");
@@ -173,7 +174,8 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     }
     lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
     int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
-    if (result != 0)
+    //if(result != 0)
+    if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), fetching failed!");
