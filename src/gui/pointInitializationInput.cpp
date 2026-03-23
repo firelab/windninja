@@ -93,6 +93,8 @@ void PointInitializationInput::weatherStationDownloadBetweenDatesStartTimeDateTi
 {
     if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
     {
+        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing End Time...");
+        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING END TIME");
         ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime().addSecs(3600));
     }
     updateTimeSteps();
@@ -102,6 +104,8 @@ void PointInitializationInput::weatherStationDownloadBetweenDatesEndTimeDateTime
 {
     if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
     {
+        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing Start Time...");
+        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING START TIME");
         ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime().addSecs(-3600));
     }
     updateTimeSteps();
@@ -183,7 +187,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         emit self->updateProgressMessageSignal(QString::fromStdString("StationFetch ended in warning:\n"+clipStr));
-        emit self->writeToConsoleSignal(QString::fromStdString("StationFetch warning: "+clipStr), Qt::yellow);
+        emit self->writeToConsoleSignal(QString::fromStdString("StationFetch warning: "+clipStr), QColor(255, 140, 0));
     }
     else
     {
@@ -194,9 +198,9 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 {
-    emit writeToConsoleSignal("Fetching station data...");
+    emit writeToConsoleSignal("Downloading station data...");
 
-    progress = new QProgressDialog("Fetching Station Data...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Downloading Station Data...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
@@ -212,10 +216,20 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
+    CPLDebug("STATION_FETCH", "Fetch Station GUI Function");
+    CPLDebug("STATION_FETCH", "---------------------------------------");
+
     QString DEMTimeZone = ui->timeZoneComboBox->currentText();
     QByteArray DEMTimeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
     QDateTime start = ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime();
     QDateTime end = ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime();
+
+    CPLDebug("STATION_FETCH", "DEM FILE NAME: %s", QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).absoluteFilePath().toStdString().c_str());
+    CPLDebug("STATION_FETCH", "TIME ZONE: %s", DEMTimeZone.toStdString().c_str());
+    CPLDebug("STATION_FETCH", "geoLoc: %i, (0=\"Download From DEM\",1=\"Download From Station ID\")", ui->weatherStationDataSourceComboBox->currentIndex());
+    CPLDebug("STATION_FETCH", "timeLoc: %i, (0=\"Download Most Recent Data\",1=\"Download Between Two Dates\")", ui->weatherStationDataTimeComboBox->currentIndex());
+    CPLDebug("STATION_FETCH", "---------------------------------------");
+    CPLDebug("STATION_FETCH", "USING DEM: %s", ui->elevationInputFileLineEdit->text().toStdString().c_str());
 
     QVector<int> year   = {start.date().year(),   end.date().year()};
     QVector<int> month  = {start.date().month(),  end.date().month()};
@@ -387,6 +401,14 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QFuture<int> future;
     if(ui->weatherStationDataSourceComboBox->currentIndex() == 0)
     {
+        if(fetchLatestFlag == true)
+        {
+            CPLDebug("STATION_FETCH", "Fetch Params: DEM and Current Data");
+        }
+        else
+        {
+            CPLDebug("STATION_FETCH", "Fetch Params: DEM and Time series");
+        }
         QString units = ui->downloadFromDEMComboBox->currentText();
         double buffer = ui->downloadFromDEMSpinBox->value();
         future = QtConcurrent::run(&PointInitializationInput::fetchStationFromBbox, this,
@@ -397,6 +419,14 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     }
     else
     {
+        if(fetchLatestFlag == true)
+        {
+            CPLDebug("STATION_FETCH", "STID and Current Data");
+        }
+        else
+        {
+            CPLDebug("STATION_FETCH", "STID and Timeseries");
+        }
         QString stationList = ui->downloadFromStationIDLineEdit->text();
         future = QtConcurrent::run(&PointInitializationInput::fetchStationByName, this,
                                    ninjaTools,
@@ -561,10 +591,11 @@ void PointInitializationInput::fetchStationDataFinished()
     {
         // get the return value of the QtConcurrent::run() function
         int result = futureWatcher->future().result();
+        CPLDebug("STATION_FETCH", "station fetch return value: %i", result);
 
         if(result == NINJA_SUCCESS)
         {
-            emit writeToConsoleSignal("Finished fetching station data.", Qt::darkGreen);
+            emit writeToConsoleSignal("Finished downloading station data.", Qt::darkGreen);
 
             if (progress)
             {
@@ -577,7 +608,7 @@ void PointInitializationInput::fetchStationDataFinished()
 
         } else
         {
-            emit writeToConsoleSignal("Failed to fetch station data.");
+            emit writeToConsoleSignal("Failed to download station data.");
         }
     }
     // delete the futureWatcher every time, whether success or failure
@@ -633,6 +664,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
 {
     AppState& state = AppState::instance();
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
+    CPLDebug("STATION_FETCH", "========================================");
+    CPLDebug("STATION_FETCH", "NUMBER OF SELECTED STATIONS: %lli", selectedRows.count());
 
     stationFiles.clear();
     stationFileTypes.clear();
@@ -641,32 +674,39 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
     minStationLocalDateTime = QDateTime();
 
     state.isStationFileSelected = false;
-    if (selectedRows.count() > 0)
+    if(selectedRows.count() > 0)
     {
         state.isStationFileSelected = true;
     }
 
     for(int i = 0; i < selectedRows.count(); i++)
     {
+        // If its a directory, make it so that it can't be selected
         if(stationFileSystemModel->isDir(selectedRows[i]))
         {
+            CPLDebug("STATION_FETCH", "IGNORING SELECTED DIRECTORY!");
             ui->pointInitializationTreeView->selectionModel()->select(selectedRows[i], QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
             return;
         }
 
+        CPLDebug("STATION_FETCH", "----------------------------------------");
+        CPLDebug("STATION_FETCH", "STATION NAME: %s", stationFileSystemModel->filePath(selectedRows[i]).toStdString().c_str());
+
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
         stationFiles.push_back(recentFileSelected);  // note, selected vs valid are two separate things
         //qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
+        CPLDebug("STATION_FETCH", "Selected file path: %s", recentFileSelected.toStdString().c_str());
 
         QByteArray filePathBytes = recentFileSelected.toUtf8();
         const char* filePath = filePathBytes.constData();
         char** options = nullptr;
         int stationHeader = NinjaGetWxStationHeaderVersion(filePath, options);
         //qDebug() << "[GUI-Point] Station Header: " << stationHeader;
+        CPLDebug("STATION_FETCH", "STATION HEADER TYPE: %i", stationHeader);
 
         if(stationHeader == 1)
         {
-            writeToConsoleSignal("Station has old station format, which is no longer allowed!");
+            emit writeToConsoleSignal("Station has old station format, which is no longer allowed!");
             state.isStationFileSelectionValid = false;
             return;
         }
@@ -684,44 +724,53 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
 
             if(hDS == NULL)
             {
-                writeToConsoleSignal("Cannot open station file!");
+                emit writeToConsoleSignal("Cannot open station file!");
                 state.isStationFileSelectionValid = false;
                 return;
             }
 
             OGRLayer* poLayer = hDS->GetLayer(0);
             poLayer->ResetReading();
-            qint64 lastIndex = poLayer->GetFeatureCount();
+            qint64 lastIndex = poLayer->GetFeatureCount();  // How many lines are on disk
             //qDebug() << "[GUI-Point] Number of Time Entries:" << lastIndex;
+            CPLDebug("STATION_FETCH", "Number of Time Entries: %llu", lastIndex);
 
             OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, row 1 is first time in series
             if(poFeature == NULL)
             {
-                writeToConsoleSignal("No Stations Found in file!");
+                emit writeToConsoleSignal("No Stations Found in file!");
                 state.isStationFileSelectionValid = false;
                 return;
             }
 
             QString startDateTimeStr(poFeature->GetFieldAsString(15)); // Time should be in 15th (last) column (0-14)
-            //qDebug() << "[GUI-Point] Station start time:" << startDateTimeStr;
 
             poFeature = poLayer->GetFeature(lastIndex);             // last time in series
             QString stopDateTimeStr(poFeature->GetFieldAsString(15));
-            //qDebug() << "[GUI-Point] Station end Time:" << stopDateTimeStr;
+
+            //qDebug() << "[GUI-Point] Station start time:" << startDateTimeStr;
+            //qDebug() << "[GUI-Point] Station end   time:" <<  stopDateTimeStr;
+            CPLDebug("STATION_FETCH", "STATION START TIME: %s", startDateTimeStr.toStdString().c_str());
+            CPLDebug("STATION_FETCH", "STATION END   TIME: %s",  stopDateTimeStr.toStdString().c_str());
 
             if(startDateTimeStr.isEmpty() && stopDateTimeStr.isEmpty())  // No time series
             {
                 //qDebug() << "[GUI-Point] File cannot be used for Time Series";
+                CPLDebug("STATION_FETCH", "File cannot be used for Time Series");
                 timeSeriesFlag = false;
                 stationFileTypes.push_back(0);
             }
             else if(!startDateTimeStr.isEmpty() && !stopDateTimeStr.isEmpty())  // Some type of time series
             {
                 //qDebug() << "[GUI-Point] File can be used for Time Series, suggesting time series parameters...";
+                CPLDebug("STATION_FETCH", "File can be used for Times Series, suggesting time series parameters...");
+                CPLDebug("STATION_FETCH", "Suggesting Potentially Reasonable Time Series Parameters...");
                 readStationTime(startDateTimeStr, stopDateTimeStr);
                 stationFileTypes.push_back(1);
             }
         }
+
+        CPLDebug("STATION_FETCH", "Type of Station File: %i", stationFileTypes[i]);
 
         ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(timeSeriesFlag ? 0 : 1);
 
@@ -735,9 +784,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
     }
 
     state.isStationFileSelectionValid = true;
-    for (int i = 0; i < stationFileTypes.size(); i++)
+    for(int i = 0; i < stationFileTypes.size(); i++)
     {
-        if (stationFileTypes[i] != stationFileTypes[0]) {
+        CPLDebug("STATION_FETCH", "stationFileTypes[%i] = %i", i, stationFileTypes[i]);
+        if(stationFileTypes[i] != stationFileTypes[0])
+        {
+            CPLDebug("STATION_FETCH", "found unique stationFileType at: %i", i);
+            CPLDebug("STATION_FETCH", "WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
             state.isStationFileSelectionValid = false;
             break;
         }
@@ -819,6 +872,11 @@ void PointInitializationInput::readStationTime(QString startDateTimeStr, QString
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
 
+    CPLDebug("STATION_FETCH", "minStationLocalDateTime = %s", minStationLocalDateTime.toString("MM/dd/yyyy HH:mm").toStdString().c_str());
+    CPLDebug("STATION_FETCH", "maxStationLocalDateTime = %s", maxStationLocalDateTime.toString("MM/dd/yyyy HH:mm").toStdString().c_str());
+    emit writeToConsoleSignal("Start Time (local): "+minStationLocalDateTime.toString());
+    emit writeToConsoleSignal("End   Time (local): "+maxStationLocalDateTime.toString());
+
     updateTimeSteps();
 }
 
@@ -852,6 +910,8 @@ void PointInitializationInput::weatherStationDataStartDateTimeEditChanged()
 {
     if(ui->weatherStationDataEndDateTimeEdit->dateTime() < ui->weatherStationDataStartDateTimeEdit->dateTime())
     {
+        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing End Time...");
+        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING END TIME!");
         ui->weatherStationDataEndDateTimeEdit->setDateTime(ui->weatherStationDataStartDateTimeEdit->dateTime().addSecs(3600));
     }
     updateTimeSteps();
@@ -861,6 +921,8 @@ void PointInitializationInput::weatherStationDataEndDateTimeEditChanged()
 {
     if(ui->weatherStationDataEndDateTimeEdit->dateTime() < ui->weatherStationDataStartDateTimeEdit->dateTime())
     {
+        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing Start Time...");
+        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING START TIME!");
         ui->weatherStationDataStartDateTimeEdit->setDateTime(ui->weatherStationDataEndDateTimeEdit->dateTime().addSecs(-3600));
     }
     updateTimeSteps();
@@ -868,6 +930,8 @@ void PointInitializationInput::weatherStationDataEndDateTimeEditChanged()
 
 void PointInitializationInput::updateTimeSteps()
 {
+    CPLDebug("STATION_FETCH", "Updating suggested time steps...");
+
     int timesteps;
 
     if(ui->weatherStationDataStartDateTimeEdit->dateTime() == ui->weatherStationDataEndDateTimeEdit->dateTime())
@@ -884,6 +948,7 @@ void PointInitializationInput::updateTimeSteps()
 
     if(timesteps == 1)
     {
+        CPLDebug("STATION_FETCH", "One Step Set for Timeseries, greying out stop time!");
         ui->weatherStationDataEndDateTimeEdit->setEnabled(false);
         ui->weatherStationDataEndDateTimeEdit->setToolTip("Stop time is disabled for 1 time step simulations");
     }

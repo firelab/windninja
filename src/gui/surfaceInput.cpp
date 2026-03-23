@@ -99,6 +99,8 @@ void SurfaceInput::elevationInputTypePushButtonClicked()
 
 void SurfaceInput::boundingBoxReceived(double north, double south, double east, double west)
 {
+    qDebug() << "north south east west =" << QString::number(north) << QString::number(south) << QString::number(east) << QString::number(west);
+
     ui->boundingBoxNorthLineEdit->blockSignals(true);
     ui->boundingBoxEastLineEdit->blockSignals(true);
     ui->boundingBoxSouthLineEdit->blockSignals(true);
@@ -319,6 +321,8 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     QString directoryPath;
     QFileInfo inputFileDirInfo(inputFileDir);
 
+    CPLDebug("WINDNINJA", "inputFileDir=%s", inputFileDirInfo.absolutePath().toStdString().c_str());
+
     if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
     {
         directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
@@ -345,7 +349,22 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
         return;
     }
 
-    bool retVal = loadDemMetadata(demFilePath);
+    // check and attempt to fill the to be opened dem file for NO_DATA values
+    // update the dem file if NO_DATA values are filled
+    QString nanFilledDemFilePath;
+    bool retVal = checkAndFillToBeOpenedDemNoDataValues(demFilePath, nanFilledDemFilePath);
+    if(retVal == false)
+    {
+        // failed with some kind of error, messaging is handled by the underlying function
+        return;
+    }
+    if(!nanFilledDemFilePath.isEmpty())
+    {
+        // required and succeeded in filling
+        demFilePath = nanFilledDemFilePath;
+    }
+
+    retVal = loadDemMetadata(demFilePath);
     if(retVal == false)
     {
         return;
@@ -358,9 +377,9 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
 
 void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
 {
-    emit writeToConsoleSignal("Fetching DEM file...");
+    emit writeToConsoleSignal("Downloading DEM file...");
 
-    progress = new QProgressDialog("Fetching DEM file...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Downloading DEM file...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::WindowModal);
     progress->setCancelButton(nullptr);
     progress->setMinimumDuration(0);
@@ -393,11 +412,20 @@ void SurfaceInput::fetchDEMFinished()
         // get the return value of the QtConcurrent::run() function
         int result = futureWatcher->future().result();
 
-        if(result == NINJA_SUCCESS)
+        if(result >= 0)  // returned NINJA_SUCCESS, or a nNoDataCount value
         {
-            emit writeToConsoleSignal("Finished fetching DEM file.", Qt::darkGreen);
+            emit writeToConsoleSignal("Finished downloading DEM file.", Qt::darkGreen);
 
-            bool retVal = loadDemMetadata(pendingDownloadDemFilePath);
+            bool retVal = true;
+
+            // check and attempt to fill the downloaded dem file for NO_DATA values
+            retVal = checkAndFillDownloadedDemNoDataValues(pendingDownloadDemFilePath);
+
+            if(retVal == true)
+            {
+                retVal = loadDemMetadata(pendingDownloadDemFilePath);
+            }
+
             if(retVal == true)
             {
                 ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
@@ -405,10 +433,11 @@ void SurfaceInput::fetchDEMFinished()
                 ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
                 ui->inputsStackedWidget->setCurrentIndex(3);
             }
+
             //else  // if(retVal == false)
             //{
-            //    // message is handled in loadDemMetadata()
-            //    // don't want to return here, need to wrap up all the other todos of this function or things won't close properly
+            //    // message is handled in the various underlying functions
+            //    // don't want to return here, need to wrap up all the other todos of this finished() function or things won't close properly
             //    //return;
             //}
 
@@ -421,7 +450,7 @@ void SurfaceInput::fetchDEMFinished()
         }
         else
         {
-            emit writeToConsoleSignal("Failed to fetch DEM file.");
+            emit writeToConsoleSignal("Failed to download DEM file.");
         }
 
         // delete the futureWatcher every time, whether success or failure
@@ -707,7 +736,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr+"\n"));
-        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), Qt::yellow);
+        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
     }
     else
     {
@@ -743,8 +772,162 @@ int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile,
     return NINJA_SUCCESS;
 }
 
+bool SurfaceInput::checkAndFillDownloadedDemNoDataValues(const QString demFilePath)
+{
+    emit writeToConsoleSignal("Checking downloaded dem file for NO_DATA values...");
+
+    GDALDataset *poDS;
+    poDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_Update);
+    if(poDS == nullptr)
+    {
+        qCritical() << "ERROR: Cannot open dem file.";
+        comMessageHandler("ERROR: Cannot open dem file.", this);
+        return false;
+    }
+
+    if(GDALHasNoData(poDS, 1))
+    {
+        qWarning() << "WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...";
+        emit writeToConsoleSignal("WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...", QColor(255, 140, 0));
+        QMessageBox::information(nullptr, tr("WindNinja"),
+                                 tr("The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data. Please click OK to proceed."),
+                                 QMessageBox::Ok);
+        // need this OR the QMessageBox and writeToConsoleSignal()
+        //comMessageHandler("WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...", this);
+
+        int nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
+        if(nNoDataValues)
+        {
+            qWarning() << "WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.";
+            emit writeToConsoleSignal("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", QColor(255, 140, 0));
+            QMessageBox::warning(nullptr, tr("WindNinja"),
+                                 tr("Could not fill NO_DATA pixels, too many pixels were invalid."),
+                                 QMessageBox::Ok);
+            // again, need this OR the QMessageBox and writeToConsoleSignal()
+            //comMessageHandler("WARNING: Could not fill no data pixels, too many pixels were invalid.", this);
+            GDALClose((GDALDatasetH)poDS);
+            return false;
+        }
+        qInfo() << "succeeded in filling NO_DATA pixels.";
+        emit writeToConsoleSignal("succeeded in filling NO_DATA pixel.", Qt::darkGreen);
+        QMessageBox::information(nullptr, tr("WindNinja"),
+                                 tr("Succeeded in filling NO_DATA pixels."),
+                                 QMessageBox::Ok);
+    }
+
+    GDALClose((GDALDatasetH)poDS);
+
+    emit writeToConsoleSignal("finished checking for NO_DATA values.", Qt::darkGreen);
+    return true;
+}
+
+bool SurfaceInput::checkAndFillToBeOpenedDemNoDataValues(const QString demFilePath, QString& nanFilledDemFilePath)
+{
+    emit writeToConsoleSignal("Checking dem file for NO_DATA values...");
+
+    nanFilledDemFilePath = "";
+
+    GDALDataset *poDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
+    if(poDS == nullptr)
+    {
+        qCritical() << "ERROR: Cannot open dem file.";
+        comMessageHandler("ERROR: Cannot open dem file.", this);
+        return false;
+    }
+
+    if(GDALHasNoData(poDS, 1))
+    {
+        qWarning() << "WARNING: The dem contains NO_DATA values. WindNinja will attempt to fill with valid data...";
+        emit writeToConsoleSignal("WARNING: The dem contains NO_DATA values. WindNinja will attempt to fill with valid data...", QColor(255, 140, 0));
+        int response = QMessageBox::warning(nullptr, tr("WindNinja"),
+                                            tr("The input dataset contains pixels with NO_DATA. "
+                                            "These datasets cannot be used by WindNinja, "
+                                            "would you like to attempt to fill those pixels?"),
+                                            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
+        if(response == QMessageBox::Yes)
+        {
+            nanFilledDemFilePath = QFileDialog::getSaveFileName(ui->centralwidget, tr("Set NO_DATA Filled DEM File"),
+                                                                QFileInfo(demFilePath).absolutePath(),
+                                                                tr("GeoTiff (*.tif)"));
+            if(nanFilledDemFilePath.isEmpty())
+            {
+                qWarning() << "Cancelled by user with no selection. Not filling NO_DATA values. Not loading dem file.";
+                emit writeToConsoleSignal("Cancelled by user with no selection. Not filling NO_DATA values. Not loading dem file.");
+                return false;
+            }
+
+            if(!nanFilledDemFilePath.endsWith(".tif", Qt::CaseInsensitive))
+            {
+                nanFilledDemFilePath += ".tif";
+            }
+
+            GDALDriverH hDriver = GDALGetDriverByName("GTiff");
+            GDALDatasetH hNewDS;
+            hNewDS = GDALCreateCopy(hDriver, nanFilledDemFilePath.toStdString().c_str(), (GDALDriverH)poDS, FALSE, NULL, NULL, NULL);
+
+            int nSuccess;
+            GDALRasterBandH hSrcBand, hDstBand;
+            hSrcBand = GDALGetRasterBand((GDALDatasetH)poDS, 1);
+            hDstBand = GDALGetRasterBand(hNewDS, 1);
+            GDALSetRasterNoDataValue(hDstBand, GDALGetRasterNoDataValue(hSrcBand, &nSuccess));
+            if(nSuccess == false)
+            {
+                qCritical() << "ERROR: Could not get NO_DATA value definition from the dem file.";
+                comMessageHandler("ERROR: Could not get NO_DATA value definition from the dem file.", this);
+                return false;
+            }
+
+            int nNoData = GDALFillBandNoData((GDALDataset*)hNewDS, 1, 100);
+            if(nNoData)
+            {
+                qWarning() << "WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.";
+                emit writeToConsoleSignal("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", QColor(255, 140, 0));
+                QMessageBox::warning(nullptr, tr("WindNinja"),
+                                     tr("Could not fill NO_DATA pixels, too many pixels were invalid."),
+                                     QMessageBox::Ok);
+                // again, need this OR the QMessageBox and writeToConsoleSignal()
+                //comMessageHandler("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", this);
+                GDALClose(hNewDS);
+                GDALClose((GDALDatasetH)poDS);
+                VSIUnlink(nanFilledDemFilePath.toStdString().c_str());
+                nanFilledDemFilePath = "";
+                return false;
+            }
+            else
+            {
+                GDALFlushCache(hNewDS);
+                GDALClose(hNewDS);
+                GDALClose((GDALDatasetH)poDS);
+                qInfo() << "succeeded in filling NO_DATA pixels.";
+                emit writeToConsoleSignal("succeeded in filling NO_DATA pixels.", Qt::darkGreen);
+                QMessageBox::information(nullptr, tr("WindNinja"),
+                                         tr("Succeeded in filling NO_DATA pixels."),
+                                         QMessageBox::Ok);
+                return true;
+            }
+        }
+        else
+        {
+            qWarning() << "Cancelled by user. Not filling NO_DATA values. Not loading dem file.";
+            emit writeToConsoleSignal("Cancelled by user. Not filling NO_DATA values. Not loading dem file.");
+            return false;
+        }
+    }
+    else
+    {
+        GDALClose((GDALDatasetH)poDS);
+    }
+
+    emit writeToConsoleSignal("finished checking for NO_DATA values.", Qt::darkGreen);
+    return true;
+}
+
 bool SurfaceInput::loadDemMetadata(const QString demFilePath)
 {
+    emit writeToConsoleSignal("Opening dem file to load in metadata...");
+    emit writeToConsoleSignal("demFilePath="+demFilePath);
+
     CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
 
     double adfGeoTransform[6];
@@ -753,11 +936,15 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     poInputDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
     if(poInputDS == nullptr)
     {
-        qCritical() << "ERROR: Cannot open dem file for reading in SurfaceInput::loadDemMetadata().";
-        comMessageHandler("ERROR: Cannot open dem file for reading in SurfaceInput::loadDemMetadata().", this);
+        qCritical() << "ERROR: Cannot open dem file.";
+        comMessageHandler("ERROR: Cannot open dem file.", this);
         return false;
     }
 
+    QString GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
+    emit writeToConsoleSignal("using "+GDALDriverLongName+" driver to read dem file...");
+
+    // set the file type here
     QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
     if(GDALDriverName == "AAIGrid")
     {
@@ -770,7 +957,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     else if (GDALDriverName == "GTiff")
     {
         int bandCount = GDALGetRasterCount(poInputDS);
-        if(bandCount >1)
+        // if it's a multi-band GeoTIFF, it's an lcp
+        if(bandCount > 1)
         {
             demFileType = "LCP";
         }
@@ -784,36 +972,107 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         demFileType = "IMG";
     }
 
+    // get x and y dimension
     GDALXSize = poInputDS->GetRasterXSize();
     GDALYSize = poInputDS->GetRasterYSize();
-    GDALGetCorners(poInputDS, DEMCorners);
 
+    if(!GDALTestSRS(poInputDS))
+    {
+        qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";
+        comMessageHandler("ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+    else
+    {
+        std::string GDALProjRef = poInputDS->GetProjectionRef();
+        const char *pszProjRef;
+        OGRSpatialReference oSRS;
+        pszProjRef = GDALProjRef.c_str();
+        oSRS.importFromWkt((char**)&pszProjRef);
+        if(GDALProjRef == "")
+        {
+            qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";
+            comMessageHandler("ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+
+        // Check for geographic. Separate case as we may allow support later on.
+        if(oSRS.IsGeographic())
+        {
+            qCritical() << "ERROR: The dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)";
+            comMessageHandler("ERROR: The dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+
+        // if it gets here, it has a valid projected coordinate system
+    }
+
+    // check for no data values
+    if(GDALHasNoData(poInputDS, 1))
+    {
+        qCritical() << "ERROR: The dem file contains NO_DATA values, cannot use.";
+        comMessageHandler("ERROR: The dem file contains NO_DATA values, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get dem corners
+    //if(!GDALGetCorners(poInputDS, DEMCorners))  // this actually returns 0 when success, rather than 1, so strange
+    if(GDALGetCorners(poInputDS, DEMCorners))
+    {
+        qCritical() << "ERROR: Cannot get the corners of the dem file, cannot use.";
+        comMessageHandler("ERROR: Cannot get the corners of the dem file, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get center of the dem
     double latitude, longitude;
-    GDALGetCenter(poInputDS, &longitude, &latitude);
+    if(!GDALGetCenter(poInputDS, &longitude, &latitude))
+    {
+        qCritical() << "ERROR: Cannot get the center of the dem file, cannot use.";
+        comMessageHandler("ERROR: Cannot get the center of the dem file, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get dem timezone
     std::string timeZone = FetchTimeZone(longitude, latitude, NULL);
     int index = ui->timeZoneComboBox->findText(QString::fromStdString(timeZone));
-    if (index >= 0)
+    if(index >= 0)
     {
         ui->timeZoneComboBox->setCurrentIndex(index);
     }
 
+    // get the geo-transform, get the cell size, check the dem has square cell size
     if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
         double c1, c2;
         c1 = adfGeoTransform[1];
         c2 = adfGeoTransform[5];
-        if (abs(c1) == abs(c2)) {
+        if(abs(c1) == abs(c2))
+        {
             GDALCellSize = abs(c1);
-        } else {
+        }
+        else
+        {
+            qCritical() << "ERROR: The dem file has non-square cell size, cannot use.";
+            comMessageHandler("ERROR: The dem file has non-square cell size, cannot use.", this);
             GDALClose((GDALDatasetH)poInputDS);
+            return false;
         }
     }
 
+    // get min/max values
     GDALRasterBand* band = poInputDS->GetRasterBand(1);
     int gotMin = 0, gotMax = 0;
     double minVal = band->GetMinimum(&gotMin);
     double maxVal = band->GetMaximum(&gotMax);
-    if (!gotMin || !gotMax) {
+    if(!gotMin || !gotMax)
+    {
         band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
     }
 
@@ -823,6 +1082,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     GDALClose((GDALDatasetH)poInputDS);
 
     CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
+
+    emit writeToConsoleSignal("Metadata loaded from dem file successfully.", Qt::darkGreen);
 
     return true;
 }
@@ -928,6 +1189,8 @@ void SurfaceInput::updateMeshResolutionByUnits()
             ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
         }
     }
+
+    emit writeToConsoleSignal("Mesh Resolution set to "+QString::number(ui->meshResolutionSpinBox->value())+" "+ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData());
 }
 
 void SurfaceInput::computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4])

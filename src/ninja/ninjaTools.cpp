@@ -120,7 +120,8 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     double southBound = boundsBox[2];
     double westBound = boundsBox[3];
     int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
-    if (result != 0)
+    //if(result != 0)
+    if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), fetching failed!");
@@ -173,7 +174,8 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     }
     lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
     int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
-    if (result != 0)
+    //if(result != 0)
+    if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), fetching failed!");
@@ -367,6 +369,16 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
             timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
         }
 
+        // Custom API_KEY STUFF
+        const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
+        if(api_key_conf_opt != "FALSE")
+        {
+            std::ostringstream api_stream;
+            api_stream << api_key_conf_opt;
+            pointInitialization::setCustomAPIKey(api_stream.str());
+        }
+        // End Custom API_KEY STUFF
+
         wxStation::SetStationFormat(wxStation::newFormat);
 
         if(!fetchLatestFlag)
@@ -389,7 +401,8 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
         bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
         if(!success)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationFromBbox() failed.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationFromBbox() failed.\nCould not read station File: Possibly no stations exist for request.");
+            pointInitialization::removeBadDirectory(stationPathName);
             return NINJA_E_INVALID;
         }
         if(locationFileFlag)
@@ -426,6 +439,16 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
             timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i], minuteList[i], 0, 0)));
         }
 
+        // Custom API_KEY STUFF
+        const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
+        if(api_key_conf_opt != "FALSE")
+        {
+            std::ostringstream api_stream;
+            api_stream << api_key_conf_opt;
+            pointInitialization::setCustomAPIKey(api_stream.str());
+        }
+        // End Custom API_KEY STUFF
+
         wxStation::SetStationFormat(wxStation::newFormat);
 
         if(!fetchLatestFlag)
@@ -447,7 +470,8 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
         bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
         if(!success)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationByName() failed.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationByName() failed.\nCould not read station File: Possibly no stations exist for request.");
+            pointInitialization::removeBadDirectory(stationPathName);
             return NINJA_E_INVALID;
         }
         if(locationFileFlag)
