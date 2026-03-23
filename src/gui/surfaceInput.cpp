@@ -390,7 +390,7 @@ void SurfaceInput::ninjafoamCaseButtonClicked()
     }
 
     ui->ninjafoamCaseLineEdit->setText(QFileInfo(ninjafoamDir).fileName());
-    ui->ninjafoamCaseLineEdit->setProperty("fullPath", ninjafoamDir);
+    ui->ninjafoamCaseLineEdit->setProperty("fullpath", ninjafoamDir);
 
     ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
     ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
