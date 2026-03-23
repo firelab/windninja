@@ -318,6 +318,7 @@ void MainWindow::treeWidgetItemSelectionChanged()
 void MainWindow::massSolverCheckBoxClicked()
 {
     ui->stabilityCheckBox->setDisabled(false);
+    ui->ninjafoamCaseGroupBox->setVisible(false);
 
     AppState& state = AppState::instance();
 
@@ -340,6 +341,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
 {
     ui->stabilityCheckBox->setChecked(false);
     ui->stabilityCheckBox->setDisabled(true);
+    ui->ninjafoamCaseGroupBox->setVisible(true);
 
     AppState& state = AppState::instance();
 
@@ -1152,6 +1154,16 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
             return false;
+        }
+
+        if(ui->momentumSolverCheckBox->isChecked() && !ui->ninjafoamCaseLineEdit->text().isEmpty())
+        {
+            ninjaErr = NinjaSetExistingCaseDirectory(ninjaArmy, i, ui->ninjafoamCaseLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetExistingCaseDirectory: ninjaErr =" << ninjaErr;
+                return false;
+            }
         }
 
         ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);  // if setting up ninja.cpp function call to simply throw, this breaks, this requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h

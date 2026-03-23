@@ -777,6 +777,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     }
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaSetExistingCaseDirectory(NinjaArmyH * army, const int nIndex, const char * directory, char ** options)
+{
+    if( NULL != army && NULL != directory )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setExistingCaseDirectory
+            ( nIndex, std::string( directory ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
 /**
  * \brief Set an in-memory DEM to use for the simulations.
  *

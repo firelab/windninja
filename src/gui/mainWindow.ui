@@ -832,7 +832,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>15</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1017,8 +1017,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>530</width>
-               <height>385</height>
+               <width>730</width>
+               <height>462</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1027,7 +1027,7 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0,0">
               <property name="spacing">
                <number>6</number>
               </property>
@@ -1043,6 +1043,54 @@
               <property name="bottomMargin">
                <number>5</number>
               </property>
+              <item>
+               <widget class="QGroupBox" name="ninjafoamCaseGroupBox">
+                <property name="title">
+                 <string>Use Existing Case</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_24">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
+                 <item>
+                  <widget class="QLineEdit" name="ninjafoamCaseLineEdit"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="ninjafoamCaseButton">
+                   <property name="text">
+                    <string>Open Case</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="../../wn-resources.qrc">
+                     <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="ninjaFoamCaseGroupBoxSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </item>
               <item>
                <widget class="QGroupBox" name="elevationInputFileGroupBox">
                 <property name="sizePolicy">
@@ -1181,7 +1229,7 @@
                     </sizepolicy>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="vegetationSelectionPage">
                     <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -1263,7 +1311,7 @@
                         </sizepolicy>
                        </property>
                        <property name="text">
-                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vegetation Data Set Using LCP File&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Vegetation Data Set Using LCP File&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                       </widget>
                      </item>
@@ -1755,8 +1803,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>330</width>
-               <height>231</height>
+               <width>730</width>
+               <height>462</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2272,8 +2320,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>510</width>
-               <height>331</height>
+               <width>730</width>
+               <height>462</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2769,8 +2817,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>368</width>
-               <height>431</height>
+               <width>730</width>
+               <height>462</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3439,8 +3487,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>374</width>
-               <height>439</height>
+               <width>730</width>
+               <height>462</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4375,8 +4423,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>357</width>
-               <height>274</height>
+               <width>730</width>
+               <height>462</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
