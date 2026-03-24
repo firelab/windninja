@@ -497,19 +497,6 @@
                 return container;
             };
 
-            kmlLegendLayer.on('remove', () => {
-                map.removeControl(legendControl);
-
-                if (activeWindNinjaLayer === kmlLegendLayer) {
-                    activeWindNinjaLayer = null;
-                }
-
-                if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
-                    timeSeriesImg.remove();
-                    activeWindNinjaTimeSeriesImg = null;
-                }
-            });
-
             kmlLegendLayer.on('add', () => {
                 activeWindNinjaLayer = kmlLegendLayer;
                 windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
@@ -526,6 +513,19 @@
                         activeWindNinjaTimeSeriesImg.remove();
                         activeWindNinjaTimeSeriesImg = null;
                     }
+                }
+            });
+
+            kmlLegendLayer.on('remove', () => {
+                map.removeControl(legendControl);
+
+                if (activeWindNinjaLayer === kmlLegendLayer) {
+                    activeWindNinjaLayer = null;
+                }
+
+                if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
+                    timeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
                 }
             });
 
@@ -674,11 +674,8 @@
                 return container;
             }
          
-            kmlLegendLayer.on('add', () => 
-            {
-
+            kmlLegendLayer.on('add', () => {
                 activeInitializationLayer = kmlLegendLayer;
-
                 initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
                 if (initializationLegendEnabled) {
@@ -690,22 +687,16 @@
                 }
             });
 
-            kmlLegendLayer.on('remove', () => 
-            {
+            kmlLegendLayer.on('remove', () => {
                 map.removeControl(legendControl);
-
-                if (timeSeriesImg) {
-                    timeSeriesImg.remove();
-                    timeSeriesImg = null;
-                }
-
-                if (timeSeriesImgUrl) {
-                    URL.revokeObjectURL(timeSeriesImgUrl);
-                    timeSeriesImgUrl = null;
-                }
 
                 if (activeInitializationLayer === kmlLegendLayer) {
                     activeInitializationLayer = null;
+                }
+
+                if (!initializationTimeSeriesEnabled && timeSeriesImg) {
+                    timeSeriesImg.remove();
+                    showInitializationTimeSeriesImg = null;
                 }
             });
 
