@@ -401,9 +401,8 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
         bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
         if(!success)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationFromBbox() failed.\nCould not read station File: Possibly no stations exist for request.");
             pointInitialization::removeBadDirectory(stationPathName);
-            return NINJA_E_INVALID;
+            throw std::runtime_error("pointInitialization::fetchStationFromBbox() failed with unknown error.\nCould not read station File: Possibly no stations exist for request.");
         }
         if(locationFileFlag)
         {
@@ -470,9 +469,8 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
         bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
         if(!success)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationByName() failed.\nCould not read station File: Possibly no stations exist for request.");
             pointInitialization::removeBadDirectory(stationPathName);
-            return NINJA_E_INVALID;
+            throw std::runtime_error("pointInitialization::fetchStationByName() failed with unknown error.\nCould not read station File: Possibly no stations exist for request.");
         }
         if(locationFileFlag)
         {
@@ -597,8 +595,7 @@ int ninjaTools::checkTimeDuration( int* yearList, int* monthList, int * dayList,
         int isValid = pointInitialization::checkFetchTimeDuration(timeList);
         if(isValid == -2)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::checkFetchTimeDuration() failed.");
-            return NINJA_E_OTHER;
+            throw std::runtime_error("pointInitialization::checkFetchTimeDuration() failed. Time duration exceeds 1 year.");
         }
 
         return NINJA_SUCCESS;

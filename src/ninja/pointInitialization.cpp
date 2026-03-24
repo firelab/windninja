@@ -2607,12 +2607,19 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
                                                std::vector<bpt::ptime> timeList,
                                                std::string timeZone, bool latest)
 {
+    bool doesFileExist = CPLCheckForFile((char*)demFile.c_str(), NULL);
+    if(!doesFileExist)
+    {
+        error_msg="demFile '"+demFile+"' does not exist.";
+        throw std::runtime_error(error_msg);
+    }
+
     GDALDataset  *poDS;
     poDS = (GDALDataset *) GDALOpen(demFile.c_str(), GA_ReadOnly );
     if (poDS==NULL)
     {
-        CPLDebug("STATION_FETCH", "Could not read DEM file for station fetching");
-        return false;
+        error_msg="Could not read DEM file for station fetching.";
+        throw std::runtime_error("Could not read DEM file for station fetching.");
     }
 
     double bounds[4];
@@ -2621,9 +2628,8 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     bRet=GDALGetBounds(poDS,bounds);
     if (bRet==false)
     {
-        error_msg="GDALGetBounds returned false, DEM file is lacking readable data.";
-        throw std::runtime_error("GDALGetBounds returned false, DEM file is lacking readable data.");
-        return false;
+        error_msg="GDALGetBounds() returned false, DEM file is lacking readable data.";
+        throw std::runtime_error("GDALGetBounds() returned false, DEM file is lacking readable data.");
 
     }
 
@@ -2637,10 +2643,8 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
             //Greater than 100 miles
             error_msg="Selected Buffer around DEM is too big! Greater than 100 miles. Use a custom API token to enable larger buffers.";
             throw std::runtime_error("Selected Buffer around DEM is too big! Greater than 100 miles. Use a custom API token to enable larger buffers.");
-            return false;
         }
     }
-
 
     CPLDebug("STATION_FETCH", "Adding %fm to DEM for station fetching.", buffer);
 
@@ -2933,8 +2937,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     if (hDS==NULL) //This is mainly caused by a bad URL, the user enters something wrong
     {
         CPLDebug("STATION_FETCH", "URL: %s", URL.c_str());
-        error_msg="OGROpen could not read the station file.\nPossibly no stations exist for the given parameters.";
-        return false;
+        error_msg="Could not open the station file for reading.\nPossibly no stations exist for the given parameters.";
         throw std::runtime_error(error_msg);
     }
     //get the data
@@ -3142,10 +3145,10 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                     stationChecks.push_back(write_this_station);
                     if(fCount==1)
                     {
-                        error_msg="ERROR: Station: "+idStream.str()+" is missing required data/sesnors!";
                         CPLDebug("STATION_FETCH","%s failed to return valid data...",writeID);
+                        error_msg="ERROR: Station: "+idStream.str()+" is missing required data/sensors!";
+                        //throw std::runtime_error("DATA CHECK FAILED ON ALL STATIONS!");
                         return false;
-                        throw std::runtime_error("DATA CHECK FAILED ON ALL STATIONS!");
                     }
                 }
 
@@ -3247,9 +3250,9 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                     stationChecks.push_back(write_this_station);
                     if(fCount==1)
                     {
-                        error_msg="ERROR: Station: "+idStream.str()+" is missing required data/sesnors!";
+                        error_msg="ERROR: Station: "+idStream.str()+" is missing required data/sensors!";
+                        //throw std::runtime_error("DATA CHECK FAILED ON ALL STATIONS!");
                         return false;
-                        throw std::runtime_error("DATA CHECK FAILED ON ALL STATIONS!");
                     }
                 }
             }
@@ -3259,8 +3262,9 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     GDALClose(hDS);
     if(stationChecks.size()>=fCount)
     {
-        error_msg="ERROR: Data check failed on all stations, likley stations are missing sensors.";
         CPLDebug("STATION_FETCH","DATA CHECK FAILED ON ALL STATIONS...");
+        error_msg="ERROR: Data check failed on all stations, likely stations are missing sensors.";
+        //throw std::runtime_error( error_msg );
         return false;
     }
     else

@@ -271,6 +271,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 
     // the latestTime fetch just uses the first time from the list
     // the time-series fetch throws an error as expected, but the message seems to drop what is going on to cause the error
+    // looks like we don't have a proper start time > stop time check yet, so it just fails with the generic error
     /*QVector<int> year   = {start.date().year(),   start.date().year()-1};
     QVector<int> month  = {start.date().month(),  start.date().month()};
     QVector<int> day    = {start.date().day(),    start.date().day()};
@@ -365,7 +366,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
 
     if(ui->weatherStationDataTimeComboBox->currentIndex() == 1) // TODO: Add proper error handling for a bad time duration (someone downloads too much data)
     {
-        //outYear[0] = outYear[1]-2;  // doing more than a year worth of time SHOULD be what triggers it, this is NOT a check on the times themselves  // hrm, it returns an error code of 8, but no ninjaCom seems to be sent so it leaves it hanging without a proper message. runs fine for a latestTime simulation.
+        //outYear[0] = outYear[1]-2;  // doing more than a year worth of time SHOULD be what triggers it, this is NOT a check on the times themselves  // hrm, it returns an error code of 8, but no ninjaCom seems to be sent so it leaves it hanging without a proper message. runs fine for a latestTime simulation. // updated ninja code and the error message is WAY better now, has a proper error message.
         //outYear[1] = outYear[0]+2;  // not sure if it can even handle when the endYear goes past the current year  // same result as the above test.
         ninjaErr = NinjaCheckTimeDuration(ninjaTools, outYear.data(), outMonth.data(), outDay.data(), outHour.data(), outMinute.data(), 2, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
@@ -470,7 +471,7 @@ int PointInitializationInput::fetchStationFromBbox(NinjaToolsH* ninjaTools,
     //year[0] = year[1]+1;  // throws an error as expected, though the message seems to drop what is going on to cause the error
     //hour[0] = hour[1]+1;  // need to carefully set the date to the same date for both times for this test to properly work. apparently this test SHOULD break, but something must be up in how it is handled within the ninja code because it ends up just downloading a single dateTime, of the earliest of the two sets of times. Seems to work better when not close to the hour.
     //hour[0] = hour[1]+2;  // throws an error as expected. need to carefully set the date to the same date for both times for this test to properly work.
-    //elevationFile = "fudge";  // throws error as expected, after a message of "ERROR 4: fudge: No such file or directory", BUT, the message seems to drop what is going on to cause the error
+    //elevationFile = "fudge";  // after adding in the check to the raw ninja code, for if the file exists BEFORE opening, it now properly throws the error "demFile 'fudge' does not exist."
     //buffer = -1;  // runs fine, no error messages, just downloads the data within the area of the dem
     //units = "fudge";  // runs fine, no error messages, just downloads the data within the area of the dem
     //osTimeZone = "fudge";  // runs fine, no error messages, seems to just download the data assuming the timezone of the dem
