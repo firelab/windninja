@@ -478,6 +478,17 @@
                 const container = L.DomUtil.create('div', 'kmz-legend');
                 L.DomEvent.disableClickPropagation(container);
 
+                const header = L.DomUtil.create('div', '', container);
+                header.innerHTML = 'Simulation Legend';
+                header.style.backgroundColor = 'black';
+                header.style.borderBottom = '1px solid black';
+                header.style.padding = '2px 8px';
+                header.style.fontSize = '12px';
+                header.style.fontFamily = 'Arial, sans-serif';
+                header.style.fontWeight = 'bold';
+                header.style.color = 'white';
+                header.style.textAlign = 'left';
+
                 if (legendEntries.length === 0) return container;
 
                 (async () => {
@@ -654,6 +665,17 @@
 
                 const container = L.DomUtil.create('div', 'kmz-legend');
                 L.DomEvent.disableClickPropagation(container);
+
+                const header = L.DomUtil.create('div', '', container);
+                header.innerHTML = 'Weather Model Legend';
+                header.style.backgroundColor = 'black';
+                header.style.borderBottom = '1px solid black';
+                header.style.padding = '2px 8px';
+                header.style.fontSize = '12px';
+                header.style.fontFamily = 'Arial, sans-serif';
+                header.style.fontWeight = 'bold';
+                header.style.color = 'white';
+                header.style.textAlign = 'left';
 
                 if (legendEntries.length === 0) return container;
 
@@ -905,28 +927,54 @@
         }
     }
 
-    function showWindNinjaTimeSeries(img) {
+    function createTimeSeriesCard(img, titleText) {
+        
+        const card = document.createElement('div');
+        card.style.border = '2px solid black';
+        card.style.backgroundColor = 'white';
+        card.style.display = 'inline-block';
 
+        const header = document.createElement('div');
+        header.innerText = titleText;
+        header.style.backgroundColor = 'black';
+        header.style.color = 'white';
+        header.style.padding = '2px 8px';
+        header.style.fontSize = '12px';
+        header.style.fontFamily = 'Arial, sans-serif';
+        header.style.fontWeight = 'bold';
+        header.style.textAlign = 'left';
+
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        
+        card.appendChild(header);
+        card.appendChild(img);
+        
+        return card;
+    }
+
+    function showWindNinjaTimeSeries(img) {
         if (!windninjaTimeSeriesEnabled || !img) return;
 
         if (activeWindNinjaTimeSeriesImg) {
             activeWindNinjaTimeSeriesImg.remove();
         }
 
-        timeSeriesContainer.appendChild(img);
-        activeWindNinjaTimeSeriesImg = img;
+        const card = createTimeSeriesCard(img, 'Simulation Datetime');
+        timeSeriesContainer.appendChild(card);
+        activeWindNinjaTimeSeriesImg = card;
     }
 
     function showInitializationTimeSeries(img) {
-
         if (!initializationTimeSeriesEnabled || !img) return;
 
         if (activeInitializationTimeSeriesImg) {
             activeInitializationTimeSeriesImg.remove();
         }
 
-        timeSeriesContainer.appendChild(img);
-        activeInitializationTimeSeriesImg = img;
+        const card = createTimeSeriesCard(img, 'Weather Model Datetime');
+        timeSeriesContainer.appendChild(card);
+        activeInitializationTimeSeriesImg = card;
     }
 
 
