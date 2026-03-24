@@ -514,6 +514,11 @@
 
                 if (windninjaLegendEnabled) {
                     legendControl.addTo(map);
+                    if (activeInitializationLayer && initializationLegendEnabled) {
+                        const currentInitCtrl = initializationLegendControls[initializationLegendControls.length - 1];
+                        map.removeControl(currentInitCtrl);
+                        currentInitCtrl.addTo(map);
+                    }
                 }
 
                 if (windninjaTimeSeriesEnabled) {
@@ -957,7 +962,7 @@
         if (!windninjaTimeSeriesEnabled || !img) return;
         if (activeWindNinjaTimeSeriesImg) activeWindNinjaTimeSeriesImg.remove();
 
-        const card = createTimeSeriesCard(img, 'Simulation Datetime', 1);
+        const card = createTimeSeriesCard(img, 'Simulation Datetime', 2);
         timeSeriesContainer.appendChild(card);
         activeWindNinjaTimeSeriesImg = card;
     }
@@ -966,7 +971,7 @@
         if (!initializationTimeSeriesEnabled || !img) return;
         if (activeInitializationTimeSeriesImg) activeInitializationTimeSeriesImg.remove();
 
-        const card = createTimeSeriesCard(img, 'Weather Model Datetime', 2);
+        const card = createTimeSeriesCard(img, 'Weather Model Datetime', 1);
         timeSeriesContainer.appendChild(card);
         activeInitializationTimeSeriesImg = card;
     }
