@@ -391,10 +391,21 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
+            const char* msg = CPLGetLastErrorMsg();
+
             CSLDestroy( papszFileList );
             CPLFree( (void*)pszPath );
             CPLFree( (void*)pszFullPath );
-            throw badForecastFile( "Could not open forecast file with GDAL" );
+
+            if(msg && strlen(msg) > 0)
+            {
+                std::string eMsg = "Could not open forecast file with GDAL.\nLast GDAL error message = '"+std::string(msg)+"'";
+                throw badForecastFile(eMsg.c_str());
+            }
+            else
+            {
+                throw badForecastFile("Could not open forecast file with GDAL");
+            }
         }
         nBandCount = GDALGetRasterCount( hDS );
         for( j = 0; j < nBandCount; j++ ) {
