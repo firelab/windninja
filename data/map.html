@@ -927,12 +927,12 @@
         }
     }
 
-    function createTimeSeriesCard(img, titleText) {
-        
+    function createTimeSeriesCard(img, titleText, orderValue) {
         const card = document.createElement('div');
         card.style.border = '2px solid black';
         card.style.backgroundColor = 'white';
         card.style.display = 'inline-block';
+        card.style.order = orderValue; 
 
         const header = document.createElement('div');
         header.innerText = titleText;
@@ -955,24 +955,18 @@
 
     function showWindNinjaTimeSeries(img) {
         if (!windninjaTimeSeriesEnabled || !img) return;
+        if (activeWindNinjaTimeSeriesImg) activeWindNinjaTimeSeriesImg.remove();
 
-        if (activeWindNinjaTimeSeriesImg) {
-            activeWindNinjaTimeSeriesImg.remove();
-        }
-
-        const card = createTimeSeriesCard(img, 'Simulation Datetime');
+        const card = createTimeSeriesCard(img, 'Simulation Datetime', 1);
         timeSeriesContainer.appendChild(card);
         activeWindNinjaTimeSeriesImg = card;
     }
 
     function showInitializationTimeSeries(img) {
         if (!initializationTimeSeriesEnabled || !img) return;
+        if (activeInitializationTimeSeriesImg) activeInitializationTimeSeriesImg.remove();
 
-        if (activeInitializationTimeSeriesImg) {
-            activeInitializationTimeSeriesImg.remove();
-        }
-
-        const card = createTimeSeriesCard(img, 'Weather Model Datetime');
+        const card = createTimeSeriesCard(img, 'Weather Model Datetime', 2);
         timeSeriesContainer.appendChild(card);
         activeInitializationTimeSeriesImg = card;
     }
