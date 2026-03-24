@@ -529,10 +529,8 @@
                 }
             });
 
-            const isFirstLayer = windninjaOutputTree.children.length === 1;
-            if (isFirstLayer) {
-                kmlLegendLayer.addTo(map);
-            }
+            kmlLegendLayer.addTo(map);
+
 
             windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutputs'});
 
@@ -711,11 +709,7 @@
                 }
             });
 
-            const isFirstLayer = initializationOutputTree.children.length === 1;
-            if (isFirstLayer) 
-            {
-                kmlLegendLayer.addTo(map);
-            }
+            kmlLegendLayer.addTo(map);
 
             initializationOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'initializationOutput'});
 
