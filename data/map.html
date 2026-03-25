@@ -358,22 +358,41 @@
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
 
-                let layer = null;
-
-                if (boundingBoxLayer.getLayers().length > 0) {
-                    layer = boundingBoxLayer.getLayers()[0];
-                }
-                else if (demLayer.getLayers().length > 0) {
-                    layer = demLayer.getLayers()[0];
-                }
-
-                if (layer && layer.getBounds) {
-                    map.fitBounds(layer.getBounds());
-                }
+                centerMapOnActiveLayer();
             });
 
             return container;
-            };
+        };
+
+        function centerMapOnActiveLayer() {
+            let bounds = null;
+
+            // 1. Bounding box (highest priority)
+            if (boundingBoxLayer.getLayers().length > 0) {
+                bounds = boundingBoxLayer.getLayers()[0].getBounds();
+            }
+
+            // 2. Active KMZ/KML
+            else if (activeWindNinjaLayer && map.hasLayer(activeWindNinjaLayer)) {
+                activeWindNinjaLayer.eachLayer(layer => {
+                    if (layer.getBounds) bounds = layer.getBounds();
+                });
+            }
+            else if (activeInitializationLayer && map.hasLayer(activeInitializationLayer)) {
+                activeInitializationLayer.eachLayer(layer => {
+                    if (layer.getBounds) bounds = layer.getBounds();
+                });
+            }
+
+            // 3. DEM (lowest priority)
+            else if (demLayer.getLayers().length > 0) {
+                bounds = demLayer.getLayers()[0].getBounds();
+            }
+
+            if (bounds) {
+                map.fitBounds(bounds);
+            }
+        }
 
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
@@ -545,12 +564,19 @@
                 }
             });
 
-            kmlLegendLayer.addTo(map);
-
+            centerMapOnActiveLayer();
 
             windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutputs'});
 
             updateOverlayTree();
+
+            if (activeWindNinjaLayer) {
+                map.removeLayer(activeWindNinjaLayer);
+            }
+            map.addLayer(kmlLegendLayer);
+            
+            centerMapOnActiveLayer();
+            showCenterControl();
         }
 
         async function handleKml(data, fileName)
@@ -584,7 +610,7 @@
                     initializationOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'initializationOutput' });
                 } 
                 else {
-                    windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, nradioGroup: 'windninjaOutputs' });
+                    windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutputs' });
                 }
             } 
             else {
@@ -594,8 +620,50 @@
                 unknownOutputTree.children.push({ label: layerName, layer: kmlLegendLayer,radioGroup: 'unknownOutput' });
             }
 
-            kmlLegendLayer.addTo(map);
             updateOverlayTree();
+
+            if (isWindNinja) {
+                const nameUpper = layerName.toUpperCase();
+                const isSpecialSource = nameUpper.includes('NOMADS') || nameUpper.includes('UCAR') || nameUpper.includes('PASTCAST');
+
+                if (isSpecialSource) {
+                    if (activeInitializationLayer) {
+                        map.removeLayer(activeInitializationLayer);
+                    }
+                    activeInitializationLayer = kmlLegendLayer;
+                } else {
+                    if (activeWindNinjaLayer) {
+                        map.removeLayer(activeWindNinjaLayer);
+                    }
+                    activeWindNinjaLayer = kmlLegendLayer;
+                }
+            } else {
+                if (unknownOutputTree.children.length > 1) {
+                    unknownOutputTree.children.forEach(item => {
+                        if (item.layer) map.removeLayer(item.layer);
+                    });
+                }
+            }
+
+            map.addLayer(kmlLegendLayer);
+
+            if (!isWindNinja) {
+                setTimeout(() => {
+                    let bounds = L.latLngBounds();
+                    kmlLegendLayer.eachLayer(layer => {
+                        if (layer.getBounds) {
+                            bounds.extend(layer.getBounds());
+                        }
+                    });
+
+                    if (bounds.isValid()) {
+                        map.fitBounds(bounds);
+                    }
+                }, 0);
+            } else {
+                centerMapOnActiveLayer();
+            }
+            showCenterControl();
             return true;
         }
 
@@ -727,11 +795,17 @@
                 }
             });
 
-            kmlLegendLayer.addTo(map);
-
             initializationOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'initializationOutput'});
 
             updateOverlayTree();
+
+            if (activeInitializationLayer) {
+                map.removeLayer(activeInitializationLayer);
+            }
+            map.addLayer(kmlLegendLayer);
+
+            centerMapOnActiveLayer();
+            showCenterControl();
         }
 
         function clearWindNinjaOutputTree() 
