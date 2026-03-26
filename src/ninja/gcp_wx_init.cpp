@@ -691,7 +691,7 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
         // direct calculation of FROM wx TO dem, already has the appropriate sign
         if(!GDALCalculateCoordinateTransformationAngle( (GDALDataset*)hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM wx TO dem
         {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
         }
     }
 
@@ -758,7 +758,7 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
         }
 
         if (!bHaveCloud) {
-            CPLError(CE_Warning, CPLE_AppDefined, "No cloud data found. Setting cloud grid to 0.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "No cloud data found. Setting cloud grid to 0.");
             cloudGrid.set_headerData(uGrid);
             cloudGrid = 0.0;
         }

@@ -229,8 +229,16 @@ void ncepNamGrib2SurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         srcDS = (GDALDataset*)GDALOpenShared(
         input.forecastFilename.c_str(), GA_ReadOnly );
     }
+    if(srcDS == NULL)
+    {
+        throw std::runtime_error("ncepNamGrib2SurfInitialization::setSurfaceGrids(), Could not open forecast file, bad forecast file.");
+    }
 
     srcWkt = srcDS->GetProjectionRef();
+    if(srcWkt.empty())
+    {
+        throw std::runtime_error("ncepNamGrib2SurfInitialization::setSurfaceGrids(), Could not get projection from forecast file, bad forecast file.");
+    }
 
     GDALRasterBand *poBand = srcDS->GetRasterBand( 9 );
     int pbSuccess;
@@ -276,7 +284,7 @@ void ncepNamGrib2SurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         // direct calculation of FROM wx TO dem, already has the appropriate sign
         if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
         {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
         }
     }
 
@@ -284,6 +292,10 @@ void ncepNamGrib2SurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                                     dstWkt.c_str(),
                                                     GRA_NearestNeighbour,
                                                     1.0, psWarpOptions );
+    if(wrpDS == NULL)
+    {
+        throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+    }
 
     std::vector<std::string> varList = getVariableList();
 

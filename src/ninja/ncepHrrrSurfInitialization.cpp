@@ -158,7 +158,8 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
     GDALDataset *srcDS = (GDALDataset*)GDALOpenShared( fileName.c_str(), GA_ReadOnly );
 
     if( srcDS == NULL ) {
-        CPLDebug( "ncepHRRRSurfaceInitialization::identify()", "Bad forecast file" );
+        //CPLError(CE_Warning, CPLE_AppDefined, "ncepHRRRSurfaceInitialization::identify(), Bad forecast file.");
+        CPLDebug("HRRR", "ncepHRRRSurfaceInitialization::identify(), Bad forecast file.");
         return false;
 
     } else {
@@ -199,10 +200,8 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 {
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
-
     if( srcDS == NULL ) {
-        CPLDebug( "ncepHRRRSurfaceInitialization::identify()",
-                "Bad forecast file" );
+        throw std::runtime_error("ncepHRRRSurfaceInitialization::setSurfaceGrids(), Could not open forecast file, bad forecast file.");
     }
 
     GDALRasterBand *poBand;
@@ -222,7 +221,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     {
         if(input.ninjaTime == timeList[i])
         {
-            cout<<"input.ninjaTime = "<<input.ninjaTime<<endl;
+            CPLDebug("HRRR", "input.ninjaTime = '%s'", input.ninjaTime.to_string().c_str());
             for(unsigned int j = 1; j <= srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
@@ -241,7 +240,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                         } else if (bandName != "Temperature [K]") {
                             bandList.push_back( j);  // 2t
                         } else {
-                            cout << "skipping unsupported forecast temperature unit: " << bandName << endl;
+                            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "skipping unsupported forecast temperature unit: '%s'", bandName.c_str());
                         }
                     }
                 }
@@ -301,7 +300,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     if(bandList.size() < 4) {
         GDALClose((GDALDatasetH) srcDS );
-        throw std::runtime_error("Not enough bands detected in HRRR forecast file.");
+        throw std::runtime_error("ncepHRRRSurfaceInitialization::setSurfaceGrids(), Not enough bands detected in HRRR forecast file.");
     }
 
     std::string dstWkt;
@@ -314,6 +313,11 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     GDALWarpOptions* psWarpOptions;
 
     srcWkt = srcDS->GetProjectionRef();
+    if(srcWkt.empty())
+    {
+        throw std::runtime_error("ncepHRRRSurfaceInitialization::setSurfaceGrids(), Could not get projection from forecast file, bad forecast file.");
+    }
+
     psWarpOptions = GDALCreateWarpOptions();
 
     int nBandCount = bandList.size();
@@ -360,7 +364,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         // direct calculation of FROM wx TO dem, already has the appropriate sign
         if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
         {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
         }
     }
 
@@ -368,6 +372,11 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                                     dstWkt.c_str(),
                                                     GRA_NearestNeighbour,
                                                     1.0, psWarpOptions );
+    if(wrpDS == NULL)
+    {
+        throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+    }
+
     std::vector<std::string> varList = getVariableList();
 
     for( unsigned int i = 0; i < varList.size(); i++ ) {

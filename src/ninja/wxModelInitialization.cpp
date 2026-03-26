@@ -384,12 +384,17 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
                                getStartHour(), getEndHour() );
         throw std::logic_error(pszErrMsg);
     }
+
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
+    if(poDS == NULL)
+    {
+        throw badForecastFile("Could not download weather forecast, could not open DEM to get bounds.");
+    }
+
     double bounds[4];
     if( !GDALGetBounds( poDS, bounds ) )
     {
-        throw badForecastFile("Could not download weather forecast, invalid "
-                              "projection for the DEM");
+        throw badForecastFile("Could not download weather forecast, could not get bounds from the DEM.");
     }
 
     /*
@@ -422,14 +427,14 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     CPLDebug( "WINDNINJA", "Forecast URL: %s", urlAddress.c_str() );
     if( poResult == NULL )
     {
-      CPLHTTPDestroyResult( poResult );
-      throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile("CPLHTTPResult is NULL!");
     }
 
     if( poResult->nStatus != 0 )
     {
-      CPLHTTPDestroyResult( poResult );
-      throw ( badForecastFile( poResult->pszErrBuf ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile(poResult->pszErrBuf);
     }
 
     if (poResult->pszErrBuf && urlAddress.find("NDFD") != std::string::npos)
@@ -461,8 +466,8 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
-      CPLHTTPDestroyResult( poResult );
-      throw ( badForecastFile( "Failed to download forecast." ) );
+      CPLHTTPDestroyResult(poResult);
+      throw badForecastFile("Failed to download forecast.");
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
     CPLHTTPDestroyResult( poResult );
@@ -485,7 +490,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
         {
             VSIUnlink( tempFileName.c_str() );
         }
-        throw ( badForecastFile( "Failed to download forecast. File is not an *.nc file" ) );
+        throw badForecastFile("Failed to download forecast. File is not an *.nc file");
     }
     nc_close( ncid );
     }
@@ -535,10 +540,14 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     }
     wxModelFileName = newFileName;
     try	{
-    checkForValidData();
+        checkForValidData();
     }
     catch( badForecastFile &e ) {
-    std::cout << endl << endl << endl << endl << e.what() << endl << endl << endl << endl;
+        if(!bSaveForecast)
+        {
+            VSIUnlink(wxModelFileName.c_str()); // do some clean-up (delete the bad file)
+        }
+        throw;  // rethrow the exception to be caught somewhere else
     }
 
     return newFileName;
@@ -670,17 +679,14 @@ wxModelInitialization::getTimeList(const char *pszVariable,
         else{        
             srcDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
         }
-
-
         if( srcDS == NULL ) {
-            CPLDebug( "wxModelInitialization::getTimeList()",
-                    "Bad forecast file" );
+            throw std::runtime_error("wxModelInitialization::getTimeList(), Could not open forecast file, bad forecast file.");
         }
 
         //get time info from 10u band
         GDALRasterBand *poBand = get10UBand(srcDS);
         if (poBand == NULL) {
-            CPLDebug( "wxModelInitialization::getTimeList()", " getTimeList() failed - no 10m UGRD band");
+            throw std::runtime_error("wxModelInitialization::getTimeList() failed, no 10m UGRD band.");
         }
 
         const char *vt;
@@ -847,7 +853,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
          */
         //int dimid;
         status = nc_inq_dimid(ncid, "DateStrLen", &dimid );
-        //cout<<"dimid =" <<dimid<<endl;
+        CPLDebug("WINDNINJA", "dimid = %d", dimid);
         if( status != NC_NOERR ) {
             ostringstream os;
             os << "The dimension \"DateStrLen\" "
@@ -1708,8 +1714,7 @@ double wxModelInitialization::GetWindHeight(std::string varName)
   {
       free(units);
       nc_close(ncid);
-      throw badForecastFile("Cannot determine wind height units in "
-                            "forecast file");
+      throw badForecastFile("Cannot determine wind height units in forecast file.");
   }
   free(units);
   nc_close(ncid);
@@ -1766,8 +1771,7 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
     }
     if (status != NC_NOERR) {
         nc_close(ncid);
-        throw badForecastFile(CPLSPrintf(
-            "Could not identify time dimension for variable: %s", pszVariable));
+        throw badForecastFile(CPLSPrintf("Could not identify time dimension for variable: %s.", pszVariable));
     }
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
     for(int i = 0; i < varndims; i++) {
@@ -1781,8 +1785,7 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
             tp[namelength] = '\0';
             if(strcmp("time", tp) == 0) {
                 timestring =  std::string(timename);
-                CPLDebug( "WINDNINJA", "Found time: %s for variable: %s",
-                          timename, pszVariable );
+                CPLDebug("WINDNINJA", "Found time: %s for variable: %s", timename, pszVariable);
                 free( (void*)tp );
                 break;
             }
