@@ -183,6 +183,8 @@
         let activeInitializationTimeSeriesImg = null;
         let activeInitializationTimeSeriesUrl = null;
 
+        let lastActiveLayer = null;
+
         const timeSeriesContainer = document.createElement('div');
         timeSeriesContainer.style.cssText = `
             position: absolute;
@@ -373,13 +375,8 @@
             }
 
             // 2. Active KMZ/KML
-            else if (activeWindNinjaLayer && map.hasLayer(activeWindNinjaLayer)) {
-                activeWindNinjaLayer.eachLayer(layer => {
-                    if (layer.getBounds) bounds = layer.getBounds();
-                });
-            }
-            else if (activeInitializationLayer && map.hasLayer(activeInitializationLayer)) {
-                activeInitializationLayer.eachLayer(layer => {
+            if (lastActiveLayer && map.hasLayer(lastActiveLayer)) {
+                lastActiveLayer.eachLayer(layer => {
                     if (layer.getBounds) bounds = layer.getBounds();
                 });
             }
@@ -396,8 +393,18 @@
 
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
+        let pendingKmzLoads = 0;
+
+        function finishKmzLoad() {
+            pendingKmzLoads--;
+
+            if (pendingKmzLoads === 0) {
+                centerMapOnActiveLayer(); 
+            }
+        }
 
         async function loadKmzFromBase64(data, fileName) {
+            pendingKmzLoads++;
             if (kmzTimeSeriesImg) {
                 kmzTimeSeriesImg.remove();
                 kmzTimeSeriesImg = null;
@@ -408,8 +415,11 @@
             }
 
             const handled = await handleKml(data, fileName);
-            if (handled) return; 
-
+            if (handled) {
+                finishKmzLoad();   
+                return; 
+            }
+            
             const binary = atob(data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
@@ -529,6 +539,7 @@
 
             kmlLegendLayer.on('add', () => {
                 activeWindNinjaLayer = kmlLegendLayer;
+                lastActiveLayer = kmlLegendLayer;
                 windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
                 if (windninjaLegendEnabled) {
@@ -564,8 +575,6 @@
                 }
             });
 
-            centerMapOnActiveLayer();
-
             windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutputs'});
 
             updateOverlayTree();
@@ -575,7 +584,7 @@
             }
             map.addLayer(kmlLegendLayer);
             
-            centerMapOnActiveLayer();
+            finishKmzLoad();
             showCenterControl();
         }
 
@@ -647,22 +656,8 @@
 
             map.addLayer(kmlLegendLayer);
 
-            if (!isWindNinja) {
-                setTimeout(() => {
-                    let bounds = L.latLngBounds();
-                    kmlLegendLayer.eachLayer(layer => {
-                        if (layer.getBounds) {
-                            bounds.extend(layer.getBounds());
-                        }
-                    });
+            lastActiveLayer = kmlLegendLayer;
 
-                    if (bounds.isValid()) {
-                        map.fitBounds(bounds);
-                    }
-                }, 0);
-            } else {
-                centerMapOnActiveLayer();
-            }
             showCenterControl();
             return true;
         }
@@ -771,6 +766,7 @@
          
             kmlLegendLayer.on('add', () => {
                 activeInitializationLayer = kmlLegendLayer;
+                lastActiveLayer = kmlLegendLayer;
                 initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
                 if (initializationLegendEnabled) {
@@ -804,7 +800,7 @@
             }
             map.addLayer(kmlLegendLayer);
 
-            centerMapOnActiveLayer();
+            finishKmzLoad();
             showCenterControl();
         }
 
