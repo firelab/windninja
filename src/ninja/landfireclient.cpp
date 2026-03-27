@@ -60,15 +60,11 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_BAD_INPUT;
     }
 
-    /*
-    ** We have an arbitrary limit on request size, 0.001 degrees
-    */
+    // We have an arbitrary limit on request size, 0.001 degrees, 111 meters (roughly 364 feet)
     if( fabs( bbox[0] - bbox[2] ) < 0.001 || fabs( bbox[1] - bbox[3] ) < 0.001 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Bounding box too small, must be greater than " \
-                  "0.001 x 0.001 degrees." );
-        return SURF_FETCH_E_BAD_INPUT;
+        CPLError(CE_Failure, CPLE_AppDefined, "Bounding box too small, must be greater than 0.001 x 0.001 degrees.");
+        return SURF_FETCH_E_BOUNDS_ERR;
     }
 
     /*-----------------------------------------------------------------------------
@@ -93,8 +89,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                bbox[1], bbox[0], bbox[3], bbox[0],
                                bbox[3], bbox[2], bbox[1], bbox[2],
                                bbox[1], bbox[0] );
-        CPLDebug( "LCP_CLIENT", "Testing if %s contains %s", osDataPath.c_str(),
-                  pszGeom );
+        CPLDebug("LCP_CLIENT", "Testing if %s contains %s", osDataPath.c_str(), pszGeom);
         //using same code for all geographic areas, but could update by region as updates
         //become available. See codes at https://lfps.usgs.gov/products
         if( NinjaOGRContain( pszGeom, osDataPath.c_str(), "conus" ) )
@@ -114,12 +109,11 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to locate product." );
-            return SURF_FETCH_E_BAD_INPUT;
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to locate product.");
+            return SURF_FETCH_E_BOUNDS_ERR;
         }
     }
-    CPLDebug( "LCP_CLIENT", "Using product: %s", pszProduct );
+    CPLDebug("LCP_CLIENT", "Using product: %s", pszProduct);
     const char *pszUrl;
 
     const char *pszTemp = CSLFetchNameValue( options, "OVERRIDE_BEST_UTM" );
@@ -138,9 +132,9 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     */
     if( nEpsgCode < 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Invalid EPSG code." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid EPSG code.");
         CPLFree( (void*)pszProduct );
-        return SURF_FETCH_E_BAD_INPUT;
+        return SURF_FETCH_E_BOUNDS_ERR;
     }
 
     /*-----------------------------------------------------------------------------
@@ -149,44 +143,41 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, nEpsgCode, pszProduct, bbox[3], bbox[2], bbox[1],
                                               bbox[0] );
     CPLFree( (void*)pszProduct );
+    CPLDebug("LCP_CLIENT", "Request URL: %s", pszUrl);
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
     CHECK_HTTP_RESULT( "Failed to get download URL" );
-    CPLDebug( "LCP_CLIENT", "Request URL: %s", pszUrl );
 
     if( strstr((const char*)m_poResult->pabyData, "\"success\":\"false\"") )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                 "Landfire server returned error: %s",
-                 (const char*)m_poResult->pabyData );
+        CPLError(CE_Failure, CPLE_AppDefined, "Landfire server returned error: %s", (const char*)m_poResult->pabyData);
         CPLHTTPDestroyResult(m_poResult);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_TIMEOUT;
     }
 
      /*-----------------------------------------------------------------------------
      *  Parse the JSON result of the request
      *-----------------------------------------------------------------------------*/
-    CPLDebug( "LCP_CLIENT", "JSON Response: %s", m_poResult->pabyData );
+    CPLDebug("LCP_CLIENT", "JSON Response: %s", m_poResult->pabyData);
 
     char **papszTokens = NULL;
     papszTokens = CSLTokenizeString2( (const char*)m_poResult->pabyData, ",:",
                                       CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES |
                                       CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
     int nTokens = CSLCount( papszTokens );
-    CPLDebug( "LCP_CLIENT", "papszTokens[0]: %s", papszTokens[0]);
-    CPLDebug( "LCP_CLIENT", "papszTokens[1]: %s", papszTokens[1]);
-    CPLDebug( "LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
-    CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
+    CPLDebug("LCP_CLIENT", "papszTokens[0]: %s", papszTokens[0]);
+    CPLDebug("LCP_CLIENT", "papszTokens[1]: %s", papszTokens[1]);
+    CPLDebug("LCP_CLIENT", "papszTokens[2]: %s", papszTokens[2]);
+    CPLDebug("LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
 
     m_JobId = std::string(papszTokens[1]);
-    CPLDebug( "LCP_CLIENT", "m_JobId: %s", m_JobId.c_str());
+    CPLDebug("LCP_CLIENT", "m_JobId: %s", m_JobId.c_str());
 
     if( nTokens < 4)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to generate valid URL for LCP download." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate valid URL for LCP download.");
         CPLHTTPDestroyResult( m_poResult );
         CSLDestroy( papszTokens );
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_TIMEOUT;
     }
 
     /*-----------------------------------------------------------------------------
@@ -196,9 +187,9 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     int nSize = 0;
     bool downloadReady = false;
     bool downloadFailed = false;
-    CPLDebug( "LCP_CLIENT", "m_JobId: %s", m_JobId.c_str());
+    CPLDebug("LCP_CLIENT", "m_JobId: %s", m_JobId.c_str());
     pszUrl = CPLStrdup(CPLSPrintf( LF_GET_STATUS_TEMPLATE, m_JobId.c_str() ));
-    CPLDebug( "LCP_CLIENT", "Status url: %s", pszUrl );
+    CPLDebug("LCP_CLIENT", "Status url: %s", pszUrl);
     do
     {
         m_poResult = CPLHTTPFetch( pszUrl, NULL );
@@ -208,7 +199,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
                                           CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
         int nTokens = CSLCount( papszTokens );
 
-        CPLDebug( "LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
+        CPLDebug("LCP_CLIENT", "papszTokens[3]: %s", papszTokens[3]);
 
         if(EQUAL( papszTokens[5], "Succeeded" )) {
           downloadReady = true;
@@ -217,8 +208,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
           downloadFailed = true;
         }
 
-        CPLDebug( "LCP_CLIENT", "Attempting to fetch LCP, try %d of %d, jobStatus: %s", i,
-            nMaxTries, papszTokens[3] );
+        CPLDebug("LCP_CLIENT", "Attempting to fetch LCP, try %d of %d, jobStatus: %s", i, nMaxTries, papszTokens[3]);
 
         std::string strLCPTest = papszTokens[nTokens - 1];
         strLCPTest.pop_back(); // Removes the last character '}'
@@ -234,18 +224,13 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(downloadFailed)
     {
-        CPLError( CE_Warning, CPLE_AppDefined, "Failed to download lcp," \
-                                               "There was an extraction " \
-                                               "error on the server." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to download lcp, There was an extraction error on the server.");
         CPLHTTPDestroyResult( m_poResult );
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_TIMEOUT;
     }
     else if( !downloadReady )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, "Failed to download lcp, timed " \
-                                               "out.  Try increasing " \
-                                               "LCP_MAX_DOWNLOAD_TRIES or "
-                                               "LCP_DOWNLOAD_WAIT" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to download lcp, timed out.\nTry increasing LCP_MAX_DOWNLOAD_TRIES or LCP_DOWNLOAD_WAIT");
         CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_TIMEOUT;
     }
@@ -266,7 +251,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     fout = VSIFOpenL( pszTmpZip, "w+" );
     if( NULL == fout )
     {
-        CPLError( CE_Warning, CPLE_AppDefined, "Failed to create output file" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create output file");
         CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -281,7 +266,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     char **papszFileList = NULL;
     std::string osPathInZip;
     const char *pszVSIZip = CPLSPrintf( "/vsizip/%s", pszTmpZip );
-    CPLDebug( "LCP_CLIENT", "Extracting .tif from %s", pszVSIZip );
+    CPLDebug("LCP_CLIENT", "Extracting .tif from %s", pszVSIZip);
     papszFileList = VSIReadDirRecursive( pszVSIZip );
     int bFound = FALSE;
     std::string osFullPath;
@@ -298,8 +283,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     CSLDestroy( papszFileList );
     if( !bFound )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to find .tif in archive" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to find .tif in archive");
         VSIUnlink( pszTmpZip );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -308,8 +292,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     nError = ExtractFileFromZip( pszTmpZip, pszFileToFind, filename );
     if( nError )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to extract .tif from zip." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to extract .tif from zip.");
         VSIUnlink( pszTmpZip );
         return SURF_FETCH_E_IO_ERR;
     }

@@ -112,12 +112,10 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
         //add error info detailing incompatible data types
         return SURF_FETCH_E_IO_ERR;
     }
-    
 
     const char *pszSrcWKT=NULL, *pszDstWKT = NULL;
     pszSrcWKT = GDALGetProjectionRef(hSrcDS);
 
-     
     OGRSpatialReference oSrcSRS, oDstSRS;
 
     oSrcSRS.importFromEPSG(4326);
@@ -144,7 +142,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
@@ -166,7 +164,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
-        return SURF_FETCH_E_WARPER_ERR; /*assumption*/
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
     adfDstGeoTransform[0] = dfMinX;
@@ -223,12 +221,11 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
-                                               "download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         CPLFree((void*)pszDstWKT);
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
     CPLFree((void*)pszDstWKT);
@@ -240,9 +237,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     CPLSetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
 
     return SURF_FETCH_E_NONE;
-
 }
-
 
 SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize )
 {
@@ -291,10 +286,9 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     GDALClose( inDS );
     if( NULL ==  pszDstWKT )
     {
-        return SURF_FETCH_E_WARPER_ERR;
+        return SURF_FETCH_E_IO_ERR;
     }
     /*finished with the input file */
-
 
     /*Get the final information from the source DS */
     hSrcDS = GDALOpen( path.c_str(), GA_ReadOnly );
@@ -352,7 +346,6 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     GDALSetProjection(hDstDS, pszDstWKT);
     GDALSetGeoTransform(hDstDS, dst_gt);
 
-
     /* warp the src ds to the output ds */
     GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
 
@@ -381,14 +374,12 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
-                                               "download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
         CPLFree((void*)pszDstWKT);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
-
 
     GDALClose(hDstDS);
     GDALClose(hSrcDS);
@@ -397,9 +388,4 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     return SURF_FETCH_E_NONE; 
 }
-
-
-
-
-
 

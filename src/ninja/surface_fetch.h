@@ -37,6 +37,8 @@
 #include "ninjaUnits.h"
 #include "ninja_conv.h"
 
+// note, a return of nNoDataCount is done if success, which is equal to SURF_FETCH_E_NONE
+// when zero NO_DATA values are found in the fetched data at the end of the fetching process
 typedef int SURF_FETCH_E;
 #define SURF_FETCH_E_NONE          0
 #define SURF_FETCH_E_IO_ERR       -1
@@ -44,7 +46,7 @@ typedef int SURF_FETCH_E;
 #define SURF_FETCH_E_WARPER_ERR   -3
 #define SURF_FETCH_E_BAD_INPUT    -4
 #define SURF_FETCH_E_SIZE_LIMIT   -5
-#define SURF_FETCH_E_NO_GDAL_DATA -6
+#define SURF_FETCH_E_NO_GDAL_DATA -6  // not really used, instead we output the numNoDataValues
 #define SURF_FETCH_E_TIMEOUT      -7
 
 class SurfaceFetch
@@ -59,6 +61,16 @@ public:
     SurfaceFetch();
     virtual ~SurfaceFetch();
 
+    /**
+    * \brief Fetch surface data for a bounding box.
+    *
+    * \param bbox north, east, south west bounding box
+    * \param resolution output resolution in meters
+    * \param filename file to write data into
+    * \param options key/value options, unused
+    *
+    * \return number of no data values on success, < 0 on error
+    */
     virtual SURF_FETCH_E FetchBoundingBox(double *bbox, double resolution,
                                           const char *filename,
                                           char **options) = 0;

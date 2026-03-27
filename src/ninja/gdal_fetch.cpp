@@ -89,6 +89,8 @@ int GDALFetch::Initialize()
  * \param resolution output resolution in meters
  * \param filename file to write data into
  * \param options key/value options, unused
+ *
+ * \return number of no data values on success, < 0 on error
  */
 SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
                                          const char *filename,
@@ -141,7 +143,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
@@ -163,7 +165,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
-        return SURF_FETCH_E_WARPER_ERR; /*assumption*/
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
     adfDstGeoTransform[0] = dfMinX;
@@ -220,14 +222,12 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
-                                               "download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         CPLFree((void*)pszDstWKT);
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
-
 
     GDALRasterBandH hSrcBand;
     GDALRasterBandH hDstBand;

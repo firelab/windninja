@@ -68,27 +68,24 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
                                                const char *filename,
                                                char **options )
 {
-    if( NULL == filename )
+    if(NULL == filename)
     {
         return SURF_FETCH_E_BAD_INPUT;
     }
 
     if(APIKey == NULL)
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "SRTM download failed. No API key specified.");
+        // this one might be a good candidate, for a throw
+        CPLError(CE_Failure, CPLE_AppDefined, "SRTM download failed. No API key specified.");
         return SURF_FETCH_E_BAD_INPUT;
     }
 
-    /*
-    ** We have an arbitrary limit on request size, 0.001 degrees
-    */
+    // We have an arbitrary limit on request size, 0.001 degrees, 111 meters (roughly 364 feet)
     if( fabs( bbox[0] - bbox[2] ) < 0.001 || fabs( bbox[1] - bbox[3] ) < 0.001 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Bounding box too small, must be greater than " \
-                  "0.001 x 0.001 degrees." );
-        return SURF_FETCH_E_BAD_INPUT;
+        // this one might be a good candidate, for a throw
+        CPLError(CE_Failure, CPLE_AppDefined, "Bounding box too small, must be greater than 0.001 x 0.001 degrees.");
+        return SURF_FETCH_E_BOUNDS_ERR;
     }
 
     // calculate the final bbox to clip to, data will be downloaded using a buffered bbox then later clipped to this bbox
@@ -121,14 +118,12 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
                            buffered_bbox[1], buffered_bbox[0], buffered_bbox[3], buffered_bbox[0],
                            buffered_bbox[3], buffered_bbox[2], buffered_bbox[1], buffered_bbox[2],
                            buffered_bbox[1], buffered_bbox[0] );
-    CPLDebug( "SRTM_CLIENT", "Testing if %s contains %s", osDataPath.c_str(),
-              pszGeom );
-
+    CPLDebug("SRTM_CLIENT", "Testing if %s contains %s", osDataPath.c_str(), pszGeom);
     if( !NinjaOGRContain( pszGeom, osDataPath.c_str(), "srtm_region" ) )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Requested DEM is outside of the SRTM bounds." );
-        return SURF_FETCH_E_BAD_INPUT;
+        // this one might be a good candidate, for a throw
+        CPLError(CE_Failure, CPLE_AppDefined, "Requested DEM is outside of the SRTM bounds.");
+        return SURF_FETCH_E_BOUNDS_ERR;
     }
 
     const char *pszUrl;
@@ -137,13 +132,11 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     //get UTM zone as EPSG
     nEpsgCode = BoundingBoxUtm( bbox );
 
-    /*
-    ** Better check?
-    */
+    // Better check?
     if( nEpsgCode < 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Invalid EPSG code." );
-        return SURF_FETCH_E_BAD_INPUT;
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid EPSG code.");
+        return SURF_FETCH_E_BOUNDS_ERR;
     }
 
     /*-----------------------------------------------------------------------------
@@ -152,36 +145,33 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     pszUrl = CPLSPrintf( SRTM_REQUEST_TEMPLATE, buffered_bbox[2], buffered_bbox[0], buffered_bbox[3], buffered_bbox[1], APIKey );
     psResult = NULL;
     psResult = CPLHTTPFetch( pszUrl, NULL );
-    CPLDebug( "SRTM_CLIENT", "Request URL: %s", pszUrl );
+    CPLDebug("SRTM_CLIENT", "Request URL: %s", pszUrl);
 
      /*-----------------------------------------------------------------------------
      *  Check the result of the request
      *-----------------------------------------------------------------------------*/
-    CPLDebug( "SRTM_CLIENT", "Response: %s", psResult->pabyData );
+    CPLDebug("SRTM_CLIENT", "Response: %s", psResult->pabyData);
     if( !psResult || psResult->nStatus != 0 || psResult->nDataLen < 1 || psResult->pszErrBuf != NULL) 
     {
         if( strstr( (char*)psResult->pszErrBuf, "HTTP error code : 401" ) )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to download file, bad API key." );
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to download file, bad API key.");
         }
         else
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to download file." );
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to download file.");
         }
         CPLHTTPDestroyResult( psResult );
-        return SURF_FETCH_E_BAD_INPUT;
+        return SURF_FETCH_E_TIMEOUT;  // no download failed error code?? use the next closest thing
     }
 
     //make a temporary file to hold the result of the HTTP request (in lat/lon coordinates)
-    CPLDebug( "SRTM_CLIENT", "Writing temporary file to: %s", CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"));
+    CPLDebug("SRTM_CLIENT", "Writing temporary file to: %s", CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"));
     VSILFILE *fout;
     fout = VSIFOpenL( CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"), "wb" );
     if( !fout )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to open srtm file for writing." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open srtm file for writing.");
         CPLHTTPDestroyResult( psResult );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -192,7 +182,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
      /*-----------------------------------------------------------------------------
      *  Warp and clip to UTM coords
      *-----------------------------------------------------------------------------*/
-    CPLDebug( "SRTM_CLIENT", "Warping to UTM..." );
+    CPLDebug("SRTM_CLIENT", "Warping to UTM...");
 
     GDALResampleAlg eAlg = GRA_NearestNeighbour;
 
@@ -206,7 +196,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     hSrcDS = GDALOpen(CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"), GA_ReadOnly);
     if(hSrcDS == NULL)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open downloaded image for warp, download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open downloaded image for warp, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
     hDriver = GDALGetDriverByName("GTiff");
@@ -241,8 +231,8 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, download failed." );
-        return SURF_FETCH_E_IO_ERR;
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
+        return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
@@ -260,8 +250,8 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Invalid nPixels and/or nLines for warp. Could not warp image, download failed." );
-        return SURF_FETCH_E_WARPER_ERR;  // assumption
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid nPixels and/or nLines for warp. Could not warp image, download failed.");
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
     adfDstGeoTransform[0] = dfMinX;
@@ -274,7 +264,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open final srtm file for writing, download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final srtm file for writing, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -319,13 +309,12 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         CPLFree((void*)pszDstWKT);
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
-
 
     GDALRasterBandH hSrcBand;
     GDALRasterBandH hDstBand;
@@ -354,7 +343,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     if(nNoDataCount > 0)
     {
         std::string oErrorString = "SRTMClient::fetchBoundingBox() after downloading, warping, and clipping, found noDataValues!!!";
-        CPLError( CE_Failure, CPLE_AppDefined, oErrorString.c_str() );
+        CPLError(CE_Failure, CPLE_AppDefined, oErrorString.c_str());
         return nNoDataCount;
     }
 
