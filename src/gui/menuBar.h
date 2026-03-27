@@ -43,6 +43,7 @@
 #include <QTextBlock>
 #include <QDesktopServices>
 #include <QtWebEngineWidgets/qwebengineview.h>
+#include <QProgressDialog>
 
 
 class MenuBar : public QObject
@@ -51,6 +52,9 @@ class MenuBar : public QObject
 
 public:
     MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent = nullptr);
+
+public slots:
+    void kmzLoadFinished();
 
 signals:
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
@@ -91,6 +95,7 @@ private slots:
 private:
     Ui::MainWindow* ui;
     QWebEngineView *webEngineView;
+    QProgressDialog *progress;
     QDir dataPath;
 };
 

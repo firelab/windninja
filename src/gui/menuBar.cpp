@@ -409,6 +409,11 @@ void MenuBar::loadKmzKmlActionTriggered()
         "KML/KMZ Files (*.kml *.kmz);;All Files (*)"
         );
 
+    progress = new QProgressDialog("Loading KMZ/KML files...", QString(), 0, 0, ui->centralwidget);
+    progress->setWindowModality(Qt::ApplicationModal);
+    progress->setMinimumDuration(0);
+    progress->setValue(0);
+
     for (const QString &outFileStr : files)
     {
         qDebug() << "kmz outFile =" << outFileStr;
@@ -428,4 +433,16 @@ void MenuBar::loadKmzKmlActionTriggered()
         QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
         webEngineView->page()->runJavaScript(jsCall);
     }
+}
+
+void MenuBar::kmzLoadFinished()
+{
+    if (progress)
+    {
+        progress->close();
+        progress->deleteLater();
+        progress = nullptr;
+    }
+
+    qDebug() << "KMZ/KML loading finished";
 }

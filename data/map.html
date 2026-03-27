@@ -166,7 +166,6 @@
         const centerControl = L.control({ position: 'topleft' });
 
         const windninjaLegendToggle = L.layerGroup([]);
-        let windninjaLegendControls = [];
         const windninjaTimeSeriesToggle = L.layerGroup([]);
         let windninjaTimeSeriesEnabled = false;
         let windninjaLegendEnabled = false;
@@ -175,7 +174,6 @@
         let activeWindNinjaTimeSeriesUrl = null;
 
         const initializationLegendToggle = L.layerGroup([]);
-        let initializationLegendControls = [];
         const initializationTimeSeriesToggle = L.layerGroup([]);
         let initializationTimeSeriesEnabled = false;
         let initializationLegendEnabled = false;
@@ -201,6 +199,22 @@
         map.whenReady(() => {
             map.getContainer().appendChild(timeSeriesContainer);
         });        
+
+        const legendContainer = document.createElement('div');
+        legendContainer.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+            z-index: 400;
+        `;
+
+        map.whenReady(() => {
+            map.getContainer().appendChild(legendContainer);
+        });
 
         const baseTree = {
             label: 'Base Maps',
@@ -393,19 +407,16 @@
         function centerMapOnActiveLayer() {
             let bounds = null;
 
-            // 1. Bounding box (highest priority)
             if (boundingBoxLayer.getLayers().length > 0) {
                 bounds = boundingBoxLayer.getLayers()[0].getBounds();
             }
 
-            // 2. Active KMZ/KML
             if (lastActiveLayer && map.hasLayer(lastActiveLayer)) {
                 lastActiveLayer.eachLayer(layer => {
                     if (layer.getBounds) bounds = layer.getBounds();
                 });
             }
 
-            // 3. DEM (lowest priority)
             else if (demLayer.getLayers().length > 0) {
                 bounds = demLayer.getLayers()[0].getBounds();
             }
@@ -424,8 +435,15 @@
 
             if (pendingKmzLoads === 0) {
                 centerMapOnActiveLayer(); 
+
+                if (window.bridge?.receiveBoundingBox) {
+                    window.bridge.mapLayersLoadingFinished();
+                }
             }
         }
+
+        let activeWindNinjaLegendCard = null;
+        let activeInitializationLegendCard = null;
 
         async function loadKmzFromBase64(data, fileName) {
             pendingKmzLoads++;
@@ -496,8 +514,11 @@
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
 
-            const legendControl = L.control({ position: 'bottomright' });
-            windninjaLegendControls.push(legendControl);
+            const blob = await legendEntries[0].async('blob');
+
+            if (activeWindNinjaLayer === kmlLegendLayer) {
+                showWindNinjaLegend(blob);
+            }
 
             const hasLegend = legendEntries.length > 0;
             const hasTimeSeries = legendEntries.length > 1;
@@ -531,48 +552,17 @@
                 })();
             }
 
-            legendControl.onAdd = function () 
-            {
-                const container = L.DomUtil.create('div', 'kmz-legend');
-                L.DomEvent.disableClickPropagation(container);
-
-                const header = L.DomUtil.create('div', '', container);
-                header.innerHTML = 'Simulation Legend';
-                header.style.backgroundColor = 'black';
-                header.style.borderBottom = '1px solid black';
-                header.style.padding = '2px 8px';
-                header.style.fontSize = '12px';
-                header.style.fontFamily = 'Arial, sans-serif';
-                header.style.fontWeight = 'bold';
-                header.style.color = 'white';
-                header.style.textAlign = 'left';
-
-                if (legendEntries.length === 0) return container;
-
-                (async () => {
-
-                    const blob = await legendEntries[0].async('blob');
-                    const url = URL.createObjectURL(blob);
-
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => URL.revokeObjectURL(url);
-                    img.style.cssText = 'display:block;max-width:150px;height:auto;';
-
-                    container.appendChild(img);
-
-                })();
-
-                return container;
-            };
-
             kmlLegendLayer.on('add', () => {
                 activeWindNinjaLayer = kmlLegendLayer;
                 lastActiveLayer = kmlLegendLayer;
-                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
-                if (windninjaLegendEnabled) {
-                    legendControl.addTo(map);
+                if (activeWindNinjaLegendCard) {
+                    activeWindNinjaLegendCard.remove();
+                    activeWindNinjaLegendCard = null;
+                }
+
+                if (kmlLegendLayer._hasLegend && windninjaLegendEnabled && legendEntries.length > 0) {
+                    legendEntries[0].async('blob').then(blob => showWindNinjaLegend(blob));
                 }
 
                 if (windninjaTimeSeriesEnabled) {
@@ -588,10 +578,14 @@
             });
 
             kmlLegendLayer.on('remove', () => {
-                map.removeControl(legendControl);
 
                 if (activeWindNinjaLayer === kmlLegendLayer) {
                     activeWindNinjaLayer = null;
+                }
+
+                if (activeWindNinjaLegendCard) {
+                    activeWindNinjaLegendCard.remove();
+                    activeWindNinjaLegendCard = null;
                 }
 
                 if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
@@ -727,11 +721,14 @@
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = fileName;
 
+            const blob = await legendEntries[0].async('blob');
+
+            if (activeInitializationLayer === kmlLegendLayer) {
+                showInitializationLegend(blob);
+            }
+
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
-
-            const legendControl = L.control({ position: 'bottomright' });
-            initializationLegendControls.push(legendControl);
             
             if (legendEntries.length > 1) 
             {
@@ -762,50 +759,18 @@
 
                 })();
             }
-
-            legendControl.onAdd = function () 
-            {
-
-                const container = L.DomUtil.create('div', 'kmz-legend');
-                L.DomEvent.disableClickPropagation(container);
-
-                const header = L.DomUtil.create('div', '', container);
-                header.innerHTML = 'Weather Model Legend';
-                header.style.backgroundColor = 'black';
-                header.style.borderBottom = '1px solid black';
-                header.style.padding = '2px 8px';
-                header.style.fontSize = '12px';
-                header.style.fontFamily = 'Arial, sans-serif';
-                header.style.fontWeight = 'bold';
-                header.style.color = 'white';
-                header.style.textAlign = 'left';
-
-                if (legendEntries.length === 0) return container;
-
-                (async () => {
-
-                    const blob = await legendEntries[0].async('blob');
-                    const url = URL.createObjectURL(blob);
-
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => URL.revokeObjectURL(url);
-                    img.style.cssText = 'display:block;max-width:150px;height:auto;';
-
-                    container.appendChild(img);
-
-                })();
-
-                return container;
-            }
          
             kmlLegendLayer.on('add', () => {
                 activeInitializationLayer = kmlLegendLayer;
                 lastActiveLayer = kmlLegendLayer;
-                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                if (activeInitializationLegendCard) {
+                    activeInitializationLegendCard.remove();
+                    activeInitializationLegendCard = null;
+                }
 
                 if (initializationLegendEnabled) {
-                    legendControl.addTo(map);
+                    legendEntries[0].async('blob').then(blob => showInitializationLegend(blob));
                 }
 
                 if (initializationTimeSeriesEnabled && timeSeriesImg) {
@@ -816,10 +781,14 @@
             });
 
             kmlLegendLayer.on('remove', () => {
-                map.removeControl(legendControl);
 
                 if (activeInitializationLayer === kmlLegendLayer) {
                     activeInitializationLayer = null;
+                }
+
+                if (activeInitializationLegendCard) {
+                    activeInitializationLegendCard.remove();
+                    activeInitializationLegendCard = null;
                 }
 
                 if (!initializationTimeSeriesEnabled && timeSeriesImg) {
@@ -849,6 +818,44 @@
 
             finishKmzLoad();
             showCenterControl();
+        }
+
+        function showWindNinjaLegend(blob) {
+            if (!windninjaLegendEnabled) return;
+
+            if (activeWindNinjaLegendCard) {
+                activeWindNinjaLegendCard.remove();
+                activeWindNinjaLegendCard = null;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            img.onload = () => URL.revokeObjectURL(url);
+
+            const card = createLegendCard(img, 'Simulation Legend', 2); // bottom
+            legendContainer.appendChild(card);
+
+            activeWindNinjaLegendCard = card;
+        }
+
+        function showInitializationLegend(blob) {
+            if (!initializationLegendEnabled) return;
+
+            if (activeInitializationLegendCard) {
+                activeInitializationLegendCard.remove();
+                activeInitializationLegendCard = null;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            img.onload = () => URL.revokeObjectURL(url);
+
+            const card = createLegendCard(img, 'Weather Model Legend', 1); // top
+            legendContainer.appendChild(card);
+
+            activeInitializationLegendCard = card;
         }
 
         function clearWindNinjaOutputTree() 
@@ -1027,11 +1034,17 @@
 
             if (e.layer === windninjaLegendToggle) {
                 windninjaLegendEnabled = false;
-                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                if (activeWindNinjaLegendCard) {
+                    activeWindNinjaLegendCard.remove();
+                    activeWindNinjaLegendCard = null;
+                }            
             }
             if (e.layer === initializationLegendToggle) {
                 initializationLegendEnabled = false;
-                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                if (activeInitializationLegendCard) {
+                    activeInitializationLegendCard.remove();
+                    activeInitializationLegendCard = null;
+                }
             }
 
             if (e.layer === windninjaTimeSeriesToggle) {
@@ -1079,6 +1092,33 @@
         card.appendChild(header);
         card.appendChild(img);
         
+        return card;
+    }
+
+    function createLegendCard(img, titleText, orderValue) {
+        const card = document.createElement('div');
+        card.style.border = '2px solid black';
+        card.style.backgroundColor = 'white';
+        card.style.display = 'inline-block';
+        card.style.order = orderValue;
+
+        const header = document.createElement('div');
+        header.innerText = titleText;
+        header.style.backgroundColor = 'black';
+        header.style.color = 'white';
+        header.style.padding = '2px 8px';
+        header.style.fontSize = '12px';
+        header.style.fontFamily = 'Arial, sans-serif';
+        header.style.fontWeight = 'bold';
+        header.style.textAlign = 'left';
+
+        img.style.display = 'block';
+        img.style.maxWidth = '150px';
+        img.style.height = 'auto';
+
+        card.appendChild(header);
+        card.appendChild(img);
+
         return card;
     }
 
