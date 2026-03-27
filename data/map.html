@@ -544,11 +544,6 @@
 
                 if (windninjaLegendEnabled) {
                     legendControl.addTo(map);
-                    if (activeInitializationLayer && initializationLegendEnabled) {
-                        const currentInitCtrl = initializationLegendControls[initializationLegendControls.length - 1];
-                        map.removeControl(currentInitCtrl);
-                        currentInitCtrl.addTo(map);
-                    }
                 }
 
                 if (windninjaTimeSeriesEnabled) {
@@ -583,6 +578,16 @@
                 map.removeLayer(activeWindNinjaLayer);
             }
             map.addLayer(kmlLegendLayer);
+
+            if (!map.hasLayer(windninjaLegendToggle)) {
+                map.addLayer(windninjaLegendToggle);
+            }
+            if (!map.hasLayer(windninjaTimeSeriesToggle)) {
+                map.addLayer(windninjaTimeSeriesToggle);
+            }
+
+            windninjaLegendEnabled = true;
+            windninjaTimeSeriesEnabled = true;
             
             finishKmzLoad();
             showCenterControl();
@@ -799,6 +804,16 @@
                 map.removeLayer(activeInitializationLayer);
             }
             map.addLayer(kmlLegendLayer);
+
+            if (!map.hasLayer(initializationLegendToggle)) {
+                map.addLayer(initializationLegendToggle);
+            }
+            if (!map.hasLayer(initializationTimeSeriesToggle)) {
+                map.addLayer(initializationTimeSeriesToggle);
+            }
+
+            initializationLegendEnabled = true;
+            initializationTimeSeriesEnabled = true;
 
             finishKmzLoad();
             showCenterControl();
