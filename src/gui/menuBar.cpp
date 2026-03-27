@@ -29,8 +29,10 @@
 
 #include "menuBar.h"
 
-MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
-    : QObject(parent), ui(ui)
+MenuBar::MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent)
+     : QObject(parent),
+     ui(ui),
+     webEngineView(webEngineView)
 {
     char ** options;
     const char * tmp = NinjaFindBinDir(options);
@@ -75,6 +77,8 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReportActionTriggered);
     //connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
     connect(ui->enableConsoleOutputAction, &QAction::toggled, this, &MenuBar::enableConsoleOutputActionToggled);
+
+    connect(ui->loadKmzKmlAction, &QAction::triggered, this, &MenuBar::loadKmzKmlActionTriggered);
 }
 
 // void MenuBar::newProjectActionTriggered()
@@ -392,4 +396,36 @@ void MenuBar::submitBugReportActionTriggered()
 void MenuBar::enableConsoleOutputActionToggled(bool toggled)
 {
     ui->consoleTextEdit->setVisible(toggled);
+}
+
+void MenuBar::loadKmzKmlActionTriggered()
+{
+    QString dir = ui->outputDirectoryLineEdit->text();
+
+    QStringList files = QFileDialog::getOpenFileNames(
+        ui->centralwidget,
+        "Select files",
+        dir,
+        "KML/KMZ Files (*.kml *.kmz);;All Files (*)"
+        );
+
+    for (const QString &outFileStr : files)
+    {
+        qDebug() << "kmz outFile =" << outFileStr;
+
+        QFileInfo fileInfo(outFileStr);
+        QString fileName = fileInfo.fileName();
+
+        QFile outFile(outFileStr);
+        if (!outFile.open(QIODevice::ReadOnly))
+        {
+            continue;
+        }
+
+        QByteArray data = outFile.readAll();
+        QString base64 = data.toBase64();
+
+        QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+        webEngineView->page()->runJavaScript(jsCall);
+    }
 }

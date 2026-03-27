@@ -42,13 +42,15 @@
 #include <QTextDocument>
 #include <QTextBlock>
 #include <QDesktopServices>
+#include <QtWebEngineWidgets/qwebengineview.h>
+
 
 class MenuBar : public QObject
 {
     Q_OBJECT
 
 public:
-    MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
+    MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent = nullptr);
 
 signals:
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
@@ -84,9 +86,11 @@ private slots:
     void supportEmailActionTriggered();
     void submitBugReportActionTriggered();
     void enableConsoleOutputActionToggled(bool toggled);
+    void loadKmzKmlActionTriggered();
 
 private:
     Ui::MainWindow* ui;
+    QWebEngineView *webEngineView;
     QDir dataPath;
 };
 

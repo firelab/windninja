@@ -591,6 +591,7 @@
                         activeWindNinjaTimeSeriesImg = null;
                     }
                 }
+                updateOverlayTree();
             });
 
             kmlLegendLayer.on('remove', () => {
@@ -817,6 +818,8 @@
                 if (initializationTimeSeriesEnabled && timeSeriesImg) {
                     showInitializationTimeSeries(timeSeriesImg);
                 }
+                
+                updateOverlayTree();
             });
 
             kmlLegendLayer.on('remove', () => {
@@ -941,7 +944,7 @@
                 });
             }
 
-            if (windninjaOutputTree.children.length > 1) {
+            if (activeWindNinjaLayer) {
                 overlayChildren.push({
                     label: 'Simulation Legend',
                     layer: windninjaLegendToggle
@@ -953,7 +956,7 @@
                 });
             }
 
-            if (initializationOutputTree.children.length > 1) {
+            if (activeInitializationLayer) {
                 overlayChildren.push({
                     label: 'Weather Model Legend',
                     layer: initializationLegendToggle
@@ -1010,6 +1013,7 @@
                     activeWindNinjaTimeSeriesImg = null;
                 }
                 activeWindNinjaLayer = null;
+                updateOverlayTree();
             }
             if (e.layer === initializationOutputTree.children[0]?.layer) {
                 if (activeInitializationTimeSeriesImg) {
@@ -1017,6 +1021,7 @@
                     activeInitializationTimeSeriesImg = null;
                 }
                 activeInitializationLayer = null;
+                updateOverlayTree();
             }
         });
 
