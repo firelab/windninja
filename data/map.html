@@ -295,19 +295,7 @@
             }, 10);
 
             showCenterControl();
-
-            if (layerControl && layerControl.setOverlayTree && windninjaOutputTree.children.length > 1) {
-                layerControl.setOverlayTree([
-                    windninjaOutputTree,
-                    initializationOutputTree,
-                    overlayTree
-                ]);
-            }
-            else {
-                layerControl.setOverlayTree([
-                    overlayTree
-                ]);
-            }
+            updateOverlayTree();
         }
 
         function startRectangleDrawing() {
