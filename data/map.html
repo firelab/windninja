@@ -511,6 +511,11 @@
             const legendControl = L.control({ position: 'bottomright' });
             windninjaLegendControls.push(legendControl);
 
+            const hasLegend = legendEntries.length > 0;
+            const hasTimeSeries = legendEntries.length > 1;
+            kmlLegendLayer._hasLegend = hasLegend;
+            kmlLegendLayer._hasTimeSeries = hasTimeSeries;
+
             if (legendEntries.length > 1) {
                 (async () => {
                     const blob = await legendEntries[1].async('blob');
@@ -945,15 +950,20 @@
             }
 
             if (activeWindNinjaLayer) {
-                overlayChildren.push({
-                    label: 'Simulation Legend',
-                    layer: windninjaLegendToggle
-                });
 
-                overlayChildren.push({
-                    label: 'Simulation Datetime',
-                    layer: windninjaTimeSeriesToggle
-                });
+                if (activeWindNinjaLayer._hasLegend) {
+                    overlayChildren.push({
+                        label: 'Simulation Legend',
+                        layer: windninjaLegendToggle
+                    });
+                }
+
+                if (activeWindNinjaLayer._hasTimeSeries) {
+                    overlayChildren.push({
+                        label: 'Simulation Datetime',
+                        layer: windninjaTimeSeriesToggle
+                    });
+                }
             }
 
             if (activeInitializationLayer) {
