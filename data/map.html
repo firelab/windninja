@@ -366,6 +366,42 @@
             return container;
         };
 
+        const clearControl = L.control({ position: 'topright' });
+
+        clearControl.onAdd = function () {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+
+            const button = L.DomUtil.create('a', '', container);
+            button.innerHTML = '✕';
+            button.title = 'Clear all layers';
+            button.href = '#';
+
+            button.style.fontSize = '18px';
+            button.style.lineHeight = '26px';
+            button.style.textAlign = 'center';
+
+            L.DomEvent.on(button, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+
+                clearWindNinjaOutputTree();
+                clearInitializationOutputTree();
+                clearUnknownOutputTree();
+                clearBoundingBoxLayer();
+                clearDEMLayer();
+                clearTimeSeriesContainer();
+
+                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+
+                activeWindNinjaLayer = null;
+                activeInitializationLayer = null;
+                activeWindNinjaTimeSeriesImg = null;
+                activeInitializationTimeSeriesImg = null;
+            });
+
+            return container;
+        };
         function centerMapOnActiveLayer() {
             let bounds = null;
 
@@ -1073,9 +1109,8 @@
         map.addLayer(demLayer);
 
         layerControl.addTo(map);
+        clearControl.addTo(map);
         L.control.scale().addTo(map);
-
-        
 
     </script>
 </body>
