@@ -124,9 +124,41 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), fetching failed!");
+
+        if(result == SURF_FETCH_E_IO_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_IO_ERR, Failure opening a dataset.");
+        }
+        else if(result == SURF_FETCH_E_BOUNDS_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_BOUNDS_ERR, Fetch was outside the bounds of the dataset.");
+        }
+        else if(result == SURF_FETCH_E_WARPER_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_WARPER_ERR, Failure during warp, failed to warp data.");
+        }
+        else if(result == SURF_FETCH_E_BAD_INPUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_BAD_INPUT, Bad input to fetching functions.");
+        }
+        else if(result == SURF_FETCH_E_SIZE_LIMIT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_SIZE_LIMIT, Hit some kind of size limit during fetch.");
+        }
+        //else if(result == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+        //{
+        //    Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_NO_GDAL_DATA, Found NO_DATA in downloaded fetch data.");
+        //}
+        else if(result == SURF_FETCH_E_TIMEOUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nSURF_FETCH_E_TIMEOUT, Download failure, likely download timeout failure.");
+        }
+        else
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), Failed to download elevation data.\nUnknown error occurred during fetch.");
+        }
         delete fetcher;
-        return NINJA_E_INVALID;
+        return result;
     }
     delete fetcher;
     return NINJA_SUCCESS;
@@ -178,9 +210,41 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), fetching failed!");
+
+        if(result == SURF_FETCH_E_IO_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_IO_ERR, Failure opening a dataset.");
+        }
+        else if(result == SURF_FETCH_E_BOUNDS_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_BOUNDS_ERR, Fetch was outside the bounds of the dataset.");
+        }
+        else if(result == SURF_FETCH_E_WARPER_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_WARPER_ERR, Failure during warp, failed to warp data.");
+        }
+        else if(result == SURF_FETCH_E_BAD_INPUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_BAD_INPUT, Bad input to fetching functions.");
+        }
+        else if(result == SURF_FETCH_E_SIZE_LIMIT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_SIZE_LIMIT, Hit some kind of size limit during fetch.");
+        }
+        //else if(result == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+        //{
+        //    Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_NO_GDAL_DATA, Found NO_DATA in downloaded fetch data.");
+        //}
+        else if(result == SURF_FETCH_E_TIMEOUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nSURF_FETCH_E_TIMEOUT, Download failure, likely download timeout failure.");
+        }
+        else
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), Failed to download elevation data.\nUnknown error occurred during fetch.");
+        }
         delete fetcher;
-        return NINJA_E_INVALID;
+        return result;
     }
     delete fetcher;
     return NINJA_SUCCESS;

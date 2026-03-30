@@ -103,6 +103,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     hSrcDS = GDALOpen(GetPath().c_str(), GA_ReadOnly);
     if(hSrcDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::FetchBoundingBox(), Could not open path for reading, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -110,6 +111,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     if( GDT_Byte != eDT )
     {
         //add error info detailing incompatible data types
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::FetchBoundingBox(), band contains incompatible byte data types, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -142,6 +144,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
@@ -164,6 +167,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid nPixels and/or nLines for warp. Could not warp image, download failed.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -179,6 +183,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final relief_fetch file for writing, Failed to create output file, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -228,6 +233,31 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
         return SURF_FETCH_E_WARPER_ERR;
     }
 
+    GDALRasterBandH hSrcBand;
+    GDALRasterBandH hDstBand;
+
+    hSrcBand = GDALGetRasterBand(hSrcDS, 1);
+    hDstBand = GDALGetRasterBand(hDstDS, 1);
+
+    double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
+
+    GDALSetRasterNoDataValue(hDstBand, dfNoData);
+
+    double *padfScanline;
+    padfScanline = (double *) CPLMalloc(sizeof(double)*nPixels);
+    int nNoDataCount = 0;
+    for(int i = 0;i < nLines;i++)
+    {
+        GDALRasterIO(hDstBand, GF_Read, 0, i, nPixels, 1, 
+                     padfScanline, nPixels, 1, GDT_Float64, 0, 0);
+        for(int j = 0; j < nPixels;j++)
+        {
+            if(CPLIsEqual(padfScanline[j], dfNoData))
+                nNoDataCount++;
+        }
+    }
+
+    CPLFree((void*)padfScanline);
     CPLFree((void*)pszDstWKT);
 
     GDALClose(hDstDS);
@@ -236,7 +266,11 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
     CPLSetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
 
-    return SURF_FETCH_E_NONE;
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::FetchBoundingBox() after downloading, warping, and clipping, found '%d' noDataValues", nNoDataCount);
+    }
+    return nNoDataCount;
 }
 
 SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize )
@@ -263,6 +297,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     inDS = GDALOpen( infile.c_str(), GA_ReadOnly );
     if( NULL == inDS )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Could not open infile for reading.");
         return SURF_FETCH_E_IO_ERR;
     }
     
@@ -286,6 +321,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     GDALClose( inDS );
     if( NULL ==  pszDstWKT )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Could not get dstWKT projection information.");
         return SURF_FETCH_E_IO_ERR;
     }
     /*finished with the input file */
@@ -294,12 +330,14 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     hSrcDS = GDALOpen( path.c_str(), GA_ReadOnly );
     if(hSrcDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Could not open path for reading.");
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
     }
     nbands = GDALGetRasterCount( hSrcDS );
     if( nbands == 0 )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Read dataset has no bands information.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -307,6 +345,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     eDT = GDALGetRasterDataType( GDALGetRasterBand( hSrcDS, 1 ) );
     if( GDT_Byte != eDT )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), band contains incompatible byte data types.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -338,6 +377,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if(hDstDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final relief_fetch file for writing, Failed to create output file.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -381,11 +421,43 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
         return SURF_FETCH_E_WARPER_ERR;
     }
 
+    GDALRasterBandH hSrcBand;
+    GDALRasterBandH hDstBand;
+
+    hSrcBand = GDALGetRasterBand(hSrcDS, 1);
+    hDstBand = GDALGetRasterBand(hDstDS, 1);
+
+    double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
+
+    GDALSetRasterNoDataValue(hDstBand, dfNoData);
+
+    double *padfScanline;
+    int nPixels = GDALGetRasterXSize(hDstDS);
+    int nLines = GDALGetRasterYSize(hDstDS);
+    padfScanline = (double *) CPLMalloc(sizeof(double)*nPixels);
+    int nNoDataCount = 0;
+    for(int i = 0;i < nLines;i++)
+    {
+        GDALRasterIO(hDstBand, GF_Read, 0, i, nPixels, 1, 
+                     padfScanline, nPixels, 1, GDT_Float64, 0, 0);
+        for(int j = 0; j < nPixels;j++)
+        {
+            if(CPLIsEqual(padfScanline[j], dfNoData))
+                nNoDataCount++;
+        }
+    }
+
+    CPLFree((void*)padfScanline);
+
     GDALClose(hDstDS);
     GDALClose(hSrcDS);
     CPLFree((void*)pszDstWKT);
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
 
-    return SURF_FETCH_E_NONE; 
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf() after prepping final output file, found '%d' noDataValues", nNoDataCount);
+    }
+    return nNoDataCount;
 }
 

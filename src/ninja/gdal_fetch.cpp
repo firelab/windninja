@@ -109,6 +109,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     hSrcDS = GDALOpen(GetPath().c_str(), GA_ReadOnly);
     if(hSrcDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALFetch::FetchBoundingBox(), Could not open path for reading, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
     hDriver = GDALGetDriverByName("GTiff");
@@ -143,6 +144,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
@@ -165,6 +167,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid nPixels and/or nLines for warp. Could not warp image, download failed.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -178,6 +181,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final gdal_fetch file for writing, Failed to create output file, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -262,6 +266,10 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
     CPLSetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
 
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALFetch::FetchBoundingBox() after downloading, warping, and clipping, found '%d' noDataValues", nNoDataCount);
+    }
     return nNoDataCount;
 }
 

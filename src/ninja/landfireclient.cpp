@@ -57,6 +57,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     (void)resolution;
     if( NULL == filename )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "LandfireClient::FetchBoundingBox(), Input filename is NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
 
@@ -109,7 +110,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         }
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Failed to locate product.");
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to locate product. Requested DEM is outside of the Landfire client bounds.");
             return SURF_FETCH_E_BOUNDS_ERR;
         }
     }
@@ -251,7 +252,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     fout = VSIFOpenL( pszTmpZip, "w+" );
     if( NULL == fout )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create output file");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open lcp file for writing, Failed to create output file.");
         CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -328,6 +329,10 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         VSIUnlink( pszTmpZip );
     }
 
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "LandfireClient::FetchBoundingBox() after downloading, found '%d' noDataValues", nNoDataCount);
+    }
     return nNoDataCount;
 }
 

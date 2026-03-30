@@ -70,6 +70,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 {
     if(NULL == filename)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "SRTMClient::FetchBoundingBox(), Input filename is NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
 
@@ -122,7 +123,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     if( !NinjaOGRContain( pszGeom, osDataPath.c_str(), "srtm_region" ) )
     {
         // this one might be a good candidate, for a throw
-        CPLError(CE_Failure, CPLE_AppDefined, "Requested DEM is outside of the SRTM bounds.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to locate product. Requested DEM is outside of the SRTM bounds.");
         return SURF_FETCH_E_BOUNDS_ERR;
     }
 
@@ -171,7 +172,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     fout = VSIFOpenL( CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"), "wb" );
     if( !fout )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open srtm file for writing.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open temporary srtm file for writing, Failed to create output file, download failed.");
         CPLHTTPDestroyResult( psResult );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -264,7 +265,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final srtm file for writing, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final srtm file for writing, Failed to create output file, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -340,13 +341,6 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
         }
     }
 
-    if(nNoDataCount > 0)
-    {
-        std::string oErrorString = "SRTMClient::fetchBoundingBox() after downloading, warping, and clipping, found noDataValues!!!";
-        CPLError(CE_Failure, CPLE_AppDefined, oErrorString.c_str());
-        return nNoDataCount;
-    }
-
     CPLFree((void*)padfScanline);
     CPLFree((void*)pszDstWKT);
 
@@ -358,6 +352,10 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
     CPLSetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
 
-    return SURF_FETCH_E_NONE;
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "SRTMClient::FetchBoundingBox() after downloading, warping, and clipping, found '%d' noDataValues", nNoDataCount);
+    }
+    return nNoDataCount;
 }
 
