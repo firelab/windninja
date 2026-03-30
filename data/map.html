@@ -389,12 +389,7 @@
                 clearWindNinjaOutputTree();
                 clearInitializationOutputTree();
                 clearUnknownOutputTree();
-                clearBoundingBoxLayer();
-                clearDEMLayer();
                 clearTimeSeriesContainer();
-
-                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
-                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
 
                 activeWindNinjaLayer = null;
                 activeInitializationLayer = null;
