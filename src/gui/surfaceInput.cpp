@@ -238,7 +238,9 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
     {
         downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     }
-    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", downloadsPath, "TIF Files (*.tif)");
+
+    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", downloadsPath + "/.tif", "TIF Files (*.tif)");
+
     if(demFilePath.isEmpty())
     {
         return;
