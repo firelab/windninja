@@ -115,6 +115,7 @@ private slots:
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);
     void cancelSolve();
+    void finishedLoadingMap();
 
 private:
     Ui::MainWindow *ui;

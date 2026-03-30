@@ -1505,9 +1505,8 @@ void MainWindow::finishedSolve()
     // ninjaCom handles most of the progress dialog, cli, and console window messaging now
     if( result == 1 ) // simulation properly finished
     {
-        progressDialog->setValue(maxProgress);
-        progressDialog->setLabelText("Simulations finished");
-        progressDialog->setCancelButtonText("Close");
+        progressDialog->setLabelText("Rendering map layers...");
+        progressDialog->setCancelButtonText("Cancel");
 
         qDebug() << "Finished with simulations";
         writeToConsole("Finished with simulations", Qt::darkGreen);
@@ -1530,6 +1529,9 @@ void MainWindow::finishedSolve()
     outputDir.setPath(ui->outputDirectoryLineEdit->text());
 
     // one more process to do after finishedSolve() stuff
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
+            this, &MainWindow::finishedLoadingMap,
+            Qt::UniqueConnection);
     plotKmzOutputs();
 
     char **papszOptions = nullptr;
@@ -1670,6 +1672,14 @@ void MainWindow::plotKmzOutputs()
         }
 
     } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
+}
+
+void MainWindow::finishedLoadingMap()
+{
+    progressDialog->setValue(maxProgress);
+    progressDialog->setLabelText("Simulation Finished.");
+    progressDialog->setCancelButtonText("Close");
+    disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
 }
 
 void MainWindow::writeSettings()
