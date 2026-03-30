@@ -680,31 +680,31 @@ int windNinjaCLI(int argc, char* argv[])
                     std::cerr << "Failed to download elevation data." << std::endl;
                     if(nDemError == SURF_FETCH_E_IO_ERR)
                     {
-                        std::cerr << "SURF_FETCH_E_IO_ERR, Failure opening a dataset." << std::endl;
+                        std::cerr << "Failure opening a dataset." << std::endl;
                     }
                     else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
                     {
-                        std::cerr << "SURF_FETCH_E_BOUNDS_ERR, Fetch was outside the bounds of the dataset." << std::endl;
+                        std::cerr << "Fetch was outside the bounds of the dataset." << std::endl;
                     }
                     else if(nDemError == SURF_FETCH_E_WARPER_ERR)
                     {
-                        std::cerr << "SURF_FETCH_E_WARPER_ERR, Failure during warp, failed to warp data." << std::endl;
+                        std::cerr << "Failure during warp, failed to warp data." << std::endl;
                     }
                     else if(nDemError == SURF_FETCH_E_BAD_INPUT)
                     {
-                        std::cerr << "SURF_FETCH_E_BAD_INPUT, Bad input to fetching functions." << std::endl;
+                        std::cerr << "Bad input to fetching functions." << std::endl;
                     }
                     else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
                     {
-                        std::cerr << "SURF_FETCH_E_SIZE_LIMIT, Hit some kind of size limit during fetch." << std::endl;
+                        std::cerr << "Hit a size limit during fetch." << std::endl;
                     }
                     //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
                     //{
-                    //    std::cerr << "SURF_FETCH_E_NO_GDAL_DATA, Found NO_DATA in downloaded fetch data." << std::endl;
+                    //    std::cerr << "Found NO_DATA in downloaded fetch data." << std::endl;
                     //}
                     else if(nDemError == SURF_FETCH_E_TIMEOUT)
                     {
-                        std::cerr << "SURF_FETCH_E_TIMEOUT, Download failure, likely download timeout failure." << std::endl;
+                        std::cerr << "Download failure, likely download timeout failure." << std::endl;
                     }
                     else
                     {
@@ -858,31 +858,31 @@ int windNinjaCLI(int argc, char* argv[])
                 std::cerr << "Failed to download elevation data." << std::endl;
                 if(nDemError == SURF_FETCH_E_IO_ERR)
                 {
-                    std::cerr << "SURF_FETCH_E_IO_ERR, Failure opening a dataset." << std::endl;
+                    std::cerr << "Failure opening a dataset." << std::endl;
                 }
                 else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
                 {
-                    std::cerr << "SURF_FETCH_E_BOUNDS_ERR, Fetch was outside the bounds of the dataset." << std::endl;
+                    std::cerr << "Fetch was outside the bounds of the dataset." << std::endl;
                 }
                 else if(nDemError == SURF_FETCH_E_WARPER_ERR)
                 {
-                    std::cerr << "SURF_FETCH_E_WARPER_ERR, Failure during warp, failed to warp data." << std::endl;
+                    std::cerr << "Failure during warp, failed to warp data." << std::endl;
                 }
                 else if(nDemError == SURF_FETCH_E_BAD_INPUT)
                 {
-                    std::cerr << "SURF_FETCH_E_BAD_INPUT, Bad input to fetching functions." << std::endl;
+                    std::cerr << "Bad input to fetching functions." << std::endl;
                 }
                 else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
                 {
-                    std::cerr << "SURF_FETCH_E_SIZE_LIMIT, Hit some kind of size limit during fetch." << std::endl;
+                    std::cerr << "Hit a size limit during fetch." << std::endl;
                 }
                 //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
                 //{
-                //    std::cerr << "SURF_FETCH_E_NO_GDAL_DATA, Found NO_DATA in downloaded fetch data." << std::endl;
+                //    std::cerr << "Found NO_DATA in downloaded fetch data." << std::endl;
                 //}
                 else if(nDemError == SURF_FETCH_E_TIMEOUT)
                 {
-                    std::cerr << "SURF_FETCH_E_TIMEOUT, Download failure, likely download timeout failure." << std::endl;
+                    std::cerr << "Download failure, likely download timeout failure." << std::endl;
                 }
                 else
                 {

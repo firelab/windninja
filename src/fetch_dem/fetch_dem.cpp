@@ -486,31 +486,31 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to download elevation data.\n");
         if(nDemError == SURF_FETCH_E_IO_ERR)
         {
-            fprintf(stderr, "SURF_FETCH_E_IO_ERR, Failure opening a dataset.\n");
+            fprintf(stderr, "Failure opening a dataset.\n");
         }
         else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
         {
-            fprintf(stderr, "SURF_FETCH_E_BOUNDS_ERR, Fetch was outside the bounds of the dataset.\n");
+            fprintf(stderr, "Fetch was outside the bounds of the dataset.\n");
         }
         else if(nDemError == SURF_FETCH_E_WARPER_ERR)
         {
-            fprintf(stderr, "SURF_FETCH_E_WARPER_ERR, Failure during warp, failed to warp data.\n");
+            fprintf(stderr, "Failure during warp, failed to warp data.\n");
         }
         else if(nDemError == SURF_FETCH_E_BAD_INPUT)
         {
-            fprintf(stderr, "SURF_FETCH_E_BAD_INPUT, Bad input to fetching functions.\n");
+            fprintf(stderr, "Bad input to fetching functions.\n");
         }
         else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
         {
-            fprintf(stderr, "SURF_FETCH_E_SIZE_LIMIT, Hit some kind of size limit during fetch.\n");
+            fprintf(stderr, "Hit a size limit during fetch.\n");
         }
         //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
         //{
-        //    fprintf(stderr, "SURF_FETCH_E_NO_GDAL_DATA, Found NO_DATA in downloaded fetch data.\n");
+        //    fprintf(stderr, "Found NO_DATA in downloaded fetch data.\n");
         //}
         else if(nDemError == SURF_FETCH_E_TIMEOUT)
         {
-            fprintf(stderr, "SURF_FETCH_E_TIMEOUT, Download failure, likely download timeout failure.\n");
+            fprintf(stderr, "Download failure, likely download timeout failure.\n");
         }
         else
         {
