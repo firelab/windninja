@@ -227,7 +227,7 @@
         const windninjaOutputTree = {
             label: 'Simulation Output',
             children: [
-                { label: 'No Output', layer: L.layerGroup([]), radioGroup: 'windninjaOutputs'}
+                { label: 'No Output', layer: L.layerGroup([]), radioGroup: 'windninjaOutput'}
             ]
         };
 
@@ -235,6 +235,13 @@
             label: 'Weather Model Output',
             children: [
                 { label: 'No Output', layer: L.layerGroup([]),  radioGroup: 'initializationOutput' }
+            ]
+        };
+
+        const stationOutputTree = {
+            label: 'Weather Stations',
+            children: [
+                { label: 'No Output', layer: L.layerGroup([]),  radioGroup: 'stationOutput' }
             ]
         };
 
@@ -388,6 +395,7 @@
 
                 clearWindNinjaOutputTree();
                 clearInitializationOutputTree();
+                clearStationOutputTree();
                 clearUnknownOutputTree();
                 clearTimeSeriesContainer();
 
@@ -589,7 +597,7 @@
                 }
             });
 
-            windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutputs'});
+            windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutput'});
 
             updateOverlayTree();
 
@@ -625,13 +633,24 @@
             const nameTag = kmlDoc.getElementsByTagName('name')[0];
             let layerName = fileName;
 
+            const descriptionTag = kmlDoc.getElementsByTagName('description')[0];
+            const isStationOutput = descriptionTag && descriptionTag.textContent.includes('Weather Stations:');
+
             const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
             const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
 
             const kmlLayer = new L.KML(kmlDoc);
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
 
-            if (isWindNinja) {
+            if (isStationOutput) {
+                    if (!layerName.toLowerCase().endsWith('.kml')) layerName += '.kml';
+                    stationOutputTree.children.push({
+                        label: layerName,
+                        layer: kmlLegendLayer,
+                        radioGroup: 'stationOutput'
+                    });
+            } 
+            else if (isWindNinja) {
                 const nameUpper = layerName.toUpperCase();
                 const isSpecialSource = nameUpper.includes('NOMADS') || nameUpper.includes('UCAR') || nameUpper.includes('PASTCAST');
 
@@ -643,7 +662,7 @@
                     initializationOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'initializationOutput' });
                 } 
                 else {
-                    windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutputs' });
+                    windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutput' });
                 }
             } 
             else {
@@ -865,7 +884,7 @@
             windninjaOutputTree.children = [{
                 label: 'No Output',
                 layer: L.layerGroup([]),
-                radioGroup: 'windninjaOutputs'
+                radioGroup: 'windninjaOutput'
             }];
 
             updateOverlayTree();
@@ -884,6 +903,23 @@
                 label: 'No Output',
                 layer: L.layerGroup([]),
                 radioGroup: 'initializationOutput'
+            }];
+
+            updateOverlayTree();
+        }
+
+        function clearStationOutputTree() 
+        {
+            stationOutputTree.children.forEach(item => {
+                if (item.layer && item.label !== 'No Output') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            stationOutputTree.children = [{
+                label: 'No Stations',
+                layer: L.layerGroup([]),
+                radioGroup: 'stationOutput'
             }];
 
             updateOverlayTree();
@@ -973,6 +1009,9 @@
 
             if (initializationOutputTree.children.length > 1)
                 displayTree.push(initializationOutputTree);
+
+            if (stationOutputTree.children.length > 1)
+                displayTree.push(stationOutputTree);
 
             if (unknownOutputTree.children.length > 1)
                 displayTree.push(unknownOutputTree);

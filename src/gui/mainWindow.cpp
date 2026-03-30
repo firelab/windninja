@@ -1630,25 +1630,28 @@ void MainWindow::plotKmzOutputs()
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
             // (first run, because station kmls are SHARED across runs)
-            // if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
-            // {
-            //     for(int j = 0; j < numStationKmls; j++)
-            //     {
-            //         QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
-            //         qDebug() << "station kml outFile =" << outFileStr;
-            //         QFile outFile(outFileStr);
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
+            {
+                for(int j = 0; j < numStationKmls; j++)
+                {
+                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
+                    qDebug() << "station kml outFile =" << outFileStr;
+                    QFile outFile(outFileStr);
+                    QFileInfo info(outFileStr);
+                    QString fileName = info.fileName();
 
-            //         outFile.open(QIODevice::ReadOnly);
-            //         QByteArray data = outFile.readAll();
-            //         QString base64 = data.toBase64();
+                    outFile.open(QIODevice::ReadOnly);
+                    QByteArray data = outFile.readAll();
+                    QString base64 = data.toBase64();
 
-            //         webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-            //     }
-            // }
+                    QString jsCall3 = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+                    webEngineView->page()->runJavaScript(jsCall3);
+                }
+            }
 
             // // if it is a weather model run, and weather model kmzs were created for the run,
             // // plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
+            if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
