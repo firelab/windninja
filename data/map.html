@@ -63,25 +63,14 @@
         .leaflet-drag-target {
             cursor: move !important;
         }
-        .leaflet-control-center {
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        .leaflet-control-center a {
+        .leaflet-center-button {
             display: block;
             text-align: center;
-            color: #0077ff;
-            font-size: 20px;
+            font-size: 35px;
             line-height: 26px;
             width: 28px;
             height: 28px;
             text-decoration: none;
-        }
-        .leaflet-control-center a:hover {
-            background: #0077ff;
-            color: white;
         }
         .leaflet-top.leaflet-right {
             z-index: 1000;
@@ -89,6 +78,15 @@
 
         .leaflet-bottom.leaflet-right {
             z-index: 400;
+        }
+        .leaflet-control-clear {
+            display: block;
+            text-align: center;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            padding: 0px 10px;
+            text-decoration: none;
+            border-radius: 4px;
         }
     </style>
 
@@ -360,9 +358,9 @@
 
         centerControl.onAdd = function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
-            const button = L.DomUtil.create('a', '', container);
+            const button = L.DomUtil.create('a', 'leaflet-center-button', container);
             button.innerHTML = '⌖';
-            button.title = 'Center on current shape';
+            button.title = 'Center on current layer';
             button.href = '#';
 
             L.DomEvent.on(button, 'click', (e) => {
@@ -380,14 +378,10 @@
         clearControl.onAdd = function () {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 
-            const button = L.DomUtil.create('a', '', container);
-            button.innerHTML = '✕';
+            const button = L.DomUtil.create('a', 'leaflet-control-clear', container);
+            button.innerHTML = 'Clear';
             button.title = 'Clear all layers';
             button.href = '#';
-
-            button.style.fontSize = '18px';
-            button.style.lineHeight = '26px';
-            button.style.textAlign = 'center';
 
             L.DomEvent.on(button, 'click', (e) => {
                 L.DomEvent.stopPropagation(e);
@@ -908,7 +902,7 @@
             updateOverlayTree();
         }
 
-        function clearStationOutputTree() 
+        function clearStationOUtput() 
         {
             stationOutputTree.children.forEach(item => {
                 if (item.layer && item.label !== 'No Output') {
