@@ -295,8 +295,7 @@ void wxStation::set_stationName( std::string Name )
  * @param Yord y coordinate in projection system coordinates (dem projection coordinates)
  * @param demFile name of the dem file used to create the coordinate transformation
  */
-void wxStation::set_location_projected( double Xord, double Yord,
-                    std::string demFile )
+void wxStation::set_location_projected( double Xord, double Yord, std::string demFile )
 {
     coordType = PROJCS;
     datumType = WGS84;  // always use WGS84 for the datum for PROJCS regardless of the input datum type
@@ -304,35 +303,22 @@ void wxStation::set_location_projected( double Xord, double Yord,
     projXord = Xord;
     projYord = Yord;
 
-    if( demFile.empty() || demFile == "" ){
-        CPLError(CE_Failure, CPLE_AppDefined, "wxStation::set_location_projected(), input demFile is empty.");
-        xord = Xord;
-        yord = Yord;
-        lon = Xord;
-        lat = Yord;
-        return;
+    if(demFile.empty() || demFile == "")
+    {
+        throw std::runtime_error("wxStation::set_location_projected(), input demFile is empty.");
     }
 
     GDALDataset *poDS = (GDALDataset*) GDALOpen( demFile.c_str(), GA_ReadOnly );
-    if( poDS == NULL ){
-        CPLError(CE_Failure, CPLE_AppDefined, "wxStation::set_location_projected(), Cannot open input demFile.");
-        xord = Xord;
-        yord = Yord;
-        lon = Xord;
-        lat = Yord;
-        return;
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("wxStation::set_location_projected(), Cannot open input demFile.");
     }
 
     //get llcorner to subtract
     double adfGeoTransform[6];
-
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
-        CPLError(CE_Failure, CPLE_AppDefined, "wxStation::set_location_projected(), Could not get GeoTransform from input demFile.");
-        xord = Xord;
-        yord = Yord;
-        lon = Xord;
-        lat = Yord;
-        return;
+    if(poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    {
+        throw std::runtime_error("wxStation::set_location_projected(), Could not get GeoTransform from input demFile.");
     }
 
     double llx = adfGeoTransform[0];
@@ -344,7 +330,10 @@ void wxStation::set_location_projected( double Xord, double Yord,
     double lonx = projXord;
     double laty = projYord;
 
-    GDALPointToLatLon( lonx, laty, poDS, "WGS84" );
+    if(!GDALPointToLatLon(lonx, laty, poDS, "WGS84"))
+    {
+        throw std::runtime_error("wxStation::set_location_projected(), Failed to warp point to lat lon.");
+    }
 
     lon = lonx;
     lat = laty;
@@ -364,61 +353,57 @@ void wxStation::set_location_projected( double Xord, double Yord,
  */
 void wxStation::set_location_LatLong( double Lat, double Lon,
                                       const std::string demFile,
-                      const char *datum )
+                                      const char *datum )
 {
+    coordType = GEOGCS;
+
     if( EQUAL( datum, "WGS84" ) )
+    {
         datumType = WGS84;
+    }
     else if( EQUAL( datum, "NAD83" ) )
+    {
         datumType = NAD83;
+    }
     else if ( EQUAL( datum, "NAD27" ) )
+    {
         datumType = NAD27;
+    }
     else
     {
-        std::string oErrorString = "wxStation::set_location_LatLong() input datum \"";
-        oErrorString += datum;
-        oErrorString += "\" is not valid! options are \"WGS84\", \"NAD83\", \"NAD27\"";
-        throw std::runtime_error(oErrorString);
+        throw std::runtime_error("wxStation::set_location_LatLong(), input datum '"+std::string(datum)+"' is not valid. options are 'WGS84', 'NAD83', 'NAD27'");
     }
-    coordType = GEOGCS;
 
     lon = Lon;
     lat = Lat;
 
-    if( demFile.empty() || demFile == "" ){
-        CPLError(CE_Failure, CPLE_AppDefined, "wxStation::set_location_LatLong(), input demFile is empty.");
-        projXord = Lon;
-        projYord = Lat;
-        xord = Lon;
-        yord = Lat;
-        return;
+    if(demFile.empty() || demFile == "")
+    {
+        throw std::runtime_error("wxStation::set_location_LatLong(), input demFile is empty.");
     }
 
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
-    if( poDS == NULL ){
-        CPLError(CE_Failure, CPLE_AppDefined, "wxStation::set_location_LatLong(), Cannot open input demFile.");
-        projXord = Lon;
-        projYord = Lat;
-        xord = Lon;
-        yord = Lat;
-        return;
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("wxStation::set_location_LatLong(), Cannot open input demFile.");
     }
 
     double projX = lon;
     double projY = lat;
 
-    GDALPointFromLatLon( projX, projY, poDS, datum );
+    if(!GDALPointFromLatLon(projX, projY, poDS, datum))
+    {
+        throw std::runtime_error("wxStation::set_location_LatLong(), Failed to warp point from lat lon.");
+    }
 
     projXord = projX;
     projYord = projY;
 
     //get llcorner to subtract
     double adfGeoTransform[6];
-
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ){
-        CPLError(CE_Failure, CPLE_AppDefined, "wxStation::set_location_LatLong(), Could not get GeoTransform from input demFile.");
-        xord = projXord;
-        yord = projYord;
-        return;
+    if(poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    {
+        throw std::runtime_error("wxStation::set_location_LatLong(), Could not get GeoTransform from input demFile.");
     }
 
     double llx = adfGeoTransform[0];
