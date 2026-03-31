@@ -110,10 +110,12 @@ private slots:
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
+    void outputDirectoryOpenButtonClicked();
     void writeToConsole(QString message, QColor color=Qt::black);
     void updateProgressValue(int run, int progress);
     void updateProgressMessage(const QString message);
     void cancelSolve();
+    void finishedLoadingMap();
 
 private:
     Ui::MainWindow *ui;
@@ -137,6 +139,8 @@ private:
 
     QProgressDialog *progressDialog;
     QFutureWatcher<int> *futureWatcher;
+
+    QDir outputDir;
 
     int startSolve(int numProcessors);
     void finishedSolve();

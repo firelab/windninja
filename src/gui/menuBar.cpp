@@ -29,18 +29,20 @@
 
 #include "menuBar.h"
 
-MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
-    : QObject(parent), ui(ui)
+MenuBar::MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent)
+     : QObject(parent),
+     ui(ui),
+     webEngineView(webEngineView)
 {
     char ** options;
     const char * tmp = NinjaFindBinDir(options);
     dataPath = QDir(QString::fromUtf8(tmp));
 
     // QMenu fileMenu "File" actions
-    connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
-    connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
-    connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
-    connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
+    // connect(ui->newProjectAction, &QAction::triggered, this, &MenuBar::newProjectActionTriggered);
+    // connect(ui->openProjectAction, &QAction::triggered, this, &MenuBar::openProjectActionTriggered);
+    // connect(ui->exportSolutionAction, &QAction::triggered, this, &MenuBar::exportSolutionActionTriggered);
+    // connect(ui->closeProjectAction, &QAction::triggered, this, &MenuBar::closeProjectActionTriggered);
     connect(ui->exitWindNinjaAction, &QAction::triggered, this, &QCoreApplication::quit);  // exit the entire app
 
     // QMenu optionsMenu "Options" actions
@@ -73,29 +75,31 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QObject* parent)
     connect(ui->citeWindNinjaAction, &QAction::triggered, this, &MenuBar::citeWindNinjaActionTriggered);
     connect(ui->supportEmailAction, &QAction::triggered, this, &MenuBar::supportEmailActionTriggered);
     connect(ui->submitBugReportAction, &QAction::triggered, this, &MenuBar::submitBugReportActionTriggered);
-    connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
+    //connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
     connect(ui->enableConsoleOutputAction, &QAction::toggled, this, &MenuBar::enableConsoleOutputActionToggled);
+
+    connect(ui->loadKmzKmlAction, &QAction::triggered, this, &MenuBar::loadKmzKmlActionTriggered);
 }
 
-void MenuBar::newProjectActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: newProject() triggered");
-}
+// void MenuBar::newProjectActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: newProject() triggered");
+// }
 
-void MenuBar::openProjectActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: openProject() triggered");
-}
+// void MenuBar::openProjectActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: openProject() triggered");
+// }
 
-void MenuBar::exportSolutionActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: exportSolution() triggered");
-}
+// void MenuBar::exportSolutionActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: exportSolution() triggered");
+// }
 
-void MenuBar::closeProjectActionTriggered()
-{
-    emit writeToConsoleSignal("MenuBar: closeProject() triggered");
-}
+// void MenuBar::closeProjectActionTriggered()
+// {
+//     emit writeToConsoleSignal("MenuBar: closeProject() triggered");
+// }
 
 void MenuBar::writeConsoleOutputActionTriggered()
 {
@@ -392,4 +396,53 @@ void MenuBar::submitBugReportActionTriggered()
 void MenuBar::enableConsoleOutputActionToggled(bool toggled)
 {
     ui->consoleTextEdit->setVisible(toggled);
+}
+
+void MenuBar::loadKmzKmlActionTriggered()
+{
+    QString dir = ui->outputDirectoryLineEdit->text();
+
+    QStringList files = QFileDialog::getOpenFileNames(
+        ui->centralwidget,
+        "Select files",
+        dir,
+        "KML/KMZ Files (*.kml *.kmz);;All Files (*)"
+        );
+
+    progress = new QProgressDialog("Loading KMZ/KML files...", QString(), 0, 0, ui->centralwidget);
+    progress->setWindowModality(Qt::ApplicationModal);
+    progress->setMinimumDuration(0);
+    progress->setValue(0);
+
+    for (const QString &outFileStr : files)
+    {
+        qDebug() << "kmz outFile =" << outFileStr;
+
+        QFileInfo fileInfo(outFileStr);
+        QString fileName = fileInfo.fileName();
+
+        QFile outFile(outFileStr);
+        if (!outFile.open(QIODevice::ReadOnly))
+        {
+            continue;
+        }
+
+        QByteArray data = outFile.readAll();
+        QString base64 = data.toBase64();
+
+        QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+        webEngineView->page()->runJavaScript(jsCall);
+    }
+}
+
+void MenuBar::kmzLoadFinished()
+{
+    if (progress)
+    {
+        progress->close();
+        progress->deleteLater();
+        progress = nullptr;
+    }
+
+    qDebug() << "KMZ/KML loading finished";
 }

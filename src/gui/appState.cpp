@@ -133,7 +133,7 @@ void AppState::updateDiurnalInputState()
 
 void AppState::updateStabilityInputState()
 {
-    if (isStabilityInputToggled)
+    if (ui->stabilityCheckBox->isChecked())
     {
         ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(2)->setToolTip(0, "Valid");

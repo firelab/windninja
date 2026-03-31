@@ -1027,7 +1027,7 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0,0">
               <property name="spacing">
                <number>6</number>
               </property>
@@ -1043,6 +1043,54 @@
               <property name="bottomMargin">
                <number>5</number>
               </property>
+              <item>
+               <widget class="QGroupBox" name="ninjafoamCaseGroupBox">
+                <property name="title">
+                 <string>Use Existing Case</string>
+                </property>
+                <layout class="QHBoxLayout" name="horizontalLayout_24">
+                 <property name="leftMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>5</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>5</number>
+                 </property>
+                 <item>
+                  <widget class="QLineEdit" name="ninjafoamCaseLineEdit"/>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="ninjafoamCaseButton">
+                   <property name="text">
+                    <string>Open Case</string>
+                   </property>
+                   <property name="icon">
+                    <iconset resource="../../wn-resources.qrc">
+                     <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="ninjaFoamCaseGroupBoxSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </widget>
+              </item>
               <item>
                <widget class="QGroupBox" name="elevationInputFileGroupBox">
                 <property name="sizePolicy">
@@ -1181,7 +1229,7 @@
                     </sizepolicy>
                    </property>
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="vegetationSelectionPage">
                     <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -1263,7 +1311,7 @@
                         </sizepolicy>
                        </property>
                        <property name="text">
-                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vegetation Data Set Using LCP File&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#ff0000;&quot;&gt;Vegetation Data Set Using LCP File&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                       </widget>
                      </item>
@@ -3096,7 +3144,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <height>16777215</height>
           </size>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,0,1">
+         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,1">
           <property name="leftMargin">
            <number>5</number>
           </property>
@@ -3321,62 +3369,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
             <property name="checked">
              <bool>true</bool>
             </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QGroupBox" name="kmzOutputGroupBox">
-            <property name="title">
-             <string>Load KMZ Output</string>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_23">
-             <property name="leftMargin">
-              <number>5</number>
-             </property>
-             <property name="topMargin">
-              <number>5</number>
-             </property>
-             <property name="rightMargin">
-              <number>5</number>
-             </property>
-             <property name="bottomMargin">
-              <number>5</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="kmzOutputOpenFileButton">
-               <property name="text">
-                <string>Open File</string>
-               </property>
-               <property name="icon">
-                <iconset resource="../../wn-resources.qrc">
-                 <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="kmzOutputClearButton">
-               <property name="text">
-                <string>Clear</string>
-               </property>
-               <property name="icon">
-                <iconset resource="../../wn-resources.qrc">
-                 <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="kmzOutputSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
            </widget>
           </item>
           <item>
@@ -5013,6 +5005,23 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="outputDirectoryOpenButton">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="cursor">
+                <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="text">
+                <string>Open Output Files Path</string>
+               </property>
+               <property name="icon">
+                <iconset resource="../../wn-resources.qrc">
+                 <normaloff>:/folder.png</normaloff>:/folder.png</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="outputDirectorySpacer">
                <property name="orientation">
                 <enum>Qt::Orientation::Horizontal</enum>
@@ -5949,11 +5958,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <property name="toolTipsVisible">
      <bool>true</bool>
     </property>
-    <addaction name="newProjectAction"/>
-    <addaction name="openProjectAction"/>
-    <addaction name="exportSolutionAction"/>
-    <addaction name="closeProjectAction"/>
     <addaction name="exitWindNinjaAction"/>
+    <addaction name="loadKmzKmlAction"/>
    </widget>
    <widget class="QMenu" name="optionsMenu">
     <property name="title">
@@ -6021,45 +6027,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <addaction name="citeWindNinjaAction"/>
     <addaction name="supportEmailAction"/>
     <addaction name="submitBugReportAction"/>
-    <addaction name="aboutQtAction"/>
    </widget>
    <addaction name="fileMenu"/>
    <addaction name="optionsMenu"/>
    <addaction name="toolsMenu"/>
    <addaction name="helpMenu"/>
   </widget>
-  <action name="newProjectAction">
-   <property name="text">
-    <string>&amp;New Project</string>
-   </property>
-   <property name="toolTip">
-    <string>Open New Project</string>
-   </property>
-  </action>
-  <action name="openProjectAction">
-   <property name="text">
-    <string>&amp;Open Project</string>
-   </property>
-   <property name="toolTip">
-    <string>Open Existing Project</string>
-   </property>
-  </action>
-  <action name="exportSolutionAction">
-   <property name="text">
-    <string>&amp;Export Solution</string>
-   </property>
-   <property name="toolTip">
-    <string>Save Output From Current Project</string>
-   </property>
-  </action>
-  <action name="closeProjectAction">
-   <property name="text">
-    <string>&amp;Close Project</string>
-   </property>
-   <property name="toolTip">
-    <string>Close Current Project</string>
-   </property>
-  </action>
   <action name="exitWindNinjaAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
@@ -6305,15 +6278,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>Ctrl+B</string>
    </property>
   </action>
-  <action name="aboutQtAction">
+  <action name="loadKmzKmlAction">
    <property name="icon">
-    <iconset theme="dialog-information"/>
+    <iconset resource="../../wn-resources.qrc">
+     <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
    </property>
    <property name="text">
-    <string>About &amp;Qt</string>
-   </property>
-   <property name="toolTip">
-    <string>Show the Qt library's About box</string>
+    <string>Load KMZ/KML</string>
    </property>
   </action>
  </widget>

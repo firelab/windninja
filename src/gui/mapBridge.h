@@ -48,10 +48,12 @@ public:
 signals:
     void boundingBoxReceived(double north, double south, double east, double west);
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
+    void mapLayersLoadingFinishedSignal();
 
 public slots:
     void receiveBoundingBox(const QString &jsonCoords);
     void invalidKMZ(const QString &fileName);
+    void mapLayersLoadingFinished();
 };
 
 #endif // BRIDGE_H

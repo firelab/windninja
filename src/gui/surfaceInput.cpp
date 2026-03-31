@@ -39,6 +39,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     progress = nullptr;
 
     ui->timeZoneDetailsTextEdit->setVisible(false);
+    ui->ninjafoamCaseGroupBox->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
     ui->elevationInputTypeStackedWidget->setCurrentIndex(0);
 
@@ -67,6 +68,8 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputTypePushButtonClicked);
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
+
+    connect(ui->ninjafoamCaseButton, &QPushButton::clicked, this, &SurfaceInput::ninjafoamCaseButtonClicked);
 
     connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
 
@@ -237,7 +240,9 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
     {
         downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     }
-    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", downloadsPath, "TIF Files (*.tif)");
+
+    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", downloadsPath + "/.tif", "TIF Files (*.tif)");
+
     if(demFilePath.isEmpty())
     {
         return;
@@ -314,6 +319,103 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
 
     emit updateState();
     emit updateTreeView();
+}
+
+void SurfaceInput::ninjafoamCaseButtonClicked()
+{
+    QString directoryPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
+
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    {
+        directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        directoryPath = inputFileDir;
+    }
+    else
+    {
+        directoryPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    }
+
+    QString ninjafoamDir = QFileDialog::getExistingDirectory(
+        ui->centralwidget,
+        tr("Open Existing Case"),
+        directoryPath,
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+        );
+
+    if (ninjafoamDir.isEmpty())
+    {
+        showInvalidCase("Invalid Existing Case. \nCase directory was empty.");
+        return;
+    }
+
+    QDir triSurfaceDir(ninjafoamDir + "/constant/triSurface");
+    QStringList stlFiles = triSurfaceDir.entryList(QStringList() << "*.stl", QDir::Files);
+    QString baseName;
+    for (const QString &file : stlFiles)
+    {
+        if (!file.contains("_out.stl"))
+        {
+            baseName = QFileInfo(file).completeBaseName();
+            break;
+        }
+    }
+    if (baseName.isEmpty())
+    {
+        showInvalidCase("Invalid Existing Case. \nNo DEM Information could be found.");
+        return;
+    }
+
+    QDir parentDir(QFileInfo(ninjafoamDir).absolutePath());
+    QStringList filters = {"*.tif", "*.lcp", "*.img", "*.asc"};
+    QStringList demFiles = parentDir.entryList(filters, QDir::Files);
+    QString demFilePath;
+    for (const QString &file : demFiles)
+    {
+        if (QFileInfo(file).completeBaseName() == baseName)
+        {
+            demFilePath = parentDir.absoluteFilePath(file);
+            break;
+        }
+    }
+    if (demFilePath.isEmpty())
+    {
+        showInvalidCase("Invalid Existing Case. \nThe DEM file could not be found.");
+        return;
+    }
+
+    bool retVal = loadDemMetadata(demFilePath);
+    if(retVal == false)
+    {
+        return;
+    }
+
+    ui->ninjafoamCaseLineEdit->setText(QFileInfo(ninjafoamDir).fileName());
+    ui->ninjafoamCaseLineEdit->setProperty("fullpath", ninjafoamDir);
+
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
+    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
+    ui->elevationInputFileLineEdit->setToolTip(demFilePath);
+
+    ui->elevationInputFileDownloadButton->setEnabled(false);
+    ui->meshResolutionComboBox->setEnabled(false);
+}
+
+void SurfaceInput::showInvalidCase(QString message)
+{
+    QMessageBox::critical(
+        ui->centralwidget,
+        tr("Error."),
+        message,
+        QMessageBox::Ok
+        );
+
+    ui->ninjafoamCaseLineEdit->clear();
+    ui->elevationInputFileDownloadButton->setEnabled(true);
+    ui->meshResolutionComboBox->setEnabled(true);
 }
 
 void SurfaceInput::elevationInputFileOpenButtonClicked()

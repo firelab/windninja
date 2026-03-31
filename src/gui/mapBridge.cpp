@@ -54,3 +54,9 @@ void MapBridge::invalidKMZ(const QString &fileName)
     qDebug() << message;
     emit writeToConsoleSignal(message, Qt::red);
 }
+
+void MapBridge::mapLayersLoadingFinished()
+{
+    qDebug() << "Map has finished loading";
+    emit mapLayersLoadingFinishedSignal();
+}

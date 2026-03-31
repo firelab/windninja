@@ -63,25 +63,14 @@
         .leaflet-drag-target {
             cursor: move !important;
         }
-        .leaflet-control-center {
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        .leaflet-control-center a {
+        .leaflet-center-button {
             display: block;
             text-align: center;
-            color: #0077ff;
-            font-size: 20px;
+            font-size: 35px;
             line-height: 26px;
             width: 28px;
             height: 28px;
             text-decoration: none;
-        }
-        .leaflet-control-center a:hover {
-            background: #0077ff;
-            color: white;
         }
         .leaflet-top.leaflet-right {
             z-index: 1000;
@@ -89,6 +78,15 @@
 
         .leaflet-bottom.leaflet-right {
             z-index: 400;
+        }
+        .leaflet-control-clear {
+            display: block;
+            text-align: center;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+            padding: 0px 10px;
+            text-decoration: none;
+            border-radius: 4px;
         }
     </style>
 
@@ -166,7 +164,6 @@
         const centerControl = L.control({ position: 'topleft' });
 
         const windninjaLegendToggle = L.layerGroup([]);
-        let windninjaLegendControls = [];
         const windninjaTimeSeriesToggle = L.layerGroup([]);
         let windninjaTimeSeriesEnabled = false;
         let windninjaLegendEnabled = false;
@@ -175,13 +172,14 @@
         let activeWindNinjaTimeSeriesUrl = null;
 
         const initializationLegendToggle = L.layerGroup([]);
-        let initializationLegendControls = [];
         const initializationTimeSeriesToggle = L.layerGroup([]);
         let initializationTimeSeriesEnabled = false;
         let initializationLegendEnabled = false;
         let activeInitializationLayer = null;
         let activeInitializationTimeSeriesImg = null;
         let activeInitializationTimeSeriesUrl = null;
+
+        let lastActiveLayer = null;
 
         const timeSeriesContainer = document.createElement('div');
         timeSeriesContainer.style.cssText = `
@@ -200,50 +198,55 @@
             map.getContainer().appendChild(timeSeriesContainer);
         });        
 
+        const legendContainer = document.createElement('div');
+        legendContainer.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-end;
+            z-index: 400;
+        `;
+
+        map.whenReady(() => {
+            map.getContainer().appendChild(legendContainer);
+        });
+
         const baseTree = {
             label: 'Base Maps',
             children: [
-                {
-                    label: 'Mapbox Streets',
-                    layer: streetBaseLayer
-                },
-                {
-                    label: 'Satellite',
-                    layer: satelliteBaseLayer
-                }
+                { label: 'Mapbox Streets',layer: streetBaseLayer },
+                { label: 'Satellite', layer: satelliteBaseLayer }
             ]
         };
 
         const windninjaOutputTree = {
-            label: 'WindNinja Output',
+            label: 'Simulation Output',
             children: [
-                {
-                    label: 'No Output',
-                    layer: L.layerGroup([]), 
-                    radioGroup: 'windninjaOutputs'
-                }
+                { label: 'No Output', layer: L.layerGroup([]), radioGroup: 'windninjaOutput'}
             ]
         };
 
         const initializationOutputTree = {
             label: 'Weather Model Output',
             children: [
-                {
-                    label: 'No Output',
-                    layer: L.layerGroup([]), 
-                    radioGroup: 'initializationOutput'
-                }
+                { label: 'No Output', layer: L.layerGroup([]),  radioGroup: 'initializationOutput' }
+            ]
+        };
+
+        const stationOutputTree = {
+            label: 'Weather Stations',
+            children: [
+                { label: 'No Output', layer: L.layerGroup([]),  radioGroup: 'stationOutput' }
             ]
         };
 
         const unknownOutputTree = {
             label: 'Unknown Output',
             children: [
-                {
-                    label: 'No Output',
-                    layer: L.layerGroup([]), 
-                    radioGroup: 'unknownOutput'
-                }
+                { label: 'No Output', layer: L.layerGroup([]), radioGroup: 'unknownOutput' }
             ]
         };
 
@@ -255,9 +258,7 @@
         const layerControl = L.control.layers.tree(
             baseTree,
             [],
-            {
-                collapsed: true
-            }
+            { collapsed: true }
         ).addTo(map);
 
 
@@ -313,19 +314,7 @@
             }, 10);
 
             showCenterControl();
-
-            if (layerControl && layerControl.setOverlayTree && windninjaOutputTree.children.length > 1) {
-                layerControl.setOverlayTree([
-                    windninjaOutputTree,
-                    initializationOutputTree,
-                    overlayTree
-                ]);
-            }
-            else {
-                layerControl.setOverlayTree([
-                    overlayTree
-                ]);
-            }
+            updateOverlayTree();
         }
 
         function startRectangleDrawing() {
@@ -359,7 +348,8 @@
             }
         }
 
-        function hideCenterControl() {
+        function hideCenterControl() 
+        {
             if (centerControlAdded) {
                 map.removeControl(centerControl);
                 centerControlAdded = false;
@@ -368,36 +358,92 @@
 
         centerControl.onAdd = function(map) {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
-            const button = L.DomUtil.create('a', '', container);
+            const button = L.DomUtil.create('a', 'leaflet-center-button', container);
             button.innerHTML = '⌖';
-            button.title = 'Center on current shape';
+            button.title = 'Center on current layer';
             button.href = '#';
 
             L.DomEvent.on(button, 'click', (e) => {
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
 
-                let layer = null;
-
-                if (boundingBoxLayer.getLayers().length > 0) {
-                    layer = boundingBoxLayer.getLayers()[0];
-                }
-                else if (demLayer.getLayers().length > 0) {
-                    layer = demLayer.getLayers()[0];
-                }
-
-                if (layer && layer.getBounds) {
-                    map.fitBounds(layer.getBounds());
-                }
+                centerMapOnActiveLayer();
             });
 
             return container;
-            };
+        };
+
+        const clearControl = L.control({ position: 'topright' });
+
+        clearControl.onAdd = function () {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+
+            const button = L.DomUtil.create('a', 'leaflet-control-clear', container);
+            button.innerHTML = 'Clear';
+            button.title = 'Clear all layers';
+            button.href = '#';
+
+            L.DomEvent.on(button, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+
+                clearWindNinjaOutputTree();
+                clearInitializationOutputTree();
+                clearStationOutputTree();
+                clearUnknownOutputTree();
+                clearTimeSeriesContainer();
+
+                activeWindNinjaLayer = null;
+                activeInitializationLayer = null;
+                activeWindNinjaTimeSeriesImg = null;
+                activeInitializationTimeSeriesImg = null;
+            });
+
+            return container;
+        };
+        function centerMapOnActiveLayer() {
+            let bounds = null;
+
+            if (boundingBoxLayer.getLayers().length > 0) {
+                bounds = boundingBoxLayer.getLayers()[0].getBounds();
+            }
+
+            if (lastActiveLayer && map.hasLayer(lastActiveLayer)) {
+                lastActiveLayer.eachLayer(layer => {
+                    if (layer.getBounds) bounds = layer.getBounds();
+                });
+            }
+
+            else if (demLayer.getLayers().length > 0) {
+                bounds = demLayer.getLayers()[0].getBounds();
+            }
+
+            if (bounds) {
+                map.fitBounds(bounds);
+            }
+        }
 
         let kmzTimeSeriesImg = null;
         let kmzTimeSeriesImgUrl = null;
+        let pendingKmzLoads = 0;
 
-        async function loadKmzFromBase64(kmlData, fileName) {
+        function finishKmzLoad() {
+            pendingKmzLoads--;
+
+            if (pendingKmzLoads === 0) {
+                centerMapOnActiveLayer(); 
+
+                if (window.bridge?.receiveBoundingBox) {
+                    window.bridge.mapLayersLoadingFinished();
+                }
+            }
+        }
+
+        let activeWindNinjaLegendCard = null;
+        let activeInitializationLegendCard = null;
+
+        async function loadKmzFromBase64(data, fileName) {
+            pendingKmzLoads++;
             if (kmzTimeSeriesImg) {
                 kmzTimeSeriesImg.remove();
                 kmzTimeSeriesImg = null;
@@ -407,68 +453,13 @@
                 kmzTimeSeriesImgUrl = null;
             }
 
-            const trimmedData = kmlData.trim();
-            const isRawKml = trimmedData.startsWith('<') || !trimmedData.startsWith('UEsDB'); // 'UEsDB' is base64 for 'PK'
-
-            if (isRawKml) {
-                console.info('Raw KML detected. Checking author metadata...');
-                const parser = new DOMParser();
-                const kmlDoc = parser.parseFromString(atob(kmlData), 'text/xml');
-                
-                const nameTag = kmlDoc.getElementsByTagName('name')[0];
-                let layerName = fileName;
-
-                const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
-                const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
-
-                const kmlLayer = new L.KML(kmlDoc);
-                const kmlLegendLayer = L.layerGroup([kmlLayer]);
-
-                if (isWindNinja) {
-                    console.info('WindNinja KML detected.');
-
-                    const nameUpper = layerName.toUpperCase();
-                    const isSpecialSource =
-                        nameUpper.includes('NOMADS') ||
-                        nameUpper.includes('UCAR') ||
-                        nameUpper.includes('PASTCAST');
-
-                    if (!layerName.toLowerCase().endsWith('.kmz')) {
-                        layerName += '.kmz';
-                    }
-
-                    if (isSpecialSource) {
-
-                        initializationOutputTree.children.push({
-                            label: layerName,
-                            layer: kmlLegendLayer,
-                            radioGroup: 'initializationOutput'
-                        });
-
-                    } else {
-                        windninjaOutputTree.children.push({
-                            label: layerName,
-                            layer: kmlLegendLayer,
-                            radioGroup: 'windninjaOutputs'
-                        });
-                    }
-                } else {
-                    console.info('Unknown KML detected.');
-                    if (!layerName.toLowerCase().endsWith('.kml')) layerName += '.kml';
-                    
-                    unknownOutputTree.children.push({
-                        label: layerName,
-                        layer: kmlLegendLayer,
-                        radioGroup: 'unknownOutput'
-                    });
-                }
-
-                kmlLegendLayer.addTo(map);
-                updateOverlayTree();
-                return;
+            const handled = await handleKml(data, fileName);
+            if (handled) {
+                finishKmzLoad();   
+                return; 
             }
-
-            const binary = atob(kmlData);
+            
+            const binary = atob(data);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) {
                 bytes[i] = binary.charCodeAt(i);
@@ -482,7 +473,7 @@
             );
 
             if (containsKeyword) {
-                loadOutputFromBase64(kmlData, fileName);
+                loadOutputFromBase64(data, fileName);
                 return; 
             }
 
@@ -506,12 +497,10 @@
             const authorNode = kmlDoc.querySelector('author');
             const author = authorNode ? authorNode.textContent.trim() : null;
 
-            if (author !== 'WindNinja') {
-                
+            if (author !== 'WindNinja') {  
                 if (window.bridge?.invalidKMZ) {
                     window.bridge.invalidKMZ(fileName);
                 }
-
                 return;
             }
             
@@ -522,8 +511,16 @@
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
 
-            const legendControl = L.control({ position: 'bottomright' });
-            windninjaLegendControls.push(legendControl);
+            const blob = await legendEntries[0].async('blob');
+
+            if (activeWindNinjaLayer === kmlLegendLayer) {
+                showWindNinjaLegend(blob);
+            }
+
+            const hasLegend = legendEntries.length > 0;
+            const hasTimeSeries = legendEntries.length > 1;
+            kmlLegendLayer._hasLegend = hasLegend;
+            kmlLegendLayer._hasTimeSeries = hasTimeSeries;
 
             if (legendEntries.length > 1) {
                 (async () => {
@@ -552,99 +549,161 @@
                 })();
             }
 
-            legendControl.onAdd = function () {
+            kmlLegendLayer.on('add', () => {
+                activeWindNinjaLayer = kmlLegendLayer;
+                lastActiveLayer = kmlLegendLayer;
 
-                const container = L.DomUtil.create('div', 'kmz-legend');
-                L.DomEvent.disableClickPropagation(container);
+                if (activeWindNinjaLegendCard) {
+                    activeWindNinjaLegendCard.remove();
+                    activeWindNinjaLegendCard = null;
+                }
 
-                if (legendEntries.length === 0) return container;
+                if (kmlLegendLayer._hasLegend && windninjaLegendEnabled && legendEntries.length > 0) {
+                    legendEntries[0].async('blob').then(blob => showWindNinjaLegend(blob));
+                }
 
-                (async () => {
-
-                    const blob = await legendEntries[0].async('blob');
-                    const url = URL.createObjectURL(blob);
-
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => URL.revokeObjectURL(url);
-                    img.style.cssText = 'display:block;max-width:150px;height:auto;';
-
-                    container.appendChild(img);
-
-                })();
-
-                return container;
-            };
+                if (windninjaTimeSeriesEnabled) {
+                    if (timeSeriesImg) {
+                        showWindNinjaTimeSeries(timeSeriesImg);
+                    } 
+                    else if (activeWindNinjaTimeSeriesImg) {
+                        activeWindNinjaTimeSeriesImg.remove();
+                        activeWindNinjaTimeSeriesImg = null;
+                    }
+                }
+                updateOverlayTree();
+            });
 
             kmlLegendLayer.on('remove', () => {
-
-                map.removeControl(legendControl);
 
                 if (activeWindNinjaLayer === kmlLegendLayer) {
                     activeWindNinjaLayer = null;
                 }
 
-                // only remove image if the overlay itself is disabled
+                if (activeWindNinjaLegendCard) {
+                    activeWindNinjaLegendCard.remove();
+                    activeWindNinjaLegendCard = null;
+                }
+
                 if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
                     timeSeriesImg.remove();
                     activeWindNinjaTimeSeriesImg = null;
                 }
             });
 
-            kmlLegendLayer.on('add', () => {
-
-                activeWindNinjaLayer = kmlLegendLayer;
-
-                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
-
-                if (windninjaLegendEnabled) {
-                    legendControl.addTo(map);
-                }
-
-                if (windninjaTimeSeriesEnabled) {
-
-                    if (timeSeriesImg) {
-                        showWindNinjaTimeSeries(timeSeriesImg);
-                    } else if (activeWindNinjaTimeSeriesImg) {
-                        activeWindNinjaTimeSeriesImg.remove();
-                        activeWindNinjaTimeSeriesImg = null;
-                    }
-
-                }
-            });
-
-            kmlLegendLayer.on('remove', () => {
-
-                map.removeControl(legendControl);
-
-                if (!windninjaTimeSeriesEnabled && timeSeriesImg) {
-                    timeSeriesImg.remove();
-                }
-
-                if (activeWindNinjaLayer === kmlLegendLayer) {
-                    activeWindNinjaLayer = null;
-                }
-            });
-
-            const isFirstLayer = windninjaOutputTree.children.length === 1;
-
-            if (isFirstLayer) {
-                kmlLegendLayer.addTo(map);
-            }
-
-            windninjaOutputTree.children.push({
-                label: layerName,
-                layer: kmlLegendLayer,
-                radioGroup: 'windninjaOutputs'
-            });
+            windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutput'});
 
             updateOverlayTree();
+
+            if (activeWindNinjaLayer) {
+                map.removeLayer(activeWindNinjaLayer);
+            }
+            map.addLayer(kmlLegendLayer);
+
+            if (!map.hasLayer(windninjaLegendToggle)) {
+                map.addLayer(windninjaLegendToggle);
+            }
+            if (!map.hasLayer(windninjaTimeSeriesToggle)) {
+                map.addLayer(windninjaTimeSeriesToggle);
+            }
+
+            windninjaLegendEnabled = true;
+            windninjaTimeSeriesEnabled = true;
+            
+            finishKmzLoad();
+            showCenterControl();
+        }
+
+        async function handleKml(data, fileName)
+        {  
+            const trimmedData = data.trim();
+            const isRawKml = trimmedData.startsWith('<') || !trimmedData.startsWith('UEsDB'); 
+            if (!isRawKml){
+                return false;
+            }
+            const parser = new DOMParser();
+            const kmlDoc = parser.parseFromString(atob(data), 'text/xml');
+            
+            const nameTag = kmlDoc.getElementsByTagName('name')[0];
+            let layerName = fileName;
+
+            const descriptionTag = kmlDoc.getElementsByTagName('description')[0];
+            const isStationOutput = descriptionTag && descriptionTag.textContent.includes('Weather Stations:');
+
+            const authorTags = kmlDoc.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "name");
+            const isWindNinja = authorTags.length > 0 && authorTags[0].textContent.includes('WindNinja');
+
+            const kmlLayer = new L.KML(kmlDoc);
+            const kmlLegendLayer = L.layerGroup([kmlLayer]);
+
+            if (isStationOutput) {
+                    if (!layerName.toLowerCase().endsWith('.kml')) layerName += '.kml';
+                    stationOutputTree.children.push({
+                        label: layerName,
+                        layer: kmlLegendLayer,
+                        radioGroup: 'stationOutput'
+                    });
+            } 
+            else if (isWindNinja) {
+                const nameUpper = layerName.toUpperCase();
+                const isSpecialSource = nameUpper.includes('NOMADS') || nameUpper.includes('UCAR') || nameUpper.includes('PASTCAST');
+
+                if (!layerName.toLowerCase().endsWith('.kmz')) {
+                    layerName += '.kmz';
+                }
+
+                if (isSpecialSource) {
+                    initializationOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'initializationOutput' });
+                } 
+                else {
+                    windninjaOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'windninjaOutput' });
+                }
+            } 
+            else {
+                if (!layerName.toLowerCase().endsWith('.kml')) {
+                    layerName += '.kml';
+                }
+                unknownOutputTree.children.push({ label: layerName, layer: kmlLegendLayer,radioGroup: 'unknownOutput' });
+            }
+
+            updateOverlayTree();
+
+            if (isWindNinja) {
+                const nameUpper = layerName.toUpperCase();
+                const isSpecialSource = nameUpper.includes('NOMADS') || nameUpper.includes('UCAR') || nameUpper.includes('PASTCAST');
+
+                if (isSpecialSource) {
+                    if (activeInitializationLayer) {
+                        map.removeLayer(activeInitializationLayer);
+                    }
+                    activeInitializationLayer = kmlLegendLayer;
+                } else {
+                    if (activeWindNinjaLayer) {
+                        map.removeLayer(activeWindNinjaLayer);
+                    }
+                    activeWindNinjaLayer = kmlLegendLayer;
+                }
+            } else {
+                if (unknownOutputTree.children.length > 1) {
+                    unknownOutputTree.children.forEach(item => {
+                        if (item.layer) map.removeLayer(item.layer);
+                    });
+                }
+            }
+
+            map.addLayer(kmlLegendLayer);
+
+            lastActiveLayer = kmlLegendLayer;
+
+            showCenterControl();
+            return true;
         }
 
         async function loadOutputFromBase64(data, fileName) {
             const binary = atob(data);
             const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
+            for (let i = 0; i < binary.length; i++) 
+            {
                 bytes[i] = binary.charCodeAt(i);
             }
 
@@ -670,13 +729,17 @@
             const kmlLegendLayer = L.layerGroup([kmlLayer]);
             const layerName = fileName;
 
+            const blob = await legendEntries[0].async('blob');
+
+            if (activeInitializationLayer === kmlLegendLayer) {
+                showInitializationLegend(blob);
+            }
+
             let timeSeriesImg = null;
             let timeSeriesImgUrl = null;
-
-            const legendControl = L.control({ position: 'bottomright' });
-            initializationLegendControls.push(legendControl);
             
-            if (legendEntries.length > 1) {
+            if (legendEntries.length > 1) 
+            {
                 (async () => {
 
                     const blob = await legendEntries[1].async('blob');
@@ -704,87 +767,107 @@
 
                 })();
             }
-
-            legendControl.onAdd = function () {
-
-                const container = L.DomUtil.create('div', 'kmz-legend');
-                L.DomEvent.disableClickPropagation(container);
-
-                if (legendEntries.length === 0) return container;
-
-                (async () => {
-
-                    const blob = await legendEntries[0].async('blob');
-                    const url = URL.createObjectURL(blob);
-
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => URL.revokeObjectURL(url);
-                    img.style.cssText = 'display:block;max-width:150px;height:auto;';
-
-                    container.appendChild(img);
-
-                })();
-
-                return container;
-            };
-
-            kmlLegendLayer.on('remove', () => {
-
-                if (!initializationTimeSeriesEnabled && timeSeriesImg) {
-                    timeSeriesImg.remove();
-                }
-
-                if (timeSeriesImgUrl) {
-                    URL.revokeObjectURL(timeSeriesImgUrl);
-                    timeSeriesImgUrl = null;
-                }
-            });
          
-            // Toggle legend with layer
             kmlLegendLayer.on('add', () => {
-
                 activeInitializationLayer = kmlLegendLayer;
+                lastActiveLayer = kmlLegendLayer;
 
-                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                if (activeInitializationLegendCard) {
+                    activeInitializationLegendCard.remove();
+                    activeInitializationLegendCard = null;
+                }
 
                 if (initializationLegendEnabled) {
-                    legendControl.addTo(map);
+                    legendEntries[0].async('blob').then(blob => showInitializationLegend(blob));
                 }
 
                 if (initializationTimeSeriesEnabled && timeSeriesImg) {
                     showInitializationTimeSeries(timeSeriesImg);
                 }
+                
+                updateOverlayTree();
             });
 
             kmlLegendLayer.on('remove', () => {
 
-                map.removeControl(legendControl);
-
-                if (timeSeriesImg) {
-                    timeSeriesImg.remove();
-                }
-
                 if (activeInitializationLayer === kmlLegendLayer) {
                     activeInitializationLayer = null;
                 }
+
+                if (activeInitializationLegendCard) {
+                    activeInitializationLegendCard.remove();
+                    activeInitializationLegendCard = null;
+                }
+
+                if (!initializationTimeSeriesEnabled && timeSeriesImg) {
+                    timeSeriesImg.remove();
+                    showInitializationTimeSeriesImg = null;
+                }
             });
 
-            const isFirstLayer = initializationOutputTree.children.length === 1;
-            if (isFirstLayer) {
-                kmlLegendLayer.addTo(map);
-            }
-
-            initializationOutputTree.children.push({
-                label: layerName,
-                layer: kmlLegendLayer,
-                radioGroup: 'initializationOutput'
-            });
+            initializationOutputTree.children.push({ label: layerName, layer: kmlLegendLayer, radioGroup: 'initializationOutput'});
 
             updateOverlayTree();
+
+            if (activeInitializationLayer) {
+                map.removeLayer(activeInitializationLayer);
+            }
+            map.addLayer(kmlLegendLayer);
+
+            if (!map.hasLayer(initializationLegendToggle)) {
+                map.addLayer(initializationLegendToggle);
+            }
+            if (!map.hasLayer(initializationTimeSeriesToggle)) {
+                map.addLayer(initializationTimeSeriesToggle);
+            }
+
+            initializationLegendEnabled = true;
+            initializationTimeSeriesEnabled = true;
+
+            finishKmzLoad();
+            showCenterControl();
         }
 
-        function clearWindNinjaOutputTree() {
+        function showWindNinjaLegend(blob) {
+            if (!windninjaLegendEnabled) return;
+
+            if (activeWindNinjaLegendCard) {
+                activeWindNinjaLegendCard.remove();
+                activeWindNinjaLegendCard = null;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            img.onload = () => URL.revokeObjectURL(url);
+
+            const card = createLegendCard(img, 'Simulation Legend', 2); // bottom
+            legendContainer.appendChild(card);
+
+            activeWindNinjaLegendCard = card;
+        }
+
+        function showInitializationLegend(blob) {
+            if (!initializationLegendEnabled) return;
+
+            if (activeInitializationLegendCard) {
+                activeInitializationLegendCard.remove();
+                activeInitializationLegendCard = null;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.src = url;
+            img.onload = () => URL.revokeObjectURL(url);
+
+            const card = createLegendCard(img, 'Weather Model Legend', 1); // top
+            legendContainer.appendChild(card);
+
+            activeInitializationLegendCard = card;
+        }
+
+        function clearWindNinjaOutputTree() 
+        {
             clearTimeSeriesContainer();
             windninjaOutputTree.children.forEach(item => {
                 if (item.layer && item.label !== 'No Output') {
@@ -795,13 +878,14 @@
             windninjaOutputTree.children = [{
                 label: 'No Output',
                 layer: L.layerGroup([]),
-                radioGroup: 'windninjaOutputs'
+                radioGroup: 'windninjaOutput'
             }];
 
             updateOverlayTree();
         }
 
-        function clearInitializationOutputTree() {
+        function clearInitializationOutputTree() 
+        {
             clearTimeSeriesContainer();
             initializationOutputTree.children.forEach(item => {
                 if (item.layer && item.label !== 'No Output') {
@@ -818,7 +902,25 @@
             updateOverlayTree();
         }
 
-        function clearUnknownOutputTree() {
+        function clearStationOUtput() 
+        {
+            stationOutputTree.children.forEach(item => {
+                if (item.layer && item.label !== 'No Output') {
+                    map.removeLayer(item.layer);
+                }
+            });
+
+            stationOutputTree.children = [{
+                label: 'No Stations',
+                layer: L.layerGroup([]),
+                radioGroup: 'stationOutput'
+            }];
+
+            updateOverlayTree();
+        }
+
+        function clearUnknownOutputTree() 
+        {
             unknownOutputTree.children.forEach(item => {
                 if (item.layer && item.label !== 'No Output') {
                     map.removeLayer(item.layer);
@@ -834,7 +936,8 @@
             updateOverlayTree();
         }
 
-        function clearBoundingBoxLayer() {
+        function clearBoundingBoxLayer() 
+        {
             boundingBoxLayer.eachLayer(layer => {
                 if (layer.editing) layer.editing.disable();
             });
@@ -845,7 +948,8 @@
             demLayer.clearLayers();
         }
 
-        function updateOverlayTree() {
+        function updateOverlayTree() 
+        {
             if (!layerControl || !layerControl.setOverlayTree) return;
 
             const displayTree = [];
@@ -865,26 +969,31 @@
                 });
             }
 
-            if (windninjaOutputTree.children.length > 1) {
-                overlayChildren.push({
-                    label: 'WindNinja Legend',
-                    layer: windninjaLegendToggle
-                });
+            if (activeWindNinjaLayer) {
 
-                overlayChildren.push({
-                    label: 'WindNinja Time Series',
-                    layer: windninjaTimeSeriesToggle
-                });
+                if (activeWindNinjaLayer._hasLegend) {
+                    overlayChildren.push({
+                        label: 'Simulation Legend',
+                        layer: windninjaLegendToggle
+                    });
+                }
+
+                if (activeWindNinjaLayer._hasTimeSeries) {
+                    overlayChildren.push({
+                        label: 'Simulation Datetime',
+                        layer: windninjaTimeSeriesToggle
+                    });
+                }
             }
 
-            if (initializationOutputTree.children.length > 1) {
+            if (activeInitializationLayer) {
                 overlayChildren.push({
                     label: 'Weather Model Legend',
                     layer: initializationLegendToggle
                 });
 
                 overlayChildren.push({
-                    label: 'Weather Model Time Series',
+                    label: 'Weather Model Datetime',
                     layer: initializationTimeSeriesToggle
                 });
             }
@@ -894,6 +1003,9 @@
 
             if (initializationOutputTree.children.length > 1)
                 displayTree.push(initializationOutputTree);
+
+            if (stationOutputTree.children.length > 1)
+                displayTree.push(stationOutputTree);
 
             if (unknownOutputTree.children.length > 1)
                 displayTree.push(unknownOutputTree);
@@ -911,90 +1023,67 @@
         map.on('overlayadd', e => {
 
             if (e.layer === windninjaLegendToggle) {
-
                 windninjaLegendEnabled = true;
+                if (activeWindNinjaLayer) activeWindNinjaLayer.fire('add');
+            }
+            if (e.layer === initializationLegendToggle) {
+                initializationLegendEnabled = true;
+                if (activeInitializationLayer) activeInitializationLayer.fire('add');
+            }
 
-                if (activeWindNinjaLayer) {
-                    activeWindNinjaLayer.fire('add');
+            if (e.layer === windninjaTimeSeriesToggle) {
+                windninjaTimeSeriesEnabled = true;
+                if (activeWindNinjaLayer) activeWindNinjaLayer.fire('add');
+            }
+            if (e.layer === initializationTimeSeriesToggle) {
+                initializationTimeSeriesEnabled = true;
+                if (activeInitializationLayer) activeInitializationLayer.fire('add');
+            }
+
+            if (e.layer === windninjaOutputTree.children[0]?.layer) {
+                if (activeWindNinjaTimeSeriesImg) {
+                    activeWindNinjaTimeSeriesImg.remove();
+                    activeWindNinjaTimeSeriesImg = null;
                 }
+                activeWindNinjaLayer = null;
+                updateOverlayTree();
+            }
+            if (e.layer === initializationOutputTree.children[0]?.layer) {
+                if (activeInitializationTimeSeriesImg) {
+                    activeInitializationTimeSeriesImg.remove();
+                    activeInitializationTimeSeriesImg = null;
+                }
+                activeInitializationLayer = null;
+                updateOverlayTree();
             }
         });
 
         map.on('overlayremove', e => {
 
             if (e.layer === windninjaLegendToggle) {
-
                 windninjaLegendEnabled = false;
-
-                windninjaLegendControls.forEach(ctrl => map.removeControl(ctrl));
+                if (activeWindNinjaLegendCard) {
+                    activeWindNinjaLegendCard.remove();
+                    activeWindNinjaLegendCard = null;
+                }            
             }
-        });
-
-        map.on('overlayadd', e => {
-
             if (e.layer === initializationLegendToggle) {
-
-                initializationLegendEnabled = true;
-
-                if (activeInitializationLayer) {
-                    activeInitializationLayer.fire('add');
-                }
-            }
-        });
-
-        map.on('overlayremove', e => {
-
-            if (e.layer === initializationLegendToggle) {
-
                 initializationLegendEnabled = false;
-
-                initializationLegendControls.forEach(ctrl => map.removeControl(ctrl));
-            }
-        });
-
-        map.on('overlayadd', e => {
-
-            if (e.layer === windninjaTimeSeriesToggle) {
-
-                windninjaTimeSeriesEnabled = true;
-
-                if (activeWindNinjaLayer) {
-                    activeWindNinjaLayer.fire('add');
+                if (activeInitializationLegendCard) {
+                    activeInitializationLegendCard.remove();
+                    activeInitializationLegendCard = null;
                 }
             }
-        });
-
-        map.on('overlayremove', e => {
 
             if (e.layer === windninjaTimeSeriesToggle) {
-
                 windninjaTimeSeriesEnabled = false;
-
                 if (activeWindNinjaTimeSeriesImg) {
                     activeWindNinjaTimeSeriesImg.remove();
                     activeWindNinjaTimeSeriesImg = null;
                 }
             }
-        });
-
-        map.on('overlayadd', e => {
-
             if (e.layer === initializationTimeSeriesToggle) {
-
-                initializationTimeSeriesEnabled = true;
-
-                if (activeInitializationLayer) {
-                    activeInitializationLayer.fire('add');
-                }
-            }
-        });
-
-        map.on('overlayremove', e => {
-
-            if (e.layer === initializationTimeSeriesToggle) {
-
                 initializationTimeSeriesEnabled = false;
-
                 if (activeInitializationTimeSeriesImg) {
                     activeInitializationTimeSeriesImg.remove();
                     activeInitializationTimeSeriesImg = null;
@@ -1002,60 +1091,81 @@
             }
         });
 
-        map.on('overlayadd', e => {
-
-        // WindNinja "No Output"
-        if (e.layer === windninjaOutputTree.children[0].layer) {
-
-            if (activeWindNinjaTimeSeriesImg) {
-                activeWindNinjaTimeSeriesImg.remove();
-                activeWindNinjaTimeSeriesImg = null;
-            }
-
-            activeWindNinjaLayer = null;
-        }
-
-        // Weather Model "No Output"
-        if (e.layer === initializationOutputTree.children[0].layer) {
-
-            if (activeInitializationTimeSeriesImg) {
-                activeInitializationTimeSeriesImg.remove();
-                activeInitializationTimeSeriesImg = null;
-            }
-
-            activeInitializationLayer = null;
-        }
-
-    });
-
     function clearTimeSeriesContainer() {
         while (timeSeriesContainer.firstChild) {
             timeSeriesContainer.removeChild(timeSeriesContainer.firstChild);
         }
     }
 
+    function createTimeSeriesCard(img, titleText, orderValue) {
+        const card = document.createElement('div');
+        card.style.border = '2px solid black';
+        card.style.backgroundColor = 'white';
+        card.style.display = 'inline-block';
+        card.style.order = orderValue; 
+
+        const header = document.createElement('div');
+        header.innerText = titleText;
+        header.style.backgroundColor = 'black';
+        header.style.color = 'white';
+        header.style.padding = '2px 8px';
+        header.style.fontSize = '12px';
+        header.style.fontFamily = 'Arial, sans-serif';
+        header.style.fontWeight = 'bold';
+        header.style.textAlign = 'left';
+
+        img.style.display = 'block';
+        img.style.margin = '0 auto';
+        
+        card.appendChild(header);
+        card.appendChild(img);
+        
+        return card;
+    }
+
+    function createLegendCard(img, titleText, orderValue) {
+        const card = document.createElement('div');
+        card.style.border = '2px solid black';
+        card.style.backgroundColor = 'white';
+        card.style.display = 'inline-block';
+        card.style.order = orderValue;
+
+        const header = document.createElement('div');
+        header.innerText = titleText;
+        header.style.backgroundColor = 'black';
+        header.style.color = 'white';
+        header.style.padding = '2px 8px';
+        header.style.fontSize = '12px';
+        header.style.fontFamily = 'Arial, sans-serif';
+        header.style.fontWeight = 'bold';
+        header.style.textAlign = 'left';
+
+        img.style.display = 'block';
+        img.style.maxWidth = '150px';
+        img.style.height = 'auto';
+
+        card.appendChild(header);
+        card.appendChild(img);
+
+        return card;
+    }
+
     function showWindNinjaTimeSeries(img) {
-
         if (!windninjaTimeSeriesEnabled || !img) return;
+        if (activeWindNinjaTimeSeriesImg) activeWindNinjaTimeSeriesImg.remove();
 
-        if (activeWindNinjaTimeSeriesImg) {
-            activeWindNinjaTimeSeriesImg.remove();
-        }
-
-        timeSeriesContainer.appendChild(img);
-        activeWindNinjaTimeSeriesImg = img;
+        const card = createTimeSeriesCard(img, 'Simulation Datetime', 2);
+        timeSeriesContainer.appendChild(card);
+        activeWindNinjaTimeSeriesImg = card;
     }
 
     function showInitializationTimeSeries(img) {
-
         if (!initializationTimeSeriesEnabled || !img) return;
+        if (activeInitializationTimeSeriesImg) activeInitializationTimeSeriesImg.remove();
 
-        if (activeInitializationTimeSeriesImg) {
-            activeInitializationTimeSeriesImg.remove();
-        }
-
-        timeSeriesContainer.appendChild(img);
-        activeInitializationTimeSeriesImg = img;
+        const card = createTimeSeriesCard(img, 'Weather Model Datetime', 1);
+        timeSeriesContainer.appendChild(card);
+        activeInitializationTimeSeriesImg = card;
     }
 
 
@@ -1070,9 +1180,8 @@
         map.addLayer(demLayer);
 
         layerControl.addTo(map);
+        clearControl.addTo(map);
         L.control.scale().addTo(map);
-
-        
 
     </script>
 </body>

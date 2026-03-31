@@ -6,15 +6,13 @@
 #include <QObject>
 #include <QStandardPaths>
 #include <QFileDialog>
-#include <QtWebEngineWidgets/qwebengineview.h>
-
 
 
 class Outputs : public QObject
 {
     Q_OBJECT
 public:
-    explicit Outputs(Ui::MainWindow *ui, QWebEngineView *webEngineView, QObject* parent);
+    explicit Outputs(Ui::MainWindow *ui, QObject* parent);
 
 signals:
     void updateGoogleState();
@@ -36,13 +34,9 @@ private slots:
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void meshResolutionSpinBoxValueChanged(double value);
     void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
-    void kmzOutputOpenFileButtonClicked();
-    void kmzOutputClearButtonClicked();
 
 private:
     Ui::MainWindow *ui;
-    QWebEngineView *webEngineView;
-
 };
 
 #endif // OUTPUTS_H

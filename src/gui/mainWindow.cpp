@@ -64,12 +64,12 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(webEngineView);
     ui->mapPanelWidget->setLayout(layout);
-    menuBar = new MenuBar(ui, this);
+    menuBar = new MenuBar(ui, webEngineView, this);
     surfaceInput = new SurfaceInput(ui, webEngineView, this);
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, this);
     weatherModelInput = new WeatherModelInput(ui, this);
-    outputs = new Outputs(ui, webEngineView, this);
+    outputs = new Outputs(ui, this);
 
     ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
     ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
@@ -126,6 +126,7 @@ void MainWindow::connectSignals()
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
+    connect(ui->outputDirectoryOpenButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryOpenButtonClicked);
     connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
 
     connect(menuBar, &MenuBar::writeToConsoleSignal, this, &MainWindow::writeToConsole);
@@ -146,6 +147,8 @@ void MainWindow::connectSignals()
     connect(pointInitializationInput, &PointInitializationInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::kmzLoadFinished);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -316,6 +319,9 @@ void MainWindow::treeWidgetItemSelectionChanged()
 
 void MainWindow::massSolverCheckBoxClicked()
 {
+    ui->stabilityCheckBox->setDisabled(false);
+    ui->ninjafoamCaseGroupBox->setVisible(false);
+
     AppState& state = AppState::instance();
 
     if (state.isMomentumSolverToggled)
@@ -335,6 +341,10 @@ void MainWindow::massSolverCheckBoxClicked()
 
 void MainWindow::momentumSolverCheckBoxClicked()
 {
+    ui->stabilityCheckBox->setChecked(false);
+    ui->stabilityCheckBox->setDisabled(true);
+    ui->ninjafoamCaseGroupBox->setVisible(true);
+
     AppState& state = AppState::instance();
 
     if (state.isMassSolverToggled)
@@ -350,6 +360,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
         surfaceInput->updateMeshResolutionByUnits();
     }
     emit updateMetholodyState();
+    emit updateStabilityState();
 }
 
 void MainWindow::diurnalCheckBoxClicked()
@@ -400,6 +411,11 @@ void MainWindow::outputDirectoryButtonClicked()
         ui->outputDirectoryLineEdit->setText(currentPath);
         ui->outputDirectoryLineEdit->setToolTip(currentPath);
     }
+}
+
+void MainWindow::outputDirectoryOpenButtonClicked()
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(outputDir.absolutePath()));
 }
 
 void MainWindow::solveButtonClicked()
@@ -1010,7 +1026,6 @@ void MainWindow::solveButtonClicked()
 
     QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
     futureWatcher->setFuture(future);
-
 }
 
 void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
@@ -1157,6 +1172,16 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         {
             qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
             return false;
+        }
+
+        if(ui->momentumSolverCheckBox->isChecked() && !ui->ninjafoamCaseLineEdit->text().isEmpty())
+        {
+            ninjaErr = NinjaSetExistingCaseDirectory(ninjaArmy, i, ui->ninjafoamCaseLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetExistingCaseDirectory: ninjaErr =" << ninjaErr;
+                return false;
+            }
         }
 
         ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);  // if setting up ninja.cpp function call to simply throw, this breaks, this requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
@@ -1504,9 +1529,8 @@ void MainWindow::finishedSolve()
     // ninjaCom handles most of the progress dialog, cli, and console window messaging now
     if( result == 1 ) // simulation properly finished
     {
-        progressDialog->setValue(maxProgress);
-        progressDialog->setLabelText("Simulations finished");
-        progressDialog->setCancelButtonText("Close");
+        progressDialog->setLabelText("Rendering map layers...");
+        progressDialog->setCancelButtonText("Cancel");
 
         qDebug() << "Finished with simulations";
         writeToConsole("Finished with simulations", Qt::darkGreen);
@@ -1525,7 +1549,13 @@ void MainWindow::finishedSolve()
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
+    ui->outputDirectoryOpenButton->setDisabled(false);
+    outputDir.setPath(ui->outputDirectoryLineEdit->text());
+
     // one more process to do after finishedSolve() stuff
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
+            this, &MainWindow::finishedLoadingMap,
+            Qt::UniqueConnection);
     plotKmzOutputs();
 
     char **papszOptions = nullptr;
@@ -1624,25 +1654,28 @@ void MainWindow::plotKmzOutputs()
             // if it is a point initialization run, and station kmls were created for the run,
             // plot the station kmls of the first run
             // (first run, because station kmls are SHARED across runs)
-            // if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
-            // {
-            //     for(int j = 0; j < numStationKmls; j++)
-            //     {
-            //         QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
-            //         qDebug() << "station kml outFile =" << outFileStr;
-            //         QFile outFile(outFileStr);
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
+            {
+                for(int j = 0; j < numStationKmls; j++)
+                {
+                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
+                    qDebug() << "station kml outFile =" << outFileStr;
+                    QFile outFile(outFileStr);
+                    QFileInfo info(outFileStr);
+                    QString fileName = info.fileName();
 
-            //         outFile.open(QIODevice::ReadOnly);
-            //         QByteArray data = outFile.readAll();
-            //         QString base64 = data.toBase64();
+                    outFile.open(QIODevice::ReadOnly);
+                    QByteArray data = outFile.readAll();
+                    QString base64 = data.toBase64();
 
-            //         webEngineView->page()->runJavaScript("loadKmzFromBase64('"+base64+"')");
-            //     }
-            // }
+                    QString jsCall3 = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+                    webEngineView->page()->runJavaScript(jsCall3);
+                }
+            }
 
             // // if it is a weather model run, and weather model kmzs were created for the run,
             // // plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->googleEarthCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
+            if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
@@ -1666,6 +1699,14 @@ void MainWindow::plotKmzOutputs()
         }
 
     } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
+}
+
+void MainWindow::finishedLoadingMap()
+{
+    progressDialog->setValue(maxProgress);
+    progressDialog->setLabelText("Simulation Finished.");
+    progressDialog->setCancelButtonText("Close");
+    disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
 }
 
 void MainWindow::writeSettings()

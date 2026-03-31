@@ -42,13 +42,19 @@
 #include <QTextDocument>
 #include <QTextBlock>
 #include <QDesktopServices>
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QProgressDialog>
+
 
 class MenuBar : public QObject
 {
     Q_OBJECT
 
 public:
-    MenuBar(Ui::MainWindow* ui, QObject* parent = nullptr);
+    MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent = nullptr);
+
+public slots:
+    void kmzLoadFinished();
 
 signals:
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
@@ -56,10 +62,10 @@ signals:
 private slots:
     // functions for Menu actions
     // functions for QMenu fileMenu "File" actions
-    void newProjectActionTriggered();
-    void openProjectActionTriggered();
-    void exportSolutionActionTriggered();
-    void closeProjectActionTriggered();
+    // void newProjectActionTriggered();
+    // void openProjectActionTriggered();
+    // void exportSolutionActionTriggered();
+    // void closeProjectActionTriggered();
     // functions for QMenu optionsMenu "Options" actions
     void writeConsoleOutputActionTriggered();
     // functions for QMenu toolsMenu "Tools" actions
@@ -84,9 +90,12 @@ private slots:
     void supportEmailActionTriggered();
     void submitBugReportActionTriggered();
     void enableConsoleOutputActionToggled(bool toggled);
+    void loadKmzKmlActionTriggered();
 
 private:
     Ui::MainWindow* ui;
+    QWebEngineView *webEngineView;
+    QProgressDialog *progress;
     QDir dataPath;
 };
 

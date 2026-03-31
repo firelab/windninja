@@ -142,6 +142,9 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * fileName, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetExistingCaseDirectory
+        ( NinjaArmyH * army, const int nIndex, const char * directory, char ** options );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetInMemoryDem
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double * demValues,
           const int nXSize, const int nYSize, const double * geoRef, const char * prj, char ** options );

@@ -76,6 +76,7 @@ private slots:
     void elevationInputTypePushButtonClicked();
     void boundingBoxLineEditsTextChanged();
     void pointRadiusLineEditsTextChanged();
+    void ninjafoamCaseButtonClicked();
     void elevationInputFileDownloadButtonClicked();
     void elevationInputFileLineEditTextChanged(const QString &arg1);
     void meshResolutionComboBoxCurrentIndexChanged(int index);
@@ -109,6 +110,7 @@ private:
     void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
     void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
     void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    void showInvalidCase(QString message);
 };
 
 #endif // SURFACEINPUT_H
