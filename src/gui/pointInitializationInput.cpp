@@ -739,7 +739,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             OGRFeature* poFeature = poLayer->GetFeature(1);         // Skip header, row 1 is first time in series
             if(poFeature == NULL)
             {
-                emit writeToConsoleSignal("No Stations Found in file!");
+                emit writeToConsoleSignal("No station data found in file!");
                 state.isStationFileSelectionValid = false;
                 return;
             }

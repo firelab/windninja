@@ -149,10 +149,11 @@ void pointInitialization::setInitializationGrids(WindNinjaInputs& input)
     //Check one grid to be sure that the interpolation completely filled the grid
     if(cloudCoverGrid.checkForNoDataValues())
     {
-        throw std::runtime_error("Fill interpolation from the wx stations didn't completely fill the grids. " \
-                        "To be sure everything is filled, let at least one wx station have an infinite influence radius. " \
-                        "This is specified by defining the influence radius to be a value less than zero in the wx " \
-                        "station file.");
+        error_msg = "Fill interpolation from the wx stations didn't completely fill the grids. " \
+                    "To be sure everything is filled, let at least one wx station have an infinite influence radius. " \
+                    "This is specified by defining the influence radius to be a value less than zero in the wx " \
+                    "station file.";
+        throw std::runtime_error(error_msg);
     }
 
     double U_star, anthropogenic_, cg_, bowen_, albedo_;
@@ -701,11 +702,11 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
         bool a=wxStation::check_station(readyToGo[i]);
         if (a != true)
         {
-            CPLDebug("STATION_FETCH", "check_station failed on #%d: %s", i, readyToGo[i].get_stationName().c_str());
+            CPLError(CE_Warning, CPLE_AppDefined, "wxStation::check_station() failed on station[%d] '%s'", i, readyToGo[i].get_stationName().c_str());
         }
         else
         {
-            CPLDebug("STATION_FETCH", "check_station passed on #%d: %s", i, readyToGo[i].get_stationName().c_str());
+            CPLDebug("STATION_FETCH", "wxStation::check_station() passed on station[%d] '%s'", i, readyToGo[i].get_stationName().c_str());
         }
     }
     return readyToGo;
@@ -733,7 +734,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         oErrorString = "Cannot open csv file: ";
         oErrorString += stationLoc;
         error_msg = oErrorString;
-        throw( std::runtime_error( oErrorString ) );
+        throw std::runtime_error(oErrorString);
     }
 
     double dfTempValue = 0.0;
@@ -783,7 +784,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
                 error_msg = oErrorString;
-                throw( std::domain_error( oErrorString ) );
+                throw std::runtime_error(oErrorString);
             }
 
             //check for valid longitude in degrees
@@ -798,7 +799,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
                 error_msg = oErrorString;
-                throw( std::domain_error( oErrorString ) );
+                throw std::runtime_error(oErrorString);
             }
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
@@ -809,7 +810,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
                 error_msg = oErrorString;
-                throw( std::domain_error( oErrorString ) );
+                throw std::runtime_error(oErrorString);
             }
 
             oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are Lat/Lon
@@ -829,7 +830,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oWarnString += " for PROJCS at station: ";
                 oWarnString += oStationName;
                 oWarnString += " and using datum WGS84";
-                std::cout << oWarnString << std::endl;
+                CPLError(CE_Warning, CPLE_AppDefined, oWarnString.c_str());
             }
 
             oStation.coord_y=poFeature->GetFieldAsDouble(3); //coords are XCoord/YCoord, in the projection of the dem
@@ -844,7 +845,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         //MIDDLE STUFF
@@ -858,7 +859,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
         if( EQUAL( pszKey, "meters" ) )
         {
@@ -877,7 +878,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         //WIND SPEED
@@ -892,7 +893,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         if ( EQUAL( pszKey, "mps" ) )
@@ -922,7 +923,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         //WIND DIRECTION
@@ -965,7 +966,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         //CLOUD COVER
@@ -1015,7 +1016,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         datetime=poFeature->GetFieldAsString(15);
@@ -1038,7 +1039,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            throw( std::domain_error( oErrorString ) );
+            throw std::runtime_error(oErrorString);
         }
 
         oStations.push_back(oStation);
@@ -1066,7 +1067,7 @@ vector<std::string> pointInitialization::fetchWxStationID()
         if(hDS == NULL)
         {
             error_msg = "Cannot open stationFile '"+stationFiles[k]+"'.";
-            throw( std::runtime_error( error_msg ) );
+            throw std::runtime_error(error_msg);
         }
 
         OGRLayer *poLayer;
@@ -1075,7 +1076,7 @@ vector<std::string> pointInitialization::fetchWxStationID()
         if(poLayer == NULL)
         {
             error_msg = "Cannot read OGRLayer in stationFile '"+stationFiles[k]+"'.";
-            throw( std::runtime_error( error_msg ) );
+            throw std::runtime_error(error_msg);
         }
 
         std::string oStationName;
@@ -1085,7 +1086,7 @@ vector<std::string> pointInitialization::fetchWxStationID()
         if(hLayer == NULL)
         {
             error_msg = "Cannot read OGRLayerH in stationFile '"+stationFiles[k]+"'.";
-            throw( std::runtime_error( error_msg ) );
+            throw std::runtime_error(error_msg);
         }
         OGR_L_ResetReading(hLayer);
 
@@ -1124,6 +1125,7 @@ int pointInitialization::directTemporalInterpolation(int posIdx, int negIdx)
         return 2;
     }
 
+    error_msg = "invalid index combination";
     throw std::runtime_error("invalid index combination");
 }
 
@@ -1172,7 +1174,6 @@ bool pointInitialization::checkWxStationSize(vector<string> wxStationIDs)
                     "detected in one file! Each unique station must be in a unique file!";
         throw std::runtime_error("ERROR: Mutliple different Stations"
                                  " detected in one file! Each unique station must be in a unique file!");
-        return false;
     }
 
     return true;
@@ -2388,7 +2389,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         if ( (start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition)
           || (start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition) )
         {
-            std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
+            CPLError(CE_Warning, CPLE_AppDefined, "pointInitialization::getTimeList(), Chosen start and stop times span a daylight savings time transition.");
         }
     } else if (start_dstStartTransition > start_dstEndTransition ) // notice that if they are equal is ignored
     {
@@ -2397,7 +2398,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         if ( (start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition)
           || (start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition) )
         {
-            std::cout << "\nSTATION_FETCH warning: Chosen start and stop times span a daylight savings time transition.\n" << std::endl;
+            CPLError(CE_Warning, CPLE_AppDefined, "pointInitialization::getTimeList(), Chosen start and stop times span a daylight savings time transition.");
         }
     }
     
@@ -2418,6 +2419,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     {
         // note start_UTC > end_UTC, leaving it in that order so later checks should catch this and stop, 
         // no need to generate more of the timeList as the run should abort and let the user edit their chosen input values accordingly
+        CPLError(CE_Failure, CPLE_AppDefined, "pointInitialization::getTimeList(), stop_time is less than start_time.");
         std::vector<bpt::ptime> timeList;
         timeList.push_back(start_UTC);
         timeList.push_back(end_UTC);
@@ -2518,7 +2520,7 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     boost::posix_time::ptime noTime;    // default constructor should fill it with not_a_date_time as the value
     if ( x_UTC == noTime )
     {
-        std::cout << "\nSTATION_FETCH warning: Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.\n" << std::endl;
+        CPLError(CE_Warning, CPLE_AppDefined, "pointInitialization::generateSingleTimeObject(), Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.");
     }
     
     CPLDebug("STATION_FETCH","x_local: %s",boost::lexical_cast<std::string>(x_local).c_str());
@@ -3227,7 +3229,6 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                     CPLDebug("STATION_FETCH","Writing station: %s to file %s",writeID,tName.c_str());
 //                  std::string raws_height="10"; //This may get changed later
                     outFile.open(tName.c_str());
-//                  cout<<tName<<endl;
                     outFile<<header<<endl;
                     stationCSVNames.push_back(tName);
                     storeFileNames(stationCSVNames);
@@ -3264,7 +3265,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     {
         CPLDebug("STATION_FETCH","DATA CHECK FAILED ON ALL STATIONS...");
         error_msg="ERROR: Data check failed on all stations, likely stations are missing sensors.";
-        //throw std::runtime_error( error_msg );
+        //throw std::runtime_error(error_msg);
         return false;
     }
     else
