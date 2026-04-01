@@ -201,7 +201,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     if( srcDS == NULL ) {
-        throw std::runtime_error("ncepHRRRSurfaceInitialization::setSurfaceGrids(), Could not open forecast file, bad forecast file.");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
 
     GDALRasterBand *poBand;
@@ -300,7 +300,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     if(bandList.size() < 4) {
         GDALClose((GDALDatasetH) srcDS );
-        throw std::runtime_error("ncepHRRRSurfaceInitialization::setSurfaceGrids(), Not enough bands detected in HRRR forecast file.");
+        throw std::runtime_error("Not enough bands detected in HRRR forecast file.");
     }
 
     std::string dstWkt;
@@ -315,7 +315,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     srcWkt = srcDS->GetProjectionRef();
     if(srcWkt.empty())
     {
-        throw std::runtime_error("ncepHRRRSurfaceInitialization::setSurfaceGrids(), Could not get projection from forecast file, bad forecast file.");
+        throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
     }
 
     psWarpOptions = GDALCreateWarpOptions();

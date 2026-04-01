@@ -231,13 +231,13 @@ void ncepNamGrib2SurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
     if(srcDS == NULL)
     {
-        throw std::runtime_error("ncepNamGrib2SurfInitialization::setSurfaceGrids(), Could not open forecast file, bad forecast file.");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
 
     srcWkt = srcDS->GetProjectionRef();
     if(srcWkt.empty())
     {
-        throw std::runtime_error("ncepNamGrib2SurfInitialization::setSurfaceGrids(), Could not get projection from forecast file, bad forecast file.");
+        throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
     }
 
     GDALRasterBand *poBand = srcDS->GetRasterBand( 9 );

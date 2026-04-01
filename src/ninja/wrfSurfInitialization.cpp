@@ -337,11 +337,11 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         //try to open original
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            throw std::runtime_error("wrfInitialization::setSurfaceGrids(), Could not open input dem file.");
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            throw std::runtime_error("wrfInitialization::setSurfaceGrids(), Could not get projection reference from input dem file.");
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose((GDALDatasetH) poDS );
     }
@@ -560,7 +560,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        throw std::runtime_error("wrfInitialization::setSurfaceGrids(), Could not open forecast file, bad forecast file.");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
     GDALClose((GDALDatasetH) poDS); // close original wxModel file
 
@@ -582,7 +582,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            throw std::runtime_error("wrfInitialization::setSurfaceGrids(), Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         CPLDebug("WRF", "varList[i] = %s", varList[i].c_str());
@@ -630,11 +630,14 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                           PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
                           UNIT[\"Meter\",1]]";
         }
-        else if(mapProj == 6){  //lat/long
-            throw badForecastFile("Cannot initialize with a forecast file in lat/long spacing. \
-                                   Forecast file must be in a projected coordinate system.");
+        else if(mapProj == 6)  // lat/long
+        {
+            throw badForecastFile("Cannot initialize with a forecast file in lat/long spacing. Forecast file must be in a projected coordinate system.");
         }
-        else throw badForecastFile("Cannot determine projection from the forecast file information.");
+        else
+        {
+            throw badForecastFile("Cannot determine projection from the forecast file information.");
+        }
 
         OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
@@ -667,7 +670,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
         {
-            throw std::runtime_error("wrfInitialization::setSurfaceGrids(), Transformation failed.");
+            throw std::runtime_error("Transformation failed.");
         }
 
         CPLDebug("WRF", "xCenter, yCenter= %f, %f", xCenter, yCenter);

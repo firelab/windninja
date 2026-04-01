@@ -70,7 +70,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 {
     if(NULL == filename)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SRTMClient::FetchBoundingBox(), Input filename is NULL.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, The input filename is NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
 
@@ -172,7 +172,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
     fout = VSIFOpenL( CPLFormFilename(CPLGetPath(filename), "NINJA_SRTM", ".tif"), "wb" );
     if( !fout )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open temporary srtm file for writing, Failed to create output file, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create temporary srtm file for writing, download failed.");
         CPLHTTPDestroyResult( psResult );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -265,7 +265,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final srtm file for writing, Failed to create output file, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -354,7 +354,7 @@ SURF_FETCH_E SRTMClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(nNoDataCount > 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SRTMClient::FetchBoundingBox() after downloading, warping, and clipping, found '%d' noDataValues", nNoDataCount);
+        CPLError(CE_Failure, CPLE_AppDefined, "Final downloaded elevation file contains '%d' noDataValues", nNoDataCount);
     }
     return nNoDataCount;
 }

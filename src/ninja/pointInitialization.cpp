@@ -702,11 +702,11 @@ vector<wxStation> pointInitialization::interpolateFromDisk(std::string demFile,
         bool a=wxStation::check_station(readyToGo[i]);
         if (a != true)
         {
-            CPLError(CE_Warning, CPLE_AppDefined, "wxStation::check_station() failed on station[%d] '%s'", i, readyToGo[i].get_stationName().c_str());
+            CPLError(CE_Warning, CPLE_AppDefined, "station[%d] '%s' failed station checks.", i, readyToGo[i].get_stationName().c_str());
         }
         else
         {
-            CPLDebug("STATION_FETCH", "wxStation::check_station() passed on station[%d] '%s'", i, readyToGo[i].get_stationName().c_str());
+            CPLDebug("STATION_FETCH", "station[%d] '%s' passed station checks.", i, readyToGo[i].get_stationName().c_str());
         }
     }
     return readyToGo;
@@ -2389,7 +2389,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         if ( (start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition)
           || (start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition) )
         {
-            CPLError(CE_Warning, CPLE_AppDefined, "pointInitialization::getTimeList(), Chosen start and stop times span a daylight savings time transition.");
+            CPLError(CE_Warning, CPLE_AppDefined, "Chosen start and stop times span a daylight savings time transition.");
         }
     } else if (start_dstStartTransition > start_dstEndTransition ) // notice that if they are equal is ignored
     {
@@ -2398,7 +2398,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
         if ( (start_ptime < start_dstEndTransition && end_ptime > start_dstEndTransition)
           || (start_ptime < start_dstStartTransition && end_ptime > start_dstStartTransition) )
         {
-            CPLError(CE_Warning, CPLE_AppDefined, "pointInitialization::getTimeList(), Chosen start and stop times span a daylight savings time transition.");
+            CPLError(CE_Warning, CPLE_AppDefined, "Chosen start and stop times span a daylight savings time transition.");
         }
     }
     
@@ -2419,7 +2419,7 @@ pointInitialization::getTimeList(int startYear, int startMonth, int startDay,
     {
         // note start_UTC > end_UTC, leaving it in that order so later checks should catch this and stop, 
         // no need to generate more of the timeList as the run should abort and let the user edit their chosen input values accordingly
-        CPLError(CE_Failure, CPLE_AppDefined, "pointInitialization::getTimeList(), stop_time is less than start_time.");
+        CPLError(CE_Failure, CPLE_AppDefined, "stop_time is less than start_time.");
         std::vector<bpt::ptime> timeList;
         timeList.push_back(start_UTC);
         timeList.push_back(end_UTC);
@@ -2520,7 +2520,7 @@ bpt::ptime pointInitialization::generateSingleTimeObject(int year, int month, in
     boost::posix_time::ptime noTime;    // default constructor should fill it with not_a_date_time as the value
     if ( x_UTC == noTime )
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "pointInitialization::generateSingleTimeObject(), Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.");
+        CPLError(CE_Warning, CPLE_AppDefined, "Chosen time is \"not_a_date_time\". This usually happens if the time is right on the daylight savings time transition.");
     }
     
     CPLDebug("STATION_FETCH","x_local: %s",boost::lexical_cast<std::string>(x_local).c_str());
@@ -2630,8 +2630,8 @@ bool pointInitialization::fetchStationFromBbox(std::string demFile,
     bRet=GDALGetBounds(poDS,bounds);
     if (bRet==false)
     {
-        error_msg="GDALGetBounds() returned false, DEM file is lacking readable data.";
-        throw std::runtime_error("GDALGetBounds() returned false, DEM file is lacking readable data.");
+        error_msg="Failed to get bounds of DEM file for station fetching. DEM file is lacking readable data.";
+        throw std::runtime_error("Failed to get bounds of DEM file for station fetching. DEM file is lacking readable data.");
 
     }
 

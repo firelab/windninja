@@ -551,18 +551,18 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         //try to open original
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            throw std::runtime_error("ncepNdfdInitialization::setSurfaceGrids(), Could not open input dem file.");
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            throw std::runtime_error("ncepNdfdInitialization::setSurfaceGrids(), Could not get projection reference from input dem file.");
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose( (GDALDatasetH)poDS );
     }
 
     poDS = (GDALDataset*)GDALOpen( input.forecastFilename.c_str(), GA_ReadOnly );
     if( poDS == NULL ) {
-        throw std::runtime_error("ncepNdfdInitialization::setSurfaceGrids(), Could not open forecast file, bad forecast file.");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
     GDALClose((GDALDatasetH) poDS);
 
@@ -586,12 +586,12 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
 
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL ) {
-            throw std::runtime_error("ncepNdfdInitialization::setSurfaceGrids(), Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         srcWkt = srcDS->GetProjectionRef();
         if( srcWkt.empty() ) {
-            throw std::runtime_error("ncepNdfdInitialization::setSurfaceGrids(), Could not get projection from forecast file, bad forecast file.");
+            throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
         }
 
     GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );

@@ -129,7 +129,7 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
 {
     if(point == NULL || buffer == NULL || bbox == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::CreateBoundingBox(), Invalid input, one or more of 'point', 'buffer', and 'bbox' are NULL.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, One or more of the inputs 'point', 'buffer', and 'bbox' are NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
     OGRSpatialReference oSrcSRS, oDstSRS;
@@ -151,7 +151,7 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
     poCT = OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::CreateBoundingBox(), could not generate OGRCoordinateTransformation, could not warp point.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not generate OGRCoordinateTransformation, could not warp point.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -170,7 +170,7 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
     poCT = OGRCreateCoordinateTransformation(&oDstSRS, &oSrcSRS);
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::CreateBoundingBox(), could not generate OGRCoordinateTransformation, could not warp buffered bbox.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not generate OGRCoordinateTransformation, could not warp buffered bbox.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -199,7 +199,7 @@ SURF_FETCH_E SurfaceFetch::WarpBoundingBox(double *bbox)
     poCT = OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::WarpBoundingBox(), could not generate OGRCoordinateTransformation, could not warp bbox.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not generate OGRCoordinateTransformation, could not warp bbox.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -233,7 +233,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
 
     if( pszArchive == NULL || pszDstFile == NULL || pszFile == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::ExtractFileFromZip(), Invalid input, one or more of 'pszArchive', 'pszFile', and 'pszDstFile' are NULL.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, One or more of the inputs 'pszArchive', 'pszFile', and 'pszDstFile' are NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
     const char *pszVSIName = CPLSPrintf( "/vsizip/%s", pszArchive );
@@ -243,7 +243,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
     int nCount = CSLCount( papszFileList );
     if( nCount < 1 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::ExtractFileFromZip(), Archive is empty.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Archive is empty, Failed to extract file from zip.");
         return SURF_FETCH_E_IO_ERR;
     }
     /*
@@ -262,7 +262,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
     }
     if( !bFound )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::ExtractFileFromZip(), File could not be found in archive.");
+        CPLError(CE_Failure, CPLE_AppDefined, "File could not be found in archive.");
         CSLDestroy( papszFileList );
         return SURF_FETCH_E_BAD_INPUT;
     }
@@ -279,7 +279,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
         fout = VSIFOpenL( pszDstFile, "wb" );
         if( !fout || !fin )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "SurfaceFetch::ExtractFileFromZip(), Failed to open files for extraction.");
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to open files for extraction.");
             CPLFree( pabyData );
             CSLDestroy( papszFileList );
             return SURF_FETCH_E_IO_ERR;

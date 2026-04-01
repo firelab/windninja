@@ -103,7 +103,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     hSrcDS = GDALOpen(GetPath().c_str(), GA_ReadOnly);
     if(hSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::FetchBoundingBox(), Could not open path for reading, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open path '%s' for reading, download failed.", GetPath().c_str());
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -111,7 +111,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     if( GDT_Byte != eDT )
     {
         //add error info detailing incompatible data types
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::FetchBoundingBox(), band contains incompatible byte data types, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Raster band contains incompatible byte data types, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -183,7 +183,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final relief_fetch file for writing, Failed to create output file, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -268,7 +268,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(nNoDataCount > 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::FetchBoundingBox() after downloading, warping, and clipping, found '%d' noDataValues", nNoDataCount);
+        CPLError(CE_Failure, CPLE_AppDefined, "Final downloaded elevation file contains '%d' noDataValues", nNoDataCount);
     }
     return nNoDataCount;
 }
@@ -297,7 +297,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     inDS = GDALOpen( infile.c_str(), GA_ReadOnly );
     if( NULL == inDS )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Could not open infile for reading.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open infile '%s' for reading, makeReliefOf() failed.", infile.c_str());
         return SURF_FETCH_E_IO_ERR;
     }
     
@@ -321,7 +321,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     GDALClose( inDS );
     if( NULL ==  pszDstWKT )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Could not get dstWKT projection information.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get dstWKT projection information, makeReliefOf() failed.");
         return SURF_FETCH_E_IO_ERR;
     }
     /*finished with the input file */
@@ -330,14 +330,14 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     hSrcDS = GDALOpen( path.c_str(), GA_ReadOnly );
     if(hSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Could not open path for reading.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open path '%s' for reading, makeReliefOf() failed.", path.c_str());
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
     }
     nbands = GDALGetRasterCount( hSrcDS );
     if( nbands == 0 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), Read dataset has no bands information.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Read dataset contains no bands information, makeReliefOf() failed.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -345,7 +345,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     eDT = GDALGetRasterDataType( GDALGetRasterBand( hSrcDS, 1 ) );
     if( GDT_Byte != eDT )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf(), band contains incompatible byte data types.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Raster band contains incompatible byte data types, makeReliefOf() failed.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -377,7 +377,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if(hDstDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open final relief_fetch file for writing, Failed to create output file.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, makeReliefOf() failed.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -414,7 +414,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if( eErr != CE_None )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, makeReliefOf() failed.");
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
         CPLFree((void*)pszDstWKT);
@@ -456,7 +456,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if(nNoDataCount > 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReliefFetch::makeReliefOf() after prepping final output file, found '%d' noDataValues", nNoDataCount);
+        CPLError(CE_Failure, CPLE_AppDefined, "Final makeReliefOf() elevation file contains '%d' noDataValues", nNoDataCount);
     }
     return nNoDataCount;
 }

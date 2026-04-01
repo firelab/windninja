@@ -58,7 +58,7 @@ static char * NomadsBuildArgList( const char *pszVars, const char *pszPrefix )
     char **papszArgs = CSLTokenizeString2( pszVars, ",", 0 );
     n = CSLCount(papszArgs);
     if (!n) {
-      CPLError(CE_Failure, CPLE_AppDefined, "NomadsBuildArgList(), Failed to tokenize input pszVars.");
+      CPLError(CE_Failure, CPLE_AppDefined, "Failed to tokenize input pszVars, failed to build NOMADS arg list.");
       return NULL;
     }
     /* var_##=on& */
@@ -180,7 +180,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
             NomadsUtcAddHours( tmp, nStride );
             if( NomadsUtcCompare( tmp, end ) > 0 )
             {
-                CPLDebug("NOMADS", "NomadsBuildForecastRunHours(), found forecast hours '%d'.", k);
+                CPLDebug("NOMADS", "found forecast hours '%d'.", k);
                 CSLDestroy( papszRunHours );
                 NomadsUtcFree( tmp );
                 CSLDestroy( papszHours );
@@ -213,7 +213,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     ppszKey = NomadsFindModel( pszKey );
     if( !ppszKey )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsBuildForecastFileList(), could not find input model key in nomads data.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data, failed to build NOMADS forecast file list.");
         return NULL;
     }
     pszVars = NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" );
@@ -267,7 +267,7 @@ static char ** NomadsBuildOutputFileList( const char *pszKey, int nFcstHour,
     ppszKey = NomadsFindModel( pszKey );
     if( !ppszKey )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsBuildOutputFileList(), could not find input model key in nomads data.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data, failed to build NOMADS output file list.");
         return NULL;
     }
 
@@ -307,7 +307,7 @@ static int NomadsZipFiles( char **papszIn, char **papszOut )
         fout = VSIFOpenL( papszOut[i], "wb" );
         if( !fin || !fout )
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "NomadsZipFiles(), could not open '%s' and '%s' files for processing.", papszIn[i], papszOut[i]);
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not open '%s' and '%s' files for processing.", papszIn[i], papszOut[i]);
             return NOMADS_ERR;
         }
         rc = VSIFSeekL( fin, 0, SEEK_END );
@@ -343,13 +343,13 @@ static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
     fin = VSIFOpenL( pszVsiUrl, "rb" );
     if( !fin )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsFetchVsi(), Failed to open Url '%s'.", pszVsiUrl);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open Url '%s'.", pszVsiUrl);
         return NOMADS_ERR;
     }
     fout = VSIFOpenL( pszFilename, "wb" );
     if( !fout )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsFetchVsi(), Failed to open '%s' file for writing.", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open '%s' file for writing.", pszFilename);
         VSIFCloseL( fin );
         return NOMADS_ERR;
     }
@@ -390,7 +390,7 @@ static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
     fout = VSIFOpenL( pszFilename, "wb" );
     if( !fout )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsFetchHttp(), Failed to open '%s' file for writing.", pszFilename);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open '%s' file for writing.", pszFilename);
         CPLHTTPDestroyResult( psResult );
         return NOMADS_ERR;
     }
@@ -420,7 +420,7 @@ static double NomadsGetMinSize( const char **ppszModel )
     char **papszTokens = CSLTokenizeString2( ppszModel[NOMADS_GRID_RES], " ", 0 );
     if( papszTokens == NULL || CSLCount( papszTokens ) < 2 )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsGetMinSize(), Failed to tokenize input ppszModel.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to tokenize input ppszModel.");
         CSLDestroy( papszTokens );
         assert( 0 );
         return 0;
@@ -559,7 +559,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in nomads data.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data.");
         return NOMADS_ERR;
     }
 
@@ -871,7 +871,7 @@ char * NomadsFormName( const char *pszKey, char pszSpacer )
     int n;
     if( ppszKey == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsFormName(), could not find input model key in nomads data.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data.");
         return NULL;
     }
     /* Count the levels to check on 3D */
@@ -1034,7 +1034,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 
     if( psWO->pTransformerArg == NULL )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsAutoCreateWarpedVRT(), Failed during GDALCreateGenImgProjTransformer(). Returning NULL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALCreateGenImgProjTransformer() failed. Returning NULL dataset.");
         GDALDestroyWarpOptions( psWO );
         return NULL;
     }
@@ -1048,7 +1048,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                                  adfDstGeoTransform, &nDstPixels, &nDstLines );
     if( eErr != CE_None )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsAutoCreateWarpedVRT(), Failed during GDALSuggestedWarpOutput(). Returning NULL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALSuggestedWarpOutput() failed. Returning NULL dataset.");
         GDALDestroyTransformer( psWO->pTransformerArg );
         GDALDestroyWarpOptions( psWO );
         return NULL;
@@ -1083,7 +1083,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                                adfDstGeoTransform, psWO );
     if(hDstDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "NomadsAutoCreateWarpedVRT(), Could not warp the forecast file, possibly non-uniform grid. Returning NULL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp the forecast file, possibly non-uniform grid. Returning NULL dataset.");
         GDALDestroyWarpOptions(psWO);
         return NULL;
     }

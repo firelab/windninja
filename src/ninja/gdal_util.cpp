@@ -43,7 +43,7 @@ double GDALGetMax( GDALDataset *poDS )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get max value of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get max value of the GDAL dataset.");
         //return false;  // not really a good return value here for this particular function, probably not safe to throw yet either
     }
 
@@ -64,7 +64,7 @@ double GDALGetMin( GDALDataset *poDS )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get min value of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get min value of the GDAL dataset.");
         //return false;  // not really a good return value here for this particular function, probably not safe to throw yet either
     }
 
@@ -87,7 +87,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get lat lon center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get lat lon center of the GDAL dataset.");
         return false;
     }
 
@@ -100,7 +100,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     const char *pszPrj = GDALGetProjectionRef(hDS);
     if(pszPrj == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot get lat lon center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to get lat lon center of the GDAL dataset.");
         return false;
     }
 
@@ -109,7 +109,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     hTargetSRS = OSRNewSpatialReference(NULL);
     if(hSrcSRS == NULL || hTargetSRS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRSpatialReference from GDAL dataset, Could not get lat lon center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRSpatialReference from GDAL dataset, Failed to get lat lon center of the GDAL dataset.");
         OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
@@ -127,7 +127,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
     if(hCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not get lat lon center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to get lat lon center of the GDAL dataset.");
         OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
@@ -139,7 +139,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude )
     double adfGeoTransform[6];
     if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get GeoTransform of the GDAL dataset, Could not get lat lon center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get GeoTransform of the GDAL dataset, Failed to get lat lon center of the GDAL dataset.");
         OCTDestroyCoordinateTransformation(hCT);
         OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
@@ -178,7 +178,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get center of the GDAL dataset.");
         return false;
     }
 
@@ -194,7 +194,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     double adfGeoTransform[6];
     if(GDALGetGeoTransform(hDS, adfGeoTransform) != CE_None)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get GeoTransform of the GDAL dataset, Could not get center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get GeoTransform of the GDAL dataset, Failed to get center of the GDAL dataset.");
         return false;
     }
 
@@ -214,7 +214,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     const char *pszSrcWkt = GDALGetProjectionRef(hDS);
     if(pszSrcWkt == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot get center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to get center of the GDAL dataset.");
         return false;
     }
 
@@ -224,7 +224,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     hTargetSRS = OSRNewSpatialReference(NULL);
     if(hSrcSRS == NULL || hTargetSRS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRSpatialReference from GDAL dataset, Could not get center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRSpatialReference from GDAL dataset, Failed to get center of the GDAL dataset.");
         OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
@@ -233,7 +233,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     OSRImportFromWkt( hTargetSRS, (char**)&pszDstWkt );
     if(hTargetSRS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to import spatial reference from pszDstWkt '%s', Cannot not get center of the GDAL dataset.", pszDstWkt);
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to import spatial reference from pszDstWkt '%s', Failed to get center of the GDAL dataset.", pszDstWkt);
         OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
@@ -250,7 +250,7 @@ bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *psz
     hCT = OCTNewCoordinateTransformation(hSrcSRS, hTargetSRS);
     if(hCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not get center of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to get center of the GDAL dataset.");
         OSRDestroySpatialReference(hSrcSRS);
         OSRDestroySpatialReference(hTargetSRS);
         return false;
@@ -277,7 +277,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get lat lon bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get lat lon bounds of the GDAL dataset.");
         return false;
     }
 
@@ -296,7 +296,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
 
     if(poDS->GetProjectionRef() == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot get lat lon bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to get lat lon bounds of the GDAL dataset.");
 	    return false;
     }
 	pszPrj = (char*)poDS->GetProjectionRef();
@@ -312,7 +312,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not get lat lon bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to get lat lon bounds of the GDAL dataset.");
         return false;
     }
 
@@ -323,7 +323,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
 
     if(!poCT->Transform(1, &eLon, &nLat))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not get lat lon bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to get lat lon bounds of the GDAL dataset.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -333,7 +333,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
 
     if(!poCT->Transform(1, &wLon, &sLat))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not get lat lon bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to get lat lon bounds of the GDAL dataset.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -360,7 +360,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get bounds of the GDAL dataset.");
         return false;
     }
 
@@ -390,7 +390,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
     char* pszSrcWkt;
     if(poDS->GetProjectionRef() == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot get bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to get bounds of the GDAL dataset.");
         return false;
     }
     pszSrcWkt = (char*)poDS->GetProjectionRef();
@@ -411,19 +411,19 @@ bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not get bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to get bounds of the GDAL dataset.");
         return false;
     }
 
     if(!poCT->Transform(1, &east, &north))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not get bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to get bounds of the GDAL dataset.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
     if(!poCT->Transform(1, &west, &south))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not get bounds of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to get bounds of the GDAL dataset.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -448,7 +448,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot calculate angleFromNorth of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to calculate angleFromNorth of the GDAL dataset.");
         return false;
     }
 
@@ -461,7 +461,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
 
     if(!GDALGetCenter(poDS, &x1, &y1))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get center of GDAL dataset, Could not calculate angleFromNorth of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get center of GDAL dataset, Failed to calculate angleFromNorth of the GDAL dataset.");
         return false;
     }
 
@@ -470,7 +470,7 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     //add 1/4 size of the DEM extent in y direction
     if(!GDALGetBounds(poDS, boundsLonLat))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get bounds of GDAL dataset, Could not calculate angleFromNorth of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get bounds of GDAL dataset, Failed to calculate angleFromNorth of the GDAL dataset.");
         return false;
     }
 
@@ -482,13 +482,13 @@ bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth )
     //project the two lat/lon points to projected DEM coordinates
     if(!GDALPointFromLatLon(x1, y1, poDS, "WGS84"))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Could not calculate angleFromNorth of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Failed to calculate angleFromNorth of the GDAL dataset.");
         return false;
     }
 
     if(!GDALPointFromLatLon(x2, y2, poDS, "WGS84"))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Could not calculate angleFromNorth of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Failed to calculate angleFromNorth of the GDAL dataset.");
         return false;
     }
 
@@ -548,7 +548,7 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
 {
     if(poSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot calculate coordinateTransformationAngle of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to calculate coordinateTransformationAngle of the GDAL dataset.");
         return false;
     }
 
@@ -563,7 +563,7 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     //get the center of the poSrcDS, in the projection of the poSrcDS
     if(!GDALGetCenter(poSrcDS, &x1, &y1, NULL))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get center of GDAL dataset, Could not calculate coordinateTransformationAngle of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get center of GDAL dataset, Failed to calculate coordinateTransformationAngle of the GDAL dataset.");
         return false;
     }
 
@@ -572,7 +572,7 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     //add 1/4 size of the poSrcDS extent in y direction, in the projection of the poSrcDS
     if(!GDALGetBounds(poSrcDS, bounds, NULL))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get bounds of GDAL dataset, Could not calculate coordinateTransformationAngle of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to get bounds of GDAL dataset, Failed to calculate coordinateTransformationAngle of the GDAL dataset.");
         return false;
     }
 
@@ -584,13 +584,13 @@ bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &c
     //project the two points FROM the projection of the poSrcDS TO the pszDstWkt projection
     if(!GDALTransformPoint(x1, y1, poSrcDS, pszDstWkt))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Could not calculate coordinateTransformationAngle of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Failed to calculate coordinateTransformationAngle of the GDAL dataset.");
         return false;
     }
 
     if(!GDALTransformPoint(x2, y2, poSrcDS, pszDstWkt))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Could not calculate coordinateTransformationAngle of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point from lat lon, Failed to calculate coordinateTransformationAngle of the GDAL dataset.");
         return false;
     }
 
@@ -646,7 +646,7 @@ bool GDALTestSRS( GDALDataset *poDS )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot test SRS of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Test SRS fails for the GDAL dataset.");
         return false;
     }
 
@@ -691,7 +691,7 @@ bool GDALHasNoData( GDALDataset *poDS, int band )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot check if GDAL dataset has NO_DATA values.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to check if GDAL dataset has NO_DATA values.");
         return false;
     }
 
@@ -705,7 +705,7 @@ bool GDALHasNoData( GDALDataset *poDS, int band )
     GDALRasterBand *poBand = poDS->GetRasterBand( band );
     if(poBand == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get raster band from GDAL dataset, Could not check if GDAL dataset has NO_DATA values.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get raster band from GDAL dataset, Failed to check if GDAL dataset has NO_DATA values.");
         return false;
     }
 
@@ -737,7 +737,7 @@ bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot convert from GDAL dataset to ascii grid dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to convert from GDAL dataset to ascii grid dataset.");
         return false;
     }
 
@@ -837,14 +837,14 @@ bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const c
 {
     if(poSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot transform point.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to transform point.");
         return false;
     }
 
     char* pszSrcWkt;
     if(poSrcDS->GetProjectionRef() == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot transform point.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to transform point.");
         return false;
     }
     pszSrcWkt = (char*)poSrcDS->GetProjectionRef();
@@ -865,13 +865,13 @@ bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const c
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not transform point.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to transform point.");
         return false;
     }
 
     if(!poCT->Transform(1, &dfX, &dfY))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not transform point.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to transform point.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -884,7 +884,7 @@ bool GDALPointFromLatLon(double &x, double &y, GDALDataset *poSrcDS, const char 
 {
     if(poSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot transform point from lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to transform point from lat lon.");
         return false;
     }
 
@@ -895,7 +895,7 @@ bool GDALPointFromLatLon(double &x, double &y, GDALDataset *poSrcDS, const char 
 
     if(poSrcDS->GetProjectionRef() == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot transform point from lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to transform point from lat lon.");
         return false;
     }
 	pszPrj = (char*)poSrcDS->GetProjectionRef();
@@ -913,13 +913,13 @@ bool GDALPointFromLatLon(double &x, double &y, GDALDataset *poSrcDS, const char 
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not transform point from lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to transform point from lat lon.");
         return false;
     }
 
     if(!poCT->Transform(1, &x, &y))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not transform point from lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to transform point from lat lon.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -932,7 +932,7 @@ bool GDALPointToLatLon(double &x, double &y, GDALDataset *poSrcDS, const char *d
 {
     if(poSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to transform point to lat lon.");
         return false;
     }
 
@@ -943,7 +943,7 @@ bool GDALPointToLatLon(double &x, double &y, GDALDataset *poSrcDS, const char *d
 
     if(poSrcDS->GetProjectionRef() == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Cannot transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from GDAL dataset, Failed to transform point to lat lon.");
         return false;
     }
 	pszPrj = (char*)poSrcDS->GetProjectionRef();
@@ -961,13 +961,13 @@ bool GDALPointToLatLon(double &x, double &y, GDALDataset *poSrcDS, const char *d
     poCT = OGRCreateCoordinateTransformation( &oSourceSRS, &oTargetSRS );
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to transform point to lat lon.");
         return false;
     }
 
     if(!poCT->Transform(1, &x, &y))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to transform point to lat lon.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -980,7 +980,7 @@ bool OGRPointToLatLon(double &x, double &y, OGRDataSourceH hDS, const char *datu
 {
     if(hDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid OGR dataset handle, Cannot transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid OGR dataset handle, Failed to transform point to lat lon.");
         return false;
     }
 
@@ -998,7 +998,7 @@ bool OGRPointToLatLon(double &x, double &y, OGRDataSourceH hDS, const char *datu
     poSrcSRS = poLayer->GetSpatialRef();
     if(poSrcSRS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from OGR dataset, Cannot transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get projection from OGR dataset, Failed to transform point to lat lon.");
         return false;
     }
     oSourceSRS = *poSrcSRS;
@@ -1014,13 +1014,13 @@ bool OGRPointToLatLon(double &x, double &y, OGRDataSourceH hDS, const char *datu
     poCT = OGRCreateCoordinateTransformation(&oSourceSRS, &oTargetSRS);
     if(poCT == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Could not transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to generate OGRCoordinateTransformation, Failed to transform point to lat lon.");
         return false;
     }
 
     if(!poCT->Transform(1, &x, &y))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Could not transform point to lat lon.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to transform point, Failed to transform point to lat lon.");
         OGRCoordinateTransformation::DestroyCT(poCT);
         return false;
     }
@@ -1040,7 +1040,7 @@ int GDALGetUtmZone( GDALDataset *poDS )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get UTM zone of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get UTM zone of the GDAL dataset.");
         return 0;
     }
 
@@ -1048,7 +1048,7 @@ int GDALGetUtmZone( GDALDataset *poDS )
     double latitude = 0;
     if(!GDALGetCenter(poDS, &longitude, &latitude))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not get center of the GDAL dataset, Could not get UTM zone of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get center of the GDAL dataset, Failed to get UTM zone of the GDAL dataset.");
         return 0;
     }
 
@@ -1132,7 +1132,7 @@ int GDALFillBandNoData(GDALDataset *poDS, int nBand, int nSearchPixels)
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot fill NO_DATA values of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to fill NO_DATA values of the GDAL dataset.");
         return -1;
     }
 
@@ -1171,7 +1171,7 @@ int GDALGetCorners( GDALDataset *poDS, double corners[8] )
 {
     if(poDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot get corners of the GDAL dataset.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to get corners of the GDAL dataset.");
         return -1;
     }
 
@@ -1441,7 +1441,7 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
 {
     if(hSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot warp GDAL dataset to UTM.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to warp GDAL dataset to UTM.");
         return false;
     }
 
@@ -1482,7 +1482,7 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALSuggestedWarpOutput failed, Could not warp GDAL dataset to UTM.");
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALSuggestedWarpOutput failed, Failed to warp GDAL dataset to UTM.");
         return false;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
@@ -1491,7 +1491,7 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
                         GDALGetRasterCount(hSrcDS), GDT_Float32, NULL);
     if(hDstDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create GDAL dataset, Could not warp GDAL dataset to UTM.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create GDAL dataset, Failed to warp GDAL dataset to UTM.");
         return false;
     }
 
@@ -1599,7 +1599,7 @@ GDALDataset* gdalWarpToUtm(const char* filename, GDALDataset* pSrcDS)
 {
     if(pSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot warp GDAL dataset to UTM.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to warp GDAL dataset to UTM.");
         return NULL;
     }
 
@@ -1660,7 +1660,7 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
 {
     if(hSrcDS == NULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Cannot warp GDAL dataset to WKT.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid GDAL dataset handle, Failed to warp GDAL dataset to WKT.");
         return false;
     }
 

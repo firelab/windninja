@@ -57,7 +57,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     (void)resolution;
     if( NULL == filename )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "LandfireClient::FetchBoundingBox(), Input filename is NULL.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, The input filename is NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
 
@@ -146,7 +146,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     CPLFree( (void*)pszProduct );
     CPLDebug("LCP_CLIENT", "Request URL: %s", pszUrl);
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
-    CHECK_HTTP_RESULT( "Failed to get download URL" );
+    CHECK_HTTP_RESULT("Failed to get download URL.");
 
     if( strstr((const char*)m_poResult->pabyData, "\"success\":\"false\"") )
     {
@@ -194,7 +194,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     do
     {
         m_poResult = CPLHTTPFetch( pszUrl, NULL );
-        CHECK_HTTP_RESULT( "Failed to get job status" );
+        CHECK_HTTP_RESULT("Failed to get job status.");
         papszTokens = CSLTokenizeString2( (const char*)m_poResult->pabyData, ",:",
                                           CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES |
                                           CSLT_STRIPENDSPACES | CSLT_STRIPLEADSPACES );
@@ -235,14 +235,14 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
         CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_TIMEOUT;
     }
-    CHECK_HTTP_RESULT( "Failed to get job status" ); 
+    CHECK_HTTP_RESULT("Failed to get job status.");
 
     /*-----------------------------------------------------------------------------
      *  Download the landfire model
      *-----------------------------------------------------------------------------*/
     pszUrl = downloadUrl.c_str();
     m_poResult = CPLHTTPFetch( pszUrl, NULL );
-    CHECK_HTTP_RESULT( "Failed to get job status" );
+    CHECK_HTTP_RESULT("Failed to get job status.");
 
     nSize = m_poResult->nDataLen;
     VSILFILE *fout;
@@ -252,7 +252,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     fout = VSIFOpenL( pszTmpZip, "w+" );
     if( NULL == fout )
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open lcp file for writing, Failed to create output file.");
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, download failed.");
         CPLHTTPDestroyResult( m_poResult );
         return SURF_FETCH_E_IO_ERR;
     }
@@ -331,7 +331,7 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
 
     if(nNoDataCount > 0)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "LandfireClient::FetchBoundingBox() after downloading, found '%d' noDataValues", nNoDataCount);
+        CPLError(CE_Failure, CPLE_AppDefined, "Final downloaded elevation file contains '%d' noDataValues", nNoDataCount);
     }
     return nNoDataCount;
 }

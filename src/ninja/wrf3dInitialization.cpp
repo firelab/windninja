@@ -228,11 +228,11 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     if ( dstWkt.empty() ) {
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            throw std::runtime_error("wrf3dInitialization::set3dGrids(), Could not open input dem file.");
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            throw std::runtime_error("wrf3dInitialization::set3dGrids(), Could not get projection reference from input dem file.");
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose((GDALDatasetH) poDS );
     }
@@ -245,7 +245,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        throw std::runtime_error("wrf3dInitialization::set3dGrids(), Could not open forecast file, bad forecast file.");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
     GDALClose((GDALDatasetH) poDS); // close original wxModel file
     
@@ -271,7 +271,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            throw std::runtime_error("wrf3dInitialization::set3dGrids(), Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         CPLDebug("WX_MODEL_INITIALIZATION", "var3dList[i] = %s", var3dList[i].c_str());
@@ -355,12 +355,12 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
         {
-            throw std::runtime_error("wrf3dInitialization::set3dGrids(), Transformation failed.");
+            throw std::runtime_error("Transformation failed.");
         }
 
         //if(poCT==NULL || !poCT->Transform(2, xCenterArray, yCenterArray))  //for testing
         //{
-        //    throw std::runtime_error("wrf3dInitialization::set3dGrids(), Transformation failed.");
+        //    throw std::runtime_error("Transformation failed.");
         //}
 
 

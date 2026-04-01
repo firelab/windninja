@@ -180,7 +180,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     GDALDatasetH hDS = GDALOpen(demFile.c_str(), GA_ReadOnly);
     double demBounds[4];
     if (!GDALGetBounds((GDALDataset *)hDS, demBounds)) {
-        throw badForecastFile("Could not download weather forecast, invalid projection for the DEM");
+        throw badForecastFile("Failed to get bounds of the DEM for weather forecast download. Failed to download weather forecast.");
     }
 
     double adfNESW[4];
@@ -229,13 +229,13 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         VSILFILE *fpRemote = VSIFOpenL(("/vsicurl/" + idxUrl).c_str(), "r");
         if (!fpRemote) {
-            CPLError(CE_Warning, CPLE_AppDefined, "GCP, Failed to open remote idx file: %s", idxUrl.c_str());
+            CPLError(CE_Warning, CPLE_AppDefined, "Failed to open remote idx file: %s", idxUrl.c_str());
             continue;
         }
 
         VSILFILE *fpLocal = VSIFOpenL(localIdxPath.c_str(), "w");
         if (!fpLocal) {
-            CPLError(CE_Warning, CPLE_AppDefined, "GCP, Failed to create local idx file: %s", localIdxPath.c_str());
+            CPLError(CE_Warning, CPLE_AppDefined, "Failed to create local idx file: %s", localIdxPath.c_str());
             VSIFCloseL(fpRemote);
             continue;
         }
@@ -274,7 +274,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
                          CPLSPrintf( "Downloading file 1 out of %d...\n This may take a few minutes...", validTimes.size() ),
                          NULL ) )
         {
-            CPLError( CE_Failure, CPLE_UserInterrupt, "Cancelled by user." );
+            CPLError(CE_Failure, CPLE_UserInterrupt, "Cancelled by user.");
             nrc = GCP_ERR;
             return "";
         }
@@ -310,7 +310,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
 
         CPLJoinableThread* handle = CPLCreateJoinableThread(ThreadFunc, params);
         if (!handle) {
-            CPLError(CE_Failure, CPLE_AppDefined, "GCP, Failed to create thread");
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to create thread.");
             delete params;
             break;
         }
@@ -327,7 +327,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
                              CPLSPrintf( "Downloading file %d out of %d...\n This may take a few minutes...", i+1, threadHandles.size() ),
                              NULL ) )
             {
-                CPLError( CE_Failure, CPLE_UserInterrupt, "Cancelled by user." );
+                CPLError(CE_Failure, CPLE_UserInterrupt, "Cancelled by user.");
                 nrc = GCP_ERR;
                 return "";
             }
@@ -380,7 +380,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         VSILFILE* fpSrc = VSIFOpenL(filePath.c_str(), "rb");
         if (!fpSrc) {
             ostringstream os;
-            os << "GCP, Failed to open source file for zipping: " << filePath << "\n";
+            os << "Failed to open source file for zipping: " << filePath << "\n";
             throw badForecastFile( os.str() );
         }
 
@@ -392,7 +392,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         if (VSIFReadL(buffer.data(), 1, fileSize, fpSrc) != fileSize) {
             VSIFCloseL(fpSrc);
             ostringstream os;
-            os << "GCP, Failed to read complete file for zipping: " << filePath << "\n";
+            os << "Failed to read complete file for zipping: " << filePath << "\n";
             throw badForecastFile( os.str() );
         }
         VSIFCloseL(fpSrc);
@@ -400,14 +400,14 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
         VSILFILE* fpZip = VSIFOpenL(zipEntryPath.c_str(), "wb");
         if (!fpZip) {
             ostringstream os;
-            os << "GCP, Failed to create zip entry: " << zipEntryPath << "\n";
+            os << "Failed to create zip entry: " << zipEntryPath << "\n";
             throw badForecastFile( os.str() );
         }
 
         if (VSIFWriteL(buffer.data(), 1, fileSize, fpZip) != fileSize) {
             VSIFCloseL(fpZip);
             ostringstream os;
-            os << "GCP, Failed to write data to zip entry: " << zipEntryPath << "\n";
+            os << "Failed to write data to zip entry: " << zipEntryPath << "\n";
             throw badForecastFile( os.str() );
         }
         VSIFCloseL(fpZip);
@@ -448,7 +448,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
     GDALDatasetH hSrcDS = GDALOpen(srcFile.c_str(), GA_ReadOnly);
     if (!hSrcDS)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GCP, Failed to open input dataset for %s", srcFile.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open input dataset for %s", srcFile.c_str());
         GDALTranslateOptionsFree(transOptions);
         return GCP_ERR;
     }
@@ -459,7 +459,7 @@ int GCPWxModel::fetchData( boost::posix_time::ptime dt, std::string outPath, std
 
     if (!hOutDS)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GCP, GDALTranslate failed for %s", outFile.c_str());
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALTranslate failed for %s", outFile.c_str());
         return GCP_ERR;
     }
     GDALClose(hOutDS);
@@ -492,7 +492,7 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
     std::ifstream idxFile(idxFilePath.c_str());
     if (!idxFile.is_open())
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "GCP, Failed to open cached .idx file: %s", idxFilePath.c_str());
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to open cached .idx file: %s", idxFilePath.c_str());
         return "";
     }
 
@@ -518,7 +518,7 @@ std::string GCPWxModel::findBands(std::string idxFilePath, std::vector<std::stri
                     }
                     else
                     {
-                        CPLError(CE_Warning, CPLE_AppDefined, "GCP, Could not parse band number in line: %s", line.c_str());
+                        CPLError(CE_Warning, CPLE_AppDefined, "Could not parse band number in line: %s", line.c_str());
                     }
                 }
             }
@@ -656,8 +656,7 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
     const char *pszForecastFile = vsiPath.c_str();
     if( !pszForecastFile )
     {
-        throw badForecastFile( "Could not find forecast associated with " \
-                          "requested time step" );
+        throw badForecastFile("Could not find forecast associated with requested time step");
     }
 
     hSrcDS = GDALOpenShared(pszForecastFile, GA_ReadOnly);
