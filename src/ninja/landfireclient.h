@@ -76,9 +76,9 @@
 #define CHECK_HTTP_RESULT( error_msg )                      \
     if( m_poResult == NULL || m_poResult->nStatus != 0 )    \
     {                                                       \
-        CPLError( CE_Warning, CPLE_AppDefined, error_msg ); \
+        CPLError(CE_Warning, CPLE_AppDefined, error_msg);   \
         CPLHTTPDestroyResult( m_poResult );                 \
-        return SURF_FETCH_E_IO_ERR;                         \
+        return SURF_FETCH_E_TIMEOUT;                        \
     }
 
 /*-----------------------------------------------------------------------------

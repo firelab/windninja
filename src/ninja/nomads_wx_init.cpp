@@ -76,8 +76,7 @@ NomadsWxModel::NomadsWxModel( const char *pszModelKey )
     ppszModelData = NomadsFindModel( pszModelKey );
     if( ppszModelData == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not find model key in nomads data" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find model key in nomads data.");
         pszKey = NULL;
     }
     else
@@ -109,7 +108,7 @@ const char ** NomadsWxModel::FindModelKey( const char *pszFilename )
     CPLFree( (void*)pszVsiDir );
     if( !papszFileList )
     {
-        return FALSE;
+        return nullptr;
     }
     nCount = CSLCount( papszFileList );
     /* Must match one file name format */
@@ -227,18 +226,22 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
 {
     if( !ppszModelData )
     {
-        throw badForecastFile( "Model not found" );
+        throw badForecastFile("Model not found.");
     }
 
     //Check to make sure the DEM is good.
     //This check is very similar to wxModelInitialization::fetchForecast
-    //Line ~388-394
+    //Line ~388-398
     GDALDatasetH hDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
+    if(hDS == NULL)
+    {
+        throw badForecastFile("Cannot open DEM to get bounds. Failed to download weather forecast.");
+    }
+
     double demBounds[4];
     if(!GDALGetBounds((GDALDataset*)hDS,demBounds))//Cast GDALDatasetH as a GdalDataset*
     {
-        throw badForecastFile("Could not download weather forecast, invalid "
-                              "projection for the DEM");
+        throw badForecastFile("Could not get bounds from the DEM. Failed to download weather forecast.");
     }
 
     double adfNESW[4], adfWENS[4];
@@ -271,14 +274,14 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     if( rc )
     {
         CPLFree( (void*)pszTmpFile );
-        throw badForecastFile( "Could not download from nomads server!" );
+        throw badForecastFile("Could not download from nomads server.");
     }
     wxModelFileName = pszTmpFile;
     std::vector<blt::local_date_time> oTimes;
     oTimes = wxModelInitialization::getTimeList();
     if( oTimes.size() < 1 )
     {
-        throw badForecastFile( "Could not open forecast from nomads server" );
+        throw badForecastFile("Could not get times from downloaded weather forecast file. Failed to download weather forecast.");
     }
     std::string filename;
     filename = bpt::to_iso_string(oTimes[0].utc_time());
@@ -297,7 +300,7 @@ std::vector<std::string> NomadsWxModel::getVariableList()
 {
     if( !ppszModelData )
     {
-        throw badForecastFile( "Invalid model" );
+        throw badForecastFile("Model not found.");
     }
     char **papszTokens = NULL;
     papszTokens = CSLTokenizeString2( ppszModelData[NOMADS_VARIABLES], ",", 0 );
@@ -321,7 +324,7 @@ std::string NomadsWxModel::getForecastReadable( const char bySwapWithSpace )
 {
     if( !ppszModelData )
     {
-        throw badForecastFile( "Invalid Model" );
+        throw badForecastFile("Model not found.");
     }
 
     char *p = NULL;
@@ -347,9 +350,13 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     if( aoCachedTimes.size() > 0 )
         return aoCachedTimes;
     (void)pszVariable;
-    if( wxModelFileName == "" || ppszModelData == NULL )
+    if( !ppszModelData )
     {
-        throw badForecastFile( "Invalid forecast file name" );
+        throw badForecastFile("Model not found.");
+    }
+    if( wxModelFileName == "" )
+    {
+        throw badForecastFile("Invalid forecast file name.");
     }
 
     int i, j;
@@ -368,7 +375,7 @@ NomadsWxModel::getTimeList( const char *pszVariable,
     int nCount = CSLCount( papszFileList );
     if( !nCount )
     {
-        throw badForecastFile( "Could not open forecast path" );
+        throw badForecastFile("Could not open forecast path.");
     }
     qsort( (void*)papszFileList, nCount, sizeof( char * ), NomadsCompareStrings );
            //(int (*)(const void*, const void*))strcmp );
@@ -391,10 +398,21 @@ NomadsWxModel::getTimeList( const char *pszVariable,
         hDS = GDALOpenShared( pszFullPath, GA_ReadOnly );
         if( !hDS )
         {
+            const char* msg = CPLGetLastErrorMsg();
+
             CSLDestroy( papszFileList );
             CPLFree( (void*)pszPath );
             CPLFree( (void*)pszFullPath );
-            throw badForecastFile( "Could not open forecast file with GDAL" );
+
+            if(msg && strlen(msg) > 0)
+            {
+                std::string eMsg = "Could not open forecast file with GDAL.\n\nLast GDAL error message = '"+std::string(msg)+"'";
+                throw badForecastFile(eMsg.c_str());
+            }
+            else
+            {
+                throw badForecastFile("Could not open forecast file with GDAL.");
+            }
         }
         nBandCount = GDALGetRasterCount( hDS );
         for( j = 0; j < nBandCount; j++ ) {
@@ -407,12 +425,11 @@ NomadsWxModel::getTimeList( const char *pszVariable,
                 CPLFree( (void*)pszPath );
                 CPLFree( (void*)pszFullPath );
                 GDALClose( hDS );
-                throw badForecastFile( "Could not fetch ref time or forecast time " \
-                                       "from GRIB file" );
+                throw badForecastFile("Could not fetch ref time or forecast time from GRIB file.");
             }
             if( CSLFindString( papszTimeList, pszValidTime ) == -1 ) {
                 papszTimeList = CSLAddString( papszTimeList, pszValidTime );
-                CPLDebug( "WINDNINJA", "Found valid time in grib: %s", pszValidTime );
+                CPLDebug("WINDNINJA", "Found valid time in grib: %s", pszValidTime);
             }
         }
         GDALClose( hDS );
@@ -552,19 +569,17 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             }
             break;
         }
-
     }
     if( !pszForecastFile )
     {
-        throw badForecastFile( "Could not find forecast associated with " \
-                               "requested time step" );
+        throw badForecastFile("Could not find forecast file associated with the requested time step.");
     }
 
     hSrcDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
     if( hSrcDS == NULL ) {
-        throw badForecastFile( "Could not find forecast associated with " \
-                               "requested time step" );
+        throw std::runtime_error("Could not open forecast file with the requested time step.");
     }
+
     CPLFree( (void*) pszForecastFile );
     pszForecastFile = NULL;
     nBandCount = GDALGetRasterCount( hSrcDS );
@@ -596,16 +611,21 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 //    }
 
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+    if(pszSrcWkt == nullptr)
+    {
+        throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
+    }
+
     pszDstWkt = input.dem.prjString.c_str();
 
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "nomads, pre warp");
+    CPLDebug("COORD_TRANSFORM_ANGLES", "nomads, pre warp");
     //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         if(!GDALCalculateAngleFromNorth( (GDALDataset*)hSrcDS, angleFromNorth ))
         {
-            printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the wxModel.");
         }
     }
 
@@ -618,7 +638,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         // direct calculation of FROM wx TO dem, already has the appropriate sign
         if(!GDALCalculateCoordinateTransformationAngle( (GDALDataset*)hSrcDS, coordinateTransformationAngle, pszDstWkt ))  // this is FROM wx TO dem
         {
-            printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
         }
     }
 
@@ -631,15 +651,19 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
 #endif
+    if(hVrtDS == NULL)
+    {
+        throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+    }
 
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "nomads, post warp");
+    CPLDebug("COORD_TRANSFORM_ANGLES", "nomads, post warp");
     //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         if(!GDALCalculateAngleFromNorth( (GDALDataset*)hVrtDS, angleFromNorth ))
         {
-            printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the wxModel.");
         }
     }
 
@@ -673,7 +697,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         pszElement = GDALGetMetadataItem( hBand, "GRIB_ELEMENT", NULL );
         if( !pszElement )
         {
-          throw badForecastFile( "Could not fetch proper band" );
+          throw badForecastFile( "Could not fetch proper band from forecast file." );
         }
         if( EQUAL( pszElement, "TMP" ) )
         {
@@ -784,7 +808,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             hSrcDS = GDALOpenShared( pszNextFcst, GA_ReadOnly );
             if( hSrcDS == NULL )
             {
-                throw badForecastFile( "Could not load cloud data." );
+                throw badForecastFile("Could not load cloud data.");
             }
             pszSrcWkt = GDALGetProjectionRef( hSrcDS );
 #ifdef NOMADS_VRT
@@ -798,7 +822,7 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 #endif
             if( hVrtDS == NULL )
             {
-                throw badForecastFile( "Could not load cloud data." );
+                throw badForecastFile("Could not load cloud data.");
             }
             int j = 0;
             for( j = 0; j < GDALGetRasterCount( hVrtDS ); j++ )
@@ -838,14 +862,12 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
             CPLFree( (void*)pszNextFcst );
             GDALClose( hSrcDS );
             GDALClose( hVrtDS );
-            CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data "
-                      "from 0th time step, using time step 1." );
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Could not load cloud data from 0th time step, using time step 1.");
         }
         else
         {
 noCloudOK:
-            CPLError( CE_Warning, CPLE_AppDefined, "Could not load cloud data " \
-                      "from the forecast file, setting to 0." );
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Could not load cloud data from the forecast file, setting to 0.");
 
             cloudGrid.set_headerData( uGrid );
             cloudGrid = 0.0;
@@ -901,8 +923,8 @@ noCloudOK:
             }
         }
 
-        CPLDebug( "COORD_TRANSFORM_ANGLES", "pre coordTransformAngle calc" );
-        CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue() );
+        CPLDebug("COORD_TRANSFORM_ANGLES", "pre coordTransformAngle calc");
+        CPLDebug("COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue());
         // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
         for(int i=0; i<dirTmpGrid.get_nRows(); i++)
         {
@@ -916,8 +938,8 @@ noCloudOK:
                 }
             }
         }
-        CPLDebug( "COORD_TRANSFORM_ANGLES", "post coordTransformAngle calc" );
-        CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue() );
+        CPLDebug("COORD_TRANSFORM_ANGLES", "post coordTransformAngle calc");
+        CPLDebug("COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue());
 
 // this whole little section is no longer needed, if we properly set the NO_DATA values, as above, with NO_DATA values properly set and detected,
 // the .get_meanValue() returns the right result every time now.
@@ -939,8 +961,8 @@ noCloudOK:
                 }
             }
         }
-        CPLDebug( "COORD_TRANSFORM_ANGLES", "true post coordTransformAngle calc value (NO_DATA spd, u, v vals (0.0) and NO_DATA dir vals (270.0) now dropped)" );
-        CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue() );
+        CPLDebug("COORD_TRANSFORM_ANGLES", "true post coordTransformAngle calc value (NO_DATA spd, u, v vals (0.0) and NO_DATA dir vals (270.0) now dropped)");
+        CPLDebug("COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() = %lf", dirTmpGrid.get_meanValue());
 
         // cleanup the intermediate grids
         speedTmpGrid.deallocate();
@@ -1059,12 +1081,18 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     }
     if( !pszForecastFile )
     {
-        throw badForecastFile( "Could not find forecast associated with " \
-                               "requested time step" );
+        throw badForecastFile("Could not find forecast associated with requested time step.");
     }
 
     hDS = GDALOpenShared( pszForecastFile, GA_ReadOnly );
+    if(hDS == NULL)
+    {
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
+    }
+
+    // wouldn't this here kill the opened file?? Shouldn't it be done later after the file gets closed??
     CPLFree( (void*)pszForecastFile );
+
     int nBandCount = GDALGetRasterCount( hDS );
     hBand = GDALGetRasterBand( hDS, 1 );
     int bSuccess;
@@ -1086,7 +1114,13 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                              "INIT_DEST", "-9999.0" );
 
     pszSrcWkt = GDALGetProjectionRef( hDS );
+    if(pszSrcWkt == nullptr)
+    {
+        throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
+    }
+
     pszDstWkt = input.dem.prjString.c_str();
+
 #ifdef NOMADS_VRT
     hVrtDS = NomadsAutoCreateWarpedVRT( hDS, pszSrcWkt, pszDstWkt,
                                       GRA_NearestNeighbour, 1.0,
@@ -1096,6 +1130,10 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                                       GRA_NearestNeighbour, 1.0,
                                       psWarpOptions );
 #endif
+    if(hVrtDS == NULL)
+    {
+        throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+    }
 
     int nSkipRows, nSkipCols;
     hBand = GDALGetRasterBand( hVrtDS, 1 );

@@ -295,8 +295,7 @@ void wxStation::set_stationName( std::string Name )
  * @param Yord y coordinate in projection system coordinates (dem projection coordinates)
  * @param demFile name of the dem file used to create the coordinate transformation
  */
-void wxStation::set_location_projected( double Xord, double Yord,
-                    std::string demFile )
+void wxStation::set_location_projected( double Xord, double Yord, std::string demFile )
 {
     coordType = PROJCS;
     datumType = WGS84;  // always use WGS84 for the datum for PROJCS regardless of the input datum type
@@ -304,32 +303,22 @@ void wxStation::set_location_projected( double Xord, double Yord,
     projXord = Xord;
     projYord = Yord;
 
-    if( demFile.empty() || demFile == "" ){
-        xord = Xord;
-        yord = Yord;
-        lon = Xord;
-        lat = Yord;
-        return;
+    if(demFile.empty() || demFile == "")
+    {
+        throw std::runtime_error("Invalid input, The input demFile is empty.");
     }
 
     GDALDataset *poDS = (GDALDataset*) GDALOpen( demFile.c_str(), GA_ReadOnly );
-    if( poDS == NULL ){
-        xord = Xord;
-        yord = Yord;
-        lon = Xord;
-        lat = Yord;
-        return;
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("Cannot open input demFile.");
     }
 
     //get llcorner to subtract
     double adfGeoTransform[6];
-
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ) {
-        xord = Xord;
-        yord = Yord;
-        lon = Xord;
-        lat = Yord;
-        return;
+    if(poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    {
+        throw std::runtime_error("Could not get GeoTransform from input demFile.");
     }
 
     double llx = adfGeoTransform[0];
@@ -341,7 +330,10 @@ void wxStation::set_location_projected( double Xord, double Yord,
     double lonx = projXord;
     double laty = projYord;
 
-    GDALPointToLatLon( lonx, laty, poDS, "WGS84" );
+    if(!GDALPointToLatLon(lonx, laty, poDS, "WGS84"))
+    {
+        throw std::runtime_error("Failed to warp station point to lat lon.");
+    }
 
     lon = lonx;
     lat = laty;
@@ -361,58 +353,57 @@ void wxStation::set_location_projected( double Xord, double Yord,
  */
 void wxStation::set_location_LatLong( double Lat, double Lon,
                                       const std::string demFile,
-                      const char *datum )
+                                      const char *datum )
 {
+    coordType = GEOGCS;
+
     if( EQUAL( datum, "WGS84" ) )
+    {
         datumType = WGS84;
+    }
     else if( EQUAL( datum, "NAD83" ) )
+    {
         datumType = NAD83;
+    }
     else if ( EQUAL( datum, "NAD27" ) )
+    {
         datumType = NAD27;
+    }
     else
     {
-        std::string oErrorString = "wxStation::set_location_LatLong() input datum \"";
-        oErrorString += datum;
-        oErrorString += "\" is not valid! options are \"WGS84\", \"NAD83\", \"NAD27\"";
-        throw std::runtime_error( oErrorString );
+        throw std::runtime_error("The station datum '"+std::string(datum)+"' is not valid. options are 'WGS84', 'NAD83', 'NAD27'");
     }
-    coordType = GEOGCS;
 
     lon = Lon;
     lat = Lat;
 
-    if( demFile.empty() || demFile == "" ){
-        projXord = Lon;
-        projYord = Lat;
-        xord = Lon;
-        yord = Lat;
-        return;
+    if(demFile.empty() || demFile == "")
+    {
+        throw std::runtime_error("Invalid input, The input demFile is empty.");
     }
 
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
-    if( poDS == NULL ){
-        projXord = Lon;
-        projYord = Lat;
-        xord = Lon;
-        yord = Lat;
-        return;
+    if(poDS == NULL)
+    {
+        throw std::runtime_error("Cannot open input demFile.");
     }
 
     double projX = lon;
     double projY = lat;
 
-    GDALPointFromLatLon( projX, projY, poDS, datum );
+    if(!GDALPointFromLatLon(projX, projY, poDS, datum))
+    {
+        throw std::runtime_error("Failed to warp station point from lat lon.");
+    }
 
     projXord = projX;
     projYord = projY;
 
     //get llcorner to subtract
     double adfGeoTransform[6];
-
-    if( poDS->GetGeoTransform( adfGeoTransform ) != CE_None ){
-        xord = projXord;
-        yord = projYord;
-        return;
+    if(poDS->GetGeoTransform(adfGeoTransform) != CE_None)
+    {
+        throw std::runtime_error("Could not get GeoTransform from input demFile.");
     }
 
     double llx = adfGeoTransform[0];
@@ -548,64 +539,57 @@ bool wxStation::check_station(wxStation station)
 {
     if(station.stationName.empty() || station.stationName == "")
     {
-        cout<<"failed Name Check"<<endl;
+        CPLError(CE_Failure, CPLE_AppDefined, "station failed name check");
         return false;
     }
     if(station.coordType != GEOGCS && station.coordType != PROJCS)
     {
-        cout<<"failed Coord Check"<<endl;
+        CPLError(CE_Failure, CPLE_AppDefined, "station failed coordType check");
         return false;
     }
     if(station.datumType != WGS84 && station.datumType != NAD83 && station.datumType !=NAD27)
     {
-        cout<<"failed datum Check"<<endl;
+        CPLError(CE_Failure, CPLE_AppDefined, "station failed datum check");
         return false;
     }
 
     if(station.lat < -90.0 || station.lat > 90.0)
     {
-        cout<<"failed lat Check: "<<station.lat<<endl;
+        CPLError(CE_Failure, CPLE_AppDefined, "station failed latitude check");
         return false;
     }
     if(station.lon < -180.0 || station.lon > 360.0)
     {
-        cout<<"failed lon Check: "<<station.lon<<endl;
+        CPLError(CE_Failure, CPLE_AppDefined, "station failed longitude check");
         return false;
     }
-
-
 
     for (int i=0;i<station.heightList.size();i++)
     {        
         //Changing all isnan() to std::isnan() for MSVC2010
         if(station.heightList[i] < 0.0|| std::isnan(station.heightList[i]))
         {
-            cout<<"failed height Check on "<<i<<endl;
-            cout<<station.heightList[i]<<endl;
+            CPLError(CE_Failure, CPLE_AppDefined, "station failed height check on height[%d] '%lf'", i, station.heightList[i]);
             return false;
         }
         if(station.speedList[i] < 0.0 || std::isnan(station.speedList[i]) || station.speedList[i]>105.0)
         {
-            cout<<"failed speed Check on "<<i<<endl;
-            cout<<station.speedList[i]<<endl;
+            CPLError(CE_Failure, CPLE_AppDefined, "station failed speed check on speed[%d] '%lf'", i, station.speedList[i]);
             return false;
         }
         if(station.directionList[i] < 0.0 || station.directionList[i] > 360.0 || std::isnan(station.directionList[i]))
         {
-            cout<<"failed direction Check on "<<i<<endl;
-            cout<<station.directionList[i]<<endl;
+            CPLError(CE_Failure, CPLE_AppDefined, "station failed direction check on direction[%d] '%lf'", i, station.directionList[i]);
             return false;
         }
         if(station.temperatureList[i]< 173.15 || station.temperatureList[i] > 330.00 || std::isnan(station.temperatureList[i]))
         {
-            cout<<"failed temperature Check on "<<i<<endl;
-            cout<<station.temperatureList[i]<<endl;
+            CPLError(CE_Failure, CPLE_AppDefined, "station failed temperature check on temperature[%d] '%lf'", i, station.temperatureList[i]);
             return false;
         }
         if(station.cloudCoverList[i]<0.0||station.cloudCoverList[i]>1.10 || std::isnan(station.cloudCoverList[i]))
         {
-            cout<<"failed cloud check on "<<i<<endl;
-            cout<<station.cloudCoverList[i]<<endl;
+            CPLError(CE_Failure, CPLE_AppDefined, "station failed cloud cover check on cloudCover[%d] '%lf'", i, station.cloudCoverList[i]);
 //            station.cloudCoverList[i]=0.0;
             return false;
         }
@@ -613,7 +597,7 @@ bool wxStation::check_station(wxStation station)
 
     if(station.w_speed < 0.0 || std::isnan(station.w_speed))
     {
-        cout<<"failed vert_speed Check"<<endl;
+        CPLError(CE_Failure, CPLE_AppDefined, "station failed vertical speed check");
         return false;
     }
 
@@ -664,16 +648,19 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     hDS = OGROpen(pszFilename, FALSE, NULL);
     int rc = 0;
     if (hDS == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open station file.");
         return -1;
     }
     OGRLayerH hLayer = NULL;
     hLayer = OGR_DS_GetLayer(hDS, 0);
     if (hLayer == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get layer from station file.");
         rc = -1;
     }
     OGRFeatureDefnH hDefn = NULL;
     hDefn = OGR_L_GetLayerDefn(hLayer);
     if (hDefn == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get layer definition from station file.");
         rc = -1;
     }
     // If we failed to open or get metadata, bail
@@ -709,6 +696,7 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     { //Check the new header...
         if(xt!=n2) //if it doesn't equal the new header size....
         { //kill it
+            CPLError(CE_Failure, CPLE_AppDefined, "Number of header columns in station file does not match station file format.");
             return -1;
         }
     }
@@ -720,11 +708,13 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     for (i = 0; i < n; i++) {
         hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
         if (hFldDefn == NULL) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not get header definition for column '%d' in station file.", i);
             rc = -1;
         }
         if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader1[i])) {
             if(!EQUAL(OGR_Fld_GetNameRef(hFldDefn), oldSpeedHeadStr))
             {
+                CPLError(CE_Failure, CPLE_AppDefined, "Header field for column '%d' in station file does not match station file format.", i);
                 rc = -1;
             }
         }
@@ -742,10 +732,18 @@ int wxStation::GetHeaderVersion(const char *pszFilename)
     */
     rc = 1;
     if (OGR_FD_GetFieldCount(hDefn) > n) {
-        if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
-            /* If we silently except version 1 files, return 1 here. */
-            rc = -1;
+        hFldDefn = OGR_FD_GetFieldDefn(hDefn, i);
+        if (hFldDefn == NULL) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not get header definition for column '%d' in station file.", i);
+            return -1;
         }
+        if (!EQUAL(OGR_Fld_GetNameRef(hFldDefn), apszValidHeader2[i])) {
+            CPLError(CE_Failure, CPLE_AppDefined, "Header field for column '%d' in station file does not match station file format.", i);
+            return -1;
+        }
+        /* TODO: If we silently accept version 1 files, would do a read/check of additional columns and return 1 here.
+        ** But would need to revise the above, because it flat out rejects if the first additional column isn't specifically the rc = 2 format, or rc = 2 format would break.
+        */
         rc = 2;
     }
     GDALClose(hDS);
@@ -763,15 +761,23 @@ int wxStation::GetFirstStationLine(const char *xFilename)
     hDS = OGROpen( xFilename, FALSE, NULL );
     if(hDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open station file.");
         return -1; //very bad!
     }
+
     poLayer = (OGRLayer*)OGR_DS_GetLayer( hDS, 0 );
     hLayer=OGR_DS_GetLayer(hDS,0);
+    if (hLayer == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get layer from station file.");
+        return -1; //very bad!
+    }
+
     OGR_L_ResetReading(hLayer);
     poLayer->ResetReading();
     poFeature = poLayer->GetFeature(iBig);
     if (poFeature==NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get feature from layer from station file. Possibly no station data in the station file.");
         return -1; //If there are no stations in the csv!
     }
     std::string start_datetime(poFeature->GetFieldAsString(15));
@@ -794,11 +800,13 @@ int wxStation::GetFirstStationLine(const char *xFilename)
 void wxStation::writeBlankStationFile(std::string outFileName)
 {
     if (outFileName.empty() || outFileName == "") {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, The input outFileName is empty.");
         return;
     }
     FILE *fout;
     fout = fopen(outFileName.c_str(), "w");
     if (fout == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open outFileName '%s' for writing.", outFileName.c_str());
         return;
     }
     int n = CSLCount( (char**)apszValidHeader2 );
@@ -848,8 +856,12 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
     outFileNameStamp=outFileNameMod+"-"+timestream.str()+".csv";
 
     if( outFileNameStamp.empty() || outFileNameStamp == "" )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "The generated outFileNameStamp is empty.");
         return;
+    }
     if( StationVect.empty() ) {
+        CPLError(CE_Warning, CPLE_AppDefined, "The input StationVect is empty, writing blank station file.");
         writeBlankStationFile( outFileNameStamp );
         return;
     }
@@ -857,6 +869,7 @@ void wxStation::writeStationFile( std::vector<wxStation>StationVect,
     FILE *fout;
     fout = fopen( outFileNameStamp.c_str(), "w" );
     if (fout == NULL) {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open the generated outFileNameStamp '%s' for writing.", outFileNameStamp.c_str());
         return;
     }
     int n = CSLCount((char **)apszValidHeader1);
@@ -928,19 +941,22 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
     {
         outFileNameStamp = std::string(CPLFormFilename(outPath.c_str(),filePart.c_str(),".kml"));
     }
-    if( stations.size() == 0 )
-        return;
-    CPLDebug("STATION_FETCH","KML PATH: %s",outFileNameStamp.c_str());
-    FILE *fout = fopen( outFileNameStamp.c_str(), "w" );
 
+    if( stations.size() == 0 )
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "The input stations is empty, skipping kml file.");
+        return;
+    }
+
+    CPLDebug("STATION_FETCH", "KML PATH: %s", outFileNameStamp.c_str());
+    FILE *fout = fopen( outFileNameStamp.c_str(), "w" );
     if( fout == NULL )
     {
-        printf( "Cannot open kml file: %s for writing.", outFileNameStamp.c_str() );
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot open kml file: %s for writing.", outFileNameStamp.c_str());
         return;
     }
 
     double heightTemp, speedTemp, directionTemp, ccTemp, temperatureTemp, radOfInflTemp;
-
 
     fprintf( fout, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
     fprintf( fout, "<kml>\n" );
@@ -1039,18 +1055,14 @@ void wxStation::writeKMZFile(std::vector<wxStation> stations, string basePath, s
     std::string outFileSubName=subDem;
     fullPath = basePath+subDem+"_stations_"+timeComponent+".kmz";
 
-    cout<<outFileSubName<<endl;
-    cout<<fullPath<<endl;
+    CPLDebug("STATION_FETCH", "outFileSubName = '%s'", outFileSubName.c_str());
+    CPLDebug("STATION_FETCH", "fullPath = '%s'", fullPath.c_str());
 
 //    for (int i=0;i<stations[0].temperatureList.size();i++)
 //    {
-//        cout<<stationKmlNames[i]<<endl;
+//        CPLDebug("STATION_FETCH", "stationKmlNames[%d] = '%s'", i, stationKmlNames[i].c_str());
 //    }
 
-
 //    writeKmlFile(stations,"test-1");
-
-
-
 
 }

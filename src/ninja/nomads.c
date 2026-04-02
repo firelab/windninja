@@ -36,8 +36,7 @@ const char ** NomadsFindModel( const char *pszKey )
             if( EQUAL( pszKey, apszNomadsKeys[i][0] ) )
             {
                 ppszKey = apszNomadsKeys[i];
-                CPLDebug( "NOMADS", "Found model key: %s",
-                          ppszKey[NOMADS_NAME] );
+                CPLDebug("NOMADS", "Found model key: %s", ppszKey[NOMADS_NAME]);
                 return ppszKey;
             }
             i++;
@@ -59,6 +58,7 @@ static char * NomadsBuildArgList( const char *pszVars, const char *pszPrefix )
     char **papszArgs = CSLTokenizeString2( pszVars, ",", 0 );
     n = CSLCount(papszArgs);
     if (!n) {
+      CPLError(CE_Failure, CPLE_AppDefined, "Failed to tokenize input pszVars, failed to build NOMADS arg list.");
       return NULL;
     }
     /* var_##=on& */
@@ -180,6 +180,7 @@ static int NomadsBuildForecastRunHours( const char **ppszKey,
             NomadsUtcAddHours( tmp, nStride );
             if( NomadsUtcCompare( tmp, end ) > 0 )
             {
+                CPLDebug("NOMADS", "found forecast hours '%d'.", k);
                 CSLDestroy( papszRunHours );
                 NomadsUtcFree( tmp );
                 CSLDestroy( papszHours );
@@ -212,6 +213,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     ppszKey = NomadsFindModel( pszKey );
     if( !ppszKey )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data, failed to build NOMADS forecast file list.");
         return NULL;
     }
     pszVars = NomadsBuildArgList( ppszKey[NOMADS_VARIABLES], "var" );
@@ -220,8 +222,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
     {
         pszGribFile = CPLSPrintf( ppszKey[NOMADS_FILE_NAME_FRMT], nFcstHour,
                                   panRunHours[i] );
-        CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
-                  pszGribFile );
+        CPLDebug("WINDNINJA", "NOMADS generated grib file name: %s", pszGribFile);
         NomadsUtcStrfTime( fcst, ppszKey[NOMADS_DIR_DATE_FRMT] );
         /* Special case for urls with subdirectories */
         if(strstr(ppszKey[NOMADS_DIR_FRMT], "%02d") != NULL)
@@ -232,8 +233,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
         {
             pszGribDir = CPLSPrintf( ppszKey[NOMADS_DIR_FRMT], fcst->s );
         }
-        CPLDebug( "WINDNINJA", "NOMADS generated grib directory: %s",
-                  pszGribDir );
+        CPLDebug("WINDNINJA", "NOMADS generated grib directory: %s", pszGribDir);
 
         pszUrl =
             CPLSPrintf( "%s%s?%s&%s%s&file=%s&dir=/%s",
@@ -246,7 +246,7 @@ static char ** NomadsBuildForecastFileList( const char *pszKey, int nFcstHour,
                         NOMADS_SUBREGION, pszGribFile, pszGribDir );
         pszUrl = CPLSPrintf( pszUrl, padfBbox[0], padfBbox[1],
                              padfBbox[2], padfBbox[3] );
-        CPLDebug( "WINDNINJA", "NOMADS generated url: %s", pszUrl );
+        CPLDebug("WINDNINJA", "NOMADS generated url: %s", pszUrl);
         papszFileList = CSLAddString( papszFileList, pszUrl );
     }
     CPLFree( (void*)pszVars );
@@ -267,6 +267,7 @@ static char ** NomadsBuildOutputFileList( const char *pszKey, int nFcstHour,
     ppszKey = NomadsFindModel( pszKey );
     if( !ppszKey )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data, failed to build NOMADS output file list.");
         return NULL;
     }
 
@@ -282,8 +283,7 @@ static char ** NomadsBuildOutputFileList( const char *pszKey, int nFcstHour,
         {
             pszGribFile = CPLSPrintf( "/vsizip/%s", pszGribFile );
         }
-        CPLDebug( "WINDNINJA", "NOMADS generated grib file name: %s",
-                  pszGribFile );
+        CPLDebug("WINDNINJA", "NOMADS generated grib file name: %s", pszGribFile);
         papszFileList = CSLAddString( papszFileList, pszGribFile );
     }
     return papszFileList;
@@ -296,14 +296,20 @@ static int NomadsZipFiles( char **papszIn, char **papszOut )
     char *pabyBuffer;
     n = CSLCount( papszIn );
     if( n != CSLCount( papszOut ) )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "NomadsZipFiles(), input and output file lists do not match in size.");
         return NOMADS_ERR;
+    }
     for( i = 0; i < n; i++ )
     {
         //VSIRename( papszIn[i], papszOut[i] );
         fin = VSIFOpenL( papszIn[i], "rb" );
         fout = VSIFOpenL( papszOut[i], "wb" );
         if( !fin || !fout )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not open '%s' and '%s' files for processing.", papszIn[i], papszOut[i]);
             return NOMADS_ERR;
+        }
         rc = VSIFSeekL( fin, 0, SEEK_END );
         c = VSIFTellL( fin );
         rc = VSIFSeekL( fin, 0, SEEK_SET );
@@ -337,15 +343,13 @@ static int NomadsFetchVsi( const char *pszUrl, const char *pszFilename )
     fin = VSIFOpenL( pszVsiUrl, "rb" );
     if( !fin )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to download file." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open Url '%s'.", pszVsiUrl);
         return NOMADS_ERR;
     }
     fout = VSIFOpenL( pszFilename, "wb" );
     if( !fout )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to open file for writing." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open '%s' file for writing.", pszFilename);
         VSIFCloseL( fin );
         return NOMADS_ERR;
     }
@@ -379,16 +383,14 @@ static int NomadsFetchHttp( const char *pszUrl, const char *pszFilename )
         strstr( (char*)psResult->pabyData, "HTTP error code : 404" ) ||
         strstr( (char*)psResult->pabyData, "data file is not present" ) )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to download file.");
         CPLHTTPDestroyResult( psResult );
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to download file." );
         return NOMADS_ERR;
     }
     fout = VSIFOpenL( pszFilename, "wb" );
     if( !fout )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Failed to open file for writing." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to open '%s' file for writing.", pszFilename);
         CPLHTTPDestroyResult( psResult );
         return NOMADS_ERR;
     }
@@ -418,6 +420,7 @@ static double NomadsGetMinSize( const char **ppszModel )
     char **papszTokens = CSLTokenizeString2( ppszModel[NOMADS_GRID_RES], " ", 0 );
     if( papszTokens == NULL || CSLCount( papszTokens ) < 2 )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to tokenize input ppszModel.");
         CSLDestroy( papszTokens );
         assert( 0 );
         return 0;
@@ -556,8 +559,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
     ppszKey = NomadsFindModel( pszModelKey );
     if( ppszKey == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Could not find model key in nomads data" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data.");
         return NOMADS_ERR;
     }
 
@@ -591,8 +593,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         nBufTries++;
     }
 
-    CPLDebug( "NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf",
-              adfBufBbox[0], adfBufBbox[1],adfBufBbox[2],adfBufBbox[3] );
+    CPLDebug("NOMADS", "Fetching data for bounding box: %lf, %lf, %lf, %lf", adfBufBbox[0], adfBufBbox[1],adfBufBbox[2],adfBufBbox[3]);
 
     NomadsUtcCreate( &ref );
     NomadsUtcCreate( &end );
@@ -655,8 +656,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         nrc = NOMADS_OK;
         fcst = NomadsSetForecastTime( ppszKey, ref, nFcstTries );
         nFcstHour = fcst->ts->tm_hour;
-        CPLDebug( "WINDNINJA", "Generated forecast time in utc: %s",
-                  NomadsUtcStrfTime( fcst, "%Y%m%dT%HZ" ) );
+        CPLDebug("WINDNINJA", "Generated forecast time in utc: %s", NomadsUtcStrfTime(fcst, "%Y%m%dT%HZ"));
 
         if( EQUALN( pszModelKey, "rtma", 4 ) )
         {
@@ -675,8 +675,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                                          nFilesToGet, fcst, adfBufBbox );
         if( papszDownloadUrls == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Could not generate list of URLs to download, invalid data" );
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not generate list of URLs to download, invalid data.");
             nFcstTries++;
             NomadsUtcFree( fcst );
             fcst = NULL;
@@ -684,15 +683,14 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
             continue;
         }
         pszTmpDir = CPLStrdup( CPLGenerateTempFilename( NULL ) );
-        CPLDebug( "WINDNINJA", "Creating Temp directory: %s", pszTmpDir );
+        CPLDebug("WINDNINJA", "Creating Temp directory: %s", pszTmpDir);
         VSIMkdir( pszTmpDir, 0777 );
         papszOutputFiles =
             NomadsBuildOutputFileList( pszModelKey, nFcstHour, panRunHours,
                                        nFilesToGet, pszTmpDir, FALSE );
         if( papszOutputFiles == NULL )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Could not generate list of URLs to download, invalid data" );
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not generate list of output files to download, invalid data.");
             nFcstTries++;
             CSLDestroy( papszDownloadUrls );
             NomadsUtcFree( fcst );
@@ -704,7 +702,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CPLAssert( CSLCount( papszDownloadUrls ) == nFilesToGet );
         CPLAssert( CSLCount( papszOutputFiles ) == nFilesToGet );
 
-        CPLDebug( "NOMADS", "Starting download..." );
+        CPLDebug("NOMADS", "Starting download...");
         if( pfnProgress )
         {
             pfnProgress( 0.0, "Starting download...", NULL );
@@ -718,9 +716,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 #endif /* NOMADS_USE_VSI_READ */
         if( nrc != NOMADS_OK )
         {
-            CPLError( CE_Warning, CPLE_AppDefined,
-                      "Failed to download forecast, " \
-                      "stepping back one forecast run time step." );
+            CPLError(CE_Warning, CPLE_AppDefined, "Failed to download forecast, stepping back one forecast run time step.");
             nFcstTries++;
             CPLSleep( 1 );
             /*
@@ -740,8 +736,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
                                              CPLGetFilename( papszOutputFiles[i] ) ),
                                  NULL ) )
                 {
-                    CPLError( CE_Failure, CPLE_UserInterrupt,
-                              "Cancelled by user." );
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "Cancelled by user.");
                     nrc = NOMADS_ERR;
                     nFcstTries = nMaxFcstRewind;
                     break;
@@ -765,10 +760,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
             {
                 if( pasData[t].nErr )
                 {
-                    CPLError( CE_Warning, CPLE_AppDefined,
-                              "Threaded download failed, attempting " \
-                              "serial download for %s",
-                              CPLGetFilename( pasData[t].pszFilename ) );
+                    CPLError(CE_Warning, CPLE_AppDefined, "Threaded download failed, attempting serial download for '%s'.", CPLGetFilename(pasData[t].pszFilename));
                     /* Try again, serially though */
                     if( CPLCheckForFile( (char *)pasData[t].pszFilename, NULL ) )
                     {
@@ -797,9 +789,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
 #endif /* NOMADS_ENABLE_ASYNC */
             if( nrc != NOMADS_OK )
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to download forecast, " \
-                          "stepping back one forecast run time step." );
+                CPLError(CE_Warning, CPLE_AppDefined, "Failed to download forecast, stepping back one forecast run time step.");
                 nFcstTries++;
                 CPLSleep( 1 );
                 break;
@@ -848,8 +838,7 @@ int NomadsFetch( const char *pszModelKey, const char *pszRefTime,
         CSLDestroy( papszFinalFiles );
         if( nrc != NOMADS_OK )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Could not copy files into path, unknown i/o failure" );
+            CPLError(CE_Failure, CPLE_AppDefined, "Could not copy files into path, unknown i/o failure.");
             CPLUnlinkTree( pszDstVsiPath );
         }
         CPLUnlinkTree( pszTmpDir );
@@ -882,6 +871,7 @@ char * NomadsFormName( const char *pszKey, char pszSpacer )
     int n;
     if( ppszKey == NULL )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not find input model key in NOMADS data.");
         return NULL;
     }
     /* Count the levels to check on 3D */
@@ -957,6 +947,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
 
     if(psOptionsIn == NULL) {
+        CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions is NULL, running regular GDALAutoCreateWarpedVRT()");
         return GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, eResampleAlg,
                     dfMaxError, psOptionsIn);
     }
@@ -981,10 +972,12 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
         psWO->nBandCount = GDALGetRasterCount(hSrcDS);
         psWO->panSrcBands = CPLMalloc(psWO->nBandCount * sizeof(int));
         if (psWO->panSrcBands == NULL) {
+            CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions->panSrcBands is NULL, returning without warping.");
             return NULL;
         }
         psWO->panDstBands = CPLMalloc(psWO->nBandCount * sizeof(int));
         if (psWO->panDstBands == NULL) {
+            CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions->panDstBands is NULL, returning without warping.");
             return NULL;
         }
         for( i = 0; i < GDALGetRasterCount( hSrcDS ); i++ ){
@@ -1041,6 +1034,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
 
     if( psWO->pTransformerArg == NULL )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALCreateGenImgProjTransformer() failed. Returning NULL dataset.");
         GDALDestroyWarpOptions( psWO );
         return NULL;
     }
@@ -1054,6 +1048,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
                                  adfDstGeoTransform, &nDstPixels, &nDstLines );
     if( eErr != CE_None )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "GDALSuggestedWarpOutput() failed. Returning NULL dataset.");
         GDALDestroyTransformer( psWO->pTransformerArg );
         GDALDestroyWarpOptions( psWO );
         return NULL;
@@ -1086,6 +1081,12 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
     GDALDatasetH hDstDS
         = GDALCreateWarpedVRT( hSrcDS, nDstPixels, nDstLines,
                                adfDstGeoTransform, psWO );
+    if(hDstDS == NULL)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp the forecast file, possibly non-uniform grid. Returning NULL dataset.");
+        GDALDestroyWarpOptions(psWO);
+        return NULL;
+    }
 
     GDALDestroyWarpOptions( psWO );
 
@@ -1101,5 +1102,4 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
     return hDstDS;
 }
 #endif /* NOMADS_INTERNAL_VRT */
-
 

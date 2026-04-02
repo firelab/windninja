@@ -124,9 +124,41 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMBBox(), fetching failed!");
+
+        if(result == SURF_FETCH_E_IO_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\Failure opening a dataset.");
+        }
+        else if(result == SURF_FETCH_E_BOUNDS_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFetch was outside the bounds of the dataset.");
+        }
+        else if(result == SURF_FETCH_E_WARPER_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFailure during warp, failed to warp data.");
+        }
+        else if(result == SURF_FETCH_E_BAD_INPUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nBad input to fetching functions.");
+        }
+        else if(result == SURF_FETCH_E_SIZE_LIMIT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nHit a size limit during fetch.");
+        }
+        //else if(result == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+        //{
+        //    Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFound NO_DATA in downloaded fetch data.");
+        //}
+        else if(result == SURF_FETCH_E_TIMEOUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nDownload failure, likely download timeout failure.");
+        }
+        else
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nUnknown error occurred during fetch.");
+        }
         delete fetcher;
-        return NINJA_E_INVALID;
+        return result;
     }
     delete fetcher;
     return NINJA_SUCCESS;
@@ -178,9 +210,41 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     if(result < 0)
     {
         //Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
-        Com->ninjaCom(ninjaComClass::ninjaFailure, "in ninjaTools::fetchDEMPoint(), fetching failed!");
+
+        if(result == SURF_FETCH_E_IO_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFailure opening a dataset.");
+        }
+        else if(result == SURF_FETCH_E_BOUNDS_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFetch was outside the bounds of the dataset.");
+        }
+        else if(result == SURF_FETCH_E_WARPER_ERR)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFailure during warp, failed to warp data.");
+        }
+        else if(result == SURF_FETCH_E_BAD_INPUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nBad input to fetching functions.");
+        }
+        else if(result == SURF_FETCH_E_SIZE_LIMIT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nHit a size limit during fetch.");
+        }
+        //else if(result == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+        //{
+        //    Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFound NO_DATA in downloaded fetch data.");
+        //}
+        else if(result == SURF_FETCH_E_TIMEOUT)
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nDownload failure, likely download timeout failure.");
+        }
+        else
+        {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nUnknown error occurred during fetch.");
+        }
         delete fetcher;
-        return NINJA_E_INVALID;
+        return result;
     }
     delete fetcher;
     return NINJA_SUCCESS;
@@ -401,9 +465,8 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
         bool success = pointInitialization::fetchStationFromBbox(std::string(elevationFile), timeList, timeZone, fetchLatestFlag);
         if(!success)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationFromBbox() failed.\nCould not read station File: Possibly no stations exist for request.");
             pointInitialization::removeBadDirectory(stationPathName);
-            return NINJA_E_INVALID;
+            throw std::runtime_error("pointInitialization::fetchStationFromBbox() failed with unknown error.\nCould not read station File: Possibly no stations exist for request.");
         }
         if(locationFileFlag)
         {
@@ -470,9 +533,8 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
         bool success = pointInitialization::fetchStationByName(std::string(stationList), timeList, timeZone, fetchLatestFlag);
         if(!success)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::fetchStationByName() failed.\nCould not read station File: Possibly no stations exist for request.");
             pointInitialization::removeBadDirectory(stationPathName);
-            return NINJA_E_INVALID;
+            throw std::runtime_error("pointInitialization::fetchStationByName() failed with unknown error.\nCould not read station File: Possibly no stations exist for request.");
         }
         if(locationFileFlag)
         {
@@ -597,8 +659,7 @@ int ninjaTools::checkTimeDuration( int* yearList, int* monthList, int * dayList,
         int isValid = pointInitialization::checkFetchTimeDuration(timeList);
         if(isValid == -2)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "pointInitialization::checkFetchTimeDuration() failed.");
-            return NINJA_E_OTHER;
+            throw std::runtime_error("pointInitialization::checkFetchTimeDuration() failed. Time duration exceeds 1 year.");
         }
 
         return NINJA_SUCCESS;

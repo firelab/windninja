@@ -103,6 +103,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     hSrcDS = GDALOpen(GetPath().c_str(), GA_ReadOnly);
     if(hSrcDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open path '%s' for reading, download failed.", GetPath().c_str());
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -110,14 +111,13 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     if( GDT_Byte != eDT )
     {
         //add error info detailing incompatible data types
+        CPLError(CE_Failure, CPLE_AppDefined, "Raster band contains incompatible byte data types, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
-    
 
     const char *pszSrcWKT=NULL, *pszDstWKT = NULL;
     pszSrcWKT = GDALGetProjectionRef(hSrcDS);
 
-     
     OGRSpatialReference oSrcSRS, oDstSRS;
 
     oSrcSRS.importFromEPSG(4326);
@@ -144,7 +144,8 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
-        return SURF_FETCH_E_IO_ERR;
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
+        return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
@@ -166,7 +167,8 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
-        return SURF_FETCH_E_WARPER_ERR; /*assumption*/
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid nPixels and/or nLines for warp. Could not warp image, download failed.");
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
     adfDstGeoTransform[0] = dfMinX;
@@ -181,6 +183,7 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if(hDstDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -223,14 +226,38 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
-                                               "download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         CPLFree((void*)pszDstWKT);
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
+    GDALRasterBandH hSrcBand;
+    GDALRasterBandH hDstBand;
+
+    hSrcBand = GDALGetRasterBand(hSrcDS, 1);
+    hDstBand = GDALGetRasterBand(hDstDS, 1);
+
+    double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
+
+    GDALSetRasterNoDataValue(hDstBand, dfNoData);
+
+    double *padfScanline;
+    padfScanline = (double *) CPLMalloc(sizeof(double)*nPixels);
+    int nNoDataCount = 0;
+    for(int i = 0;i < nLines;i++)
+    {
+        GDALRasterIO(hDstBand, GF_Read, 0, i, nPixels, 1, 
+                     padfScanline, nPixels, 1, GDT_Float64, 0, 0);
+        for(int j = 0; j < nPixels;j++)
+        {
+            if(CPLIsEqual(padfScanline[j], dfNoData))
+                nNoDataCount++;
+        }
+    }
+
+    CPLFree((void*)padfScanline);
     CPLFree((void*)pszDstWKT);
 
     GDALClose(hDstDS);
@@ -239,10 +266,12 @@ SURF_FETCH_E ReliefFetch::FetchBoundingBox( double *bbox, double resolution,
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
     CPLSetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
 
-    return SURF_FETCH_E_NONE;
-
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Final downloaded elevation file contains '%d' noDataValues", nNoDataCount);
+    }
+    return nNoDataCount;
 }
-
 
 SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile, int nXSize, int nYSize )
 {
@@ -268,6 +297,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     inDS = GDALOpen( infile.c_str(), GA_ReadOnly );
     if( NULL == inDS )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open infile '%s' for reading, makeReliefOf() failed.", infile.c_str());
         return SURF_FETCH_E_IO_ERR;
     }
     
@@ -291,21 +321,23 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     GDALClose( inDS );
     if( NULL ==  pszDstWKT )
     {
-        return SURF_FETCH_E_WARPER_ERR;
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not get dstWKT projection information, makeReliefOf() failed.");
+        return SURF_FETCH_E_IO_ERR;
     }
     /*finished with the input file */
-
 
     /*Get the final information from the source DS */
     hSrcDS = GDALOpen( path.c_str(), GA_ReadOnly );
     if(hSrcDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open path '%s' for reading, makeReliefOf() failed.", path.c_str());
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
     }
     nbands = GDALGetRasterCount( hSrcDS );
     if( nbands == 0 )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Read dataset contains no bands information, makeReliefOf() failed.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -313,6 +345,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
     eDT = GDALGetRasterDataType( GDALGetRasterBand( hSrcDS, 1 ) );
     if( GDT_Byte != eDT )
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Raster band contains incompatible byte data types, makeReliefOf() failed.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -344,6 +377,7 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if(hDstDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, makeReliefOf() failed.");
         GDALClose( hSrcDS );
         CPLFree((void*)pszDstWKT);
         return SURF_FETCH_E_IO_ERR;
@@ -351,7 +385,6 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     GDALSetProjection(hDstDS, pszDstWKT);
     GDALSetGeoTransform(hDstDS, dst_gt);
-
 
     /* warp the src ds to the output ds */
     GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
@@ -381,25 +414,50 @@ SURF_FETCH_E ReliefFetch::makeReliefOf( std::string infile, std::string outfile,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
-                                               "download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, makeReliefOf() failed.");
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
         CPLFree((void*)pszDstWKT);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
+    GDALRasterBandH hSrcBand;
+    GDALRasterBandH hDstBand;
+
+    hSrcBand = GDALGetRasterBand(hSrcDS, 1);
+    hDstBand = GDALGetRasterBand(hDstDS, 1);
+
+    double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
+
+    GDALSetRasterNoDataValue(hDstBand, dfNoData);
+
+    double *padfScanline;
+    int nPixels = GDALGetRasterXSize(hDstDS);
+    int nLines = GDALGetRasterYSize(hDstDS);
+    padfScanline = (double *) CPLMalloc(sizeof(double)*nPixels);
+    int nNoDataCount = 0;
+    for(int i = 0;i < nLines;i++)
+    {
+        GDALRasterIO(hDstBand, GF_Read, 0, i, nPixels, 1, 
+                     padfScanline, nPixels, 1, GDT_Float64, 0, 0);
+        for(int j = 0; j < nPixels;j++)
+        {
+            if(CPLIsEqual(padfScanline[j], dfNoData))
+                nNoDataCount++;
+        }
+    }
+
+    CPLFree((void*)padfScanline);
 
     GDALClose(hDstDS);
     GDALClose(hSrcDS);
     CPLFree((void*)pszDstWKT);
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
 
-    return SURF_FETCH_E_NONE; 
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Final makeReliefOf() elevation file contains '%d' noDataValues", nNoDataCount);
+    }
+    return nNoDataCount;
 }
-
-
-
-
-
 

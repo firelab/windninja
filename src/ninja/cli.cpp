@@ -672,17 +672,48 @@ int windNinjaCLI(int argc, char* argv[])
                 }
 
                 double srtmRes = fetch->GetXRes();
-                int nSrtmError = fetch->FetchBoundingBox(bbox, srtmRes,
-                                                     new_elev.c_str(), NULL);
+                int nDemError = fetch->FetchBoundingBox(bbox, srtmRes, new_elev.c_str(), NULL);
                 delete fetch;
-                                                     
-                if(nSrtmError < 0)
+
+                if(nDemError < 0)
                 {
-                    cerr << "Failed to download elevation data\n";
+                    std::cerr << "Failed to download elevation data." << std::endl;
+                    if(nDemError == SURF_FETCH_E_IO_ERR)
+                    {
+                        std::cerr << "Failure opening a dataset." << std::endl;
+                    }
+                    else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
+                    {
+                        std::cerr << "Fetch was outside the bounds of the dataset." << std::endl;
+                    }
+                    else if(nDemError == SURF_FETCH_E_WARPER_ERR)
+                    {
+                        std::cerr << "Failure during warp, failed to warp data." << std::endl;
+                    }
+                    else if(nDemError == SURF_FETCH_E_BAD_INPUT)
+                    {
+                        std::cerr << "Bad input to fetching functions." << std::endl;
+                    }
+                    else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
+                    {
+                        std::cerr << "Hit a size limit during fetch." << std::endl;
+                    }
+                    //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+                    //{
+                    //    std::cerr << "Found NO_DATA in downloaded fetch data." << std::endl;
+                    //}
+                    else if(nDemError == SURF_FETCH_E_TIMEOUT)
+                    {
+                        std::cerr << "Download failure, likely download timeout failure." << std::endl;
+                    }
+                    else
+                    {
+                        std::cerr << "Unknown error occurred during fetch." << std::endl;
+                    }
                     VSIUnlink(new_elev.c_str());
                     exit(1);
                 }
-                
+
                 if( vm["elevation_source"].as<std::string>() != "lcp") {
                     //fill in no data values
                     GDALDataset *poDS;
@@ -724,7 +755,7 @@ int windNinjaCLI(int argc, char* argv[])
             std::cout << "Downloading elevation file..." << std::endl;
             std::string new_elev = vm["fetch_elevation"].as<std::string>();
 
-            int nSrtmError;
+            int nDemError;
             conflicting_options(vm, "elevation_file", "fetch_elevation");
             option_dependency(vm, "fetch_elevation", "elevation_source");
             std::string source = vm["elevation_source"].as<std::string>();
@@ -769,16 +800,7 @@ int windNinjaCLI(int argc, char* argv[])
                     elevRes = fetch->GetXRes() * 111325;  // convert from lat/lon to m
                 }
                 #endif //HAVE_GMTED
-                nSrtmError = fetch->FetchBoundingBox(bbox, elevRes,
-                                                     new_elev.c_str(), NULL);
-                                                     
-                if(nSrtmError < 0)
-                {
-                    cerr << "Failed to download elevation data.\n";
-                    VSIUnlink(new_elev.c_str());
-                    exit(1);
-                }
-
+                nDemError = fetch->FetchBoundingBox(bbox, elevRes, new_elev.c_str(), NULL);
             }
             else
             {
@@ -827,14 +849,45 @@ int windNinjaCLI(int argc, char* argv[])
                     elevRes = fetch->GetXRes() * 111325;  // convert from lat/lon to m
                 }
                 #endif //HAVE_GMTED
-                nSrtmError = fetch->FetchPoint(center, buffer, buffer_units,
-                                               elevRes, new_elev.c_str(), NULL);
+                nDemError = fetch->FetchPoint(center, buffer, buffer_units, elevRes, new_elev.c_str(), NULL);
             }
             delete fetch;
 
-            if(nSrtmError < 0)
+            if(nDemError < 0)
             {
-                cerr << "Failed to download elevation data\n";
+                std::cerr << "Failed to download elevation data." << std::endl;
+                if(nDemError == SURF_FETCH_E_IO_ERR)
+                {
+                    std::cerr << "Failure opening a dataset." << std::endl;
+                }
+                else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
+                {
+                    std::cerr << "Fetch was outside the bounds of the dataset." << std::endl;
+                }
+                else if(nDemError == SURF_FETCH_E_WARPER_ERR)
+                {
+                    std::cerr << "Failure during warp, failed to warp data." << std::endl;
+                }
+                else if(nDemError == SURF_FETCH_E_BAD_INPUT)
+                {
+                    std::cerr << "Bad input to fetching functions." << std::endl;
+                }
+                else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
+                {
+                    std::cerr << "Hit a size limit during fetch." << std::endl;
+                }
+                //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+                //{
+                //    std::cerr << "Found NO_DATA in downloaded fetch data." << std::endl;
+                //}
+                else if(nDemError == SURF_FETCH_E_TIMEOUT)
+                {
+                    std::cerr << "Download failure, likely download timeout failure." << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Unknown error occurred during fetch." << std::endl;
+                }
                 VSIUnlink(new_elev.c_str());
                 exit(1);
             }

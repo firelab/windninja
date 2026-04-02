@@ -129,6 +129,14 @@ int ncepNamSurfInitialization::getEndHour()
 */
 void ncepNamSurfInitialization::checkForValidData()
 {
+    GDALDataset *srcDS;
+    srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
+    if(srcDS == NULL)
+    {
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
+    }
+    GDALClose((GDALDatasetH)srcDS);
+
     //just make up a "dummy" timezone for use here
     boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
 
@@ -150,7 +158,6 @@ void ncepNamSurfInitialization::checkForValidData()
     }
 
     // open ds variable by variable
-    GDALDataset *srcDS;
     std::string temp;
     std::string srcWkt;
     int nBands = 0;
@@ -170,10 +177,9 @@ void ncepNamSurfInitialization::checkForValidData()
 
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL )
-            throw badForecastFile("Cannot open forecast file.");
+            throw badForecastFile("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
 
         srcWkt = srcDS->GetProjectionRef();
-
         if( srcWkt.empty() )
             throw badForecastFile("Forecast file doesn't have projection information.");
 
@@ -406,27 +412,20 @@ void ncepNamSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         //try to open original
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            CPLDebug( "ncepNamSurfInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            //throw();
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            CPLDebug( "ncepNamSurfInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            //throw()
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose((GDALDatasetH) poDS );
     }
 
     poDS = (GDALDataset*)GDALOpen( input.forecastFilename.c_str(), GA_ReadOnly );
-
     if( poDS == NULL ) {
-        CPLDebug( "ncepNamSurfInitialization::setSurfaceGrids()",
-                "Bad forecast file" );
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
-    else
-        GDALClose((GDALDatasetH) poDS );
+    GDALClose((GDALDatasetH) poDS);
 
     // open ds one by one and warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
@@ -448,16 +447,12 @@ void ncepNamSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL ) {
-            CPLDebug( "ncepNamSurfInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         srcWkt = srcDS->GetProjectionRef();
-
         if( srcWkt.empty() ) {
-            CPLDebug( "ncepNamSurfInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
-            //throw
+            throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
         }
 
         /*
@@ -505,7 +500,7 @@ void ncepNamSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 // direct calculation of FROM wx TO dem, already has the appropriate sign
                 if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
                 {
-                    printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+                    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
                 }
             }
         }
@@ -520,8 +515,7 @@ void ncepNamSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                                         1.0, psWarpOptions );
         if(wrpDS == NULL)
         {
-            throw badForecastFile("Could not warp the forecast file, "
-                                  "possibly non-uniform grid.");
+            throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
         }
 
         if( varList[i] == "Temperature_height_above_ground" ) {

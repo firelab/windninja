@@ -128,8 +128,15 @@ int wrfSurfInitialization::getEndHour()
 */
 void wrfSurfInitialization::checkForValidData()
 {
-    // open ds variable by variable
     GDALDataset *srcDS;
+    srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
+    if(srcDS == NULL)
+    {
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
+    }
+    GDALClose((GDALDatasetH)srcDS);
+
+    // open ds variable by variable
     std::string temp;
     std::string srcWkt;
     int nBands = 0;
@@ -146,18 +153,17 @@ void wrfSurfInitialization::checkForValidData()
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:\"" + wxModelFileName + "\":" + varList[i];
-        //cout << "temp = " <<temp<<endl;
+        CPLDebug("WRF", "temp = %s", temp.c_str());
 
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL )
-            throw badForecastFile("Cannot open forecast file.");
+            throw badForecastFile("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
 
         //Get total bands (time steps)
         nBands = srcDS->GetRasterCount();
-        //cout<<"nBands = " <<nBands<<endl;
-        nBands = srcDS->GetRasterCount();
+        CPLDebug("WRF", "bands = %d", nBands);
         int nXSize, nYSize;
         GDALRasterBand *poBand;
         int pbSuccess;
@@ -167,8 +173,8 @@ void wrfSurfInitialization::checkForValidData()
         nXSize = srcDS->GetRasterXSize();
         nYSize = srcDS->GetRasterYSize();
 
-        //cout<<"nXsize = " <<nXSize<<endl;
-        //cout<<"nYsize = " <<nYSize<<endl;
+        CPLDebug("WRF", "nXSize = %d", nXSize);
+        CPLDebug("WRF", "nYSize = %d", nYSize);
 
         //loop over all bands for this variable (bands are time steps)
         for(int j = 1; j <= nBands; j++)
@@ -315,7 +321,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         if(input.ninjaTime == timeList[i])
         {
             bandNum = i + 1;
-            //cout<<"Grabbing band number: " <<bandNum<<endl;
+            CPLDebug("WRF", "Grabbing band number: %d", bandNum);
             break;
         }
     }
@@ -331,15 +337,11 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         //try to open original
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            CPLDebug( "wrfInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            throw("Cannot open dem file in wrfInitialization::setSurfaceGrids()");
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            CPLDebug( "wrfInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            throw("Cannot open dem file in wrfInitialization::setSurfaceGrids()");
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose((GDALDatasetH) poDS );
     }
@@ -384,7 +386,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         status = nc_get_att_int( ncid, NC_GLOBAL, "MAP_PROJ", &mapProj );
     }
 
-    //cout<<"MAP_PROJ = "<<mapProj<<endl;
+    CPLDebug("WRF", "MAP_PROJ = %d", mapProj);
 
     /*
      * Get global attributes DX, DY
@@ -558,14 +560,10 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        CPLDebug( "wrfInitialization::setSurfaceGrids()",
-                 "Bad forecast file");
-        throw badForecastFile("Cannot open forecast file in wrfInitialization::setSurfaceGrids()");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
-    else {
-        GDALClose((GDALDatasetH) poDS ); // close original wxModel file
-    }
-        
+    GDALClose((GDALDatasetH) poDS); // close original wxModel file
+
     // open ds one by one, set projection, warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
     std::string temp;
@@ -584,11 +582,10 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            CPLDebug( "wrfInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
-        CPLDebug("WX_MODEL_INITIALIZATION", "varList[i] = %s", varList[i].c_str());
+        CPLDebug("WRF", "varList[i] = %s", varList[i].c_str());
 
         /*
          * Set up spatial reference stuff for setting projections
@@ -633,11 +630,14 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                           PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
                           UNIT[\"Meter\",1]]";
         }
-        else if(mapProj == 6){  //lat/long
-            throw badForecastFile("Cannot initialize with a forecast file in lat/long spacing. \
-                                   Forecast file must be in a projected coordinate system.");
+        else if(mapProj == 6)  // lat/long
+        {
+            throw badForecastFile("Cannot initialize with a forecast file in lat/long spacing. Forecast file must be in a projected coordinate system.");
         }
-        else throw badForecastFile("Cannot determine projection from the forecast file information.");
+        else
+        {
+            throw badForecastFile("Cannot determine projection from the forecast file information.");
+        }
 
         OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
@@ -645,7 +645,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         oSRS.importFromWkt(&prj2);
         oSRS.exportToWkt(&srcWKT);
 
-        CPLDebug("WX_MODEL_INITIALIZATION", "srcWKT= %s", srcWKT);
+        CPLDebug("WRF", "srcWKT= %s", srcWKT);
 
         OGRCoordinateTransformation *poCT;
         poLatLong = oSRS.CloneGeogCS();
@@ -669,9 +669,11 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         delete poLatLong;
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
-            printf("Transformation failed.\n");
+        {
+            throw std::runtime_error("Transformation failed.");
+        }
 
-        CPLDebug("WX_MODEL_INITIALIZATION", "xCenter, yCenter= %f, %f", xCenter, yCenter);
+        CPLDebug("WRF", "xCenter, yCenter= %f, %f", xCenter, yCenter);
 
         /*
          * Set the geostransform for the WRF file
@@ -689,9 +691,9 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                     (yCenter+(nrows*dy)),
                                     0, -(dy)};
 
-        CPLDebug("WX_MODEL_INITIALIZATION", "ulcornerX, ulcornerY= %f, %f", (xCenter-(ncols*dx)), (yCenter+(nrows*dy)));
-        CPLDebug("WX_MODEL_INITIALIZATION", "nXSize, nYsize= %d, %d", nXSize, nYSize);
-        CPLDebug("WX_MODEL_INITIALIZATION", "dx= %f", dx);
+        CPLDebug("WRF", "ulcornerX, ulcornerY= %f, %f", (xCenter-(ncols*dx)), (yCenter+(nrows*dy)));
+        CPLDebug("WRF", "nXSize, nYsize= %d, %d", nXSize, nYSize);
+        CPLDebug("WRF", "dx= %f", dx);
 
         srcDS->SetGeoTransform(adfGeoTransform);
 
@@ -712,7 +714,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         int nBandCount = srcDS->GetRasterCount();
 
-        CPLDebug("WX_MODEL_INITIALIZATION", "band count = %d", nBandCount);
+        CPLDebug("WRF", "band count = %d", nBandCount);
 
         if( pbSuccess == false )
             dfNoData = -9999.0;
@@ -727,7 +729,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 // direct calculation of FROM wx TO dem, already has the appropriate sign
                 if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
                 {
-                    printf("Warning: Unable to calculate coordinate transform angle for the wxModel.");
+                    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
                 }
             }
         }
@@ -736,6 +738,10 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
                                                         1.0, NULL );
+        if(wrpDS == NULL)
+        {
+            throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+        }
 
         //=======for testing==================================//
         /*AsciiGrid<double> tempGrid;
@@ -758,7 +764,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }*/
         //=======end testing=================================//
 
-        CPLDebug("WX_MODEL_INITIALIZATION", "band number to write = %d", bandNum);
+        CPLDebug("WRF", "band number to write = %d", bandNum);
 
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );

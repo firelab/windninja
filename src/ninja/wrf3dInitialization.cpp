@@ -228,11 +228,11 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     if ( dstWkt.empty() ) {
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            throw("Cannot open dem file in wrf3dInitialization::set3dGrids()");
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            throw("Cannot open dem file in wrfedInitialization::set3dGrids()");
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose((GDALDatasetH) poDS );
     }
@@ -245,11 +245,9 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     poDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        throw badForecastFile("Cannot open forecast file in wrf3dInitialization::set3dGrids()");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
-    else {
-        GDALClose((GDALDatasetH) poDS ); // close original wxModel file
-    }
+    GDALClose((GDALDatasetH) poDS); // close original wxModel file
     
     int nLayers;
     int numStripRows = 0; //number of rows to strip from warped image
@@ -273,10 +271,10 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            throw badForecastFile("Cannot open forecast file in wrf3dInitialization::set3dGrids()");
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
-        //cout<<"var3dList[i] = " <<var3dList[i]<<endl;
+        CPLDebug("WX_MODEL_INITIALIZATION", "var3dList[i] = %s", var3dList[i].c_str());
 
         /*
          * Set up spatial reference stuff for setting projections
@@ -356,10 +354,14 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         delete poLatLong;
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
-            printf("Transformation failed.\n");
+        {
+            throw std::runtime_error("Transformation failed.");
+        }
 
         //if(poCT==NULL || !poCT->Transform(2, xCenterArray, yCenterArray))  //for testing
-            //printf("Transformation failed.\n");
+        //{
+        //    throw std::runtime_error("Transformation failed.");
+        //}
 
 
         /*
@@ -406,6 +408,10 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
                                                         1.0, NULL );
+        if(wrpDS == NULL)
+        {
+            throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+        }
 
 
         //=======for testing==================================//
@@ -443,7 +449,6 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         //temp2Grid.ascii2png( outFilename, scalarLegendFilename, legendUnits, legendTitle, writeLegend, keepTiff );*/
         //=======end testing=================================//
         
-       
         
         if(var3dList[i] == "U" || var3dList[i] == "V" || var3dList[i] == "T" || var3dList[i] == "QCLOUD"){
             nLayers = wxModel_nLayers - 1;
@@ -566,7 +571,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
             }
 
             
-            //cout<<"Grabbing band number: " <<bandNum<<endl;
+            CPLDebug("WX_MODEL_INITIALIZATION", "Grabbing band number: %d", bandNum);
 
             if( var3dList[i] == "T" ) {
                 GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
@@ -726,9 +731,9 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
                             input.dem.prjString.c_str());
     testGrid = -1;
 	
-	//cout<<"uGrid rows, cols = "<<uGrid.get_nRows()<< ", "<<uGrid.get_nCols()<<endl;
-	//cout<<"uArray rows, cols = "<<uArray.rows_<<", "<<uArray.cols_<<endl;
-	//cout<<"testGrid rows, cols = "<<testGrid.get_nRows() <<", "<<testGrid.get_nCols()<<endl;
+	//std::cout << "uGrid rows, cols = " << uGrid.get_nRows() << ", " << uGrid.get_nCols() << std::endl;
+	//std::cout << "uArray rows, cols = " << uArray.rows_ << ", " << uArray.cols_ << std::endl;
+	//std::cout << "testGrid rows, cols = " << testGrid.get_nRows() << ", " << testGrid.get_nCols() << std::endl;
 	
 	//std::string outFilename = "uArray0.png";
     //std::string scalarLegendFilename = "uArray_legend";
@@ -784,7 +789,6 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     endWxInterpolation = omp_get_wtime();
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Interpolation time was %lf seconds.",endWxInterpolation-startWxInterpolation);
     #endif
-    
 
     /*
      * deallocate temporary storage.
@@ -1024,7 +1028,6 @@ void wrf3dInitialization::setGlobalAttributes(WindNinjaInputs &input)
         throw std::runtime_error( os.str() );
     }
 
-    
 }
 
 

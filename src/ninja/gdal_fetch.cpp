@@ -89,6 +89,8 @@ int GDALFetch::Initialize()
  * \param resolution output resolution in meters
  * \param filename file to write data into
  * \param options key/value options, unused
+ *
+ * \return number of no data values on success, < 0 on error
  */
 SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
                                          const char *filename,
@@ -107,6 +109,7 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     hSrcDS = GDALOpen(GetPath().c_str(), GA_ReadOnly);
     if(hSrcDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not open path '%s' for reading, download failed.", GetPath().c_str());
         return SURF_FETCH_E_IO_ERR;
     }
     hDriver = GDALGetDriverByName("GTiff");
@@ -141,7 +144,8 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     CPLPopErrorHandler();
     if(eErr != CE_None)
     {
-        return SURF_FETCH_E_IO_ERR;
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
+        return SURF_FETCH_E_WARPER_ERR;
     }
     GDALDestroyGenImgProjTransformer(hTransformArg);
 
@@ -163,7 +167,8 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     if(nPixels <= 0 || nLines <= 0)
     {
-        return SURF_FETCH_E_WARPER_ERR; /*assumption*/
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid nPixels and/or nLines for warp. Could not warp image, download failed.");
+        return SURF_FETCH_E_WARPER_ERR;
     }
 
     adfDstGeoTransform[0] = dfMinX;
@@ -173,9 +178,9 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     hDstDS = GDALCreate(hDriver, filename, nPixels, nLines, 
                         GDALGetRasterCount(hSrcDS), GDT_Float32, NULL);
-
     if(hDstDS == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to create final output file for writing, download failed.");
         return SURF_FETCH_E_IO_ERR;
     }
 
@@ -220,14 +225,12 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
 
     if( eErr != CE_None )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "Could not warp image, " \
-                                               "download failed." );
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not warp image, download failed.");
         CPLFree((void*)pszDstWKT);
         GDALClose(hDstDS);
         GDALClose(hSrcDS);
-        return SURF_FETCH_E_IO_ERR;
+        return SURF_FETCH_E_WARPER_ERR;
     }
-
 
     GDALRasterBandH hSrcBand;
     GDALRasterBandH hDstBand;
@@ -262,6 +265,10 @@ SURF_FETCH_E GDALFetch::FetchBoundingBox(double *bbox, double resolution,
     CPLSetConfigOption("GTIFF_DIRECT_IO", "NO");
     CPLSetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", NULL);
 
+    if(nNoDataCount > 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Final downloaded elevation file contains '%d' noDataValues", nNoDataCount);
+    }
     return nNoDataCount;
 }
 

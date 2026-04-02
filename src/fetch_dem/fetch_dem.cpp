@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     int bHasBbox = FALSE;
     int bHasPoint = FALSE;
 
-    int nSrtmError;
+    int nDemError;
     lengthUnits::eLengthUnits units;
     GDALResampleAlg rAlg;
     GDALDataset *poDS;
@@ -464,8 +464,7 @@ int main(int argc, char *argv[])
             }
             #endif //HAVE_GMTED
         }
-        nSrtmError = fetch->FetchBoundingBox(adfBbox, dfCellSize, pszDstFile,
-                                             papszOptions);
+        nDemError = fetch->FetchBoundingBox(adfBbox, dfCellSize, pszDstFile, papszOptions);
     }
     else
     {
@@ -479,24 +478,48 @@ int main(int argc, char *argv[])
             }
             #endif //HAVE_GMTED
         }
-        nSrtmError = fetch->FetchPoint(adfPoint, adfBuff, units, dfCellSize,
-                                       pszDstFile, papszOptions);
+        nDemError = fetch->FetchPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions);
     }
 
-    if(nSrtmError < 0)
+    if(nDemError < 0)
     {
-        if(nSrtmError == SURF_FETCH_E_IO_ERR)
-            fprintf(stderr, "Failed to open a dataset\n");
-        else if(nSrtmError == SURF_FETCH_E_BOUNDS_ERR)
-            fprintf(stderr, "Request fell out of bounds of srtm data\n");
-        else if(nSrtmError == SURF_FETCH_E_WARPER_ERR)
-            fprintf(stderr, "Failed to warp data\n");
+        fprintf(stderr, "Failed to download elevation data.\n");
+        if(nDemError == SURF_FETCH_E_IO_ERR)
+        {
+            fprintf(stderr, "Failure opening a dataset.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
+        {
+            fprintf(stderr, "Fetch was outside the bounds of the dataset.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_WARPER_ERR)
+        {
+            fprintf(stderr, "Failure during warp, failed to warp data.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_BAD_INPUT)
+        {
+            fprintf(stderr, "Bad input to fetching functions.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
+        {
+            fprintf(stderr, "Hit a size limit during fetch.\n");
+        }
+        //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+        //{
+        //    fprintf(stderr, "Found NO_DATA in downloaded fetch data.\n");
+        //}
+        else if(nDemError == SURF_FETCH_E_TIMEOUT)
+        {
+            fprintf(stderr, "Download failure, likely download timeout failure.\n");
+        }
         else
-            fprintf(stderr, "Unknown error occurred\n");
-        return nSrtmError;
+        {
+            fprintf(stderr, "Unknown error occurred during fetch.\n");
+        }
+        return nDemError;
     }
 
-    if(nSrtmError > 0 && bFillNoData)
+    if(nDemError > 0 && bFillNoData)
     {
         poDS = (GDALDataset*)GDALOpen(pszDstFile, GA_Update);
         if(poDS == NULL)
@@ -504,9 +527,9 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Failed to open new dataset\n");
             return 1;
         }
-        nSrtmError = GDALFillBandNoData(poDS, 1, 100);
+        nDemError = GDALFillBandNoData(poDS, 1, 100);
         GDALClose((GDALDatasetH)poDS);
-        if(nSrtmError > 0)
+        if(nDemError > 0)
         {
             fprintf(stderr, "Failed to fill no data\n");
             return 1;

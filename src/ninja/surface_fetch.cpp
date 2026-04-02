@@ -92,7 +92,7 @@ SURF_FETCH_E SurfaceFetch::makeReliefOf( std::string infile, std::string outfile
  * @param point x, y point in WGS 84 longitude, latitude
  * @param buffer length of the buffer for x and y
  * @param units buffer units
- * @param resoultion output cell resolution
+ * @param resolution output cell resolution
  * @param filename output filename
  * @param options list of options, not checked in here.
  * @return number of no data values on success, < 0 on error
@@ -115,12 +115,12 @@ SURF_FETCH_E SurfaceFetch::FetchPoint(double *point, double *buffer,
  * @param point a x,y point in WGS 84 longitude, latitude
  * @param buffer length of a buffer in the x and y directions
  * @param units the units for the buffer
- * @param the 4 element array to be filled in by the function, clockwise from
- *        north:
+ * @param the 4 element array to be filled in by the function, clockwise from north:
  *        bbox[0] -> north
  *        bbox[1] -> east
  *        bbox[2] -> south
  *        bbox[3] -> west
+ *
  * @return zero on success, negative otherwise
  */
 SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer, 
@@ -129,7 +129,7 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
 {
     if(point == NULL || buffer == NULL || bbox == NULL)
     {
-        fprintf(stderr, "Invalid input\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, One or more of the inputs 'point', 'buffer', and 'bbox' are NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
     OGRSpatialReference oSrcSRS, oDstSRS;
@@ -151,6 +151,7 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
     poCT = OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
     if(poCT == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not generate OGRCoordinateTransformation, could not warp point.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -169,6 +170,7 @@ SURF_FETCH_E SurfaceFetch::CreateBoundingBox(double *point, double *buffer,
     poCT = OGRCreateCoordinateTransformation(&oDstSRS, &oSrcSRS);
     if(poCT == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not generate OGRCoordinateTransformation, could not warp buffered bbox.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -197,6 +199,7 @@ SURF_FETCH_E SurfaceFetch::WarpBoundingBox(double *bbox)
     poCT = OGRCreateCoordinateTransformation( &oSrcSRS, &oDstSRS );
     if(poCT == NULL)
     {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not generate OGRCoordinateTransformation, could not warp bbox.");
         return SURF_FETCH_E_WARPER_ERR;
     }
 
@@ -230,8 +233,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
 
     if( pszArchive == NULL || pszDstFile == NULL || pszFile == NULL )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid input" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid input, One or more of the inputs 'pszArchive', 'pszFile', and 'pszDstFile' are NULL.");
         return SURF_FETCH_E_BAD_INPUT;
     }
     const char *pszVSIName = CPLSPrintf( "/vsizip/%s", pszArchive );
@@ -241,8 +243,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
     int nCount = CSLCount( papszFileList );
     if( nCount < 1 )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Archive is empty" );
+        CPLError(CE_Failure, CPLE_AppDefined, "Archive is empty, Failed to extract file from zip.");
         return SURF_FETCH_E_IO_ERR;
     }
     /*
@@ -261,8 +262,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
     }
     if( !bFound )
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "File could not be found in archive" );
+        CPLError(CE_Failure, CPLE_AppDefined, "File could not be found in archive.");
         CSLDestroy( papszFileList );
         return SURF_FETCH_E_BAD_INPUT;
     }
@@ -279,8 +279,7 @@ int SurfaceFetch::ExtractFileFromZip( const char *pszArchive,
         fout = VSIFOpenL( pszDstFile, "wb" );
         if( !fout || !fin )
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Failed to open files" );
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to open files for extraction.");
             CPLFree( pabyData );
             CSLDestroy( papszFileList );
             return SURF_FETCH_E_IO_ERR;

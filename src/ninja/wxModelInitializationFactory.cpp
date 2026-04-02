@@ -40,7 +40,9 @@
 wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::string fileName )
 {
     if(fileName.empty())
-    throw std::runtime_error("The weather model initialization filename has not been set.");
+    {
+        throw std::runtime_error("The weather model initialization filename has not been set.");
+    }
 
     ncepNdfdInitialization ncepNdfd;
     ncepNamSurfInitialization ncepNamSurf;
@@ -52,7 +54,7 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     wrf3dInitialization wrf3d;
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
-    GCPWxModel arrhrr;
+    GCPWxModel archiveHrrr;
 
 #ifdef WITH_NOMADS_SUPPORT
     NomadsWxModel nomad;
@@ -76,46 +78,54 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
         //Determine what type of weather model the file came from
         //Check netcdf first, otherwise grib_api spews out crap
         if(ncepNdfd.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepNdfd.identify()");
             ncepNdfd.setModelFileName( fileName );
             return new ncepNdfdInitialization(ncepNdfd);
         }
         else if(ncepNamSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepNamSurf.identify()");
             ncepNamSurf.setModelFileName( fileName );
             return new ncepNamSurfInitialization(ncepNamSurf);
         }
         else if(ncepRapSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepRapSurf.identify()");
             ncepRapSurf.setModelFileName( fileName );
             return new ncepRapSurfInitialization(ncepRapSurf);
         }
         else if(ncepNamAlaskaSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepNamAlaskaSurf.identify()");
             ncepNamAlaskaSurf.setModelFileName( fileName );
             return new ncepNamAlaskaSurfInitialization(ncepNamAlaskaSurf);
         }
         else if(ncepGfsSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepGfsSurf.identify()");
             ncepGfsSurf.setModelFileName( fileName );
             return new ncepGfsSurfInitialization(ncepGfsSurf);
         }
 #ifdef NOMADS_ENABLE_3D
         else if(wrf3d.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), wrf3d.identify()");
             wrf3d.setModelFileName( fileName );
-            CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.identify(fileName) = %i\n", wrf3d.identify(fileName));
             return new wrf3dInitialization(wrf3d);
         }
 #endif
         else if(wrfSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), wrfSurf.identify()");
             wrfSurf.setModelFileName( fileName );
-            CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.identify(fileName) = %i\n", wrfSurf.identify(fileName));
             return new wrfSurfInitialization(wrfSurf);
         }
         if(ncepNamGrib2Surf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepNamGrib2Surf.identify()");
             ncepNamGrib2Surf.setModelFileName( fileName );
             return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
         }
         else if(ncepHrrrSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), ncepHrrrSurf.identify()");
             ncepHrrrSurf.setModelFileName( fileName );
             return new ncepHrrrSurfInitialization(ncepHrrrSurf);
         }
         else if(genericSurf.identify(fileName)) {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), genericSurf.identify()");
             genericSurf.setModelFileName( fileName );
             return new genericSurfInitialization(genericSurf);
         }
@@ -128,14 +138,16 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
     }
     else
     {
-      if(arrhrr.identify(fileName))
+      if(archiveHrrr.identify(fileName))
       {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), archiveHrrr.identify()");
         return new GCPWxModel(fileName);
       }
       else {
 #ifdef WITH_NOMADS_SUPPORT
         if(nomad.identify(fileName))
         {
+            CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitialization(), nomad.identify()");
             const char **ppszKey = nomad.FindModelKey( fileName.c_str() );
             if( ppszKey )
                 return new NomadsWxModel( fileName );
@@ -169,7 +181,9 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitialization( std::
 wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId( std::string identifier )
 {
     if(identifier.empty())
-    throw std::runtime_error("The weather model initialization filename has not been set.");
+    {
+        throw std::runtime_error("The weather model initialization filename has not been set.");
+    }
 
     ncepNdfdInitialization ncepNdfd;
     ncepNamSurfInitialization ncepNamSurf;
@@ -181,49 +195,59 @@ wxModelInitialization* wxModelInitializationFactory::makeWxInitializationFromId(
     wrf3dInitialization wrf3d;
     ncepNamGrib2SurfInitialization ncepNamGrib2Surf;
     ncepHrrrSurfInitialization ncepHrrrSurf;
-    GCPWxModel archrrr;
+    GCPWxModel archiveHrrr;
 
 
 //Determine what type of weather model the file came from
     //Check netcdf first, otherwise grib_api spews out crap
     if(ncepNdfd.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepNdfd.identify()");
         return new ncepNdfdInitialization(ncepNdfd);
     }
     else if(ncepNamSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepNamSurf.identify()");
         return new ncepNamSurfInitialization(ncepNamSurf);
     }
     else if(ncepRapSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepRapSurf.identify()");
         return new ncepRapSurfInitialization(ncepRapSurf);
     }
     else if(ncepNamAlaskaSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepNamAlaskaSurf.identify()");
         return new ncepNamAlaskaSurfInitialization(ncepNamAlaskaSurf);
     }
     else if(ncepGfsSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepGfsSurf.identify()");
         return new ncepGfsSurfInitialization(ncepGfsSurf);
     }
     else if(wrfSurf.getForecastReadable() == identifier) {
-        CPLDebug("WX_MODEL_INITIALIZATION", "wrfSurf.getForecastReadable() == identifier = %i\n", wrfSurf.getForecastReadable() == identifier);
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), wrfSurf.identify()");
         return new wrfSurfInitialization(wrfSurf);
     }
     else if(wrf3d.getForecastReadable() == identifier) {    //fix this later to read either wrf3d or wrfSurf
-        CPLDebug("WX_MODEL_INITIALIZATION", "wrf3d.getForecastReadable() == identifier = %i\n", wrf3d.getForecastReadable() == identifier);
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), wrf3d.identify()");
         return new wrf3dInitialization(wrf3d);
     }
     else if(ncepNamGrib2Surf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepNamGrib2Surf.identify()");
         return new ncepNamGrib2SurfInitialization(ncepNamGrib2Surf);
     }
     else if(ncepHrrrSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), ncepHrrrSurf.identify()");
         return new ncepHrrrSurfInitialization(ncepHrrrSurf);
     }
     else if(genericSurf.getForecastReadable() == identifier) {
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), genericSurf.identify()");
         return new genericSurfInitialization(genericSurf);
     }
-    else if(archrrr.getForecastReadable() == identifier)
+    else if(archiveHrrr.getForecastReadable() == identifier)
     {
-      return new GCPWxModel(archrrr);
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), archiveHrrr.identify()");
+        return new GCPWxModel(archiveHrrr);
     }
     else {
 #ifdef WITH_NOMADS_SUPPORT
+        CPLDebug("WX_MODEL_INITIALIZATION", "wxModelInitializationFactory::makeWxInitializationFromId(), attempting nomad.identify()");
         int i = 0;
         int bFound = FALSE;
         const char *s;

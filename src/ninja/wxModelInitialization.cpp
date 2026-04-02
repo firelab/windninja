@@ -384,12 +384,17 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
                                getStartHour(), getEndHour() );
         throw std::logic_error(pszErrMsg);
     }
+
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
+    if(poDS == NULL)
+    {
+        throw badForecastFile("Could not open DEM to get bounds. Failed to download weather forecast.");
+    }
+
     double bounds[4];
     if( !GDALGetBounds( poDS, bounds ) )
     {
-        throw badForecastFile("Could not download weather forecast, invalid "
-                              "projection for the DEM");
+        throw badForecastFile("Could not get bounds from the DEM. Failed to download weather forecast.");
     }
 
     /*
@@ -419,17 +424,17 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     urlAddress.append(url);
 
     CPLHTTPResult *poResult = CPLHTTPFetch( urlAddress.c_str(), NULL );
-    CPLDebug( "WINDNINJA", "Forecast URL: %s", urlAddress.c_str() );
+    CPLDebug("WINDNINJA", "Forecast URL: %s", urlAddress.c_str());
     if( poResult == NULL )
     {
-      CPLHTTPDestroyResult( poResult );
-      throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile("CPLHTTPResult is NULL. Failed to download weather forecast.");
     }
 
     if( poResult->nStatus != 0 )
     {
-      CPLHTTPDestroyResult( poResult );
-      throw ( badForecastFile( poResult->pszErrBuf ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile(poResult->pszErrBuf);
     }
 
     if (poResult->pszErrBuf && urlAddress.find("NDFD") != std::string::npos)
@@ -448,7 +453,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
 
       if (poResult == NULL)
       {
-        throw badForecastFile("CPLHTTPResult is NULL!");
+        throw badForecastFile("CPLHTTPResult is NULL. Failed to download weather forecast.");
       }
 
       if (poResult->nStatus != 0)
@@ -461,8 +466,8 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
-      CPLHTTPDestroyResult( poResult );
-      throw ( badForecastFile( "Failed to download forecast." ) );
+      CPLHTTPDestroyResult(poResult);
+      throw badForecastFile("Failed to download forecast.");
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
     CPLHTTPDestroyResult( poResult );
@@ -485,7 +490,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
         {
             VSIUnlink( tempFileName.c_str() );
         }
-        throw ( badForecastFile( "Failed to download forecast. File is not an *.nc file" ) );
+        throw badForecastFile("File is not an *.nc file. Failed to download weather forecast.");
     }
     nc_close( ncid );
     }
@@ -535,10 +540,14 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     }
     wxModelFileName = newFileName;
     try	{
-    checkForValidData();
+        checkForValidData();
     }
     catch( badForecastFile &e ) {
-    std::cout << endl << endl << endl << endl << e.what() << endl << endl << endl << endl;
+        if(!bSaveForecast)
+        {
+            VSIUnlink(wxModelFileName.c_str()); // do some clean-up (delete the bad file)
+        }
+        throw;  // rethrow the exception to be caught somewhere else
     }
 
     return newFileName;
@@ -670,17 +679,14 @@ wxModelInitialization::getTimeList(const char *pszVariable,
         else{        
             srcDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
         }
-
-
         if( srcDS == NULL ) {
-            CPLDebug( "wxModelInitialization::getTimeList()",
-                    "Bad forecast file" );
+            throw std::runtime_error("Could not open forecast file, bad forecast file. Failed to get times from forecast file.");
         }
 
         //get time info from 10u band
         GDALRasterBand *poBand = get10UBand(srcDS);
         if (poBand == NULL) {
-            CPLDebug( "wxModelInitialization::getTimeList()", " getTimeList() failed - no 10m UGRD band");
+            throw std::runtime_error("No 10m UGRD band in forecast file. Failed to get times from forecast file.");
         }
 
         const char *vt;
@@ -847,7 +853,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
          */
         //int dimid;
         status = nc_inq_dimid(ncid, "DateStrLen", &dimid );
-        //cout<<"dimid =" <<dimid<<endl;
+        CPLDebug("WINDNINJA", "dimid = %d", dimid);
         if( status != NC_NOERR ) {
             ostringstream os;
             os << "The dimension \"DateStrLen\" "
@@ -1140,11 +1146,11 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     input.inputDirection_proj = meanDir;
     input.inputDirection_geog = wrap0to360( input.inputDirection_proj + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
 
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "wxModelInitialization::ninjaFoamInitializeFields()" );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
-    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
+    CPLDebug("COORD_TRANSFORM_ANGLES", "wxModelInitialization::ninjaFoamInitializeFields()");
+    CPLDebug("COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed);
+    CPLDebug("COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog);
+    CPLDebug("COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth());
+    CPLDebug("COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj);
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1620,11 +1626,11 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             double angleFromNorth = 0.0;
             if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
             {
-                CPLDebug( "COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
+                CPLDebug("COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
                 GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
                 if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
                 {
-                    printf("Warning: Unable to calculate angle departure from north for the wxModel.");
+                    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the wxModel.");
                 }
                 GDALClose(hDS);
             }*/
@@ -1708,8 +1714,7 @@ double wxModelInitialization::GetWindHeight(std::string varName)
   {
       free(units);
       nc_close(ncid);
-      throw badForecastFile("Cannot determine wind height units in "
-                            "forecast file");
+      throw badForecastFile("Cannot determine wind height units in forecast file.");
   }
   free(units);
   nc_close(ncid);
@@ -1766,8 +1771,7 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
     }
     if (status != NC_NOERR) {
         nc_close(ncid);
-        throw badForecastFile(CPLSPrintf(
-            "Could not identify time dimension for variable: %s", pszVariable));
+        throw badForecastFile(CPLSPrintf("Could not identify time dimension for variable: %s.", pszVariable));
     }
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
     for(int i = 0; i < varndims; i++) {
@@ -1781,8 +1785,7 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
             tp[namelength] = '\0';
             if(strcmp("time", tp) == 0) {
                 timestring =  std::string(timename);
-                CPLDebug( "WINDNINJA", "Found time: %s for variable: %s",
-                          timename, pszVariable );
+                CPLDebug("WINDNINJA", "Found time: %s for variable: %s", timename, pszVariable);
                 free( (void*)tp );
                 break;
             }
@@ -1813,7 +1816,7 @@ int wxModelInitialization::LoadFromCsv()
     }
     else
     {
-        CPLDebug( "WINDNINJA", "Using cached thredds csv values" );
+        CPLDebug("WINDNINJA", "Using cached thredds csv values.");
         papszLines = CSLDuplicate( papszThreddsCsv );
     }
     int nRecords = CSLCount( papszLines );
