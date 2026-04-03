@@ -668,7 +668,10 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
     GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, 1);
     int bSuccess;
     dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
-    if (!bSuccess) dfNoData = -9999.0;
+    if(!bSuccess)
+    {
+        dfNoData = -9999.0;
+    }
 
     // Setup warp options
     psWarpOptions = GDALCreateWarpOptions();
@@ -677,6 +680,12 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
     for (int i = 0; i < nBandCount; ++i) {
         psWarpOptions->padfDstNoDataReal[i] = dfNoData;
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+    }
+
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(bSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
     }
 
     pszSrcWkt = GDALGetProjectionRef(hSrcDS);

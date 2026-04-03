@@ -321,7 +321,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                     std::string bandName( gc );
                     if( bandName.find( "10-HTGL" ) != bandName.npos ){
                         bandList.push_back( j );  // 10u    
-                        dfNoData = poBand->GetNoDataValue( &pbSuccess );
+                        dfNoData = poBand->GetNoDataValue(&pbSuccess);
                         break;
                     }
                 }
@@ -371,14 +371,18 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     poLatLong->exportToWkt(&dstWkt);
     delete poLatLong;
 
+    int nBandCount = bandList.size();
+
+    if(pbSuccess == false)
+    {
+        dfNoData = -9999.0;
+    }
 
     GDALDataset *wrpDS;
     GDALWarpOptions* psWarpOptions;
 
+    // Setup warp options
     psWarpOptions = GDALCreateWarpOptions();
-
-
-    int nBandCount = bandList.size();
 
     psWarpOptions->nBandCount = nBandCount;
 
@@ -400,10 +404,17 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         (double*) CPLMalloc( sizeof( double ) * nBandCount );
     psWarpOptions->padfDstNoDataImag =
         (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    for(int b = 0; b < nBandCount; b++)
+    {
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+    }
 
-
-    if( pbSuccess == false )
-        dfNoData = -9999.0;
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
 
     // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
     // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset

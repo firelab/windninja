@@ -434,17 +434,25 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
                 throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
             }
 
-        /*
-         * Grab the first band to get the nodata value for the variable,
-         * assume all bands have the same ndv
-         */
+        int nBandCount = srcDS->GetRasterCount();
+
+        // Grab the first band to get the NO_DATA value for the variable,
+        // assume all bands have the same NO_DATA value
         GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
         int pbSuccess;
-        double dfNoData = poBand->GetNoDataValue( &pbSuccess );
+        double dfNoData = poBand->GetNoDataValue(&pbSuccess);
+        if(pbSuccess == false)
+        {
+            dfNoData = -9999.0;
+        }
 
+        if(dfNoData > 1e10)
+        {
+            dfNoData = std::numeric_limits<double>::quiet_NaN();
+        }
+
+        // Setup warp options
         psWarpOptions = GDALCreateWarpOptions();
-
-        int nBandCount = srcDS->GetRasterCount();
 
         psWarpOptions->panSrcBands =
             (int*) CPLMalloc( sizeof( int ) * nBandCount );
@@ -462,15 +470,11 @@ void ncepRapSurfInitialization::setSurfaceGrids(  WindNinjaInputs &input,
           psWarpOptions->panDstBands[b] = b + 1;
         }
 
-        if( pbSuccess == false)
-          dfNoData = -9999.0;
-
-        if( dfNoData > 1e10)
-          dfNoData = std::numeric_limits<double>::quiet_NaN();
-
-        psWarpOptions->papszWarpOptions =
-        CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                 "INIT_DEST", "NO_DATA" );
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+        if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+        {
+            psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+        }
 
         // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
         // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset

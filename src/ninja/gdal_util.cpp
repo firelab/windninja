@@ -1507,9 +1507,13 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
     int nBandCount = GDALGetRasterCount( hDstDS );
 
     double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
+    // TODO: check to see if this is needed, when checking "INIT_DEST"="NO_DATA" methods
+    //int bSuccess;
+    //double dfNoData = GDALGetRasterNoDataValue(hSrcBand, &bSuccess);
 
     GDALSetRasterNoDataValue(hDstBand, dfNoData);
 
+    // Setup warp options
     GDALWarpOptions *psWarpOptions = GDALCreateWarpOptions();
 
     psWarpOptions->hSrcDS = hSrcDS;
@@ -1522,12 +1526,20 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
         (double*) CPLMalloc( sizeof( double ) * nBandCount );
     psWarpOptions->padfDstNoDataReal[0] = dfNoData;
     psWarpOptions->padfDstNoDataImag[0] = dfNoData;
+
     psWarpOptions->panSrcBands = 
         (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
     psWarpOptions->panSrcBands[0] = 1;
     psWarpOptions->panDstBands = 
         (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
     psWarpOptions->panDstBands[0] = 1;
+
+    // TODO: not sure how this affects surface_fetch products yet. Need to also check if this is needed for the other gdalWarpToUtm() function as well.
+    //psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    //if(bSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    //{
+    //    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    //}
 
     psWarpOptions->pTransformerArg = 
         GDALCreateGenImgProjTransformer( hSrcDS, 
@@ -1684,8 +1696,8 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
 
     GDALDatasetH hBand = GDALGetRasterBand( hSrcDS, band );
     int bSuccess = false;
-    double dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
-    if( bSuccess == false )
+    double dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
+    if(bSuccess == false)
     {
         dfNoData = -9999.0;
     }
@@ -1693,6 +1705,7 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
     const char *pszSrcWkt;
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
 
+    // Setup warp options
     GDALWarpOptions *psWarpOptions;
     psWarpOptions = GDALCreateWarpOptions();
 
@@ -1716,10 +1729,10 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
     }
 
-    psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA" );
-    if( bSuccess == false )  // if GDALGetRasterNoDataValue( hBand, &bSuccess ) fails to return that a NO_DATA value is in the source dataset
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(bSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
     {
-        psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str() );
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
     }
 
     hDstDS = GDALAutoCreateWarpedVRT( hSrcDS, pszSrcWkt, pszDstWkt,
