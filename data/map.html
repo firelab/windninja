@@ -153,6 +153,7 @@
         });
 
         const map = new L.Map('map', {
+            preferCanvas: true,
             layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
