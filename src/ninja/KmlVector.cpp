@@ -1836,94 +1836,97 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
     {
         for(int j = 0;j < nC;j++)
         {
-            yScale = 0.5;
-            s = spd(i,j);
-            // geTheta is the printed value (geographic coordinates), theta is the drawn value (projected coordinates) which is then reprojected (from projected to geographic coordinates)
-            // the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
-            // but in this case, prj1 = dem, prj2 = kmz, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
-            // this is because angleFromNorth is stored as a value going FROM N TO dem, but here we are going FROM dem TO N,
-            // so we need to use a negative value for angleFromNorth rather than a positive value
-            // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
-            // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
-            geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM projected TO geographic coordinates
-            theta = dir(i,j) + 180.0;
-
-            if(s <= splitValue[1])
-                yScale *= 0.40;
-            else if(s <= splitValue[2])
-                yScale *= 0.60;
-            else if(s <= splitValue[3])
-                yScale *= 0.80;
-            else if(s <= splitValue[4])
-                yScale *= 1.0;
-            xScale = yScale * 0.40;
-
-            spd.get_cellPosition(i, j, &xCenter, &yCenter);
-
-            //xCenter = (cSize / 2.0) + (j * cSize + spd.get_xllCorner());
-            //yCenter = (cSize / 2.0) + ((nR - i - 1) * cSize) + spd.get_yllCorner();
-
-            if(theta > 360)
+            if(spd(i,j) != spd.get_noDataValue() && dir(i,j) != dir.get_noDataValue())
             {
-                theta -= 360;
-            }
-            theta = 360 - theta;
+                yScale = 0.5;
+                s = spd(i,j);
 
-            theta = theta * (PI / 180);
+                // geTheta is the printed value (geographic coordinates), theta is the drawn value (projected coordinates) which is then reprojected (from projected to geographic coordinates)
+                // the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
+                // but in this case, prj1 = dem, prj2 = kmz, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
+                // this is because angleFromNorth is stored as a value going FROM N TO dem, but here we are going FROM dem TO N,
+                // so we need to use a negative value for angleFromNorth rather than a positive value
+                // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
+                // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
+                geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM projected TO geographic coordinates
+                theta = dir(i,j) + 180.0;
 
-            if( areEqual( s, 0.0 ) )
-            {
-                double square_size = 16;
-                xTip = xCenter - cSize / square_size;
-                yTip = yCenter + cSize / square_size;
-                xTail = xCenter + cSize / square_size;
-                yTail = yCenter + cSize / square_size;
-                xHeadLeft = xCenter - cSize / square_size;
-                yHeadLeft = yCenter - cSize / square_size;
-                xHeadRight = xCenter + cSize / square_size;
-                yHeadRight = yCenter - cSize / square_size;
-            }
-            else
-            {
-                xPoint = 0;
-                yPoint = (cSize * yScale);
+                if(s <= splitValue[1])
+                    yScale *= 0.40;
+                else if(s <= splitValue[2])
+                    yScale *= 0.60;
+                else if(s <= splitValue[3])
+                    yScale *= 0.80;
+                else if(s <= splitValue[4])
+                    yScale *= 1.0;
+                xScale = yScale * 0.40;
 
-                //compute tip coordinates
-                xTip = (xPoint * cos(theta)) - (yPoint * sin(theta));
-                yTip = (xPoint * sin(theta)) + (yPoint * cos(theta));
-                //compute tail coordinates
-                xTail = -xTip;
-                yTail = -yTip;
+                spd.get_cellPosition(i, j, &xCenter, &yCenter);
 
-                //compute right and left coordinates for head
-                xPoint = (cSize * xScale);
-                yPoint = (cSize * yScale)-(cSize * xScale);
+                //xCenter = (cSize / 2.0) + (j * cSize + spd.get_xllCorner());
+                //yCenter = (cSize / 2.0) + ((nR - i - 1) * cSize) + spd.get_yllCorner();
 
-                xHeadRight = (xPoint * cos(theta)) - (yPoint * sin(theta));
-                yHeadRight = (xPoint * sin(theta)) + (yPoint * cos(theta));
+                if(theta > 360)
+                {
+                    theta -= 360;
+                }
+                theta = 360 - theta;
 
-                xPoint = -(cSize * xScale);
-                yPoint = (cSize * yScale) - (cSize * xScale);
-                xHeadLeft = (xPoint * cos(theta)) - (yPoint * sin(theta));
-                yHeadLeft = (xPoint * sin(theta)) + (yPoint * cos(theta));
+                theta = theta * (PI / 180);
 
-                //shift to global coordinates
-                xTip+=xCenter;
-                yTip+=yCenter;
-                xTail+=xCenter;
-                yTail+=yCenter;
-                xHeadRight += xCenter;
-                yHeadRight += yCenter;
-                xHeadLeft += xCenter;
-                yHeadLeft += yCenter;
-            }
-            coordTransform->Transform(1, &xTip, &yTip);
-            coordTransform->Transform(1, &xTail, &yTail);
-            coordTransform->Transform(1, &xHeadRight, &yHeadRight);
-            coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
+                if( areEqual( s, 0.0 ) )
+                {
+                    double square_size = 16;
+                    xTip = xCenter - cSize / square_size;
+                    yTip = yCenter + cSize / square_size;
+                    xTail = xCenter + cSize / square_size;
+                    yTail = yCenter + cSize / square_size;
+                    xHeadLeft = xCenter - cSize / square_size;
+                    yHeadLeft = yCenter - cSize / square_size;
+                    xHeadRight = xCenter + cSize / square_size;
+                    yHeadRight = yCenter - cSize / square_size;
+                }
+                else
+                {
+                    xPoint = 0;
+                    yPoint = (cSize * yScale);
 
-            if(s != spd.get_noDataValue() && theta != dir.get_noDataValue())
-            {
+                    //compute tip coordinates
+                    xTip = (xPoint * cos(theta)) - (yPoint * sin(theta));
+                    yTip = (xPoint * sin(theta)) + (yPoint * cos(theta));
+                    //compute tail coordinates
+                    xTail = -xTip;
+                    yTail = -yTip;
+
+                    //compute right and left coordinates for head
+                    xPoint = (cSize * xScale);
+                    yPoint = (cSize * yScale)-(cSize * xScale);
+
+                    xHeadRight = (xPoint * cos(theta)) - (yPoint * sin(theta));
+                    yHeadRight = (xPoint * sin(theta)) + (yPoint * cos(theta));
+
+                    xPoint = -(cSize * xScale);
+                    yPoint = (cSize * yScale) - (cSize * xScale);
+                    xHeadLeft = (xPoint * cos(theta)) - (yPoint * sin(theta));
+                    yHeadLeft = (xPoint * sin(theta)) + (yPoint * cos(theta));
+
+                    //shift to global coordinates
+                    xTip+=xCenter;
+                    yTip+=yCenter;
+                    xTail+=xCenter;
+                    yTail+=yCenter;
+                    xHeadRight += xCenter;
+                    yHeadRight += yCenter;
+                    xHeadLeft += xCenter;
+                    yHeadLeft += yCenter;
+                }
+                coordTransform->Transform(1, &xTip, &yTip);
+                coordTransform->Transform(1, &xTail, &yTail);
+                coordTransform->Transform(1, &xHeadRight, &yHeadRight);
+                coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
+
+                // now start writing to the kml file
+
                 VSIFPrintfL(fileOut, "<Placemark>");
                 //fprintf(fileOut, "\n<Icon><href>ffs_icon.ico</href></Icon>");
                 VSIFPrintfL(fileOut, "\n\t<name>Cell %d,%d</name>", i, j);

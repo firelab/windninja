@@ -2444,6 +2444,15 @@ bool NinjaFoam::SampleRawOutput()
     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, foamU );
     GDAL2AsciiGrid( (GDALDataset *)hDS, 2, foamV );
 
+    // If we failed to fill in the data for the entire grid, we've failed.
+    // Report a better message.
+    if(foamU.get_hasNoDataValues() || foamV.get_hasNoDataValues())
+    {
+        // testing this by forcing a value to be NO_DATA. For some odd reason, this message isn't going through.
+        CPLError( CE_Failure, CPLE_AppDefined, "The openfoam output could not be interpolated to a proper surface.");
+        return false;
+    }
+
     if(!CheckIfOutputWindHeightIsResolved()){
         //if the output wind height is not resolved, interpolate to output height using a log profile
         windProfile profile;
@@ -2483,12 +2492,7 @@ bool NinjaFoam::SampleRawOutput()
         }
     }
 
-    // If we failed to fill in the data for the entire grid, we've failed.
-    // Report a better message.
-    if( AngleGrid.get_hasNoDataValues() || VelocityGrid.get_hasNoDataValues() ) {
-        CPLError( CE_Failure, CPLE_AppDefined, "The openfoam output could not be interpolated to a proper surface.");
-        return false;
-    }
+    //final check, to see if values are greater than the largest known wind speed
     if(VelocityGrid.get_maxValue() > 220.0){
         CPLError( CE_Failure, CPLE_AppDefined, "The flow solution did not converge. This may occasionally "
                 "happen in very complex terrain when the mesh resolution is high. Try the simulation "
