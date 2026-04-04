@@ -594,15 +594,19 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
             throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
         }
 
+    int nBandCount = srcDS->GetRasterCount();
+
     GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
     int pbSuccess;
-    double dfNoData = poBand->GetNoDataValue( &pbSuccess );
+    double dfNoData = poBand->GetNoDataValue(&pbSuccess);
+    if(pbSuccess == false)
+    {
+        dfNoData = -9999.0;
+    }
+
+    // Setup warp options
     psWarpOptions = GDALCreateWarpOptions();
 
-    if( pbSuccess == false )
-        dfNoData = -9999.0;
-
-    int nBandCount = srcDS->GetRasterCount();
     psWarpOptions->nBandCount = nBandCount;
     psWarpOptions->panSrcBands = 
         (int*) CPLMalloc( sizeof( int ) * nBandCount );
@@ -620,9 +624,11 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         psWarpOptions->panDstBands[b] = b + 1;
     }
 
-    psWarpOptions->papszWarpOptions =
-        CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                 "INIT_DEST", "NO_DATA" );
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
 
         // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
         // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset

@@ -310,6 +310,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         AsciiGrid<double> &vGrid,
         AsciiGrid<double> &wGrid )
 {
+    GDALWarpOptions* psWarpOptions = nullptr;
 
     int bandNum = -1;
 
@@ -704,20 +705,34 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             tempSrcGrid.write_Grid("before_warp", 2);
         }*/
 
-        /*
-         * Grab the first band to get the nodata value for the variable,
-         * assume all bands have the same ndv
-         */
-        GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
-        int pbSuccess;
-        double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-
         int nBandCount = srcDS->GetRasterCount();
-
         CPLDebug("WRF", "band count = %d", nBandCount);
 
-        if( pbSuccess == false )
+        // Grab the first band to get the NO_DATA value for the variable,
+        // assume all bands have the same NO_DATA value
+        GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
+        int pbSuccess;
+        double dfNoData = poBand->GetNoDataValue(&pbSuccess);
+        if(pbSuccess == false)
+        {
             dfNoData = -9999.0;
+        }
+
+        // Setup warp options
+        psWarpOptions = GDALCreateWarpOptions();
+        psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+        psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+        for(int b = 0; b < nBandCount; b++)
+        {
+            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+        }
+
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+        if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+        {
+            psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+        }
 
         // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
         // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
@@ -737,7 +752,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWKT,
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,
-                                                        1.0, NULL );
+                                                        1.0, psWarpOptions );
         if(wrpDS == NULL)
         {
             throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
@@ -798,7 +813,10 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         delete poCT;
         GDALClose((GDALDatasetH) srcDS );
         GDALClose((GDALDatasetH) wrpDS );
+
+        GDALDestroyWarpOptions(psWarpOptions);
     }
+
     //don't allow small negative values in cloud cover
     for(int i=0; i<cloudGrid.get_nRows(); i++){
         for(int j=0; j<cloudGrid.get_nCols(); j++){

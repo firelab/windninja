@@ -1018,8 +1018,13 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
     {
         if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == NULL)
         {
-            psWO->papszWarpOptions =
-                CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+            psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
+            int hasNoDataValue;
+            double noDataValue = GDALGetRasterNoDataValue(band, &hasNoDataValue);
+            if(hasNoDataValue == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+            {
+                psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(noDataValue).c_str());
+            }
         }
     }
 

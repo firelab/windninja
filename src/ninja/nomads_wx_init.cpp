@@ -584,8 +584,8 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
     pszForecastFile = NULL;
     nBandCount = GDALGetRasterCount( hSrcDS );
     hBand = GDALGetRasterBand( hSrcDS, 1 );
-    dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
-    if( bSuccess == FALSE )
+    dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
+    if(bSuccess == FALSE)
     {
         dfNoData = -9999.0;
     }
@@ -601,14 +601,11 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
     }
 
-// this fix works to finally properly add NO_DATA values instead of 0.0 values to the dataset,
-// and surprisingly, the code runs fine to completion. The main difference I saw was that the kmz output
-// dropped all the bands of zeroes around the edges of the dataset.
-//    psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA" );
-//    if( bSuccess == false )  // if GDALGetRasterNoDataValue( hBand, &bSuccess ) fails to return that a NO_DATA value is in the source dataset
-//    {
-//        psWarpOptions->papszWarpOptions = CSLSetNameValue( psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str() );
-//    }
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(bSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
 
     pszSrcWkt = GDALGetProjectionRef( hSrcDS );
     if(pszSrcWkt == nullptr)
@@ -969,7 +966,7 @@ noCloudOK:
         dirTmpGrid.deallocate();
     }
 
-    GDALDestroyWarpOptions( psWarpOptions );
+    GDALDestroyWarpOptions(psWarpOptions);
 }
 
 void NomadsWxModel::checkForValidData()
@@ -1096,9 +1093,12 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     int nBandCount = GDALGetRasterCount( hDS );
     hBand = GDALGetRasterBand( hDS, 1 );
     int bSuccess;
-    double dfNoData = GDALGetRasterNoDataValue( hBand, &bSuccess );
-    if( !bSuccess )
+    double dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
+    if(!bSuccess)
+    {
         dfNoData = -9999.0;
+    }
+
     psWarpOptions = GDALCreateWarpOptions();
     psWarpOptions->padfDstNoDataReal =
         (double*) CPLMalloc( sizeof( double ) * nBandCount );
@@ -1109,9 +1109,12 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         psWarpOptions->padfDstNoDataReal[i] = dfNoData;
         psWarpOptions->padfDstNoDataImag[i] = dfNoData;
     }
-    psWarpOptions->papszWarpOptions =
-            CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                             "INIT_DEST", "-9999.0" );
+
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(bSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
 
     pszSrcWkt = GDALGetProjectionRef( hDS );
     if(pszSrcWkt == nullptr)
@@ -1278,6 +1281,8 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         fields[i]->allocate( &mesh );
         wxFields[i]->interpolateScalarData((*(fields[i])), mesh, input);
     }
+
+    GDALDestroyWarpOptions(psWarpOptions);
 #endif /* NOMADS_ENABLE_3D */
     return;
 }
