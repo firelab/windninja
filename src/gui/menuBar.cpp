@@ -418,19 +418,11 @@ void MenuBar::loadKmzKmlActionTriggered()
     {
         qDebug() << "kmz outFile =" << outFileStr;
 
-        QFileInfo fileInfo(outFileStr);
-        QString fileName = fileInfo.fileName();
-
-        QFile outFile(outFileStr);
-        if (!outFile.open(QIODevice::ReadOnly))
-        {
-            continue;
-        }
-
-        QByteArray data = outFile.readAll();
-        QString base64 = data.toBase64();
-
-        QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+        QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+        QFileInfo info(outFileStr);
+        QString fileName = info.fileName();
+        qDebug() << "file url =" << filePath;
+        QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
         webEngineView->page()->runJavaScript(jsCall);
     }
 }

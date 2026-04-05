@@ -48,11 +48,12 @@ MainWindow::MainWindow(QWidget *parent)
     serverBridge = new ServerBridge();
     serverBridge->checkMessages();
 
-    QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
-    QWebEngineProfile::defaultProfile()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
     QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
     QString mapPath = QDir(dataPath).filePath("map.html");
     webEngineView = new QWebEngineView(ui->mapPanelWidget);
+    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
+    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
     webChannel = new QWebChannel(webEngineView->page());
     mapBridge = new MapBridge(this);
     webChannel->registerObject(QStringLiteral("bridge"), mapBridge);
@@ -1638,19 +1639,15 @@ void MainWindow::plotKmzOutputs()
             // plot the output kmz of the run
             QString outFileStr = QString::fromStdString(kmzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
-            QFile outFile(outFileStr);
-            QFileInfo info(outFileStr);
-            QString fileName = info.fileName();
-
-            outFile.open(QIODevice::ReadOnly);
-            QByteArray data = outFile.readAll();
-            QString base64 = data.toBase64();
-
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
             webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
             webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
-            QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
+            QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+            QFileInfo info(outFileStr);
+            QString fileName = info.fileName();
+            qDebug() << "file url =" << filePath;
+            QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
             webEngineView->page()->runJavaScript(jsCall);
 
             // if it is a point initialization run, and station kmls were created for the run,
@@ -1662,16 +1659,12 @@ void MainWindow::plotKmzOutputs()
                 {
                     QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
                     qDebug() << "station kml outFile =" << outFileStr;
-                    QFile outFile(outFileStr);
+
+                    QString filePath = QUrl::fromLocalFile(outFileStr).toString();
                     QFileInfo info(outFileStr);
                     QString fileName = info.fileName();
-
-                    outFile.open(QIODevice::ReadOnly);
-                    QByteArray data = outFile.readAll();
-                    QString base64 = data.toBase64();
-
-                    QString jsCall3 = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
-                    webEngineView->page()->runJavaScript(jsCall3);
+                    QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                    webEngineView->page()->runJavaScript(jsCall);
                 }
             }
 
@@ -1681,16 +1674,12 @@ void MainWindow::plotKmzOutputs()
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
-                QFile outFile(outFileStr);
+
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
                 QFileInfo info(outFileStr);
                 QString fileName = info.fileName();
-
-                outFile.open(QIODevice::ReadOnly);
-                QByteArray data = outFile.readAll();
-                QString base64 = data.toBase64();
-
-                QString jsCall2 = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
-                webEngineView->page()->runJavaScript(jsCall2);
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
             }
         }
 
