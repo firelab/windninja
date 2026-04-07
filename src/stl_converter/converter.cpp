@@ -11,6 +11,10 @@
 
 #include "stl_create.h"
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
+
 void Usage()
 {
     printf("stl_converter [-r cellsize] [-o zoffset] input output\n");

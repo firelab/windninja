@@ -39,6 +39,15 @@
 
 #include <stdlib.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#include "omp_guard.h"
+#endif
+
+#ifdef _OPENMP
+extern omp_lock_t netCDF_lock;
+#endif
+
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #endif

@@ -39,6 +39,9 @@
 #include "KmlVector.h"
 #include "cplIsNan.h"
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
 
 /**
 * function for converting the read in netcdf units to WindNinja units

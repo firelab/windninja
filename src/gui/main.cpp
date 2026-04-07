@@ -11,8 +11,21 @@
 #include <QEventLoop>
 #include <QMouseEvent>
 
+//#ifdef _OPENMP
+//#include <omp.h>
+//#include "omp_guard.h"
+//#endif
+
+//#ifdef _OPENMP
+//omp_lock_t netCDF_lock;
+//#endif
+
 int main(int argc, char *argv[])
 {
+    //#ifdef _OPENMP
+    //omp_init_lock (&netCDF_lock);
+    //#endif
+
     setbuf(stdout, nullptr);
     QApplication a(argc, argv);
 
@@ -39,6 +52,9 @@ int main(int argc, char *argv[])
         w->setMinimumSize(800, 600);
         w->resize(800, 600);
     } catch (...) {
+        //#ifdef _OPENMP
+        //omp_destroy_lock (&netCDF_lock);
+        //#endif
         return 1;
     }
 
@@ -108,6 +124,10 @@ int main(int argc, char *argv[])
         w->show();
         splash->deleteLater();
     }
+
+    //#ifdef _OPENMP
+    //omp_destroy_lock (&netCDF_lock);
+    //#endif
 
     return a.exec();
 }

@@ -36,7 +36,7 @@
 #include "ogr_api.h"
 
 #ifdef _OPENMP
-    omp_lock_t netCDF_lock;
+omp_lock_t netCDF_lock;
 #endif
 
 /**
@@ -59,15 +59,15 @@ int main(int argc, char *argv[])
         CPLDebug("SRTM_CLIENT", "Setting CLI SRTM API key.");
     }
     int result;
-#ifdef _OPENMP
-    omp_init_lock (&netCDF_lock);
-#endif
+//#ifdef _OPENMP
+//    omp_init_lock (&netCDF_lock);
+//#endif
 
     result = windNinjaCLI(argc, argv);
 
-#ifdef _OPENMP
-    omp_destroy_lock (&netCDF_lock);
-#endif
+//#ifdef _OPENMP
+//    omp_destroy_lock (&netCDF_lock);
+//#endif
 
     return result;
 }

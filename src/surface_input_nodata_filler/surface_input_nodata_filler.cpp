@@ -37,6 +37,10 @@
 #include <omp.h>
 #endif
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
+
 inline void check(CPLErr res) {
     if (res != CE_None) {
         CPLErrorNum err = CPLGetLastErrorNo();

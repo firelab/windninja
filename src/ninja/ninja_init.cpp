@@ -177,6 +177,10 @@ void NinjaCheckThreddsData( void *rc )
 */
 int NinjaInitializeNoRegister(const char *pszGdalData,
                               const char *pszWindNinjaData) {
+    #ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+    #endif
+
     if (!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData),
                                                    "gdalicon.png", NULL)),
                          NULL)) {
@@ -204,6 +208,10 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     //set GDAL_DATA and WINDNINJA_DATA
     GDALAllRegister();
     OGRRegisterAll();    
+
+    #ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+    #endif
 
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
@@ -235,6 +243,10 @@ int NinjaInitialize(const char* typeofrun)
 {
     GDALAllRegister();
     OGRRegisterAll();
+
+    #ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+    #endif
 
     /*
     ** Silence warnings and errors in initialize.  Sometimes we can't dial out,

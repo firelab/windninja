@@ -35,7 +35,7 @@
 #include "ninja_init.h"
 
 #ifdef _OPENMP
-    omp_lock_t netCDF_lock;
+omp_lock_t netCDF_lock;
 #endif
 
 void Usage()

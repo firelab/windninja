@@ -30,6 +30,10 @@
 #include "ninja_init.h"
 #include "ninjafoam.h"
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
+
 void Usage()
 { 
     printf("convert_output input_foam_U_file input_foam_k_file output_file_base dem_file\n");
