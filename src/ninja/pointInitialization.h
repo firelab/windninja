@@ -36,7 +36,6 @@
 
 #include <limits>	//for large number
 #include <math.h>
-#include "cplIsNan.h"
 
 // shorten boost namespaces
 namespace blt = boost::local_time;

@@ -31,7 +31,6 @@
 #define NCEP_NAM_ALASKA_SURF_INITIALIZATION_H
 
 #include "wxModelInitialization.h"
-#include "cplIsNan.h"
 
 /**
  * Class to initialize a WindNinja run from an NCEP NAM Alaska Surface forecast file.
