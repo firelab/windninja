@@ -249,7 +249,7 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
     double angleFromNorth = 0.0;
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
-        if(!GDALCalculateAngleFromNorth( hDem, angleFromNorth ))
+        if(!GDALCalculateAngleFromNorth( (GDALDataset*)hDem, angleFromNorth ))
         {
             printf("warning: Unable to calculate angle departure from north for the DEM.\n");
         }

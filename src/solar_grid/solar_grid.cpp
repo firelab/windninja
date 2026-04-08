@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         GDALDatasetH hDS = elev.ascii2GDAL();
-        if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+        if(!GDALCalculateAngleFromNorth( (GDALDataset*)hDS, angleFromNorth ))
         {
             printf("warning: Unable to calculate angle departure from north for the DEM.\n");
         }

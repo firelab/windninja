@@ -121,8 +121,10 @@ int main(int argc, char *argv[])
         Usage("Invalid value for num-threads");
     
     // correct the path if it dropped the "/" on the end
-    if(pszOutputPath[strlen(pszOutputPath)-1] != "/")
+    if(pszOutputPath[strlen(pszOutputPath)-1] != '/')
+    {
         pszOutputPath = CPLSPrintf("%s/", pszOutputPath);
+    }
 
     CPLDebug("FLOW_SEPARATION", "pszOutputPath = %s", pszOutputPath);
     

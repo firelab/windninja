@@ -37,7 +37,6 @@
 
 #include "ninjaUnits.h"
 #include "KmlVector.h"
-#include "cplIsNan.h"
 
 /**
 * function for converting the read in netcdf units to WindNinja units
@@ -239,7 +238,7 @@ void checkForValidData( std::string wxModelFileName )
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = cplIsNan(dfNoData);
+                noDataIsNan = std::isnan(dfNoData);
             }
 
             const char * poBand_units = poBand->GetUnitType();
@@ -264,7 +263,7 @@ void checkForValidData( std::string wxModelFileName )
                 {
                     if(noDataIsNan)
                     {
-                        if(cplIsNan(current_val))
+                        if(std::isnan(current_val))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -855,7 +854,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
             temperatureUnits::toBaseUnits( airGrid, T_units );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 airGrid.set_noDataValue(-9999.0);
                 airGrid.replaceNan( -9999.0 );
             }
@@ -863,7 +862,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         else if( varList[i] == "V10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, vGrid );
             velocityUnits::toBaseUnits( vGrid, spd_units );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 vGrid.set_noDataValue(-9999.0);
                 vGrid.replaceNan( -9999.0 );
             }
@@ -871,14 +870,14 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         else if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, uGrid );
             velocityUnits::toBaseUnits( uGrid, spd_units );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 uGrid.set_noDataValue(-9999.0);
                 uGrid.replaceNan( -9999.0 );
             }
         }
         else if( varList[i] == "QCLOUD" ) {
             GDAL2AsciiGrid( srcDS, bandNum, cloudGrid );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 cloudGrid.set_noDataValue(-9999.0);
                 cloudGrid.replaceNan( -9999.0 );
             }
@@ -1002,7 +1001,7 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
-        if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+        if(!GDALCalculateAngleFromNorth( (GDALDataset*)hDS, angleFromNorth ))
         {
             printf("Warning: Unable to calculate angle departure from north for the wxModel.");
         }
@@ -1075,7 +1074,7 @@ int main( int argc, char* argv[] )
         std::cout << "please enter a valid input_wrf_filename" << std::endl;
         Usage();
     }
-    int isValidFile = CPLCheckForFile(input_wrf_filename.c_str(),NULL);
+    int isValidFile = CPLCheckForFile((char*)input_wrf_filename.c_str(),NULL);
     if( isValidFile != 1 )
     {
         printf("input_wrf_filename \"%s\" file does not exist!!\n", input_wrf_filename.c_str());
