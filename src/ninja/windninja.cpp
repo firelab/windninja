@@ -33,7 +33,7 @@
 #include "ninjaException.h"
 
 #ifdef _OPENMP
-omp_lock_t netCDF_lock;
+extern omp_lock_t netCDF_lock;
 #endif
 
 /**

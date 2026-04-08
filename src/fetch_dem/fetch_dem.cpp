@@ -59,10 +59,6 @@
                     "AUTHORITY[\"EPSG\",\"4326\"]]"
 #endif
 
-#ifdef _OPENMP
-omp_lock_t netCDF_lock;
-#endif
-
 void Usage()
 { 
     printf("fetch_dem [--bbox north east south west]\n"                  );

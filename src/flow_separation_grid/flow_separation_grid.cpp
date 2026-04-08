@@ -33,10 +33,6 @@
 #include "ninja_conv.h"
 #include "ninja_init.h"
 
-#ifdef _OPENMP
-omp_lock_t netCDF_lock;
-#endif
-
 void Usage(const char *pszError)
 {
     printf("flow_separation_grid [--c/--output-cell-size size]\n"

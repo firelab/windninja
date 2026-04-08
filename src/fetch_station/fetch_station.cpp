@@ -34,10 +34,6 @@
 #include "ninja_conv.h"
 #include "ninja_init.h"
 
-#ifdef _OPENMP
-omp_lock_t netCDF_lock;
-#endif
-
 void Usage()
 { 
     printf("fetch_station [--bbox north east south west]\n"              );

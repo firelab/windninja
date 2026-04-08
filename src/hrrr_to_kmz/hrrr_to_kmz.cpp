@@ -39,10 +39,6 @@
 #include "KmlVector.h"
 #include "cplIsNan.h"
 
-#ifdef _OPENMP
-omp_lock_t netCDF_lock;
-#endif
-
 /**
 * Static identifier to determine if the file is a HRRR forecast.
 * If don't have access to grib api, identificaion is done based

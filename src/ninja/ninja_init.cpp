@@ -39,6 +39,10 @@
 
 boost::local_time::tz_database globalTimeZoneDB;
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
+
 /*
 ** Query the ninjastorm.firelab.org/sqlitetest/messages.txt and ask for the most up to date version.
 ** There are three current values:

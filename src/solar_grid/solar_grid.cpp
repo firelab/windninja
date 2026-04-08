@@ -47,10 +47,6 @@
 
 extern boost::local_time::tz_database globalTimeZoneDB;
 
-#ifdef _OPENMP
-omp_lock_t netCDF_lock;
-#endif
-
 void Usage(const char *pszError)
 {
     printf("solar_grid [--perc-cloud-cover percent] [--cloud-file cloud_raster]\n"
