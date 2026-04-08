@@ -1600,19 +1600,19 @@ void MainWindow::plotKmzOutputs()
         // vars to be filled
         int numRuns = 0;
         char **kmzFilenames = NULL;
-        int numStationKmls = 0;
-        char **stationKmlFilenames = NULL;
+        int *numStationKmlsPerRun = 0;
+        char ***stationKmlFilenames = NULL;
         char **weatherModelKmzFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numStationKmls, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numStationKmlsPerRun, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
         std::vector<std::string> kmzFilenamesStr;
-        std::vector<std::string> stationKmlFilenamesStr;
+        std::vector<std::vector<std::string>> stationKmlFilenamesStr;
         std::vector<std::string> wxModelKmzFilenamesStr;
 
         kmzFilenamesStr.reserve(numRuns);
@@ -1623,10 +1623,14 @@ void MainWindow::plotKmzOutputs()
             wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
         }
 
-        stationKmlFilenamesStr.reserve(numStationKmls);
-        for(int j = 0; j < numStationKmls; j++)
+        stationKmlFilenamesStr.resize(numRuns); // have to actually size it for the later reserves and emplace_back to work correctly
+        for(int i = 0; i < numRuns; i++)
         {
-            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[j]);
+            stationKmlFilenamesStr[i].reserve(numStationKmlsPerRun[i]);
+            for(int j = 0; j < numStationKmlsPerRun[i]; j++)
+            {
+                stationKmlFilenamesStr[i].emplace_back(stationKmlFilenames[i][j]);
+            }
         }
 
         outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
@@ -1653,14 +1657,12 @@ void MainWindow::plotKmzOutputs()
             QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
             webEngineView->page()->runJavaScript(jsCall);
 
-            // if it is a point initialization run, and station kmls were created for the run,
-            // plot the station kmls of the first run
-            // (first run, because station kmls are SHARED across runs)
-            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-                for(int j = 0; j < numStationKmls; j++)
+                for(int j = 0; j < numStationKmlsPerRun[i]; j++)
+                //for(int j = 0; j < 1; j++)
                 {
-                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
+                    QString outFileStr = QString::fromStdString(stationKmlFilenames[i][j]);
                     qDebug() << "station kml outFile =" << outFileStr;
                     QFile outFile(outFileStr);
                     QFileInfo info(outFileStr);
@@ -1694,7 +1696,7 @@ void MainWindow::plotKmzOutputs()
             }
         }
 
-        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numStationKmls, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numStationKmlsPerRun, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);

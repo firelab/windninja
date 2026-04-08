@@ -147,7 +147,7 @@ private:
     void plotKmzOutputs();
 
     std::vector<std::vector<std::string>> outputKmzFilenames;
-    std::vector<std::vector<std::string>> outputStationKmlFilenames;
+    std::vector<std::vector<std::vector<std::string>>> outputStationKmlFilenames;
     std::vector<std::vector<std::string>> outputWxModelKmzFilenames;
 
     void connectSignals();
