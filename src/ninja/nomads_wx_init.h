@@ -31,7 +31,6 @@
 #define NOMADS_WX_MODEL_H_
 
 #include "wxModelInitialization.h"
-#include "cplIsNan.h"
 
 #include "nomads.h"
 

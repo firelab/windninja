@@ -39,6 +39,10 @@
 
 #include <stdlib.h>
 
+#ifdef _OPENMP
+#include "omp_guard.h"
+#endif
+
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #endif
@@ -48,6 +52,8 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData);
 int NinjaInitializeNoRegister(const char *pszGdalData, const char *pszWindNinjaData);
 char * NinjaQueryServerMessages(bool checkAbort);
 bool NinjaCheckVersions(char * mostrecentversion, char * localversion); 
+
+int NinjaFinalize();
 
 #endif /* NINJA_INIT_H_ */
 

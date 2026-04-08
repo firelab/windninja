@@ -466,8 +466,8 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
-      CPLHTTPDestroyResult(poResult);
-      throw badForecastFile("Failed to download forecast.");
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile("Failed to create temporary wxModel file for writing, Failed to download weather forecast.");
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
     CPLHTTPDestroyResult( poResult );

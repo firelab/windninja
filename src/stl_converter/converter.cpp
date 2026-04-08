@@ -14,12 +14,14 @@
 void Usage()
 {
     printf("stl_converter [-r cellsize] [-o zoffset] input output\n");
+    NinjaFinalize();
     exit(1);
 }
 
 int main( int argc, char* argv[] )
 {
     NinjaInitialize();
+
     /*  parse input arguments  */
     double dfRes = 0.0;
     double dfOffset = 0.0;
@@ -55,6 +57,10 @@ int main( int argc, char* argv[] )
     {
         Usage();
     }
-    return NinjaElevationToStl( pszIn, pszOut, 1, dfRes, NinjaStlBinary, dfOffset, GDALTermProgress );
+
+    int result = NinjaElevationToStl( pszIn, pszOut, 1, dfRes, NinjaStlBinary, dfOffset, GDALTermProgress );
+
+    NinjaFinalize();
+    return result;
 }
 

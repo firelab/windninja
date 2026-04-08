@@ -39,6 +39,10 @@
 
 boost::local_time::tz_database globalTimeZoneDB;
 
+#ifdef _OPENMP
+omp_lock_t netCDF_lock;
+#endif
+
 /*
 ** Query the ninjastorm.firelab.org/sqlitetest/messages.txt and ask for the most up to date version.
 ** There are three current values:
@@ -177,6 +181,10 @@ void NinjaCheckThreddsData( void *rc )
 */
 int NinjaInitializeNoRegister(const char *pszGdalData,
                               const char *pszWindNinjaData) {
+    #ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+    #endif
+
     if (!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData),
                                                    "gdalicon.png", NULL)),
                          NULL)) {
@@ -204,6 +212,10 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
     //set GDAL_DATA and WINDNINJA_DATA
     GDALAllRegister();
     OGRRegisterAll();    
+
+    #ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+    #endif
 
     if(!CPLCheckForFile(CPLStrdup(CPLFormFilename(CPLStrdup(pszGdalData), "gdalicon.png", NULL)), NULL))
     {
@@ -235,6 +247,10 @@ int NinjaInitialize(const char* typeofrun)
 {
     GDALAllRegister();
     OGRRegisterAll();
+
+    #ifdef _OPENMP
+    omp_init_lock (&netCDF_lock);
+    #endif
 
     /*
     ** Silence warnings and errors in initialize.  Sometimes we can't dial out,
@@ -371,6 +387,15 @@ int NinjaInitialize(const char* typeofrun)
         }
     }
 #endif
+
+    return 0;
+}
+
+int NinjaFinalize()
+{
+    #ifdef _OPENMP
+    omp_destroy_lock(&netCDF_lock);
+    #endif
 
     return 0;
 }

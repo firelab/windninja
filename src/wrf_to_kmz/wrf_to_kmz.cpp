@@ -37,8 +37,6 @@
 
 #include "ninjaUnits.h"
 #include "KmlVector.h"
-#include "cplIsNan.h"
-
 
 /**
 * function for converting the read in netcdf units to WindNinja units
@@ -240,7 +238,7 @@ void checkForValidData( std::string wxModelFileName )
             else
             {
                 noDataValueExists = true;
-                noDataIsNan = cplIsNan(dfNoData);
+                noDataIsNan = std::isnan(dfNoData);
             }
 
             const char * poBand_units = poBand->GetUnitType();
@@ -265,7 +263,7 @@ void checkForValidData( std::string wxModelFileName )
                 {
                     if(noDataIsNan)
                     {
-                        if(cplIsNan(current_val))
+                        if(std::isnan(current_val))
                             throw badForecastFile("Forecast file contains no_data values.");
                     }else
                     {
@@ -515,6 +513,7 @@ std::string getTimeZoneString( const double &lat, const double &lon )
     if( timeZoneString == "" )
     {
         fprintf(stderr, "Could not get timezone for lat,lon %f,%f location!!!\n", lat, lon);
+        NinjaFinalize();
         std::exit(1);
     }
 
@@ -856,7 +855,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
             temperatureUnits::toBaseUnits( airGrid, T_units );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 airGrid.set_noDataValue(-9999.0);
                 airGrid.replaceNan( -9999.0 );
             }
@@ -864,7 +863,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         else if( varList[i] == "V10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, vGrid );
             velocityUnits::toBaseUnits( vGrid, spd_units );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 vGrid.set_noDataValue(-9999.0);
                 vGrid.replaceNan( -9999.0 );
             }
@@ -872,14 +871,14 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         else if( varList[i] == "U10" ) {
             GDAL2AsciiGrid( srcDS, bandNum, uGrid );
             velocityUnits::toBaseUnits( uGrid, spd_units );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 uGrid.set_noDataValue(-9999.0);
                 uGrid.replaceNan( -9999.0 );
             }
         }
         else if( varList[i] == "QCLOUD" ) {
             GDAL2AsciiGrid( srcDS, bandNum, cloudGrid );
-            if( cplIsNan( dfNoData ) ) {
+            if( std::isnan( dfNoData ) ) {
                 cloudGrid.set_noDataValue(-9999.0);
                 cloudGrid.replaceNan( -9999.0 );
             }
@@ -1003,7 +1002,7 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
     {
         GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
-        if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+        if(!GDALCalculateAngleFromNorth( (GDALDataset*)hDS, angleFromNorth ))
         {
             printf("Warning: Unable to calculate angle departure from north for the wxModel.");
         }
@@ -1038,11 +1037,14 @@ void Usage()
            "Defaults:\n"
            "    --output_speed_units mps\n"
            "    --output_path \".\"\n");
+    NinjaFinalize();
     exit(1);
 }
 
 int main( int argc, char* argv[] )
 {
+    NinjaInitialize();  // needed for GDALAllRegister()
+
     std::string input_wrf_filename = "";
     std::string outputSpeedUnits_str = "mps";
     std::string output_path = ".";
@@ -1076,10 +1078,11 @@ int main( int argc, char* argv[] )
         std::cout << "please enter a valid input_wrf_filename" << std::endl;
         Usage();
     }
-    int isValidFile = CPLCheckForFile(input_wrf_filename.c_str(),NULL);
+    int isValidFile = CPLCheckForFile((char*)input_wrf_filename.c_str(),NULL);
     if( isValidFile != 1 )
     {
         printf("input_wrf_filename \"%s\" file does not exist!!\n", input_wrf_filename.c_str());
+        NinjaFinalize();
         exit(1);
     }
     VSIDIR *pathDir;
@@ -1087,6 +1090,7 @@ int main( int argc, char* argv[] )
     if( pathDir == NULL )
     {
         printf("output_path \"%s\" is not a valid path!!\n", output_path.c_str());
+        NinjaFinalize();
         exit(1);
     }
     VSICloseDir(pathDir);
@@ -1095,14 +1099,13 @@ int main( int argc, char* argv[] )
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
     std::cout << "output_path = \"" << output_path.c_str() << "\"" << std::endl;
 
-    NinjaInitialize();  // needed for GDALAllRegister()
-
     // test and set units
     velocityUnits::eVelocityUnits outputSpeedUnits = velocityUnits::getUnit(outputSpeedUnits_str);
 
     // check dataset to verify it is a wrf dataset, and to verify it is readable
     if ( identify( input_wrf_filename ) == false )
     {
+        NinjaFinalize();
         throw badForecastFile("input input_wrf_filename is not a valid WRF file!!!");
     }
     checkForValidData( input_wrf_filename );
@@ -1134,5 +1137,6 @@ int main( int argc, char* argv[] )
         writeWxModelGrids( output_path, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
 
+    NinjaFinalize();
     return 0;
 }

@@ -34,7 +34,6 @@
 #include "ninja_conv.h"
 #include "ninja_init.h"
 
-
 void Usage(const char *pszError)
 {
     printf("slope_aspect_grid [--c/--output-cell-size size]\n"
@@ -51,6 +50,7 @@ void Usage(const char *pszError)
     {
         fprintf(stderr, "%s\n", pszError);
     }
+    NinjaFinalize();
     exit(1);
 }
 
@@ -116,8 +116,10 @@ int main(int argc, char *argv[])
         Usage("Invalid value for num-threads");
     
     // correct the path if it dropped the "/" on the end
-    if(pszOutputPath[strlen(pszOutputPath)-1] != "/")
+    if(pszOutputPath[strlen(pszOutputPath)-1] != '/')
+    {
         pszOutputPath = CPLSPrintf("%s/", pszOutputPath);
+    }
 
     CPLDebug("SLOPE_ASPECT", "pszOutputPath = %s", pszOutputPath);
     
@@ -161,7 +163,8 @@ int main(int argc, char *argv[])
 #endif
     
     std::cout << "Total time = " << endTotal - startTotal << std::endl;
-    
+
+    NinjaFinalize();
     return 0;
 }
 

@@ -32,10 +32,6 @@
 #include "ninjaTools.h"
 #include "ninjaException.h"
 
-#ifdef _OPENMP
-    omp_lock_t netCDF_lock;
-#endif
-
 /**
  * \file windninja.cpp
  *
@@ -68,6 +64,26 @@ NinjaErr handleException()
 
 extern "C"
 {
+
+WINDNINJADLL_EXPORT NinjaErr NinjaInit
+    ( const char * runType, char ** papszOptions )
+{
+    NinjaErr retval = NINJA_E_INVALID;
+
+    retval = NinjaInitialize(runType);
+
+    return retval;
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaFinalize
+    ( char ** papszOptions )
+{
+    NinjaErr retval = NINJA_E_INVALID;
+
+    retval = NinjaFinalize();
+
+    return retval;
+}
 
 /**
  * \brief Automatically allocate an empty ninjaArmy.
@@ -628,16 +644,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetInitializationMethod
     {
         return NINJA_E_NULL_PTR;
     }
-}
-        
-WINDNINJADLL_EXPORT NinjaErr NinjaInit
-    ( const char * runType, char ** papszOptions )
-{
-    NinjaErr retval = NINJA_E_INVALID;
-
-    retval = NinjaInitialize(runType);
-
-    return retval;
 }
 
 /**

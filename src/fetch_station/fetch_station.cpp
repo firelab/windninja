@@ -34,28 +34,26 @@
 #include "ninja_conv.h"
 #include "ninja_init.h"
 
-#ifdef _OPENMP
-    omp_lock_t netCDF_lock;
-#endif
-
 void Usage()
 { 
     printf("fetch_station [--bbox north east south west]\n"              );
     printf("          [--point x y x_buf y_buf]\n"                       );
     printf("          [--buf_units miles/kilometers]\n"                  );
+    NinjaFinalize();
     exit(1);
 }
 
 int main(int argc, char *argv[])
 {
+    NinjaInitialize();
+
     /* Parse the command line arguments */
     if(argc <= 1)
     {
         Usage();
     }
 
-    NinjaInitialize();
-
+    NinjaFinalize();
     return 0;
 }
 
