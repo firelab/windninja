@@ -49,6 +49,7 @@ void Usage(const char *pszError)
     {
         fprintf(stderr, "%s\n", pszError);
     }
+    NinjaFinalize();
     exit(1);
 }
 
@@ -162,7 +163,8 @@ int main(int argc, char *argv[])
 #endif
     
     std::cout << "Total time = " << endTotal - startTotal << std::endl;
-    
+
+    NinjaFinalize();
     return 0;
 }
 

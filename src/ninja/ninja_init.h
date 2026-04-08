@@ -53,5 +53,7 @@ int NinjaInitializeNoRegister(const char *pszGdalData, const char *pszWindNinjaD
 char * NinjaQueryServerMessages(bool checkAbort);
 bool NinjaCheckVersions(char * mostrecentversion, char * localversion); 
 
+int NinjaFinalize();
+
 #endif /* NINJA_INIT_H_ */
 

@@ -397,6 +397,7 @@ void Usage()
            "  Filling the non-DEM bands is optional because the NO_DATA values in these bands are automatically filled during initialization of a WindNinja simulation.\n"
            "\n"
            );
+    NinjaFinalize();
     exit(1);
 }
 
@@ -411,6 +412,7 @@ void checkArgs( int argIdx, int nSubArgs, char* arg, int argc )
 
 int main(int argc, char *argv[])
 {
+    NinjaInitialize();  // needed for GDALAllRegister()
 
     std::string input_dem_file = "";
     std::string output_dem_file = "";
@@ -543,7 +545,6 @@ int main(int argc, char *argv[])
     std::cout << std::endl;  // just cleaner with an extra line break in the command line output right here
 
     // start the script stuff
-    NinjaInitialize();  // needed for GDALAllRegister()
 
     Elevation dem;  // ELEV, land height above mean sea level, in meters
     AsciiGrid<double> slope;  // SLPD, percent change of elevation over a specific area, in degrees, 0 to 90
@@ -563,6 +564,7 @@ int main(int argc, char *argv[])
     poDS = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_ReadOnly);
     if(poDS == NULL)
     {
+        NinjaFinalize();
         throw std::runtime_error("\nCannot open input_dem_file \""+input_dem_file+"\"");
     }
 
@@ -573,6 +575,7 @@ int main(int argc, char *argv[])
     // check for the prj info
     if(poDS->GetProjectionRef() == NULL)
     {
+        NinjaFinalize();
         throw std::runtime_error("\nNo projection available in input_dem_file \""+input_dem_file+"\"");
     } else
     {
@@ -600,10 +603,12 @@ int main(int argc, char *argv[])
         // but we also want to reject filling if there are more than 8 bands, need the exact specific order and count if there is vegetation in the dataset
         if( nBands < 8)
         {
+            NinjaFinalize();
             throw std::runtime_error("\nToo few bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + boost::lexical_cast<std::string>(nBands) + " bands");
         }
         if( nBands > 8)
         {
+            NinjaFinalize();
             throw std::runtime_error("\nToo many bands in dataset for vegetation!\nexpected 8 bands, but dataset has " + boost::lexical_cast<std::string>(nBands) + " bands");
         }
     }
@@ -638,6 +643,7 @@ int main(int argc, char *argv[])
         dem.set_noDataValue(-9999.0);
         if( dem.checkForNoDataValues() )
         {
+            NinjaFinalize();
             throw std::runtime_error("NO_DATA values still found in elevation band");
         }
     }
@@ -695,6 +701,7 @@ int main(int argc, char *argv[])
         }
         if( nRet != 0 )
         {
+            NinjaFinalize();
             throw std::runtime_error("Problem writing output_dem_file \""+output_dem_file+"\"");
         }
 
@@ -702,6 +709,7 @@ int main(int argc, char *argv[])
         poDS_out = (GDALDataset*)GDALOpen(output_dem_file.c_str(), GA_Update);
         if(poDS_out == NULL)
         {
+            NinjaFinalize();
             throw std::runtime_error("Could not open output_dem_file \""+output_dem_file+"\" for writing");
         }
 
@@ -725,5 +733,6 @@ int main(int argc, char *argv[])
         #endif
     }
 
+    NinjaFinalize();
     return 0;
 }

@@ -390,3 +390,12 @@ int NinjaInitialize(const char* typeofrun)
 
     return 0;
 }
+
+int NinjaFinalize()
+{
+    #ifdef _OPENMP
+    omp_destroy_lock(&netCDF_lock);
+    #endif
+
+    return 0;
+}

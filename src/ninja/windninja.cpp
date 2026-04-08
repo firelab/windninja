@@ -75,6 +75,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaInit
     return retval;
 }
 
+WINDNINJADLL_EXPORT NinjaErr NinjaFinalize
+    ( char ** papszOptions )
+{
+    NinjaErr retval = NINJA_E_INVALID;
+
+    retval = NinjaFinalize();
+
+    return retval;
+}
+
 /**
  * \brief Automatically allocate an empty ninjaArmy.
  *

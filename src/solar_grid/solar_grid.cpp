@@ -65,6 +65,7 @@ void Usage(const char *pszError)
     {
         fprintf(stderr, "%s\n", pszError);
     }
+    NinjaFinalize();
     exit(1);
 }
 
@@ -229,6 +230,7 @@ int main(int argc, char *argv[])
     ninjaTimeZone = globalTimeZoneDB.time_zone_from_region(pszTimeZone);
     if(ninjaTimeZone == NULL)
     {
+        NinjaFinalize();
         ostringstream os;
         os << "The time zone string: " << pszTimeZone << " does not match any in "
                 << "the time zone database file: date_time_zonespec.csv.";
@@ -238,6 +240,7 @@ int main(int argc, char *argv[])
     boost::local_time::local_date_time ninjaTime = boost::local_time::local_date_time(boost::gregorian::date(nYear, nMonth, nDay), boost::posix_time::time_duration(nHour,nMinute,0,0), ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
     if(ninjaTime.is_not_a_date_time())
     {
+        NinjaFinalize();
         throw std::runtime_error("Time could not be properly set in "
                                  "WindNinjaInputs::set_date_time().");
     }
@@ -310,8 +313,8 @@ int main(int argc, char *argv[])
     std::cout << "ShdAspSlp time = " << endShdAspSlp - startShdAspSlp << std::endl;
     std::cout << "Rad time = " << endRad - startRad << std::endl;
     std::cout << "Total time = " << endTotal - startTotal << std::endl;
-    
-    
+
+    NinjaFinalize();
     return 0;
 }
 

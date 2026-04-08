@@ -89,6 +89,7 @@ void Usage()
     printf("          [--resample_alg near/bilinear]\n"                  );
 #endif
     printf("          dst_file\n"                                        );
+    NinjaFinalize();
     exit(1);
 }
 
@@ -512,6 +513,7 @@ int main(int argc, char *argv[])
         {
             fprintf(stderr, "Unknown error occurred during fetch.\n");
         }
+        NinjaFinalize();
         return nDemError;
     }
 
@@ -521,6 +523,7 @@ int main(int argc, char *argv[])
         if(poDS == NULL)
         {
             fprintf(stderr, "Failed to open new dataset\n");
+            NinjaFinalize();
             return 1;
         }
         nDemError = GDALFillBandNoData(poDS, 1, 100);
@@ -528,9 +531,12 @@ int main(int argc, char *argv[])
         if(nDemError > 0)
         {
             fprintf(stderr, "Failed to fill no data\n");
+            NinjaFinalize();
             return 1;
         }
     }
+
+    NinjaFinalize();
     return 0;
 }
 

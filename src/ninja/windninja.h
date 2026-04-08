@@ -74,6 +74,13 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaInit
         ( const char * runType, char ** options );
 
+    /* to be called at the end of the program, only once,
+     * including if possible when errors are thrown,
+     * separate from the number of ninjaArmy and ninjaTools instances.
+     */
+    WINDNINJADLL_EXPORT NinjaErr NinjaFinalize
+        ( char ** options );
+
     /*-----------------------------------------------------------------------------
      *  Contructor/Destructors
      *-----------------------------------------------------------------------------*/

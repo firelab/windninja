@@ -33,6 +33,7 @@
 void Usage()
 { 
     printf("convert_output input_foam_U_file input_foam_k_file output_file_base dem_file\n");
+    NinjaFinalize();
     exit(1);
 }
 
@@ -399,11 +400,13 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
 int main( int argc, char* argv[] )
 {
     NinjaInitialize();
+
     /*  parse input arguments  */
     if( argc != 5 )
     {
         cout << "Invalid arguments!" << endl;
         cout << "convert_output [input_foam_U_file] [input_foam_k_file] [output_file_base] [dem_filename]" << endl;
+        NinjaFinalize();
         return 1;
     }
     std::string input_foam_U_file = std::string( argv[1] );
@@ -419,7 +422,8 @@ int main( int argc, char* argv[] )
 
     //Convert an xyz output file from OpenFOAM and convert to kmz AND raster with name 'output_file'
     WriteOutputFiles( input_foam_U_file, input_foam_k_file, output_file_base, dem_filename );
-    
+
+    NinjaFinalize();
     return 0;
 }
 

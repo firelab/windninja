@@ -14,7 +14,7 @@
 int main(int argc, char *argv[])
 {
     setbuf(stdout, nullptr);
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
     // Initialize as a GUI run
     char ** options = NULL;
@@ -27,10 +27,10 @@ int main(int argc, char *argv[])
     // Set icon and application settings
     QIcon icon(":/wn-icon.png");
     QString ver = NINJA_VERSION_STRING;
-    a.setWindowIcon(icon);
-    a.setApplicationName(QString("WindNinja"));
-    a.setApplicationVersion(ver);
-    a.setStyle(QStyleFactory::create("Fusion"));
+    app.setWindowIcon(icon);
+    app.setApplicationName(QString("WindNinja"));
+    app.setApplicationVersion(ver);
+    app.setStyle(QStyleFactory::create("Fusion"));
 
     // Initialize mainwindow (for the version message)
     MainWindow* w = nullptr;
@@ -39,6 +39,11 @@ int main(int argc, char *argv[])
         w->setMinimumSize(800, 600);
         w->resize(800, 600);
     } catch (...) {
+        ninjaErr = NinjaFinalize(options);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaFinalize: ninjaErr =" << ninjaErr;
+        }
         return 1;
     }
 
@@ -109,5 +114,13 @@ int main(int argc, char *argv[])
         splash->deleteLater();
     }
 
-    return a.exec();
+    int result = app.exec();
+
+    ninjaErr = NinjaFinalize(options);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaFinalize: ninjaErr =" << ninjaErr;
+    }
+
+    return result;
 }

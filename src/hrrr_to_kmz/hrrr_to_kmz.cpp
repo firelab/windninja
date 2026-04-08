@@ -117,6 +117,7 @@ std::string getTimeZoneString( const double &lat, const double &lon )
     if( timeZoneString == "" )
     {
         fprintf(stderr, "Could not get timezone for lat,lon %f,%f location!!!\n", lat, lon);
+        NinjaFinalize();
         std::exit(1);
     }
 
@@ -643,6 +644,7 @@ void Usage()
            "    --output_speed_units mps\n"
            "    --output_path \".\"\n"
            "Note, the bbox and point clipping box inputs have to be in units of lat/lon\n");
+    NinjaFinalize();
     exit(1);
 }
 
@@ -657,6 +659,8 @@ void checkArgs( int argIdx, int nSubArgs, char* arg, int argc )
 
 int main( int argc, char* argv[] )
 {
+    NinjaInitialize();  // needed for GDALAllRegister()
+
     std::string input_hrrr_filename = "";
     std::string outputSpeedUnits_str = "mps";
     std::string output_path = ".";
@@ -827,14 +831,12 @@ int main( int argc, char* argv[] )
     }
 
 
-    NinjaInitialize();  // needed for GDALAllRegister()
-
-
     velocityUnits::eVelocityUnits outputSpeedUnits = velocityUnits::getUnit(outputSpeedUnits_str);
 
 
     if ( identify( input_hrrr_filename ) == false )
     {
+        NinjaFinalize();
         throw badForecastFile("input input_hrrr_filename is not a valid hrrr file!!!");
     }
     checkForValidData( input_hrrr_filename );
@@ -860,7 +862,7 @@ int main( int argc, char* argv[] )
         writeWxModelGrids( output_path, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
 
-
+    NinjaFinalize();
     return 0;
 }
 
