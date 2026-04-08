@@ -887,7 +887,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue < 0.0 )
         {
-            dfTempValue=0.0;
             oErrorString = "Invalid value for speed: ";
             oErrorString += poFeature->GetFieldAsString( 7 );
             oErrorString += " at station: ";
@@ -935,7 +934,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += poFeature->GetFieldAsString( 9 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
-            dfTempValue=0.0;
+            error_msg = oErrorString;
+            throw std::runtime_error(oErrorString);
         }
 
         oStation.direction=dfTempValue;
@@ -979,7 +979,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
-            dfTempValue=0.0; //TEMPORARY UNTIL SOLRAD IS FIXED
+            throw std::runtime_error(oErrorString);
         }
 
         oStation.cloudCover=dfTempValue;
