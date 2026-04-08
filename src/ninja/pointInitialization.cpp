@@ -728,7 +728,6 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
     OGRDataSourceH hDS;
     hDS = OGROpen( stationLoc.c_str(), FALSE, NULL );
-
     if( hDS == NULL )
     {
         oErrorString = "Cannot open csv file: ";
@@ -776,9 +775,10 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             //check for valid latitude in degrees
             dfTempValue = poFeature->GetFieldAsDouble( 3 );
 
-            if( dfTempValue > 90.0 || dfTempValue < -90.0 ) {
-                OGRFeature::DestroyFeature( poFeature );
-                GDALClose( hDS );
+            if( dfTempValue > 90.0 || dfTempValue < -90.0 )
+            {
+                OGRFeature::DestroyFeature(poFeature);
+                GDALClose(hDS);
 
                 oErrorString = "Bad latitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -792,8 +792,8 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
             if( dfTempValue < -180.0 || dfTempValue > 360.0 )
             {
-                OGRFeature::DestroyFeature( poFeature );
-                GDALClose( hDS );
+                OGRFeature::DestroyFeature(poFeature);
+                GDALClose(hDS);
 
                 oErrorString = "Bad longitude in weather station csv file";
                 oErrorString += " at station: ";
@@ -805,6 +805,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
             if( !EQUAL( pszDatum, "WGS84" ) && !EQUAL( pszDatum, "NAD83" ) && !EQUAL( pszDatum, "NAD27" ) )
             {
+                OGRFeature::DestroyFeature(poFeature);
+                GDALClose(hDS);
+
                 oErrorString = "Invalid datum: ";
                 oErrorString += poFeature->GetFieldAsString( 2 );
                 oErrorString += " at station: ";
@@ -840,6 +843,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid coordinate system: ";
             oErrorString += poFeature->GetFieldAsString( 1 );
             oErrorString += " at station: ";
@@ -854,6 +860,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue <= 0.0 )
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid height: ";
             oErrorString += poFeature->GetFieldAsString( 5 );
             oErrorString += " at station: ";
@@ -873,6 +882,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid units for height: ";
             oErrorString += poFeature->GetFieldAsString( 6 );
             oErrorString += " at station: ";
@@ -887,6 +899,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue < 0.0 )
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid value for speed: ";
             oErrorString += poFeature->GetFieldAsString( 7 );
             oErrorString += " at station: ";
@@ -917,6 +932,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid units for speed: ";
             oErrorString += poFeature->GetFieldAsString( 8 );
             oErrorString += " at station: ";
@@ -930,6 +948,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue > 360.0 || dfTempValue < 0.0 )
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid value for direction: ";
             oErrorString += poFeature->GetFieldAsString( 9 );
             oErrorString += " at station: ";
@@ -961,6 +982,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid units for temperature: ";
             oErrorString += poFeature->GetFieldAsString( 11 );
             oErrorString += " at station: ";
@@ -974,6 +998,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue > 100.0 || dfTempValue < 0.0 )
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid value for cloud cover: ";
             oErrorString += poFeature->GetFieldAsString( 12 );
             oErrorString += " at station: ";
@@ -1011,6 +1038,9 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid units for influence radius: ";
             oErrorString += poFeature->GetFieldAsString( 14 );
             oErrorString += " at station: ";
@@ -1033,7 +1063,11 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         //if it's not a "WindNinja NOW" type simulation and we can't detect the datetime
         bpt::ptime noTime;
-        if(datetime != "" && oStation.datetime==noTime){
+        if(datetime != "" && oStation.datetime==noTime)
+        {
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             oErrorString = "Invalid datetime format: ";
             oErrorString += poFeature->GetFieldAsString( 15 );
             oErrorString += " at station: ";
@@ -1043,10 +1077,10 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
 
         oStations.push_back(oStation);
-        OGRFeature::DestroyFeature( poFeature );
+        OGRFeature::DestroyFeature(poFeature);
     }
 
-    GDALClose( hDS );
+    GDALClose(hDS);
 
     return oStations;
 }
