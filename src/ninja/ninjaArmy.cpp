@@ -243,6 +243,21 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
         //The function name is a bit misleading as to what it really does.
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
    }
+
+    // hrm, turns out clearing these static values out in the moment before adding new ones, didn't work across runs.
+    // The idea is that we need to always clear these static values out before adding new ones,
+    // between each download/run, or they get kept across downloads/runs.
+    //
+    // looks like the ninjas[i]->input.stations[i].stationKmlNames get set during calls to wxStation::writeKmlFile(),
+    // which is called per ninjas[i] between calls to ninjaArmy::makePointArmy() and calls to ninjaArmy::startRuns().
+    // so clearing this data needs to be done either during ninjaArmy::makePointArmy() after the ninjas have been generated,
+    // or during the cleanup of ninjas[i] within ninjaArmy::startRuns(), after the kmlFileNames have been cleaned for the given run.
+    //
+    // kind of an awkward place, but this seems to be the best spot to put it for now. Seems to be working.
+    for(unsigned int i = 0; i < ninjas.size(); i++)
+    {
+        ninjas[i]->input.stations[i].stationKmlNames.clear();
+    }
 }
 
 /**
