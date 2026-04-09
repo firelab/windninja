@@ -2570,17 +2570,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputSt
  * \param army An opaque handle to a valid ninjaArmy.
  * \param numRuns The number of runs that were simulated, to be filled. Also the expected size of the filled filename arrays.
  * \param kmzFilenames The ninjas[i] output kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns.
- * \param numStationKmlsPerRun An array of the number of station kmls per each run, as a NULL int*, to be created and filled, to be created of size numRuns. Also the expected inner size of the filled stationKmlFilenames array.
- * \param stationKmlFilenames The ninjas[i] station kml filenames array, as a NULL char***, to be created and filled, to be created of size numRuns by numStationKmls[runIdx]. Runs without station kml file output use "" for the station kml filenames.
+ * \param stationKmlFilenames The ninjas[i] station kml filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without station kml file output use "" for the station kml filenames.
  * \param weatherModelKmzFilenames The ninjas[i] weather model kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without weather model kmz file output use "" for the weather model kmz filenames.
  * \param papszOptions options
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *numRuns, char*** kmzFilenames, int **numStationKmlsPerRun, char**** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *numRuns, char*** kmzFilenames, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions)
 {
     std::vector<std::string> kmzFilenameStrings;
-    std::vector<std::vector<std::string>> stationKmlFilenameStrings;
+    std::vector<std::string> stationKmlFilenameStrings;
     std::vector<std::string> wxModelKmzFilenameStrings;
 
     if( NULL != army )
@@ -2595,66 +2594,31 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *num
         *numRuns = n;
 
         *kmzFilenames = (char **)malloc(sizeof(char *) * n);
+        *stationKmlFilenames = (char **)malloc(sizeof(char *) * n);
         *weatherModelKmzFilenames = (char **)malloc(sizeof(char *) * n);
 
         for(int i = 0; i < n; i++)
         {
             std::string kmzFilenameStr = kmzFilenameStrings[i];
+            std::string stationKmlFilenameStr = stationKmlFilenameStrings[i];
             std::string wxModelKmzFilenameStr = wxModelKmzFilenameStrings[i];
 
             char *kmzFilename = (char *)malloc(kmzFilenameStr.size() + 1);
+            char *stationKmlFilename = (char *)malloc(stationKmlFilenameStr.size() + 1);
             char *wxModelKmzFilename = (char *)malloc(wxModelKmzFilenameStr.size() + 1);
 
-            if(!kmzFilename || !wxModelKmzFilename)
+            if(!kmzFilename || !stationKmlFilename || !wxModelKmzFilename)
             {
                 return NINJA_E_BAD_ALLOC;
             }
 
             memcpy(kmzFilename, kmzFilenameStr.c_str(), kmzFilenameStr.size() + 1);
+            memcpy(stationKmlFilename, stationKmlFilenameStr.c_str(), stationKmlFilenameStr.size() + 1);
             memcpy(wxModelKmzFilename, wxModelKmzFilenameStr.c_str(), wxModelKmzFilenameStr.size() + 1);
 
             (*kmzFilenames)[i] = kmzFilename;
+            (*stationKmlFilenames)[i] = stationKmlFilename;
             (*weatherModelKmzFilenames)[i] = wxModelKmzFilename;
-        }
-
-        std::cout << "stationKmlFilenameStrings.size() = " << stationKmlFilenameStrings.size() << std::endl;
-        *numStationKmlsPerRun = (int *)malloc(sizeof(int) * n);
-        for(int i = 0; i < n; i++)
-        {
-            (*numStationKmlsPerRun)[i] = (int)stationKmlFilenameStrings[i].size();
-            std::cout << "stationKmlFilenameStrings[" << i << "].size() = " << stationKmlFilenameStrings[i].size() << std::endl;
-        }
-
-        *stationKmlFilenames = (char ***)malloc(sizeof(char **) * n);
-        for(int i = 0; i < n; i++)
-        {
-            int m = (int)stationKmlFilenameStrings[i].size();
-            std::cout << "i = " << i << ", numStationKmls = " << m << std::endl;
-
-            (*stationKmlFilenames)[i] = (char **)malloc(sizeof(char *) * m);
-
-            if(!(*stationKmlFilenames)[i])
-            {
-                return NINJA_E_BAD_ALLOC;
-            }
-
-            std::vector<std::string> stationKmlFilenameStrVec = stationKmlFilenameStrings[i];
-            for(int j = 0; j < m; j++)
-            {
-                std::string stationKmlFilenameStr = stationKmlFilenameStrVec[j];
-
-                char *stationKmlFilename = (char *)malloc(stationKmlFilenameStr.size() + 1);
-
-                if(!stationKmlFilename)
-                {
-                    return NINJA_E_BAD_ALLOC;
-                }
-
-                memcpy(stationKmlFilename, stationKmlFilenameStr.c_str(), stationKmlFilenameStr.size() + 1);
-                std::cout << "stationKmlFilename[" << j << "] = \"" << stationKmlFilename << "\"" << std::endl;
-
-                (*stationKmlFilenames)[i][j] = stationKmlFilename;
-            }
         }
 
         return NINJA_SUCCESS;
@@ -2665,7 +2629,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *num
     }
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmzFilenames, int* numStationKmlsPerRun, char*** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmzFilenames, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions)
 {
     for(int i = 0; i < numRuns; i++)
     {
@@ -2674,6 +2638,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmz
             if(kmzFilenames[i])
             {
                 free(kmzFilenames[i]);
+            }
+        }
+
+        if(stationKmlFilenames)
+        {
+            if(stationKmlFilenames[i])
+            {
+                free(stationKmlFilenames[i]);
             }
         }
 
@@ -2686,31 +2658,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmz
         }
     }
 
-    for(int i = 0; i < numRuns; i++)
-    {
-        if(numStationKmlsPerRun && stationKmlFilenames)
-        {
-            if(numStationKmlsPerRun[i])
-            {
-                for(int j = 0; j < numStationKmlsPerRun[i]; j++)
-                {
-                    if(stationKmlFilenames[i])
-                    {
-                        if(stationKmlFilenames[i][j])
-                        {
-                            free(stationKmlFilenames[i][j]);
-                        }
-                    }
-                }
-
-                if(stationKmlFilenames[i])
-                {
-                    free(stationKmlFilenames[i]);
-                }
-            }
-        }
-    }
-
     if(kmzFilenames)
     {
         free(kmzFilenames);
@@ -2718,10 +2665,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmz
     if(stationKmlFilenames)
     {
         free(stationKmlFilenames);
-    }
-    if(numStationKmlsPerRun)
-    {
-        free(numStationKmlsPerRun);
     }
     if(weatherModelKmzFilenames)
     {

@@ -2671,7 +2671,7 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
     return std::string("");
 }
 
-int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::vector<std::string>>& stationKmlFilenamesStr,
+int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
                                    std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions )
 {
     kmzFilenamesStr = kmzFilenames;
@@ -2710,25 +2710,24 @@ void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
 {
     kmzFilenames[runNumber] = ninjas[runNumber]->input.kmzFile;
 
-    std::vector<std::string> currentStationKmlFilenames;
     if(ninjas[runNumber]->input.stations.size() == 0)
     {
-        currentStationKmlFilenames.push_back( "" );
+        stationKmlFilenames[runNumber] = "";
     } else
     {
         if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
         {
-            currentStationKmlFilenames.push_back( "" );
+            stationKmlFilenames[runNumber] = "";
         } else
         {
-            for(int j = 0; j < ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size(); j++)
-            {
-                std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames[" << j << "] = \"" << ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] << "\"" << std::endl;
-                currentStationKmlFilenames.push_back( ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] );
-            }
+            // all these cout statements are various ways to access the given wxStation::stationKmlNames, which is SHARED across ninjas[runNumber].input.stations[runNumber]
+            // the past attempt of doing a for loop over ninjas[runNumber]->input.stations[runNumber].stationKmlNames[stationIdx] makes NO sense, it results in DUPLICATION
+            //std::cout << "ninjas[0]->input.stations[0].stationKmlNames[" << runNumber << "] = \"" << ninjas[0]->input.stations[0].stationKmlNames[runNumber] << "\"" << std::endl;
+            //std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames[" << runNumber << "] = \"" << ninjas[runNumber]->input.stations[runNumber].stationKmlNames[runNumber] << "\"" << std::endl;
+            //std::cout << "wxStation::stationKmlNames[" << runNumber << "] = \"" << wxStation::stationKmlNames[runNumber] << "\"" << std::endl;
+            stationKmlFilenames[runNumber] = ninjas[runNumber]->input.stations[runNumber].stationKmlNames[runNumber];
         }
     }
-    stationKmlFilenames[runNumber] = currentStationKmlFilenames;
 
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
     if(ninjas[runNumber]->input.wxModelKmzFile == "!set")
