@@ -41,7 +41,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
-    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);
+    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);  // boundingBoxPage
 
     timeZoneAllZonesCheckBoxClicked();
 
@@ -104,35 +104,26 @@ void SurfaceInput::boundingBoxReceived(double north, double south, double east, 
 {
     qDebug() << "north south east west =" << QString::number(north) << QString::number(south) << QString::number(east) << QString::number(west);
 
-    ui->boundingBoxNorthLineEdit->blockSignals(true);
-    ui->boundingBoxEastLineEdit->blockSignals(true);
-    ui->boundingBoxSouthLineEdit->blockSignals(true);
-    ui->boundingBoxWestLineEdit->blockSignals(true);
+    // update information for one page OR the other, updating one triggers the signal to update the other
+    // but need to do it based off of what the current page index is at
 
-    ui->boundingBoxNorthLineEdit->setText(QString::number(north));
-    ui->boundingBoxEastLineEdit->setText(QString::number(east));
-    ui->boundingBoxSouthLineEdit->setText(QString::number(south));
-    ui->boundingBoxWestLineEdit->setText(QString::number(west));
+    if(ui->elevationInputTypeComboBox->currentIndex() == 0)  // boundingBoxPage
+    {
+        ui->boundingBoxNorthLineEdit->setText(QString::number(north));
+        ui->boundingBoxEastLineEdit->setText(QString::number(east));
+        ui->boundingBoxSouthLineEdit->setText(QString::number(south));
+        ui->boundingBoxWestLineEdit->setText(QString::number(west));
+    }
 
-    ui->boundingBoxNorthLineEdit->blockSignals(false);
-    ui->boundingBoxEastLineEdit->blockSignals(false);
-    ui->boundingBoxSouthLineEdit->blockSignals(false);
-    ui->boundingBoxWestLineEdit->blockSignals(false);
+    if(ui->elevationInputTypeComboBox->currentIndex() == 1)  // pointRadiusPage
+    {
+        double pointRadius[3];
+        computePointRadius(north, east, south, west, pointRadius);
 
-    double pointRadius[3];
-    computePointRadius(north, east, south, west, pointRadius);
-
-    ui->pointRadiusLatLineEdit->blockSignals(true);
-    ui->pointRadiusLonLineEdit->blockSignals(true);
-    ui->pointRadiusRadiusLineEdit->blockSignals(true);
-
-    ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
-    ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
-    ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
-
-    ui->pointRadiusLatLineEdit->blockSignals(false);
-    ui->pointRadiusLonLineEdit->blockSignals(false);
-    ui->pointRadiusRadiusLineEdit->blockSignals(false);
+        ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
+        ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
+        ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+    }
 
     ui->elevationInputTypePushButton->setChecked(false);
 }
@@ -140,7 +131,7 @@ void SurfaceInput::boundingBoxReceived(double north, double south, double east, 
 
 void SurfaceInput::boundingBoxLineEditsTextChanged()
 {
-    if(ui->elevationInputTypeComboBox->currentIndex() == 0)
+    if(ui->elevationInputTypeComboBox->currentIndex() == 0)  // boundingBoxPage
     {
         bool isNorthValid, isEastValid, isSouthValid, isWestValid;
         double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
@@ -169,7 +160,7 @@ void SurfaceInput::boundingBoxLineEditsTextChanged()
 
 void SurfaceInput::pointRadiusLineEditsTextChanged()
 {
-    if (ui->elevationInputTypeComboBox->currentIndex() == 1)
+    if(ui->elevationInputTypeComboBox->currentIndex() == 1)  // pointRadiusPage
     {
         bool isLatValid, isLonValid, isRadiusValid;
         double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
