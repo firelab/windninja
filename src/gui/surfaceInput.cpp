@@ -128,7 +128,6 @@ void SurfaceInput::boundingBoxReceived(double north, double south, double east, 
     ui->elevationInputTypePushButton->setChecked(false);
 }
 
-
 void SurfaceInput::boundingBoxLineEditsTextChanged()
 {
     if(ui->elevationInputTypeComboBox->currentIndex() == 0)  // boundingBoxPage
@@ -401,7 +400,7 @@ void SurfaceInput::ninjafoamCaseButtonClicked()
     ui->ninjafoamCaseLineEdit->setProperty("fullpath", ninjafoamDir);
 
     ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
-    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
+    elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 
     ui->elevationInputFileDownloadButton->setEnabled(false);
@@ -449,7 +448,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
         if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
         {
             ui->elevationInputFileLineEdit->setProperty("fullpath", ui->elevationInputFileLineEdit->property("fullpath").toString());
-            ui->elevationInputFileLineEdit->setText(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
+            elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
             ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
         }
         return;
@@ -477,7 +476,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     }
 
     ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
-    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
+    elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
 
@@ -535,7 +534,7 @@ void SurfaceInput::fetchDEMFinished()
             if(retVal == true)
             {
                 ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
-                ui->elevationInputFileLineEdit->setText(QFileInfo(pendingDownloadDemFilePath).fileName());
+                elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(pendingDownloadDemFilePath).fileName());
                 ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
                 ui->inputsStackedWidget->setCurrentIndex(3);
             }
@@ -1192,6 +1191,21 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     emit writeToConsoleSignal("Metadata loaded from dem file successfully.", Qt::darkGreen);
 
     return true;
+}
+
+void SurfaceInput::elevationInputFileLineEditSetTextAndForceSignal(const QString &demFilePath)
+{
+    bool isTextSame = false;
+    if(ui->elevationInputFileLineEdit->text() == demFilePath)
+    {
+        isTextSame = true;
+    }
+
+    ui->elevationInputFileLineEdit->setText(demFilePath);
+    if(isTextSame == true)
+    {
+        emit elevationInputFileLineEditTextChanged(demFilePath);
+    }
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
