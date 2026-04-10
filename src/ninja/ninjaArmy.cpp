@@ -104,10 +104,6 @@ int ninjaArmy::getSize()
 
 void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 {
-//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
-//throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
-Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
-
     if( nSize < 1 )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
@@ -144,10 +140,6 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
                              string demFile, bool matchPoints, bool momentumFlag)
 {
-//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
-//throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
-Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
-
     if( timeList.size() == 0 )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
@@ -270,10 +262,6 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
  */
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
-//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
-//throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
-Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
-
     wxModelInitialization* model;
     
     tz = timeZone;

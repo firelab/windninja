@@ -248,8 +248,6 @@ bool ninja::simulate_wind()
 
 	input.Com->ninjaCom(ninjaComClass::ninjaNone, "Reading elevation file...");
 
-//throw std::runtime_error("I WANT CHOCOLATE!!! Yum.");
-
 	readInputFile();
 	set_position();
 
