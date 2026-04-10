@@ -1503,6 +1503,23 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
     if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
     {
+        // clip the output weather model ascii grids, to the area of the dem, plus one dem cell size.
+        // actually, it looks best to use one wxModel cell size NOT one dem cell size.
+        //
+        // technically the following wxModel ascii grids all exist, but we only use SOME of them for output:
+        //  airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel, vGrid_wxModel, wGrid_wxModel
+        double west = input.dem.get_xllCorner();
+        double east = input.dem.get_xllCorner() + input.dem.get_xDimension();
+        double south = input.dem.get_yllCorner();
+        double north = input.dem.get_yllCorner() + input.dem.get_yDimension();
+        west = west - uGrid_wxModel.get_cellSize();
+        east = east + uGrid_wxModel.get_cellSize();
+        south = south - uGrid_wxModel.get_cellSize();
+        north = north + uGrid_wxModel.get_cellSize();
+        uGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
+        vGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
+        cloudCoverGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
+
         speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
         dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
 
