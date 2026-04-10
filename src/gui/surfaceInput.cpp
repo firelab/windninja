@@ -43,6 +43,10 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     ui->vegetationStackedWidget->setCurrentIndex(0);
     ui->elevationInputTypeStackedWidget->setCurrentIndex(0);  // boundingBoxPage
 
+    ui->elevationFileTypeComboBox->setItemData(0, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
+    ui->elevationFileTypeComboBox->setItemData(1, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
+    ui->elevationFileTypeComboBox->setItemData(2, "US coverage LANDFIRE 2023 Landscape data at 30 meter resolution.", Qt::ToolTipRole);
+
     timeZoneAllZonesCheckBoxClicked();
 
     connect(ui->boundingBoxNorthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
@@ -74,6 +78,97 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
 
     connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
+}
+
+void SurfaceInput::updateProgressMessage(const QString message)
+{
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message
+        );
+    }
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
+
+    std::string msg = pszMessage;
+
+    // hrm, this was the old stuff, that was put in because ninjaCom likes to add "\n" to stuff
+    // and the writeToConsole() function does NOT like having a "\n" on the end, it adds extra empty lines all over the place
+    // but now we are running into an issue where QMessageBox gets confused about how to size things,
+    // UNLESS an extra "\n" is in the text. So annoying and confusing.
+    // hrm, this means that I actually need BOTH functionalities, strip the "\n" for writeToConsole(), add a "\n" for updateProgressMessage() stuff.
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error")+"\n");
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr+"\n"));
+            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr+"\n"));
+        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg)+"\n");
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
 }
 
 void SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
@@ -219,11 +314,49 @@ void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
 
 void SurfaceInput::surfaceInputDownloadButtonClicked()
 {
+    bool isNorthValid, isEastValid, isSouthValid, isWestValid;
+    double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
+    double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
+    double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
+    double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
+
+    if(!isNorthValid || !isEastValid || !isSouthValid || !isWestValid)
+    {
+        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.";
+        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.", this);
+        return;
+    }
+
+    if(north == 0.0 || east == 0.0 || south == 0.0 || west == 0.0)
+    {
+        qCritical() << "ERROR: Please select an area on the map.";
+        comMessageHandler("ERROR: Please select an area on the map.", this);
+        return;
+    }
+
+    // need to update this logic for special cases, like wrapping around the earth
+    if(north < south || east < west)
+    {
+        qCritical() << "ERROR: North must be greater than South and East must be greater than West.";
+        comMessageHandler("ERROR: North must be greater than South and East must be greater than West.", this);
+        return;
+    }
+
+    if(ui->elevationFileTypeComboBox->currentIndex() == 0)
+    {
+        if(CPLGetConfigOption("CUSTOM_SRTM_API_KEY", NULL) == NULL && CPLGetConfigOption("NINJA_GUI_SRTM_API_KEY", NULL) == NULL)
+        {
+            qCritical() << "ERROR: API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY.";
+            comMessageHandler("ERROR: API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY.", this);
+            return;
+        }
+    }
+
     QVector<double> boundingBox = {
-        ui->boundingBoxNorthLineEdit->text().toDouble(),
-        ui->boundingBoxEastLineEdit->text().toDouble(),
-        ui->boundingBoxSouthLineEdit->text().toDouble(),
-        ui->boundingBoxWestLineEdit->text().toDouble()
+        north,
+        east,
+        south,
+        west
     };
 
     double resolution = 30;
@@ -756,97 +889,6 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
     else
     {
         return americaData;
-    }
-}
-
-void SurfaceInput::updateProgressMessage(const QString message)
-{
-    if(progress)
-    {
-        progress->setLabelText(message);
-        progress->setWindowTitle(tr("Error"));
-        progress->setCancelButtonText(tr("Close"));
-        progress->setAutoClose(false);
-        progress->setAutoReset(false);
-        progress->setRange(0, 1);
-        progress->setValue(progress->maximum());
-    }
-    else
-    {
-        QMessageBox::critical(
-            nullptr,
-            QApplication::tr("Error"),
-            message
-        );
-    }
-}
-
-static void comMessageHandler(const char *pszMessage, void *pUser)
-{
-    SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
-
-    std::string msg = pszMessage;
-
-    // hrm, this was the old stuff, that was put in because ninjaCom likes to add "\n" to stuff
-    // and the writeToConsole() function does NOT like having a "\n" on the end, it adds extra empty lines all over the place
-    // but now we are running into an issue where QMessageBox gets confused about how to size things,
-    // UNLESS an extra "\n" is in the text. So annoying and confusing.
-    // hrm, this means that I actually need BOTH functionalities, strip the "\n" for writeToConsole(), add a "\n" for updateProgressMessage() stuff.
-    if( msg.substr(msg.size()-1, 1) == "\n")
-    {
-        msg = msg.substr(0, msg.size()-1);
-    }
-
-    size_t pos;
-    size_t startPos;
-    size_t endPos;
-    std::string clipStr;
-
-    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
-    {
-        if( msg.find("Exception caught: ") != msg.npos )
-        {
-            pos = msg.find("Exception caught: ");
-            startPos = pos+18;
-        }
-        else // if( msg.find("ERROR: ") != msg.npos )
-        {
-            pos = msg.find("ERROR: ");
-            startPos = pos+7;
-        }
-        clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
-        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        if( clipStr == "Cannot determine exception type." )
-        {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error")+"\n");
-            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
-        }
-        else
-        {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr+"\n"));
-            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
-        }
-    }
-    else if( msg.find("Warning: ") != msg.npos )
-    {
-        if( msg.find("Warning: ") != msg.npos )
-        {
-            pos = msg.find("Warning: ");
-            startPos = pos+9;
-        }
-        clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
-        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr+"\n"));
-        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
-    }
-    else
-    {
-        emit self->updateProgressMessageSignal(QString::fromStdString(msg)+"\n");
-        emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
 }
 

@@ -131,7 +131,7 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
         }
         else if(result == SURF_FETCH_E_BOUNDS_ERR)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFetch was outside the bounds of the dataset.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFetch was outside the bounds of the dataset. Please select new data source or new area.");
         }
         else if(result == SURF_FETCH_E_WARPER_ERR)
         {
@@ -155,7 +155,7 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
         }
         else
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nUnknown error occurred during fetch.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nUnknown error occurred during fetch.\nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
         }
         delete fetcher;
         return result;
@@ -217,7 +217,7 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
         }
         else if(result == SURF_FETCH_E_BOUNDS_ERR)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFetch was outside the bounds of the dataset.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFetch was outside the bounds of the dataset. Please select new data source or new area.");
         }
         else if(result == SURF_FETCH_E_WARPER_ERR)
         {
@@ -241,7 +241,7 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
         }
         else
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nUnknown error occurred during fetch.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nUnknown error occurred during fetch.\nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
         }
         delete fetcher;
         return result;

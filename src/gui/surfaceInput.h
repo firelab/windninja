@@ -70,6 +70,7 @@ public slots:
     void elevationInputFileOpenButtonClicked();
 
 private slots:
+    void updateProgressMessage(const QString message);
     void surfaceInputDownloadCancelButtonClicked();
     void surfaceInputDownloadButtonClicked();
     void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
@@ -84,7 +85,6 @@ private slots:
     void timeZoneDetailsCheckBoxClicked();
     void timeZoneComboBoxCurrentIndexChanged(int index);
     void timeZoneAllZonesCheckBoxClicked();
-    void updateProgressMessage(const QString message);
 
 private:
     Ui::MainWindow *ui;
