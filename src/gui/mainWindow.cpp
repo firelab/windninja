@@ -1649,6 +1649,7 @@ void MainWindow::plotKmzOutputs()
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
             webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+            webEngineView->page()->runJavaScript("clearStationOutputTree();");
             webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
             QString jsCall = QString("loadKmzFromBase64('%1', '%2');").arg(base64, fileName);
             webEngineView->page()->runJavaScript(jsCall);
