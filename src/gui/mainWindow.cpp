@@ -175,7 +175,7 @@ void MainWindow::updateProgressMessage(const QString message)
         QMessageBox::critical(
             nullptr,
             QApplication::tr("Error"),
-            message
+            message+"\n"
         );
     }
 }
@@ -215,11 +215,9 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
 
     std::string msg = pszMessage;
 
-    // hrm, this was the old stuff, that was put in because ninjaCom likes to add "\n" to stuff
-    // and the writeToConsole() function does NOT like having a "\n" on the end, it adds extra empty lines all over the place
-    // but now we are running into an issue where QMessageBox gets confused about how to size things,
-    // UNLESS an extra "\n" is in the text. So annoying and confusing.
-    // hrm, this means that I actually need BOTH functionalities, strip the "\n" for writeToConsole(), add a "\n" for updateProgressMessage() stuff.
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
     if( msg.substr(msg.size()-1, 1) == "\n")
     {
         msg = msg.substr(0, msg.size()-1);
@@ -272,21 +270,21 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         }
         clipStr = msg.substr(startPos);
         //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Simulation was cancelled by the user." )
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation cancelled")+"\n");
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation cancelled"));
             emit self->writeToConsoleSignal(QString::fromStdString("Simulation cancelled by user"), QColor(255, 140, 0));
         }
         else if( clipStr == "Cannot determine exception type." )
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended with unknown error")+"\n");
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended with unknown error"));
             emit self->writeToConsoleSignal(QString::fromStdString("unknown solver error"), Qt::red);
         }
         else
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended in error:\n"+clipStr)+"\n");
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended in error:\n"+clipStr));
             emit self->writeToConsoleSignal(QString::fromStdString("Solver error: "+clipStr), Qt::red);
         }
     }
@@ -299,14 +297,14 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         }
         clipStr = msg.substr(startPos);
         //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        emit self->updateProgressMessageSignal(QString::fromStdString("Solver ended in warning:\n"+clipStr)+"\n");
+        emit self->updateProgressMessageSignal(QString::fromStdString("Solver ended in warning:\n"+clipStr));
         emit self->writeToConsoleSignal(QString::fromStdString("Solver warning: "+clipStr), QColor(255, 140, 0));
     }
     else
     {
-        emit self->updateProgressMessageSignal(QString::fromStdString(msg)+"\n");
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
 }
