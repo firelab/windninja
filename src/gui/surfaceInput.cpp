@@ -146,7 +146,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         }
         else
         {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr+"\n"));
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr)+"\n");
             emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
         }
     }
@@ -159,9 +159,9 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         }
         clipStr = msg.substr(startPos);
         //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr+"\n"));
+        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr)+"\n");
         emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
     }
     else
