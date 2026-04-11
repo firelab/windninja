@@ -1028,9 +1028,6 @@ void wxStation::writeKmlFile( std::vector<wxStation> stations,
 
     fclose( fout );
 
-    // Need to always clear these static values out before adding new ones, between each download/run, or they get kept across downloads/runs
-    // Looks like this function is only ever called a single time per run, so it works to put the clear right here in the moment right before it is filled.
-    stationKmlNames.clear();
     stationKmlNames.push_back(outFileNameStamp);
 }
 

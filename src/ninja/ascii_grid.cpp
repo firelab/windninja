@@ -1286,8 +1286,57 @@ void AsciiGrid<T>::clipGridInPlaceSnapToCells(double west, double east, double s
     // this means slightly bigger than the bounding box for south and west, but slightly smaller than the bounding box for north and east
     get_cellIndex(west, south, &southIdx, &westIdx);
     get_cellIndex(east, north, &northIdx, &eastIdx);
-
     //std::cout << "westIdx,eastIdx,southIdx,northIdx = " << westIdx << "," << eastIdx << "," << southIdx << "," << northIdx << std::endl;
+    //std::cout << "nRows,nCols = " << get_nRows() << "," << get_nCols() << std::endl;
+
+    double clippedWest;
+    double clippedEast;
+    double clippedSouth;
+    double clippedNorth;
+    get_cellPosition(southIdx, westIdx, &clippedWest, &clippedSouth);
+    get_cellPosition(northIdx, eastIdx, &clippedEast, &clippedNorth);
+    // get_cellPosition grabs the location PLUS 1/2 a cell size, so need to take back out that 1/2 cell size
+    clippedWest = clippedWest - (cellSize / 2.0);
+    clippedEast = clippedEast - (cellSize / 2.0);
+    clippedSouth = clippedSouth - (cellSize / 2.0);
+    clippedNorth = clippedNorth - (cellSize / 2.0);
+    //std::cout << "        west,east,south,north = " << west << "," << east << "," << south << "," << north << std::endl;
+    //std::cout << "clipped west,east,south,north = " << clippedWest << "," << clippedEast << "," << clippedSouth << "," << clippedNorth << std::endl;
+
+    // adjust the found cell size based clipping area, to always encompass the desired clipping area.
+    // so round the cell size based clipping area, to the desired clipping area.
+    // note the + or - 1/2 cell size, instead of just comparing the areas,
+    //  that acts as a rounding method, similar to int(val+0.5) is equivalent to round(val)
+    if((clippedWest - (cellSize/2.0)) > west)
+    {
+        if(westIdx-1 > 0)
+        {
+            westIdx = westIdx - 1;
+        }
+    }
+    if((clippedEast + (cellSize/2.0)) < east)
+    {
+        if(eastIdx+1 < get_nCols())
+        {
+            eastIdx = eastIdx + 1;
+        }
+    }
+    if((clippedSouth - (cellSize/2.0)) > south)
+    {
+        if(southIdx-1 > 0)
+        {
+            southIdx = southIdx - 1;
+        }
+    }
+    if((clippedNorth + (cellSize/2.0)) < north)
+    {
+        if(northIdx+1 < get_nRows())
+        {
+            northIdx = northIdx + 1;
+        }
+    }
+    //std::cout << "westIdx,eastIdx,southIdx,northIdx = " << westIdx << "," << eastIdx << "," << southIdx << "," << northIdx << std::endl;
+    //std::cout << "nRows,nCols = " << get_nRows() << "," << get_nCols() << std::endl;
 
     if ( westIdx == eastIdx && southIdx == northIdx )
     {

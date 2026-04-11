@@ -167,7 +167,18 @@ void MainWindow::writeToConsole(QString message, QColor color)
 
 void MainWindow::updateProgressMessage(const QString message)
 {
-    progressDialog->setLabelText(message);
+    if(progressDialog)
+    {
+        progressDialog->setLabelText(message);
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message+"\n"
+        );
+    }
 }
 
 void MainWindow::updateProgressValue(int run, int progress)
@@ -204,6 +215,10 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
     MainWindow *self = static_cast<MainWindow*>(pUser);
 
     std::string msg = pszMessage;
+
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
     if( msg.substr(msg.size()-1, 1) == "\n")
     {
         msg = msg.substr(0, msg.size()-1);
@@ -1601,12 +1616,11 @@ void MainWindow::plotKmzOutputs()
         // vars to be filled
         int numRuns = 0;
         char **kmzFilenames = NULL;
-        int numStationKmls = 0;
         char **stationKmlFilenames = NULL;
         char **weatherModelKmzFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &numStationKmls, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
@@ -1617,17 +1631,13 @@ void MainWindow::plotKmzOutputs()
         std::vector<std::string> wxModelKmzFilenamesStr;
 
         kmzFilenamesStr.reserve(numRuns);
+        stationKmlFilenamesStr.reserve(numRuns);
         wxModelKmzFilenamesStr.reserve(numRuns);
         for(int i = 0; i < numRuns; i++)
         {
             kmzFilenamesStr.emplace_back(kmzFilenames[i]);
+            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
             wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
-        }
-
-        stationKmlFilenamesStr.reserve(numStationKmls);
-        for(int j = 0; j < numStationKmls; j++)
-        {
-            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[j]);
         }
 
         outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
@@ -1652,25 +1662,21 @@ void MainWindow::plotKmzOutputs()
             webEngineView->page()->runJavaScript(jsCall);
 
             // if it is a point initialization run, and station kmls were created for the run,
-            // plot the station kmls of the first run
-            // (first run, because station kmls are SHARED across runs)
-            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked() && i == 0)
+            // then plot the station kmls of the run
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-                for(int j = 0; j < numStationKmls; j++)
-                {
-                    QString outFileStr = QString::fromStdString(stationKmlFilenames[j]);
-                    qDebug() << "station kml outFile =" << outFileStr;
+                QString outFileStr = QString::fromStdString(stationKmlFilenames[i]);
+                qDebug() << "station kml outFile =" << outFileStr;
 
-                    QString filePath = QUrl::fromLocalFile(outFileStr).toString();
-                    QFileInfo info(outFileStr);
-                    QString fileName = info.fileName();
-                    QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
-                    webEngineView->page()->runJavaScript(jsCall);
-                }
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
             }
 
-            // // if it is a weather model run, and weather model kmzs were created for the run,
-            // // plot the weather model kmz of the run
+            // if it is a weather model run, and weather model kmzs were created for the run,
+            // then plot the weather model kmz of the run
             if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
@@ -1684,7 +1690,7 @@ void MainWindow::plotKmzOutputs()
             }
         }
 
-        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, numStationKmls, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);

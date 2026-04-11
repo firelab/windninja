@@ -684,7 +684,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
                     {
-                        std::cerr << "Fetch was outside the bounds of the dataset." << std::endl;
+                        std::cerr << "Fetch was outside the bounds of the dataset. Please select new data source or new area." << std::endl;
                     }
                     else if(nDemError == SURF_FETCH_E_WARPER_ERR)
                     {
@@ -708,7 +708,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                     else
                     {
-                        std::cerr << "Unknown error occurred during fetch." << std::endl;
+                        std::cerr << "Unknown error occurred during fetch.\nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source." << std::endl;
                     }
                     VSIUnlink(new_elev.c_str());
                     exit(1);
@@ -862,7 +862,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
                 {
-                    std::cerr << "Fetch was outside the bounds of the dataset." << std::endl;
+                    std::cerr << "Fetch was outside the bounds of the dataset. Please select new data source or new area." << std::endl;
                 }
                 else if(nDemError == SURF_FETCH_E_WARPER_ERR)
                 {
@@ -886,7 +886,7 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 else
                 {
-                    std::cerr << "Unknown error occurred during fetch." << std::endl;
+                    std::cerr << "Unknown error occurred during fetch.\nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source." << std::endl;
                 }
                 VSIUnlink(new_elev.c_str());
                 exit(1);

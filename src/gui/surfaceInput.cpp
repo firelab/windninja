@@ -41,7 +41,11 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
-    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);
+    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);  // boundingBoxPage
+
+    ui->elevationFileTypeComboBox->setItemData(0, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
+    ui->elevationFileTypeComboBox->setItemData(1, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
+    ui->elevationFileTypeComboBox->setItemData(2, "US coverage LANDFIRE 2023 Landscape data at 30 meter resolution.", Qt::ToolTipRole);
 
     timeZoneAllZonesCheckBoxClicked();
 
@@ -76,6 +80,95 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
 }
 
+void SurfaceInput::updateProgressMessage(const QString message)
+{
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message+"\n"
+        );
+    }
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
+
+    std::string msg = pszMessage;
+
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+}
+
 void SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
 {
     if(index == 0) // meters
@@ -104,43 +197,33 @@ void SurfaceInput::boundingBoxReceived(double north, double south, double east, 
 {
     qDebug() << "north south east west =" << QString::number(north) << QString::number(south) << QString::number(east) << QString::number(west);
 
-    ui->boundingBoxNorthLineEdit->blockSignals(true);
-    ui->boundingBoxEastLineEdit->blockSignals(true);
-    ui->boundingBoxSouthLineEdit->blockSignals(true);
-    ui->boundingBoxWestLineEdit->blockSignals(true);
+    // update information for one page OR the other, updating one triggers the signal to update the other
+    // but need to do it based off of what the current page index is at
 
-    ui->boundingBoxNorthLineEdit->setText(QString::number(north));
-    ui->boundingBoxEastLineEdit->setText(QString::number(east));
-    ui->boundingBoxSouthLineEdit->setText(QString::number(south));
-    ui->boundingBoxWestLineEdit->setText(QString::number(west));
+    if(ui->elevationInputTypeComboBox->currentIndex() == 0)  // boundingBoxPage
+    {
+        ui->boundingBoxNorthLineEdit->setText(QString::number(north));
+        ui->boundingBoxEastLineEdit->setText(QString::number(east));
+        ui->boundingBoxSouthLineEdit->setText(QString::number(south));
+        ui->boundingBoxWestLineEdit->setText(QString::number(west));
+    }
 
-    ui->boundingBoxNorthLineEdit->blockSignals(false);
-    ui->boundingBoxEastLineEdit->blockSignals(false);
-    ui->boundingBoxSouthLineEdit->blockSignals(false);
-    ui->boundingBoxWestLineEdit->blockSignals(false);
+    if(ui->elevationInputTypeComboBox->currentIndex() == 1)  // pointRadiusPage
+    {
+        double pointRadius[3];
+        computePointRadius(north, east, south, west, pointRadius);
 
-    double pointRadius[3];
-    computePointRadius(north, east, south, west, pointRadius);
-
-    ui->pointRadiusLatLineEdit->blockSignals(true);
-    ui->pointRadiusLonLineEdit->blockSignals(true);
-    ui->pointRadiusRadiusLineEdit->blockSignals(true);
-
-    ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
-    ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
-    ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
-
-    ui->pointRadiusLatLineEdit->blockSignals(false);
-    ui->pointRadiusLonLineEdit->blockSignals(false);
-    ui->pointRadiusRadiusLineEdit->blockSignals(false);
+        ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
+        ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
+        ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+    }
 
     ui->elevationInputTypePushButton->setChecked(false);
 }
 
-
 void SurfaceInput::boundingBoxLineEditsTextChanged()
 {
-    if(ui->elevationInputTypeComboBox->currentIndex() == 0)
+    if(ui->elevationInputTypeComboBox->currentIndex() == 0)  // boundingBoxPage
     {
         bool isNorthValid, isEastValid, isSouthValid, isWestValid;
         double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
@@ -150,6 +233,13 @@ void SurfaceInput::boundingBoxLineEditsTextChanged()
 
         if (isNorthValid && isEastValid && isSouthValid && isWestValid)
         {
+            double pointRadius[3];
+            computePointRadius(north, east, south, west, pointRadius);
+
+            ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
+            ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
+            ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+
             QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
             .arg(north, 0, 'f', 10)
                 .arg(south, 0, 'f', 10)
@@ -162,17 +252,23 @@ void SurfaceInput::boundingBoxLineEditsTextChanged()
 
 void SurfaceInput::pointRadiusLineEditsTextChanged()
 {
-    if (ui->elevationInputTypeComboBox->currentIndex() == 1)
+    if(ui->elevationInputTypeComboBox->currentIndex() == 1)  // pointRadiusPage
     {
         bool isLatValid, isLonValid, isRadiusValid;
         double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
         double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
         double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
-        double boundingBox[4];
 
         if(isLatValid && isLonValid && isRadiusValid)
         {
+            double boundingBox[4];
             computeBoundingBox(lat, lon, radius, boundingBox);
+
+            ui->boundingBoxNorthLineEdit->setText(QString::number(boundingBox[0]));
+            ui->boundingBoxEastLineEdit->setText(QString::number(boundingBox[1]));
+            ui->boundingBoxSouthLineEdit->setText(QString::number(boundingBox[2]));
+            ui->boundingBoxWestLineEdit->setText(QString::number(boundingBox[3]));
+
             QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
                              .arg(boundingBox[0], 0, 'f', 10)
                              .arg(boundingBox[2], 0, 'f', 10)
@@ -216,11 +312,49 @@ void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
 
 void SurfaceInput::surfaceInputDownloadButtonClicked()
 {
+    bool isNorthValid, isEastValid, isSouthValid, isWestValid;
+    double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
+    double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
+    double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
+    double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
+
+    if(!isNorthValid || !isEastValid || !isSouthValid || !isWestValid)
+    {
+        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.";
+        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.", this);
+        return;
+    }
+
+    if(north == 0.0 || east == 0.0 || south == 0.0 || west == 0.0)
+    {
+        qCritical() << "ERROR: Please select an area on the map.";
+        comMessageHandler("ERROR: Please select an area on the map.", this);
+        return;
+    }
+
+    // need to update this logic for special cases, like wrapping around the earth
+    if(north < south || east < west)
+    {
+        qCritical() << "ERROR: North must be greater than South and East must be greater than West.";
+        comMessageHandler("ERROR: North must be greater than South and East must be greater than West.", this);
+        return;
+    }
+
+    if(ui->elevationFileTypeComboBox->currentIndex() == 0)
+    {
+        if(CPLGetConfigOption("CUSTOM_SRTM_API_KEY", NULL) == NULL && CPLGetConfigOption("NINJA_GUI_SRTM_API_KEY", NULL) == NULL)
+        {
+            qCritical() << "ERROR: API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY.";
+            comMessageHandler("ERROR: API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY.", this);
+            return;
+        }
+    }
+
     QVector<double> boundingBox = {
-        ui->boundingBoxNorthLineEdit->text().toDouble(),
-        ui->boundingBoxEastLineEdit->text().toDouble(),
-        ui->boundingBoxSouthLineEdit->text().toDouble(),
-        ui->boundingBoxWestLineEdit->text().toDouble()
+        north,
+        east,
+        south,
+        west
     };
 
     double resolution = 30;
@@ -397,7 +531,7 @@ void SurfaceInput::ninjafoamCaseButtonClicked()
     ui->ninjafoamCaseLineEdit->setProperty("fullpath", ninjafoamDir);
 
     ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
-    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
+    elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 
     ui->elevationInputFileDownloadButton->setEnabled(false);
@@ -445,7 +579,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
         if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
         {
             ui->elevationInputFileLineEdit->setProperty("fullpath", ui->elevationInputFileLineEdit->property("fullpath").toString());
-            ui->elevationInputFileLineEdit->setText(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
+            elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
             ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
         }
         return;
@@ -473,7 +607,7 @@ void SurfaceInput::elevationInputFileOpenButtonClicked()
     }
 
     ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
-    ui->elevationInputFileLineEdit->setText(QFileInfo(demFilePath).fileName());
+    elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(demFilePath).fileName());
     ui->elevationInputFileLineEdit->setToolTip(demFilePath);
 }
 
@@ -531,7 +665,7 @@ void SurfaceInput::fetchDEMFinished()
             if(retVal == true)
             {
                 ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
-                ui->elevationInputFileLineEdit->setText(QFileInfo(pendingDownloadDemFilePath).fileName());
+                elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(pendingDownloadDemFilePath).fileName());
                 ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
                 ui->inputsStackedWidget->setCurrentIndex(3);
             }
@@ -753,97 +887,6 @@ QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZone
     else
     {
         return americaData;
-    }
-}
-
-void SurfaceInput::updateProgressMessage(const QString message)
-{
-    if(progress)
-    {
-        progress->setLabelText(message);
-        progress->setWindowTitle(tr("Error"));
-        progress->setCancelButtonText(tr("Close"));
-        progress->setAutoClose(false);
-        progress->setAutoReset(false);
-        progress->setRange(0, 1);
-        progress->setValue(progress->maximum());
-    }
-    else
-    {
-        QMessageBox::critical(
-            nullptr,
-            QApplication::tr("Error"),
-            message
-        );
-    }
-}
-
-static void comMessageHandler(const char *pszMessage, void *pUser)
-{
-    SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
-
-    std::string msg = pszMessage;
-
-    // hrm, this was the old stuff, that was put in because ninjaCom likes to add "\n" to stuff
-    // and the writeToConsole() function does NOT like having a "\n" on the end, it adds extra empty lines all over the place
-    // but now we are running into an issue where QMessageBox gets confused about how to size things,
-    // UNLESS an extra "\n" is in the text. So annoying and confusing.
-    // hrm, this means that I actually need BOTH functionalities, strip the "\n" for writeToConsole(), add a "\n" for updateProgressMessage() stuff.
-    if( msg.substr(msg.size()-1, 1) == "\n")
-    {
-        msg = msg.substr(0, msg.size()-1);
-    }
-
-    size_t pos;
-    size_t startPos;
-    size_t endPos;
-    std::string clipStr;
-
-    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
-    {
-        if( msg.find("Exception caught: ") != msg.npos )
-        {
-            pos = msg.find("Exception caught: ");
-            startPos = pos+18;
-        }
-        else // if( msg.find("ERROR: ") != msg.npos )
-        {
-            pos = msg.find("ERROR: ");
-            startPos = pos+7;
-        }
-        clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr)+"\n");
-        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        if( clipStr == "Cannot determine exception type." )
-        {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error")+"\n");
-            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
-        }
-        else
-        {
-            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr+"\n"));
-            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
-        }
-    }
-    else if( msg.find("Warning: ") != msg.npos )
-    {
-        if( msg.find("Warning: ") != msg.npos )
-        {
-            pos = msg.find("Warning: ");
-            startPos = pos+9;
-        }
-        clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
-        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
-        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
-        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr+"\n"));
-        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
-    }
-    else
-    {
-        emit self->updateProgressMessageSignal(QString::fromStdString(msg)+"\n");
-        emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
 }
 
@@ -1188,6 +1231,21 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     emit writeToConsoleSignal("Metadata loaded from dem file successfully.", Qt::darkGreen);
 
     return true;
+}
+
+void SurfaceInput::elevationInputFileLineEditSetTextAndForceSignal(const QString &demFilePath)
+{
+    bool isTextSame = false;
+    if(ui->elevationInputFileLineEdit->text() == demFilePath)
+    {
+        isTextSame = true;
+    }
+
+    ui->elevationInputFileLineEdit->setText(demFilePath);
+    if(isTextSame == true)
+    {
+        emit elevationInputFileLineEditTextChanged(demFilePath);
+    }
 }
 
 double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)

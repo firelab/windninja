@@ -119,18 +119,24 @@ void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 
 void PointInitializationInput::updateProgressMessage(const QString message)
 {
-//    QMessageBox::critical(
-//        nullptr,
-//        QApplication::tr("Error"),
-//        message
-//    );
-    progress->setLabelText(message);
-    progress->setWindowTitle(tr("Error"));
-    progress->setCancelButtonText(tr("Close"));
-    progress->setAutoClose(false);
-    progress->setAutoReset(false);
-    progress->setRange(0, 1);
-    progress->setValue(progress->maximum());
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message+"\n"
+        );
+    }
 }
 
 static void comMessageHandler(const char *pszMessage, void *pUser)
@@ -138,6 +144,10 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
     PointInitializationInput *self = static_cast<PointInitializationInput*>(pUser);
 
     std::string msg = pszMessage;
+
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
     if( msg.substr(msg.size()-1, 1) == "\n")
     {
         msg = msg.substr(0, msg.size()-1);

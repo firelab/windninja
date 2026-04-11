@@ -129,7 +129,7 @@ void WeatherModelInput::updateProgressMessage(const QString message)
         QMessageBox::critical(
             nullptr,
             QApplication::tr("Error"),
-            message
+            message+"\n"
         );
     }
 }
@@ -139,6 +139,10 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
     WeatherModelInput *self = static_cast<WeatherModelInput*>(pUser);
 
     std::string msg = pszMessage;
+
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
     if( msg.substr(msg.size()-1, 1) == "\n")
     {
         msg = msg.substr(0, msg.size()-1);
@@ -162,7 +166,7 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
             startPos = pos+7;
         }
         clipStr = msg.substr(startPos);
-        //std::cout << "clipStr = \"" << clipStr << "\" << std::endl;
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
         //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
         //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
         if( clipStr == "Cannot determine exception type." )

@@ -104,10 +104,6 @@ int ninjaArmy::getSize()
 
 void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 {
-//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeDomainAverageArmy.");
-//throw std::runtime_error("forcing an error message in ninjaArmy::makeDomainAverageArmy.");
-Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeDomainAverageArmy.");
-
     if( nSize < 1 )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
@@ -144,10 +140,6 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
                              string demFile, bool matchPoints, bool momentumFlag)
 {
-//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makePointArmy.");
-//throw std::runtime_error("forcing an error message in ninjaArmy::makePointArmy.");
-Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
-
     if( timeList.size() == 0 )
     {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
@@ -243,6 +235,10 @@ Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makePointArmy.");
         //The function name is a bit misleading as to what it really does.
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
    }
+
+    // need to always clear these static values out before adding new ones,
+    // between each download/run, or they get kept across downloads/runs.
+    wxStation::stationKmlNames.clear();
 }
 
 /**
@@ -266,10 +262,6 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
  */
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
-//Com->ninjaCom(ninjaComClass::ninjaFailure, "forcing an error message in ninjaArmy::makeWeatherModelArmy.");
-//throw std::runtime_error("forcing an error message in ninjaArmy::makeWeatherModelArmy.");
-Com->ninjaCom(ninjaComClass::ninjaNone, "running ninjaArmy::makeWeatherModelArmy.");
-
     wxModelInitialization* model;
     
     tz = timeZone;
@@ -564,10 +556,8 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
-    // stationKmlfilenames is an exception, it is filled by appending the ninjas[0] set of station files,
-    // which are shared across runs. Appends within a single run don't mess up the ordering like they do across runs.
     kmzFilenames.resize(ninjas.size());
-    stationKmlFilenames.clear();
+    stationKmlFilenames.resize(ninjas.size());
     wxModelKmzFilenames.resize(ninjas.size());
 
     if(ninjas.size() == 1)
@@ -2708,26 +2698,22 @@ void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
 {
     kmzFilenames[runNumber] = ninjas[runNumber]->input.kmzFile;
 
-    // assume all the other stations across all the other stations storage, are the exact same list as that of the first station
-    // SHOULD be true, seems like the idea of the storage was to make sure each station had access to the same copy of data, so a form of SHARED storage
-    // still, it's one of the quirkiest code setups that I've seen in a while
-    if(runNumber == 0)
+    if(ninjas[runNumber]->input.stations.size() == 0)
     {
-        if(ninjas[runNumber]->input.stations.size() == 0)
+        stationKmlFilenames[runNumber] = "";
+    } else
+    {
+        if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
         {
-            stationKmlFilenames.push_back( "" );
+            stationKmlFilenames[runNumber] = "";
         } else
         {
-            if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
-            {
-                stationKmlFilenames.push_back( "" );
-            } else
-            {
-                for(int j = 0; j < ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size(); j++)
-                {
-                    stationKmlFilenames.push_back( ninjas[runNumber]->input.stations[runNumber].stationKmlNames[j] );
-                }
-            }
+            // all these cout statements are various ways to access the given wxStation::stationKmlNames, which is SHARED across ninjas[runNumber].input.stations[runNumber]
+            // the past attempt of doing a for loop over ninjas[runNumber]->input.stations[runNumber].stationKmlNames[stationIdx] makes NO sense, it results in DUPLICATION
+            //std::cout << "ninjas[0]->input.stations[0].stationKmlNames[" << runNumber << "] = \"" << ninjas[0]->input.stations[0].stationKmlNames[runNumber] << "\"" << std::endl;
+            //std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames[" << runNumber << "] = \"" << ninjas[runNumber]->input.stations[runNumber].stationKmlNames[runNumber] << "\"" << std::endl;
+            //std::cout << "wxStation::stationKmlNames[" << runNumber << "] = \"" << wxStation::stationKmlNames[runNumber] << "\"" << std::endl;
+            stationKmlFilenames[runNumber] = ninjas[runNumber]->input.stations[runNumber].stationKmlNames[runNumber];
         }
     }
 

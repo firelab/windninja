@@ -487,7 +487,7 @@ int main(int argc, char *argv[])
         }
         else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
         {
-            fprintf(stderr, "Fetch was outside the bounds of the dataset.\n");
+            fprintf(stderr, "Fetch was outside the bounds of the dataset. Please select new data source or new area.\n");
         }
         else if(nDemError == SURF_FETCH_E_WARPER_ERR)
         {
@@ -511,7 +511,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            fprintf(stderr, "Unknown error occurred during fetch.\n");
+            fprintf(stderr, "Unknown error occurred during fetch.\nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.\n");
         }
         NinjaFinalize();
         return nDemError;

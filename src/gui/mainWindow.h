@@ -46,8 +46,8 @@
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
-#include <QMainWindow>
 #include <QMessageBox>
+#include <QMainWindow>
 #include <QTreeWidgetItem>
 #include <QDir>
 #include <QDirIterator>
