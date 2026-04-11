@@ -466,13 +466,7 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
         if(!success)
         {
             pointInitialization::removeBadDirectory(stationPathName);
-            if(pointInitialization::error_msg.empty() || pointInitialization::error_msg == "An Error Occured, Possibly no Data Exists for request")
-            {
-                throw std::runtime_error("pointInitialization::fetchStationFromBbox() failed with unknown error.\nCould not read station File: Possibly no stations exist for request.");
-            } else
-            {
-                throw std::runtime_error(pointInitialization::error_msg);
-            }
+            throw std::runtime_error(pointInitialization::error_msg);
         }
         if(locationFileFlag)
         {
@@ -540,13 +534,7 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
         if(!success)
         {
             pointInitialization::removeBadDirectory(stationPathName);
-            if(pointInitialization::error_msg.empty() || pointInitialization::error_msg == "An Error Occured, Possibly no Data Exists for request")
-            {
-                throw std::runtime_error("pointInitialization::fetchStationByName() failed with unknown error.\nCould not read station File: Possibly no stations exist for request.");
-            } else
-            {
-                throw std::runtime_error(pointInitialization::error_msg);
-            }
+            throw std::runtime_error(pointInitialization::error_msg);
         }
         if(locationFileFlag)
         {

@@ -47,7 +47,7 @@ std::string pointInitialization::tzAbbrev; // Abbreviation of the time zone
 vector<blt::local_date_time> pointInitialization::start_and_stop_times; //Storage for the start and stop time as a local obj
 //Stores the start and stop time in local time from getTimeList so that we can name the files properly
 bool pointInitialization::enforce_limits = true; //Enfore limitations on the API ->set to false if the user provides a custom key
-std::string pointInitialization::error_msg = "An Error Occured, Possibly no Data Exists for request"; //generic error message
+std::string pointInitialization::error_msg = "An error occured, Possibly no station data exists for request."; //generic error message
 //Set to whether or not we enforce the limits of 1 year and buffer range
 extern blt::tz_database globalTimeZoneDB;
 
@@ -3178,12 +3178,12 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 }
                 if(write_this_station==false)
                 {
+                    CPLDebug("STATION_FETCH","%s failed to return valid data...", writeID);
                     stationChecks.push_back(write_this_station);
                     if(fCount==1)
                     {
-                        CPLDebug("STATION_FETCH","%s failed to return valid data...",writeID);
-                        error_msg="ERROR: Station: "+idStream.str()+" is missing required data/sensors!";
-                        //throw std::runtime_error("DATA CHECK FAILED ON ALL STATIONS!");
+                        error_msg="ERROR: Station: Data check failed on all stations, '"+idStream.str()+"' is missing required data/sensors!";
+                        //throw std::runtime_error(error_msg);
                         return false;
                     }
                 }
@@ -3281,12 +3281,12 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 }
                 if(write_this_station==false)
                 {
-                    CPLDebug("STATION_FETCH","%s failed to return valid data...",writeID);
+                    CPLDebug("STATION_FETCH","%s failed to return valid data...", writeID);
                     stationChecks.push_back(write_this_station);
                     if(fCount==1)
                     {
-                        error_msg="ERROR: Station: "+idStream.str()+" is missing required data/sensors!";
-                        //throw std::runtime_error("DATA CHECK FAILED ON ALL STATIONS!");
+                        error_msg="ERROR: Station: Data check failed on all stations, '"+idStream.str()+"' is missing required data/sensors!";
+                        //throw std::runtime_error(error_msg);
                         return false;
                     }
                 }
