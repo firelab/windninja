@@ -153,6 +153,7 @@
         });
 
         const map = new L.Map('map', {
+            preferCanvas: true,
             layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
@@ -442,8 +443,9 @@
         let activeWindNinjaLegendCard = null;
         let activeInitializationLegendCard = null;
 
-        async function loadKmzFromBase64(data, fileName) {
+        async function loadSimulation(data, fileName) {
             pendingKmzLoads++;
+
             if (kmzTimeSeriesImg) {
                 kmzTimeSeriesImg.remove();
                 kmzTimeSeriesImg = null;
@@ -459,13 +461,9 @@
                 return; 
             }
             
-            const binary = atob(data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            
-            const zip = await JSZip.loadAsync(bytes.buffer);
+            const response = await fetch(data);
+            const arrayBuffer = await response.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
 
             const keywords = ["NOMADS", "UCAR", "PASTCAST"];
             const containsKeyword = Object.keys(zip.files).some(fileName => 
@@ -473,7 +471,7 @@
             );
 
             if (containsKeyword) {
-                loadOutputFromBase64(data, fileName);
+                loadWxModel(data, fileName);
                 return; 
             }
 
@@ -616,13 +614,17 @@
 
         async function handleKml(data, fileName)
         {  
-            const trimmedData = data.trim();
-            const isRawKml = trimmedData.startsWith('<') || !trimmedData.startsWith('UEsDB'); 
-            if (!isRawKml){
+            let kmlText;
+            const response = await fetch(data);
+            kmlText = await response.text();
+
+            const trimmed = kmlText.trim();
+            if (!trimmed.startsWith('<')) {
                 return false;
             }
+
             const parser = new DOMParser();
-            const kmlDoc = parser.parseFromString(atob(data), 'text/xml');
+            const kmlDoc = parser.parseFromString(trimmed, 'text/xml');
             
             const nameTag = kmlDoc.getElementsByTagName('name')[0];
             let layerName = fileName;
@@ -699,15 +701,10 @@
             return true;
         }
 
-        async function loadOutputFromBase64(data, fileName) {
-            const binary = atob(data);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) 
-            {
-                bytes[i] = binary.charCodeAt(i);
-            }
-
-            const zip = await JSZip.loadAsync(bytes.buffer);
+        async function loadWxModel(data, fileName) {
+            const response = await fetch(data);
+            const arrayBuffer = await response.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
             const kmlEntries = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.kml')
             );
