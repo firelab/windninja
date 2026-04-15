@@ -1646,34 +1646,50 @@ void MainWindow::plotKmzOutputs()
 
         for(int i = 0; i < numRuns; i++)
         {
-            // plot the output kmz of the run
-            //QString outFileStr = QString::fromStdString(kmzFilenames[i]);
-            //qDebug() << "kmz outFile =" << outFileStr;
-
-            // use geojson files instead of run kmz files
-            // wxModel still uses kmz files
-            std::string kmzFile = kmzFilenames[i];
-            std::string geoJsonFile = kmzFile;
-            size_t pos = kmzFile.rfind(".kmz");
-            if(pos != std::string::npos)
-            {
-                geoJsonFile = kmzFile.substr(0, pos);
-            }
-            geoJsonFile =  geoJsonFile + ".geojson";
-            QString outFileStr = QString::fromStdString(geoJsonFile);
-            qDebug() << "kmz outFile =" << outFileStr;
-
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
             webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
             webEngineView->page()->runJavaScript("clearStationOutputTree();");
             webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
 
-            QString filePath = QUrl::fromLocalFile(outFileStr).toString();
-            QFileInfo info(outFileStr);
-            QString fileName = info.fileName();
-            //qDebug() << "file url =" << filePath;
-            QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
-            webEngineView->page()->runJavaScript(jsCall);
+            //bool loadRunAsKmz = false;
+            bool loadRunAsKmz = true;
+            if(loadRunAsKmz == true)
+            {
+                // plot the output kmz of the run
+                QString outFileStr = QString::fromStdString(kmzFilenames[i]);
+                qDebug() << "kmz outFile =" << outFileStr;
+
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                //qDebug() << "file url =" << filePath;
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
+            }
+
+            //bool loadRunAsGeojson = false;
+            bool loadRunAsGeojson = true;
+            if(loadRunAsGeojson == true)
+            {
+                // use geojson files instead of run kmz files
+                // wxModel still uses kmz files
+                std::string kmzFile = kmzFilenames[i];
+                std::string geoJsonFile = kmzFile;
+                size_t pos = kmzFile.rfind(".kmz");
+                if(pos != std::string::npos)
+                {
+                    geoJsonFile = kmzFile.substr(0, pos);
+                }
+                geoJsonFile =  geoJsonFile + ".geojson";
+                QString outFileStr = QString::fromStdString(geoJsonFile);
+                qDebug() << "kmz outFile =" << outFileStr;
+
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
+            }
 
             // if it is a point initialization run, and station kmls were created for the run,
             // then plot the station kmls of the run

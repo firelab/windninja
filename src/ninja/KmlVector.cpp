@@ -2184,32 +2184,39 @@ void KmlVector::makeGeoJson()
 
                 if(s <= splitValue[1])
                 {
+                    // blue
                     feature->SetField("stroke", "#0000ff");
-                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-width", 1.0);
                     feature->SetField("stroke-opacity", 1.0);
                 }
                 else if(s <= splitValue[2])
                 {
+                    // green
                     feature->SetField("stroke", "#00ff00");
-                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-width", 1.0);
                     feature->SetField("stroke-opacity", 1.0);
                 }
                 else if(s <= splitValue[3])
                 {
+                    // yellow
                     feature->SetField("stroke", "#ffff00");
-                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-width", 1.0);
                     feature->SetField("stroke-opacity", 1.0);
                 }
                 else if(s <= splitValue[4])
                 {
-                    feature->SetField("stroke", "#ffa500");
-                    feature->SetField("stroke-width", 2.0);
+                    // orange
+                    //feature->SetField("stroke", "#ffa500");
+                    // trying to better match kml "#orange" color, as seen in makeDefaultStyles()
+                    feature->SetField("stroke", "#ff7f00");
+                    feature->SetField("stroke-width", 1.0);
                     feature->SetField("stroke-opacity", 1.0);
                 }
                 else
                 {
+                    // red
                     feature->SetField("stroke", "#ff0000");
-                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-width", 1.0);
                     feature->SetField("stroke-opacity", 1.0);
                 }
 
