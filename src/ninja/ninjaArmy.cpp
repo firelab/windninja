@@ -1072,6 +1072,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 {
                     if(ninjaKmlFiles[i]->makeKmz())
                         ninjaKmlFiles[i]->removeKmlFile();
+                    ninjaKmlFiles[i]->makeGeoJson();
                 }
             }
 

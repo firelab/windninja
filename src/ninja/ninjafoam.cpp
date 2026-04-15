@@ -3668,6 +3668,7 @@ void NinjaFoam::WriteOutputFiles()
 			{
 				if(ninjaKmlFiles.makeKmz())
 					ninjaKmlFiles.removeKmlFile();
+				ninjaKmlFiles.makeGeoJson();
 			}
 			if(angTempGrid)
 			{

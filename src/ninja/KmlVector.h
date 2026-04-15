@@ -113,6 +113,7 @@ public:
     bool writeKml(egoogSpeedScaling scaling, std::string cScheme, bool vector_scaling);
     bool makeKmz();
     bool removeKmlFile();
+    void makeGeoJson();
 
     void orangeLegend();
 

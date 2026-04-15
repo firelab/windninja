@@ -3266,6 +3266,7 @@ void ninja::writeOutputFiles()
 			{
 				if(ninjaKmlFiles.makeKmz())
 					ninjaKmlFiles.removeKmlFile();
+				ninjaKmlFiles.makeGeoJson();
 			}
 			if(angTempGrid)
 			{

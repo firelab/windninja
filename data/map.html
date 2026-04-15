@@ -153,7 +153,7 @@
         });
 
         const map = new L.Map('map', {
-            preferCanvas: true,
+            //preferCanvas: true,
             layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
@@ -455,6 +455,12 @@
                 kmzTimeSeriesImgUrl = null;
             }
 
+            const handledGeoJSON = await handleGeoJSON(data, fileName);
+            if (handledGeoJSON) {
+                finishKmzLoad();
+                return;
+            }
+
             const handled = await handleKml(data, fileName);
             if (handled) {
                 finishKmzLoad();   
@@ -612,8 +618,79 @@
             showCenterControl();
         }
 
+        async function handleGeoJSON(data, fileName)
+        {
+            if(!fileName.toLowerCase().endsWith('.geojson'))
+            {
+                return false;
+            }
+
+            const response = await fetch(data);
+            const geojson = await response.json();
+
+            if(!geojson || !geojson.features)
+            {
+                return false;
+            }
+
+            const geoJsonLayer = L.geoJSON(geojson, {
+                style: function(feature) {
+                    const props = feature.properties || {};
+
+                    return {
+                        color: props.stroke || '#ffffff',
+                        weight: props["stroke-width"] || 2,
+                        opacity: props["stroke-opacity"] ?? 1.0
+                    };
+                },
+
+                onEachFeature: function (feature, layer) {
+                    const props = feature.properties || {};
+                    const name = props.name || "no name";
+
+                    layer.bindPopup(`
+                        <strong>${name}</strong><br>
+                        Speed: ${props.speed ?? 'n/a'}<br>
+                        Angle: ${props.angle ?? 'n/a'}
+                    `);
+                }
+            });
+
+            const geoJsonLegendLayer = L.layerGroup([geoJsonLayer]);
+            const layerName = fileName;
+
+            // Treat as WindNinja output (same as KMZ path)
+            windninjaOutputTree.children.push({
+                label: layerName,
+                layer: geoJsonLegendLayer,
+                radioGroup: 'windninjaOutput'
+            });
+
+            updateOverlayTree();
+
+            // Replace active layer (same logic as your KML path)
+            if (activeWindNinjaLayer) {
+                map.removeLayer(activeWindNinjaLayer);
+            }
+
+            activeWindNinjaLayer = geoJsonLegendLayer;
+            lastActiveLayer = geoJsonLegendLayer;
+
+            map.addLayer(geoJsonLegendLayer);
+
+            showCenterControl();
+
+            return true;
+        }
+
         async function handleKml(data, fileName)
-        {  
+        {
+            if(!fileName.toLowerCase().endsWith('.kml') &&
+               !fileName.toLowerCase().endsWith('.kmz'))  // is this function doing kmz as well as kml stuff? Seems like it, but I can't tell
+            {
+                return false;
+            }
+
             let kmlText;
             const response = await fetch(data);
             kmlText = await response.text();

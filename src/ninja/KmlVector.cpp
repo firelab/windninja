@@ -2005,6 +2005,233 @@ bool KmlVector::writeVectors(VSILFILE *fileOut)
     return true;
 }
 
+void KmlVector::makeGeoJson()
+{
+    std::string geoJsonFile = kmzFile;
+    size_t pos = kmzFile.rfind(".kmz");
+    if(pos != std::string::npos)
+    {
+        geoJsonFile = kmzFile.substr(0, pos);
+    }
+    geoJsonFile =  geoJsonFile + ".geojson";
+
+    GDALDriver *driver = GetGDALDriverManager()->GetDriverByName("GeoJSON");
+    GDALDataset *out_ds = driver->Create(geoJsonFile.c_str(), 0, 0, 0, GDT_Unknown, NULL);
+
+    OGRLayer *layer = out_ds->CreateLayer("winds", NULL, wkbLineString, NULL);
+
+    OGRFieldDefn nameField("name", OFTString);
+    layer->CreateField(&nameField);
+
+    OGRFieldDefn speedField("speed", OFTReal);
+    layer->CreateField(&speedField);
+
+    OGRFieldDefn angleField("angle", OFTReal);
+    layer->CreateField(&angleField);
+
+    OGRFieldDefn strokeField("stroke", OFTString);
+    layer->CreateField(&strokeField);
+
+    OGRFieldDefn strokeWidthField("stroke-width", OFTReal);
+    layer->CreateField(&strokeWidthField);
+
+    OGRFieldDefn opacityField("stroke-opacity", OFTReal);
+    layer->CreateField(&opacityField);
+
+    double xPoint, yPoint;
+    double xCenter, yCenter;
+    double xTip, yTip, xTail, yTail, xHeadLeft, xHeadRight, yHeadLeft, yHeadRight;
+    double theta;
+    double yScale = 0.5;
+    double xScale = yScale * 0.4;
+    double s = 0;
+    double cSize;
+    int nR;
+    int nC;
+
+    cSize = spd.get_cellSize();
+    nR = spd.get_nRows();
+    nC = spd.get_nCols();
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "KmlVector::writeVectors()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() (projection coordinates) = %lf", dir.get_meanValue() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", angleFromNorth );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "dirGrid.get_meanValue() (geographic coordinates) = %lf", wrap0to360( dir.get_meanValue() + angleFromNorth ) );  // see below for the calculation formula
+
+    geTheta = 0;
+    OGRFeatureDefn *layerDefn = layer->GetLayerDefn();
+    for(int i = 0;i < nR;i++)
+    {
+        for(int j = 0;j < nC;j++)
+        {
+            if(spd(i,j) != spd.get_noDataValue() && dir(i,j) != dir.get_noDataValue())
+            {
+                yScale = 0.5;
+                s = spd(i,j);
+
+                // geTheta is the printed value (geographic coordinates), theta is the drawn value (projected coordinates) which is then reprojected (from projected to geographic coordinates)
+                // the formula for going from one projection to another is always prj2 = prj1 - coordinateTransformAngle_from_prj1_to_prj2
+                // but in this case, prj1 = dem, prj2 = kmz, and coordinateTransformAngle_from_dem_to_kmz = -coordinateTransformAngle_from_kmz_to_dem = -angleFromNorth
+                // this is because angleFromNorth is stored as a value going FROM N TO dem, but here we are going FROM dem TO N,
+                // so we need to use a negative value for angleFromNorth rather than a positive value
+                // so for this case, prj2 = prj1 - (-angleFromNorth) = prj1 + angleFromNorth, the two negative signs cancel
+                // But, if using coordinateTransformAngle_from_dem_to_kmz instead of the angleFromNorth value, make sure to go back to only a single "-" sign in the formula
+                geTheta = wrap0to360( dir(i,j) + angleFromNorth ); //convert FROM projected TO geographic coordinates
+                theta = dir(i,j) + 180.0;
+
+                if(s <= splitValue[1])
+                    yScale *= 0.40;
+                else if(s <= splitValue[2])
+                    yScale *= 0.60;
+                else if(s <= splitValue[3])
+                    yScale *= 0.80;
+                else if(s <= splitValue[4])
+                    yScale *= 1.0;
+                xScale = yScale * 0.40;
+
+                spd.get_cellPosition(i, j, &xCenter, &yCenter);
+
+                //xCenter = (cSize / 2.0) + (j * cSize + spd.get_xllCorner());
+                //yCenter = (cSize / 2.0) + ((nR - i - 1) * cSize) + spd.get_yllCorner();
+
+                if(theta > 360)
+                {
+                    theta -= 360;
+                }
+                theta = 360 - theta;
+
+                theta = theta * (PI / 180);
+
+                if( areEqual( s, 0.0 ) )
+                {
+                    double square_size = 16;
+                    xTip = xCenter - cSize / square_size;
+                    yTip = yCenter + cSize / square_size;
+                    xTail = xCenter + cSize / square_size;
+                    yTail = yCenter + cSize / square_size;
+                    xHeadLeft = xCenter - cSize / square_size;
+                    yHeadLeft = yCenter - cSize / square_size;
+                    xHeadRight = xCenter + cSize / square_size;
+                    yHeadRight = yCenter - cSize / square_size;
+                }
+                else
+                {
+                    xPoint = 0;
+                    yPoint = (cSize * yScale);
+
+                    //compute tip coordinates
+                    xTip = (xPoint * cos(theta)) - (yPoint * sin(theta));
+                    yTip = (xPoint * sin(theta)) + (yPoint * cos(theta));
+                    //compute tail coordinates
+                    xTail = -xTip;
+                    yTail = -yTip;
+
+                    //compute right and left coordinates for head
+                    xPoint = (cSize * xScale);
+                    yPoint = (cSize * yScale)-(cSize * xScale);
+
+                    xHeadRight = (xPoint * cos(theta)) - (yPoint * sin(theta));
+                    yHeadRight = (xPoint * sin(theta)) + (yPoint * cos(theta));
+
+                    xPoint = -(cSize * xScale);
+                    yPoint = (cSize * yScale) - (cSize * xScale);
+                    xHeadLeft = (xPoint * cos(theta)) - (yPoint * sin(theta));
+                    yHeadLeft = (xPoint * sin(theta)) + (yPoint * cos(theta));
+
+                    //shift to global coordinates
+                    xTip+=xCenter;
+                    yTip+=yCenter;
+                    xTail+=xCenter;
+                    yTail+=yCenter;
+                    xHeadRight += xCenter;
+                    yHeadRight += yCenter;
+                    xHeadLeft += xCenter;
+                    yHeadLeft += yCenter;
+                }
+                coordTransform->Transform(1, &xTip, &yTip);
+                coordTransform->Transform(1, &xTail, &yTail);
+                coordTransform->Transform(1, &xHeadRight, &yHeadRight);
+                coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
+
+                // now start writing to the geoJson file
+                OGRLineString line;
+
+                if(areEqual(s, 0.0))
+                {
+                    line.addPoint(xTip, yTip);
+                    line.addPoint(xTail, yTail);
+                    line.addPoint(xHeadRight, yHeadRight);
+                    line.addPoint(xHeadLeft, yHeadLeft);
+                    line.addPoint(xTip, yTip);
+                }
+                else
+                {
+                    line.addPoint(xHeadRight, yHeadRight);
+                    line.addPoint(xTip, yTip);
+                    line.addPoint(xHeadLeft, yHeadLeft);
+                    line.addPoint(xTip, yTip);
+                    line.addPoint(xTail, yTail);
+                }
+
+                OGRFeature *feature = OGRFeature::CreateFeature(layerDefn);
+
+                char name[64];
+                sprintf(name, "cell %d,%d", i, j);
+                feature->SetField("name", name);
+
+                feature->SetField("speed", s);
+                feature->SetField("angle", geTheta);
+
+                if(s <= splitValue[1])
+                {
+                    feature->SetField("stroke", "#0000ff");
+                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-opacity", 1.0);
+                }
+                else if(s <= splitValue[2])
+                {
+                    feature->SetField("stroke", "#00ff00");
+                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-opacity", 1.0);
+                }
+                else if(s <= splitValue[3])
+                {
+                    feature->SetField("stroke", "#ffff00");
+                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-opacity", 1.0);
+                }
+                else if(s <= splitValue[4])
+                {
+                    feature->SetField("stroke", "#ffa500");
+                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-opacity", 1.0);
+                }
+                else
+                {
+                    feature->SetField("stroke", "#ff0000");
+                    feature->SetField("stroke-width", 2.0);
+                    feature->SetField("stroke-opacity", 1.0);
+                }
+
+                feature->SetGeometry(&line);
+
+                if(layer->CreateFeature(feature) != OGRERR_NONE)
+                {
+                    std::ostringstream oss;
+                    oss << "KmlVector::makeGeoJson() failed to create feature [" << i << "," << j << "] in layer 'winds'.";
+                    throw std::runtime_error(oss.str());
+                }
+
+                OGRFeature::DestroyFeature(feature);
+            }
+        }
+    }
+
+    GDALClose(out_ds);
+
+    return true;
+}
+
 /**
 *@brief Uses GDAL VSI to make .kmz files
 */
