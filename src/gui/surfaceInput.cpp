@@ -37,6 +37,11 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       webEngineView(webEngineView)
 {
     progress = nullptr;
+    GDALXSize = 0;
+    GDALYSize = 0;
+    GDALCellSize = 0.0;
+    GDALMaxValue = 0.0;
+    GDALMinValue = 0.0;
 
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
