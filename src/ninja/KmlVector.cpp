@@ -2148,29 +2148,45 @@ void KmlVector::makeGeoJson()
                     xHeadLeft += xCenter;
                     yHeadLeft += yCenter;
                 }
-                coordTransform->Transform(1, &xTip, &yTip);
-                coordTransform->Transform(1, &xTail, &yTail);
-                coordTransform->Transform(1, &xHeadRight, &yHeadRight);
-                coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
+
+                //coordTransform->Transform(1, &xTip, &yTip);
+                //coordTransform->Transform(1, &xTail, &yTail);
+                //coordTransform->Transform(1, &xHeadRight, &yHeadRight);
+                //coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
 
                 // now start writing to the geoJson file
-                OGRLineString line;
+                OGRMultiLineString multiLine;
+                OGRLineString lineSeg1;
+                OGRLineString lineSeg2;
+                OGRLineString lineSeg3;
 
                 if(areEqual(s, 0.0))
                 {
-                    line.addPoint(xTip, yTip);
-                    line.addPoint(xTail, yTail);
-                    line.addPoint(xHeadRight, yHeadRight);
-                    line.addPoint(xHeadLeft, yHeadLeft);
-                    line.addPoint(xTip, yTip);
+                    // tail -> tip
+                    lineSeg1.addPoint(xTip, yTip);
+                    lineSeg1.addPoint(xTail, yTail);
+
+                    // tip -> headRight
+                    lineSeg2.addPoint(xTip, yTip);
+                    lineSeg2.addPoint(xHeadRight, yHeadRight);
+
+                    // tip -> headLeft
+                    lineSeg3.addPoint(xTip, yTip);
+                    lineSeg3.addPoint(xHeadLeft, yHeadLeft);
                 }
                 else
                 {
-                    line.addPoint(xHeadRight, yHeadRight);
-                    line.addPoint(xTip, yTip);
-                    line.addPoint(xHeadLeft, yHeadLeft);
-                    line.addPoint(xTip, yTip);
-                    line.addPoint(xTail, yTail);
+                    // tail -> tip
+                    lineSeg1.addPoint(xTip, yTip);
+                    lineSeg1.addPoint(xTail, yTail);
+
+                    // tip -> headRight
+                    lineSeg2.addPoint(xTip, yTip);
+                    lineSeg2.addPoint(xHeadRight, yHeadRight);
+
+                    // tip -> headLeft
+                    lineSeg3.addPoint(xTip, yTip);
+                    lineSeg3.addPoint(xHeadLeft, yHeadLeft);
                 }
 
                 OGRFeature *feature = OGRFeature::CreateFeature(layerDefn);
@@ -2220,7 +2236,10 @@ void KmlVector::makeGeoJson()
                     feature->SetField("stroke-opacity", 1.0);
                 }
 
-                feature->SetGeometry(&line);
+                multiLine.addGeometry(&lineSeg1);
+                multiLine.addGeometry(&lineSeg2);
+                multiLine.addGeometry(&lineSeg3);
+                feature->SetGeometry(&multiLine);
 
                 if(layer->CreateFeature(feature) != OGRERR_NONE)
                 {
@@ -2235,6 +2254,74 @@ void KmlVector::makeGeoJson()
     }
 
     GDALClose(out_ds);
+
+    makeMvtTileFiles();
+
+    return true;
+}
+
+void KmlVector::makeMvtTileFiles()
+{
+    std::string geoJsonFile = kmzFile;
+    size_t pos = kmzFile.rfind(".kmz");
+    if(pos != std::string::npos)
+    {
+        geoJsonFile = kmzFile.substr(0, pos);
+    }
+    geoJsonFile =  geoJsonFile + ".geojson";
+
+    std::string mvtFileDir = kmzFile;
+    pos = kmzFile.rfind(".kmz");
+    if(pos != std::string::npos)
+    {
+        mvtFileDir = kmzFile.substr(0, pos);
+    }
+    ////mvtFileDir =  mvtFileDir + ".mvtDir";
+
+
+    GDALDatasetH hSrcDS = GDALOpenEx(
+        geoJsonFile.c_str(),
+        GDAL_OF_VECTOR,
+        NULL, NULL, NULL
+    );
+    if (!hSrcDS)
+    {
+        printf("Failed to open source\n");
+        return 1;
+    }
+
+    char* argv[] = {
+        (char*)"-f", (char*)"MVT",
+
+        (char*)"-dsco", (char*)"COMPRESS=NO",
+        (char*)"-dsco", (char*)"MINZOOM=0",
+        (char*)"-dsco", (char*)"MAXZOOM=16",
+        (char*)"-dsco", (char*)"FORMAT=DIRECTORY",
+        (char*)"-dsco", (char*)"NAME=MyTiledVectorData",
+        (char*)"-dsco", (char*)"DESCRIPTION=Multi-resolution vector tiles",
+
+        // reprojection (this is the important part)
+        (char*)"-s_srs", (char*)spd.prjString.c_str(),
+        (char*)"-t_srs", (char*)"EPSG:3857",
+
+        NULL
+    };
+
+    GDALVectorTranslateOptions* psOptions =
+        GDALVectorTranslateOptionsNew(argv, NULL);
+
+    GDALDatasetH hDstDS = GDALVectorTranslate(
+        mvtFileDir.c_str(),
+        NULL,
+        1,
+        &hSrcDS,
+        psOptions,
+        NULL
+    );
+
+    GDALVectorTranslateOptionsFree(psOptions);
+    GDALClose(hDstDS);
+    GDALClose(hSrcDS);
 
     return true;
 }

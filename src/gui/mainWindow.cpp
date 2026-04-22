@@ -1652,8 +1652,8 @@ void MainWindow::plotKmzOutputs()
             webEngineView->page()->runJavaScript("clearStationOutputTree();");
             webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
 
-            //bool loadRunAsKmz = false;
-            bool loadRunAsKmz = true;
+            bool loadRunAsKmz = false;
+            //bool loadRunAsKmz = true;
             if(loadRunAsKmz == true)
             {
                 // plot the output kmz of the run
@@ -1668,8 +1668,8 @@ void MainWindow::plotKmzOutputs()
                 webEngineView->page()->runJavaScript(jsCall);
             }
 
-            //bool loadRunAsGeojson = false;
-            bool loadRunAsGeojson = true;
+            bool loadRunAsGeojson = false;
+            //bool loadRunAsGeojson = true;
             if(loadRunAsGeojson == true)
             {
                 // use geojson files instead of run kmz files
@@ -1683,6 +1683,33 @@ void MainWindow::plotKmzOutputs()
                 }
                 geoJsonFile =  geoJsonFile + ".geojson";
                 QString outFileStr = QString::fromStdString(geoJsonFile);
+                qDebug() << "kmz outFile =" << outFileStr;
+
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
+            }
+
+            //bool loadRunAsMvt = false;
+            bool loadRunAsMvt = true;
+            if(loadRunAsMvt == true)
+            {
+                // use MVT tile folder/files instead of run kmz files or geojson files
+                // wxModel still uses kmz files
+                std::string kmzFile = kmzFilenames[i];
+                std::string mvtFileDir = kmzFile;
+                size_t pos = kmzFile.rfind(".kmz");
+                if(pos != std::string::npos)
+                {
+                    mvtFileDir = kmzFile.substr(0, pos);
+                }
+                mvtFileDir =  mvtFileDir + ".mvtDir";
+////mvtFileDir = "/home/atw09001/Downloads/output_dir_coarse.mvtDir";
+////mvtFileDir = "/home/atw09001/Downloads/output_dir_fine.mvtDir";
+//mvtFileDir = "/home/atw09001/Downloads/z_output_dir_combined.mvtDir";
+                QString outFileStr = QString::fromStdString(mvtFileDir);
                 qDebug() << "kmz outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();

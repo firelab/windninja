@@ -51,6 +51,8 @@
 
 #include "gdal_util.h" //nsw
 
+#include "gdal_utils.h"
+
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time.hpp"
@@ -114,6 +116,7 @@ public:
     bool makeKmz();
     bool removeKmlFile();
     void makeGeoJson();
+    void makeMvtTileFiles();
 
     void orangeLegend();
 

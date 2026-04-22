@@ -130,6 +130,7 @@
     
 
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+    <script src="https://unpkg.com/leaflet.vectorgrid@latest/dist/Leaflet.VectorGrid.bundled.js"></script>
 </head>
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
@@ -461,6 +462,12 @@
                 return;
             }
 
+            const handledMvtDirectory = await handleMvtDirectory(data, fileName);
+            if (handledMvtDirectory) {
+                finishKmzLoad();
+                return;
+            }
+
             const handled = await handleKml(data, fileName);
             if (handled) {
                 finishKmzLoad();   
@@ -677,6 +684,53 @@
             lastActiveLayer = geoJsonLegendLayer;
 
             map.addLayer(geoJsonLegendLayer);
+
+            showCenterControl();
+
+            return true;
+        }
+
+        async function handleMvtDirectory(data, fileName)
+        {
+            if(!fileName.endsWith('.mvtDir'))
+            {
+                return false;
+            }
+
+            const basePath = data.replace(/\.mvtDir$/i, '');
+
+            const layer = L.vectorGrid.protobuf(basePath + "/{z}/{x}/{y}.pbf", {
+                rendererFactory: L.canvas.tile,
+                vectorTileLayerStyles: {
+                    winds: function(props) {
+                        return {
+                            color: props.stroke || "#ffffff",
+                            weight: Number(props["stroke-width"]) || 1.0,
+                            opacity: Number(props["stroke-opacity"]) ?? 1.0,
+                            fill: false
+                        };
+                    }
+                }
+            });
+
+            const group = L.layerGroup([layer]);
+
+            windninjaOutputTree.children.push({
+                label: fileName,
+                layer: group,
+                radioGroup: 'windninjaOutput'
+            });
+
+            updateOverlayTree();
+
+            if (activeWindNinjaLayer) {
+                map.removeLayer(activeWindNinjaLayer);
+            }
+
+            activeWindNinjaLayer = group;
+            lastActiveLayer = group;
+
+            map.addLayer(group);
 
             showCenterControl();
 
