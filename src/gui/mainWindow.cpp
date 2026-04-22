@@ -1599,7 +1599,8 @@ void MainWindow::plotKmzOutputs()
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
         {
-            QWidget* inspectorWindow = new QWidget(this);
+            QWidget* inspectorWindow = new QWidget(nullptr);
+            inspectorWindow->setAttribute(Qt::WA_DeleteOnClose);
             inspectorWindow->setWindowTitle("Web Inspector - Developer Tools");
             inspectorWindow->setMinimumSize(800, 600);
 
