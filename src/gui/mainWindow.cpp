@@ -1706,9 +1706,7 @@ void MainWindow::plotKmzOutputs()
                     mvtFileDir = kmzFile.substr(0, pos);
                 }
                 mvtFileDir =  mvtFileDir + ".mvtDir";
-////mvtFileDir = "/home/atw09001/Downloads/output_dir_coarse.mvtDir";
-////mvtFileDir = "/home/atw09001/Downloads/output_dir_fine.mvtDir";
-//mvtFileDir = "/home/atw09001/Downloads/z_output_dir_combined.mvtDir";
+//mvtFileDir = "/home/atw09001/Downloads/output_dir_combined.mvtDir";
                 QString outFileStr = QString::fromStdString(mvtFileDir);
                 qDebug() << "kmz outFile =" << outFileStr;
 

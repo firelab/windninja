@@ -2278,6 +2278,12 @@ void KmlVector::makeMvtTileFiles()
     }
     ////mvtFileDir =  mvtFileDir + ".mvtDir";
 
+    // if mvtFileDir already exists, delete it and create a new one
+    if(CPLCheckForFile((char*)mvtFileDir.c_str(), NULL))
+    {
+        //NinjaUnlinkTree(mvtFileDir.c_str());
+        VSIRmdirRecursive(mvtFileDir.c_str());
+    }
 
     GDALDatasetH hSrcDS = GDALOpenEx(
         geoJsonFile.c_str(),
