@@ -699,7 +699,14 @@
 
             const basePath = data.replace(/\.mvtDir$/i, '');
 
+            const demBounds = demLayer.getLayers()[0].getBounds();
+            const south = demBounds.getSouth();
+            const west  = demBounds.getWest();
+            const north = demBounds.getNorth();
+            const east  = demBounds.getEast();
+
             const layer = L.vectorGrid.protobuf(basePath + "/{z}/{x}/{y}.pbf", {
+                bounds: L.latLngBounds([[south, west], [north, east]]),
                 rendererFactory: L.canvas.tile,
                 vectorTileLayerStyles: {
                     winds: function(props) {
