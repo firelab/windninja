@@ -2282,7 +2282,10 @@ void KmlVector::makeMvtTileFiles()
         (char*)"-f", (char*)"MVT",
 
         (char*)"-dsco", (char*)"COMPRESS=NO",
-        (char*)"-dsco", (char*)"MINZOOM=0",
+        (char*)"-dsco", (char*)"EXTENT=216",
+        (char*)"-dsco", (char*)"MAX_SIZE=1000000",
+        (char*)"-dsco", (char*)"MAX_FEATURES=600000",
+        (char*)"-dsco", (char*)"MINZOOM=8",
         (char*)"-dsco", (char*)"MAXZOOM=16",
         (char*)"-dsco", (char*)"FORMAT=DIRECTORY",
         (char*)"-dsco", (char*)"NAME=MyTiledVectorData",
