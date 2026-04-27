@@ -2155,38 +2155,23 @@ void KmlVector::makeGeoJson()
                 //coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
 
                 // now start writing to the geoJson file
-                OGRMultiLineString multiLine;
-                OGRLineString lineSeg1;
-                OGRLineString lineSeg2;
-                OGRLineString lineSeg3;
+                OGRLineString line;
 
                 if(areEqual(s, 0.0))
                 {
-                    // tail -> tip
-                    lineSeg1.addPoint(xTip, yTip);
-                    lineSeg1.addPoint(xTail, yTail);
-
-                    // tip -> headRight
-                    lineSeg2.addPoint(xTip, yTip);
-                    lineSeg2.addPoint(xHeadRight, yHeadRight);
-
-                    // tip -> headLeft
-                    lineSeg3.addPoint(xTip, yTip);
-                    lineSeg3.addPoint(xHeadLeft, yHeadLeft);
+                    line.addPoint(xTip, yTip);
+                    line.addPoint(xTail, yTail);
+                    line.addPoint(xHeadRight, yHeadRight);
+                    line.addPoint(xHeadLeft, yHeadLeft);
+                    line.addPoint(xTip, yTip);
                 }
                 else
                 {
-                    // tail -> tip
-                    lineSeg1.addPoint(xTip, yTip);
-                    lineSeg1.addPoint(xTail, yTail);
-
-                    // tip -> headRight
-                    lineSeg2.addPoint(xTip, yTip);
-                    lineSeg2.addPoint(xHeadRight, yHeadRight);
-
-                    // tip -> headLeft
-                    lineSeg3.addPoint(xTip, yTip);
-                    lineSeg3.addPoint(xHeadLeft, yHeadLeft);
+                    line.addPoint(xHeadRight, yHeadRight);
+                    line.addPoint(xTip, yTip);
+                    line.addPoint(xHeadLeft, yHeadLeft);
+                    line.addPoint(xTip, yTip);
+                    line.addPoint(xTail, yTail);
                 }
 
                 OGRFeature *feature = OGRFeature::CreateFeature(layerDefn);
@@ -2236,10 +2221,7 @@ void KmlVector::makeGeoJson()
                     feature->SetField("stroke-opacity", 1.0);
                 }
 
-                multiLine.addGeometry(&lineSeg1);
-                multiLine.addGeometry(&lineSeg2);
-                multiLine.addGeometry(&lineSeg3);
-                feature->SetGeometry(&multiLine);
+                feature->SetGeometry(&line);
 
                 if(layer->CreateFeature(feature) != OGRERR_NONE)
                 {
