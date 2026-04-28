@@ -785,15 +785,19 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
 
 WINDNINJADLL_EXPORT NinjaErr NinjaSetExistingCaseDirectory(NinjaArmyH * army, const int nIndex, const char * directory, char ** options)
 {
-    if( NULL != army && NULL != directory )
-    {
-        return reinterpret_cast<ninjaArmy*>( army )->setExistingCaseDirectory
-            ( nIndex, std::string( directory ) );
-    }
-    else
+    if( NULL == army || NULL == directory )
     {
         return NINJA_E_NULL_PTR;
     }
+
+#ifdef NINJAFOAM
+    return reinterpret_cast<ninjaArmy*>( army )->setExistingCaseDirectory
+        ( nIndex, std::string( directory ), options );
+#else
+    (void)nIndex;
+    (void)options;
+    return NINJA_E_INVALID;
+#endif
 }
 
 /**
