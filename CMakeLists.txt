@@ -88,9 +88,9 @@ set(WINDNINJA_VERSION_NAME WindNinja-${VER_STR})
 message(STATUS "VERSION: ${VER_STR}")
 message(STATUS "PKG VERSION: ${WINDNINJA_VERSION_NAME}")
 
+find_package(shapelib CONFIG REQUIRED)
 # Find Dependencies: VCPKG for Windows and ATP for Linux
 if(MSVC)
-    find_package(shapelib CONFIG REQUIRED)
     find_package(GDAL CONFIG REQUIRED)
     find_package(netCDF CONFIG REQUIRED)
     find_package(Boost REQUIRED COMPONENTS date_time program_options unit_test_framework)
