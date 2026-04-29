@@ -45,79 +45,132 @@ void printArray(const double* array, int size, const char* label) {
 
 int main()
 {
-    /* 
+    /*
      * Setting up the simulation
      */
-    NinjaArmyH* ninjaArmy = NULL; 
-    const char * comType = "cli"; //communication type is always set to "cli"
+    NinjaArmyH* ninjaArmy = NULL;
     const int nCPUs = 1;
+    const char * runType = "C-API autotest";
     char ** papszOptions = NULL;
-    NinjaErr err = 0; 
-    err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
+    NinjaErr err = 0;
+    err = NinjaInit(runType, papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
     if(err != NINJA_SUCCESS)
     {
-      printf("NinjaInit: err = %d\n", err);
+        printf("NinjaInit: err = %d\n", err);
     }
 
-    /* 
-     * Set up domain average run 
+    /*
+     * Setting up a log file, for ninjaCom, if desired
+     */
+    FILE* multiStream = NULL;
+    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    if(multiStream == NULL)
+    {
+        printf("error opening log file\n");
+    }
+
+    /*
+     * Set up domain average run
      */
     /* inputs that do not vary among ninjas in an army */
-    const char * demFile = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/missoula_valley.tif"; 
+    const char * demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
     const char * initializationMethod = "domain_average";
     const char * meshChoice = "coarse";
-    const char * vegetation = "grass";
+    const char * vegetation = "brush";
     const int nLayers = 20; //layers in the mesh
-    const int diurnalFlag = 0; //diurnal slope wind parameterization not used
+    const int diurnalFlag = 0; //set to 1 to use the diurnal slope wind parameterization inputs
+    const int stabilityFlag = 0; //set to 1 to use the stability wind parameterization inputs. NOT to be used with a momentum solver run.
     const double height = 10.0;
     const char * heightUnits = "m";
     bool momentumFlag = 0; //we're using the conservation of mass solver
-    unsigned int numNinjas = 3; //two ninjas in the ninjaArmy
+    //bool momentumFlag = 1; //we're using the conservation of momentum solver
+    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - must be equal to array sizes
+
+    //const int nIters = -1.0;  //set to value > 0.0 to override the default value of 1000. Used only by the conservation of momentum solver.
+    const int nIters = 300;  // the cli and the GUI use a value of 300 instead of the default value of 1000.
+
+    const double meshResolution = -1.0;  //set to value > 0.0 to override meshChoice with meshResolution value. Used only by the conservation of momentum solver.
+    //const double meshResolution = 300.0;
+    const char * meshResolutionUnits = "m";
+
+    bool matchedPoints = true;  // for point initialization, but currently required as an input to SetInitializationMethod(). Should the match points pointInitialization algorythm be run, or should it just run as a domainAvgRun on the input wind field. ALWAYS set to true unless you know what you are doing.
 
     /* inputs that can vary among ninjas in an army */
     const double speedList[] = {5.5, 5.5};
     const char * speedUnits = "mps";
     const double directionList[] = {220, 300};
 
-    /* inputs specific to output 
+    // thermal parameterization inputs (diurnal and stability)
+    const int year[2] = {2023, 2023};
+    const int month[2] = {10, 11};
+    const int day[2] = {10, 11};
+    const int hour[2] = {12, 13};
+    const int minute[2] = {30, 31};
+    const char * timezone = "UTC";
+    const double air[2] = {50.0, 50.0};
+    const char * airUnits = "F";
+    const double cloud[2] = {10.0, 10.0};
+    const char * cloudUnits = "percent";
+
+    /* inputs specific to output
      * Note: Outputs have default values if inputs are not specified (For example, resolution will default to the mesh resolution)
      */
     const double outputResolution = 100.0;
     const char * units = "m";
     const double width = 1.0;
     const char * scaling = "equal_color";
-    const char * outputPath  = "/home/mason/Documents/Git/WindNinja/windninja/autotest/api/data/output";
+    const char * outputPath  = "/home/atw09001/src/wind/windninja/autotest/api/data/output";
     const bool outputFlag = 1;
-    /* 
-     * Create the army
+
+    /*
+     * Initialize the army
      */
-    ninjaArmy = NinjaMakeDomainAverageArmy(numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    ninjaArmy = NinjaInitializeArmy();
     if( NULL == ninjaArmy )
     {
-        printf("NinjaCreateArmy: ninjaArmy = NULL\n");
+        printf("NinjaInitializeArmy: ninjaArmy = NULL\n");
     }
 
-    /* 
+    /*
+     * Customize the ninja communication
+     */
+    err = NinjaSetArmyMultiComStream(ninjaArmy, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetArmyMultiComStream: err = %d\n", err);
+    }
+
+    /*
+     * Make the army
+     */
+    if(diurnalFlag == 1 || stabilityFlag == 1)
+    {
+        err = NinjaMakeDomainAverageArmyThermalParameterization(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    }
+    else
+    {
+        err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    }
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaMakeDomainAverageArmy: err = %d\n", err);
+    }
+
+    /*
      * Prepare the army
      */
     for(unsigned int i=0; i<numNinjas; i++)
     {
-      /* 
+      /*
        * Sets Simulation Variables
        */
-      err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-        printf("NinjaSetCommunication: err = %d\n", err);
-      }
-    
       err = NinjaSetNumberCPUs(ninjaArmy, i, nCPUs, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetNumberCPUs: err = %d\n", err);
       }
     
-      err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+      err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, matchedPoints, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetInitializationMethod: err = %d\n", err);
@@ -158,26 +211,52 @@ int main()
       {
         printf("NinjaSetDiurnalWinds: err = %d\n", err);
       }
-    
+
+      err = NinjaSetStabilityFlag(ninjaArmy, i, stabilityFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetStabilityFlag: err = %d\n", err);
+      }
+
       err = NinjaSetUniVegetation(ninjaArmy, i, vegetation, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetUniVegetation: err = %d\n", err);
       }
-    
-      err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
-      if(err != NINJA_SUCCESS)
+
+      if(nIters > 0.0)
       {
-          printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+        err = NinjaSetNumberOfIterations(ninjaArmy, i, nIters, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetNumberOfIterations: err = %d\n", err);
+        }
       }
-    
+
+      if(meshResolution > 0.0)
+      {
+        err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetMeshResolution: err = %d\n", err);
+        }
+      }
+      else  // meshResolution not set, use meshChoice
+      {
+        err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+        }
+      }
+
       err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers, papszOptions);
       if(err != NINJA_SUCCESS)
       {
           printf("NinjaSetNumVertLayers: err = %d\n", err);
       }
 
-      /* 
+      /*
        * Sets Output Variables
        */
       err = NinjaSetOutputPath(ninjaArmy, i, outputPath, papszOptions);
@@ -243,10 +322,9 @@ int main()
       {
           printf("NinjaSetVtkOutFlag: err = %d\n", err);
       }
-
     }
 
-    /* 
+    /*
      * Start the simulations
      */
     err = NinjaStartRuns(ninjaArmy, nCPUs, papszOptions);
@@ -255,7 +333,7 @@ int main()
         printf("NinjaStartRuns: err = %d\n", err);
     }
 
-    /* 
+    /*
      * Get the outputs
      */
     const double* outputSpeedGrid = NULL;
@@ -302,7 +380,7 @@ int main()
     printf("Grid Rows: %d\n", outputGridnRows);
     printf("Grid Projection: %s\n", outputGridProjection);
 
-    /* 
+    /*
      * Clean up
      */
     err = NinjaDestroyArmy(ninjaArmy, papszOptions);
@@ -310,6 +388,21 @@ int main()
     {
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
- 
+
+    if(multiStream != NULL)
+    {
+        if(fclose(multiStream) != 0)
+        {
+            printf("error closing log file\n");
+        }
+    }
+
+    // must be called to cleanup ninjaInit();
+    err = NinjaFinalize(papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFinalize: err = %d\n", err);
+    }
+
     return NINJA_SUCCESS;
 }

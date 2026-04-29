@@ -38,34 +38,63 @@
 
 int main()
 {
-    /* 
-     * Setting up NinjaArmy
+    /*
+     * Setting up NinjaTools
      */
-    NinjaArmyH* ninjaArmy = NULL; 
+    NinjaToolsH* ninjaTools = NULL;
+    const char * runType = "C-API autotest";
     char ** papszOptions = NULL;
     NinjaErr err = 0; 
-    err = NinjaInit(papszOptions); // must be called for fetching and simulations 
+    err = NinjaInit(runType, papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
     if(err != NINJA_SUCCESS)
     {
-      printf("NinjaInit: err = %d\n", err);
+        printf("NinjaInit: err = %d\n", err);
     }
 
     /*
-     * Testing fetching from a DEM bounding box  
+     * Setting up a log file, for ninjaCom, if desired
+     */
+    FILE* multiStream = NULL;
+    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    if(multiStream == NULL)
+    {
+        printf("error opening log file\n");
+    }
+
+    /*
+     * Initialize ninjaTools
+     */
+    ninjaTools = NinjaMakeTools();
+
+    /*
+     * Customize the ninja communication
+     */
+    err = NinjaSetToolsMultiComStream(ninjaTools, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetToolsMultiComStream: err = %d\n", err);
+    }
+
+    /*
+     * Testing fetching from a DEM bounding box
      */
     const char * demFileBBox = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMBBox.tif"; // output file name
     char * fetch_type = "lcp"; // can be srtm, gmted, relief
     double resolution = 30.0; // 30 m resolution
     double boundsBox [] = {40.07, -104.0, 40.0, -104.07}; // Bounding box (north, east, south, west)
-    err = NinjaFetchDEMBBox(ninjaArmy, boundsBox, demFileBBox, resolution, fetch_type, papszOptions);
-    if (err != NINJA_SUCCESS){
+    err = NinjaFetchDEMBBox(ninjaTools, boundsBox, demFileBBox, resolution, fetch_type, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
         printf("NinjaFetchDEMBBox: err = %d\n", err);
+    } else
+    {
+        printf("NinjaFetchDEMBBox: success\n");
     }
     
     /*
-     * Testing fetching for a Forecast file 
+     * Testing fetching for a Forecast file
      */
-    const char*wx_model_type = "NOMADS-HRRR-CONUS-3-KM"; //  follow the cli argument output UCAR-NAM-CONUS-12-KM, 
+    const char* wx_model_type = "NOMADS-HRRR-CONUS-3-KM";  // follow the cli argument output UCAR-NAM-CONUS-12-KM,
     /* All Possible inputs for wx_model_type
      * UCAR-NAM-ALASKA-11-KM, 
      * UCAR-NDFD-CONUS-2.5-KM, 
@@ -94,17 +123,18 @@ int main()
      * NOMADS-RAP-NORTH-AMERICA-32-KM
     */
     const char * demFileForecast = demFileBBox; // input DEM file
-    int numNinjas = 1;
-    const char* forecastFilename = NinjaFetchForecast(ninjaArmy, wx_model_type, numNinjas, demFileForecast, papszOptions);
-    if (strcmp(forecastFilename, "exception") == 0){
-        printf("NinjaFetchForecast: err = %s\n", forecastFilename);
-    }
-    else{
-        printf("NinjaFetchForecast: forecastFilename = %s\n", forecastFilename);
+    int numForecastHours = 1;
+    err = NinjaFetchWeatherData(ninjaTools, wx_model_type, demFileForecast, numForecastHours);//, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFetchWeatherData: err = %d\n", err);
+    } else
+    {
+        printf("NinjaFetchWeatherData: success\n");
     }
 
     /*
-     * Testing fetching station data from a geotiff file.  
+     * Testing fetching station data from a geotiff file.
      */
     int year[2] = {2024, 2024};
     int month[2] = {2, 2};
@@ -115,15 +145,18 @@ int main()
     const char* output_path = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/";
     const char* elevation_file = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
     const char* osTimeZone = "UTC";
-    bool fetchLatestFlag = 1;
-    double buffer = 10;
+    bool fetchLatestFlag = 0;  // set to 1 if you want the latestTime instead of the above time list
+    double buffer = 10;  // distance around elevation file
     const char* units = "mi";
+    bool locationFileFlag = 1; //set to 1 if you want the location file for the station data to be output
 
-    err = NinjaFetchStation(year, month, day, hour, minute, size, elevation_file, buffer, units, osTimeZone, fetchLatestFlag, output_path, papszOptions);
-    if (err != NINJA_SUCCESS) {
-        printf("NinjaFetchStation: err = %d\n", err);
-    } else {
-        printf("NinjaFetchStation: success\n");
+    err = NinjaFetchStationFromBBox(ninjaTools, year, month, day, hour, minute, size, elevation_file, buffer, units, osTimeZone, fetchLatestFlag, output_path, locationFileFlag, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFetchStationFromBBox: err = %d\n", err);
+    } else
+    {
+        printf("NinjaFetchStationFromBBox: success\n");
     }
 
     /*
@@ -134,11 +167,39 @@ int main()
     double dfCellSize = 30.0; // Cell size in meters
     char* pszDstFile = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMpoint.tif";
     char* fetchType = "lcp";
-    err = NinjaFetchDEMPoint(ninjaArmy, adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
-    if (err != NINJA_SUCCESS) {
+    err = NinjaFetchDEMPoint(ninjaTools, adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
         printf("NinjaFetchDemPoint: err = %d\n", err);
-    } else {
+    } else
+    {
         printf("NinjaFetchDemPoint: elevation = %f\n", adfBuff[0]);
+    }
+
+    /*
+     * Clean up
+     */
+
+    // not yet needed/implemented in the code, but it should be.
+    //err = NinjaDestroyTools(ninjaTools, papszOptions);
+    //if(err != NINJA_SUCCESS)
+    //{
+    //    printf("NinjaDestroyTools: err = %d\n", ninjaErr);
+    //}
+
+    if(multiStream != NULL)
+    {
+        if(fclose(multiStream) != 0)
+        {
+            printf("error closing log file\n");
+        }
+    }
+
+    // must be called to cleanup ninjaInit();
+    err = NinjaFinalize(papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFinalize: err = %d\n", err);
     }
 
     return NINJA_SUCCESS;
