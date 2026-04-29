@@ -528,9 +528,6 @@ void MainWindow::solveButtonClicked()
             {
                 ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
             }
-            //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, -1, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
-            //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, 0, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeDomainAverageArmy() single messaging error, instead of the double messaging makeDomainAverageArmy() error.
-            //ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), "fudge", airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h, but then catches error as expected, well it technically throws two separate error messages, but both are caught properly
             if(ninjaErr != NINJA_SUCCESS)
             {
                 qDebug() << "NinjaMakeDomainAverageArmy: ninjaErr =" << ninjaErr;
@@ -579,59 +576,7 @@ void MainWindow::solveButtonClicked()
             QVector<int> hour   = { start.time().hour(),   end.time().hour() };
             QVector<int> minute = { start.time().minute(), end.time().minute() };
 
-            // runs fine for the single time run, as expected,
-            // and, errors and is properly caught for the multi-time run
-            /*QVector<int> year   = {start.date().year(),   start.date().year()};
-            QVector<int> month  = {start.date().month(),  start.date().month()};
-            QVector<int> day    = {start.date().day(),    start.date().day()};
-            QVector<int> hour   = {start.time().hour(),   start.time().hour()};
-            QVector<int> minute = {start.time().minute(), start.time().minute()};*/
-
-            // runs fine for the single time run, as expected,
-            // and, errors and is properly caught for the multi-time run
-            /*QVector<int> year   = {end.date().year(),   end.date().year()};
-            QVector<int> month  = {end.date().month(),  end.date().month()};
-            QVector<int> day    = {end.date().day(),    end.date().day()};
-            QVector<int> hour   = {end.time().hour(),   end.time().hour()};
-            QVector<int> minute = {end.time().minute(), end.time().minute()};*/
-
-            // runs fine for the single time run, as expected,
-            // and, errors and is properly caught for the multi-time run
-            /*QVector<int> year   = {start.date().year(),   start.date().year()-1};
-            QVector<int> month  = {start.date().month(),  start.date().month()};
-            QVector<int> day    = {start.date().day(),    start.date().day()};
-            QVector<int> hour   = {start.time().hour(),   start.time().hour()};
-            QVector<int> minute = {start.time().minute(), start.time().minute()};*/
-
-            // runs fine for the single time run, as expected,
-            // and, errors and is properly caught for the multi-time run
-            //  which is interesting because the download without an additional hour time difference should also error but does not always error,
-            //  so this implies the time checking for the run from this, is more strict, and better
-            /*QVector<int> year   = {start.date().year(),   start.date().year()};
-            QVector<int> month  = {start.date().month(),  start.date().month()};
-            QVector<int> day    = {start.date().day(),    start.date().day()};
-            QVector<int> hour   = {start.time().hour(),   start.time().hour()-1};
-            QVector<int> minute = {start.time().minute(), start.time().minute()};*/
-
-            // errors for both the single time run AND the multi-time run,
-            // and errors are properly caught for both cases
-            /*QVector<int> year   = {end.date().year()+1,   end.date().year()};
-            QVector<int> month  = {end.date().month(),  end.date().month()};
-            QVector<int> day    = {end.date().day(),    end.date().day()};
-            QVector<int> hour   = {end.time().hour(),   end.time().hour()};
-            QVector<int> minute = {end.time().minute(), end.time().minute()};*/
-
-            // errors for both the single time run AND the multi-time run,
-            // and errors are properly caught for both cases
-            /*QVector<int> year   = {end.date().year(),   end.date().year()};
-            QVector<int> month  = {end.date().month(),  end.date().month()};
-            QVector<int> day    = {end.date().day(),    end.date().day()};
-            QVector<int> hour   = {end.time().hour()+1,   end.time().hour()};
-            QVector<int> minute = {end.time().minute(), end.time().minute()};*/
-
             int nTimeSteps = ui->weatherStationDataTimestepsSpinBox->value();
-            //int nTimeSteps = 1;  // runs fine for the single time, properly throws an error for multi-times, well the error implies out of index but maybe not at the proper step ("NinjaSetNumberCPUS", "Run 0: ERROR: Exception caught: invalid index 1". But the error is at least properly caught.
-            //int nTimeSteps = 2;   // runs fine for 2 timestep multi-times, but for 1 timestep multi-times, an error is getting thrown, but apparently the solver isn't stopping because it is an error on just one single thread???? Quirky behavior that is not good. "ERROR 4: : No such file or directory, Run 1: ERROR: Exception caught: Cannot open input file for reading in ninja::readInputFile()." but then it continues with the run0 info to completion, then it ends hanging because it didn't stop at the error message and it finds it DID have some kind of error at the end. Ugh. I do see that it printed red, so it SAW that it was an error message, but I guess it wasn't a THROWN error message or something? So it didn't properly stop the solver?? Not sure what is going on here.
 
             QVector<int> outYear(nTimeSteps);
             QVector<int> outMonth(nTimeSteps);
@@ -657,12 +602,6 @@ void MainWindow::solveButtonClicked()
                     timeZoneBytes.constData(),
                     &endYear, &endMonth, &endDay, &endHour, &endMinute
                     );
-                //ninjaErr = NinjaGenerateSingleTimeObject(
-                //    ninjaTools,
-                //    startYear, startMonth, startDay, startHour, startMinute,
-                //    "fudge",
-                //    &endYear, &endMonth, &endDay, &endHour, &endMinute
-                //    );  // breaks HARD, a smart pointer failing on assert somewhere along the pipeline, not sure if that occurs here, or later down the pipeline. And it gets past the try/catch error handling stuff, hrm.
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr =" << ninjaErr;
@@ -686,22 +625,6 @@ void MainWindow::solveButtonClicked()
                     outHour.data(), outMinute.data(),
                     nTimeSteps, timeZoneBytes.data()
                 );
-                //ninjaErr = NinjaGetTimeList(
-                //    ninjaTools,
-                //    year.data(), month.data(), day.data(),
-                //    hour.data(), minute.data(),
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(),
-                //    1, timeZoneBytes.data()
-                //    );  // catches error as expected, though month or date out of range wasn't quite the error I was expecting
-                //ninjaErr = NinjaGetTimeList(
-                //    ninjaTools,
-                //    year.data(), month.data(), day.data(),
-                //    hour.data(), minute.data(),
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(),
-                //    nTimeSteps, "fudge"
-                //    );  // breaks HARD, a smart pointer failing on assert somewhere along the pipeline, not sure if that occurs here, or later down the pipeline. And it gets past the try/catch error handling stuff, hrm.
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaGetTimeList: ninjaErr =" << ninjaErr;
@@ -721,55 +644,6 @@ void MainWindow::solveButtonClicked()
                     stationFileNames.size(), DEMPath.toUtf8().data(),
                     true, momentumFlag, papszOptions
                     );
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), -1,
-                //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                //    stationFileNames.size(), DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error, and instead of the single unexpected month or date out of range error that was seen for this case.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), 0,
-                //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                //    stationFileNames.size(), DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                //    -1, DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                //    0, DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //    );  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                //    stationFileNames.size(), "fudge",
-                //    true, momentumFlag, papszOptions
-                //    );  // um, it warns that the dem doesn't exist, but then continues on without throwing an error or a ninjaCom, so the solver continues as if everything is normal. The warning is "ERROR 4: fudge: No such file or directory" four times, yet still it continues as if nothing went wrong.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), nTimeSteps,
-                //    "fudge", stationFileNames.data(),
-                //    stationFileNames.size(), DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //    );  // no error or warning messages are thrown, just runs as if the dem timezone is good enough
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    outYear.data(), outMonth.data(), outDay.data(),
-                //    outHour.data(), outMinute.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
-                //    stationFileNames.size(), DEMPath.toUtf8().data(),
-                //    true, true, papszOptions
-                //    );  // catches error as expected
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
@@ -799,25 +673,6 @@ void MainWindow::solveButtonClicked()
             hour = date.time().hour();
             minute = date.time().minute();
 
-            //year = -1;  // catches error as expected
-            //year = 0;  // catches error as expected
-            //year = 1235;  // catches error as expected
-            //year = 2035;  // um, apparently this one is an allowable year, it runs like normal without an error thrown, even though it probably shouldn't
-
-            //month = -1;  // catches error as expected
-            //month = 0;  // catches error as expected
-            //month = 14;  // catches error as expected
-
-            //day = -1;  // catches error as expected
-            //day = 0;  // catches error as expected
-            //day = 33;  // catches error as expected
-
-            //hour = -1;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
-            //hour = 26;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
-
-            //minute = -1;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
-            //minute = 78;  // this one SHOULD error, but runs fine somehow, no errors thrown. Probably wraps around or sets it to a value of 0 or something.
-
             int outYear, outMonth, outDay, outHour, outMinute;
 
             ninjaErr = NinjaGenerateSingleTimeObject(
@@ -826,12 +681,6 @@ void MainWindow::solveButtonClicked()
                 timeZoneBytes.constData(),
                 &outYear, &outMonth, &outDay, &outHour, &outMinute
                 );
-            //ninjaErr = NinjaGenerateSingleTimeObject(
-            //    ninjaTools,
-            //    year, month, day, hour, minute,
-            //    "fudge",
-            //    &outYear, &outMonth, &outDay, &outHour, &outMinute
-            //    );  // breaks HARD, a smart pointer failing on assert somewhere along the pipeline, not sure if that occurs here, or later down the pipeline. And it gets past the try/catch error handling stuff, hrm.
             if (ninjaErr != NINJA_SUCCESS)
             {
                 qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr =" << ninjaErr;
@@ -859,69 +708,6 @@ void MainWindow::solveButtonClicked()
                     DEMPath.toUtf8().data(),
                     true, momentumFlag, papszOptions
                 );
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), -1,
-                //    DEMTimeZone.toUtf8().data(),
-                //    stationFileNames.data(),
-                //    static_cast<int>(stationFileNames.size()),
-                //    DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error, and instead of the single unexpected month or date out of range error that was seen for this case.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), 0,
-                //    DEMTimeZone.toUtf8().data(),
-                //    stationFileNames.data(),
-                //    static_cast<int>(stationFileNames.size()),
-                //    DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(),
-                //    stationFileNames.data(),
-                //    -1,
-                //    DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(),
-                //    stationFileNames.data(),
-                //    0,
-                //    DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //);  // catches error as expected, now it triggers the NinjaMakePointArmy() single messaging error, instead of the double messaging makePointArmy() error.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(),
-                //    stationFileNames.data(),
-                //    static_cast<int>(stationFileNames.size()),
-                //    "fudge",
-                //    true, momentumFlag, papszOptions
-                //);  // um, it warns that the dem doesn't exist, but then continues on without throwing an error or a ninjaCom, so the solver continues as if everything is normal. The warning is "ERROR 4: fudge: No such file or directory" four times, yet still it continues as if nothing went wrong.
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), nTimeSteps,
-                //    "fudge",
-                //    stationFileNames.data(),
-                //    static_cast<int>(stationFileNames.size()),
-                //    DEMPath.toUtf8().data(),
-                //    true, momentumFlag, papszOptions
-                //);  // no error or warning messages are thrown, just runs as if the dem timezone is good enough
-                //ninjaErr = NinjaMakePointArmy( ninjaArmy,
-                //    yearVec.data(), monthVec.data(), dayVec.data(),
-                //    hourVec.data(), minuteVec.data(), nTimeSteps,
-                //    DEMTimeZone.toUtf8().data(),
-                //    stationFileNames.data(),
-                //    static_cast<int>(stationFileNames.size()),
-                //    DEMPath.toUtf8().data(),
-                //    true, true, papszOptions
-                //);  // catches error as expected
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     qDebug() << "NinjaMakePointArmy ninjaErr =" << ninjaErr;
@@ -952,10 +738,6 @@ void MainWindow::solveButtonClicked()
         }
 
         ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, -1, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeWeatherModelArmy() single messaging error, instead of the double messaging makeWeatherArmy() error.  // need to make a better error check for this than to disallow an empty inputTimeList. Need to setup a check to compare inputTimeList size to the input timeListSize.
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, 0, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected, now it triggers the NinjaMakeWeatherModelArmy() single messaging error, instead of the double messaging makeWeatherArmy() error.  // need to make a better error check for this than to disallow an empty inputTimeList. Need to setup a check to compare inputTimeList size to the input timeListSize.
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, "fudge", timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
-        //ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), "fudge", inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);  // catches error as expected
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaMakeWeatherModelArmy ninjaErr =" << ninjaErr;
@@ -1128,7 +910,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 
     char **papszOptions = nullptr;
 
-    // can this one even be tested?? The way it is organized also makes it tough to setup a ninjaCom message
     ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
@@ -1149,12 +930,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
                 {
                     writeToConsole("Writing Weather Station .kml");
                 }
-                // function needs MAJOR rework to get the testing to work, direct call to non-ninjaArmy function makes this process tougher
                 ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
-                //ninjaErr = NinjaSetStationKML(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
-                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), "fudge", papszOptions);  // test error handling  // ran, but the functions need reorganized for proper messaging
-                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), "fudge", ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
-                //ninjaErr = NinjaSetStationKML(ninjaArmy, i, "fudge", ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // function needs reorganized to handle this test
                 if(ninjaErr != NINJA_SUCCESS)
                 {
                     printf("NinjaSetStationKML: ninjaErr = %d\n", ninjaErr);
@@ -1164,8 +940,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
-        //ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i+10, ui->numberOfProcessorsSpinBox->value(), papszOptions);  // test error handling
-        //ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumberCPUs: ninjaErr =" << ninjaErr;
@@ -1173,8 +947,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i+10, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-        //ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, "fudge", ui->pointInitializationGroupBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInitializationMethod: ninjaErr =" << ninjaErr;
@@ -1182,8 +954,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
-        //ninjaErr = NinjaSetDem(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
-        //ninjaErr = NinjaSetDem(ninjaArmy, i, "fudge", papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
@@ -1200,8 +970,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             }
         }
 
-        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);  // if setting up ninja.cpp function call to simply throw, this breaks, this requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
-        //ninjaErr = NinjaSetPosition(ninjaArmy, i+10, papszOptions);  // test error handling
+        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetPosition: ninjaErr =" << ninjaErr;
@@ -1209,9 +978,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i+10, ui->inputWindHeightSpinBox->value(), ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
-        //ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, -1, ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetInputWindHeight: ninjaErr =" << ninjaErr;
@@ -1219,7 +985,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i+10, ui->diurnalCheckBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetDiurnalWinds: ninjaErr =" << ninjaErr;
@@ -1227,7 +992,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i, ui->stabilityCheckBox->isChecked(), papszOptions);
-        //ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i+10, ui->stabilityCheckBox->isChecked(), papszOptions);  // test error handling
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetStabilityFlag: ninjaErr =" << ninjaErr;
@@ -1237,8 +1001,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         if(ui->vegetationStackedWidget->currentIndex() == 0)
         {
             ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-            //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i+10, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-            //ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, "fudge", papszOptions);  // test error handling
             if(ninjaErr != NINJA_SUCCESS)
             {
                 qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
@@ -1249,9 +1011,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         #ifdef NINJAFOAM
         // the cli and the GUI use a value of 300 instead of the default value of 1000.
         ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, 300, papszOptions);
-        //ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i+10, 300, papszOptions);  // catches the error, as expected, but only when using the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
-        //ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, -1, papszOptions);  // the code still needs a check against this, OpenFOAM itself is throwing the error right now, which is not an easy one to properly try/catch.
-        //ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, 0, papszOptions);  // the code still needs a check against this, OpenFOAM itself is throwing the error right now, which is not an easy one to properly try/catch.
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumberOfIterations: ninjaErr =" << ninjaErr;
@@ -1270,8 +1029,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         } else
         {
             ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
-            //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i+10, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-            //ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, "fudge", papszOptions);  // test error handling
             if(ninjaErr != NINJA_SUCCESS)
             {
                 qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
@@ -1280,8 +1037,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         }
 
         ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
-        //ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i+10, 20, papszOptions);  // test error handling
-        //ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
         if(ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetNumVertLayers: ninjaErr =" << ninjaErr;
@@ -1307,7 +1062,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     int ninjaErr;
 
     ninjaErr = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetOutputPath(ninjaArmy, i+10, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputPath: ninjaErr =" << ninjaErr;
@@ -1315,9 +1069,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i+10, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), "fudge", papszOptions);  // test error handling
-    //ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, -1, ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputWindHeight: ninjaErr =" << ninjaErr;
@@ -1325,8 +1076,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i+10, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputSpeedUnits: ninjaErr =" << ninjaErr;
@@ -1334,9 +1083,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, ui->clipOutputSpinBox->value(), papszOptions);
-    //ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i+10, ui->clipOutputSpinBox->value(), papszOptions);  // test error handling, looks good
-    //ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, -1, papszOptions);  // test error handling
-    //ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, 50, papszOptions);  // test error handling, message might need improved, but it IS an error, as it should be
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetOutputBufferClipping: ninjaErr =" << ninjaErr;
@@ -1344,7 +1090,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i+10, ui->googleEarthCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1352,8 +1097,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i+10, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
@@ -1361,8 +1104,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i+10, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogSpeedScaling: ninjaErr =" << ninjaErr;
@@ -1370,9 +1111,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
-    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i+10, ui->googleEarthVectorsSpinBox->value(), papszOptions);  // test error handling
-    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, -1, papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h
-    //ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, 101, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogLineWidth: ninjaErr =" << ninjaErr;
@@ -1380,8 +1118,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetGoogColor(ninjaArmy, i+10, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);  // test error handling
-    ////ninjaErr = NinjaSetGoogColor(ninjaArmy, i, "fudge", ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);  // test error handling  // requires the try/catch form of IF_VALID_INDEX_TRY in ninjaArmy.h  // actually, the colorScheme string appears to not even be checked
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogColor: ninjaErr =" << ninjaErr;
@@ -1389,7 +1125,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
-    //ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i+10, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogConsistentColorScale: ninjaErr =" << ninjaErr;
@@ -1397,7 +1132,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
@@ -1405,7 +1139,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiAaigridOutFlag: ninjaErr =" << ninjaErr;
@@ -1413,7 +1146,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i+10, ui->fireBehaviorGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiProjOutFlag: ninjaErr =" << ninjaErr;
@@ -1421,8 +1153,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i+10, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
@@ -1430,7 +1160,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i+10, ui->shapeFilesGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpOutFlag: ninjaErr =" << ninjaErr;
@@ -1438,8 +1167,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i+10, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
@@ -1447,7 +1174,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i+10, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFOutFlag: ninjaErr =" << ninjaErr;
@@ -1455,7 +1181,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
-    //ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i+10, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFLineWidth: ninjaErr =" << ninjaErr;
@@ -1463,7 +1188,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
-    //ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i+10, ui->basemapComboBox->currentIndex(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFBaseMap: ninjaErr =" << ninjaErr;
@@ -1471,8 +1195,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetPDFDEM(ninjaArmy, i+10, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);  // test error handling
-    ////ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, "fudge", papszOptions);  // test error handling  // the dem string is not even checked
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFDEM: ninjaErr =" << ninjaErr;
@@ -1480,7 +1202,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
-    //ninjaErr = NinjaSetPDFSize(ninjaArmy, i+10, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFSize: ninjaErr =" << ninjaErr;
@@ -1488,8 +1209,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
-    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i+10, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);  // test error handling  // hrm, ninjaCom isn't triggering for this one, though the error returns, leading to it hanging without a proper message.
-    //ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), "fudge", papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
@@ -1497,7 +1216,6 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     }
 
     ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
-    //ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i+10, ui->VTKFilesCheckBox->isChecked(), papszOptions);  // test error handling
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
