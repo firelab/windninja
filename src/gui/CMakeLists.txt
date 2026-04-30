@@ -10,6 +10,7 @@ find_package(Qt6 REQUIRED COMPONENTS
     Widgets
     WebEngineWidgets
     WebChannel
+    HttpServer
 )
 
 set(PROJECT_SOURCES
@@ -39,6 +40,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         surfaceInput.cpp
         serverBridge.h
         serverBridge.cpp
+        tileServer.h
+        tileServer.cpp
         domainAverageInput.h
         domainAverageInput.cpp
         pointInitializationInput.h
@@ -64,6 +67,8 @@ target_link_libraries(WindNinja
     PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
     PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets
     PRIVATE Qt${QT_VERSION_MAJOR}::WebChannel
+    PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer
+    PRIVATE sqlite3
     Qt6::Core
     PRIVATE ninja
     GDAL::GDAL

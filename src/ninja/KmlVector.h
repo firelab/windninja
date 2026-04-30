@@ -117,6 +117,7 @@ public:
     bool removeKmlFile();
     void makeGeoJson();
     void makeMvtTileFiles();
+    void makeMbtilesFile();
 
     void orangeLegend();
 

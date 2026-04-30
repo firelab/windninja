@@ -61,6 +61,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     QUrl url = QUrl::fromLocalFile(mapPath);
     webEngineView->setUrl(url);
+
+    tileServer = new TileServer(this);
+    tileServer->start(0); // auto port
+
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(webEngineView);
@@ -1645,13 +1649,14 @@ void MainWindow::plotKmzOutputs()
         outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
         outputWxModelKmzFilenames.push_back(std::move( wxModelKmzFilenamesStr ));
 
+        webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+        webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+        webEngineView->page()->runJavaScript("clearStationOutputTree();");
+        webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
+        tileServer->clearDatasets();
+
         for(int i = 0; i < numRuns; i++)
         {
-            webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
-            webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
-            webEngineView->page()->runJavaScript("clearStationOutputTree();");
-            webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
-
             bool loadRunAsKmz = false;
             //bool loadRunAsKmz = true;
             if(loadRunAsKmz == true)
@@ -1692,8 +1697,8 @@ void MainWindow::plotKmzOutputs()
                 webEngineView->page()->runJavaScript(jsCall);
             }
 
-            //bool loadRunAsMvt = false;
-            bool loadRunAsMvt = true;
+            bool loadRunAsMvt = false;
+            //bool loadRunAsMvt = true;
             if(loadRunAsMvt == true)
             {
                 // use MVT tile folder/files instead of run kmz files or geojson files
@@ -1714,6 +1719,39 @@ void MainWindow::plotKmzOutputs()
                 QFileInfo info(outFileStr);
                 QString fileName = info.fileName();
                 QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
+            }
+
+            //bool loadRunAsMbtiles = false;
+            bool loadRunAsMbtiles = true;
+            if(loadRunAsMbtiles == true)
+            {
+                // use mbtiles file instead of run kmz files or geojson files
+                // wxModel still uses kmz files
+                std::string kmzFile = kmzFilenames[i];
+                std::string mbtilesFile = kmzFile;
+                size_t pos = kmzFile.rfind(".kmz");
+                if(pos != std::string::npos)
+                {
+                    mbtilesFile = kmzFile.substr(0, pos);
+                }
+                mbtilesFile =  mbtilesFile + ".mbtiles";
+//mbtilesFile = "/home/atw09001/Downloads/output_dir_fine.mbtiles";
+//mbtilesFile = "/home/atw09001/Downloads/output_fine-0to16.mbtiles";
+                QString outFileStr = QString::fromStdString(mbtilesFile);
+                qDebug() << "kmz outFile =" << outFileStr;
+
+                QString datasetId = QString("run_%1").arg(i);
+                QString tilePath = QString::fromStdString(mbtilesFile);
+                tileServer->registerDataset(datasetId, tilePath);
+
+                ////QString url = tileServer->baseUrl() + "/" + datasetId + "/{z}/{x}/{y}.pbf";  // this extension gets added by the map.html vectorGrid.protobuf() call
+                QString url = tileServer->baseUrl() + "/" + datasetId + ".mbtiles";
+                qDebug() << "url =" << url;
+
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(url, fileName);
                 webEngineView->page()->runJavaScript(jsCall);
             }
 

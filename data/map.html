@@ -462,8 +462,8 @@
                 return;
             }
 
-            const handledMvtDirectory = await handleMvtDirectory(data, fileName);
-            if (handledMvtDirectory) {
+            const handledMvtDirectoryAndMbtiles = await handleMvtDirectoryAndMbtiles(data, fileName);
+            if (handledMvtDirectoryAndMbtiles) {
                 finishKmzLoad();
                 return;
             }
@@ -690,14 +690,23 @@
             return true;
         }
 
-        async function handleMvtDirectory(data, fileName)
+        async function handleMvtDirectoryAndMbtiles(data, fileName)
         {
-            if(!fileName.endsWith('.mvtDir'))
+            if(!fileName.endsWith('.mvtDir') && !fileName.endsWith('.mbtiles'))
             {
                 return false;
             }
 
-            const basePath = data.replace(/\.mvtDir$/i, '');
+            let basePath = data;
+            if(fileName.endsWith('.mvtDir'))
+            {
+                basePath = data.replace(/\.mvtDir$/i, '');
+            }
+
+            if(fileName.endsWith('.mbtiles'))
+            {
+                basePath = data.replace(/\.mbtiles$/i, '');
+            }
 
             const demBounds = demLayer.getLayers()[0].getBounds();
             const south = demBounds.getSouth();

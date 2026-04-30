@@ -2237,7 +2237,8 @@ void KmlVector::makeGeoJson()
 
     GDALClose(out_ds);
 
-    makeMvtTileFiles();
+    //makeMvtTileFiles();
+    makeMbtilesFile();
 
     return true;
 }
@@ -2291,7 +2292,6 @@ void KmlVector::makeMvtTileFiles()
         (char*)"-dsco", (char*)"NAME=MyTiledVectorData",
         (char*)"-dsco", (char*)"DESCRIPTION=Multi-resolution vector tiles",
 
-        // reprojection (this is the important part)
         (char*)"-s_srs", (char*)spd.prjString.c_str(),
         (char*)"-t_srs", (char*)"EPSG:3857",
 
@@ -2303,6 +2303,75 @@ void KmlVector::makeMvtTileFiles()
 
     GDALDatasetH hDstDS = GDALVectorTranslate(
         mvtFileDir.c_str(),
+        NULL,
+        1,
+        &hSrcDS,
+        psOptions,
+        NULL
+    );
+
+    GDALVectorTranslateOptionsFree(psOptions);
+    GDALClose(hDstDS);
+    GDALClose(hSrcDS);
+
+    return true;
+}
+
+void KmlVector::makeMbtilesFile()
+{
+    std::string geoJsonFile = kmzFile;
+    size_t pos = kmzFile.rfind(".kmz");
+    if(pos != std::string::npos)
+    {
+        geoJsonFile = kmzFile.substr(0, pos);
+    }
+    geoJsonFile =  geoJsonFile + ".geojson";
+
+    std::string mbtilesFile = kmzFile;
+    pos = kmzFile.rfind(".kmz");
+    if(pos != std::string::npos)
+    {
+        mbtilesFile = kmzFile.substr(0, pos);
+    }
+    mbtilesFile =  mbtilesFile + ".mbtiles";
+
+    // if mbtilesFile already exists, delete it and create a new one
+    if(CPLCheckForFile((char*)mbtilesFile.c_str(), NULL))
+    {
+        VSIUnlink(mbtilesFile.c_str());
+    }
+
+    GDALDatasetH hSrcDS = GDALOpenEx(
+        geoJsonFile.c_str(),
+        GDAL_OF_VECTOR,
+        NULL, NULL, NULL
+    );
+    if (!hSrcDS)
+    {
+        printf("Failed to open source\n");
+        return 1;
+    }
+
+    char* argv[] = {
+        (char*)"-f", (char*)"MBTILES",
+
+        //(char*)"-dsco", (char*)"COMPRESS=YES",  // makes it just a hint slower, doesn't seem to affect the use of the tiles either way
+        (char*)"-dsco", (char*)"MINZOOM=8",
+        (char*)"-dsco", (char*)"MAXZOOM=16",
+        (char*)"-dsco", (char*)"NAME=MyTiledVectorData",
+        (char*)"-dsco", (char*)"DESCRIPTION=Multi-resolution vector tiles",
+
+        (char*)"-s_srs", (char*)spd.prjString.c_str(),
+        (char*)"-t_srs", (char*)"EPSG:3857",
+
+        NULL
+    };
+
+    GDALVectorTranslateOptions* psOptions =
+        GDALVectorTranslateOptionsNew(argv, NULL);
+
+    GDALDatasetH hDstDS = GDALVectorTranslate(
+        mbtilesFile.c_str(),
         NULL,
         1,
         &hSrcDS,
