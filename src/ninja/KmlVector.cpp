@@ -2149,10 +2149,10 @@ void KmlVector::makeGeoJson()
                     yHeadLeft += yCenter;
                 }
 
-                //coordTransform->Transform(1, &xTip, &yTip);
-                //coordTransform->Transform(1, &xTail, &yTail);
-                //coordTransform->Transform(1, &xHeadRight, &yHeadRight);
-                //coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
+                coordTransform->Transform(1, &xTip, &yTip);
+                coordTransform->Transform(1, &xTail, &yTail);
+                coordTransform->Transform(1, &xHeadRight, &yHeadRight);
+                coordTransform->Transform(1, &xHeadLeft, &yHeadLeft);
 
                 // now start writing to the geoJson file
                 OGRLineString line;
@@ -2238,7 +2238,7 @@ void KmlVector::makeGeoJson()
     GDALClose(out_ds);
 
     //makeMvtTileFiles();
-    makeMbtilesFile();
+    //makeMbtilesFile();
 
     return true;
 }

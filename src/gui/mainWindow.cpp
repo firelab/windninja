@@ -1673,8 +1673,8 @@ void MainWindow::plotKmzOutputs()
                 webEngineView->page()->runJavaScript(jsCall);
             }
 
-            bool loadRunAsGeojson = false;
-            //bool loadRunAsGeojson = true;
+            //bool loadRunAsGeojson = false;
+            bool loadRunAsGeojson = true;
             if(loadRunAsGeojson == true)
             {
                 // use geojson files instead of run kmz files
@@ -1722,8 +1722,8 @@ void MainWindow::plotKmzOutputs()
                 webEngineView->page()->runJavaScript(jsCall);
             }
 
-            //bool loadRunAsMbtiles = false;
-            bool loadRunAsMbtiles = true;
+            bool loadRunAsMbtiles = false;
+            //bool loadRunAsMbtiles = true;
             if(loadRunAsMbtiles == true)
             {
                 // use mbtiles file instead of run kmz files or geojson files
