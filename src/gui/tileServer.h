@@ -21,6 +21,7 @@ class TileServer : public QObject
 
 public:
     TileServer(QObject* parent = nullptr);
+    ~TileServer();
 
     bool start(quint16 port = 0); // 0 = auto-pick port
     quint16 port() const;  // no longer needed, baseUrl() returns with this already in it, shared across each dataset
@@ -37,8 +38,8 @@ private:
     QHttpServer m_server;
     quint16 m_port;
     QMap<QString, QString> m_datasetMap;
+    QMap<QString, sqlite3*> m_dbMap;
 
-    QByteArray getTile(int z, int x, int y);
 };
 
 #endif // TILESERVER_H
