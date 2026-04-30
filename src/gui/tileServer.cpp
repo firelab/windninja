@@ -7,17 +7,6 @@ TileServer::TileServer(QObject* parent)
 {
 }
 
-TileServer::~TileServer()
-{
-    for(auto db : m_dbMap)
-    {
-        if(db)
-        {
-            sqlite3_close(db);
-        }
-    }
-}
-
 bool TileServer::start(quint16 port)
 {
     setupRoutes();
@@ -48,30 +37,19 @@ QString TileServer::baseUrl() const
 void TileServer::registerDataset(QString datasetId, QString dataPath)
 {
     m_datasetMap[datasetId] = dataPath;
-
-    sqlite3* db = nullptr;
-    if(sqlite3_open(dataPath.toStdString().c_str(), &db) == SQLITE_OK)
-    {
-        m_dbMap[datasetId] = db;
-    }
 }
 
 void TileServer::clearDatasets()
 {
-    for(auto db : m_dbMap)
-    {
-        if(db)
-        {
-            sqlite3_close(db);
-        }
-    }
-
-    m_dbMap.clear();
     m_datasetMap.clear();
 }
 
+// this is inefficient, even if it were a GDAL form. Opening the database multiple times once per call and closing it is not efficient.
+// gdal would be even quirkier trying to do such a thing. both forms with this current method are doing: "open dataset -> read tile -> close"
+// so multiple read and writes to the same file
 void TileServer::setupRoutes()
 {
+    // GET route
     m_server.route("/tiles/<arg>/<arg>/<arg>/<arg>.pbf",
         [this](const QString& datasetId,
                const QString& zStr,
@@ -110,9 +88,10 @@ void TileServer::setupRoutes()
                 return response;
             }
 
-            sqlite3* db = m_dbMap.value(datasetId, nullptr);
-            if(!db)
-            {
+            // SQLite handle or GDAL dataset here
+
+            sqlite3* db = nullptr;
+            if(sqlite3_open(basePath.toStdString().c_str(), &db) != SQLITE_OK) {
                 QHttpServerResponse response(QHttpServerResponder::StatusCode::InternalServerError);
                 response.setHeaders(headers);
                 return response;
@@ -141,6 +120,7 @@ void TileServer::setupRoutes()
             }
 
             sqlite3_finalize(stmt);
+            sqlite3_close(db);
 
             if(tileData.isEmpty()) {
                 QHttpServerResponse response(QHttpServerResponder::StatusCode::NotFound);
