@@ -37,7 +37,7 @@
 #include "pointInitializationInput.h"
 #include "mapBridge.h"
 #include "serverBridge.h"
-#include "tileServer.h"
+////#include "tileServer.h"
 #include "weatherModelInput.h"
 #include "ui_mainWindow.h"
 #include "appState.h"
@@ -123,7 +123,7 @@ private:
     QWebEngineView *webEngineView;
     QWebChannel *webChannel;
     MapBridge *mapBridge;
-    TileServer *tileServer;
+//    TileServer *tileServer;
     SurfaceInput *surfaceInput;
     MenuBar *menuBar;
     ServerBridge *serverBridge;

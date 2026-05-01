@@ -62,8 +62,8 @@ MainWindow::MainWindow(QWidget *parent)
     QUrl url = QUrl::fromLocalFile(mapPath);
     webEngineView->setUrl(url);
 
-    tileServer = new TileServer(this);
-    tileServer->start(0); // auto port
+//    tileServer = new TileServer(this);
+//    tileServer->start(0); // auto port
 
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
@@ -1653,7 +1653,7 @@ void MainWindow::plotKmzOutputs()
         webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
         webEngineView->page()->runJavaScript("clearStationOutputTree();");
         webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
-        tileServer->clearDatasets();
+//        tileServer->clearDatasets();
 
         for(int i = 0; i < numRuns; i++)
         {
@@ -1742,11 +1742,13 @@ void MainWindow::plotKmzOutputs()
                 qDebug() << "kmz outFile =" << outFileStr;
 
                 QString datasetId = QString("run_%1").arg(i);
-                QString tilePath = QString::fromStdString(mbtilesFile);
-                tileServer->registerDataset(datasetId, tilePath);
+//                QString tilePath = QString::fromStdString(mbtilesFile);
+//                tileServer->registerDataset(datasetId, tilePath);
 
                 ////QString url = tileServer->baseUrl() + "/" + datasetId + "/{z}/{x}/{y}.pbf";  // this extension gets added by the map.html vectorGrid.protobuf() call
-                QString url = tileServer->baseUrl() + "/" + datasetId + ".mbtiles";
+//                QString url = tileServer->baseUrl() + "/" + datasetId + ".mbtiles";
+QString baseUrl = "http://127.0.0.1:%1/tiles";
+QString url = baseUrl + "/" + datasetId + ".mbtiles";
                 qDebug() << "url =" << url;
 
                 QFileInfo info(outFileStr);
