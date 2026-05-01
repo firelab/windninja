@@ -29,7 +29,7 @@
 #include "windninja.h"
 #include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdlib.h> //for malloc, free
-#include <string.h> //for strcat, strlen, used in concat() function
+#include <string.h> //for strlen, memcpy, used in concat() function
 #include <stdbool.h>
 
 // used for combining const char* "strings"
@@ -42,15 +42,18 @@ char* concat(const char *s1, const char *s2)
         return NULL;
     }
 
-    char *result = malloc(strlen(s1) + strlen(s2) + 1); // +1 for the null-terminator
-    if (result == NULL)
+    size_t len1 = strlen(s1);
+    size_t len2 = strlen(s2);
+    char *result = malloc(len1 + len2 + 1); // +1 for '\0', the null-terminator
+    if(result == NULL)
     {
         printf("concat() failed (out of memory)\n");
         return NULL;
     }
 
-    strcpy(result, s1);
-    strcat(result, s2);
+    memcpy(result, s1, len1);
+    memcpy(result + len1, s2, len2 + 1);  // includes '\0', the null-terminator
+
     return result;
 }
 
