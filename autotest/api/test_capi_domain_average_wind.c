@@ -28,34 +28,9 @@
  *****************************************************************************/
 #include "windninja.h"
 #include <stdio.h> //for printf, FILE, fopen, fclose
-#include <stdlib.h> //for malloc, free
-#include <string.h> //for strlen, memcpy, used in concat() function
 #include <stdbool.h>
 
-// used for combining const char* "strings"
-// returns a newly allocated char* that the function caller must free().
-char* concat(const char *s1, const char *s2)
-{
-    if(s1 == NULL || s2 == NULL)
-    {
-        printf("an input to concat() is NULL\n");
-        return NULL;
-    }
-
-    size_t len1 = strlen(s1);
-    size_t len2 = strlen(s2);
-    char *result = malloc(len1 + len2 + 1); // +1 for '\0', the null-terminator
-    if(result == NULL)
-    {
-        printf("concat() failed (out of memory)\n");
-        return NULL;
-    }
-
-    memcpy(result, s1, len1);
-    memcpy(result + len1, s2, len2 + 1);  // includes '\0', the null-terminator
-
-    return result;
-}
+#define MAX_PATH_LEN 512
 
 
 int main()
@@ -82,27 +57,20 @@ int main()
     /*
      * Setting up a log file, for ninjaCom, if desired
      */
-    char* multiStreamFilename = concat(wnDataPath, "/../autotest/api/data/ninja.log");
-    if(multiStreamFilename == NULL)
-    {
-        printf("concat failed\n");
-        return 1;
-    }
-
-    FILE* multiStream = NULL;
-    multiStream = fopen(multiStreamFilename, "w+");
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
     if(multiStream == NULL)
     {
-        //free(multiStreamFilename);
         printf("error opening log file\n");
-        //return 1;
     }
 
     /*
      * Set up domain average run
      */
     /* inputs that do not vary among ninjas in an army */
-    char * demFile = concat(wnDataPath, "/../autotest/api/data/missoula_valley.tif");
+    char demFile[MAX_PATH_LEN];
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
     const char * initializationMethod = "domain_average";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
@@ -122,7 +90,8 @@ int main()
     const char * units = "m";
     const double width = 1.0;
     const char * scaling = "equal_color";
-    char * outputPath  = concat(wnDataPath, "/../autotest/api/data/output");
+    char outputPath[MAX_PATH_LEN];
+    snprintf(outputPath, sizeof(outputPath), "%s%s", wnDataPath, "/../autotest/api/data/output");
     const bool outputFlag = 1;
 
     /* inputs that can vary among ninjas in an army */
@@ -318,10 +287,6 @@ int main()
     {
         printf("NinjaFinalize: err = %d\n", err);
     }
-
-    free(outputPath);
-    free(demFile);
-    free(multiStreamFilename);
 
     return NINJA_SUCCESS;
 }
