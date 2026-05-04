@@ -32,7 +32,6 @@
 
 #define MAX_PATH_LEN 512
 
-
 int main()
 {
     /*
@@ -51,8 +50,7 @@ int main()
 
     // manually set your wnDataPath (makes it easier for setting paths and testing)
     // must replace the "~/" part with your exact path
-    //const char* wnDataPath = "~/src/wind/windninja/data";
-    const char* wnDataPath = "/home/atw09001/src/wind/windninja/data";
+    const char* wnDataPath = "~/src/wind/windninja/data";
 
     /*
      * Setting up a log file, for ninjaCom, if desired

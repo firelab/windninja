@@ -27,8 +27,10 @@
  *
  *****************************************************************************/
 #include "windninja.h"
-#include <stdio.h> //for printf
+#include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdbool.h>
+
+#define MAX_PATH_LEN 512
 
 int main()
 {
@@ -46,11 +48,16 @@ int main()
         printf("NinjaInit: err = %d\n", err);
     }
 
+    // manually set your wnDataPath (makes it easier for setting paths and testing)
+    // must replace the "~/" part with your exact path
+    const char* wnDataPath = "~/src/wind/windninja/data";
+
     /*
      * Setting up a log file, for ninjaCom, if desired
      */
-    FILE* multiStream = NULL;
-    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
     if(multiStream == NULL)
     {
         printf("error opening log file\n");
@@ -85,14 +92,19 @@ int main()
     //int timeListSize = numNinjas;
     int timeListSize = 2;
     //int timeListSize = 1;  // make sure to only use 1 if doing latestTime data, or it tries to converge on some kind of NO_DATA situation or something.
+
     //// the fetched data times, hrm the run seems to be way stricter than the fetch for building the times
+    //// will need to run fetch test to get station data
+    /// so update the folder path accordingly for the fresh data.
+    /// the time list seems to stay pretty stable, latestTime just affects folder paths/names.
     //int year[2] = {2024, 2024};
     //int month[2] = {2, 2};
     //int day[2] = {2, 2};
     //int hour[2] = {2, 2};  // local time
     ////int hour[2] = {8, 8};  // UTC time
     //int minute[2] = {0, 59};
-    //// the /windninja/data/ times
+
+    //// the /windninja/data/ times, predownloaded data.
     int year[2] = {2018, 2018};
     int month[2] = {6, 6};
     //int day[2] = {20, 21};  // local time
@@ -100,21 +112,58 @@ int main()
     int day[2] = {21, 22}; // UTC time
     int hour[2] = {3, 3};  // UTC time
     int minute[2] = {28, 28};
+
     ////// will need to run fetch test to get wxstation data, or grab the data from the windninja/data folder (that seems easier)
     //// hrm, doesn't seem to like the station location files, like the cli does
     ////int numStationFiles = 1;
-    ////const char* station_paths[1] = {"/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/missoula_valley_stations_6.csv.csv"};  // latestTime
-    ////const char* station_paths[1] = {"/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/missoula_valley_stations_6.csv.csv"};  // timeSeries
-    ////const char* station_paths[1] = {"/home/atw09001/src/wind/windninja/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv"};  // timeSeries
-    ////const char* station_paths[1] = {"/home/atw09001/src/wind/windninja/data/WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv"};  // latestTime
+    ////char station_path0[MAX_PATH_LEN];
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/missoula_valley_stations_6.csv.csv");  // latestTime
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/missoula_valley_stations_6.csv.csv");  // timeSeries
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv");  // latestTime
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv");  // timeSeries
+    ////const char* station_paths[1] = {station_path0};
     int numStationFiles = 4;
-    const char* station_paths[4] = {"/home/atw09001/src/wind/windninja/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv", "/home/atw09001/src/wind/windninja/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv", "/home/atw09001/src/wind/windninja/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv", "/home/atw09001/src/wind/windninja/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv"};  // timeSeries
-    //const char* station_paths[4] = {"/home/atw09001/src/wind/windninja/data/WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv", "/home/atw09001/src/wind/windninja/data/WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv", "/home/atw09001/src/wind/windninja/data/WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv", "/home/atw09001/src/wind/windninja/data/WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv"};  // latestTime
-    // the fetched data
+    char station_path0[MAX_PATH_LEN];
+    char station_path1[MAX_PATH_LEN];
+    char station_path2[MAX_PATH_LEN];
+    char station_path3[MAX_PATH_LEN];
+    /// timeSeries
+    snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv");
+    snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv");
+    snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv");
+    snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv");
+    /// latestTime
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv");
+    const char* station_paths[4] = {station_path0, station_path1, station_path2, station_path3};
+    /// the fetched data
     //int numStationFiles = 6;
-    //const char* station_paths[6] = {"/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/KMSO-2026-04-29_1331-0.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/BLMM8-2026-04-29_1331-1.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/PNTM8-2026-04-29_1331-2.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/FINM8-2026-04-29_1331-3.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/NINM8-2026-04-29_1331-4.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2026-04-29-1331-missoula_valley/TT350-2026-04-29_1331-5.csv"};  // latestTime
-    //const char* station_paths[6] = {"/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/KMSO-2024-02-02_0202-2024-02-02_0202-0.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/BLMM8-2024-02-02_0202-2024-02-02_0202-1.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/PNTM8-2024-02-02_0202-2024-02-02_0202-2.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/FINM8-2024-02-02_0202-2024-02-02_0202-3.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/NINM8-2024-02-02_0202-2024-02-02_0202-4.csv", "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/MOMM8-2024-02-02_0202-2024-02-02_0202-5.csv"};  // timeSeries
-    char* demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
+    //char station_path0[MAX_PATH_LEN];
+    //char station_path1[MAX_PATH_LEN];
+    //char station_path2[MAX_PATH_LEN];
+    //char station_path3[MAX_PATH_LEN];
+    //char station_path4[MAX_PATH_LEN];
+    //char station_path5[MAX_PATH_LEN];
+    /// latestTime
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/KMSO-2026-05-04_1530-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/BLMM8-2026-05-04_1530-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/PNTM8-2026-05-04_1530-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/FINM8-2026-05-04_1530-3.csv");
+    //snprintf(station_path4, sizeof(station_path4), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/NINM8-2026-05-04_1530-4.csv");
+    //snprintf(station_path5, sizeof(station_path5), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/TT350-2026-05-04_1530-5.csv");
+    /// timeSeries
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/KMSO-2024-02-02_0202-2024-02-02_0202-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/BLMM8-2024-02-02_0202-2024-02-02_0202-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/PNTM8-2024-02-02_0202-2024-02-02_0202-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/FINM8-2024-02-02_0202-2024-02-02_0202-3.csv");
+    //snprintf(station_path4, sizeof(station_path4), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/NINM8-2024-02-02_0202-2024-02-02_0202-4.csv");
+    //snprintf(station_path5, sizeof(station_path5), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/MOMM8-2024-02-02_0202-2024-02-02_0202-5.csv");
+    //const char* station_paths[6] = {station_path0, station_path1, station_path2, station_path3, station_path4, station_path5};
+
+    char demFile[MAX_PATH_LEN];
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
     //char* osTimeZone = "UTC";
     char* osTimeZone = "America/Denver";
     bool matchPointsFlag = 1;  // needed to match the station data, or else you only get a domainAverageRun of the initial wind field constructed from the station data

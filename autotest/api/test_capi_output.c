@@ -27,8 +27,10 @@
  *
  *****************************************************************************/
 #include "windninja.h"
-#include <stdio.h> //for printf
+#include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdbool.h>
+
+#define MAX_PATH_LEN 512
 
 void printArray(const double* array, int size, const char* label) {
     if (array == NULL) {
@@ -59,11 +61,16 @@ int main()
         printf("NinjaInit: err = %d\n", err);
     }
 
+    // manually set your wnDataPath (makes it easier for setting paths and testing)
+    // must replace the "~/" part with your exact path
+    const char* wnDataPath = "~/src/wind/windninja/data";
+
     /*
      * Setting up a log file, for ninjaCom, if desired
      */
-    FILE* multiStream = NULL;
-    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
     if(multiStream == NULL)
     {
         printf("error opening log file\n");
@@ -73,7 +80,8 @@ int main()
      * Set up domain average run
      */
     /* inputs that do not vary among ninjas in an army */
-    const char * demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
+    char demFile[MAX_PATH_LEN];
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
     const char * initializationMethod = "domain_average";
     const char * meshChoice = "coarse";
     const char * vegetation = "brush";
@@ -119,7 +127,8 @@ int main()
     const char * units = "m";
     const double width = 1.0;
     const char * scaling = "equal_color";
-    const char * outputPath  = "/home/atw09001/src/wind/windninja/autotest/api/data/output";
+    char outputPath[MAX_PATH_LEN];
+    snprintf(outputPath, sizeof(outputPath), "%s%s", wnDataPath, "/../autotest/api/data/output");
     const bool outputFlag = 1;
 
     /*

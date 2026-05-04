@@ -27,8 +27,10 @@
  *
  *****************************************************************************/
 #include "windninja.h"
-#include <stdio.h> //for printf
+#include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdbool.h>
+
+#define MAX_PATH_LEN 512
 
 int main()
 {
@@ -46,11 +48,16 @@ int main()
         printf("NinjaInit: err = %d\n", err);
     }
 
+    // manually set your wnDataPath (makes it easier for setting paths and testing)
+    // must replace the "~/" part with your exact path
+    const char* wnDataPath = "~/src/wind/windninja/data";
+
     /*
      * Setting up a log file, for ninjaCom, if desired
      */
-    FILE* multiStream = NULL;
-    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
     if(multiStream == NULL)
     {
         printf("error opening log file\n");
@@ -59,8 +66,9 @@ int main()
     /*
      * Set up Weather Model Initialization run
      */
-    //const char * demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
-    const char * demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMBBox.tif";
+    char demFile[MAX_PATH_LEN];
+    //snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/fetch/DEMBBox.tif");
     const char * initializationMethod = "wxmodel";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
@@ -85,10 +93,13 @@ int main()
 
     /* timeListSize is technically used instead of the number of ninjas */
     //// will need to run fetch test to get wxstation data, there is no predownloaded data in the windninja/data folder for this case
-    const char * forecast = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/NOMADS-HRRR-CONUS-3-KM-DEMBBox.tif/20260429T2000/20260429T2000.zip";
+    /// so update the folder path accordingly for the fresh data.
+    /// will have to update the time list accordingly as well.
+    char forecast[MAX_PATH_LEN];
+    snprintf(forecast, sizeof(forecast), "%s%s", wnDataPath, "/../autotest/api/data/fetch/NOMADS-HRRR-CONUS-3-KM-DEMBBox.tif/20260504T2000/20260504T2000.zip");
     int timeListSize = 1;
-    ////const char* inputTimeList[1] = {"20260429T2000"};  // apparently wrong format
-    const char* inputTimeList[1] = {"2026-Apr-29 14:00:00 MDT"};
+    ////const char* inputTimeList[1] = {"20260504T2000"};  // apparently wrong format
+    const char* inputTimeList[1] = {"2026-May-04 14:00:00 MDT"};  // convert from UTC to MDT, 6 hrs back
 
     //const char * osTimeZone = "UTC";
     const char * osTimeZone = "America/Denver";

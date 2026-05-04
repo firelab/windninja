@@ -27,9 +27,10 @@
  *
  *****************************************************************************/
 #include "windninja.h"
-#include <stdio.h> //for printf and strcmp
-#include <string.h>
+#include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdbool.h>
+
+#define MAX_PATH_LEN 512
 
 /*TODO: 
  * Implement exhaustive tests for all wx_model_types for NinjaFetchForecast
@@ -51,11 +52,16 @@ int main()
         printf("NinjaInit: err = %d\n", err);
     }
 
+    // manually set your wnDataPath (makes it easier for setting paths and testing)
+    // must replace the "~/" part with your exact path
+    const char* wnDataPath = "~/src/wind/windninja/data";
+
     /*
      * Setting up a log file, for ninjaCom, if desired
      */
-    FILE* multiStream = NULL;
-    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
     if(multiStream == NULL)
     {
         printf("error opening log file\n");
@@ -78,7 +84,8 @@ int main()
     /*
      * Testing fetching from a DEM bounding box
      */
-    const char * demFileBBox = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMBBox.tif"; // output file name
+    char demFileBBox[MAX_PATH_LEN];
+    snprintf(demFileBBox, sizeof(demFileBBox), "%s%s", wnDataPath, "/../autotest/api/data/fetch/DEMBBox.tif"); // output file name
     char * fetch_type = "lcp"; // can be srtm, gmted, relief
     double resolution = 30.0; // 30 m resolution
     double boundsBox [] = {40.07, -104.0, 40.0, -104.07}; // Bounding box (north, east, south, west)
@@ -142,8 +149,10 @@ int main()
     int hour[2] = {2, 2};
     int minute[2] = {2, 2};
     int size = 2;
-    const char* output_path = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/";
-    const char* elevation_file = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
+    char output_path[MAX_PATH_LEN];
+    char elevation_file[MAX_PATH_LEN];
+    snprintf(output_path, sizeof(output_path), "%s%s", wnDataPath, "/../autotest/api/data/fetch/");
+    snprintf(elevation_file, sizeof(elevation_file), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
     const char* osTimeZone = "UTC";
     bool fetchLatestFlag = 0;  // set to 1 if you want the latestTime instead of the above time list
     double buffer = 10;  // distance around elevation file
@@ -165,7 +174,8 @@ int main()
     double adfPoint[] = {-104.0, 40.07}; // Point coordinates (longitude, latitude)
     double adfBuff[] = {1.5, 1.5}; // Buffer to store the elevation value
     double dfCellSize = 30.0; // Cell size in meters
-    char* pszDstFile = "/home/atw09001/src/wind/windninja/autotest/api/data/fetch/DEMpoint.tif";
+    char pszDstFile[MAX_PATH_LEN];
+    snprintf(pszDstFile, sizeof(pszDstFile), "%s%s", wnDataPath, "/../autotest/api/data/fetch/DEMpoint.tif");
     char* fetchType = "lcp";
     err = NinjaFetchDEMPoint(ninjaTools, adfPoint, adfBuff, units, dfCellSize, pszDstFile, fetchType, papszOptions);
     if(err != NINJA_SUCCESS)
