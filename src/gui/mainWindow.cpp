@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     state.setUi(ui);
     ui->massSolverCheckBox->setChecked(true);
     ui->treeWidget->setMouseTracking(true);
-    state.isMassSolverToggled = true;
+    state.updateSolverMethodologyState();
 
     lineNumber = 1;
 
@@ -338,21 +338,19 @@ void MainWindow::massSolverCheckBoxClicked()
     ui->stabilityCheckBox->setDisabled(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
-    AppState& state = AppState::instance();
-
-    if (state.isMomentumSolverToggled)
+    if(ui->momentumSolverCheckBox->isChecked())
     {
         ui->momentumSolverCheckBox->setChecked(false);
-        state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
     }
-    state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
         surfaceInput->updateMeshResolutionByUnits();
     }
+
     emit updateMetholodyState();
+    emit updateStabilityState();
 }
 
 void MainWindow::momentumSolverCheckBoxClicked()
@@ -361,29 +359,23 @@ void MainWindow::momentumSolverCheckBoxClicked()
     ui->stabilityCheckBox->setDisabled(true);
     ui->ninjafoamCaseGroupBox->setVisible(true);
 
-    AppState& state = AppState::instance();
-
-    if (state.isMassSolverToggled)
+    if(ui->massSolverCheckBox->isChecked())
     {
         ui->massSolverCheckBox->setChecked(false);
-        state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
     }
-    state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
         surfaceInput->updateMeshResolutionByUnits();
     }
+
     emit updateMetholodyState();
     emit updateStabilityState();
 }
 
 void MainWindow::diurnalCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-    state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
-
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
@@ -398,9 +390,6 @@ void MainWindow::diurnalCheckBoxClicked()
 
 void MainWindow::stabilityCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-    state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
-
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {

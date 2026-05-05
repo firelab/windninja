@@ -59,7 +59,7 @@ public slots:
     void updateTreeView();
 
 private slots:
-    void pointInitializationGroupBoxToggled(bool toggled);
+    void pointInitializationGroupBoxToggled();
     void pointInitializationDownloadDataButtonClicked();
     void weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged();
     void weatherStationDownloadBetweenDatesEndTimeDateTimeEditChanged();

@@ -77,38 +77,28 @@ void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
     }
 }
 
-void Outputs::googleEarthCheckBoxToggled(bool checked)
+void Outputs::googleEarthCheckBoxToggled()
 {
-    AppState& state = AppState::instance();
-    state.isGoogleEarthToggled = checked;
     emit updateGoogleState();
 }
 
-void Outputs::fireBehaviorGroupBoxToggled(bool checked)
+void Outputs::fireBehaviorGroupBoxToggled()
 {
-    AppState& state = AppState::instance();
-    state.isFireBehaviorToggled = checked;
     emit updateFireBehaviorState();
 }
 
-void Outputs::shapeFilesGroupBoxToggled(bool checked)
+void Outputs::shapeFilesGroupBoxToggled()
 {
-    AppState& state = AppState::instance();
-    state.isShapeFilesToggled = checked;
     emit updateShapeState();
 }
 
-void Outputs::geospatialPDFFilesGroupBoxToggled(bool checked)
+void Outputs::geospatialPDFFilesGroupBoxToggled()
 {
-    AppState& state = AppState::instance();
-    state.isGeoSpatialPDFFilesToggled = checked;
     emit updatePDFState();
 }
 
-void Outputs::VTKFilesCheckBoxClicked(bool checked)
+void Outputs::VTKFilesCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-    state.isVTKFilesToggled = checked;
     emit updateVTKState();
 }
 

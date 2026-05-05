@@ -62,17 +62,12 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
 }
 
-void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
+void PointInitializationInput::pointInitializationGroupBoxToggled()
 {
-    AppState& state = AppState::instance();
-
-    state.isPointInitializationToggled = toggled;
-    if (toggled)
+    if(ui->pointInitializationGroupBox->isChecked())
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelGroupBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
     emit updateState();

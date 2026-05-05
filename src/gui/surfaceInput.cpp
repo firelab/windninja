@@ -712,8 +712,6 @@ void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-
     bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
     QVector<QVector<QString>> displayData = fetchAllTimeZones(isShowAllTimeZonesSelected);
 

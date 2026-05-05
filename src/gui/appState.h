@@ -43,37 +43,25 @@ public:
     void setState();
 
     bool isSolverMethodologyValid = false;
-    bool isMassSolverToggled = false;
-    bool isMomentumSolverToggled = false;
 
     bool isInputValid = false;
     bool isSurfaceInputValid = false;
-    bool isDiurnalInputToggled = false;
-    bool isStabilityInputToggled = false;
 
     bool isWindInputValid = false;
-    bool isDomainAverageInitializationToggled = false;
     int DomainAvgTableNumRuns = 0;
     int DomainAvgTableNumZeroRuns = 0;
     bool isDomainAverageInitializationValid = false;
-    bool isPointInitializationToggled = false;
     bool isStationFileSelected = false;
     bool isStationFileSelectionValid = false;
     bool isPointInitializationValid = false;
-    bool isWeatherModelInitializationToggled = false;
     bool isWeatherModelForecastValid = false;
     bool isWeatherModelInitializationValid = false;
 
     bool isOutputValid = false;
-    bool isGoogleEarthToggled = false;
     bool isGoogleEarthValid = false;
-    bool isFireBehaviorToggled = false;
     bool isFireBehaviorValid = false;
-    bool isShapeFilesToggled = false;
     bool isShapeFilesValid = false;
-    bool isGeoSpatialPDFFilesToggled = false;
     bool isGeoSpatialPDFFilesValid = false;
-    bool isVTKFilesToggled = false;
     bool isVTKFilesValid = false;
 
     bool isSolverReady = false;

@@ -62,7 +62,7 @@ private slots:
     void weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected);
     void weatherModelTimeSelectAllButtonClicked();
     void weatherModelTimeSelectNoneButtonClicked();
-    void weatherModelGroupBoxToggled(bool toggled);
+    void weatherModelGroupBoxToggled();
     void weatherModelComboBoxCurrentIndexChanged(int index);
     void weatherModelDownloadFinished();
     void updateProgressMessage(const QString message);

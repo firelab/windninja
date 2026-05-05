@@ -482,19 +482,14 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     emit updateState();
 }
 
-void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
+void WeatherModelInput::weatherModelGroupBoxToggled()
 {
-    ui->rawWeatherModelOutputCheckBox->setEnabled(toggled);
+    ui->rawWeatherModelOutputCheckBox->setEnabled(ui->weatherModelGroupBox->isChecked());
 
-    AppState& state = AppState::instance();
-    state.isWeatherModelInitializationToggled = toggled;
-
-    if (state.isWeatherModelInitializationToggled)
+    if(ui->weatherModelGroupBox->isChecked())
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->pointInitializationGroupBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-        state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
     }
 
     emit updateState();

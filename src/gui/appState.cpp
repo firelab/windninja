@@ -65,7 +65,7 @@ void AppState::setState()
 
 void AppState::updateSolverMethodologyState()
 {
-    if (isMassSolverToggled)
+    if(ui->massSolverCheckBox->isChecked())
     {
         isSolverMethodologyValid = true;
         ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
@@ -75,7 +75,7 @@ void AppState::updateSolverMethodologyState()
         ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Not Selected");
     }
-    else if (isMomentumSolverToggled)
+    else if(ui->momentumSolverCheckBox->isChecked())
     {
         isSolverMethodologyValid = true;
         ui->treeWidget->topLevelItem(0)->setToolTip(1, "Conservation of Mass and Momentum Selected");
@@ -119,7 +119,7 @@ void AppState::updateSurfaceInputState()
 
 void AppState::updateDiurnalInputState()
 {
-    if (isDiurnalInputToggled)
+    if(ui->diurnalCheckBox->isChecked())
     {
         ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(1)->setToolTip(0, "Valid");
@@ -133,7 +133,7 @@ void AppState::updateDiurnalInputState()
 
 void AppState::updateStabilityInputState()
 {
-    if (ui->stabilityCheckBox->isChecked())
+    if(ui->stabilityCheckBox->isChecked())
     {
         ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(2)->setToolTip(0, "Valid");
@@ -147,7 +147,7 @@ void AppState::updateStabilityInputState()
 
 void AppState::updateDomainAverageInputState()
 {
-    if(isDomainAverageInitializationToggled)
+    if(ui->domainAverageGroupBox->isChecked())
     {
         if(DomainAvgTableNumRuns == 0)
         {
@@ -201,19 +201,19 @@ void AppState::updateDomainAverageInputState()
 
 void AppState::updatePointInitializationInputState()
 {
-    if (isPointInitializationToggled && isStationFileSelectionValid && isStationFileSelected)
+    if(ui->pointInitializationGroupBox->isChecked() && isStationFileSelectionValid && isStationFileSelected)
     {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Valid");
         isPointInitializationValid = true;
     }
-    else if(isPointInitializationToggled && !isStationFileSelected)
+    else if(ui->pointInitializationGroupBox->isChecked() && !isStationFileSelected)
     {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No Station File Selected");
         isPointInitializationValid = false;
     }
-    else if(isPointInitializationToggled && !isStationFileSelectionValid)
+    else if(ui->pointInitializationGroupBox->isChecked() && !isStationFileSelectionValid)
     {
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Conflicting Files Selected");
@@ -231,13 +231,13 @@ void AppState::updatePointInitializationInputState()
 
 void AppState::updateWeatherModelInputState()
 {
-    if (isWeatherModelInitializationToggled && isWeatherModelForecastValid)
+    if(ui->weatherModelGroupBox->isChecked() && isWeatherModelForecastValid)
     {
         isWeatherModelInitializationValid = true;
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Valid");
     }
-    else if (isWeatherModelInitializationToggled && !isWeatherModelForecastValid)
+    else if(ui->weatherModelGroupBox->isChecked() && !isWeatherModelForecastValid)
     {
         isWeatherModelInitializationValid = false;
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
@@ -284,7 +284,7 @@ void AppState::updateGoogleEarthOutputState()
 
 void AppState::updateFireBehaviorOutputState()
 {
-    if(isFireBehaviorToggled)
+    if(ui->fireBehaviorGroupBox->isChecked())
     {
         if(isSurfaceInputValid)
         {
@@ -313,7 +313,7 @@ void AppState::updateFireBehaviorOutputState()
 
 void AppState::updateShapeFilesOutputState()
 {
-    if(isShapeFilesToggled)
+    if(ui->shapeFilesGroupBox->isChecked())
     {
         if(isSurfaceInputValid)
         {
@@ -342,7 +342,7 @@ void AppState::updateShapeFilesOutputState()
 
 void AppState::updateGeoSpatialPDFFilesOutputState()
 {
-    if(isGeoSpatialPDFFilesToggled)
+    if(ui->geospatialPDFFilesGroupBox->isChecked())
     {
         if(isSurfaceInputValid)
         {
@@ -371,7 +371,7 @@ void AppState::updateGeoSpatialPDFFilesOutputState()
 
 void AppState::updateVTKFilesOutputState()
 {
-    if(isVTKFilesToggled)
+    if(ui->VTKFilesCheckBox->isChecked())
     {
         if(isSurfaceInputValid)
         {
