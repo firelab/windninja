@@ -90,9 +90,9 @@ public:
     ~MainWindow();
 
 signals:
+    void updateMetholodyState();
     void updateDirunalState();
     void updateStabilityState();
-    void updateMetholodyState();
     void updateProgressValueSignal(int run, int progress);
     void updateProgressMessageSignal(const QString &msg);
     void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);

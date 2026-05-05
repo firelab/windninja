@@ -57,6 +57,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->pastcastStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastStartDateTimeEditChanged);
     connect(ui->pastcastEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
+    connect(this, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -458,10 +459,14 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     if(timeList == NULL)
     {
         qDebug() << "NinjaGetWeatherModelTimeList: Failed to fill timeList";
+        state.isWeatherModelForecastValid = false;
+        emit updateState();
     }
     if(timeListSize == 0)
     {
         qDebug() << "NinjaGetWeatherModelTimeList: returned empty timeList";
+        state.isWeatherModelForecastValid = false;
+        emit updateState();
     }
 
     timeModel->clear();

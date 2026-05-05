@@ -134,12 +134,11 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
     connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
-    connect(weatherModelInput, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
     connect(webEngineView, &QWebEngineView::loadFinished, this, &MainWindow::readSettings);
 
+    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
     connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
     connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
-    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
     connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
     connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
@@ -458,7 +457,7 @@ void MainWindow::solveButtonClicked()
         qDebug() << "NinjaSetArmyComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
-    if (state.isDomainAverageInitializationValid)
+    if(state.isDomainAverageInitializationValid)
     {
         initializationMethod = "domain_average";
         QList<double> speeds;
@@ -526,7 +525,7 @@ void MainWindow::solveButtonClicked()
             }
         }
     }
-    else if (state.isPointInitializationValid)
+    else if(state.isPointInitializationValid)
     {
         initializationMethod = "point";
 
@@ -918,7 +917,7 @@ void MainWindow::solveButtonClicked()
             }
         }
     }
-    else //if (state.isWeatherModelInitializationValid)
+    else if(state.isWeatherModelInitializationValid)
     {
         QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
         int timeListSize = selectedIndexes.count();
@@ -949,6 +948,12 @@ void MainWindow::solveButtonClicked()
         {
             qDebug() << "NinjaMakeWeatherModelArmy ninjaErr =" << ninjaErr;
         }
+    }
+    else
+    {
+        ninjaErr = NINJA_E_INVALID;
+        qCritical() << "ERROR: Invalid initialization inputs to Solve().";
+        comMessageHandler("ERROR: Invalid initialization inputs to Solve().", this);
     }
 
     if(ninjaErr != NINJA_SUCCESS)
