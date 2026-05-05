@@ -125,8 +125,20 @@ int main()
      */
     const double outputResolution = 100.0;
     const char * units = "m";
-    const double width = 1.0;
-    const char * scaling = "equal_color";
+    const double clipAmount = 0.0;  // use values between 0.0 and 50.0
+    //const double clipAmount = 20.0;
+    const double lineWidth = 1.0;
+    //// some google earth specific variables
+    const char * scaling = "equal_interval";  // equivalent to "Uniform Range" in the gui
+    //const char * scaling = "equal_color";  // equivalent to "Equal Count" in the gui, the default
+    const char * colorScheme = "default";  // default (ROYGB), oranges, blues, greens, pinks, magic_beans, pink_to_green, ROPGW
+    const bool scaleVectors = false;  // enable vector scaling based on wind speed
+    const bool useConsistentColorScale = false;  // google earth, use the same color scale across multi-runs
+    //// some pdf specific variables
+    const int baseMap = 0; // 0 is "topofire", 1 is "hillshade". the connection goes down a lot for topofire, though it looks a lot better
+    const double pdfHeight = 8.5;  // inches
+    const double pdfWidth = 11.0;  // inches
+    const double pdfDpi = 150;
     char outputPath[MAX_PATH_LEN];
     snprintf(outputPath, sizeof(outputPath), "%s%s", wnDataPath, "/../autotest/api/data/output");
     const bool outputFlag = 1;
@@ -168,6 +180,12 @@ int main()
     /*
      * Prepare the army
      */
+    // farsite atm file only works if very specific units. outputs in mph at 20 feet, or outputs in kph at 10 meters.
+    //err = NinjaSetAsciiAtmFile(ninjaArmy, outputFlag, papszOptions);
+    //if(err != NINJA_SUCCESS)
+    //{
+    //    printf("NinjaSetAsciiAtmFile: err = %d\n", err);
+    //}
     for(unsigned int i=0; i<numNinjas; i++)
     {
       /*
@@ -196,25 +214,13 @@ int main()
       {
         printf("NinjaSetPosition: err = %d\n", err);
       }
-    
+
       err = NinjaSetInputWindHeight(ninjaArmy, i, height, heightUnits, papszOptions);
       if(err != NINJA_SUCCESS)
       {
         printf("NinjaSetInputWindHeight: err = %d\n", err);
       }
-    
-      err = NinjaSetOutputWindHeight(ninjaArmy, i, height, heightUnits, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-        printf("NinjaSetOutputWindHeight: err = %d\n", err);
-      }
-    
-      err = NinjaSetOutputSpeedUnits(ninjaArmy, i, speedUnits, papszOptions);
-      if(err != NINJA_SUCCESS)
-      {
-        printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
-      }
-    
+
       err = NinjaSetDiurnalWinds(ninjaArmy, i, diurnalFlag, papszOptions);
       if(err != NINJA_SUCCESS)
       {
@@ -274,6 +280,24 @@ int main()
           printf("NinjaSetOutputPath: err = %d\n", err);
       }
 
+      err = NinjaSetOutputWindHeight(ninjaArmy, i, height, heightUnits, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetOutputWindHeight: err = %d\n", err);
+      }
+
+      err = NinjaSetOutputSpeedUnits(ninjaArmy, i, speedUnits, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetOutputSpeedUnits: err = %d\n", err);
+      }
+
+      err = NinjaSetOutputBufferClipping(ninjaArmy, i, clipAmount, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetOutputBufferClipping: err = %d\n", err);
+      }
+
       /* Google output (.kmz) */
       err = NinjaSetGoogOutFlag(ninjaArmy, i, outputFlag, papszOptions);
       if(err != NINJA_SUCCESS)
@@ -281,22 +305,34 @@ int main()
           printf("NinjaSetGoogOutFlag: err = %d\n", err);
       }
 
-      err = NinjaSetGoogResolution (ninjaArmy, i, outputResolution, units, papszOptions);
+      err = NinjaSetGoogResolution(ninjaArmy, i, outputResolution, units, papszOptions);
       if(err != NINJA_SUCCESS)
       {
           printf("NinjaSetGoogResolution: err = %d\n", err);
       }
 
-      err = NinjaSetGoogSpeedScaling (ninjaArmy, i, scaling, papszOptions);
+      err = NinjaSetGoogSpeedScaling(ninjaArmy, i, scaling, papszOptions);
       if(err != NINJA_SUCCESS)
       {
           printf("NinjaSetGoogSpeedScaling: err = %d\n", err);
       }
 
-      err = NinjaSetGoogLineWidth (ninjaArmy, i, width, papszOptions);
+      err = NinjaSetGoogLineWidth(ninjaArmy, i, lineWidth, papszOptions);
       if(err != NINJA_SUCCESS)
       {
           printf("NinjaSetGoogLineWidth: err = %d\n", err);
+      }
+
+      err = NinjaSetGoogColor(ninjaArmy, i, colorScheme, scaleVectors, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGoogColor: err = %d\n", err);
+      }
+
+      err = NinjaSetGoogConsistentColorScale(ninjaArmy, i, useConsistentColorScale, numNinjas, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGoogConsistentColorScale: err = %d\n", err);
       }
 
       /* Shapefile output (.shp) */
@@ -319,12 +355,61 @@ int main()
           printf("NinjaSetAsciiOutFlag: err = %d\n", err);
       }
 
+      err = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetAsciiAaigridOutFlag: err = %d\n", err);
+      }
+
+      err = NinjaSetAsciiProjOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetAsciiProjOutFlag: err = %d\n", err);
+      }
+
       err = NinjaSetAsciiResolution(ninjaArmy, i, outputResolution, units, papszOptions);
       if(err != NINJA_SUCCESS)
       {
           printf("NinjaSetAsciiResolution: err = %d\n", err);
       }
-      
+
+      /* pdf output (.pdf) */
+      err = NinjaSetPDFOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetPDFOutFlag: err = %d\n", err);
+      }
+
+      err = NinjaSetPDFLineWidth(ninjaArmy, i, lineWidth, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetPDFLineWidth: err = %d\n", err);
+      }
+
+      err = NinjaSetPDFBaseMap(ninjaArmy, i, baseMap, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetPDFBaseMap: err = %d\n", err);
+      }
+
+      err = NinjaSetPDFDEM(ninjaArmy, i, demFile, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetPDFDEM: err = %d\n", err);
+      }
+
+      err = NinjaSetPDFSize(ninjaArmy, i, pdfHeight, pdfWidth, pdfDpi, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetPDFSize: err = %d\n", err);
+      }
+
+      err = NinjaSetPDFResolution(ninjaArmy, i, outputResolution, units, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetPDFResolution: err = %d\n", err);
+      }
+
       /* VKT output (.vkt) */
       err = NinjaSetVtkOutFlag(ninjaArmy, i, outputFlag, papszOptions);
       if(err != NINJA_SUCCESS)

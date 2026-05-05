@@ -411,7 +411,7 @@ int PointInitializationInput::fetchStationByName(NinjaToolsH* ninjaTools,
 
     if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaFetchStationFromBbox: ninjaErr =" << ninjaErr;
+        qDebug() << "NinjaFetchStationByName: ninjaErr =" << ninjaErr;
     }
 
     return ninjaErr;

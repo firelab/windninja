@@ -88,21 +88,61 @@ int main()
     //const double meshResolution = 300.0;
     const char * meshResolutionUnits = "m";
 
+    //const char * osTimeZone = "UTC";
+    const char * osTimeZone = "America/Denver";
+
     /* inputs that can vary among ninjas in an army */
     const char * speedUnits = "mps";
 
+
     /* timeListSize is technically used instead of the number of ninjas */
-    //// will need to run fetch test to get wxstation data, there is no predownloaded data in the windninja/data folder for this case
+    //// will need to run test_capi_fetching.c to get wxstation data, there is no predownloaded data in the windninja/data folder for this case
     /// so update the folder path accordingly for the fresh data.
     /// will have to update the time list accordingly as well.
     char forecast[MAX_PATH_LEN];
-    snprintf(forecast, sizeof(forecast), "%s%s", wnDataPath, "/../autotest/api/data/fetch/NOMADS-HRRR-CONUS-3-KM-DEMBBox.tif/20260504T2000/20260504T2000.zip");
-    int timeListSize = 1;
-    ////const char* inputTimeList[1] = {"20260504T2000"};  // apparently wrong format
-    const char* inputTimeList[1] = {"2026-May-04 14:00:00 MDT"};  // convert from UTC to MDT, 6 hrs back
+    snprintf(forecast, sizeof(forecast), "%s%s", wnDataPath, "/../autotest/api/data/fetch/NOMADS-HRRR-CONUS-3-KM-DEMBBox.tif/20260504T2300/20260504T2300.zip");
+    //snprintf(forecast, sizeof(forecast), "%s%s", wnDataPath, "/../autotest/api/data/fetch/PASTCAST-GCP-HRRR-CONUS-3-KM-DEMBBox.tif/20240202T0200/20240202T0200.zip");
 
-    //const char * osTimeZone = "UTC";
-    const char * osTimeZone = "America/Denver";
+    /*//// manually set a time from the file (needs updated each time)
+    int timeListSize = 1;
+    ////const char* inputTimeList[1] = {"20260504T2300"};  // apparently wrong format
+    const char* inputTimeList[1] = {"2026-May-04 17:00:00 MDT"};  // convert from UTC to MDT, 6 hrs back*/
+
+    //// or get the full time list read from the file, and pick indices
+    //// yeah, picking indices can be a pain without printing out the list, making a new list from specific times is also a pain
+    //// so this is meant more to just use the whole time list, with a debug option to print out the full list
+    //// this involves setting up a ninjaTools instance
+    // Initialize ninjaTools
+    NinjaToolsH* ninjaTools = NinjaMakeTools();
+    // Customize the ninja communication
+    err = NinjaSetToolsMultiComStream(ninjaTools, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetToolsMultiComStream: err = %d\n", err);
+    }
+    // now get the list of times
+    int timeListSize = 0;
+    const char **inputTimeList = NinjaGetWeatherModelTimeList(ninjaTools, &timeListSize, forecast, osTimeZone);
+    if(inputTimeList == NULL)
+    {
+        printf("NinjaGetWeatherModelTimeList: Failed to fill timeList\n");
+    }
+    if(timeListSize == 0)
+    {
+        printf("NinjaGetWeatherModelTimeList: returned empty timeList\n");
+    }
+    for(unsigned int i = 0; i < timeListSize; i++)
+    {
+        printf("timeList[%d] = '%s'\n", i, inputTimeList[i]);
+    }
+    // not yet needed/implemented in the code, but it should be.
+    // if ninjaTools was used/generated, clean it up afterwards
+    //err = NinjaDestroyTools(ninjaTools, papszOptions);
+    //if(err != NINJA_SUCCESS)
+    //{
+    //    printf("NinjaDestroyTools: err = %d\n", ninjaErr);
+    //}
+
 
     bool matchedPoints = true;  // for point initialization, but currently required as an input to SetInitializationMethod(). Should the match points pointInitialization algorythm be run, or should it just run as a domainAvgRun on the input wind field. ALWAYS set to true unless you know what you are doing.
 

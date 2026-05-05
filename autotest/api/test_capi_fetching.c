@@ -83,6 +83,7 @@ int main()
 
     /*
      * Testing fetching from a DEM bounding box
+     * TODO: implement nan filling of the result, if needed.
      */
     char demFileBBox[MAX_PATH_LEN];
     snprintf(demFileBBox, sizeof(demFileBBox), "%s%s", wnDataPath, "/../autotest/api/data/fetch/DEMBBox.tif"); // output file name
@@ -141,14 +142,38 @@ int main()
     }
 
     /*
+     * Testing fetching for a Pastcast file
+     */
+    const char* wx_model_type_pastcast = "PASTCAST-GCP-HRRR-CONUS-3-KM";
+    const char* osTimeZone_pastcast = "UTC";
+    int startYear = 2024;
+    int startMonth = 2;
+    int startDay = 2;  // UTC time
+    int startHour = 2;  // UTC time
+    int endYear = 2024;
+    int endMonth = 2;
+    int endDay = 2;  // UTC time
+    int endHour = 2;  // UTC time
+    err = NinjaFetchArchiveWeatherData(ninjaTools, wx_model_type_pastcast, demFileForecast, osTimeZone_pastcast, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);//, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFetchArchiveWeatherData: err = %d\n", err);
+    } else
+    {
+        printf("NinjaFetchArchiveWeatherData: success\n");
+    }
+
+    /*
      * Testing fetching station data from a geotiff file.
      */
+    // always lists of size 2 for these methods
+    // if doing a latestTime fetch, the fetch just ignores the later times in the list
+    int size = 2;
     int year[2] = {2024, 2024};
     int month[2] = {2, 2};
-    int day[2] = {2, 2};
-    int hour[2] = {2, 2};
+    int day[2] = {2, 2};  // UTC time
+    int hour[2] = {2, 2};  // UTC time
     int minute[2] = {2, 2};
-    int size = 2;
     char output_path[MAX_PATH_LEN];
     char elevation_file[MAX_PATH_LEN];
     snprintf(output_path, sizeof(output_path), "%s%s", wnDataPath, "/../autotest/api/data/fetch/");
@@ -169,7 +194,54 @@ int main()
     }
 
     /*
+     * Testing fetching station data from a list of station IDs.
+     * use the helper functions to generate the desired list of times for this fetching method
+     * so convert from local time to UTC time
+     *
+     * hrm, I like that it comes out with the same times as above
+     * but I DON'T like that the filenames come out different, for UTC vs local time. a future TODO in sorting this out.
+     */
+    // always lists of size 2 for these methods
+    // if doing a latestTime fetch, the fetch just ignores the later times in the list
+    const char* stationIds = "KMSO,BLMM8,PNTM8,FINM8";
+    ////const char* osTimeZone_fromId = "UTC";
+    const char* osTimeZone_fromId = "America/Denver";
+    //int inSize = 2;
+    int inYear[2] = {2024, 2024};
+    int inMonth[2] = {2, 2};
+    int inDay[2] = {1, 1};  // local time
+    int inHour[2] = {19, 19};  // local time, 7 hrs earlier
+    //int inDay[2] = {2, 2};  // UTC time
+    //int inHour[2] = {2, 2};  // UTC time
+    int inMinute[2] = {2, 2};
+    int outSize = 2;
+    // make sure the outputs have the same size as outSize.
+    int outYear[2], outMonth[2], outDay[2], outHour[2], outMinute[2];
+    err = NinjaGetTimeList(ninjaTools, inYear, inMonth, inDay, inHour, inMinute, outYear, outMonth, outDay, outHour, outMinute, outSize, osTimeZone_fromId);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaGetTimeList: err = %d\n", err);
+    }
+    if(fetchLatestFlag == 0)
+    {
+        err = NinjaCheckTimeDuration(ninjaTools, outYear, outMonth, outDay, outHour, outMinute, outSize, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaCheckTimeDuration: err = %d\n", err);
+        }
+    }
+    err = NinjaFetchStationByName(ninjaTools, outYear, outMonth, outDay, outHour, outMinute, outSize, elevation_file, stationIds, osTimeZone_fromId, fetchLatestFlag, output_path, locationFileFlag, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFetchStationByName: err = %d\n", err);
+    } else
+    {
+        printf("NinjaFetchStationByName: success\n");
+    }
+
+    /*
      * Testing fetching from a DEM point
+     * TODO: implement nan filling of the result, if needed.
      */
     double adfPoint[] = {-104.0, 40.07}; // Point coordinates (longitude, latitude)
     double adfBuff[] = {1.5, 1.5}; // Buffer to store the elevation value

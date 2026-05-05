@@ -87,41 +87,23 @@ int main()
     //const double meshResolution = 300.0;
     const char * meshResolutionUnits = "m";
 
-    /* timeListSize is technically used instead of the number of ninjas */
-    /* but timeListSize is technically used more like a numTimeSteps, it can be less than or equal to the size of the time arrays */
-    //int timeListSize = numNinjas;
-    int timeListSize = 2;
-    //int timeListSize = 1;  // make sure to only use 1 if doing latestTime data, or it tries to converge on some kind of NO_DATA situation or something.
+    char demFile[MAX_PATH_LEN];
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
+    //char* osTimeZone = "UTC";
+    char* osTimeZone = "America/Denver";
+    bool matchPointsFlag = 1;  // needed to match the station data, or else you only get a domainAverageRun of the initial wind field constructed from the station data
 
-    //// the fetched data times, hrm the run seems to be way stricter than the fetch for building the times
-    //// will need to run fetch test to get station data
-    /// so update the folder path accordingly for the fresh data.
-    /// the time list seems to stay pretty stable, latestTime just affects folder paths/names.
-    //int year[2] = {2024, 2024};
-    //int month[2] = {2, 2};
-    //int day[2] = {2, 2};
-    //int hour[2] = {2, 2};  // local time
-    ////int hour[2] = {8, 8};  // UTC time
-    //int minute[2] = {0, 59};
 
-    //// the /windninja/data/ times, predownloaded data.
-    int year[2] = {2018, 2018};
-    int month[2] = {6, 6};
-    //int day[2] = {20, 21};  // local time
-    //int hour[2] = {21, 21};  // local time
-    int day[2] = {21, 22}; // UTC time
-    int hour[2] = {3, 3};  // UTC time
-    int minute[2] = {28, 28};
-
-    ////// will need to run fetch test to get wxstation data, or grab the data from the windninja/data folder (that seems easier)
-    //// hrm, doesn't seem to like the station location files, like the cli does
+    /* set the number and names of the station files to use */
+    ////// use predownloaded WINDNINJA_DATA files
+    //// try the station location files
+    //// hrm, the C-API doesn't seem to like the station location files, like the cli does
     ////int numStationFiles = 1;
     ////char station_path0[MAX_PATH_LEN];
-    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/missoula_valley_stations_6.csv.csv");  // latestTime
-    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/missoula_valley_stations_6.csv.csv");  // timeSeries
     ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv");  // latestTime
     ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv");  // timeSeries
     ////const char* station_paths[1] = {station_path0};
+    //// standard setup for a latestTime or timeSeries
     int numStationFiles = 4;
     char station_path0[MAX_PATH_LEN];
     char station_path1[MAX_PATH_LEN];
@@ -138,7 +120,27 @@ int main()
     //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv");
     //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv");
     const char* station_paths[4] = {station_path0, station_path1, station_path2, station_path3};
-    /// the fetched data
+
+    ////// use files fetched from test_capi_fetching.c
+    ////// will need to run test_capi_fetching.c to get wxstation data, and adjust the path names accordingly
+    //// hrm, the C-API doesn't seem to like the station location files, like the cli does
+    ////int numStationFiles = 1;
+    ////char station_path0[MAX_PATH_LEN];
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/missoula_valley_stations_6.csv.csv");  // latestTime
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/missoula_valley_stations_6.csv.csv");  // timeSeries
+    ////const char* station_paths[1] = {station_path0};
+    /// latestTime
+    //int numStationFiles = 4;
+    //char station_path0[MAX_PATH_LEN];
+    //char station_path1[MAX_PATH_LEN];
+    //char station_path2[MAX_PATH_LEN];
+    //char station_path3[MAX_PATH_LEN];
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/KMSO-2026-05-04_1840-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/BLMM8-2026-05-04_1840-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/PNTM8-2026-05-04_1840-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/FINM8-2026-05-04_1840-3.csv");
+    //const char* station_paths[4] = {station_path0, station_path1, station_path2, station_path3};
+    /// timeSeries
     //int numStationFiles = 6;
     //char station_path0[MAX_PATH_LEN];
     //char station_path1[MAX_PATH_LEN];
@@ -146,14 +148,6 @@ int main()
     //char station_path3[MAX_PATH_LEN];
     //char station_path4[MAX_PATH_LEN];
     //char station_path5[MAX_PATH_LEN];
-    /// latestTime
-    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/KMSO-2026-05-04_1530-0.csv");
-    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/BLMM8-2026-05-04_1530-1.csv");
-    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/PNTM8-2026-05-04_1530-2.csv");
-    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/FINM8-2026-05-04_1530-3.csv");
-    //snprintf(station_path4, sizeof(station_path4), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/NINM8-2026-05-04_1530-4.csv");
-    //snprintf(station_path5, sizeof(station_path5), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1530-missoula_valley/TT350-2026-05-04_1530-5.csv");
-    /// timeSeries
     //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/KMSO-2024-02-02_0202-2024-02-02_0202-0.csv");
     //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/BLMM8-2024-02-02_0202-2024-02-02_0202-1.csv");
     //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/PNTM8-2024-02-02_0202-2024-02-02_0202-2.csv");
@@ -162,11 +156,137 @@ int main()
     //snprintf(station_path5, sizeof(station_path5), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/MOMM8-2024-02-02_0202-2024-02-02_0202-5.csv");
     //const char* station_paths[6] = {station_path0, station_path1, station_path2, station_path3, station_path4, station_path5};
 
-    char demFile[MAX_PATH_LEN];
-    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
-    //char* osTimeZone = "UTC";
-    char* osTimeZone = "America/Denver";
-    bool matchPointsFlag = 1;  // needed to match the station data, or else you only get a domainAverageRun of the initial wind field constructed from the station data
+
+    /* set the times to be used from/with the station files */
+    /* timeListSize is technically used instead of the number of ninjas */
+    /* but timeListSize is technically used more like a numTimeSteps, it can be less than or equal to the size of the time arrays */
+    /* to do a latestTime simulation, instead of a timeSeries, use a timeListSize of 1. */
+    ////int timeListSize = numNinjas;
+    int timeListSize = 2;
+    //int timeListSize = 1;  // make sure to only use 1 if doing latestTime data, or it tries to converge on some kind of NO_DATA situation or something.
+
+    //// use predownloaded WINDNINJA_DATA files and times
+    //int year[2] = {2018, 2018};
+    //int month[2] = {6, 6};
+    ////int day[2] = {20, 21};  // local time
+    ////int hour[2] = {21, 21};  // local time
+    //int day[2] = {21, 22}; // UTC time
+    //int hour[2] = {3, 3};  // UTC time, 6 hrs later
+    //int minute[2] = {28, 28};
+
+    //// use fetched data times
+    //// will need to run test_capi_fetching.c to get station data
+    //// so update the folder path accordingly for the fresh data.
+    ////
+    //// hrm the run seems to be way stricter than the fetch for building the times
+    //// have to use a narrower set of times than the download
+    ////
+    //// the time list seems to stay pretty stable, latestTime just affects folder paths/names
+    //// so probably don't need to edit this list of times after all.
+    //int year[2] = {2024, 2024};
+    //int month[2] = {2, 2};
+    ////int day[2] = {1, 1};  // local time
+    ////int hour[2] = {19, 19};  // local time, 7 hrs earlier
+    //int day[2] = {2, 2};  // UTC time
+    //int hour[2] = {2, 2};  // UTC time
+    //int minute[2] = {0, 59};
+
+
+    //// or even better, generate your own list of times, using the helper functions
+    //// this involves setting up a ninjaTools instance
+    /// use predownloaded WINDNINJA_DATA files and times
+    int startYear = 2018;
+    int startMonth = 6;
+    int startDay = 20;  // local time
+    int startHour = 21;  // local time
+    //int startDay = 21;  // UTC time
+    //int startHour = 3;  // UTC time, 6 hrs later
+    int startMinute = 28;
+    int stopYear = 2018;
+    int stopMonth = 6;
+    int stopDay = 21;  // local time
+    int stopHour = 21;  // local time
+    //int stopDay = 22;  // UTC time
+    //int stopHour = 3;  // UTC time, 6 hrs later
+    int stopMinute = 28;
+    /// use fetched data times (for files fetched from test_capi_fetching.c)
+    /// looks like the fetch was in UTC time, but these helper functions require local time as input
+    //int startYear = 2024;
+    //int startMonth = 2;
+    //int startDay = 1;  // local time
+    //int startHour = 19;  // local time, 7 hrs earlier
+    ////int startDay = 2;  // UTC time
+    ////int startHour = 2;  // UTC time
+    //int startMinute = 0;
+    //int stopYear = 2024;
+    //int stopMonth = 2;
+    //int stopDay = 1;  // local time
+    //int stopHour = 19;  // local time, 7 hrs earlier
+    ////int stopDay = 2;  // UTC time
+    ////int stopHour = 2;  // UTC time
+    //int stopMinute = 59;
+
+    NinjaToolsH* ninjaTools = NULL;
+    /*
+     * Initialize ninjaTools
+     */
+    ninjaTools = NinjaMakeTools();
+    /*
+     * Customize the ninja communication
+     */
+    err = NinjaSetToolsMultiComStream(ninjaTools, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetToolsMultiComStream: err = %d\n", err);
+    }
+
+    // MUST USE THE SAME or smaller SIZE AS timeListSize, or you get ERRORS
+    int year[2];
+    int month[2];
+    int day[2];
+    int hour[2];
+    int minute[2];
+    if(timeListSize == 1)
+    {
+        int outYear;
+        int outMonth;
+        int outDay;
+        int outHour;
+        int outMinute;
+        err = NinjaGenerateSingleTimeObject(ninjaTools, startYear, startMonth, startDay, startHour, startMinute, osTimeZone, &outYear, &outMonth, &outDay, &outHour, &outMinute);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaGenerateSingleTimeObject: err = %d\n", err);
+        }
+
+        year[0] = outYear;
+        month[0] = outMonth;
+        day[0] = outDay;
+        hour[0] = outHour;
+        minute[0] = outMinute;
+    }
+    else
+    {
+        int inYears[2] = {startYear, stopYear};
+        int inMonths[2] = {startMonth, stopMonth};
+        int inDays[2] = {startDay, stopDay};
+        int inHours[2] = {startHour, stopHour};
+        int inMinutes[2] = {startMinute, stopMinute};
+        err = NinjaGetTimeList(ninjaTools, inYears, inMonths, inDays, inHours, inMinutes, year, month, day, hour, minute, timeListSize, osTimeZone);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaGetTimeList: err = %d\n", err);
+        }
+    }
+
+    // not yet needed/implemented in the code, but it should be.
+    // if ninjaTools was used/generated, clean it up afterwards
+    //err = NinjaDestroyTools(ninjaTools, papszOptions);
+    //if(err != NINJA_SUCCESS)
+    //{
+    //    printf("NinjaDestroyTools: err = %d\n", ninjaErr);
+    //}
+
 
     /*
      * Initialize the army
