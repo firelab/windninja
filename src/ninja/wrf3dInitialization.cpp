@@ -271,7 +271,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
+            throw std::runtime_error("Could not get NETCDF variable '"+var3dList[i]+"' from forecast file, bad forecast file.");
         }
 
         CPLDebug("WX_MODEL_INITIALIZATION", "var3dList[i] = %s", var3dList[i].c_str());
