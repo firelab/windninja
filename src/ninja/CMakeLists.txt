@@ -135,7 +135,7 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${GDAL_LIBRARY} 
               ${CURL_LIBRARIES}
               ${Boost_LIBRARIES}
-              shapelib::shp)
+              ${SHAPELIB_LIBRARY})
 
 
 include_directories(${NINJA_INCLUDES})
@@ -143,7 +143,7 @@ include_directories(${NINJA_INCLUDES})
 if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
     add_library(WindNinjadll SHARED ${NINJA_SOURCES})
-    target_link_libraries(WindNinjadll PRIVATE GDAL::GDAL ${LINK_LIBS})
+    target_link_libraries(WindNinjadll PRIVATE ${LINK_LIBS})
     target_compile_definitions(WindNinjadll
         PUBLIC 
             WIN32_LEAN_AND_MEAN
