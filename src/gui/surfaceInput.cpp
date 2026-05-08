@@ -401,6 +401,8 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
         break;
     case 1:
         fetchType = "gmted";
+        ////resolution = fetch->GetXRes() * 111325;  // convert from lat/lon to m. Equals 0.00208333 * 111325 = 231.927 m.
+        resolution = 231.927;  // m
         break;
     case 2:
         fetchType = "lcp";
