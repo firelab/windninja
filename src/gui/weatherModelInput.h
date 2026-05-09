@@ -60,6 +60,7 @@ public slots:
 private slots:
     void weatherModelDownloadButtonClicked();
     void weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected);
+    void weatherModelTimeTreeViewItemSelectionChanged(const QItemSelection &selected);
     void weatherModelTimeSelectAllButtonClicked();
     void weatherModelTimeSelectNoneButtonClicked();
     void weatherModelGroupBoxToggled();

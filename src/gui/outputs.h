@@ -34,6 +34,10 @@ private slots:
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void meshResolutionSpinBoxValueChanged(double value);
     void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
+    void googleEarthMeshResolutionSpinBoxValueChanged();
+    void fireBehaviorMeshResolutionSpinBoxValueChanged();
+    void shapeFilesMeshResolutionSpinBoxValueChanged();
+    void geospatialPDFFilesMeshResolutionSpinBoxValueChanged();
 
 private:
     Ui::MainWindow *ui;

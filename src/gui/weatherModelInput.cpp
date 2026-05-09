@@ -423,17 +423,19 @@ void WeatherModelInput::updateTreeView()
     timeHeader->setVisible(false);
 
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
+    connect(ui->weatherModelTimeTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelTimeTreeViewItemSelectionChanged);
 }
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
 {
     AppState& state = AppState::instance();
+    state.isWeatherModelFileSelected = false;
+    state.isWeatherModelForecastValid = false;
 
-    if (selected.indexes().empty())
+    if(selected.indexes().empty())
     {
-        state.isWeatherModelForecastValid = false;
+        state.isWeatherModelFileSelected = false;
         emit updateState();
-
         return;
     }
 
@@ -443,18 +445,17 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     {
         timeModel->clear();
 
-        state.isWeatherModelForecastValid = false;
+        state.isWeatherModelFileSelected = false;
         emit updateState();
-
         return;
     }
-
-    state.isWeatherModelForecastValid = true;
+    state.isWeatherModelFileSelected = true;
 
     std::string modelFilePath = fileModel->filePath(index).toStdString();
     std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
     int timeListSize = 0;
 
+    state.isWeatherModelForecastValid = true;
     const char **timeList = NinjaGetWeatherModelTimeList(ninjaTools, &timeListSize, modelFilePath.c_str(), timeZone.c_str());
     if(timeList == NULL)
     {
@@ -482,6 +483,19 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFreeWeatherModelTimeList: ninjaErr=" << ninjaErr;
+    }
+
+    emit updateState();
+}
+
+void WeatherModelInput::weatherModelTimeTreeViewItemSelectionChanged(const QItemSelection &selected)
+{
+    AppState& state = AppState::instance();
+
+    state.isWeatherModelTimeSelected = true;
+    if(selected.indexes().empty())
+    {
+        state.isWeatherModelTimeSelected = false;
     }
 
     emit updateState();

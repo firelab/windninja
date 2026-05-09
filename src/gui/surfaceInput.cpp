@@ -434,6 +434,9 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
+    AppState& state = AppState::instance();
+    state.surfaceInputFileLoadSuccess = false;
+
     webEngineView->page()->runJavaScript("stopRectangleDrawing();");
 
     QString fullPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
@@ -457,6 +460,11 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
         cornerStrs << QString::number(DEMCorners[i], 'f', 8);
     QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
     webEngineView->page()->runJavaScript(js);
+
+    state.GDALXSize = GDALXSize;
+    state.GDALYSize = GDALYSize;
+    state.GDALCellSize = GDALCellSize;
+    state.surfaceInputFileLoadSuccess = true;
 
     emit updateState();
     emit updateTreeView();
