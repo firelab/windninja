@@ -164,9 +164,9 @@ void AppState::updateDomainAverageInputState()
     {
         if(!isSurfaceInputValid)
         {
+            isDomainAverageInitializationValid = false;
             ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Check Surface Input");
-            isDomainAverageInitializationValid = false;
         }
         else
         {
@@ -174,38 +174,38 @@ void AppState::updateDomainAverageInputState()
             {
                 if(ui->diurnalCheckBox->isChecked() == false)
                 {
+                    isDomainAverageInitializationValid = false;
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
-                    isDomainAverageInitializationValid = false;
                 }
                 else // if(ui->diurnalCheckBox->isChecked() == true)
                 {
+                    isDomainAverageInitializationValid = true;
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
-                    isDomainAverageInitializationValid = true;
                 }
             }
             else // if(DomainAvgTableNumRuns != 0)
             {
                 if(DomainAvgTableNumZeroRuns == 0)
                 {
+                    isDomainAverageInitializationValid = true;
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs");
-                    isDomainAverageInitializationValid = true;
                 }
                 else // if(DomainAvgTableNumZeroRuns != 0)
                 {
                     if(ui->diurnalCheckBox->isChecked() == true)
                     {
+                        isDomainAverageInitializationValid = true;
                         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
                         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
-                        isDomainAverageInitializationValid = true;
                     }
                     else // if(ui->diurnalCheckBox->isChecked() == false)
                     {
+                        isDomainAverageInitializationValid = false;
                         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
                         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, but detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs without diurnal being active");
-                        isDomainAverageInitializationValid = false;
                     }
                 }
             }
@@ -213,9 +213,9 @@ void AppState::updateDomainAverageInputState()
     }
     else
     {
+        isDomainAverageInitializationValid = false;
         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Not selected");
-        isDomainAverageInitializationValid = false;
     }
 
     updateInputState();
@@ -227,43 +227,43 @@ void AppState::updatePointInitializationInputState()
     {
         if(!isSurfaceInputValid)
         {
+            isPointInitializationValid = false;
             ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Check Surface Input");
-            isPointInitializationValid = false;
         }
         else
         {
             if(!isStationFileSelected)
             {
+                isPointInitializationValid = false;
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No Station files selected");
-                isPointInitializationValid = false;
             }
             else if(!isStationDataValid)
             {
+                isPointInitializationValid = false;
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Invalid Station data detected");
-                isPointInitializationValid = false;
             }
             else if(!isStationFileSelectionValid)
             {
+                isPointInitializationValid = false;
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Mismatched file types selected, cannot proceed");
-                isPointInitializationValid = false;
             }
             else
             {
+                isPointInitializationValid = true;
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
                 ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Valid");
-                isPointInitializationValid = true;
             }
         }
     }
     else
     {
+        isPointInitializationValid = false;
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Not selected");
-        isPointInitializationValid = false;
     }
 
     updateInputState();
