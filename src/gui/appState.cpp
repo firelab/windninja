@@ -238,9 +238,9 @@ void AppState::updatePointInitializationInputState()
     {
         if(!isSurfaceInputValid)
         {
-            isGoogleEarthValid = false;
-            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Check Surface Input");
+            ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Check Surface Input");
+            isPointInitializationValid = false;
         }
         else
         {
@@ -286,9 +286,9 @@ void AppState::updateWeatherModelInputState()
     {
         if(!isSurfaceInputValid)
         {
-            isGoogleEarthValid = false;
-            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Check Surface Input");
+            isWeatherModelInitializationValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Check Surface Input");
         }
         else
         {
