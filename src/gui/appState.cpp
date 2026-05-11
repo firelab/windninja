@@ -577,49 +577,29 @@ void AppState::updateInputState()
     }
     else
     {
-        QVector<QString> invalidCases;
-        if(ui->diurnalCheckBox->isChecked() && !isDiurnalValid)
-        {
-            invalidCases.append(QString("Diurnal Input"));
-        }
-        if(ui->stabilityCheckBox->isChecked() && !isStabilityValid)
-        {
-            invalidCases.append(QString("Stability Input"));
-        }
         if(!isWindInputValid)
         {
-            invalidCases.append(QString("Wind Input"));
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Wind Input");
         }
-
-        if(invalidCases.size() == 0)
+        else if(ui->diurnalCheckBox->isChecked() && !isDiurnalValid)
+        {
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Diurnal Input");
+        }
+        else if(ui->stabilityCheckBox->isChecked() && !isStabilityValid)
+        {
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Stability Input");
+        }
+        else
         {
             isInputValid = true;
             ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
             ui->treeWidget->topLevelItem(1)->setToolTip(0, "Valid");
-        } else
-        {
-            QString checkString;
-            if(invalidCases.size() == 1)
-            {
-                checkString = QString("Check " + invalidCases[0]);
-            }
-            else if(invalidCases.size() == 2)
-            {
-                checkString = QString("Check " + invalidCases[0] + " and " + invalidCases[1]);
-            }
-            else
-            {
-                checkString = QString("Check " + invalidCases[0]);
-                for(qsizetype checkIdx = 1; checkIdx < invalidCases.size() - 1; checkIdx++)
-                {
-                    checkString = QString(checkString + ", " + invalidCases[checkIdx]);
-                }
-                checkString = QString(checkString + " and " + invalidCases[invalidCases.size()-1]);
-            }
-
-            isInputValid = false;
-            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(1)->setToolTip(0, checkString);
         }
     }
 
