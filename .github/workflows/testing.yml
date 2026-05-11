@@ -52,7 +52,8 @@ jobs:
                             libsqlite3-dev \
                             sqlite3 \
                             libopenjp2-7-dev \
-                            libtiff-dev
+                            libtiff-dev \
+                            libshp-dev
         # Install qt6 libs
         ##sudo apt install qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
         # sudo make poppler, proj, and gdal
