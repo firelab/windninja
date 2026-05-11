@@ -168,42 +168,45 @@ void AppState::updateDomainAverageInputState()
             ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Check Surface Input");
             isDomainAverageInitializationValid = false;
         }
-        else if(DomainAvgTableNumRuns == 0)
+        else
         {
-            if(ui->diurnalCheckBox->isChecked() == false)
+            if(DomainAvgTableNumRuns == 0)
             {
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
-                isDomainAverageInitializationValid = false;
-            }
-            else // if(ui->diurnalCheckBox->isChecked() == true)
-            {
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
-                isDomainAverageInitializationValid = true;
-            }
-        }
-        else // if(DomainAvgTableNumRuns != 0)
-        {
-            if(DomainAvgTableNumZeroRuns == 0)
-            {
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs");
-                isDomainAverageInitializationValid = true;
-            }
-            else // if(DomainAvgTableNumZeroRuns != 0)
-            {
-                if(ui->diurnalCheckBox->isChecked() == true)
-                {
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
-                    isDomainAverageInitializationValid = true;
-                }
-                else // if(ui->diurnalCheckBox->isChecked() == false)
+                if(ui->diurnalCheckBox->isChecked() == false)
                 {
                     ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, but detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs without diurnal being active");
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
                     isDomainAverageInitializationValid = false;
+                }
+                else // if(ui->diurnalCheckBox->isChecked() == true)
+                {
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
+                    isDomainAverageInitializationValid = true;
+                }
+            }
+            else // if(DomainAvgTableNumRuns != 0)
+            {
+                if(DomainAvgTableNumZeroRuns == 0)
+                {
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs");
+                    isDomainAverageInitializationValid = true;
+                }
+                else // if(DomainAvgTableNumZeroRuns != 0)
+                {
+                    if(ui->diurnalCheckBox->isChecked() == true)
+                    {
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
+                        isDomainAverageInitializationValid = true;
+                    }
+                    else // if(ui->diurnalCheckBox->isChecked() == false)
+                    {
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, but detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs without diurnal being active");
+                        isDomainAverageInitializationValid = false;
+                    }
                 }
             }
         }
@@ -381,17 +384,20 @@ void AppState::updateFireBehaviorOutputState()
             ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Check Inputs");
         }
-        else if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
-        {
-            isFireBehaviorValid = true;
-            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, warnIcon);
-            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
-        }
         else
         {
-            isFireBehaviorValid = true;
-            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Valid");
+            if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
+            {
+                isFireBehaviorValid = true;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isFireBehaviorValid = true;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Valid");
+            }
         }
     }
     else
@@ -420,17 +426,20 @@ void AppState::updateShapeFilesOutputState()
             ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Inputs");
         }
-        else if(GDALCellSize > ui->shapeFilesMeshResolutionSpinBox->value())
-        {
-            isShapeFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, warnIcon);
-            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
-        }
         else
         {
-            isShapeFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Valid");
+            if(GDALCellSize > ui->shapeFilesMeshResolutionSpinBox->value())
+            {
+                isShapeFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isShapeFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Valid");
+            }
         }
     }
     else
@@ -459,17 +468,20 @@ void AppState::updateGeoSpatialPDFFilesOutputState()
             ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Inputs");
         }
-        else if(GDALCellSize > ui->geospatialPDFFilesMeshResolutionSpinBox->value())
-        {
-            isGeoSpatialPDFFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, warnIcon);
-            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
-        }
         else
         {
-            isGeoSpatialPDFFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Valid");
+            if(GDALCellSize > ui->geospatialPDFFilesMeshResolutionSpinBox->value())
+            {
+                isGeoSpatialPDFFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isGeoSpatialPDFFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Valid");
+            }
         }
     }
     else
@@ -523,49 +535,38 @@ void AppState::updateInputState()
         ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Surface Input");
     }
-    else if(!ui->domainAverageGroupBox->isChecked() && !ui->pointInitializationGroupBox->isChecked() && !ui->weatherModelGroupBox->isChecked())
-    {
-        isWindInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "No Initialization selected");
-    }
-    else if(ui->domainAverageGroupBox->isChecked() && !isDomainAverageInitializationValid)
-    {
-        isWindInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Domain Average Wind inputs");
-    }
-    else if(ui->pointInitializationGroupBox->isChecked() && !isPointInitializationValid)
-    {
-        isWindInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Point Initialization inputs");
-    }
-    else if(ui->weatherModelGroupBox->isChecked() && !isWeatherModelInitializationValid)
-    {
-        isWindInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Weather Model inputs");
-    }
     else
     {
-        isWindInputValid = true;
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Valid");
-    }
-
-    QVector<QString> invalidCases;
-    if(ui->diurnalCheckBox->isChecked() && !isDiurnalValid)
-    {
-        invalidCases.append(QString("Diurnal Input"));
-    }
-    if(ui->stabilityCheckBox->isChecked() && !isStabilityValid)
-    {
-        invalidCases.append(QString("Stability Input"));
-    }
-    if(!isWindInputValid)
-    {
-        invalidCases.append(QString("Wind Input"));
+        if(!ui->domainAverageGroupBox->isChecked() && !ui->pointInitializationGroupBox->isChecked() && !ui->weatherModelGroupBox->isChecked())
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "No Initialization selected");
+        }
+        else if(ui->domainAverageGroupBox->isChecked() && !isDomainAverageInitializationValid)
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Domain Average Wind inputs");
+        }
+        else if(ui->pointInitializationGroupBox->isChecked() && !isPointInitializationValid)
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Point Initialization inputs");
+        }
+        else if(ui->weatherModelGroupBox->isChecked() && !isWeatherModelInitializationValid)
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Weather Model inputs");
+        }
+        else
+        {
+            isWindInputValid = true;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Valid");
+        }
     }
 
     if(!isSurfaceInputValid)
@@ -574,35 +575,52 @@ void AppState::updateInputState()
         ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Surface Input");
     }
-    else if(invalidCases.size() == 0)
+    else
     {
-        isInputValid = true;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Valid");
-    } else
-    {
-        QString checkString;
-        if(invalidCases.size() == 1)
+        QVector<QString> invalidCases;
+        if(ui->diurnalCheckBox->isChecked() && !isDiurnalValid)
         {
-            checkString = QString("Check " + invalidCases[0]);
+            invalidCases.append(QString("Diurnal Input"));
         }
-        else if(invalidCases.size() == 2)
+        if(ui->stabilityCheckBox->isChecked() && !isStabilityValid)
         {
-            checkString = QString("Check " + invalidCases[0] + " and " + invalidCases[1]);
+            invalidCases.append(QString("Stability Input"));
         }
-        else
+        if(!isWindInputValid)
         {
-            checkString = QString("Check " + invalidCases[0]);
-            for(qsizetype checkIdx = 1; checkIdx < invalidCases.size() - 1; checkIdx++)
-            {
-                checkString = QString(checkString + ", " + invalidCases[checkIdx]);
-            }
-            checkString = QString(checkString + " and " + invalidCases[invalidCases.size()-1]);
+            invalidCases.append(QString("Wind Input"));
         }
 
-        isInputValid = false;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, checkString);
+        if(invalidCases.size() == 0)
+        {
+            isInputValid = true;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Valid");
+        } else
+        {
+            QString checkString;
+            if(invalidCases.size() == 1)
+            {
+                checkString = QString("Check " + invalidCases[0]);
+            }
+            else if(invalidCases.size() == 2)
+            {
+                checkString = QString("Check " + invalidCases[0] + " and " + invalidCases[1]);
+            }
+            else
+            {
+                checkString = QString("Check " + invalidCases[0]);
+                for(qsizetype checkIdx = 1; checkIdx < invalidCases.size() - 1; checkIdx++)
+                {
+                    checkString = QString(checkString + ", " + invalidCases[checkIdx]);
+                }
+                checkString = QString(checkString + " and " + invalidCases[invalidCases.size()-1]);
+            }
+
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, checkString);
+        }
     }
 
     updateGoogleEarthOutputState();
@@ -628,65 +646,68 @@ void AppState::updateOutputState()
         ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(2)->setToolTip(0, "Check Inputs");
     }
-    else if(!ui->googleEarthCheckBox->isChecked() && !ui->fireBehaviorGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked())
-    {
-        isOutputValid = false;
-        ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(2)->setToolTip(0, "No outputs selected");
-    }
     else
     {
-        QVector<QString> invalidCases;
-        if(ui->googleEarthCheckBox->isChecked() && !isGoogleEarthValid)
+        if(!ui->googleEarthCheckBox->isChecked() && !ui->fireBehaviorGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked())
         {
-            invalidCases.append(QString("Google Earth output"));
-        }
-        if(ui->fireBehaviorGroupBox->isChecked() && !isFireBehaviorValid)
-        {
-            invalidCases.append(QString("Fire Behavior output"));
-        }
-        if(ui->shapeFilesGroupBox->isChecked() && !isShapeFilesValid)
-        {
-            invalidCases.append(QString("Shape Files output"));
-        }
-        if(ui->geospatialPDFFilesGroupBox->isChecked() && !isGeoSpatialPDFFilesValid)
-        {
-            invalidCases.append(QString("Geospatial PDF Files output"));
-        }
-        if(ui->VTKFilesCheckBox->isChecked() && !isVTKFilesValid)
-        {
-            invalidCases.append(QString("VTK Files output"));
-        }
-
-        if(invalidCases.size() == 0)
-        {
-            isOutputValid = true;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Valid");
-        } else
-        {
-            QString checkString;
-            if(invalidCases.size() == 1)
-            {
-                checkString = QString("Check " + invalidCases[0]);
-            }
-            else if(invalidCases.size() == 2)
-            {
-                checkString = QString("Check " + invalidCases[0] + " and " + invalidCases[1]);
-            }
-            else
-            {
-                checkString = QString("Check " + invalidCases[0]);
-                for(qsizetype checkIdx = 1; checkIdx < invalidCases.size() - 1; checkIdx++)
-                {
-                    checkString = QString(checkString + ", " + invalidCases[checkIdx]);
-                }
-                checkString = QString(checkString + " and " + invalidCases[invalidCases.size()-1]);
-            }
-
             isOutputValid = false;
             ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, checkString);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "No outputs selected");
+        }
+        else
+        {
+            QVector<QString> invalidCases;
+            if(ui->googleEarthCheckBox->isChecked() && !isGoogleEarthValid)
+            {
+                invalidCases.append(QString("Google Earth output"));
+            }
+            if(ui->fireBehaviorGroupBox->isChecked() && !isFireBehaviorValid)
+            {
+                invalidCases.append(QString("Fire Behavior output"));
+            }
+            if(ui->shapeFilesGroupBox->isChecked() && !isShapeFilesValid)
+            {
+                invalidCases.append(QString("Shape Files output"));
+            }
+            if(ui->geospatialPDFFilesGroupBox->isChecked() && !isGeoSpatialPDFFilesValid)
+            {
+                invalidCases.append(QString("Geospatial PDF Files output"));
+            }
+            if(ui->VTKFilesCheckBox->isChecked() && !isVTKFilesValid)
+            {
+                invalidCases.append(QString("VTK Files output"));
+            }
+
+            if(invalidCases.size() == 0)
+            {
+                isOutputValid = true;
+                ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->setToolTip(0, "Valid");
+            } else
+            {
+                QString checkString;
+                if(invalidCases.size() == 1)
+                {
+                    checkString = QString("Check " + invalidCases[0]);
+                }
+                else if(invalidCases.size() == 2)
+                {
+                    checkString = QString("Check " + invalidCases[0] + " and " + invalidCases[1]);
+                }
+                else
+                {
+                    checkString = QString("Check " + invalidCases[0]);
+                    for(qsizetype checkIdx = 1; checkIdx < invalidCases.size() - 1; checkIdx++)
+                    {
+                        checkString = QString(checkString + ", " + invalidCases[checkIdx]);
+                    }
+                    checkString = QString(checkString + " and " + invalidCases[invalidCases.size()-1]);
+                }
+
+                isOutputValid = false;
+                ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(2)->setToolTip(0, checkString);
+            }
         }
     }
 
