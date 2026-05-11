@@ -23,17 +23,21 @@ signals:
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
-    void googleEarthCheckBoxToggled(bool checked);
-    void fireBehaviorGroupBoxToggled(bool checked);
-    void shapeFilesGroupBoxToggled(bool checked);
-    void geospatialPDFFilesGroupBoxToggled(bool checked);
-    void VTKFilesCheckBoxClicked(bool checked);
+    void googleEarthCheckBoxToggled();
+    void fireBehaviorGroupBoxToggled();
+    void shapeFilesGroupBoxToggled();
+    void geospatialPDFFilesGroupBoxToggled();
+    void VTKFilesCheckBoxClicked();
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void meshResolutionSpinBoxValueChanged(double value);
     void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
+    void googleEarthMeshResolutionSpinBoxValueChanged();
+    void fireBehaviorMeshResolutionSpinBoxValueChanged();
+    void shapeFilesMeshResolutionSpinBoxValueChanged();
+    void geospatialPDFFilesMeshResolutionSpinBoxValueChanged();
 
 private:
     Ui::MainWindow *ui;

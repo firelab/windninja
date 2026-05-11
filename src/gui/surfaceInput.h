@@ -95,8 +95,9 @@ private:
 
     QString pendingDownloadDemFilePath;
 
-    QString demFileType;
     QString inputFileDir;
+
+    QString demFileType;
     int GDALXSize, GDALYSize;
     double GDALCellSize, GDALMaxValue, GDALMinValue;
     double DEMCorners[8];

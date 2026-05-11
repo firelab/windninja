@@ -65,35 +65,35 @@ void AppState::setState()
 
 void AppState::updateSolverMethodologyState()
 {
-    if (isMassSolverToggled)
+    if(ui->massSolverCheckBox->isChecked())
     {
         isSolverMethodologyValid = true;
         ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(0)->setToolTip(0, "Using Conservation of Mass Selected");
+        ui->treeWidget->topLevelItem(0)->setToolTip(0, "Using Conservation of Mass solver");
         ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass Selected");
+        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass selected");
         ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Not Selected");
+        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum not selected");
     }
-    else if (isMomentumSolverToggled)
+    else if(ui->momentumSolverCheckBox->isChecked())
     {
         isSolverMethodologyValid = true;
-        ui->treeWidget->topLevelItem(0)->setToolTip(1, "Conservation of Mass and Momentum Selected");
+        ui->treeWidget->topLevelItem(0)->setToolTip(1, "Using Conservation of Mass and Momentum solver");
         ui->treeWidget->topLevelItem(0)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Selected");
+        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum selected");
         ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass Not Selected");
+        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass not selected");
     }
     else
     {
         isSolverMethodologyValid = false;
         ui->treeWidget->topLevelItem(0)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(0)->setToolTip(0,"Select a Solver");
+        ui->treeWidget->topLevelItem(0)->setToolTip(0,"Select a solver");
         ui->treeWidget->topLevelItem(0)->child(0)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass Not Selected");
+        ui->treeWidget->topLevelItem(0)->child(0)->setToolTip(0, "Conservation of Mass not selected");
         ui->treeWidget->topLevelItem(0)->child(1)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum Not Selected");
+        ui->treeWidget->topLevelItem(0)->child(1)->setToolTip(0, "Conservation of Mass and Momentum not selected");
     }
 
     updateOverallState();
@@ -101,99 +101,118 @@ void AppState::updateSolverMethodologyState()
 
 void AppState::updateSurfaceInputState()
 {
-    if (ui->elevationInputFileLineEdit->text() != "")
+    if(ui->elevationInputFileLineEdit->text() == "")
+    {
+        isSurfaceInputValid = false;
+        ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Surface Input File not selected");
+    }
+    else
     {
         isSurfaceInputValid = true;
         ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Valid");
     }
-    else
-    {
-        isSurfaceInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Input File Cannot be Detected");
-    }
-    updateInputState();
-    updateGoogleEarthOutputState();
+
+    updateDomainAverageInputState();
+    updatePointInitializationInputState();
+    updateWeatherModelInputState();
 }
 
 void AppState::updateDiurnalInputState()
 {
-    if (isDiurnalInputToggled)
+    if(ui->diurnalCheckBox->isChecked())
     {
+        isDiurnalValid = true;
         ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(1)->setToolTip(0, "Valid");
     }
     else
     {
+        isDiurnalValid = false;
         ui->treeWidget->topLevelItem(1)->child(1)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(1)->child(1)->setToolTip(0, "No Diurnal Input");
     }
+
+    updateDomainAverageInputState();
 }
 
 void AppState::updateStabilityInputState()
 {
-    if (ui->stabilityCheckBox->isChecked())
+    if(ui->stabilityCheckBox->isChecked())
     {
+        isStabilityValid = true;
         ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(1)->child(2)->setToolTip(0, "Valid");
     }
     else
     {
+        isStabilityValid = false;
         ui->treeWidget->topLevelItem(1)->child(2)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(1)->child(2)->setToolTip(0, "No Stability Input");
     }
+
+    updateDomainAverageInputState();
 }
 
 void AppState::updateDomainAverageInputState()
 {
-    if(isDomainAverageInitializationToggled)
+    if(ui->domainAverageGroupBox->isChecked())
     {
-        if(DomainAvgTableNumRuns == 0)
+        if(!isSurfaceInputValid)
         {
-            if(ui->diurnalCheckBox->isChecked() == false)
-            {
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
-                isDomainAverageInitializationValid = false;
-            }
-            else // if(ui->diurnalCheckBox->isChecked() == true)
-            {
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
-                isDomainAverageInitializationValid = true;
-            }
+            isDomainAverageInitializationValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Check Surface Input");
         }
-        else // if(DomainAvgTableNumRuns != 0)
+        else
         {
-            if(DomainAvgTableNumZeroRuns == 0)
+            if(DomainAvgTableNumRuns == 0)
             {
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
-                ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs");
-                isDomainAverageInitializationValid = true;
-            }
-            else // if(DomainAvgTableNumZeroRuns != 0)
-            {
-                if(ui->diurnalCheckBox->isChecked() == true)
+                if(ui->diurnalCheckBox->isChecked() == false)
                 {
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
-                    isDomainAverageInitializationValid = true;
-                }
-                else // if(ui->diurnalCheckBox->isChecked() == false)
-                {
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
-                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, but detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs without diurnal being active");
                     isDomainAverageInitializationValid = false;
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, diurnal is not active");
+                }
+                else // if(ui->diurnalCheckBox->isChecked() == true)
+                {
+                    isDomainAverageInitializationValid = true;
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0 while using diurnal");
+                }
+            }
+            else // if(DomainAvgTableNumRuns != 0)
+            {
+                if(DomainAvgTableNumZeroRuns == 0)
+                {
+                    isDomainAverageInitializationValid = true;
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, tickIcon);
+                    ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs");
+                }
+                else // if(DomainAvgTableNumZeroRuns != 0)
+                {
+                    if(ui->diurnalCheckBox->isChecked() == true)
+                    {
+                        isDomainAverageInitializationValid = true;
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, warnIcon);
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs, diurnal is active so will continue the runs");
+                    }
+                    else // if(ui->diurnalCheckBox->isChecked() == false)
+                    {
+                        isDomainAverageInitializationValid = false;
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+                        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, QString::number(DomainAvgTableNumRuns)+" runs have been added, but detecting "+QString::number(DomainAvgTableNumZeroRuns)+" zero wind speed runs without diurnal being active");
+                    }
                 }
             }
         }
     }
     else
     {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Not Selected");
         isDomainAverageInitializationValid = false;
+        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Not selected");
     }
 
     updateInputState();
@@ -201,29 +220,47 @@ void AppState::updateDomainAverageInputState()
 
 void AppState::updatePointInitializationInputState()
 {
-    if (isPointInitializationToggled && isStationFileSelectionValid && isStationFileSelected)
+    if(ui->pointInitializationGroupBox->isChecked())
     {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Valid");
-        isPointInitializationValid = true;
-    }
-    else if(isPointInitializationToggled && !isStationFileSelected)
-    {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No Station File Selected");
-        isPointInitializationValid = false;
-    }
-    else if(isPointInitializationToggled && !isStationFileSelectionValid)
-    {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Conflicting Files Selected");
-        isPointInitializationValid = false;
+        if(!isSurfaceInputValid)
+        {
+            isPointInitializationValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Check Surface Input");
+        }
+        else
+        {
+            if(!isStationFileSelected)
+            {
+                isPointInitializationValid = false;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "No Station files selected");
+            }
+            else if(!isStationDataValid)
+            {
+                isPointInitializationValid = false;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Invalid Station data detected");
+            }
+            else if(!isStationFileSelectionValid)
+            {
+                isPointInitializationValid = false;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Mismatched file types selected, cannot proceed");
+            }
+            else
+            {
+                isPointInitializationValid = true;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Valid");
+            }
+        }
     }
     else
     {
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Not Selected");
         isPointInitializationValid = false;
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(1)->child(3)->child(1)->setToolTip(0, "Not selected");
     }
 
     updateInputState();
@@ -231,23 +268,47 @@ void AppState::updatePointInitializationInputState()
 
 void AppState::updateWeatherModelInputState()
 {
-    if (isWeatherModelInitializationToggled && isWeatherModelForecastValid)
+    if(ui->weatherModelGroupBox->isChecked())
     {
-        isWeatherModelInitializationValid = true;
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Valid");
-    }
-    else if (isWeatherModelInitializationToggled && !isWeatherModelForecastValid)
-    {
-        isWeatherModelInitializationValid = false;
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Forecast is Invalid");
+        if(!isSurfaceInputValid)
+        {
+            isWeatherModelInitializationValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Check Surface Input");
+        }
+        else
+        {
+            if(!isWeatherModelFileSelected)
+            {
+                isWeatherModelInitializationValid = false;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "No Forecast file selected");
+            }
+            else if(!isWeatherModelForecastValid)
+            {
+                isWeatherModelInitializationValid = false;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Invalid Forecast data detected");
+            }
+            else if(!isWeatherModelTimeSelected)
+            {
+                isWeatherModelInitializationValid = false;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Forecast time not selected");
+            }
+            else
+            {
+                isWeatherModelInitializationValid = true;
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Valid");
+            }
+        }
     }
     else
     {
         isWeatherModelInitializationValid = false;
         ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Not Selected");
+        ui->treeWidget->topLevelItem(1)->child(3)->child(2)->setToolTip(0, "Not selected");
     }
 
     updateInputState();
@@ -257,26 +318,48 @@ void AppState::updateGoogleEarthOutputState()
 {
     if(ui->googleEarthCheckBox->isChecked())
     {
-        if(isSurfaceInputValid)
+        if(!isSurfaceInputValid)
         {
-            isGoogleEarthValid = true;
-            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+            isGoogleEarthValid = false;
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isGoogleEarthValid = false;
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Check Inputs");
         }
         else
         {
-            isGoogleEarthValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Cannot read DEM File");
+            double XLength = GDALXSize * GDALCellSize;
+            double YLength = GDALYSize * GDALCellSize;
+            double noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
+            if(noGoogleCellSize > ui->googleEarthMeshResolutionSpinBox->value())
+            {
+                isGoogleEarthValid = true;
+                ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "The resolution of the google file may be too fine");
+            }
+            else if(GDALCellSize > ui->googleEarthMeshResolutionSpinBox->value())
+            {
+                isGoogleEarthValid = true;
+                ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isGoogleEarthValid = true;
+                ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Valid");
+            }
         }
     }
     else
     {
         isGoogleEarthValid = false;
         ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->setToolTip(0, "Not Selected");
+        ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -284,28 +367,41 @@ void AppState::updateGoogleEarthOutputState()
 
 void AppState::updateFireBehaviorOutputState()
 {
-    if(isFireBehaviorToggled)
+    if(ui->fireBehaviorGroupBox->isChecked())
     {
-        if(isSurfaceInputValid)
+        if(!isSurfaceInputValid)
         {
-            isFireBehaviorValid = true;
-            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+            isFireBehaviorValid = false;
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isFireBehaviorValid = false;
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Check Inputs");
         }
         else
         {
-            isFireBehaviorValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Cannot read DEM File");
+            if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
+            {
+                isFireBehaviorValid = true;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isFireBehaviorValid = true;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Valid");
+            }
         }
     }
     else
     {
         isFireBehaviorValid = false;
         ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Not Selected");
+        ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -313,28 +409,41 @@ void AppState::updateFireBehaviorOutputState()
 
 void AppState::updateShapeFilesOutputState()
 {
-    if(isShapeFilesToggled)
+    if(ui->shapeFilesGroupBox->isChecked())
     {
-        if(isSurfaceInputValid)
+        if(!isSurfaceInputValid)
         {
-            isShapeFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+            isShapeFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isShapeFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Inputs");
         }
         else
         {
-            isShapeFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Cannot read DEM File");
+            if(GDALCellSize > ui->shapeFilesMeshResolutionSpinBox->value())
+            {
+                isShapeFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isShapeFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Valid");
+            }
         }
     }
     else
     {
         isShapeFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Not Selected");
+        ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -342,28 +451,41 @@ void AppState::updateShapeFilesOutputState()
 
 void AppState::updateGeoSpatialPDFFilesOutputState()
 {
-    if(isGeoSpatialPDFFilesToggled)
+    if(ui->geospatialPDFFilesGroupBox->isChecked())
     {
-        if(isSurfaceInputValid)
+        if(!isSurfaceInputValid)
         {
-            isGeoSpatialPDFFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+            isGeoSpatialPDFFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isGeoSpatialPDFFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Inputs");
         }
         else
         {
-            isGeoSpatialPDFFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Cannot read DEM File");
+            if(GDALCellSize > ui->geospatialPDFFilesMeshResolutionSpinBox->value())
+            {
+                isGeoSpatialPDFFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isGeoSpatialPDFFilesValid = true;
+                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Valid");
+            }
         }
     }
     else
     {
         isGeoSpatialPDFFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Not Selected");
+        ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -371,28 +493,32 @@ void AppState::updateGeoSpatialPDFFilesOutputState()
 
 void AppState::updateVTKFilesOutputState()
 {
-    if(isVTKFilesToggled)
+    if(ui->VTKFilesCheckBox->isChecked())
     {
-        if(isSurfaceInputValid)
+        if(!isSurfaceInputValid)
         {
-            isVTKFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "");
+            isVTKFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isVTKFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Inputs");
         }
         else
         {
-            isVTKFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->setToolTip(0, "Cannot read DEM File");
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Cannot read DEM File");
+            isVTKFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Valid");
         }
     }
     else
     {
         isVTKFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Not Selected");
+        ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -400,59 +526,164 @@ void AppState::updateVTKFilesOutputState()
 
 void AppState::updateInputState()
 {
-    if (isDomainAverageInitializationValid || isPointInitializationValid || isWeatherModelInitializationValid)
-    {
-        isWindInputValid = true;
-        ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Valid");
-    }
-    else
+    if(!isSurfaceInputValid)
     {
         isWindInputValid = false;
         ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "No Initialization Method Selected");
+        ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Surface Input");
+    }
+    else
+    {
+        if(!ui->domainAverageGroupBox->isChecked() && !ui->pointInitializationGroupBox->isChecked() && !ui->weatherModelGroupBox->isChecked())
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "No Initialization selected");
+        }
+        else if(ui->domainAverageGroupBox->isChecked() && !isDomainAverageInitializationValid)
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Domain Average Wind inputs");
+        }
+        else if(ui->pointInitializationGroupBox->isChecked() && !isPointInitializationValid)
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Point Initialization inputs");
+        }
+        else if(ui->weatherModelGroupBox->isChecked() && !isWeatherModelInitializationValid)
+        {
+            isWindInputValid = false;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Check Weather Model inputs");
+        }
+        else
+        {
+            isWindInputValid = true;
+            ui->treeWidget->topLevelItem(1)->child(3)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->setToolTip(0, "Valid");
+        }
     }
 
-    if (isSurfaceInputValid && isWindInputValid)
-    {
-        isInputValid = true;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Valid");
-    }
-    else if (!isSurfaceInputValid && !isWindInputValid)
+    if(!isSurfaceInputValid)
     {
         isInputValid = false;
         ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Surface Input");
     }
-    else if (!isSurfaceInputValid)
+    else
     {
-        isInputValid = false;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Surface Input");
-    }
-    else if (!isWindInputValid)
-    {
-        isInputValid = false;
-        ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Wind Input");
+        if(!isWindInputValid)
+        {
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Wind Input");
+        }
+        else if(ui->diurnalCheckBox->isChecked() && !isDiurnalValid)
+        {
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Diurnal Input");
+        }
+        else if(ui->stabilityCheckBox->isChecked() && !isStabilityValid)
+        {
+            isInputValid = false;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Stability Input");
+        }
+        else
+        {
+            isInputValid = true;
+            ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(1)->setToolTip(0, "Valid");
+        }
     }
 
-    updateOverallState();
+    updateGoogleEarthOutputState();
+    updateFireBehaviorOutputState();
+    updateShapeFilesOutputState();
+    updateGeoSpatialPDFFilesOutputState();
+    updateVTKFilesOutputState();
 }
 
 void AppState::updateOutputState()
 {
-    if(isGoogleEarthValid || isFireBehaviorValid || isShapeFilesValid || isGeoSpatialPDFFilesValid || isVTKFilesValid)
+    if(!isSurfaceInputValid)
     {
-        isOutputValid = true;
-        ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(2)->setToolTip(0, "Valid");
+        isOutputValid = false;
+        ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "Check Surface Input");
+    }
+    else if(!isInputValid)
+    {
+        isOutputValid = false;
+        ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "Check Inputs");
     }
     else
     {
-        ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(2)->setToolTip(0, "No Output Selected");
+        if(!ui->googleEarthCheckBox->isChecked() && !ui->fireBehaviorGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked())
+        {
+            isOutputValid = false;
+            ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->setToolTip(0, "No outputs selected");
+        }
+        else
+        {
+            QVector<QString> invalidCases;
+            if(ui->googleEarthCheckBox->isChecked() && !isGoogleEarthValid)
+            {
+                invalidCases.append(QString("Google Earth output"));
+            }
+            if(ui->fireBehaviorGroupBox->isChecked() && !isFireBehaviorValid)
+            {
+                invalidCases.append(QString("Fire Behavior output"));
+            }
+            if(ui->shapeFilesGroupBox->isChecked() && !isShapeFilesValid)
+            {
+                invalidCases.append(QString("Shape Files output"));
+            }
+            if(ui->geospatialPDFFilesGroupBox->isChecked() && !isGeoSpatialPDFFilesValid)
+            {
+                invalidCases.append(QString("Geospatial PDF Files output"));
+            }
+            if(ui->VTKFilesCheckBox->isChecked() && !isVTKFilesValid)
+            {
+                invalidCases.append(QString("VTK Files output"));
+            }
+
+            if(invalidCases.size() == 0)
+            {
+                isOutputValid = true;
+                ui->treeWidget->topLevelItem(2)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->setToolTip(0, "Valid");
+            } else
+            {
+                QString checkString;
+                if(invalidCases.size() == 1)
+                {
+                    checkString = QString("Check " + invalidCases[0]);
+                }
+                else if(invalidCases.size() == 2)
+                {
+                    checkString = QString("Check " + invalidCases[0] + " and " + invalidCases[1]);
+                }
+                else
+                {
+                    checkString = QString("Check " + invalidCases[0]);
+                    for(qsizetype checkIdx = 1; checkIdx < invalidCases.size() - 1; checkIdx++)
+                    {
+                        checkString = QString(checkString + ", " + invalidCases[checkIdx]);
+                    }
+                    checkString = QString(checkString + " and " + invalidCases[invalidCases.size()-1]);
+                }
+
+                isOutputValid = false;
+                ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(2)->setToolTip(0, checkString);
+            }
+        }
     }
 
     updateOverallState();
@@ -460,17 +691,31 @@ void AppState::updateOutputState()
 
 void AppState::updateOverallState()
 {
-    if (isSolverMethodologyValid && isInputValid && isOutputValid)
+    if(isSolverMethodologyValid && isInputValid && isOutputValid)
     {
         ui->numberOfProcessorsSolveButton->setEnabled(true);
-        ui->numberOfProcessorsSolveButton->setToolTip("");
+        ui->numberOfProcessorsSolveButton->setToolTip("You may start the solver");
         ui->treeWidget->topLevelItem(3)->setIcon(0, tickIcon);
-        ui->treeWidget->topLevelItem(3)->setToolTip(0, "");
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "You may start the solver");
+    }
+    else if(!isSurfaceInputValid)
+    {
+        ui->numberOfProcessorsSolveButton->setEnabled(false);
+        ui->numberOfProcessorsSolveButton->setToolTip("Check Surface Input");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "Check Surface Input");
+    }
+    else if(!ui->domainAverageGroupBox->isChecked() && !ui->pointInitializationGroupBox->isChecked() && !ui->weatherModelGroupBox->isChecked())
+    {
+        ui->numberOfProcessorsSolveButton->setEnabled(false);
+        ui->numberOfProcessorsSolveButton->setToolTip("You must select an initialization method");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "You must select an initialization method");
     }
     else
     {
         ui->numberOfProcessorsSolveButton->setEnabled(false);
-        ui->numberOfProcessorsSolveButton->setToolTip("Solver Methodology and Inputs must be passing to solve.");
+        ui->numberOfProcessorsSolveButton->setToolTip("There are errors in the inputs or outputs");
         ui->treeWidget->topLevelItem(3)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(3)->setToolTip(0, "There are errors in the inputs or outputs");
     }

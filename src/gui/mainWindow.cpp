@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     state.setUi(ui);
     ui->massSolverCheckBox->setChecked(true);
     ui->treeWidget->setMouseTracking(true);
-    state.isMassSolverToggled = true;
+    state.updateSolverMethodologyState();
 
     lineNumber = 1;
 
@@ -134,12 +134,11 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
     connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
     connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
-    connect(weatherModelInput, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
     connect(webEngineView, &QWebEngineView::loadFinished, this, &MainWindow::readSettings);
 
+    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
     connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
     connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
-    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
     connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
     connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
     connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
@@ -338,21 +337,19 @@ void MainWindow::massSolverCheckBoxClicked()
     ui->stabilityCheckBox->setDisabled(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
-    AppState& state = AppState::instance();
-
-    if (state.isMomentumSolverToggled)
+    if(ui->momentumSolverCheckBox->isChecked())
     {
         ui->momentumSolverCheckBox->setChecked(false);
-        state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
     }
-    state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
 
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
         surfaceInput->updateMeshResolutionByUnits();
     }
+
     emit updateMetholodyState();
+    emit updateStabilityState();
 }
 
 void MainWindow::momentumSolverCheckBoxClicked()
@@ -361,29 +358,23 @@ void MainWindow::momentumSolverCheckBoxClicked()
     ui->stabilityCheckBox->setDisabled(true);
     ui->ninjafoamCaseGroupBox->setVisible(true);
 
-    AppState& state = AppState::instance();
-
-    if (state.isMassSolverToggled)
+    if(ui->massSolverCheckBox->isChecked())
     {
         ui->massSolverCheckBox->setChecked(false);
-        state.isMassSolverToggled = ui->massSolverCheckBox->isChecked();
     }
-    state.isMomentumSolverToggled = ui->momentumSolverCheckBox->isChecked();
 
     if(!ui->elevationInputFileLineEdit->text().isEmpty())
     {
         ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
         surfaceInput->updateMeshResolutionByUnits();
     }
+
     emit updateMetholodyState();
     emit updateStabilityState();
 }
 
 void MainWindow::diurnalCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-    state.isDiurnalInputToggled = ui->diurnalCheckBox->isChecked();
-
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
@@ -398,9 +389,6 @@ void MainWindow::diurnalCheckBoxClicked()
 
 void MainWindow::stabilityCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-    state.isStabilityInputToggled = ui->stabilityCheckBox->isChecked();
-
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
@@ -469,7 +457,7 @@ void MainWindow::solveButtonClicked()
         qDebug() << "NinjaSetArmyComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 
-    if (state.isDomainAverageInitializationValid)
+    if(state.isDomainAverageInitializationValid)
     {
         initializationMethod = "domain_average";
         QList<double> speeds;
@@ -537,7 +525,7 @@ void MainWindow::solveButtonClicked()
             }
         }
     }
-    else if (state.isPointInitializationValid)
+    else if(state.isPointInitializationValid)
     {
         initializationMethod = "point";
 
@@ -929,7 +917,7 @@ void MainWindow::solveButtonClicked()
             }
         }
     }
-    else //if (state.isWeatherModelInitializationValid)
+    else if(state.isWeatherModelInitializationValid)
     {
         QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
         int timeListSize = selectedIndexes.count();
@@ -960,6 +948,12 @@ void MainWindow::solveButtonClicked()
         {
             qDebug() << "NinjaMakeWeatherModelArmy ninjaErr =" << ninjaErr;
         }
+    }
+    else
+    {
+        ninjaErr = NINJA_E_INVALID;
+        qCritical() << "ERROR: Invalid initialization inputs to Solve().";
+        comMessageHandler("ERROR: Invalid initialization inputs to Solve().", this);
     }
 
     if(ninjaErr != NINJA_SUCCESS)

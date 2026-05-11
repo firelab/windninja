@@ -401,6 +401,8 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
         break;
     case 1:
         fetchType = "gmted";
+        ////resolution = fetch->GetXRes() * 111325;  // convert from lat/lon to m. Equals 0.00208333 * 111325 = 231.927 m.
+        resolution = 231.927;  // m
         break;
     case 2:
         fetchType = "lcp";
@@ -432,6 +434,8 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
+    AppState& state = AppState::instance();
+
     webEngineView->page()->runJavaScript("stopRectangleDrawing();");
 
     QString fullPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
@@ -455,6 +459,10 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
         cornerStrs << QString::number(DEMCorners[i], 'f', 8);
     QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
     webEngineView->page()->runJavaScript(js);
+
+    state.GDALXSize = GDALXSize;
+    state.GDALYSize = GDALYSize;
+    state.GDALCellSize = GDALCellSize;
 
     emit updateState();
     emit updateTreeView();
@@ -712,8 +720,6 @@ void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
 
 void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
 {
-    AppState& state = AppState::instance();
-
     bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
     QVector<QVector<QString>> displayData = fetchAllTimeZones(isShowAllTimeZonesSelected);
 
@@ -1078,6 +1084,13 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     emit writeToConsoleSignal("Opening dem file to load in metadata...");
     emit writeToConsoleSignal("demFilePath="+demFilePath);
 
+    // tmp vars to fill, used to fill the final vars at the end after a fully successful load
+    // that way the vars from the past file aren't replaced unless the new file successfully loads
+    QString tmp_demFileType;
+    int tmp_GDALXSize, tmp_GDALYSize;
+    double tmp_GDALCellSize, tmp_GDALMaxValue, tmp_GDALMinValue;
+    double tmp_DEMCorners[8];
+
     CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
 
     double adfGeoTransform[6];
@@ -1098,33 +1111,33 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
     if(GDALDriverName == "AAIGrid")
     {
-        demFileType = "ASC";
+        tmp_demFileType = "ASC";
     }
-    else if (GDALDriverName == "LCP")
+    else if(GDALDriverName == "LCP")
     {
-        demFileType = "LCP";
+        tmp_demFileType = "LCP";
     }
-    else if (GDALDriverName == "GTiff")
+    else if(GDALDriverName == "GTiff")
     {
         int bandCount = GDALGetRasterCount(poInputDS);
         // if it's a multi-band GeoTIFF, it's an lcp
         if(bandCount > 1)
         {
-            demFileType = "LCP";
+            tmp_demFileType = "LCP";
         }
         else
         {
-            demFileType = "GTIFF";
+            tmp_demFileType = "GTIFF";
         }
     }
-    else if (GDALDriverName == "IMG")
+    else if(GDALDriverName == "IMG")
     {
-        demFileType = "IMG";
+        tmp_demFileType = "IMG";
     }
 
     // get x and y dimension
-    GDALXSize = poInputDS->GetRasterXSize();
-    GDALYSize = poInputDS->GetRasterYSize();
+    tmp_GDALXSize = poInputDS->GetRasterXSize();
+    tmp_GDALYSize = poInputDS->GetRasterYSize();
 
     if(!GDALTestSRS(poInputDS))
     {
@@ -1170,8 +1183,8 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     }
 
     // get dem corners
-    //if(!GDALGetCorners(poInputDS, DEMCorners))  // this actually returns 0 when success, rather than 1, so strange
-    if(GDALGetCorners(poInputDS, DEMCorners))
+    //if(!GDALGetCorners(poInputDS, tmp_DEMCorners))  // this actually returns 0 when success, rather than 1, so strange
+    if(GDALGetCorners(poInputDS, tmp_DEMCorners))
     {
         qCritical() << "ERROR: Cannot get the corners of the dem file, cannot use.";
         comMessageHandler("ERROR: Cannot get the corners of the dem file, cannot use.", this);
@@ -1198,14 +1211,14 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
     }
 
     // get the geo-transform, get the cell size, check the dem has square cell size
-    if (poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    if(poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
         double c1, c2;
         c1 = adfGeoTransform[1];
         c2 = adfGeoTransform[5];
         if(abs(c1) == abs(c2))
         {
-            GDALCellSize = abs(c1);
+            tmp_GDALCellSize = abs(c1);
         }
         else
         {
@@ -1226,12 +1239,27 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
     }
 
-    GDALMinValue = minVal;
-    GDALMaxValue = maxVal;
+    tmp_GDALMinValue = minVal;
+    tmp_GDALMaxValue = maxVal;
 
     GDALClose((GDALDatasetH)poInputDS);
 
     CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
+
+    demFileType = tmp_demFileType;
+    GDALXSize = tmp_GDALXSize;
+    GDALYSize = tmp_GDALYSize;
+    GDALCellSize = tmp_GDALCellSize;
+    GDALMaxValue = tmp_GDALMaxValue;
+    GDALMinValue = tmp_GDALMinValue;
+    DEMCorners[0] = tmp_DEMCorners[0];
+    DEMCorners[1] = tmp_DEMCorners[1];
+    DEMCorners[2] = tmp_DEMCorners[2];
+    DEMCorners[3] = tmp_DEMCorners[3];
+    DEMCorners[4] = tmp_DEMCorners[4];
+    DEMCorners[5] = tmp_DEMCorners[5];
+    DEMCorners[6] = tmp_DEMCorners[6];
+    DEMCorners[7] = tmp_DEMCorners[7];
 
     emit writeToConsoleSignal("Metadata loaded from dem file successfully.", Qt::darkGreen);
 

@@ -57,6 +57,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->pastcastStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastStartDateTimeEditChanged);
     connect(ui->pastcastEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
+    connect(this, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
 
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
@@ -422,17 +423,19 @@ void WeatherModelInput::updateTreeView()
     timeHeader->setVisible(false);
 
     connect(ui->weatherModelFileTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged);
+    connect(ui->weatherModelTimeTreeView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &WeatherModelInput::weatherModelTimeTreeViewItemSelectionChanged);
 }
 
 void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected)
 {
     AppState& state = AppState::instance();
+    state.isWeatherModelFileSelected = false;
+    state.isWeatherModelForecastValid = false;
 
-    if (selected.indexes().empty())
+    if(selected.indexes().empty())
     {
-        state.isWeatherModelForecastValid = false;
+        state.isWeatherModelFileSelected = false;
         emit updateState();
-
         return;
     }
 
@@ -442,26 +445,29 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     {
         timeModel->clear();
 
-        state.isWeatherModelForecastValid = false;
+        state.isWeatherModelFileSelected = false;
         emit updateState();
-
         return;
     }
-
-    state.isWeatherModelForecastValid = true;
+    state.isWeatherModelFileSelected = true;
 
     std::string modelFilePath = fileModel->filePath(index).toStdString();
     std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
     int timeListSize = 0;
 
+    state.isWeatherModelForecastValid = true;
     const char **timeList = NinjaGetWeatherModelTimeList(ninjaTools, &timeListSize, modelFilePath.c_str(), timeZone.c_str());
     if(timeList == NULL)
     {
         qDebug() << "NinjaGetWeatherModelTimeList: Failed to fill timeList";
+        state.isWeatherModelForecastValid = false;
+        emit updateState();
     }
     if(timeListSize == 0)
     {
         qDebug() << "NinjaGetWeatherModelTimeList: returned empty timeList";
+        state.isWeatherModelForecastValid = false;
+        emit updateState();
     }
 
     timeModel->clear();
@@ -482,19 +488,27 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     emit updateState();
 }
 
-void WeatherModelInput::weatherModelGroupBoxToggled(bool toggled)
+void WeatherModelInput::weatherModelTimeTreeViewItemSelectionChanged(const QItemSelection &selected)
 {
-    ui->rawWeatherModelOutputCheckBox->setEnabled(toggled);
-
     AppState& state = AppState::instance();
-    state.isWeatherModelInitializationToggled = toggled;
 
-    if (state.isWeatherModelInitializationToggled)
+    state.isWeatherModelTimeSelected = true;
+    if(selected.indexes().empty())
+    {
+        state.isWeatherModelTimeSelected = false;
+    }
+
+    emit updateState();
+}
+
+void WeatherModelInput::weatherModelGroupBoxToggled()
+{
+    ui->rawWeatherModelOutputCheckBox->setEnabled(ui->weatherModelGroupBox->isChecked());
+
+    if(ui->weatherModelGroupBox->isChecked())
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->pointInitializationGroupBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-        state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
     }
 
     emit updateState();

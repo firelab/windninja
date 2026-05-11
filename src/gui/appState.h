@@ -43,37 +43,34 @@ public:
     void setState();
 
     bool isSolverMethodologyValid = false;
-    bool isMassSolverToggled = false;
-    bool isMomentumSolverToggled = false;
 
     bool isInputValid = false;
+    int GDALXSize = 0;
+    int GDALYSize = 0;
+    double GDALCellSize = 0.0;
     bool isSurfaceInputValid = false;
-    bool isDiurnalInputToggled = false;
-    bool isStabilityInputToggled = false;
+    bool isDiurnalValid = false;
+    bool isStabilityValid = false;
 
     bool isWindInputValid = false;
-    bool isDomainAverageInitializationToggled = false;
     int DomainAvgTableNumRuns = 0;
     int DomainAvgTableNumZeroRuns = 0;
     bool isDomainAverageInitializationValid = false;
-    bool isPointInitializationToggled = false;
     bool isStationFileSelected = false;
+    bool isStationDataValid = false;
     bool isStationFileSelectionValid = false;
     bool isPointInitializationValid = false;
-    bool isWeatherModelInitializationToggled = false;
+    bool isWeatherModelFileSelected = false;
     bool isWeatherModelForecastValid = false;
+    bool isWeatherModelTimeSelected = false;
     bool isWeatherModelInitializationValid = false;
 
+    int noGoogleNumCells = 400000;
     bool isOutputValid = false;
-    bool isGoogleEarthToggled = false;
     bool isGoogleEarthValid = false;
-    bool isFireBehaviorToggled = false;
     bool isFireBehaviorValid = false;
-    bool isShapeFilesToggled = false;
     bool isShapeFilesValid = false;
-    bool isGeoSpatialPDFFilesToggled = false;
     bool isGeoSpatialPDFFilesValid = false;
-    bool isVTKFilesToggled = false;
     bool isVTKFilesValid = false;
 
     bool isSolverReady = false;

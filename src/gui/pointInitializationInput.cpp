@@ -62,17 +62,12 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
 }
 
-void PointInitializationInput::pointInitializationGroupBoxToggled(bool toggled)
+void PointInitializationInput::pointInitializationGroupBoxToggled()
 {
-    AppState& state = AppState::instance();
-
-    state.isPointInitializationToggled = toggled;
-    if (toggled)
+    if(ui->pointInitializationGroupBox->isChecked())
     {
         ui->domainAverageGroupBox->setChecked(false);
         ui->weatherModelGroupBox->setChecked(false);
-        state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
     emit updateState();
@@ -674,6 +669,10 @@ void PointInitializationInput::updateTreeView()
 void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(const QItemSelection &selected, const QItemSelection &deselected)
 {
     AppState& state = AppState::instance();
+    state.isStationFileSelected = false;
+    state.isStationDataValid = false;
+    state.isStationFileSelectionValid = false;
+
     QModelIndexList selectedRows = ui->pointInitializationTreeView->selectionModel()->selectedRows();
     CPLDebug("STATION_FETCH", "========================================");
     CPLDebug("STATION_FETCH", "NUMBER OF SELECTED STATIONS: %lli", selectedRows.count());
@@ -684,7 +683,6 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
     maxStationLocalDateTime = QDateTime();
     minStationLocalDateTime = QDateTime();
 
-    state.isStationFileSelected = false;
     if(selectedRows.count() > 0)
     {
         state.isStationFileSelected = true;
@@ -697,6 +695,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         {
             CPLDebug("STATION_FETCH", "IGNORING SELECTED DIRECTORY!");
             ui->pointInitializationTreeView->selectionModel()->select(selectedRows[i], QItemSelectionModel::Deselect | QItemSelectionModel::Rows);
+            // no change to appState for this operation
             return;
         }
 
@@ -718,7 +717,15 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         if(stationHeader == 1)
         {
             emit writeToConsoleSignal("Station has old station format, which is no longer allowed!");
-            state.isStationFileSelectionValid = false;
+            state.isStationDataValid = false;
+            emit updateState();
+            return;
+        }
+        else if(stationHeader == -1)
+        {
+            emit writeToConsoleSignal("Station has invalid header data");
+            state.isStationDataValid = false;
+            emit updateState();
             return;
         }
 
@@ -736,7 +743,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             if(hDS == NULL)
             {
                 emit writeToConsoleSignal("Cannot open station file!");
-                state.isStationFileSelectionValid = false;
+                state.isStationDataValid = false;
+                emit updateState();
                 return;
             }
 
@@ -750,7 +758,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             if(poFeature == NULL)
             {
                 emit writeToConsoleSignal("No station data found in file!");
-                state.isStationFileSelectionValid = false;
+                state.isStationDataValid = false;
+                emit updateState();
                 return;
             }
 
@@ -793,6 +802,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         }
         ui->pointInitializationTreeView->setProperty("timeSeriesFlag", timeSeriesFlag);
     }
+    state.isStationDataValid = true;
 
     state.isStationFileSelectionValid = true;
     for(int i = 0; i < stationFileTypes.size(); i++)
@@ -806,6 +816,7 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             break;
         }
     }
+
     emit updateState();
 }
 

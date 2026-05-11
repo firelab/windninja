@@ -64,6 +64,8 @@ int DomainAverageInput::countNumRuns()
 
 void DomainAverageInput::domainAverageTableCheckRows()
 {
+    AppState& state = AppState::instance();
+
     int numRuns = countNumRuns();
 
     int numZeroRuns = 0;
@@ -75,8 +77,8 @@ void DomainAverageInput::domainAverageTableCheckRows()
         }
     }
 
-    AppState::instance().DomainAvgTableNumRuns = numRuns;
-    AppState::instance().DomainAvgTableNumZeroRuns = numZeroRuns;
+    state.DomainAvgTableNumRuns = numRuns;
+    state.DomainAvgTableNumZeroRuns = numZeroRuns;
 
     emit updateState();
 }
@@ -126,15 +128,10 @@ void DomainAverageInput::windHeightComboBoxCurrentIndexChanged(int index)
 
 void DomainAverageInput::domainAverageGroupBoxToggled()
 {
-    AppState& state = AppState::instance();
-    state.isDomainAverageInitializationToggled = ui->domainAverageGroupBox->isChecked();
-
-    if (state.isDomainAverageInitializationToggled)
+    if(ui->domainAverageGroupBox->isChecked())
     {
         ui->pointInitializationGroupBox->setChecked(false);
         ui->weatherModelGroupBox->setChecked(false);
-        state.isPointInitializationToggled = ui->pointInitializationGroupBox->isChecked();
-        state.isWeatherModelInitializationToggled = ui->weatherModelGroupBox->isChecked();
     }
 
     emit updateState();
