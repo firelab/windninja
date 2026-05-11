@@ -160,7 +160,7 @@ WindNinjaInputs::WindNinjaInputs()
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
     writeTurbulence = false;
-    colMax_colHeightAGL = 300.0;  // default value of 300 m
+    colMax_colHeightAGL = 457.2;  // default value of 457.2 m is 1500 ft
     colMax_colHeightAGL_units = lengthUnits::meters;
 #endif
     

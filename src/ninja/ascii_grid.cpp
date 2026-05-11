@@ -1876,7 +1876,6 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
     return hDS;
 }
 
-
 /**
  * Create a png for an ascii grid.
  * Creates a color (RGBA) png.
@@ -1895,6 +1894,130 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              std::string scalarLegendFilename,
                              bool writeLegend, bool keepTiff)
 {
+
+    double dataMinVal = get_minValue();
+    double dataMaxVal = get_maxValue();
+
+    // the default is 4 color breaks, which can be overwritten only with 3 color breaks
+    // note that the original colors are blue, green, yellow, and red in that order, and that nColorBreaks of 3 drops the first blue color
+    int nColorBreaks = 4;
+    std::string found_nColorBreaks_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_NCOLORBREAKS", "");
+    if ( found_nColorBreaks_str != "" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_NCOLORBREAKS=" << found_nColorBreaks_str << std::endl;
+        nColorBreaks = atoi(found_nColorBreaks_str.c_str());
+    }
+    if ( nColorBreaks != 3 && nColorBreaks != 4 )
+    {
+        throw std::runtime_error(CPLSPrintf("TURBULENCE_KML_OUTPUT_NCOLORBREAKS %d is not valid!!!\nimplementation only available right now for 3 or 4 colorBreaks!!!",nColorBreaks));
+    }
+
+    double desiredBrk0;
+    double desiredBrk1;
+    double desiredBrk2;
+    double desiredBrk3;
+
+    std::string colorRampType = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_COLORRAMPTYPE", "minToMax");
+    if ( colorRampType == "minToMax" || colorRampType == "" )
+    {
+        // default colorRampType "minToMax", the original past method, sets the 4 color breaks between the data min to max at levels 0, 1/5, 3/5, 1
+        desiredBrk0 = dataMinVal;
+        desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
+        desiredBrk3 = dataMaxVal;
+        desiredBrk2 = (desiredBrk3+desiredBrk1)/2.0;
+    } else if ( colorRampType == "minToMax_uniform" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=minToMax_uniform" << std::endl;
+        // "minToMax_uniform" is 3 or 4 color breaks specified by "nColorBreaks", between min to max at levels 0, 1/3, 2/3, 1.
+        desiredBrk0 = 0.0;
+        desiredBrk1 = dataMinVal;
+        desiredBrk2 = (dataMinVal+dataMaxVal)/2.0;
+        desiredBrk3 = dataMaxVal;
+        if ( nColorBreaks == 4 )
+        {
+            desiredBrk0 = dataMinVal;
+            desiredBrk1 = dataMinVal+(dataMaxVal-dataMinVal)/3.0;
+            desiredBrk2 = dataMinVal+(dataMaxVal-dataMinVal)*2.0/3.0;
+            desiredBrk3 = dataMaxVal;
+        }
+    } else if ( colorRampType == "specificVals" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=specificVals" << std::endl;
+        // "specificVals" is 3 or 4 color breaks specified by "nColorBreaks", the breaks set by "desiredBrk0 to 3" in increasing order, the levels auto adjust between 0 and 1 to go with the breaks.
+        // default values for smokejumper simulations, in mph
+        desiredBrk0 = 0.0;  // ignored when nColorBreaks == 3
+        desiredBrk1 = 2.0;
+        desiredBrk2 = 3.0;
+        desiredBrk3 = 5.0;
+        // hrm, can't include this unit conversion stuff, because ninjaUnits.h has ascii_grid.h as a dependency, would create a circular dependency
+        // instead, seems you can just set the desired output units to something other than mph, then override the desiredBrk vals with the corresponding unit values
+        //if( legendUnits != "mph" )
+        //{
+        //    velocityUnits::toBaseUnits(desiredBrk0, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk1, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk2, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk3, velocityUnits::milesPerHour);
+        //    velocityUnits::fromBaseUnits(desiredBrk0, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk1, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk2, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk3, velocityUnits::getUnit(legendUnits));
+        //}
+        // overwriting values are assumed to already be in legendUnits
+        if ( nColorBreaks == 4 )
+        {
+            std::string found_desiredBrk0_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK0", "");
+            if ( found_desiredBrk0_str != "" )
+            {
+                std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK0=" << found_desiredBrk0_str << std::endl;
+                desiredBrk0 = atof(found_desiredBrk0_str.c_str());
+            }
+        }
+        std::string found_desiredBrk1_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK1", "");
+        std::string found_desiredBrk2_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK2", "");
+        std::string found_desiredBrk3_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK3", "");
+        if ( found_desiredBrk1_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK1=" << found_desiredBrk1_str << std::endl;
+            desiredBrk1 = atof(found_desiredBrk1_str.c_str());
+        }
+        if ( found_desiredBrk2_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK2=" << found_desiredBrk2_str << std::endl;
+            desiredBrk2 = atof(found_desiredBrk2_str.c_str());
+        }
+        if ( found_desiredBrk3_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK3=" << found_desiredBrk3_str << std::endl;
+            desiredBrk3 = atof(found_desiredBrk3_str.c_str());
+        }
+        std::cout << "ascii2png() input nColorBreaks = " << nColorBreaks << std::endl;
+        std::cout << "ascii2png() input desiredBrk0 = " << desiredBrk0 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk1 = " << desiredBrk1 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk2 = " << desiredBrk2 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk3 = " << desiredBrk3 << " " << legendUnits << std::endl;
+    } else
+    {
+        throw std::runtime_error(CPLSPrintf("input CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE %s is not valid!!!\navailable options are 'minToMax', 'minToMaxUniform', 'specificVals'",colorRampType.c_str()));
+    }
+
+
+    if ( nColorBreaks == 4 )
+    {
+        if ( desiredBrk1 <= desiredBrk0 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 <= desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+        }
+    }
+    if ( desiredBrk2 <= desiredBrk1 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 <= desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+    }
+    if ( desiredBrk3 <= desiredBrk2 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 <= desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
+    }
+
+
     // png driver doesn't support create(), only createCopy()
     // so create the image as a tif first, then use createCopy() to create the png from that tif
 
@@ -1927,12 +2050,12 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
     
     //this->write_Grid("this_grid", 2);
-    
+
 
     /* -------------------------------------------------------------------- */
     /*  Scale data for the color table                                      */
     /* -------------------------------------------------------------------- */
-    
+
     AsciiGrid<T>scaledDataGrid(*this);
 
 
@@ -1948,31 +2071,6 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     //}//scaledDataGrid.write_Grid("scaled_datagrid", 2);
 
 
-    // need min value (without no data vals) later to make legend
-    double raw_minValue = std::numeric_limits<double>::max();
-    for(int i=0; i<scaledDataGrid.get_nRows(); i++)
-        {
-            for (int j=0;j<scaledDataGrid.get_nCols();j++)
-            {
-                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue())
-                {
-                    raw_minValue = scaledDataGrid(i,j);
-                }
-            }
-        }
-        
-    double raw_maxValue = std::numeric_limits<double>::min();
-    for(int i = scaledDataGrid.get_nRows() - 1;i >= 0;i--)
-    {
-        for (int j = 0;j < scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) > raw_maxValue && scaledDataGrid(i,j) != get_noDataValue())
-            {
-                raw_maxValue = scaledDataGrid(i,j);
-            }
-        }
-    }
-
     // didn't see much difference when varying the range, the important thing is that scaled values are between 0 and 255
     // however, brk2 and brk4 divide may divide more evenly int wise into numbers/range divisible by 2 and 5.
     // oops, need to reserve idx = 0 for the transparent channel in the color table, looks like need to manually convert noData vals to 0
@@ -1981,20 +2079,32 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     int idxRangeMax = 255;
     // numVals = idxRangeMax - idxRangeMin + 1, numBins = numVals - 1, so numBins = idxRangeMax - idxRangeMin
     int numBins = idxRangeMax - idxRangeMin;
-    double binWidth = (raw_maxValue - raw_minValue)/double(numBins);
+    double rangeMinVal;
+    double rangeMaxVal;
+    if ( nColorBreaks == 4 )
+    {
+        rangeMinVal = desiredBrk0;
+        rangeMaxVal = desiredBrk3;
+    } else // if ( nColorBreaks == 3 )
+    {
+        rangeMinVal = desiredBrk1;
+        rangeMaxVal = desiredBrk3;
+    }
+
+    double binWidth = (rangeMaxVal - rangeMinVal)/double(numBins);
     for(int i=0;i<scaledDataGrid.get_nRows();i++)
     {
         for(int j=0;j<scaledDataGrid.get_nCols();j++)
         {
             if( scaledDataGrid(i,j) == get_noDataValue() ){
                 scaledDataGrid(i,j) = 0;
-            } else if ( scaledDataGrid(i,j) < raw_minValue ){
+            } else if ( scaledDataGrid(i,j) < rangeMinVal ){
                 scaledDataGrid(i,j) = idxRangeMin;
-            } else if ( scaledDataGrid(i,j) > raw_maxValue ){
+            } else if ( scaledDataGrid(i,j) > rangeMaxVal ){
                 scaledDataGrid(i,j) = idxRangeMax;
             } else {
                 // int( val + 0.5 ) here is to make int() behave like round()
-                int binIdx = int( (scaledDataGrid(i,j) - raw_minValue)/binWidth + 0.5 ) + idxRangeMin;
+                int binIdx = int( (scaledDataGrid(i,j) - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
                 scaledDataGrid(i,j) = binIdx;
             }
         }
@@ -2030,48 +2140,32 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     int brk0, brk1, brk2, brk3, brk4;
 
-    double _maxValue = std::numeric_limits<double>::min();
-    for(int i = scaledDataGrid.get_nRows() - 1;i >= 0;i--)
-    {
-        for (int j = 0;j < scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) > _maxValue && scaledDataGrid(i,j) != get_noDataValue())
-            {
-                _maxValue = scaledDataGrid(i,j);
-            }
-        }
-    }
-
-    // need min value without 0s aka without no data vals, to make legend
-    double _minValue = std::numeric_limits<double>::max();
-    for(int i=nYSize-1;i>=0;i--)
-        {
-            for (int j=0;j<scaledDataGrid.get_nCols();j++)
-            {
-                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() && scaledDataGrid(i,j) != 0)
-                {
-                    _minValue = scaledDataGrid(i,j);
-                }
-            }
-        }
-
+    // adapt the percent distances between the brk values to match the locations
+    //  of the desired break values within the desired break value range
+    // hrm, comes out the same even with nColorBreaks 3 vs 4, because of the nature of the histogram binning calculation
+    //  but only when rangeMinVal matches across cases
     brk0 = 0;
-    brk1 = _minValue;
-    brk2 = 0.2*(_maxValue-_minValue)+_minValue;
-    brk4 = _maxValue;
-    brk3 = (brk4+brk2)/2.0;
+    brk1 = idxRangeMin;
+    brk4 = idxRangeMax;
+    // int( val + 0.5 ) here is to make int() behave like round()
+    brk2 = int( (desiredBrk1 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
+    brk3 = int( (desiredBrk2 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
 
     poCT->SetColorEntry(brk0, &white);
-    poCT->SetColorEntry(brk1, &blue);
+    if ( nColorBreaks == 4 )
+        poCT->SetColorEntry(brk1, &blue);
     poCT->SetColorEntry(brk2, &green);
     poCT->SetColorEntry(brk3, &yellow);
     poCT->SetColorEntry(brk4, &red);
 
     int nStartIndex = brk1;
     int nEndIndex = brk2;
-    const GDALColorEntry psStartColor1 = blue;
-    const GDALColorEntry psEndColor1 = green;
-    GDALCreateColorRamp(poCT, nStartIndex, &psStartColor1,  nEndIndex, &psEndColor1);
+    if ( nColorBreaks == 4 )
+    {
+        const GDALColorEntry psStartColor1 = blue;
+        const GDALColorEntry psEndColor1 = green;
+        GDALCreateColorRamp(poCT, nStartIndex, &psStartColor1,  nEndIndex, &psEndColor1);
+    }
     nStartIndex = brk2;
     nEndIndex = brk3;
     const GDALColorEntry psStartColor2 = green;
@@ -2092,18 +2186,23 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     if(writeLegend == true)
     {
         //make bitmap
-	    int legendWidth = 180;
-	    int legendHeight = int(legendWidth / 0.75);  // increase by a factor of 4/3, rounded down. For legendWidth of 180, this comes out to be 240
+        int legendWidth = 180;
+        int legendHeight = int(legendWidth / 0.75);  // increase by a factor of 4/3, rounded down. For legendWidth of 180, this comes out to be 240
+        if ( nColorBreaks == 3 )
+        {
+            // override the value (keeps storage still in scope this way)
+            legendHeight = 190;  // specific value for legendWidth of 180
+        }
         BMP legend;
 
 	    std::string legendStrings[6];
 	    ostringstream os;
 
         double _brk0 = 0;
-        double _brk1 = raw_minValue;
-        double _brk2 = 0.20*(raw_maxValue-raw_minValue)+raw_minValue;
-        double _brk4 = raw_maxValue;
-        double _brk3 = (_brk4+_brk2)/2.0;
+        double _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
+        double _brk2 = desiredBrk1;
+        double _brk3 = desiredBrk2;
+        double _brk4 = desiredBrk3;
 
 	    for(int labelIdx = 0; labelIdx < 5; labelIdx++)
 	    {
@@ -2115,7 +2214,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 		    else if(labelIdx == 2)
 			    os << (double)_brk2;
             else if(labelIdx == 3)
-                os << (double)_brk1;
+                os << (double)_brk1;  // ignored when nColorBreaks == 3
 		    else if(labelIdx == 4)
 			    os << "0.00";  // not currently used, but just in case leave it as a stored value
             legendStrings[labelIdx] = os.str();
@@ -2221,6 +2320,11 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
         double cbarBoxXstart_percent = leftMarginPad + 5.0/60.0;  // percent of total image width, the 5.0/60.0 = 0.08333333333 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 5.0/60.0 = 0.08333333333, this comes out to be 0.05 + 5.0/60.0 = 0.13333333333. Probably could have used 0.084, let int(legendWidth*cbarBoxXstart_percent) round down to 24, but using 0.05 + 5.0/60.0 specifically divides evenly into the legendWidth of 180 to get 24
         double cbarBoxYstart_percent = 0.297;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave just a hint too much space, so it was adjusted back a bit
+        if ( nColorBreaks == 3 )
+        {
+            // override the value (keeps storage still in scope this way)
+            cbarBoxYstart_percent = 0.365;
+        }
         int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 5.0/60.0 = 0.08333333333, this comes out to be 24
         int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.297, this comes out to be int(71.28) = 71
 
@@ -2230,7 +2334,14 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         int upperLabelPad = 1;
         int lowerLabelPad = 2;
 
-        int nColorsToUse = 10;  // for 4 cbar colors
+        int nColorsToUse;
+        if ( nColorBreaks == 4 )
+        {
+            nColorsToUse = 10;  // for 4 cbar colors
+        } else // if ( nColorBreaks == 3 )
+        {
+            nColorsToUse = 7;  // for 3 cbar colors
+        }
 
         int labelIdx = 0;
         int yPos = cbarBoxYstart;  // yPos is the current pixel y position
