@@ -27,17 +27,17 @@
  *
  *****************************************************************************/
 #include "windninja.h"
-#include <stdio.h> //for printf
+#include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdbool.h>
 
-
+#define MAX_PATH_LEN 512
 
 int main()
 {
-    /* 
+    /*
      * Setting up the simulation
      */
-    NinjaArmyH* ninjaArmy = NULL; 
+    NinjaArmyH* ninjaArmy = NULL;
     const int nCPUs = 3;
     const char * runType = "C-API autotest";
     char ** papszOptions = NULL;
@@ -48,46 +48,56 @@ int main()
         printf("NinjaInit: err = %d\n", err);
     }
 
+    // manually set your wnDataPath (makes it easier for setting paths and testing)
+    // must replace the "~/" part with your exact path
+    const char* wnDataPath = "~/src/wind/windninja/data";
+
     /*
      * Setting up a log file, for ninjaCom, if desired
      */
-    FILE* multiStream = NULL;
-    multiStream = fopen("/home/atw09001/src/wind/windninja/autotest/api/data/ninja.log", "w+");
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
     if(multiStream == NULL)
     {
         printf("error opening log file\n");
     }
 
-    /* 
-     * Set up domain average run 
+    /*
+     * Set up domain average run
      */
     /* inputs that do not vary among ninjas in an army */
-    const char * demFile = "/home/atw09001/src/wind/windninja/autotest/api/data/missoula_valley.tif";
+    char demFile[MAX_PATH_LEN];
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
     const char * initializationMethod = "domain_average";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
-    const int diurnalFlag = 1; //diurnal slope wind parameterization not used
+    const int diurnalFlag = 1; //set to 1 to use the diurnal slope wind parameterization inputs
+    const int stabilityFlag = 0; //set to 1 to use the stability wind parameterization inputs. NOT to be used with a momentum solver run.
     const double height = 10.0;
     const char * heightUnits = "m";
     //bool momentumFlag = 0; //we're using the conservation of mass solver
     bool momentumFlag = 1; //we're using the conservation of momentum solver
     unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - must be equal to array sizes
 
-    /* inputs specific to output 
+    /* inputs specific to output
      * Note: Outputs have default values if inputs are not specified (like resolution)
      */
     const double outputResolution = 100.0;
     const char * units = "m";
     const double width = 1.0;
     const char * scaling = "equal_color";
-    const char * outputPath  = "/home/atw09001/src/wind/windninja/autotest/api/data/output";
+    char outputPath[MAX_PATH_LEN];
+    snprintf(outputPath, sizeof(outputPath), "%s%s", wnDataPath, "/../autotest/api/data/output");
     const bool outputFlag = 1;
 
     /* inputs that can vary among ninjas in an army */
     const double speedList[] = {5.5, 5.5}; // matches the size of numNinjas
     const char * speedUnits = "mps";
     const double directionList[2] = {220.0, 300.0};
+
+    // thermal parameterization inputs (diurnal and stability)
     const int year[2] = {2023, 2023};
     const int month[2] = {10, 11};
     const int day[2] = {10, 11};
@@ -127,20 +137,27 @@ int main()
     }
 
     /*
-     * Create the army
+     * Make the army
      */
-    err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
-    if( err != NINJA_SUCCESS)
+    if(diurnalFlag == 1 || stabilityFlag == 1)
+    {
+        err = NinjaMakeDomainAverageArmyThermalParameterization(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, year, month, day, hour, minute, timezone, air, airUnits, cloud, cloudUnits, papszOptions);
+    }
+    else
+    {
+        err = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speedList, speedUnits, directionList, papszOptions);
+    }
+    if(err != NINJA_SUCCESS)
     {
         printf("NinjaMakeDomainAverageArmy: err = %d\n", err);
     }
 
-    /* 
+    /*
      * Prepare the army
      */
     for(unsigned int i=0; i<numNinjas; i++)
     {
-      /* 
+      /*
        * Sets Simulation Variables
        */
       err = NinjaSetNumberCPUs(ninjaArmy, i, nCPUs, papszOptions);
@@ -190,7 +207,13 @@ int main()
       {
         printf("NinjaSetDiurnalWinds: err = %d\n", err);
       }
-    
+
+      err = NinjaSetStabilityFlag(ninjaArmy, i, stabilityFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+        printf("NinjaSetStabilityFlag: err = %d\n", err);
+      }
+
       err = NinjaSetUniVegetation(ninjaArmy, i, vegetation, papszOptions);
       if(err != NINJA_SUCCESS)
       {
@@ -230,7 +253,7 @@ int main()
       }
     }
 
-    /* 
+    /*
      * Start the simulations
      */
     err = NinjaStartRuns(ninjaArmy, nCPUs, papszOptions);
@@ -239,7 +262,7 @@ int main()
         printf("NinjaStartRuns: err = %d\n", err);
     }
     
-    /* 
+    /*
      * Clean up
      */
     err = NinjaDestroyArmy(ninjaArmy, papszOptions);
@@ -254,6 +277,13 @@ int main()
         {
             printf("error closing log file\n");
         }
+    }
+
+    // must be called to cleanup ninjaInit();
+    err = NinjaFinalize(papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFinalize: err = %d\n", err);
     }
 
     return NINJA_SUCCESS;

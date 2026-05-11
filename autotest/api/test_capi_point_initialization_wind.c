@@ -4,7 +4,7 @@
  * Purpose:  C API testing
  * Author:   Mason Willman <mason.willman
  *
- * gcc -g -Wall -o test_capi_point_initialization_wind.c test_capi_point_initialization_wind.c -lninja
+ * gcc -g -Wall -o test_capi_point_initialization_wind test_capi_point_initialization_wind.c -lninja
  *
  ******************************************************************************
  *
@@ -27,80 +27,309 @@
  *
  *****************************************************************************/
 #include "windninja.h"
-#include <stdio.h> //for printf
+#include <stdio.h> //for printf, FILE, fopen, fclose
 #include <stdbool.h>
+
+#define MAX_PATH_LEN 512
 
 int main()
 {
-    /* 
+    /*
      * Setting up the simulation
      */
-    NinjaArmyH* ninjaArmy = NULL; 
-    const char * comType = "cli"; //communication type is always set to "cli"
-    const int nCPUs = 1;
+    NinjaArmyH* ninjaArmy = NULL;
+    const int nCPUs = 3;
+    const char * runType = "C-API autotest";
     char ** papszOptions = NULL;
-    NinjaErr err = 0; 
-    err = NinjaInit(papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
+    NinjaErr err = 0;
+    err = NinjaInit(runType, papszOptions); //initialize global singletons and environments (GDAL_DATA, etc.)
     if(err != NINJA_SUCCESS)
     {
-      printf("NinjaInit: err = %d\n", err);
+        printf("NinjaInit: err = %d\n", err);
     }
 
-    /* 
-     * Set up point initialization run 
+    // manually set your wnDataPath (makes it easier for setting paths and testing)
+    // must replace the "~/" part with your exact path
+    const char* wnDataPath = "~/src/wind/windninja/data";
+
+    /*
+     * Setting up a log file, for ninjaCom, if desired
+     */
+    char multiStreamFilename[MAX_PATH_LEN];
+    snprintf(multiStreamFilename, sizeof(multiStreamFilename), "%s%s", wnDataPath, "/../autotest/api/data/ninja.log");
+    FILE* multiStream = fopen(multiStreamFilename, "w+");
+    if(multiStream == NULL)
+    {
+        printf("error opening log file\n");
+    }
+
+    /*
+     * Set up point initialization run
      */
     /* inputs that can vary among ninjas in an army */
-    //double outputResolution = 100; 
     const char * initializationMethod = "point";
     const char * meshChoice = "coarse";
     const char * vegetation = "grass";
     const int nLayers = 20; //layers in the mesh
-    const int diurnalFlag = 0; //diurnal slope wind parameterization not used
+    const int diurnalFlag = 0; //set to 1 to use the diurnal slope wind parameterization inputs
+    const int stabilityFlag = 0; //set to 1 to use the stability wind parameterization inputs. NOT to be used with a momentum solver run.
     const double height = 10.0;
     const char * heightUnits = "m";
     const char * speedUnits = "mps";
     bool momentumFlag = 0; //we're using the conservation of mass solver
-    unsigned int numNinjas = 2; //two ninjas in the ninjaArmy
-    
-    /* Size must match the number of ninjas */
-    int size = numNinjas;
-    int year[2] = {2024, 2024}; 
-    int month[2] = {2, 2};
-    int day[2] = {2, 2};
-    int hour[2] = {2, 2};
-    int minute[2] = {2, 2};
-    char* station_path = "data/WXSTATION"; // will need to run fetch test to get wxstation data
-    char* demFile = "data/missoula_valley.tif";
-    char* osTimeZone = "UTC";
-    bool matchPointFlag = 1;
+    ////bool momentumFlag = 1; //we're using the conservation of momentum solver. NOTE: CANNOT DO POINT INITIALIZATION WITH A MOMENTUM SOLVER RUN.
+    ////unsigned int numNinjas = 2; //two ninjas in the ninjaArmy - this will eventually be equal to the number of times in the timeList to be run on the set of station files
 
-    /* 
-     * Create the army
+    //const int nIters = -1.0;  //set to value > 0.0 to override the default value of 1000. Used only by the conservation of momentum solver.
+    const int nIters = 300;  // the cli and the GUI use a value of 300 instead of the default value of 1000.
+
+    const double meshResolution = -1.0;  //set to value > 0.0 to override meshChoice with meshResolution value. Used only by the conservation of momentum solver.
+    //const double meshResolution = 300.0;
+    const char * meshResolutionUnits = "m";
+
+    char demFile[MAX_PATH_LEN];
+    snprintf(demFile, sizeof(demFile), "%s%s", wnDataPath, "/../autotest/api/data/missoula_valley.tif");
+    //char* osTimeZone = "UTC";
+    char* osTimeZone = "America/Denver";
+    bool matchPointsFlag = 1;  // needed to match the station data, or else you only get a domainAverageRun of the initial wind field constructed from the station data
+
+
+    /* set the number and names of the station files to use */
+    ////// use predownloaded WINDNINJA_DATA files
+    //// try the station location files
+    //// hrm, the C-API doesn't seem to like the station location files, like the cli does
+    ////int numStationFiles = 1;
+    ////char station_path0[MAX_PATH_LEN];
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv");  // latestTime
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv");  // timeSeries
+    ////const char* station_paths[1] = {station_path0};
+    //// standard setup for a latestTime or timeSeries
+    int numStationFiles = 4;
+    char station_path0[MAX_PATH_LEN];
+    char station_path1[MAX_PATH_LEN];
+    char station_path2[MAX_PATH_LEN];
+    char station_path3[MAX_PATH_LEN];
+    /// timeSeries
+    snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv");
+    snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv");
+    snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv");
+    snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv");
+    /// latestTime
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv");
+    const char* station_paths[4] = {station_path0, station_path1, station_path2, station_path3};
+
+    ////// use files fetched from test_capi_fetching.c
+    ////// will need to run test_capi_fetching.c to get wxstation data, and adjust the path names accordingly
+    //// hrm, the C-API doesn't seem to like the station location files, like the cli does
+    ////int numStationFiles = 1;
+    ////char station_path0[MAX_PATH_LEN];
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/missoula_valley_stations_6.csv.csv");  // latestTime
+    ////snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/missoula_valley_stations_6.csv.csv");  // timeSeries
+    ////const char* station_paths[1] = {station_path0};
+    /// latestTime
+    //int numStationFiles = 4;
+    //char station_path0[MAX_PATH_LEN];
+    //char station_path1[MAX_PATH_LEN];
+    //char station_path2[MAX_PATH_LEN];
+    //char station_path3[MAX_PATH_LEN];
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/KMSO-2026-05-04_1840-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/BLMM8-2026-05-04_1840-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/PNTM8-2026-05-04_1840-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2026-05-04-1840-missoula_valley/FINM8-2026-05-04_1840-3.csv");
+    //const char* station_paths[4] = {station_path0, station_path1, station_path2, station_path3};
+    /// timeSeries
+    //int numStationFiles = 6;
+    //char station_path0[MAX_PATH_LEN];
+    //char station_path1[MAX_PATH_LEN];
+    //char station_path2[MAX_PATH_LEN];
+    //char station_path3[MAX_PATH_LEN];
+    //char station_path4[MAX_PATH_LEN];
+    //char station_path5[MAX_PATH_LEN];
+    //snprintf(station_path0, sizeof(station_path0), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/KMSO-2024-02-02_0202-2024-02-02_0202-0.csv");
+    //snprintf(station_path1, sizeof(station_path1), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/BLMM8-2024-02-02_0202-2024-02-02_0202-1.csv");
+    //snprintf(station_path2, sizeof(station_path2), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/PNTM8-2024-02-02_0202-2024-02-02_0202-2.csv");
+    //snprintf(station_path3, sizeof(station_path3), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/FINM8-2024-02-02_0202-2024-02-02_0202-3.csv");
+    //snprintf(station_path4, sizeof(station_path4), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/NINM8-2024-02-02_0202-2024-02-02_0202-4.csv");
+    //snprintf(station_path5, sizeof(station_path5), "%s%s", wnDataPath, "/../autotest/api/data/fetch/WXSTATIONS-2024-02-02-0202-2024-02-02-0202-missoula_valley/MOMM8-2024-02-02_0202-2024-02-02_0202-5.csv");
+    //const char* station_paths[6] = {station_path0, station_path1, station_path2, station_path3, station_path4, station_path5};
+
+
+    /* set the times to be used from/with the station files */
+    /* timeListSize is technically used instead of the number of ninjas */
+    /* but timeListSize is technically used more like a numTimeSteps, it can be less than or equal to the size of the time arrays */
+    /* to do a latestTime simulation, instead of a timeSeries, use a timeListSize of 1. */
+    ////int timeListSize = numNinjas;
+    int timeListSize = 2;
+    //int timeListSize = 1;  // make sure to only use 1 if doing latestTime data, or it tries to converge on some kind of NO_DATA situation or something.
+
+    //// use predownloaded WINDNINJA_DATA files and times
+    //int year[2] = {2018, 2018};
+    //int month[2] = {6, 6};
+    ////int day[2] = {20, 21};  // local time
+    ////int hour[2] = {21, 21};  // local time
+    //int day[2] = {21, 22}; // UTC time
+    //int hour[2] = {3, 3};  // UTC time, 6 hrs later
+    //int minute[2] = {28, 28};
+
+    //// use fetched data times
+    //// will need to run test_capi_fetching.c to get station data
+    //// so update the folder path accordingly for the fresh data.
+    ////
+    //// hrm the run seems to be way stricter than the fetch for building the times
+    //// have to use a narrower set of times than the download
+    ////
+    //// the time list seems to stay pretty stable, latestTime just affects folder paths/names
+    //// so probably don't need to edit this list of times after all.
+    //int year[2] = {2024, 2024};
+    //int month[2] = {2, 2};
+    ////int day[2] = {1, 1};  // local time
+    ////int hour[2] = {19, 19};  // local time, 7 hrs earlier
+    //int day[2] = {2, 2};  // UTC time
+    //int hour[2] = {2, 2};  // UTC time
+    //int minute[2] = {0, 59};
+
+
+    //// or even better, generate your own list of times, using the helper functions
+    //// this involves setting up a ninjaTools instance
+    /// use predownloaded WINDNINJA_DATA files and times
+    int startYear = 2018;
+    int startMonth = 6;
+    int startDay = 20;  // local time
+    int startHour = 21;  // local time
+    //int startDay = 21;  // UTC time
+    //int startHour = 3;  // UTC time, 6 hrs later
+    int startMinute = 28;
+    int stopYear = 2018;
+    int stopMonth = 6;
+    int stopDay = 21;  // local time
+    int stopHour = 21;  // local time
+    //int stopDay = 22;  // UTC time
+    //int stopHour = 3;  // UTC time, 6 hrs later
+    int stopMinute = 28;
+    /// use fetched data times (for files fetched from test_capi_fetching.c)
+    /// looks like the fetch was in UTC time, but these helper functions require local time as input
+    //int startYear = 2024;
+    //int startMonth = 2;
+    //int startDay = 1;  // local time
+    //int startHour = 19;  // local time, 7 hrs earlier
+    ////int startDay = 2;  // UTC time
+    ////int startHour = 2;  // UTC time
+    //int startMinute = 0;
+    //int stopYear = 2024;
+    //int stopMonth = 2;
+    //int stopDay = 1;  // local time
+    //int stopHour = 19;  // local time, 7 hrs earlier
+    ////int stopDay = 2;  // UTC time
+    ////int stopHour = 2;  // UTC time
+    //int stopMinute = 59;
+
+    NinjaToolsH* ninjaTools = NULL;
+    /*
+     * Initialize ninjaTools
      */
-    ninjaArmy = NinjaMakePointArmy(year, month, day, hour, minute, size, osTimeZone, station_path, demFile, matchPointFlag, momentumFlag, papszOptions);
-    if( NULL == ninjaArmy )
+    ninjaTools = NinjaMakeTools();
+    /*
+     * Customize the ninja communication
+     */
+    err = NinjaSetToolsMultiComStream(ninjaTools, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
     {
-        printf("NinjaCreateArmy: ninjaArmy = NULL\n");
+        printf("NinjaSetToolsMultiComStream: err = %d\n", err);
     }
-    
-    /* 
-     * Prepare the army
-     */
-    for(unsigned int i=0; i<numNinjas; i++)
+
+    // MUST USE THE SAME or smaller SIZE AS timeListSize, or you get ERRORS
+    int year[2];
+    int month[2];
+    int day[2];
+    int hour[2];
+    int minute[2];
+    if(timeListSize == 1)
     {
-        err = NinjaSetCommunication(ninjaArmy, i, comType, papszOptions);
+        int outYear;
+        int outMonth;
+        int outDay;
+        int outHour;
+        int outMinute;
+        err = NinjaGenerateSingleTimeObject(ninjaTools, startYear, startMonth, startDay, startHour, startMinute, osTimeZone, &outYear, &outMonth, &outDay, &outHour, &outMinute);
         if(err != NINJA_SUCCESS)
         {
-          printf("NinjaSetCommunication: err = %d\n", err);
+            printf("NinjaGenerateSingleTimeObject: err = %d\n", err);
         }
-     
+
+        year[0] = outYear;
+        month[0] = outMonth;
+        day[0] = outDay;
+        hour[0] = outHour;
+        minute[0] = outMinute;
+    }
+    else
+    {
+        int inYears[2] = {startYear, stopYear};
+        int inMonths[2] = {startMonth, stopMonth};
+        int inDays[2] = {startDay, stopDay};
+        int inHours[2] = {startHour, stopHour};
+        int inMinutes[2] = {startMinute, stopMinute};
+        err = NinjaGetTimeList(ninjaTools, inYears, inMonths, inDays, inHours, inMinutes, year, month, day, hour, minute, timeListSize, osTimeZone);
+        if(err != NINJA_SUCCESS)
+        {
+            printf("NinjaGetTimeList: err = %d\n", err);
+        }
+    }
+
+    // not yet needed/implemented in the code, but it should be.
+    // if ninjaTools was used/generated, clean it up afterwards
+    //err = NinjaDestroyTools(ninjaTools, papszOptions);
+    //if(err != NINJA_SUCCESS)
+    //{
+    //    printf("NinjaDestroyTools: err = %d\n", ninjaErr);
+    //}
+
+
+    /*
+     * Initialize the army
+     */
+    ninjaArmy = NinjaInitializeArmy();
+    if( NULL == ninjaArmy )
+    {
+        printf("NinjaInitializeArmy: ninjaArmy = NULL\n");
+    }
+
+    /*
+     * Customize the ninja communication
+     */
+    err = NinjaSetArmyMultiComStream(ninjaArmy, multiStream, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaSetArmyMultiComStream: err = %d\n", err);
+    }
+
+    /*
+     * Make the army
+     */
+    err = NinjaMakePointArmy(ninjaArmy, year, month, day, hour, minute, timeListSize, osTimeZone, station_paths, numStationFiles, demFile, matchPointsFlag, momentumFlag, papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaMakePointArmy: err = %d\n", err);
+    }
+
+    /*
+     * Prepare the army
+     */
+    for(unsigned int i=0; i<timeListSize; i++)
+    {
+        /*
+        * Sets Simulation Variables
+        */
         err = NinjaSetNumberCPUs(ninjaArmy, i, nCPUs, papszOptions);
         if(err != NINJA_SUCCESS)
         {
           printf("NinjaSetNumberCPUs: err = %d\n", err);
         }
-     
-        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, papszOptions);
+
+        err = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, matchPointsFlag, papszOptions);
         if(err != NINJA_SUCCESS)
         {
           printf("NinjaSetInitializationMethod: err = %d\n", err);
@@ -141,19 +370,45 @@ int main()
         {
           printf("NinjaSetDiurnalWinds: err = %d\n", err);
         }
-     
+
+        err = NinjaSetStabilityFlag(ninjaArmy, i, stabilityFlag, papszOptions);
+        if(err != NINJA_SUCCESS)
+        {
+          printf("NinjaSetStabilityFlag: err = %d\n", err);
+        }
+
         err = NinjaSetUniVegetation(ninjaArmy, i, vegetation, papszOptions);
         if(err != NINJA_SUCCESS)
         {
           printf("NinjaSetUniVegetation: err = %d\n", err);
         }
-     
-        err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
-        if(err != NINJA_SUCCESS)
+
+        if(nIters > 0.0)
         {
-            printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+          err = NinjaSetNumberOfIterations(ninjaArmy, i, nIters, papszOptions);
+          if(err != NINJA_SUCCESS)
+          {
+            printf("NinjaSetNumberOfIterations: err = %d\n", err);
+          }
         }
-     
+
+        if(meshResolution > 0.0)
+        {
+          err = NinjaSetMeshResolution(ninjaArmy, i, meshResolution, meshResolutionUnits, papszOptions);
+          if(err != NINJA_SUCCESS)
+          {
+            printf("NinjaSetMeshResolution: err = %d\n", err);
+          }
+        }
+        else  // meshResolution not set, use meshChoice
+        {
+          err = NinjaSetMeshResolutionChoice(ninjaArmy, i, meshChoice, papszOptions);
+          if(err != NINJA_SUCCESS)
+          {
+            printf("NinjaSetMeshResolutionChoice: err = %d\n", err);
+          }
+        }
+
         err = NinjaSetNumVertLayers(ninjaArmy, i, nLayers, papszOptions);
         if(err != NINJA_SUCCESS)
         {
@@ -161,7 +416,7 @@ int main()
         }
     }
 
-    /* 
+    /*
      * Start the simulations
      */
     err = NinjaStartRuns(ninjaArmy, nCPUs, papszOptions);
@@ -169,8 +424,8 @@ int main()
     {
         printf("NinjaStartRuns: err = %d\n", err);
     }
-    
-    /* 
+
+    /*
      * Clean up
      */
     err = NinjaDestroyArmy(ninjaArmy, papszOptions);
@@ -178,6 +433,21 @@ int main()
     {
         printf("NinjaDestroyRuns: err = %d\n", err);
     }
- 
+
+    if(multiStream != NULL)
+    {
+        if(fclose(multiStream) != 0)
+        {
+            printf("error closing log file\n");
+        }
+    }
+
+    // must be called to cleanup ninjaInit();
+    err = NinjaFinalize(papszOptions);
+    if(err != NINJA_SUCCESS)
+    {
+        printf("NinjaFinalize: err = %d\n", err);
+    }
+
     return NINJA_SUCCESS;
 }
