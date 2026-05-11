@@ -896,8 +896,8 @@ void PointInitializationInput::readStationTime(QString startDateTimeStr, QString
 
     CPLDebug("STATION_FETCH", "minStationLocalDateTime = %s", minStationLocalDateTime.toString("MM/dd/yyyy HH:mm").toStdString().c_str());
     CPLDebug("STATION_FETCH", "maxStationLocalDateTime = %s", maxStationLocalDateTime.toString("MM/dd/yyyy HH:mm").toStdString().c_str());
-//    emit writeToConsoleSignal("Start Time (local): "+minStationLocalDateTime.toString());
-//    emit writeToConsoleSignal("End   Time (local): "+maxStationLocalDateTime.toString());
+    emit writeToConsoleSignal("Start Time (local): "+minStationLocalDateTime.toString());
+    emit writeToConsoleSignal("End   Time (local): "+maxStationLocalDateTime.toString());
 
     updateTimeSteps();
 }

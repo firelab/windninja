@@ -117,7 +117,6 @@ void AppState::updateSurfaceInputState()
     updateDomainAverageInputState();
     updatePointInitializationInputState();
     updateWeatherModelInputState();
-    //updateInputState();
 }
 
 void AppState::updateDiurnalInputState()
@@ -136,7 +135,6 @@ void AppState::updateDiurnalInputState()
     }
 
     updateDomainAverageInputState();
-    //updateInputState();
 }
 
 void AppState::updateStabilityInputState()
@@ -155,7 +153,6 @@ void AppState::updateStabilityInputState()
     }
 
     updateDomainAverageInputState();
-    //updateInputState();
 }
 
 void AppState::updateDomainAverageInputState()
@@ -608,8 +605,6 @@ void AppState::updateInputState()
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
-    //updateOutputState();
-    //updateOverallState();
 }
 
 void AppState::updateOutputState()
