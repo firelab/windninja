@@ -435,7 +435,6 @@ void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
 void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
 {
     AppState& state = AppState::instance();
-    state.surfaceInputFileLoadSuccess = false;
 
     webEngineView->page()->runJavaScript("stopRectangleDrawing();");
 
@@ -464,7 +463,6 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
     state.GDALXSize = GDALXSize;
     state.GDALYSize = GDALYSize;
     state.GDALCellSize = GDALCellSize;
-    state.surfaceInputFileLoadSuccess = true;
 
     emit updateState();
     emit updateTreeView();

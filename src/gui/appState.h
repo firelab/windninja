@@ -32,7 +32,6 @@
 
 #include "ui_mainWindow.h"
 #include <QObject>
-#include <QFile>
 
 class AppState : public QObject
 {
@@ -49,7 +48,6 @@ public:
     int GDALXSize = 0;
     int GDALYSize = 0;
     double GDALCellSize = 0.0;
-    bool surfaceInputFileLoadSuccess = false;
     bool isSurfaceInputValid = false;
     bool isDiurnalValid = false;
     bool isStabilityValid = false;

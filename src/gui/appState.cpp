@@ -107,20 +107,6 @@ void AppState::updateSurfaceInputState()
         ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Surface Input File not selected");
     }
-    else if(!QFile::exists(ui->elevationInputFileLineEdit->property("fullpath").toString()))
-    {
-        isSurfaceInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, crossIcon);
-        ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Surface Input File does not exist on disk");
-    }
-    else if(surfaceInputFileLoadSuccess == false)
-    {
-        // old code did this check, doing hasPrj, but the new code has many stages during loadDemMetadata() where a file could potentially fail to load
-        // variables aren't replaced anyways until a fully successful load, so just do a single check at the end of the process.
-        isSurfaceInputValid = false;
-        ui->treeWidget->topLevelItem(1)->child(0)->setIcon(0, warnIcon);
-        ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Surface Input File failed to load");
-    }
     else
     {
         isSurfaceInputValid = true;
