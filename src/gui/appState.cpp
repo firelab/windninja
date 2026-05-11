@@ -128,12 +128,10 @@ void AppState::updateSurfaceInputState()
         ui->treeWidget->topLevelItem(1)->child(0)->setToolTip(0, "Valid");
     }
 
-    updateInputState();
-    updateGoogleEarthOutputState();
-    updateFireBehaviorOutputState();
-    updateShapeFilesOutputState();
-    updateGeoSpatialPDFFilesOutputState();
-    updateVTKFilesOutputState();
+    updateDomainAverageInputState();
+    updatePointInitializationInputState();
+    updateWeatherModelInputState();
+    //updateInputState();
 }
 
 void AppState::updateDiurnalInputState()
@@ -151,8 +149,8 @@ void AppState::updateDiurnalInputState()
         ui->treeWidget->topLevelItem(1)->child(1)->setToolTip(0, "No Diurnal Input");
     }
 
-    //updateInputState();  // called by updateDomainAverageInputState()
     updateDomainAverageInputState();
+    //updateInputState();
 }
 
 void AppState::updateStabilityInputState()
@@ -170,8 +168,8 @@ void AppState::updateStabilityInputState()
         ui->treeWidget->topLevelItem(1)->child(2)->setToolTip(0, "No Stability Input");
     }
 
-    updateInputState();
-    //updateDomainAverageInputState();
+    updateDomainAverageInputState();
+    //updateInputState();
 }
 
 void AppState::updateDomainAverageInputState()
@@ -626,7 +624,7 @@ void AppState::updateInputState()
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
-    updateOutputState();
+    //updateOutputState();
     //updateOverallState();
 }
 
