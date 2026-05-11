@@ -178,7 +178,13 @@ void AppState::updateDomainAverageInputState()
 {
     if(ui->domainAverageGroupBox->isChecked())
     {
-        if(DomainAvgTableNumRuns == 0)
+        if(!isSurfaceInputValid)
+        {
+            ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(1)->child(3)->child(0)->setToolTip(0, "Check Surface Input");
+            isDomainAverageInitializationValid = false;
+        }
+        else if(DomainAvgTableNumRuns == 0)
         {
             if(ui->diurnalCheckBox->isChecked() == false)
             {
@@ -334,6 +340,12 @@ void AppState::updateGoogleEarthOutputState()
             ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Check Surface Input");
         }
+        else if(!isInputValid)
+        {
+            isGoogleEarthValid = false;
+            ui->treeWidget->topLevelItem(2)->child(0)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(0)->setToolTip(0, "Check Inputs");
+        }
         else
         {
             double XLength = GDALXSize * GDALCellSize;
@@ -379,6 +391,12 @@ void AppState::updateFireBehaviorOutputState()
             ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Check Surface Input");
         }
+        else if(!isInputValid)
+        {
+            isFireBehaviorValid = false;
+            ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Check Inputs");
+        }
         else if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
         {
             isFireBehaviorValid = true;
@@ -411,6 +429,12 @@ void AppState::updateShapeFilesOutputState()
             isShapeFilesValid = false;
             ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isShapeFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Inputs");
         }
         else if(GDALCellSize > ui->shapeFilesMeshResolutionSpinBox->value())
         {
@@ -445,6 +469,12 @@ void AppState::updateGeoSpatialPDFFilesOutputState()
             ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Surface Input");
         }
+        else if(!isInputValid)
+        {
+            isGeoSpatialPDFFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Inputs");
+        }
         else if(GDALCellSize > ui->geospatialPDFFilesMeshResolutionSpinBox->value())
         {
             isGeoSpatialPDFFilesValid = true;
@@ -477,6 +507,12 @@ void AppState::updateVTKFilesOutputState()
             isVTKFilesValid = false;
             ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isVTKFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Inputs");
         }
         else
         {
@@ -535,10 +571,6 @@ void AppState::updateInputState()
     }
 
     QVector<QString> invalidCases;
-    if(!isSurfaceInputValid)
-    {
-        invalidCases.append(QString("Surface Input"));
-    }
     if(ui->diurnalCheckBox->isChecked() && !isDiurnalValid)
     {
         invalidCases.append(QString("Diurnal Input"));
@@ -552,7 +584,13 @@ void AppState::updateInputState()
         invalidCases.append(QString("Wind Input"));
     }
 
-    if(invalidCases.size() == 0)
+    if(!isSurfaceInputValid)
+    {
+        isInputValid = false;
+        ui->treeWidget->topLevelItem(1)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(1)->setToolTip(0, "Check Surface Input");
+    }
+    else if(invalidCases.size() == 0)
     {
         isInputValid = true;
         ui->treeWidget->topLevelItem(1)->setIcon(0, tickIcon);
@@ -583,7 +621,13 @@ void AppState::updateInputState()
         ui->treeWidget->topLevelItem(1)->setToolTip(0, checkString);
     }
 
-    updateOverallState();
+    updateGoogleEarthOutputState();
+    updateFireBehaviorOutputState();
+    updateShapeFilesOutputState();
+    updateGeoSpatialPDFFilesOutputState();
+    updateVTKFilesOutputState();
+    updateOutputState();
+    //updateOverallState();
 }
 
 void AppState::updateOutputState()
@@ -593,6 +637,12 @@ void AppState::updateOutputState()
         isOutputValid = false;
         ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
         ui->treeWidget->topLevelItem(2)->setToolTip(0, "Check Surface Input");
+    }
+    else if(!isInputValid)
+    {
+        isOutputValid = false;
+        ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(2)->setToolTip(0, "Check Inputs");
     }
     else if(!ui->googleEarthCheckBox->isChecked() && !ui->fireBehaviorGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked())
     {
