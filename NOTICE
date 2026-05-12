@@ -48,18 +48,24 @@ Third‑Party Dependencies and Their Licenses
    * Used for: configuration handling, debugging, file checks, etc.
    * License: MIT‑style “X/MIT” license (same as GDAL).
 
-8. **Standard C++ Library**
+8. **Qt**
+   * Used for: the graphical user interface (menus, dialogs, file handling, etc.) in `src/gui/`.
+   * License: GNU Lesser General Public License v2.1 (or later) with the Qt
+     GPL Exception.
+   * Full text: https://www.qt.io/licensing/
+
+9. **Standard C++ Library**
    * Used for: containers, streams, algorithms, etc.
    * License: Implementation‑specific (e.g., GPL with the “runtime
      exception” for libstdc++, Apache 2.0 for libc++, etc.).  This
      library is provided by the compiler/runtime and does not impose
      additional restrictions on the WindNinja source.
 
-9. **Other small utilities**
-   * `jsmn` (JSON parser) – public domain / MIT‑compatible.
-   * `tinyxml2` (if used elsewhere) – Zlib license.
-   * Any additional header‑only helpers that ship with the source are
-     covered by the same permissive licenses noted above.
+10. **Other small utilities**
+    * `jsmn` (JSON parser) – public domain / MIT‑compatible.
+    * `tinyxml2` (if used elsewhere) – Zlib license.
+    * Any additional header‑only helpers that ship with the source are
+      covered by the same permissive licenses noted above.
 
 --------------------------------------------------------------------
 How to Distribute
