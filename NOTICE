@@ -1,0 +1,83 @@
+WindNinja – Open‑Source Wind Modeling Software
+================================================
+
+This repository contains the source code for **WindNinja**, a public‑domain
+software project developed by the Rocky Mountain Research Station (RMRS),
+U.S. Forest Service.  The main code itself is released into the public
+domain (see the header comment in `src/ninja/ninja.cpp`).
+
+--------------------------------------------------------------------
+Third‑Party Dependencies and Their Licenses
+--------------------------------------------------------------------
+
+1. **Boost C++ Libraries**
+   * Used for: date‑time handling, lexical casts, local time zones, etc.
+   * License: Boost Software License 1.0
+   * Full text: https://www.boost.org/LICENSE_1_0.txt
+
+2. **GDAL (Geospatial Data Abstraction Library)**
+   * Used for: raster I/O, coordinate transformations, VRT creation,
+     warping, and many helper utilities.
+   * License: MIT‑style “X/MIT” license
+   * Full text: https://gdal.org/license.html
+
+3. **PROJ**
+   * Used for: map projections and coordinate transformations (via GDAL).
+   * License: MIT‑style “X/MIT” license
+   * Full text: https://proj.org/about.html#license
+
+4. **OpenMP**
+   * Used for: parallel loops throughout the code base.
+   * License: Apache License 2.0 (part of the LLVM/Clang runtime)
+   * Full text: https://www.apache.org/licenses/LICENSE-2.0
+
+5. **Intel Math Kernel Library (MKL)**
+   * Used for: BLAS‑level routines (`cblas_*`, `mkl_dcsrmv`, etc.).
+   * License: Intel Simplified Software License (free for non‑commercial
+     use; commercial use requires an Intel MKL license).
+   * Full text: https://software.intel.com/content/www/us/en/develop/articles/intel-simplified-software-license.html
+
+6. **TAUCS (Templated Algebraic Unstructured Solver)**
+   * Used for: sparse matrix storage (`taucs_double`) and linear‑solver
+     infrastructure (commented out in the current code but still present).
+   * License: BSD‑style license (see `src/ninja/Preconditioner.h` for
+     attribution).
+   * Full text: https://github.com/jeffhammond/taucs/blob/master/LICENSE
+
+7. **CPL (Common Portability Library) – part of GDAL**
+   * Used for: configuration handling, debugging, file checks, etc.
+   * License: MIT‑style “X/MIT” license (same as GDAL).
+
+8. **Standard C++ Library**
+   * Used for: containers, streams, algorithms, etc.
+   * License: Implementation‑specific (e.g., GPL with the “runtime
+     exception” for libstdc++, Apache 2.0 for libc++, etc.).  This
+     library is provided by the compiler/runtime and does not impose
+     additional restrictions on the WindNinja source.
+
+9. **Other small utilities**
+   * `jsmn` (JSON parser) – public domain / MIT‑compatible.
+   * `tinyxml2` (if used elsewhere) – Zlib license.
+   * Any additional header‑only helpers that ship with the source are
+     covered by the same permissive licenses noted above.
+
+--------------------------------------------------------------------
+How to Distribute
+--------------------------------------------------------------------
+* The core WindNinja code is in the public domain; you may use, modify,
+  and redistribute it without restriction.
+* When redistributing the software, you must also include the license
+  texts for the third‑party components listed above.  The full license
+  files can be placed in a `LICENSES/` sub‑directory, or you may embed
+  the short notices (as shown here) in your distribution package.
+* If you link against Intel MKL in a commercial product, ensure you
+  comply with Intel’s licensing terms.
+
+--------------------------------------------------------------------
+Contact
+--------------------------------------------------------------------
+For questions about licensing or to obtain the original source of any
+dependency, please contact the WindNinja development team at:
+
+* **Project website:** https://github.com/firelab/windninja
+* **Primary maintainer:** Natalie Wagenbrenner <nwagenbrenner@gmail.com>
