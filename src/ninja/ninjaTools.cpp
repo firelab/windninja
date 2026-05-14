@@ -87,7 +87,7 @@ ninjaTools::~ninjaTools()
  *
  * @param boundsBox Bounding box in the form of north, east, south, west.
  * @param fileName Name of DEM file.
- * @param resolution Resolution of DEM file.
+ * @param resolution Desired resolution of DEM file, in meters. If set to <= 0.0, the fetcher will use the raw DEM resolution.
  * @param fetchType Type of DEM file to fetch.
  *
  */
@@ -119,7 +119,20 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     double eastBound = boundsBox[1];
     double southBound = boundsBox[2];
     double westBound = boundsBox[3];
-    int result = fetcher->FetchBoundingBox(boundsBox, resolution, fileName, NULL);
+
+    double elevRes = resolution;
+    if(elevRes <= 0.0)
+    {
+        elevRes = fetcher->GetXRes();
+        #ifdef HAVE_GMTED
+        if(strcmp(fetchType, "gmted") == 0)
+        {
+            elevRes = fetcher->GetXRes() * 111325;  // convert from lat/lon to m
+        }
+        #endif //HAVE_GMTED
+    }
+
+    int result = fetcher->FetchBoundingBox(boundsBox, elevRes, fileName, NULL);
     //if(result != 0)
     if(result < 0)
     {
@@ -170,7 +183,7 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
  * @param adfPoint a x,y point in WGS 84 longitude, latitude
  * @param adfBuff length of a buffer in the x and y directions
  * @param units Units of buffer.
- * @param dfCellSize Cell size of DEM.
+ * @param dfCellSize Desired cell size of DEM file, in meters. If set to <= 0.0, the fetcher will use the raw DEM resolution.
  * @param pszDstFile Destination file.
  * @param papszOptions Options for fetching DEM.
  * @param fetchType Type of DEM to fetch.
@@ -205,7 +218,20 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
         return NINJA_E_INVALID;
     }
     lengthUnits::eLengthUnits ninjaUnits = lengthUnits::getUnit(std::string(units));
-    int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, dfCellSize, pszDstFile, papszOptions);
+
+    double elevRes = dfCellSize;
+    if(elevRes <= 0.0)
+    {
+        elevRes = fetcher->GetXRes();
+        #ifdef HAVE_GMTED
+        if(strcmp(fetchType, "gmted") == 0)
+        {
+            elevRes = fetcher->GetXRes() * 111325;  // convert from lat/lon to m
+        }
+        #endif //HAVE_GMTED
+    }
+
+    int result = fetcher->FetchPoint(adfPoint, adfBuff, ninjaUnits, elevRes, pszDstFile, papszOptions);
     //if(result != 0)
     if(result < 0)
     {
