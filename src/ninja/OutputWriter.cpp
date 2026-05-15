@@ -242,6 +242,10 @@ OutputWriter::write (std::string outputFilename, std::string driver)
            //_writeGTiff(outFilename);
         }
     }
+    else if ( 0 == driver.compare( "FlatGeoBuf" ) )
+    {
+        _writeFlatGeoBuf(outputFilename);
+    }
     else
     {
         throw std::runtime_error("OutputWriter: unrecognized output format");
@@ -504,8 +508,7 @@ void OutputWriter::_openSrcDataSet()
  * @post The OGR datasource is populated with features from simulation data
  */
 /* ----------------------------------------------------------------------------*/
-    void
-OutputWriter::_createOGRFile()
+void OutputWriter::_createOGRFile()
 {
     int ncols = spd.get_nCols();
     int nrows = spd.get_nRows();
@@ -611,8 +614,6 @@ OutputWriter::_createOGRFile()
         }
     }
     
-    _closeOGRFile();
-
     return ;
 
 }		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
@@ -630,8 +631,7 @@ OutputWriter::_createOGRFile()
  * @Returns True is successful. 
  */
 /* ----------------------------------------------------------------------------*/
-    bool
-OutputWriter::_writePDF (std::string outputfn)
+bool OutputWriter::_writePDF (std::string outputfn)
 {
     _createSplits();
     _createOGRFile();
@@ -961,3 +961,31 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
     return true;
 }
 
+bool OutputWriter::_writeFlatGeoBuf(std::string filename)
+{
+    _createSplits();
+    _createOGRFile();
+    _createLegend();
+    _openSrcDataSet();
+
+
+    hDriver = OGRGetDriverByName("FlatGeobuf");
+    if ( hDriver == NULL )
+    {
+        throw std::runtime_error("OutputWriter: FlatGeobuf driver not available.");
+    }
+
+    papszOptions = CSLAddNameValue(papszOptions, "SPATIAL_INDEX", "YES");
+    hDstDS = GDALCreateCopy(hDriver, filename.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);
+
+    if( NULL == hDstDS )
+    {
+        throw std::runtime_error("OutputWriter: Error creating output file");
+    }
+
+    _destroyOptions();
+
+    OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
+
+    return true;
+}

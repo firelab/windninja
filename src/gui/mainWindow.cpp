@@ -90,7 +90,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 12);
     ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 15);
+    ui->treeWidget->topLevelItem(2)->child(5)->setData(0, Qt::UserRole, 15);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 16);
 
     connectSignals();
 
@@ -1213,6 +1214,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFlatGeoBufFlag(ninjaArmy, i, ui->mapVisualizationGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFlatGeoBufFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 

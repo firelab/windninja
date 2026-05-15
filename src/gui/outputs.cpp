@@ -40,6 +40,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
     connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &Outputs::VTKFilesCheckBoxClicked);
+    connect(ui->mapVisualizationGroupBox, &QGroupBox::toggled, this, &Outputs::mapVisualizationGroupBoxToggled);
     connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthMeshResolutionGroupBoxToggled);
     connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorMeshResolutionGroupBoxToggled);
     connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesMeshResolutionGroupBoxToggled);
@@ -148,6 +149,11 @@ void Outputs::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
     emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
 
     emit updatePDFState();
+}
+
+void Outputs::mapVisualizationGroupBoxToggled(bool checked)
+{
+
 }
 
 void Outputs::meshResolutionSpinBoxValueChanged(double value)

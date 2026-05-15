@@ -237,6 +237,8 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
+    bool        flatGeoBuffFlag;
+    std::string flatGeoBuffFile;
 
     std::string customOutputPath; //user-specified path for output
 

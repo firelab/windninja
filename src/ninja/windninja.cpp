@@ -2350,6 +2350,29 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
 }
 
 /**
+ * \brief Set the flag to write PDF output for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not VTK output will be
+ *             written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFlatGeoBufFlag
+    ( NinjaArmyH* army, const int nIndex, const bool flag, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFlatGeoBufFlag( nIndex, flag, papszOptions );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
  * \brief Get the output path for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.

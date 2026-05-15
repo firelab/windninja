@@ -3374,6 +3374,46 @@ void ninja::writeOutputFiles()
 	}
 #endif //EMISSIONS
 	} //end omp section
+#pragma omp section
+    {
+        try{
+            if(input.flatGeoBuffFlag == true)
+            {
+                AsciiGrid<double> *velTempGrid, *angTempGrid;
+                velTempGrid=NULL;
+                angTempGrid=NULL;
+                OutputWriter output;
+
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+
+                output.setDirGrid(*angTempGrid);
+                output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+                output.setDEMfile(input.pdfDEMFileName);
+                output.setLineWidth(input.pdfLineWidth);
+                output.setDPI(input.pdfDPI);
+                output.setSize(input.pdfWidth, input.pdfHeight);
+                output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+
+                if(angTempGrid)
+                {
+                    delete angTempGrid;
+                    angTempGrid=NULL;
+                }
+                if(velTempGrid)
+                {
+                    delete velTempGrid;
+                    velTempGrid=NULL;
+                }
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+        }
+    } //end omp section
 	}	//end parallel sections region
 }
 
@@ -4975,6 +5015,11 @@ void ninja::set_vtkOutFlag(bool flag)
     input.volVTKOutFlag = flag;
 }
 
+void ninja::set_flatGeoBufFlag(bool flag)
+{
+    input.flatGeoBuffFlag = flag;
+}
+
 void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
@@ -5181,6 +5226,8 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+
+    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgb";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";

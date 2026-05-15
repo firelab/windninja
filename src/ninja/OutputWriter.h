@@ -115,6 +115,7 @@ class OutputWriter
 
         bool _writePDF(std::string outputfn);
         bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
+        bool _writeFlatGeoBuf(std::string filename);
         std::string _getStyleFromSpeed( const double & spd );
         void _openSrcDataSet();
         void _closeDataSets();

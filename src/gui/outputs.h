@@ -28,6 +28,7 @@ private slots:
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
     void VTKFilesCheckBoxClicked();
+    void mapVisualizationGroupBoxToggled(bool checked);
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);

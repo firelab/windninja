@@ -2650,6 +2650,11 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
 }
 
+int ninjaArmy::setFlatGeoBufFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_flatGeoBufFlag( flag ) );
+}
+
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )

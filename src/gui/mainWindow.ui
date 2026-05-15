@@ -793,6 +793,11 @@
            <string>VTK Files</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>Map Visualization</string>
+          </property>
+         </item>
         </item>
         <item>
          <property name="text">
@@ -832,7 +837,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>9</number>
+         <number>15</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1017,8 +1022,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>530</width>
+               <height>452</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1803,8 +1808,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>330</width>
+               <height>231</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2320,8 +2325,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>510</width>
+               <height>331</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2817,8 +2822,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>368</width>
+               <height>431</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3431,8 +3436,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>374</width>
-               <height>439</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4367,8 +4372,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>357</width>
-               <height>274</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -4844,6 +4849,36 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </item>
           <item>
            <spacer name="VTKFilesPageSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="mapVisualizationPage">
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <widget class="QGroupBox" name="mapVisualizationGroupBox">
+            <property name="title">
+             <string>Create Map Visualization Files (*.fgb)</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="mapVisualizationSpacer">
             <property name="orientation">
              <enum>Qt::Orientation::Vertical</enum>
             </property>

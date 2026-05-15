@@ -1351,6 +1351,9 @@ public:
 
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
+
+    int setFlatGeoBufFlag( const int nIndex, const bool flag, char ** papszOptions );
+
     /**
     * \brief Returns the output path of a ninja
     *

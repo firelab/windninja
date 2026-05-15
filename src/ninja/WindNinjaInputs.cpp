@@ -125,6 +125,7 @@ WindNinjaInputs::WindNinjaInputs()
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
+    flatGeoBuffFlag = false;
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
