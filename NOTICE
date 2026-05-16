@@ -4,7 +4,7 @@ WindNinja – Open‑Source Wind Modeling Software
 This repository contains the source code for **WindNinja**, a public‑domain
 software project developed by the Rocky Mountain Research Station (RMRS),
 U.S. Forest Service.  The main code itself is released into the public
-domain (see the header comment in `src/ninja/ninja.cpp`).
+domain (see `LICENSE`).
 
 --------------------------------------------------------------------
 Third‑Party Dependencies and Their Licenses
@@ -93,4 +93,4 @@ For questions about licensing or to obtain the original source of any
 dependency, please contact the WindNinja development team at:
 
 * **Project website:** https://github.com/firelab/windninja
-* **Primary maintainer:** Natalie Wagenbrenner <nwagenbrenner@gmail.com>
+* **WindNinja Support:** wind.ninja.support@gmail.com
