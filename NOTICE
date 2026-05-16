@@ -75,18 +75,6 @@ Third‑Party Dependencies and Their Licenses
       covered by the same permissive licenses noted above.
 
 --------------------------------------------------------------------
-How to Distribute
---------------------------------------------------------------------
-* The core WindNinja code is in the public domain; you may use, modify,
-  and redistribute it without restriction.
-* When redistributing the software, you must also include the license
-  texts for the third‑party components listed above.  The full license
-  files can be placed in a `LICENSES/` sub‑directory, or you may embed
-  the short notices (as shown here) in your distribution package.
-* If you link against any optional commercial libraries (e.g., a
-  proprietary BLAS), ensure you comply with their licensing terms.
-
---------------------------------------------------------------------
 Contact
 --------------------------------------------------------------------
 For questions about licensing or to obtain the original source of any
