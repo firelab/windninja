@@ -635,6 +635,7 @@ bool OutputWriter::_writePDF (std::string outputfn)
 {
     _createSplits();
     _createOGRFile();
+    _closeOGRFile();
     _createLegend();
     _openSrcDataSet();
 
@@ -975,7 +976,7 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
         throw std::runtime_error("OutputWriter: FlatGeobuf driver not available.");
     }
 
-    papszOptions = CSLAddNameValue(papszOptions, "SPATIAL_INDEX", "YES");
+    papszOptions = CSLAddNameValue( papszOptions, "SPATIAL_INDEX", "YES" );
     hDstDS = GDALCreateCopy(hDriver, filename.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);
 
     if( NULL == hDstDS )
