@@ -1,0 +1,90 @@
+WindNinja – Open‑Source Wind Modeling Software
+================================================
+
+This repository contains the source code for **WindNinja**, a public‑domain
+software project developed by the Rocky Mountain Research Station (RMRS),
+U.S. Forest Service.  The main code itself is released into the public
+domain (see `LICENSE`).
+
+--------------------------------------------------------------------
+Third‑Party Dependencies and Their Licenses
+--------------------------------------------------------------------
+
+1. **Boost C++ Libraries**
+   * Used for: date‑time handling, lexical casts, local time zones, etc.
+   * License: Boost Software License 1.0
+   * Full text: https://www.boost.org/LICENSE_1_0.txt
+
+2. **GDAL (Geospatial Data Abstraction Library)**
+   * Used for: raster I/O, coordinate transformations, VRT creation,
+     warping, and many helper utilities.
+   * License: MIT‑style “X/MIT” license
+   * Full text: https://gdal.org/license.html
+
+3. **PROJ**
+   * Used for: map projections and coordinate transformations (via GDAL).
+   * License: MIT‑style “X/MIT” license
+   * Full text: https://proj.org/about.html#license
+
+4. **Poppler**
+   * Used for: PDF raster support inside GDAL (reading PDF datasets).
+   * License: GPL‑2.0 or later with the “Open Font License” exception
+   * Full text: https://gitlab.com/freedesktop-sdk/mirrors/freedesktop/poppler/poppler/-/blob/master/COPYING?ref_type=heads
+
+5. **OpenMP**
+   * Used for: parallel loops throughout the code base.
+   * License: Apache License 2.0 (part of the LLVM/Clang runtime)
+   * Full text: https://www.apache.org/licenses/LICENSE-2.0
+
+6. **Qt**
+   * Used for: the graphical user interface (menus, dialogs, file handling,
+     web‑engine view, etc.) in `src/gui/`.
+   * License: GNU Lesser General Public License v2.1 (or later) with the
+     Qt GPL Exception.
+   * Full text: https://doc.qt.io/qt-6/licensing.html
+
+7. **Leaflet**
+   * Used for: the interactive web‑map UI (displaying wind vectors,
+     drawing tools, etc.) located under `data/leaflet/`.
+   * License: BSD 2‑Clause “Simplified” License
+   * Full text: https://github.com/Leaflet/Leaflet/blob/master/LICENSE
+
+8. **Leaflet‑draw (plugin)**
+   * Used for: drawing polylines, polygons, rectangles, circles, etc. on the
+     Leaflet map (found in `data/leaflet/draw/`).
+   * License: BSD 2‑Clause “Simplified” License
+   * Full text: https://github.com/Leaflet/Leaflet.draw/blob/develop/docs/highlight/LICENSE
+
+8. **Leaflet-Control-Layers-Tree (plugin)**
+   * Used for: allowing a tree structure for the layers layout
+     Leaflet map (found in `data/leaflet/`).
+   * License: BSD 3-Clause License
+   * Full text: https://github.com/jjimenezshaw/Leaflet.Control.Layers.Tree/blob/master/LICENSE
+
+9. **OpenFOAM**
+   * Used for: optional high‑resolution CFD simulations when the user
+     enables the OpenFOAM solver path.
+   * License: GNU General Public License v3.0
+   * Full text: https://openfoam.org/licence/
+
+10. **Standard C++ Library**
+    * Used for: containers, streams, algorithms, etc.
+    * License: Implementation‑specific (e.g., GPL with the “runtime
+      exception” for libstdc++, Apache 2.0 for libc++, etc.).  This
+      library is provided by the compiler/runtime and does not impose
+      additional restrictions on the WindNinja source.
+
+11. **Other small utilities**
+    * `jsmn` – public‑domain / MIT‑compatible JSON parser.
+    * `tinyxml2` – Zlib license.
+    * Any additional header‑only helpers that ship with the source are
+      covered by the same permissive licenses noted above.
+
+--------------------------------------------------------------------
+Contact
+--------------------------------------------------------------------
+For questions about licensing or to obtain the original source of any
+dependency, please contact the WindNinja development team at:
+
+* **Project website:** https://github.com/firelab/windninja
+* **WindNinja Support:** wind.ninja.support@gmail.com
