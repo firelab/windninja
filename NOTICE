@@ -55,6 +55,12 @@ Third‑Party Dependencies and Their Licenses
    * License: BSD 2‑Clause “Simplified” License
    * Full text: https://github.com/Leaflet/Leaflet.draw/blob/develop/docs/highlight/LICENSE
 
+8. **Leaflet-Control-Layers-Tree (plugin)**
+   * Used for: allowing a tree structure for the layers layout
+     Leaflet map (found in `data/leaflet/`).
+   * License: BSD 3-Clause License
+   * Full text: https://github.com/jjimenezshaw/Leaflet.Control.Layers.Tree/blob/master/LICENSE
+
 9. **OpenFOAM**
    * Used for: optional high‑resolution CFD simulations when the user
      enables the OpenFOAM solver path.
