@@ -976,12 +976,22 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
         throw std::runtime_error("OutputWriter: FlatGeobuf driver not available.");
     }
 
+    std::string baseName = CPLGetBasename(filename.c_str());
+
+    std::string vsiFgbPath = "/vsizip/" + filename + "/" + baseName + ".fgb";
+    std::string vsiLegendPath = "/vsizip/" + filename + "/" + baseName + ".bmp";
+
     papszOptions = CSLAddNameValue( papszOptions, "SPATIAL_INDEX", "YES" );
-    hDstDS = GDALCreateCopy(hDriver, filename.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);
+    hDstDS = GDALCreateCopy(hDriver, vsiFgbPath.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);
 
     if( NULL == hDstDS )
     {
         throw std::runtime_error("OutputWriter: Error creating output file");
+    }
+
+    if (pszLegendFile != nullptr && CPLCopyFile(vsiLegendPath.c_str(), pszLegendFile) != 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
     }
 
     _destroyOptions();

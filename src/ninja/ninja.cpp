@@ -5227,7 +5227,7 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
 
-    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgb";
+    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".zip";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";
