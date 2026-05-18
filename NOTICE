@@ -29,7 +29,7 @@ Third‑Party Dependencies and Their Licenses
 4. **Poppler**
    * Used for: PDF raster support inside GDAL (reading PDF datasets).
    * License: GPL‑2.0 or later with the “Open Font License” exception
-   * Full text: https://poppler.freedesktop.org/COPYING
+   * Full text: https://gitlab.com/freedesktop-sdk/mirrors/freedesktop/poppler/poppler/-/blob/master/COPYING?ref_type=heads
 
 5. **OpenMP**
    * Used for: parallel loops throughout the code base.
@@ -41,7 +41,7 @@ Third‑Party Dependencies and Their Licenses
      web‑engine view, etc.) in `src/gui/`.
    * License: GNU Lesser General Public License v2.1 (or later) with the
      Qt GPL Exception.
-   * Full text: https://www.qt.io/licensing/
+   * Full text: https://doc.qt.io/qt-6/licensing.html
 
 7. **Leaflet**
    * Used for: the interactive web‑map UI (displaying wind vectors,
@@ -53,13 +53,13 @@ Third‑Party Dependencies and Their Licenses
    * Used for: drawing polylines, polygons, rectangles, circles, etc. on the
      Leaflet map (found in `data/leaflet/draw/`).
    * License: BSD 2‑Clause “Simplified” License
-   * Full text: https://github.com/Leaflet/Leaflet.draw/blob/master/LICENSE
+   * Full text: https://github.com/Leaflet/Leaflet.draw/blob/develop/docs/highlight/LICENSE
 
 9. **OpenFOAM**
    * Used for: optional high‑resolution CFD simulations when the user
      enables the OpenFOAM solver path.
    * License: GNU General Public License v3.0
-   * Full text: https://www.openfoam.com/about/license
+   * Full text: https://openfoam.org/licence/
 
 10. **Standard C++ Library**
     * Used for: containers, streams, algorithms, etc.
