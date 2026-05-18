@@ -875,6 +875,10 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     {
         ui->VTKFilesCheckBox->click();
     }
+    else if (item->text(0) == "Map Visualization")
+    {
+        ui->mapVisualizationGroupBox->setChecked(!ui->mapVisualizationGroupBox->isChecked());
+    }
 }
 
 bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)

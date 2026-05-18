@@ -50,6 +50,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
     connect(this, &Outputs::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
+    connect(this, &Outputs::updateMapVisualizationState, &AppState::instance(), &AppState::updateMapVisualizationOutputState);
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::googleEarthMeshResolutionSpinBoxValueChanged);
@@ -107,6 +108,11 @@ void Outputs::VTKFilesCheckBoxClicked()
     emit updateVTKState();
 }
 
+void Outputs::mapVisualizationGroupBoxToggled()
+{
+    emit updateMapVisualizationState();
+}
+
 void Outputs::googleEarthMeshResolutionGroupBoxToggled(bool checked)
 {
     ui->googleEarthMeshResolutionSpinBox->setEnabled(!checked);
@@ -149,11 +155,6 @@ void Outputs::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
     emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
 
     emit updatePDFState();
-}
-
-void Outputs::mapVisualizationGroupBoxToggled(bool checked)
-{
-
 }
 
 void Outputs::meshResolutionSpinBoxValueChanged(double value)

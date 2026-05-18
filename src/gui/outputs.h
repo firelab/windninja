@@ -20,6 +20,7 @@ signals:
     void updateShapeState();
     void updatePDFState();
     void updateVTKState();
+    void updateMapVisualizationState();
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
@@ -28,7 +29,7 @@ private slots:
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
     void VTKFilesCheckBoxClicked();
-    void mapVisualizationGroupBoxToggled(bool checked);
+    void mapVisualizationGroupBoxToggled();
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
