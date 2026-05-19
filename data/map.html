@@ -151,6 +151,16 @@
             id: 'mapbox/satellite-v9'
         });
 
+        const topographicBaseLayer = L.tileLayer(
+            `https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`,
+            {
+                tileSize: 512,
+                maxZoom: 18,
+                zoomOffset: -1,
+                id: 'mapbox/outdoors-v12'
+            }
+        );
+
         const map = new L.Map('map', {
             preferCanvas: true,
             layers: [streetBaseLayer],
@@ -217,8 +227,9 @@
         const baseTree = {
             label: 'Base Maps',
             children: [
-                { label: 'Mapbox Streets',layer: streetBaseLayer },
-                { label: 'Satellite', layer: satelliteBaseLayer }
+                { label: 'Streets', layer: streetBaseLayer },
+                { label: 'Satellite', layer: satelliteBaseLayer },
+                { label: 'Topographic', layer: topographicBaseLayer },
             ]
         };
 
