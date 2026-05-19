@@ -365,6 +365,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
             ninjas[i]->set_wxModelFilename(forecastFilename);
             ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
             ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+            ninjas[i]->setArmySize(wxList.size());
 
             /*iter_ninja->set_date_time( timeList[i] );
             iter_ninja->set_wxModelFilename( forecastFilename );
@@ -802,21 +803,24 @@ bool ninjaArmy::startRuns(int numProcessors)
         std::vector<std::string>asMessages( numProcessors );
         
         std::vector<boost::local_time::local_date_time> timeList; 
-     
+
         //create MEM datasets for GTiff output writer
-        ninjas[0]->readInputFile();
-        ninjas[0]->set_position();
-        ninjas[0]->set_uniVegetation();
-        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
-        
-        int nXSize = ninjas[0]->input.dem.get_nCols(); //57; 
-        int nYSize = ninjas[0]->input.dem.get_nRows(); //70; 
-    
-        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
-        
-        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
-        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
-        hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+        if( wxList.size() > 1 && ninjas[0]->input.geotiffOutFlag == true )
+        {
+            ninjas[0]->readInputFile();
+            ninjas[0]->set_position();
+            ninjas[0]->set_uniVegetation();
+            ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
+
+            int nXSize = ninjas[0]->input.dem.get_nCols();
+            int nYSize = ninjas[0]->input.dem.get_nRows();
+
+            GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+
+            hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+            hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+        }
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
@@ -825,15 +829,15 @@ bool ninjaArmy::startRuns(int numProcessors)
             try
             {
                 //list of paths to forecast files, possibly in various zip archives
-                if( wxList.size() > 1 )
+                if( wxList.size() > 1 && ninjas[0]->input.geotiffOutFlag == true )
                 {
                     wxModelInitialization* model;
                     model = wxModelInitializationFactory::makeWxInitialization(wxList[i]); 
                 
                     timeList = model->getTimeList(tz);
-                    ninjas[i]->set_date_time(timeList[0]);
+//                    ninjas[i]->set_date_time(timeList[0]);
                     ninjas[i]->set_wxModelFilename( wxList[i] );
-                    ninjas[i]->set_date_time( timeList[0] );
+//                    ninjas[i]->set_date_time( timeList[0] );
                     //set in-memory datasets for GTiff output writer
                     ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS); 
                     
@@ -941,6 +945,34 @@ bool ninjaArmy::startRuns(int numProcessors)
             //write farsite atmosphere file
             if(writeFarsiteAtmFile)
                 writeFarsiteAtmosphereFile();
+
+            //finalize the multi-band gtiff dataset and close the inMem datasets
+            //need the same check as before to trigger it only for the same simulation
+            if( wxList.size() > 1 && ninjas[0]->input.geotiffOutFlag == true )
+            {
+                OutputWriter output;
+                output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
+
+                output.finalizeWriteGtiff(ninjas[0]->input.geotiffOutFilename);
+
+                if(hSpdMemDS != NULL)
+                {
+                    GDALClose(hSpdMemDS);
+                    hSpdMemDS = NULL;
+                }
+                if(hDirMemDS != NULL)
+                {
+                    GDALClose(hDirMemDS);
+                    hDirMemDS = NULL;
+                }
+                #ifdef EMISSIONS
+                if(hDustMemDS != NULL)
+                {
+                    GDALClose(hDustMemDS);
+                    hDustMemDS = NULL;
+                }
+                #endif
+            }
 
         }catch (bad_alloc& e)
         {

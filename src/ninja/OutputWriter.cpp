@@ -249,6 +249,54 @@ OutputWriter::write (std::string outputFilename, std::string driver)
     return true;
 }		/* -----  end of method OutputWriter::write  ----- */
 
+bool OutputWriter::finalizeWriteGtiff(std::string outputFilename)
+{
+    std::string outFilename_spd = outputFilename;
+    std::string outFilename_dir = outputFilename;
+    #ifdef EMISSIONS
+    std::string outFilename_dust = outputFilename;
+    #endif
+
+    outFilename_spd.insert(outFilename_spd.find(".tif"), "_spd");
+    outFilename_dir.insert(outFilename_dir.find(".tif"), "_dir");
+    #ifdef EMISSIONS
+    outFilename_dust.insert(outFilename_dust.find(".tif"), "_dust");
+    #endif
+
+    GDALDriverH hGtiffDriver = GDALGetDriverByName( "GTiff" );
+    papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");
+    papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );
+
+    /*--------------------------------------------*/
+    /*  Write the tif to disk for each file type  */
+    /*--------------------------------------------*/
+
+    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_spd.c_str(), hSpdMemDs, FALSE, papszOptions, NULL, NULL);
+    if(hDstDS != NULL)
+    {
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+    }
+
+    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dir.c_str(), hDirMemDs, FALSE, papszOptions, NULL, NULL);
+    if(hDstDS != NULL)
+    {
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+    }
+
+    #ifdef EMISSIONS
+    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dust.c_str(), hDustMemDs, FALSE, papszOptions, NULL, NULL);
+    if(hDstDS != NULL)
+    {
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+    }
+    #endif
+
+    return true;
+}
+
 std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
     std::string style = "none";
@@ -756,7 +804,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
     
     int nXSize = spd.get_nCols();
     int nYSize = spd.get_nRows();
-    
+
     double *padfScanline;
     padfScanline = new double[nXSize];
     CPLErr eErr = CE_None;
@@ -779,12 +827,13 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         GDALSetGeoTransform(hMemDS, adfGeoTransform);
         
         GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
-        
+
         GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, 1 );
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
         GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
 
+        CPLErr eErr = CE_None;
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
@@ -810,17 +859,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
             assert( eErr == CE_None );
         }
     }
-    else if(runNumber < maxRunNumber){
-        /*------------------------------------------*/
-        /*  Add a new band                          */
-        /*------------------------------------------*/
-        
-        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
-        if(eErr != 0){
-            return false;
-        }
-        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
+    else if(runNumber <= maxRunNumber)
+    {
+        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, runNumber+1 );
         
         const char* startTime = GDALGetMetadataItem( hMemDS, "TIFFTAG_DATETIME", NULL );
         
@@ -871,89 +912,9 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
             assert( eErr == CE_None );
         }
     }
-    else{
-        /*------------------------------------------*/
-        /*  Write the tif to disk                   */
-        /*------------------------------------------*/
-        //get start time
-        const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
-
-        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
-        if(eErr != 0){
-            return false;
-        }
-        
-        //copy MEM to GTiff format
-        hDriver = GDALGetDriverByName( "GTiff" );
-
-        // write current grid to last band in hDstDS        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
-  
-        // calculate hours since startTime 
-        std::string s(ninjaTime);
-        std::string s0(startTime);
-        
-        s.erase(s.length()-4); //get rid of tz
-        s0.erase(s0.length()-4); //get rid of tz
-               
-        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
-        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-        
-        boost::posix_time::time_duration tdiff = t - t0;
-        
-        int hdiff = tdiff.hours();
-
-        std::string h(boost::lexical_cast<std::string>(hdiff));
-        
-        CPLDebug( "GTIFF", "offset in hours, DT = %s", h.c_str() );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-        
-        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
-
-        CPLErr eErr;
-
-        for(int i=nYSize-1; i>=0; i--)
-        {
-            for(int j=0; j<nXSize; j++)
-            {
-                if(filename.find("spd.tif") != filename.npos){
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos){
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-#endif
-                else{
-                    return false;
-                }
-            }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0); 
-            assert( eErr == CE_None );
-        }
-        
-        
-        GDALDriverH hGtiffDriver = GDALGetDriverByName( "GTiff" );
-        papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");	
-        papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );        
-        hDstDS = GDALCreateCopy(hGtiffDriver, filename.c_str(), hMemDS, FALSE, papszOptions, NULL, NULL);
-        
-        //close MEM dataset
-        if( hMemDS != NULL ){
-            GDALClose( hMemDS );
-            hMemDS = NULL;
-        }
-    
-        //close GTiff dataset
-        if( hDstDS != NULL ){
-            GDALClose( hDstDS );
-            hDstDS = NULL;
-        }
+    else // if(runNumber > maxRunNumber)
+    {
+        throw std::runtime_error("OutputWriter: Error creating output gtiff file: runNumber > maxRunNumber");
     }
 
     delete [] padfScanline;

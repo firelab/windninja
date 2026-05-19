@@ -98,6 +98,7 @@ class OutputWriter
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
+        bool finalizeWriteGtiff(std::string outputFilename);
 
         static const double BOTTOM_MARGIN;
         static const double TOP_MARGIN;
