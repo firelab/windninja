@@ -3330,7 +3330,7 @@ void NinjaFoam::SetOutputFilenames()
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -3389,7 +3389,7 @@ void NinjaFoam::SetOutputFilenames()
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
@@ -3399,6 +3399,7 @@ void NinjaFoam::SetOutputFilenames()
         os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_gtiff << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
 
     double meshResolutionTemp = input.dem.get_cellSize();
@@ -3420,12 +3421,14 @@ void NinjaFoam::SetOutputFilenames()
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+    os_gtiff << "_" << timeAppend << (long) (meshResolutionTemp+0.5) << mesh_units;
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+    gtiff_fileAppend = os_gtiff.str();
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -3434,6 +3437,7 @@ void NinjaFoam::SetOutputFilenames()
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+    input.geotiffFile = rootFile + gtiff_fileAppend + ".tif";
 
     input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
@@ -3736,8 +3740,31 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
-	
-	
+
+    try{
+        if(input.geotiffOutFlag==true)
+        {
+            OutputWriter output;
+
+            output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
+            output.setRunNumber(input.inputsRunNumber);
+            output.setMaxRunNumber(input.armySize);
+
+            output.setDirGrid(AngleGrid);
+            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
+
+            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
+
+            output.write(input.geotiffFile, "GTiff");
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
+    }
+
 	try{
 	    if ( input.volVTKOutFlag == true ) {
 	        writeMassMeshVtkOutput();

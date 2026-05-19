@@ -225,7 +225,10 @@ OutputWriter::write (std::string outputFilename, std::string driver)
             }
 #ifdef EMISSIONS
             else if(grid == 2){
-                outFilename.insert(outFilename.find(".tif"), "_dust");
+                if(hDustMemDs)
+                {
+                    outFilename.insert(outFilename.find(".tif"), "_dust");
+                }
             }
 #endif
 
@@ -238,8 +241,6 @@ OutputWriter::write (std::string outputFilename, std::string driver)
             else if(outFilename.find("dust.tif") != outFilename.npos){
                  _writeGTiff(outFilename, hDustMemDs);
             }
-
-           //_writeGTiff(outFilename);
         }
     }
     else
@@ -286,11 +287,14 @@ bool OutputWriter::finalizeWriteGtiff(std::string outputFilename)
     }
 
     #ifdef EMISSIONS
-    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dust.c_str(), hDustMemDs, FALSE, papszOptions, NULL, NULL);
-    if(hDstDS != NULL)
+    if(hDustMemDs)
     {
-        GDALClose(hDstDS);
-        hDstDS = NULL;
+        hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dust.c_str(), hDustMemDs, FALSE, papszOptions, NULL, NULL);
+        if(hDstDS != NULL)
+        {
+            GDALClose(hDstDS);
+            hDstDS = NULL;
+        }
     }
     #endif
 

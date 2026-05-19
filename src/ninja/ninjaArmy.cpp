@@ -350,12 +350,6 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
             setNinjaCommunication( i, i );
         }
 
-        // setup wxList for gtiff output
-        wxList.resize(timeList.size());
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        {
-            wxList[i] = forecastFilename;
-        }
 
         for(unsigned int i = 0; i < timeList.size(); i++)
         //int i = 0;
@@ -365,7 +359,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
             ninjas[i]->set_wxModelFilename(forecastFilename);
             ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
             ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-            ninjas[i]->setArmySize(wxList.size());
+            ninjas[i]->setArmySize(timeList.size());
 
             /*iter_ninja->set_date_time( timeList[i] );
             iter_ninja->set_wxModelFilename( forecastFilename );
@@ -562,6 +556,32 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
+    hSpdMemDS = NULL;
+    hDirMemDS = NULL;
+    hDustMemDS = NULL;
+    if(ninjas[0]->input.geotiffOutFlag == true)
+    {
+        //create MEM datasets for GTiff output writer
+        ninjas[0]->readInputFile();
+        ninjas[0]->set_position();
+        ninjas[0]->set_uniVegetation();
+        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
+
+        int nXSize = ninjas[0]->input.dem.get_nCols();
+        int nYSize = ninjas[0]->input.dem.get_nRows();
+
+        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+
+        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+        #ifdef EMISSIONS
+        if(ninjas[0]->input.dustFlag == true)
+        {
+            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+        }
+        #endif
+    }
+
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
     kmzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
@@ -572,6 +592,12 @@ bool ninjaArmy::startRuns(int numProcessors)
         //set number of threads for the run
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
+
+            //set in-memory datasets for multi-band GTiff output writer
+            if(ninjas[0]->input.geotiffOutFlag == true)
+            {
+                ninjas[0]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+            }
 
             if ((ninjas[0]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
             {
@@ -666,6 +692,12 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
+
+                //set in-memory datasets for multi-band GTiff output writer
+                if(ninjas[i]->input.geotiffOutFlag == true)
+                {
+                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+                }
 
                 if((ninjas[i]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
                 {
@@ -802,25 +834,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         std::vector<int> anErrors( numProcessors);
         std::vector<std::string>asMessages( numProcessors );
         
-        std::vector<boost::local_time::local_date_time> timeList; 
-
-        //create MEM datasets for GTiff output writer
-        if( wxList.size() > 1 && ninjas[0]->input.geotiffOutFlag == true )
-        {
-            ninjas[0]->readInputFile();
-            ninjas[0]->set_position();
-            ninjas[0]->set_uniVegetation();
-            ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
-
-            int nXSize = ninjas[0]->input.dem.get_nCols();
-            int nYSize = ninjas[0]->input.dem.get_nRows();
-
-            GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
-
-            hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-            hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-        }
+        std::vector<boost::local_time::local_date_time> timeList;
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
@@ -828,20 +842,10 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             try
             {
-                //list of paths to forecast files, possibly in various zip archives
-                if( wxList.size() > 1 && ninjas[0]->input.geotiffOutFlag == true )
+                //set in-memory datasets for multi-band GTiff output writer
+                if(ninjas[i]->input.geotiffOutFlag == true)
                 {
-                    wxModelInitialization* model;
-                    model = wxModelInitializationFactory::makeWxInitialization(wxList[i]); 
-                
-                    timeList = model->getTimeList(tz);
-//                    ninjas[i]->set_date_time(timeList[0]);
-                    ninjas[i]->set_wxModelFilename( wxList[i] );
-//                    ninjas[i]->set_date_time( timeList[0] );
-                    //set in-memory datasets for GTiff output writer
-                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS); 
-                    
-                    delete model;
+                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
                 }
 
                 //start the run
@@ -946,34 +950,6 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(writeFarsiteAtmFile)
                 writeFarsiteAtmosphereFile();
 
-            //finalize the multi-band gtiff dataset and close the inMem datasets
-            //need the same check as before to trigger it only for the same simulation
-            if( wxList.size() > 1 && ninjas[0]->input.geotiffOutFlag == true )
-            {
-                OutputWriter output;
-                output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
-
-                output.finalizeWriteGtiff(ninjas[0]->input.geotiffOutFilename);
-
-                if(hSpdMemDS != NULL)
-                {
-                    GDALClose(hSpdMemDS);
-                    hSpdMemDS = NULL;
-                }
-                if(hDirMemDS != NULL)
-                {
-                    GDALClose(hDirMemDS);
-                    hDirMemDS = NULL;
-                }
-                #ifdef EMISSIONS
-                if(hDustMemDS != NULL)
-                {
-                    GDALClose(hDustMemDS);
-                    hDustMemDS = NULL;
-                }
-                #endif
-            }
-
         }catch (bad_alloc& e)
         {
             ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
@@ -998,6 +974,33 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     try{
+        // finalize the multi-band gtiff dataset and close the inMem datasets
+        if(ninjas[0]->input.geotiffOutFlag == true)
+        {
+            OutputWriter output;
+            output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
+
+            output.finalizeWriteGtiff(ninjas[0]->input.geotiffFile);
+
+            if(hSpdMemDS != NULL)
+            {
+                GDALClose(hSpdMemDS);
+                hSpdMemDS = NULL;
+            }
+            if(hDirMemDS != NULL)
+            {
+                GDALClose(hDirMemDS);
+                hDirMemDS = NULL;
+            }
+            #ifdef EMISSIONS
+            if(hDustMemDS != NULL)
+            {
+                GDALClose(hDustMemDS);
+                hDustMemDS = NULL;
+            }
+            #endif
+        }
+
         //write consistent color scale outputs
         if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScale == true)
         {
@@ -1691,17 +1694,6 @@ int ninjaArmy::setDustFilename( const int nIndex, const std::string filename,
 int ninjaArmy::setDustFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFlag( flag ) );
-}
-
-int ninjaArmy::setGeotiffOutFilename( const int nIndex, const std::string filename,
-                                char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFilename( filename ) );
-}
-
-int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
 }
 #endif //EMISSIONS
 
@@ -2686,6 +2678,11 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
                            const unsigned short dpi )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
+}
+
+int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )

@@ -237,6 +237,8 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
+    bool geotiffOutFlag; //flag specifying if multiband geotiff output should be written
+    std::string geotiffFile;
 
     std::string customOutputPath; //user-specified path for output
 
@@ -268,8 +270,6 @@ public:
     std::string dustFileOut;   //filename of the output dust emissions file
     std::string dustFilename;   //filename of fire perimeter for dust emissions calculation
     std::string dustFile;
-    std::string geotiffOutFilename; //filename of multiband geotiff output file
-    bool geotiffOutFlag; //flag specifying if multiband geotiff output should be written
 #endif
 
     /*-----------------------------------------------------------------------------

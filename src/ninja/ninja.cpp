@@ -3342,7 +3342,6 @@ void ninja::writeOutputFiles()
 
 #pragma omp section
 	{
-#ifdef EMISSIONS
 	try{
 		if(input.geotiffOutFlag==true)
 		{
@@ -3354,16 +3353,15 @@ void ninja::writeOutputFiles()
 
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-			
-			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs);// set the in-memory datasets
 
-			
+			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
+
 #ifdef EMISSIONS
 			if(input.dustFlag == 1){
                 output.setDustGrid(DustGrid);
             }
 #endif
-            output.write(input.geotiffOutFilename, "GTiff");
+            output.write(input.geotiffFile, "GTiff");
 		}
 	}catch (exception& e)
 	{
@@ -3372,7 +3370,6 @@ void ninja::writeOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
 	}
-#endif //EMISSIONS
 	} //end omp section
 	}	//end parallel sections region
 }
@@ -3626,17 +3623,6 @@ void ninja::set_dustFileOut(std::string filename)
     if( input.dustFlag==true )
     {
         input.dustFileOut = filename;
-    }
-}
-void ninja::set_geotiffOutFlag(bool flag)
-{
-    input.geotiffOutFlag = flag;
-}
-void ninja::set_geotiffOutFilename(std::string filename)
-{
-    if( input.geotiffOutFlag==true )
-    {
-        input.geotiffOutFilename = filename; //if file exisits, bands are appended
     }
 }
 #endif //EMISSIONS
@@ -4176,10 +4162,6 @@ void ninja::set_inputSpeed(double speed, velocityUnits::eVelocityUnits units)
 const std::string ninja::get_DustFileName() const
 {
     return input.dustFile;
-}
-const std::string ninja::get_GeotiffFileName() const
-{
-    return input.geotiffOutFilename;
 }
 #endif
 #ifdef FRICTION_VELOCITY
@@ -4975,6 +4957,11 @@ void ninja::set_vtkOutFlag(bool flag)
     input.volVTKOutFlag = flag;
 }
 
+void ninja::set_geotiffOutFlag(bool flag)
+{
+    input.geotiffOutFlag = flag;
+}
+
 void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;
@@ -5025,7 +5012,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -5107,7 +5094,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
         input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
@@ -5118,6 +5105,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_gtiff << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
@@ -5126,6 +5114,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp << "_point";
         os_ascii << "_point";
         os_pdf   << "_point";
+        os_gtiff << "_point";
     }
 
 
@@ -5146,6 +5135,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+    os_gtiff << "_" << timeAppend << (long) (meshResolutionTemp+0.5) << mesh_units;
 
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
@@ -5154,6 +5144,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp   << "_alpha_" << input.alphaStability;
         os_ascii << "_alpha_" << input.alphaStability;
         os_pdf   << "_alpha_" << input.alphaStability;
+        os_gtiff << "_alpha_" << input.alphaStability;
     }
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
     {
@@ -5162,6 +5153,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp   << "_non_neutral_stability";
         os_ascii << "_non_neutral_stability";
         os_pdf   << "_non_neutral_stability";
+        os_gtiff << "_non_neutral_stability";
     }
 
     fileAppend = os.str();
@@ -5169,6 +5161,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+    gtiff_fileAppend = os_gtiff.str();
 
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
@@ -5181,6 +5174,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+    input.geotiffFile = rootFile + gtiff_fileAppend + ".tif";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";

@@ -318,6 +318,7 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_height", po::value<double>(), "height of geospatial pdf")
                 ("pdf_width", po::value<double>(), "width of geospatial pdf")
                 ("pdf_size", po::value<std::string>()->default_value("letter"), "pre-defined pdf sizes (letter, legal, tabloid)")
+                ("write_multiband_geotiff_output", po::value<bool>()->default_value(false), "write multiband geotiff file (true, false)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
@@ -328,8 +329,6 @@ int windNinjaCLI(int argc, char* argv[])
                 #ifdef EMISSIONS
                 ("compute_emissions",po::value<bool>()->default_value(false), "compute dust emissions (true, false)")
                 ("fire_perimeter_file", po::value<std::string>(), "input burn perimeter path/filename (*.shp)")
-                ("write_multiband_geotiff_output", po::value<bool>()->default_value(false), "write multiband geotiff file for dust emissions (true, false)")
-                ("geotiff_file", po::value<std::string>(), "output geotiff path/filename (*.tif)")
                 #endif
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
@@ -1614,16 +1613,9 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 option_dependency(vm, "compute_emissions", "compute_friction_velocity");
                 option_dependency(vm, "compute_emissions", "fire_perimeter_file");
-                option_dependency(vm, "write_multiband_geotiff_output", "geotiff_file");
-                option_dependency(vm, "write_multiband_geotiff_output", "compute_emissions");
 
                 windsim.setDustFlag( i_, true );
                 windsim.setDustFilename( i_, vm["fire_perimeter_file"].as<std::string>() );
-                
-                if(vm["write_multiband_geotiff_output"].as<bool>()){
-                    windsim.setGeotiffOutFlag( i_, true );
-                    windsim.setGeotiffOutFilename( i_, vm["geotiff_file"].as<std::string>() );
-                }
             }
             else
             {
@@ -2026,7 +2018,8 @@ int windNinjaCLI(int argc, char* argv[])
                     !vm.count("write_goog_output") &&
                     !vm.count("write_shapefile_output") &&
                     !vm.count("write_ascii_output") &&
-                    !vm.count("write_vtk_output"))
+                    !vm.count("write_vtk_output") &&
+                    !vm.count("write_multiband_geotiff_output"))
             {
                 cout << "No outputs selected.\n";
                 return -1;
@@ -2164,7 +2157,10 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 windsim.setPDFSize(i_, pdfHeight, pdfWidth, 150);
             }
-
+            if(vm["write_multiband_geotiff_output"].as<bool>())
+            {
+                windsim.setGeotiffOutFlag( i_, true );
+            }
         }   //end for loop over ninjas
 
         if(vm["write_farsite_atm"].as<bool>())

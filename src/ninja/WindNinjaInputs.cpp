@@ -125,6 +125,8 @@ WindNinjaInputs::WindNinjaInputs()
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
+    geotiffOutFlag = false;
+    geotiffFile = "!set";
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -147,7 +149,6 @@ WindNinjaInputs::WindNinjaInputs()
     dustFlag = false;
     dustFile = "!set";
     ustarFile = "!set";
-    geotiffOutFlag = false;
 #endif
 #ifdef NINJAFOAM
     nIterations = 1000;
@@ -228,8 +229,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     dustFlag = rhs.dustFlag;
     dustFilename = rhs.dustFilename;
     dustFileOut = rhs.dustFileOut;
-    geotiffOutFlag = rhs.geotiffOutFlag;
-    geotiffOutFilename = rhs.geotiffOutFilename;
     dustFile = rhs.dustFile;
     ustarFile = rhs.ustarFile;
 #endif
@@ -331,6 +330,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     wxModelLegFile = rhs.wxModelLegFile;
     dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
     volVTKFile = rhs.volVTKFile;
+    geotiffOutFlag = rhs.geotiffOutFlag;
+    geotiffFile = rhs.geotiffFile;
     keepOutGridsInMemory = rhs.keepOutGridsInMemory;
     customOutputPath = rhs.customOutputPath;
 
@@ -443,8 +444,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       dustFlag = rhs.dustFlag;
       dustFilename = rhs.dustFilename;
       dustFileOut = rhs.dustFileOut;
-      geotiffOutFlag = rhs.geotiffOutFlag;
-      geotiffOutFilename = rhs.geotiffOutFilename;
       dustFile = rhs.dustFile;
       ustarFile = rhs.ustarFile;
 #endif
@@ -546,6 +545,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       wxModelLegFile = rhs.wxModelLegFile;
       dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
       volVTKFile = rhs.volVTKFile;
+      geotiffOutFlag = rhs.geotiffOutFlag;
+      geotiffFile = rhs.geotiffFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
       customOutputPath = rhs.customOutputPath;
 

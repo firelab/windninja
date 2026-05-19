@@ -320,25 +320,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDustFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    
-        /**
-    * \brief Set the dust geotiff file output name for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param filename name of the dust geotiff output file
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFilename( const int nIndex, const std::string filename, char ** papszOptions=NULL );
-
-    /**
-    * \brief Enable/disable dust geotiff file output for a ninja
-    *
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables dust geotiff output if true, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 #endif //EMISSIONS
 
 #ifdef NINJAFOAM
@@ -1351,6 +1332,16 @@ public:
 
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
+
+    /**
+    * \brief Enable/disable multiband geotiff file output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enables multiband geotiff output if true, disables if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
     /**
     * \brief Returns the output path of a ninja
     *
@@ -1384,7 +1375,7 @@ public:
 
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
-    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer
+    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer. Left as NULL if EMISSIONS is not enabled and if compute_emissions is not set.
 
     std::vector<std::string> wxList;
 protected:

@@ -269,9 +269,6 @@ public:
     void set_dustFlag(bool flag);
     void computeDustEmissions();
     const std::string get_DustFileName() const; //returns the name of the dust file name
-    const std::string get_GeotiffFileName() const; //returns the name of the geotiff file name
-    void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
-    void set_geotiffOutFlag(bool flag);
 #endif
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
@@ -352,6 +349,7 @@ public:
     void set_pdfLineWidth(const float w);
     void set_pdfBaseMap(const int b);
     void set_pdfSize( const double height, const double width, const unsigned short dpi );
+    void set_geotiffOutFlag(bool flag);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);
