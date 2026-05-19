@@ -127,8 +127,7 @@
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
     <script src="./leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
 
-    
-
+    <script src="https://unpkg.com/flatgeobuf@4.3.3/dist/flatgeobuf-geojson.min.js"></script>
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
@@ -455,6 +454,13 @@
                 kmzTimeSeriesImgUrl = null;
             }
 
+            const handledFgb = await handleFlatGeoBuf(data, fileName);
+
+if (handledFgb) {
+    finishKmzLoad();
+    return;
+}
+
             const handled = await handleKml(data, fileName);
             if (handled) {
                 finishKmzLoad();   
@@ -610,6 +616,167 @@
             
             finishKmzLoad();
             showCenterControl();
+        }
+
+        async function handleFlatGeoBuf(data, fileName)
+        {
+            const response = await fetch(data);
+            const arrayBuffer = await response.arrayBuffer();
+
+            const zip = await JSZip.loadAsync(arrayBuffer);
+
+            const fgbEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.fgb')
+            );
+
+            const legendEntries = Object.values(zip.files).filter(entry =>
+                entry.name.toLowerCase().endsWith('.bmp')
+            );
+
+            if (fgbEntries.length === 0) {
+                return false;
+            }
+
+            const fgbEntry = fgbEntries[0];
+
+            const features = [];
+
+
+            const fgbBuffer = await fgbEntry.async('arraybuffer');
+
+            for await (const feature of flatgeobuf.deserialize(
+                new Uint8Array(fgbBuffer)
+            )) {
+                if (feature?.geometry) {
+                    features.push(feature);
+                }
+            }
+
+                if (features.length === 0) {
+                    console.error('No features found in FlatGeoBuf.');
+                    return false;
+                }
+
+            const geoJsonLayer = L.geoJSON(features, {
+
+                style: function(feature) {
+
+                    const props = feature.properties || {};
+                    const ogr = parseOGRStyle(props.OGR_STYLE);
+
+                    return {
+                        color: ogr.color || props.stroke || '#ffffff',
+                        weight: ogr.weight || props["stroke-width"] || 1.0,
+                        opacity: props["stroke-opacity"] ?? 1.0
+                    };
+                },
+
+                onEachFeature: function(feature, layer) {
+                    const props = feature.properties || {};
+                    const name = props.name || "no name";
+
+                    layer.bindPopup(`
+                        <strong>${name}</strong><br>
+                        Speed: ${props.speed ?? 'n/a'}<br>
+                        Angle: ${props.angle ?? 'n/a'}
+                    `);
+                }
+            });
+
+
+            const layerGroup = L.layerGroup([geoJsonLayer]);
+
+            layerGroup._hasLegend = legendEntries.length > 0;
+            layerGroup._hasTimeSeries = false;
+
+            layerGroup.on('add', async () => {
+                activeWindNinjaLayer = layerGroup;
+                lastActiveLayer = layerGroup;
+
+                if (activeWindNinjaLegendCard) {
+                activeWindNinjaLegendCard.remove();
+                activeWindNinjaLegendCard = null;
+                }
+
+                if (windninjaLegendEnabled && legendEntries.length > 0) {
+                const blob = await legendEntries[0].async('blob');
+                showWindNinjaLegend(blob);
+                }
+
+                updateOverlayTree();
+            });
+
+            layerGroup.on('remove', () => {
+                if (activeWindNinjaLayer === layerGroup) {
+                activeWindNinjaLayer = null;
+                }
+
+                if (activeWindNinjaLegendCard) {
+                activeWindNinjaLegendCard.remove();
+                activeWindNinjaLegendCard = null;
+                }
+            });
+
+            let layerName = fileName;
+
+            if (!layerName.toLowerCase().endsWith('.zip')) {
+                layerName += '.zip';
+            }
+
+            windninjaOutputTree.children.push({
+                label: layerName,
+                layer: layerGroup,
+                radioGroup: 'windninjaOutput'
+            });
+
+            updateOverlayTree();
+
+            if (activeWindNinjaLayer) {
+                map.removeLayer(activeWindNinjaLayer);
+            }
+
+            map.addLayer(layerGroup);
+
+            if (!map.hasLayer(windninjaLegendToggle)) {
+                map.addLayer(windninjaLegendToggle);
+            }
+
+            windninjaLegendEnabled = true;
+
+            const bounds = geoJsonLayer.getBounds();
+            if (bounds.isValid()) {
+                map.fitBounds(bounds);
+            }
+
+            showCenterControl();
+
+            return true;
+
+            
+        }
+
+        function parseOGRStyle(styleString) {
+            if (!styleString) {
+                return {};
+            }
+
+            const style = {};
+
+            // Extract color
+            const colorMatch = styleString.match(/c:\s*(#[0-9A-Fa-f]+)/);
+
+            if (colorMatch) {
+                style.color = colorMatch[1];
+            }
+
+            // Extract width
+            const widthMatch = styleString.match(/w:\s*([\d.]+)px/);
+
+            if (widthMatch) {
+                style.weight = parseFloat(widthMatch[1]);
+            }
+
+            return style;
         }
 
         async function handleKml(data, fileName)
