@@ -38,7 +38,6 @@ WindNinjaInputs::WindNinjaInputs()
     hSpdMemDs = NULL;
     hDirMemDs = NULL;
     hDustMemDs = NULL;
-    armySize = 1;
     vegetation = WindNinjaInputs::trees;
     initializationMethod = WindNinjaInputs::noInitializationFlag;
     inputSpeedUnits = velocityUnits::milesPerHour;
@@ -193,7 +192,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 
     inputsRunNumber = rhs.inputsRunNumber;
 
-    armySize = rhs.armySize;
     hSpdMemDs = rhs.hSpdMemDs;
     hDirMemDs = rhs.hDirMemDs;
     hDustMemDs = rhs.hDustMemDs;
@@ -408,7 +406,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 
       inputsRunNumber = rhs.inputsRunNumber;
 
-      armySize = rhs.armySize;
       hSpdMemDs = rhs.hSpdMemDs;
       hDirMemDs = rhs.hDirMemDs;
       hDustMemDs = rhs.hDustMemDs;

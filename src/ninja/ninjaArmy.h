@@ -1377,7 +1377,6 @@ public:
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer. Left as NULL if EMISSIONS is not enabled and if compute_emissions is not set.
 
-    std::vector<std::string> wxList;
 protected:
     std::vector<ninja*> ninjas;
     std::string tz;

@@ -805,7 +805,9 @@ OutputWriter::_writePDF (std::string outputfn)
 bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
 {
     CPLSetConfigOption( "GDAL_CACHEMAX", "1024" );
-    
+
+    int maxRunNumber = GDALGetRasterCount(hMemDS);
+
     int nXSize = spd.get_nCols();
     int nYSize = spd.get_nRows();
 

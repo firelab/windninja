@@ -3352,7 +3352,6 @@ void ninja::writeOutputFiles()
                 output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
             }
             output.setRunNumber(input.inputsRunNumber);
-            output.setMaxRunNumber(input.armySize);
 
 			output.setDirGrid(AngleGrid);
 			output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
@@ -3735,10 +3734,6 @@ WindNinjaInputs::eVegetation ninja::get_eVegetationType(std::string veg)
     else{
         throw std::logic_error("Problem with vegetation string in ninja::get_vegetation().");
     }
-}
-void ninja::setArmySize(int n)
-{
-    input.armySize = n;
 }
 
 void ninja::set_stabilityFlag(bool flag)

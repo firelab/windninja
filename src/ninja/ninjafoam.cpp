@@ -3751,7 +3751,6 @@ void NinjaFoam::WriteOutputFiles()
                 output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
             }
             output.setRunNumber(input.inputsRunNumber);
-            output.setMaxRunNumber(input.armySize);
 
             output.setDirGrid(AngleGrid);
             output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);

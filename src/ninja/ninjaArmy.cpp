@@ -126,8 +126,6 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 #endif //NINJAFOAM
 
         setNinjaCommunication( i, i );
-
-        ninjas[i]->setArmySize(nSize);
     }
 }
 
@@ -236,7 +234,6 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
         //in set_wxStations. Also it gets the units from the first station
         //The function name is a bit misleading as to what it really does.
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
-        ninjas[i]->setArmySize(timeList.size());
    }
 
     // need to always clear these static values out before adding new ones,
@@ -266,112 +263,57 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
     wxModelInitialization* model;
-    
-    tz = timeZone;
-    
-    //for a list of paths forecast files
-    if( strstr( forecastFilename.c_str(), ".csv" ) ){
-        FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
-        if(fcastList == NULL){
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
-            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() + std::string(" cannot be opened."));
-        }
-        while(1){
-            const char* f = CPLReadLine(fcastList);
-            if(f == NULL){
-                break;
-            }
-            wxList.push_back(f);
-        }
-        VSIFClose(fcastList);
-        
-        model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
-        
-        ninjas.resize(wxList.size());
-        
-        for(unsigned int i = 0; i < wxList.size(); i++)
-        {
-#ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
-            }
-            else{
-                 ninjas[i] = new ninja();
-            }
-#else
-            ninjas[i] = new ninja();
-#endif //NINJAFOAM
 
-            setNinjaCommunication( i, i );
-        }
-        
-        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-        
-        for(unsigned int i = 0; i < wxList.size(); i++)
-        {
-            ninjas[i]->set_date_time(timeList[0]);
-            ninjas[i]->set_wxModelFilename(wxList[i]);
-            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-            ninjas[i]->setArmySize(wxList.size());
-        }       
-        delete model;
+    model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
+
+    try
+    {
+        model->checkForValidData();
     }
-    
-    //Factory function that identifies the type of forecast file and makes appropriate class.
-    else{
-        model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
-
-        try
-        {
-            model->checkForValidData();
-        }
-        catch(armyException &e)
-        {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
-            throw;
-        }
-        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-        if(times.size() > 0) {
-          timeList = times;
-        }
-        ninjas.resize(timeList.size());
-        //reallocate ninjas after resizing
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        {
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
+        throw;
+    }
+    std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+    if(times.size() > 0) {
+      timeList = times;
+    }
+    ninjas.resize(timeList.size());
+    //reallocate ninjas after resizing
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    {
 #ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
-            }
-            else{
-                 ninjas[i] = new ninja();
-            }
+        if(momentumFlag == true){
+            ninjas[i] = new NinjaFoam();
+        }
+        else{
+             ninjas[i] = new ninja();
+        }
 #else
-            ninjas[i] = new ninja();
+        ninjas[i] = new ninja();
 #endif
 
-            setNinjaCommunication( i, i );
-        }
-
-
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        //int i = 0;
-        //FOR_EVERY( iter_ninja, ninjas )
-        {
-            ninjas[i]->set_date_time(timeList[i]);
-            ninjas[i]->set_wxModelFilename(forecastFilename);
-            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-            ninjas[i]->setArmySize(timeList.size());
-
-            /*iter_ninja->set_date_time( timeList[i] );
-            iter_ninja->set_wxModelFilename( forecastFilename );
-            iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
-            iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
-            i++;*/
-        }
-        delete model;
+        setNinjaCommunication( i, i );
     }
+
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    //int i = 0;
+    //FOR_EVERY( iter_ninja, ninjas )
+    {
+        ninjas[i]->set_date_time(timeList[i]);
+        ninjas[i]->set_wxModelFilename(forecastFilename);
+        ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
+        ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+
+        /*iter_ninja->set_date_time( timeList[i] );
+        iter_ninja->set_wxModelFilename( forecastFilename );
+        iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
+        iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
+        i++;*/
+    }
+
+    delete model;
 }
 
 void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
