@@ -147,7 +147,7 @@ class OutputWriter
         GDALDatasetH hSpdMemDs;
         GDALDatasetH hDirMemDs;
         GDALDatasetH hDustMemDs;
-        
+
         std::string ninjaTime;
         double resolution;
         std::string demFile;

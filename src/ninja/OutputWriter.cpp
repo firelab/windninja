@@ -818,24 +818,31 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         /*------------------------------------------*/
         /* Set dataset metadata                     */
         /*------------------------------------------*/
-                  
+
         adfGeoTransform[0] = spd.get_xllCorner();
         adfGeoTransform[1] = spd.get_cellSize();
         adfGeoTransform[2] = 0;
         adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
         adfGeoTransform[4] = 0;
         adfGeoTransform[5] = -spd.get_cellSize();
-        
+
         char* pszDstWKT = (char*)spd.prjString.c_str();
         GDALSetProjection(hMemDS, pszDstWKT);
         GDALSetGeoTransform(hMemDS, adfGeoTransform);
-        
-        GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
 
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, 1 );
-        
+        if(!ninjaTime.empty())
+        {
+            GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
+        }
+
+        GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, 1);
+
+        if(!ninjaTime.empty())
+        {
+            GDALSetMetadataItem(hBand, "DT", "0", NULL); // offset in hours
+        }
+
         GDALSetRasterNoDataValue(hBand, -9999.0);
-        GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
 
         CPLErr eErr = CE_None;
         for(int i=nYSize-1; i>=0; i--)
@@ -865,31 +872,34 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
     }
     else if(runNumber <= maxRunNumber)
     {
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, runNumber+1 );
-        
-        const char* startTime = GDALGetMetadataItem( hMemDS, "TIFFTAG_DATETIME", NULL );
-        
-        // calculate hours since startTime 
-        std::string s(ninjaTime);
-        std::string s0(startTime);
-        
-        s.erase(s.length()-4); //get rid of tz
-        s0.erase(s0.length()-4); //get rid of tz
-               
-        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
-        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-        
-        boost::posix_time::time_duration tdiff = t - t0;
-        
-        int hdiff = tdiff.hours();
+        GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, runNumber+1);
 
-        std::string h(boost::lexical_cast<std::string>(hdiff));
-        
-        CPLDebug( "GTIFF", "offset in hours, DT = %s", h.c_str() );
-        
+        if(!ninjaTime.empty())
+        {
+            const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
+
+            // calculate hours since startTime
+            std::string s(ninjaTime);
+            std::string s0(startTime);
+
+            s.erase(s.length()-4); //get rid of tz
+            s0.erase(s0.length()-4); //get rid of tz
+
+            boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
+            boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
+
+            boost::posix_time::time_duration tdiff = t - t0;
+
+            int hdiff = tdiff.hours();
+
+            std::string h(boost::lexical_cast<std::string>(hdiff));
+
+            CPLDebug("GTIFF", "offset in hours, DT = %s", h.c_str());
+
+            GDALSetMetadataItem(hBand, "DT", h.c_str(), NULL); // offset in hours since first band
+        }
+
         GDALSetRasterNoDataValue(hBand, -9999.0);
-        
-        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
 
         CPLErr eErr = CE_None;
         for(int i=nYSize-1; i>=0; i--)

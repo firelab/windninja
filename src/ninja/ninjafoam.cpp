@@ -3746,7 +3746,10 @@ void NinjaFoam::WriteOutputFiles()
         {
             OutputWriter output;
 
-            output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
+            if(!input.ninjaTime.is_not_a_date_time())
+            {
+                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+            }
             output.setRunNumber(input.inputsRunNumber);
             output.setMaxRunNumber(input.armySize);
 

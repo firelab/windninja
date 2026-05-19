@@ -126,6 +126,8 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
 #endif //NINJAFOAM
 
         setNinjaCommunication( i, i );
+
+        ninjas[i]->setArmySize(nSize);
     }
 }
 
@@ -234,6 +236,7 @@ void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
         //in set_wxStations. Also it gets the units from the first station
         //The function name is a bit misleading as to what it really does.
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
+        ninjas[i]->setArmySize(timeList.size());
    }
 
     // need to always clear these static values out before adding new ones,
