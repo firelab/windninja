@@ -65,23 +65,11 @@ public:
         brush,
         trees
     };
-    
-    enum eMeshType{
-        MDM,
-        SHM
-    };
-    
+
     enum eNinjafoamMeshChoice{
         coarse,
         medium,
         fine
-    };
-
-    enum eOutputType{
-        mesh,
-        google,
-        shapefile,
-        ASCII
     };
 
     enum ePDFBaseMap {
