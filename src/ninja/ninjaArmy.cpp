@@ -350,6 +350,12 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
             setNinjaCommunication( i, i );
         }
 
+        // setup wxList for gtiff output
+        wxList.resize(timeList.size());
+        for(unsigned int i = 0; i < timeList.size(); i++)
+        {
+            wxList[i] = forecastFilename;
+        }
 
         for(unsigned int i = 0; i < timeList.size(); i++)
         //int i = 0;
