@@ -830,10 +830,11 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         GDALSetProjection(hMemDS, pszDstWKT);
         GDALSetGeoTransform(hMemDS, adfGeoTransform);
 
-        if(!ninjaTime.empty())
-        {
-            GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
-        }
+        //gets pre-set now, in case ninjas[0] doesn't run first
+        //if(!ninjaTime.empty())
+        //{
+        //    GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
+        //}
 
         GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, 1);
 
@@ -891,12 +892,15 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
             boost::posix_time::time_duration tdiff = t - t0;
 
             int hdiff = tdiff.hours();
+            int mdiff = tdiff.minutes();
+            int mtdiff = hdiff*60 + mdiff;
 
-            std::string h(boost::lexical_cast<std::string>(hdiff));
+            std::string m(boost::lexical_cast<std::string>(mtdiff));
 
-            CPLDebug("GTIFF", "offset in hours, DT = %s", h.c_str());
+            CPLDebug("GTIFF", "offset in minutes, DT = %s", m.c_str());
 
-            GDALSetMetadataItem(hBand, "DT", h.c_str(), NULL); // offset in hours since first band
+            GDALSetMetadataItem(hBand, "DT", m.c_str(), NULL);
+            GDALSetMetadataItem(hBand, "DT_DESC", "offset in minutes since first band", NULL);
         }
 
         GDALSetRasterNoDataValue(hBand, -9999.0);

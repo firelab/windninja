@@ -583,6 +583,20 @@ bool ninjaArmy::startRuns(int numProcessors)
             hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
         }
         #endif
+
+        //need the startTime already preset in the datasets, in case ninjas[0] doesn't run first
+        if(!ninjas[0]->input.ninjaTime.is_not_a_date_time())
+        {
+            std::string ninjaTimeStr = boost::lexical_cast<std::string>(ninjas[0]->input.ninjaTime);
+            GDALSetMetadataItem(hSpdMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+            GDALSetMetadataItem(hDirMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+            #ifdef EMISSIONS
+            if(ninjas[0]->input.dustFlag == true)
+            {
+                GDALSetMetadataItem(hDustMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+            }
+            #endif
+        }
     }
 
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
