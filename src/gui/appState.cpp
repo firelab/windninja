@@ -317,7 +317,7 @@ void AppState::updateWeatherModelInputState()
 
 void AppState::updateGoogleEarthOutputState()
 {
-    if(ui->googleEarthCheckBox->isChecked())
+    if(ui->googleEarthGroupBox->isChecked())
     {
         if(!isSurfaceInputValid)
         {
@@ -527,7 +527,7 @@ void AppState::updateVTKFilesOutputState()
 
 void AppState::updateMapVisualizationOutputState()
 {
-    if(ui->mapVisualizationGroupBox->isChecked())
+    if(ui->mapVisualizationCheckBox->isChecked())
     {
         if(!isSurfaceInputValid)
         {
@@ -659,7 +659,7 @@ void AppState::updateOutputState()
     }
     else
     {
-        if(!ui->googleEarthCheckBox->isChecked() && !ui->fireBehaviorGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked() && !ui->mapVisualizationGroupBox->isChecked())
+        if(!ui->googleEarthGroupBox->isChecked() && !ui->fireBehaviorGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked() && !ui->mapVisualizationCheckBox->isChecked())
         {
             isOutputValid = false;
             ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
@@ -668,7 +668,7 @@ void AppState::updateOutputState()
         else
         {
             QVector<QString> invalidCases;
-            if(ui->googleEarthCheckBox->isChecked() && !isGoogleEarthValid)
+            if(ui->googleEarthGroupBox->isChecked() && !isGoogleEarthValid)
             {
                 invalidCases.append(QString("Google Earth output"));
             }

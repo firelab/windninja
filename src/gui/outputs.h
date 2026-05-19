@@ -24,12 +24,12 @@ signals:
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
-    void googleEarthCheckBoxToggled();
+    void googleEarthGroupBoxToggled();
     void fireBehaviorGroupBoxToggled();
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
-    void VTKFilesCheckBoxClicked();
-    void mapVisualizationGroupBoxToggled();
+    void VTKFilesCheckBoxToggled();
+    void mapVisualizationCheckBoxToggled();
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);

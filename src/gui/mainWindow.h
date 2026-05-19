@@ -102,10 +102,10 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
-    void massSolverCheckBoxClicked();
-    void momentumSolverCheckBoxClicked();
-    void diurnalCheckBoxClicked();
-    void stabilityCheckBoxClicked();
+    void massSolverCheckBoxToggled();
+    void momentumSolverCheckBoxToggled();
+    void diurnalCheckBoxToggled();
+    void stabilityCheckBoxToggled();
     void treeWidgetItemSelectionChanged();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();

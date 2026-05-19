@@ -121,10 +121,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectSignals()
 {
-    connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
-    connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
-    connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
-    connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
+    connect(ui->massSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::massSolverCheckBoxToggled);
+    connect(ui->momentumSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::momentumSolverCheckBoxToggled);
+    connect(ui->diurnalCheckBox, &QCheckBox::toggled, this, &MainWindow::diurnalCheckBoxToggled);
+    connect(ui->stabilityCheckBox, &QCheckBox::toggled, this, &MainWindow::stabilityCheckBoxToggled);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
@@ -333,8 +333,11 @@ void MainWindow::treeWidgetItemSelectionChanged()
     ui->inputsStackedWidget->setCurrentIndex(pageIndex);
 }
 
-void MainWindow::massSolverCheckBoxClicked()
+void MainWindow::massSolverCheckBoxToggled()
 {
+    if(!ui->massSolverCheckBox->isChecked())
+        return;
+
     ui->stabilityCheckBox->setDisabled(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
@@ -353,8 +356,11 @@ void MainWindow::massSolverCheckBoxClicked()
     emit updateStabilityState();
 }
 
-void MainWindow::momentumSolverCheckBoxClicked()
+void MainWindow::momentumSolverCheckBoxToggled()
 {
+    if(!ui->momentumSolverCheckBox->isChecked())
+        return;
+
     ui->stabilityCheckBox->setChecked(false);
     ui->stabilityCheckBox->setDisabled(true);
     ui->ninjafoamCaseGroupBox->setVisible(true);
@@ -374,7 +380,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     emit updateStabilityState();
 }
 
-void MainWindow::diurnalCheckBoxClicked()
+void MainWindow::diurnalCheckBoxToggled()
 {
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
@@ -388,7 +394,7 @@ void MainWindow::diurnalCheckBoxClicked()
     emit updateDirunalState();
 }
 
-void MainWindow::stabilityCheckBoxClicked()
+void MainWindow::stabilityCheckBoxToggled()
 {
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
@@ -825,19 +831,19 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     if (item->text(0) == "Conservation of Mass")
     {
-        ui->massSolverCheckBox->click();
+        ui->massSolverCheckBox->setChecked(!ui->massSolverCheckBox->isChecked());
     }
     else if (item->text(0) == "Conservation of Mass and Momentum")
     {
-        ui->momentumSolverCheckBox->click();
+        ui->momentumSolverCheckBox->setChecked(!ui->momentumSolverCheckBox->isChecked());
     }
     else if (item->text(0) == "Diurnal Input")
     {
-        ui->diurnalCheckBox->click();
+        ui->diurnalCheckBox->setChecked(!ui->diurnalCheckBox->isChecked());
     }
     else if (item->text(0) == "Stability Input")
     {
-        ui->stabilityCheckBox->click();
+        ui->stabilityCheckBox->setChecked(!ui->stabilityCheckBox->isChecked());
     }
     else if (item->text(0) == "Domain Average Wind")
     {
@@ -857,7 +863,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Google Earth")
     {
-        ui->googleEarthCheckBox->setChecked(!ui->googleEarthCheckBox->isChecked());
+        ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
     }
     else if (item->text(0) == "Fire Behavior")
     {
@@ -873,11 +879,14 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "VTK Files")
     {
-        ui->VTKFilesCheckBox->click();
+        ui->VTKFilesCheckBox->setChecked(!ui->VTKFilesCheckBox->isChecked());
     }
     else if (item->text(0) == "Map Visualization")
     {
-        ui->mapVisualizationGroupBox->setChecked(!ui->mapVisualizationGroupBox->isChecked());
+        if(ui->mapVisualizationCheckBox->isEnabled())
+        {
+            ui->mapVisualizationCheckBox->setChecked(!ui->mapVisualizationCheckBox->isChecked());
+        }
     }
 }
 
@@ -1088,7 +1097,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1221,7 +1230,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetFlatGeoBufFlag(ninjaArmy, i, ui->mapVisualizationGroupBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetFlatGeoBufFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetFlatGeoBufFlag: ninjaErr =" << ninjaErr;
@@ -1230,7 +1239,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
 
     if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
     {
-        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
+        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1318,7 +1327,7 @@ void MainWindow::plotKmzOutputs()
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
 
-    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
+    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
     {
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
@@ -1420,7 +1429,7 @@ void MainWindow::plotKmzOutputs()
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
 }
 
 void MainWindow::finishedLoadingMap()

@@ -35,12 +35,12 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->legendComboBox->setItemData(1, "equal_color");
 
     connect(ui->outputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightComboBoxCurrentIndexChanged);
-    connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
+    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthGroupBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
-    connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &Outputs::VTKFilesCheckBoxClicked);
-    connect(ui->mapVisualizationGroupBox, &QGroupBox::toggled, this, &Outputs::mapVisualizationGroupBoxToggled);
+    connect(ui->VTKFilesCheckBox, &QCheckBox::toggled, this, &Outputs::VTKFilesCheckBoxToggled);
+    connect(ui->mapVisualizationCheckBox, &QCheckBox::toggled, this, &Outputs::mapVisualizationCheckBoxToggled);
     connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthMeshResolutionGroupBoxToggled);
     connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorMeshResolutionGroupBoxToggled);
     connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesMeshResolutionGroupBoxToggled);
@@ -83,7 +83,7 @@ void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
     }
 }
 
-void Outputs::googleEarthCheckBoxToggled()
+void Outputs::googleEarthGroupBoxToggled()
 {
     emit updateGoogleState();
 }
@@ -103,12 +103,12 @@ void Outputs::geospatialPDFFilesGroupBoxToggled()
     emit updatePDFState();
 }
 
-void Outputs::VTKFilesCheckBoxClicked()
+void Outputs::VTKFilesCheckBoxToggled()
 {
     emit updateVTKState();
 }
 
-void Outputs::mapVisualizationGroupBoxToggled()
+void Outputs::mapVisualizationCheckBoxToggled()
 {
     emit updateMapVisualizationState();
 }
