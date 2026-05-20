@@ -40,6 +40,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
     connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &Outputs::VTKFilesCheckBoxClicked);
+    connect(ui->geoTiffFilesCheckBox, &QCheckBox::clicked, this, &Outputs::geoTiffFilesCheckBoxClicked);
     connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthMeshResolutionGroupBoxToggled);
     connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorMeshResolutionGroupBoxToggled);
     connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesMeshResolutionGroupBoxToggled);
@@ -49,6 +50,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
     connect(this, &Outputs::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
+    connect(this, &Outputs::updateGeoTiffState, &AppState::instance(), &AppState::updateGeoTiffFilesOutputState);
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::googleEarthMeshResolutionSpinBoxValueChanged);
@@ -104,6 +106,11 @@ void Outputs::geospatialPDFFilesGroupBoxToggled()
 void Outputs::VTKFilesCheckBoxClicked()
 {
     emit updateVTKState();
+}
+
+void Outputs::geoTiffFilesCheckBoxClicked()
+{
+    emit updateGeoTiffState();
 }
 
 void Outputs::googleEarthMeshResolutionGroupBoxToggled(bool checked)

@@ -90,7 +90,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 12);
     ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 15);
+    ui->treeWidget->topLevelItem(2)->child(5)->setData(0, Qt::UserRole, 15);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 16);
 
     connectSignals();
 
@@ -874,6 +875,10 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     {
         ui->VTKFilesCheckBox->click();
     }
+    else if (item->text(0) == "geoTiff Files")
+    {
+        ui->VTKFilesCheckBox->click();
+    }
 }
 
 bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
@@ -1213,6 +1218,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGeoTiffOutFlag(ninjaArmy, i, ui->geoTiffFilesCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGeoTiffOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 

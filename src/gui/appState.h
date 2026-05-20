@@ -72,6 +72,7 @@ public:
     bool isShapeFilesValid = false;
     bool isGeoSpatialPDFFilesValid = false;
     bool isVTKFilesValid = false;
+    bool isGeoTiffFilesValid = false;
 
     bool isSolverReady = false;
 
@@ -88,6 +89,7 @@ public slots:
     void updateShapeFilesOutputState();
     void updateGeoSpatialPDFFilesOutputState();
     void updateVTKFilesOutputState();
+    void updateGeoTiffFilesOutputState();
 
 private:
     Ui::MainWindow *ui;

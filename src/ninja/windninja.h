@@ -392,6 +392,9 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFSize
         ( NinjaArmyH* army, const int nIndex, const double height, const double width, const unsigned short dpi, char ** papszOptions);
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
+
     WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
 

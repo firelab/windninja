@@ -61,6 +61,7 @@ void AppState::setState()
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
+    updateGeoTiffFilesOutputState();
 }
 
 void AppState::updateSolverMethodologyState()
@@ -524,6 +525,39 @@ void AppState::updateVTKFilesOutputState()
     updateOutputState();
 }
 
+void AppState::updateGeoTiffFilesOutputState()
+{
+    if(ui->geoTiffFilesCheckBox->isChecked())
+    {
+        if(!isSurfaceInputValid)
+        {
+            isGeoTiffFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isGeoTiffFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Check Inputs");
+        }
+        else
+        {
+            isGeoTiffFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Valid");
+        }
+    }
+    else
+    {
+        isGeoTiffFilesValid = false;
+        ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Not selected");
+    }
+
+    updateOutputState();
+}
+
 void AppState::updateInputState()
 {
     if(!isSurfaceInputValid)
@@ -605,6 +639,7 @@ void AppState::updateInputState()
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
+    updateGeoTiffFilesOutputState();
 }
 
 void AppState::updateOutputState()
@@ -651,6 +686,10 @@ void AppState::updateOutputState()
             if(ui->VTKFilesCheckBox->isChecked() && !isVTKFilesValid)
             {
                 invalidCases.append(QString("VTK Files output"));
+            }
+            if(ui->geoTiffFilesCheckBox->isChecked() && !isGeoTiffFilesValid)
+            {
+                invalidCases.append(QString("geoTiff Files output"));
             }
 
             if(invalidCases.size() == 0)

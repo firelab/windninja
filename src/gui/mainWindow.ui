@@ -793,6 +793,11 @@
            <string>VTK Files</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>geoTiff Files</string>
+          </property>
+         </item>
         </item>
         <item>
          <property name="text">
@@ -4844,6 +4849,81 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </item>
           <item>
            <spacer name="VTKFilesPageSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="geoTiffFilesPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="geoTiffFilesVerticalLayout" stretch="0,0,0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="geoTiffFilesCheckBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Create multi-band geoTiff Files (*.tif)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="geoTiffFilesLabel">
+            <property name="text">
+             <string>Write multi-band geotiff files
+</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="geoTiffFilesNoteLabel">
+            <property name="text">
+             <string>Note: a separate geotiff file is generated for each of the following datasets:
+  * Wind Speed
+  * Wind Direction
+Each band corresponds to data from a given run, one right after the other.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="geoTiffFilesPageSpacer">
             <property name="orientation">
              <enum>Qt::Orientation::Vertical</enum>
             </property>
