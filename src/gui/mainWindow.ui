@@ -4096,7 +4096,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="fireBehaviorResolutionCheckBox">
+                 <widget class="QCheckBox" name="fireBehaviorAtmFileCheckBox">
                   <property name="text">
                    <string>Create *.atm file(s)</string>
                   </property>

@@ -907,7 +907,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         std::swap(PDFSize.PDFHeight, PDFSize.PDFWidth);
     }
 
-    if(ui->fireBehaviorGroupBox->isChecked() && ui->fireBehaviorResolutionCheckBox->isChecked())
+    if(ui->fireBehaviorGroupBox->isChecked() && ui->fireBehaviorAtmFileCheckBox->isChecked())
     {
         double outputHeight = ui->outputWindHeightSpinBox->value();
         std::string outputHeightUnits = ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData();
@@ -924,7 +924,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
 
     char **papszOptions = nullptr;
 
-    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorAtmFileCheckBox->isChecked(), papszOptions);
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
