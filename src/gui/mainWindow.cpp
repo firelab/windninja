@@ -907,6 +907,21 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
         std::swap(PDFSize.PDFHeight, PDFSize.PDFWidth);
     }
 
+    if(ui->fireBehaviorGroupBox->isChecked() && ui->fireBehaviorResolutionCheckBox->isChecked())
+    {
+        double outputHeight = ui->outputWindHeightSpinBox->value();
+        std::string outputHeightUnits = ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData();
+        std::string outputSpeedUnits = ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData();
+        bool isAtmValid = (outputHeight == 20.0 && outputHeightUnits == "ft" && outputSpeedUnits == "mph") ||
+                          (outputHeight == 10.0 && outputHeightUnits == "m"  && outputSpeedUnits == "kph");
+        if(!isAtmValid)
+        {
+            qCritical() << "ERROR: The solver cannot be run. The Outputs settings for '.atm' file output must be either\n '10m' for Output Wind Height and Output Speed Units in 'kph', or\n'20ft' for Output Wind Height and Output Speed Units in 'mph'.";
+            comMessageHandler("ERROR: The solver cannot be run. The Outputs settings for '.atm' file output must be either\n '10m' for Output Wind Height and Output Speed Units in 'kph', or\n'20ft' for Output Wind Height and Output Speed Units in 'mph'.", this);
+            return false;
+        }
+    }
+
     char **papszOptions = nullptr;
 
     ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
