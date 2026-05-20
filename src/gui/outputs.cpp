@@ -35,8 +35,12 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->legendComboBox->setItemData(1, "equal_color");
 
     connect(ui->outputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightComboBoxCurrentIndexChanged);
+    connect(ui->outputWindHeightSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::windHeightSpinBoxValueChanged);
+    connect(ui->outputWindHeightUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightUnitsComboBoxCurrentIndexChanged);
+    connect(ui->outputSpeedUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windSpeedUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
+    connect(ui->fireBehaviorAtmFileCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorAtmFileCheckBoxClicked);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
     connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &Outputs::VTKFilesCheckBoxClicked);
@@ -81,6 +85,23 @@ void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
         ui->outputWindHeightUnitsComboBox->setEnabled(true);
         break;
     }
+
+    emit updateFireBehaviorState();
+}
+
+void Outputs::windHeightSpinBoxValueChanged()
+{
+    emit updateFireBehaviorState();
+}
+
+void Outputs::windHeightUnitsComboBoxCurrentIndexChanged()
+{
+    emit updateFireBehaviorState();
+}
+
+void Outputs::windSpeedUnitsComboBoxCurrentIndexChanged()
+{
+    emit updateFireBehaviorState();
 }
 
 void Outputs::googleEarthCheckBoxToggled()
@@ -89,6 +110,11 @@ void Outputs::googleEarthCheckBoxToggled()
 }
 
 void Outputs::fireBehaviorGroupBoxToggled()
+{
+    emit updateFireBehaviorState();
+}
+
+void Outputs::fireBehaviorAtmFileCheckBoxClicked()
 {
     emit updateFireBehaviorState();
 }

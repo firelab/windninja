@@ -384,11 +384,22 @@ void AppState::updateFireBehaviorOutputState()
         }
         else
         {
+            double outputHeight = ui->outputWindHeightSpinBox->value();
+            std::string outputHeightUnits = ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData();
+            std::string outputSpeedUnits = ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData();
+            bool isAtmValid = (outputHeight == 20.0 && outputHeightUnits == "ft" && outputSpeedUnits == "mph") ||
+                              (outputHeight == 10.0 && outputHeightUnits == "m"  && outputSpeedUnits == "kph");
             if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
             {
                 isFireBehaviorValid = true;
                 ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, warnIcon);
                 ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+            }
+            else if(ui->fireBehaviorAtmFileCheckBox->isChecked() && !isAtmValid)
+            {
+                isFireBehaviorValid = false;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The Outputs settings for '.atm' file output must be either\n '10m' for Output Wind Height and Output Speed Units in 'kph', or\n'20ft' for Output Wind Height and Output Speed Units in 'mph'.");
             }
             else
             {

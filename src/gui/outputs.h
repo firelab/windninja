@@ -24,8 +24,12 @@ signals:
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
+    void windHeightSpinBoxValueChanged();
+    void windHeightUnitsComboBoxCurrentIndexChanged();
+    void windSpeedUnitsComboBoxCurrentIndexChanged();
     void googleEarthCheckBoxToggled();
     void fireBehaviorGroupBoxToggled();
+    void fireBehaviorAtmFileCheckBoxClicked();
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
     void VTKFilesCheckBoxClicked();
