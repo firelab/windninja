@@ -83,7 +83,9 @@ WindNinjaInputs::WindNinjaInputs()
     asciiProjOutFlag = false;
     asciiGeogOutFlag = false;
     asciiUvOutFlag = false;
-    
+    fbGeoTiffOutFlag = false;
+    fbGeoTiffFile = "!set";
+
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
     txtOutFlag = false;
@@ -285,6 +287,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     asciiProjOutFlag = rhs.asciiProjOutFlag;
     asciiGeogOutFlag = rhs.asciiGeogOutFlag;
     asciiUvOutFlag = rhs.asciiUvOutFlag;
+    fbGeoTiffOutFlag = rhs.fbGeoTiffOutFlag;
+    fbGeoTiffFile = rhs.fbGeoTiffFile;
 
     wxModelShpOutFlag = rhs.wxModelShpOutFlag;
     wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
@@ -499,6 +503,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       asciiProjOutFlag = rhs.asciiProjOutFlag;
       asciiGeogOutFlag = rhs.asciiGeogOutFlag;
       asciiUvOutFlag = rhs.asciiUvOutFlag;
+      fbGeoTiffOutFlag = rhs.fbGeoTiffOutFlag;
+      fbGeoTiffFile = rhs.fbGeoTiffFile;
 
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;

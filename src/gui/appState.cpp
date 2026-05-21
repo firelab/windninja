@@ -389,7 +389,13 @@ void AppState::updateFireBehaviorOutputState()
             std::string outputSpeedUnits = ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData();
             bool isAtmValid = (outputHeight == 20.0 && outputHeightUnits == "ft" && outputSpeedUnits == "mph") ||
                               (outputHeight == 10.0 && outputHeightUnits == "m"  && outputSpeedUnits == "kph");
-            if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
+            if(!ui->fireBehaviorAsciiCheckBox->isChecked() && !ui->fireBehaviorGeoTiffCheckBox->isChecked())
+            {
+                isFireBehaviorValid = false;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "No Output Format selected");
+            }
+            else if(GDALCellSize > ui->fireBehaviorMeshResolutionSpinBox->value())
             {
                 isFireBehaviorValid = true;
                 ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, warnIcon);
@@ -400,6 +406,12 @@ void AppState::updateFireBehaviorOutputState()
                 isFireBehaviorValid = false;
                 ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
                 ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The Outputs settings for '.atm' file output must be either\n '10m' for Output Wind Height and Output Speed Units in 'kph', or\n'20ft' for Output Wind Height and Output Speed Units in 'mph'.");
+            }
+            else if(ui->fireBehaviorAtmFileCheckBox->isChecked() && ui->fireBehaviorAsciiCheckBox->isChecked() && ui->fireBehaviorGeoTiffCheckBox->isChecked())
+            {
+                isFireBehaviorValid = false;
+                ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, crossIcon);
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "Only one Output Format can be selected at a time for '.atm' file output");
             }
             else
             {

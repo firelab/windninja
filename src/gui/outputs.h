@@ -29,6 +29,8 @@ private slots:
     void windSpeedUnitsComboBoxCurrentIndexChanged();
     void googleEarthCheckBoxToggled();
     void fireBehaviorGroupBoxToggled();
+    void fireBehaviorAsciiCheckBoxClicked();
+    void fireBehaviorGeoTiffCheckBoxClicked();
     void fireBehaviorAtmFileCheckBoxClicked();
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();

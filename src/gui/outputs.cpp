@@ -40,6 +40,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->outputSpeedUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windSpeedUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
     connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
+    connect(ui->fireBehaviorAsciiCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorAsciiCheckBoxClicked);
+    connect(ui->fireBehaviorGeoTiffCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorGeoTiffCheckBoxClicked);
     connect(ui->fireBehaviorAtmFileCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorAtmFileCheckBoxClicked);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
@@ -110,6 +112,24 @@ void Outputs::googleEarthCheckBoxToggled()
 }
 
 void Outputs::fireBehaviorGroupBoxToggled()
+{
+    if(ui->fireBehaviorGroupBox->isChecked())
+    {
+        if(!ui->fireBehaviorAsciiCheckBox->isChecked() && !ui->fireBehaviorGeoTiffCheckBox->isChecked())
+        {
+            ui->fireBehaviorAsciiCheckBox->setChecked(true);
+        }
+    }
+
+    emit updateFireBehaviorState();
+}
+
+void Outputs::fireBehaviorAsciiCheckBoxClicked()
+{
+    emit updateFireBehaviorState();
+}
+
+void Outputs::fireBehaviorGeoTiffCheckBoxClicked()
 {
     emit updateFireBehaviorState();
 }

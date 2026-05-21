@@ -3108,6 +3108,118 @@ void ninja::writeOutputFiles()
 
 	}//end omp section
 
+    //write fire behavior geotiff files
+    #pragma omp section
+    {
+        try{
+            if(input.fbGeoTiffOutFlag)
+            {
+                AsciiGrid<double> *velTempGrid, *angTempGrid;
+                velTempGrid=NULL;
+                angTempGrid=NULL;
+
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+                AsciiGrid<double> tempCloud(CloudGrid);
+                tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+
+                // if output clipping was set by the user, don't buffer to overlap the DEM
+                // but only if writing atm file for farsite grids
+                if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                {
+                    //ensure grids cover original DEM extents for FARSITE
+                    AsciiGrid<double> demGrid;
+                    GDALDatasetH hDS;
+                    hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                    if( hDS == NULL )
+                    {
+                        input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                        "Problem reading DEM during output writing." );
+                    }
+                    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                    tempCloud.BufferToOverlapGrid(demGrid);
+                    angTempGrid->BufferToOverlapGrid(demGrid);
+                    velTempGrid->BufferToOverlapGrid(demGrid);
+                }
+
+                std::string velFbGeoTiffFile = input.fbGeoTiffFile;
+                std::string angFbGeoTiffFile = input.fbGeoTiffFile;
+                std::string cldFbGeoTiffFile = input.fbGeoTiffFile;
+                velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
+                angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
+                cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
+                velTempGrid->exportToTiff(velFbGeoTiffFile);
+                angTempGrid->exportToTiff(angFbGeoTiffFile);
+                tempCloud.exportToTiff(cldFbGeoTiffFile);
+
+                #ifdef FRICTION_VELOCITY
+                if(input.frictionVelocityFlag == 1)
+                {
+                    AsciiGrid<double> *ustarTempGrid;
+                    ustarTempGrid=NULL;
+
+                    ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+                    std::string ustarFbGeoTiffFile = input.fbGeoTiffFile;
+                    ustarFbGeoTiffFile.insert(ustarFbGeoTiffFile.find(".tif"), "_ustar");
+                    ustarTempGrid->exportToTiff(ustarFbGeoTiffFile);
+
+                    if(ustarTempGrid)
+                    {
+                        delete ustarTempGrid;
+                        ustarTempGrid=NULL;
+                    }
+                }
+                #endif
+                #ifdef EMISSIONS
+                if(input.dustFlag == 1)
+                {
+                    AsciiGrid<double> *dustTempGrid;
+                    dustTempGrid=NULL;
+
+                    dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+                    std::string dustFbGeoTiffFile = input.fbGeoTiffFile;
+                    dustFbGeoTiffFile.insert(dustFbGeoTiffFile.find(".tif"), "_dust");
+                    dustTempGrid->exportToTiff(dustFbGeoTiffFile);
+
+                    if(dustTempGrid)
+                    {
+                        delete dustTempGrid;
+                        dustTempGrid=NULL;
+                    }
+                }
+                #endif
+                if(angTempGrid)
+                {
+                    delete angTempGrid;
+                    angTempGrid=NULL;
+                }
+                if(velTempGrid)
+                {
+                    delete velTempGrid;
+                    velTempGrid=NULL;
+                }
+
+                //Write .atm file for this run.  Only has one time value in file.
+                if(input.writeAtmFile)
+                {
+                    farsiteAtm atmosphere;
+                    atmosphere.push(input.ninjaTime, velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+                }
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: Cannot determine exception type.");
+        }
+
+    }//end omp section
+
 
 	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
 	#pragma omp section
@@ -4945,6 +5057,11 @@ void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits uni
     input.velResolution = input.angResolution = Resolution;
 }
 
+void ninja::set_fbGeoTiffOutFlag(bool flag)
+{
+    input.fbGeoTiffOutFlag = flag;
+}
+
 void ninja::set_txtOutFlag(bool flag)
 {
     input.txtOutFlag = flag;
@@ -5173,6 +5290,7 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geotiffFile = rootFile + gtiff_fileAppend + ".tif";
+    input.fbGeoTiffFile = rootFile + +"_fb" + gtiff_fileAppend + ".tif";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";

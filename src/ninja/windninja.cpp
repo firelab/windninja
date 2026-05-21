@@ -2119,6 +2119,28 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
 }
 
 /**
+ * \brief Set the flag to write fire behavior geotiff (raster) output for a simulation.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not fire behavior geotiff output will be written (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFbGeoTiffOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFbGeoTiffOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
  * \brief Set the resolution of the raster output for a simulation.
  *
  * \note Only valid if NinjaSetAsciiOutFlag is set to 1.

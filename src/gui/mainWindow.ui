@@ -3934,6 +3934,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </property>
           <item>
            <widget class="QGroupBox" name="fireBehaviorGroupBox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -3947,7 +3950,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </size>
             </property>
             <property name="title">
-             <string>Create Fire Behavior Files (*.asc)</string>
+             <string>Create Fire Behavior Files</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
@@ -3968,6 +3971,48 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <property name="bottomMargin">
               <number>5</number>
              </property>
+             <item>
+              <widget class="QGroupBox" name="fireBehaviorOutputFormatsGroupBox">
+               <property name="title">
+                <string>Output Formats</string>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <layout class="QHBoxLayout" name="fireBehaviorOutputFormatsHorizontalLayout">
+                <item>
+                 <widget class="QCheckBox" name="fireBehaviorAsciiCheckBox">
+                  <property name="text">
+                   <string>ascii (*.asc)</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="fireBehaviorGeoTiffCheckBox">
+                  <property name="text">
+                   <string>geotiff (*.tif)</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="FireBehaviorOutputFormatsSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Orientation::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>454</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </widget>
+             </item>
              <item>
               <widget class="QGroupBox" name="fireBehaviorResolutionGroupBox">
                <property name="sizePolicy">

@@ -608,12 +608,14 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                 //set kmzFile for setRunKmzFilenames(), for the GUI
                 ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
-            } 
+            }
 #endif //NINJAFOAM            
 
             //write farsite atmosphere file
             if(writeFarsiteAtmFile)
+            {
                 writeFarsiteAtmosphereFile();
+            }
 
             //setup the run kmz filenames, for C-API calls
             setCurrentRunKmzFilenames(0);
@@ -711,8 +713,20 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)
                 {
-                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                    if(ninjas[i]->input.fbGeoTiffOutFlag == true)
+                    {
+                        std::string velFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
+                        std::string angFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
+                        std::string cldFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
+                        velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
+                        angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
+                        cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
+                        atmosphere.push(ninjas[i]->get_date_time(), velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                    }
+                    else
+                    {
+                        atmosphere.push(ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
+                    }
                 }
 
                 //setup the run kmz filenames, for C-API calls
@@ -813,8 +827,20 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)
                 {
-                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                    if(ninjas[i]->input.fbGeoTiffOutFlag == true)
+                    {
+                        std::string velFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
+                        std::string angFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
+                        std::string cldFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
+                        velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
+                        angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
+                        cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
+                        atmosphere.push(ninjas[i]->get_date_time(), velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                    }
+                    else
+                    {
+                        atmosphere.push(ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
+                    }
                 }
 
                 //setup the run kmz filenames, for C-API calls
@@ -1230,6 +1256,15 @@ void ninjaArmy::setAtmFlags()
 {
     if(writeFarsiteAtmFile)
     {
+        if(!ninjas[0]->input.asciiOutFlag && !ninjas[0]->input.fbGeoTiffOutFlag)
+        {
+            throw std::runtime_error("atm output set without choosing 'ascii' or 'geotiff' output.");
+        }
+        else if(ninjas[0]->input.asciiOutFlag && ninjas[0]->input.fbGeoTiffOutFlag)
+        {
+            throw std::runtime_error("only one of 'ascii' or 'geotiff' output can be set at a time for 'atm' file output.");
+        }
+
         //if it's not a weather model or point run, set all ninja's atm write flags
         if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag) &&
            !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && 
@@ -2538,15 +2573,12 @@ int ninjaArmy::setAsciiUvOutFlag( const int nIndex, const bool flag, char ** pap
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUvOutFlag( flag ) );
 }
-
-
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_asciiResolution( resolution, units ) );
 }
-
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                                    std::string units, char ** papszOptions )
 {
@@ -2567,6 +2599,10 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
        }
    }
    return retval;
+}
+int ninjaArmy::setFbGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fbGeoTiffOutFlag( flag ) );
 }
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {

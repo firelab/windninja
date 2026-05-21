@@ -365,6 +365,9 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetFbGeoTiffOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
         ( NinjaArmyH * army, bool flag, char ** papszOptions);
 

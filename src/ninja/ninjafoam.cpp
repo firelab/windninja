@@ -3438,6 +3438,7 @@ void NinjaFoam::SetOutputFilenames()
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geotiffFile = rootFile + gtiff_fileAppend + ".tif";
+    input.fbGeoTiffFile = rootFile + +"_fb" + gtiff_fileAppend + ".tif";
 
     input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
@@ -3564,6 +3565,75 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
 	}
+
+    //write fire behavior geotiff files
+    try{
+        if(input.fbGeoTiffOutFlag)
+        {
+            AsciiGrid<double> *velTempGrid, *angTempGrid;
+            velTempGrid=NULL;
+            angTempGrid=NULL;
+
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+            AsciiGrid<double> tempCloud(CloudGrid);
+            tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
+
+            // if output clipping was set by the user, don't buffer to overlap the DEM
+            // but only if writing atm file for farsite grids
+            if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+            {
+                //ensure grids cover original DEM extents for FARSITE
+                AsciiGrid<double> demGrid;
+                GDALDatasetH hDS;
+                hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                if( hDS == NULL )
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                    "Problem reading DEM during output writing." );
+                }
+                GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                tempCloud.BufferToOverlapGrid(demGrid);
+                angTempGrid->BufferToOverlapGrid(demGrid);
+                velTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
+            std::string velFbGeoTiffFile = input.fbGeoTiffFile;
+            std::string angFbGeoTiffFile = input.fbGeoTiffFile;
+            std::string cldFbGeoTiffFile = input.fbGeoTiffFile;
+            velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
+            angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
+            cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
+            velTempGrid->exportToTiff(velFbGeoTiffFile);
+            angTempGrid->exportToTiff(angFbGeoTiffFile);
+            tempCloud.exportToTiff(cldFbGeoTiffFile);
+
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+
+            if(input.writeAtmFile)
+            {
+                farsiteAtm atmosphere;
+                atmosphere.push(input.ninjaTime, velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
+            }
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: Cannot determine exception type.");
+    }
 
 	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
 	try{

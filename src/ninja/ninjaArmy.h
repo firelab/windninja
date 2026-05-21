@@ -1247,6 +1247,14 @@ public:
     int setAsciiResolution( const int nIndex, const double resolution,
                             std::string units, char ** papszOptions=NULL );
     /**
+    * \brief Enable/disable fire behavior geotiff (raster) output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFbGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
     * \brief Enable/disable VTK output for a ninja
     *
     * \param nIndex index of a ninja
