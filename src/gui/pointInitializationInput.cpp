@@ -81,7 +81,7 @@ void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
     ui->downloadFromStationIDLineEdit->clear();
     ui->downloadFromDEMSpinBox->setValue(0);
 
-    ui->inputsStackedWidget->setCurrentIndex(17);
+    ui->inputsStackedWidget->setCurrentIndex(18);
 }
 
 void PointInitializationInput::weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged()
