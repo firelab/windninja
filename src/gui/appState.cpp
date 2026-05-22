@@ -58,10 +58,10 @@ void AppState::setState()
     updateWeatherModelInputState();
     updateGoogleEarthOutputState();
     updateFireBehaviorOutputState();
+    updateGeoTiffFilesOutputState();
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
-    updateGeoTiffFilesOutputState();
 }
 
 void AppState::updateSolverMethodologyState()
@@ -431,6 +431,39 @@ void AppState::updateFireBehaviorOutputState()
     updateOutputState();
 }
 
+void AppState::updateGeoTiffFilesOutputState()
+{
+    if(ui->geoTiffFilesCheckBox->isChecked())
+    {
+        if(!isSurfaceInputValid)
+        {
+            isGeoTiffFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isGeoTiffFilesValid = false;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Inputs");
+        }
+        else
+        {
+            isGeoTiffFilesValid = true;
+            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Valid");
+        }
+    }
+    else
+    {
+        isGeoTiffFilesValid = false;
+        ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Not selected");
+    }
+
+    updateOutputState();
+}
+
 void AppState::updateShapeFilesOutputState()
 {
     if(ui->shapeFilesGroupBox->isChecked())
@@ -438,36 +471,36 @@ void AppState::updateShapeFilesOutputState()
         if(!isSurfaceInputValid)
         {
             isShapeFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Surface Input");
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Surface Input");
         }
         else if(!isInputValid)
         {
             isShapeFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Check Inputs");
+            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Inputs");
         }
         else
         {
             if(GDALCellSize > ui->shapeFilesMeshResolutionSpinBox->value())
             {
                 isShapeFilesValid = true;
-                ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
             }
             else
             {
                 isShapeFilesValid = true;
-                ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, tickIcon);
-                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Valid");
+                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Valid");
             }
         }
     }
     else
     {
         isShapeFilesValid = false;
-        ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "Not selected");
+        ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -480,36 +513,36 @@ void AppState::updateGeoSpatialPDFFilesOutputState()
         if(!isSurfaceInputValid)
         {
             isGeoSpatialPDFFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Surface Input");
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Surface Input");
         }
         else if(!isInputValid)
         {
             isGeoSpatialPDFFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Check Inputs");
+            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Inputs");
         }
         else
         {
             if(GDALCellSize > ui->geospatialPDFFilesMeshResolutionSpinBox->value())
             {
                 isGeoSpatialPDFFilesValid = true;
-                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+                ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
             }
             else
             {
                 isGeoSpatialPDFFilesValid = true;
-                ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, tickIcon);
-                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Valid");
+                ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Valid");
             }
         }
     }
     else
     {
         isGeoSpatialPDFFilesValid = false;
-        ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "Not selected");
+        ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Not selected");
     }
 
     updateOutputState();
@@ -522,58 +555,25 @@ void AppState::updateVTKFilesOutputState()
         if(!isSurfaceInputValid)
         {
             isVTKFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Surface Input");
-        }
-        else if(!isInputValid)
-        {
-            isVTKFilesValid = false;
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, crossIcon);
-            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Check Inputs");
-        }
-        else
-        {
-            isVTKFilesValid = true;
-            ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Valid");
-        }
-    }
-    else
-    {
-        isVTKFilesValid = false;
-        ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, bulletIcon);
-        ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "Not selected");
-    }
-
-    updateOutputState();
-}
-
-void AppState::updateGeoTiffFilesOutputState()
-{
-    if(ui->geoTiffFilesCheckBox->isChecked())
-    {
-        if(!isSurfaceInputValid)
-        {
-            isGeoTiffFilesValid = false;
             ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Check Surface Input");
         }
         else if(!isInputValid)
         {
-            isGeoTiffFilesValid = false;
+            isVTKFilesValid = false;
             ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, crossIcon);
             ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Check Inputs");
         }
         else
         {
-            isGeoTiffFilesValid = true;
+            isVTKFilesValid = true;
             ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, tickIcon);
             ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Valid");
         }
     }
     else
     {
-        isGeoTiffFilesValid = false;
+        isVTKFilesValid = false;
         ui->treeWidget->topLevelItem(2)->child(5)->setIcon(0, bulletIcon);
         ui->treeWidget->topLevelItem(2)->child(5)->setToolTip(0, "Not selected");
     }
@@ -659,10 +659,10 @@ void AppState::updateInputState()
 
     updateGoogleEarthOutputState();
     updateFireBehaviorOutputState();
+    updateGeoTiffFilesOutputState();
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
-    updateGeoTiffFilesOutputState();
 }
 
 void AppState::updateOutputState()
@@ -698,6 +698,10 @@ void AppState::updateOutputState()
             {
                 invalidCases.append(QString("Fire Behavior output"));
             }
+            if(ui->geoTiffFilesCheckBox->isChecked() && !isGeoTiffFilesValid)
+            {
+                invalidCases.append(QString("geoTiff Files output"));
+            }
             if(ui->shapeFilesGroupBox->isChecked() && !isShapeFilesValid)
             {
                 invalidCases.append(QString("Shape Files output"));
@@ -709,10 +713,6 @@ void AppState::updateOutputState()
             if(ui->VTKFilesCheckBox->isChecked() && !isVTKFilesValid)
             {
                 invalidCases.append(QString("VTK Files output"));
-            }
-            if(ui->geoTiffFilesCheckBox->isChecked() && !isGeoTiffFilesValid)
-            {
-                invalidCases.append(QString("geoTiff Files output"));
             }
 
             if(invalidCases.size() == 0)

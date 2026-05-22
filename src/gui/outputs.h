@@ -17,10 +17,10 @@ public:
 signals:
     void updateGoogleState();
     void updateFireBehaviorState();
+    void updateGeoTiffState();
     void updateShapeState();
     void updatePDFState();
     void updateVTKState();
-    void updateGeoTiffState();
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
@@ -32,10 +32,10 @@ private slots:
     void fireBehaviorAsciiCheckBoxClicked();
     void fireBehaviorGeoTiffCheckBoxClicked();
     void fireBehaviorAtmFileCheckBoxClicked();
+    void geoTiffFilesCheckBoxClicked();
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
     void VTKFilesCheckBoxClicked();
-    void geoTiffFilesCheckBoxClicked();
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);

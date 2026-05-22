@@ -69,10 +69,10 @@ public:
     bool isOutputValid = false;
     bool isGoogleEarthValid = false;
     bool isFireBehaviorValid = false;
+    bool isGeoTiffFilesValid = false;
     bool isShapeFilesValid = false;
     bool isGeoSpatialPDFFilesValid = false;
     bool isVTKFilesValid = false;
-    bool isGeoTiffFilesValid = false;
 
     bool isSolverReady = false;
 
@@ -86,10 +86,10 @@ public slots:
     void updateWeatherModelInputState();
     void updateGoogleEarthOutputState();
     void updateFireBehaviorOutputState();
+    void updateGeoTiffFilesOutputState();
     void updateShapeFilesOutputState();
     void updateGeoSpatialPDFFilesOutputState();
     void updateVTKFilesOutputState();
-    void updateGeoTiffFilesOutputState();
 
 private:
     Ui::MainWindow *ui;
