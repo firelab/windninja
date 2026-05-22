@@ -2119,20 +2119,20 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
 }
 
 /**
- * \brief Set the flag to write fire behavior geotiff (raster) output for a simulation.
+ * \brief Set the flag to write geoTiff output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param flag The flag which determines whether or not fire behavior geotiff output will be written (0 = no, 1 = yes).
+ * \param flag The flag which determines whether or not geoTiff output will be written (0 = no, 1 = yes).
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetFbGeoTiffOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffOutFlag
     ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setFbGeoTiffOutFlag( nIndex, flag );
+        return reinterpret_cast<ninjaArmy*>( army )->setGeoTiffOutFlag( nIndex, flag );
     }
     else
     {
@@ -2141,16 +2141,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetFbGeoTiffOutFlag
 }
 
 /**
- * \brief Set the resolution of the raster output for a simulation.
+ * \brief Set the flag to write atm file output for a simulation.
  *
- * \note Only valid if NinjaSetAsciiOutFlag is set to 1.
+ * \note Only valid if NinjaSetAsciiOutFlag or NinjaSetGeoTiffOutFlag is set to 1.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param flag That flag that determines whether to write the .atm file.
+ * \param flag The flag that determines whether to write the .atm file.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAtmOutFlag
     ( NinjaArmyH * army, bool flag, char ** papszOptions)
 {
     if( NULL != army)
@@ -2364,28 +2364,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
     {
         return reinterpret_cast<ninjaArmy*>( army )->setPDFResolution
             ( nIndex, resolution, std::string( units ) );
-    }
-    else
-    {
-        return NINJA_E_NULL_PTR;
-    }
-}
-
-/**
- * \brief Set the flag to write geoTiff output for a simulation.
- *
- * \param army An opaque handle to a valid ninjaArmy.
- * \param nIndex The run to apply the setting to.
- * \param flag The flag which determines whether or not geoTiff output will be written (0 = no, 1 = yes).
- *
- * \return NINJA_SUCCESS on success, non-zero otherwise.
- */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffOutFlag
-    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
-{
-    if( NULL != army )
-    {
-        return reinterpret_cast<ninjaArmy*>( army )->setGeotiffOutFlag( nIndex, flag );
     }
     else
     {

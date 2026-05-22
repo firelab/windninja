@@ -3437,8 +3437,7 @@ void NinjaFoam::SetOutputFilenames()
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
-    input.geotiffFile = rootFile + gtiff_fileAppend + ".tif";
-    input.fbGeoTiffFile = rootFile + +"_fb" + gtiff_fileAppend + ".tif";
+    input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
     input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
@@ -3568,7 +3567,7 @@ void NinjaFoam::WriteOutputFiles()
 
     //write fire behavior geotiff files
     try{
-        if(input.fbGeoTiffOutFlag)
+        if(input.geoTiffOutFlag)
         {
             AsciiGrid<double> *velTempGrid, *angTempGrid;
             velTempGrid=NULL;
@@ -3599,15 +3598,15 @@ void NinjaFoam::WriteOutputFiles()
                 velTempGrid->BufferToOverlapGrid(demGrid);
             }
 
-            std::string velFbGeoTiffFile = input.fbGeoTiffFile;
-            std::string angFbGeoTiffFile = input.fbGeoTiffFile;
-            std::string cldFbGeoTiffFile = input.fbGeoTiffFile;
-            velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
-            angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
-            cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
-            velTempGrid->exportToTiff(velFbGeoTiffFile);
-            angTempGrid->exportToTiff(angFbGeoTiffFile);
-            tempCloud.exportToTiff(cldFbGeoTiffFile);
+            std::string velGeoTiffFile = input.geoTiffFile;
+            std::string angGeoTiffFile = input.geoTiffFile;
+            std::string cldGeoTiffFile = input.geoTiffFile;
+            velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+            angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+            cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
+            velTempGrid->exportToTiff(velGeoTiffFile);
+            angTempGrid->exportToTiff(angGeoTiffFile);
+            tempCloud.exportToTiff(cldGeoTiffFile);
 
             if(angTempGrid)
             {
@@ -3623,7 +3622,7 @@ void NinjaFoam::WriteOutputFiles()
             if(input.writeAtmFile)
             {
                 farsiteAtm atmosphere;
-                atmosphere.push(input.ninjaTime, velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                atmosphere.push(input.ninjaTime, velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                 atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
             }
         }
@@ -3811,31 +3810,31 @@ void NinjaFoam::WriteOutputFiles()
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
 
-    try{
-        if(input.geotiffOutFlag==true)
-        {
-            OutputWriter output;
-
-            if(!input.ninjaTime.is_not_a_date_time())
-            {
-                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
-            }
-            output.setRunNumber(input.inputsRunNumber);
-
-            output.setDirGrid(AngleGrid);
-            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-
-            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
-
-            output.write(input.geotiffFile, "GTiff");
-        }
-    }catch (exception& e)
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
-    }catch (...)
-    {
-        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
-    }
+//    try{
+//        if(input.geoTiffOutFlag==true)
+//        {
+//            OutputWriter output;
+//
+//            if(!input.ninjaTime.is_not_a_date_time())
+//            {
+//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//            }
+//            output.setRunNumber(input.inputsRunNumber);
+//
+//            output.setDirGrid(AngleGrid);
+//            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
+//
+//            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
+//
+//            output.write(input.geoTiffFile, "GTiff");
+//        }
+//    }catch (exception& e)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
+//    }catch (...)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
+//    }
 
 	try{
 	    if ( input.volVTKOutFlag == true ) {

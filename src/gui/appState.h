@@ -68,8 +68,8 @@ public:
     int noGoogleNumCells = 400000;
     bool isOutputValid = false;
     bool isGoogleEarthValid = false;
-    bool isFireBehaviorValid = false;
-    bool isGeoTiffFilesValid = false;
+    bool isFireBehaviorAsciiValid = false;
+    bool isFireBehaviorGeoTiffValid = false;
     bool isShapeFilesValid = false;
     bool isGeoSpatialPDFFilesValid = false;
     bool isVTKFilesValid = false;
@@ -85,8 +85,8 @@ public slots:
     void updatePointInitializationInputState();
     void updateWeatherModelInputState();
     void updateGoogleEarthOutputState();
-    void updateFireBehaviorOutputState();
-    void updateGeoTiffFilesOutputState();
+    void updateFireBehaviorAsciiOutputState();
+    void updateFireBehaviorGeoTiffOutputState();
     void updateShapeFilesOutputState();
     void updateGeoSpatialPDFFilesOutputState();
     void updateVTKFilesOutputState();

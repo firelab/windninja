@@ -504,42 +504,42 @@ bool ninjaArmy::startRuns(int numProcessors)
     hSpdMemDS = NULL;
     hDirMemDS = NULL;
     hDustMemDS = NULL;
-    if(ninjas[0]->input.geotiffOutFlag == true)
-    {
-        //create MEM datasets for GTiff output writer
-        ninjas[0]->readInputFile();
-        ninjas[0]->set_position();
-        ninjas[0]->set_uniVegetation();
-        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
-
-        int nXSize = ninjas[0]->input.dem.get_nCols();
-        int nYSize = ninjas[0]->input.dem.get_nRows();
-
-        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
-
-        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-        #ifdef EMISSIONS
-        if(ninjas[0]->input.dustFlag == true)
-        {
-            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-        }
-        #endif
-
-        //need the startTime already preset in the datasets, in case ninjas[0] doesn't run first
-        if(!ninjas[0]->input.ninjaTime.is_not_a_date_time())
-        {
-            std::string ninjaTimeStr = boost::lexical_cast<std::string>(ninjas[0]->input.ninjaTime);
-            GDALSetMetadataItem(hSpdMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
-            GDALSetMetadataItem(hDirMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
-            #ifdef EMISSIONS
-            if(ninjas[0]->input.dustFlag == true)
-            {
-                GDALSetMetadataItem(hDustMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
-            }
-            #endif
-        }
-    }
+//    if(ninjas[0]->input.geoTiffOutFlag == true)
+//    {
+//        //create MEM datasets for GTiff output writer
+//        ninjas[0]->readInputFile();
+//        ninjas[0]->set_position();
+//        ninjas[0]->set_uniVegetation();
+//        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
+//
+//        int nXSize = ninjas[0]->input.dem.get_nCols();
+//        int nYSize = ninjas[0]->input.dem.get_nRows();
+//
+//        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+//
+//        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+//        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+//        #ifdef EMISSIONS
+//        if(ninjas[0]->input.dustFlag == true)
+//        {
+//            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+//        }
+//        #endif
+//
+//        //need the startTime already preset in the datasets, in case ninjas[0] doesn't run first
+//        if(!ninjas[0]->input.ninjaTime.is_not_a_date_time())
+//        {
+//            std::string ninjaTimeStr = boost::lexical_cast<std::string>(ninjas[0]->input.ninjaTime);
+//            GDALSetMetadataItem(hSpdMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+//            GDALSetMetadataItem(hDirMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+//            #ifdef EMISSIONS
+//            if(ninjas[0]->input.dustFlag == true)
+//            {
+//                GDALSetMetadataItem(hDustMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+//            }
+//            #endif
+//        }
+//    }
 
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
     kmzFilenames.resize(ninjas.size());
@@ -552,11 +552,11 @@ bool ninjaArmy::startRuns(int numProcessors)
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
 
-            //set in-memory datasets for multi-band GTiff output writer
-            if(ninjas[0]->input.geotiffOutFlag == true)
-            {
-                ninjas[0]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
-            }
+//            //set in-memory datasets for multi-band GTiff output writer
+//            if(ninjas[0]->input.geoTiffOutFlag == true)
+//            {
+//                ninjas[0]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+//            }
 
             if ((ninjas[0]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
             {
@@ -654,11 +654,11 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
 
-                //set in-memory datasets for multi-band GTiff output writer
-                if(ninjas[i]->input.geotiffOutFlag == true)
-                {
-                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
-                }
+//                //set in-memory datasets for multi-band GTiff output writer
+//                if(ninjas[i]->input.geoTiffOutFlag == true)
+//                {
+//                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+//                }
 
                 if((ninjas[i]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
                 {
@@ -713,15 +713,15 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)
                 {
-                    if(ninjas[i]->input.fbGeoTiffOutFlag == true)
+                    if(ninjas[i]->input.geoTiffOutFlag == true)
                     {
-                        std::string velFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
-                        std::string angFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
-                        std::string cldFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
-                        velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
-                        angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
-                        cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
-                        atmosphere.push(ninjas[i]->get_date_time(), velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                        std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string cldGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                        angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                        cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
+                        atmosphere.push(ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                     }
                     else
                     {
@@ -815,11 +815,11 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             try
             {
-                //set in-memory datasets for multi-band GTiff output writer
-                if(ninjas[i]->input.geotiffOutFlag == true)
-                {
-                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
-                }
+//                //set in-memory datasets for multi-band GTiff output writer
+//                if(ninjas[i]->input.geoTiffOutFlag == true)
+//                {
+//                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+//                }
 
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
@@ -827,15 +827,15 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)
                 {
-                    if(ninjas[i]->input.fbGeoTiffOutFlag == true)
+                    if(ninjas[i]->input.geoTiffOutFlag == true)
                     {
-                        std::string velFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
-                        std::string angFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
-                        std::string cldFbGeoTiffFile = ninjas[i]->input.fbGeoTiffFile;
-                        velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
-                        angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
-                        cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
-                        atmosphere.push(ninjas[i]->get_date_time(), velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                        std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string cldGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                        angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                        cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
+                        atmosphere.push(ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                     }
                     else
                     {
@@ -959,32 +959,32 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     try{
-        // finalize the multi-band gtiff dataset and close the inMem datasets
-        if(ninjas[0]->input.geotiffOutFlag == true)
-        {
-            OutputWriter output;
-            output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
-
-            output.finalizeWriteGtiff(ninjas[0]->input.geotiffFile);
-
-            if(hSpdMemDS != NULL)
-            {
-                GDALClose(hSpdMemDS);
-                hSpdMemDS = NULL;
-            }
-            if(hDirMemDS != NULL)
-            {
-                GDALClose(hDirMemDS);
-                hDirMemDS = NULL;
-            }
-            #ifdef EMISSIONS
-            if(hDustMemDS != NULL)
-            {
-                GDALClose(hDustMemDS);
-                hDustMemDS = NULL;
-            }
-            #endif
-        }
+//        // finalize the multi-band gtiff dataset and close the inMem datasets
+//        if(ninjas[0]->input.geoTiffOutFlag == true)
+//        {
+//            OutputWriter output;
+//            output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
+//
+//            output.finalizeWriteGtiff(ninjas[0]->input.geoTiffFile);
+//
+//            if(hSpdMemDS != NULL)
+//            {
+//                GDALClose(hSpdMemDS);
+//                hSpdMemDS = NULL;
+//            }
+//            if(hDirMemDS != NULL)
+//            {
+//                GDALClose(hDirMemDS);
+//                hDirMemDS = NULL;
+//            }
+//            #ifdef EMISSIONS
+//            if(hDustMemDS != NULL)
+//            {
+//                GDALClose(hDustMemDS);
+//                hDustMemDS = NULL;
+//            }
+//            #endif
+//        }
 
         //write consistent color scale outputs
         if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScale == true)
@@ -1256,12 +1256,14 @@ void ninjaArmy::setAtmFlags()
 {
     if(writeFarsiteAtmFile)
     {
-        if(!ninjas[0]->input.asciiOutFlag && !ninjas[0]->input.fbGeoTiffOutFlag)
+        if(!ninjas[0]->input.asciiOutFlag && !ninjas[0]->input.geoTiffOutFlag)
         {
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "atm output set without choosing 'ascii' or 'geotiff' output.");
             throw std::runtime_error("atm output set without choosing 'ascii' or 'geotiff' output.");
         }
-        else if(ninjas[0]->input.asciiOutFlag && ninjas[0]->input.fbGeoTiffOutFlag)
+        else if(ninjas[0]->input.asciiOutFlag && ninjas[0]->input.geoTiffOutFlag)
         {
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "only one of 'ascii' or 'geotiff' output can be set at a time for 'atm' file output.");
             throw std::runtime_error("only one of 'ascii' or 'geotiff' output can be set at a time for 'atm' file output.");
         }
 
@@ -2600,9 +2602,9 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
    }
    return retval;
 }
-int ninjaArmy::setFbGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fbGeoTiffOutFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geoTiffOutFlag( flag ) );
 }
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2673,11 +2675,6 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
                            const unsigned short dpi )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
-}
-
-int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )

@@ -182,8 +182,9 @@ public:
     bool asciiProjOutFlag;       // write ascii files using dem projection coordinates (standard output), this is UTM (northing,easting) grids for WindNinja downloaded dems
     bool asciiGeogOutFlag;      // write ascii files using geographic coordinates, EPSG:4326 (lat,lon) grids
     bool asciiUvOutFlag;        // write ascii output as u,v wind vector data
-    bool fbGeoTiffOutFlag;  //flag specifying if fire behavior geotiff (raster) output should be written
-    std::string fbGeoTiffFile;
+
+    bool geoTiffOutFlag;  //flag specifying if fire behavior geotiff (raster) output should be written
+    std::string geoTiffFile;
 
     bool txtOutFlag;			//flag specifying if a text file (*.txt) comparing measured to simulated data at specified points should be written (filenames here are hard-coded into the write_compare_output() function in ninja.cpp)
     bool wxModelShpOutFlag;		//flag specifying if a wxModel shapefile should be written
@@ -226,8 +227,6 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
-    bool geotiffOutFlag; //flag specifying if multiband geotiff output should be written
-    std::string geotiffFile;
 
     std::string customOutputPath; //user-specified path for output
 

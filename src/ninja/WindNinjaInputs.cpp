@@ -83,8 +83,9 @@ WindNinjaInputs::WindNinjaInputs()
     asciiProjOutFlag = false;
     asciiGeogOutFlag = false;
     asciiUvOutFlag = false;
-    fbGeoTiffOutFlag = false;
-    fbGeoTiffFile = "!set";
+
+    geoTiffOutFlag = false;
+    geoTiffFile = "!set";
 
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
@@ -126,8 +127,6 @@ WindNinjaInputs::WindNinjaInputs()
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
-    geotiffOutFlag = false;
-    geotiffFile = "!set";
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -287,8 +286,9 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     asciiProjOutFlag = rhs.asciiProjOutFlag;
     asciiGeogOutFlag = rhs.asciiGeogOutFlag;
     asciiUvOutFlag = rhs.asciiUvOutFlag;
-    fbGeoTiffOutFlag = rhs.fbGeoTiffOutFlag;
-    fbGeoTiffFile = rhs.fbGeoTiffFile;
+
+    geoTiffOutFlag = rhs.geoTiffOutFlag;
+    geoTiffFile = rhs.geoTiffFile;
 
     wxModelShpOutFlag = rhs.wxModelShpOutFlag;
     wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
@@ -332,8 +332,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     wxModelLegFile = rhs.wxModelLegFile;
     dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
     volVTKFile = rhs.volVTKFile;
-    geotiffOutFlag = rhs.geotiffOutFlag;
-    geotiffFile = rhs.geotiffFile;
     keepOutGridsInMemory = rhs.keepOutGridsInMemory;
     customOutputPath = rhs.customOutputPath;
 
@@ -503,8 +501,9 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       asciiProjOutFlag = rhs.asciiProjOutFlag;
       asciiGeogOutFlag = rhs.asciiGeogOutFlag;
       asciiUvOutFlag = rhs.asciiUvOutFlag;
-      fbGeoTiffOutFlag = rhs.fbGeoTiffOutFlag;
-      fbGeoTiffFile = rhs.fbGeoTiffFile;
+
+      geoTiffOutFlag = rhs.geoTiffOutFlag;
+      geoTiffFile = rhs.geoTiffFile;
 
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
@@ -548,8 +547,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       wxModelLegFile = rhs.wxModelLegFile;
       dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
       volVTKFile = rhs.volVTKFile;
-      geotiffOutFlag = rhs.geotiffOutFlag;
-      geotiffFile = rhs.geotiffFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
       customOutputPath = rhs.customOutputPath;
 

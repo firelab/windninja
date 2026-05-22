@@ -337,7 +337,7 @@ public:
     void set_asciiProjOutFlag(bool flag);
     void set_asciiGeogOutFlag(bool flag);
     void set_asciiUvOutFlag(bool flag);
-    void set_fbGeoTiffOutFlag(bool flag);
+    void set_geoTiffOutFlag(bool flag);
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
@@ -349,7 +349,6 @@ public:
     void set_pdfLineWidth(const float w);
     void set_pdfBaseMap(const int b);
     void set_pdfSize( const double height, const double width, const unsigned short dpi );
-    void set_geotiffOutFlag(bool flag);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);

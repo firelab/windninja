@@ -1253,7 +1253,7 @@ public:
     * \param flag   enable if true, disable if false
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setFbGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    int setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable VTK output for a ninja
     *
@@ -1340,15 +1340,6 @@ public:
 
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
-
-    /**
-    * \brief Enable/disable multiband geotiff file output for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables multiband geotiff output if true, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
     * \brief Returns the output path of a ninja

@@ -308,6 +308,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
+                ("write_geotiff_output", po::value<bool>()->default_value(false), "write geotiff file (true, false)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false). For momentum solver runs, this is NOT of the full openfoam case but is actually of a corresponding mass solver mesh")
                 ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
@@ -318,7 +319,6 @@ int windNinjaCLI(int argc, char* argv[])
                 ("pdf_height", po::value<double>(), "height of geospatial pdf")
                 ("pdf_width", po::value<double>(), "width of geospatial pdf")
                 ("pdf_size", po::value<std::string>()->default_value("letter"), "pre-defined pdf sizes (letter, legal, tabloid)")
-                ("write_multiband_geotiff_output", po::value<bool>()->default_value(false), "write multiband geotiff file (true, false)")
                 ("output_path", po::value<std::string>(), "path to where output files will be written")
                 ("non_neutral_stability", po::value<bool>()->default_value(false), "use non-neutral stability (true, false)")
                 ("alpha_stability", po::value<double>(), "alpha value for atmospheric stability")
@@ -2018,8 +2018,8 @@ int windNinjaCLI(int argc, char* argv[])
                     !vm.count("write_goog_output") &&
                     !vm.count("write_shapefile_output") &&
                     !vm.count("write_ascii_output") &&
-                    !vm.count("write_vtk_output") &&
-                    !vm.count("write_multiband_geotiff_output"))
+                    !vm.count("write_geotiff_output") &&
+                    !vm.count("write_vtk_output"))
             {
                 cout << "No outputs selected.\n";
                 return -1;
@@ -2095,6 +2095,10 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setAsciiResolution( i_, vm["ascii_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_ascii_out_resolution"].as<std::string>()));
             }
+            if(vm["write_geotiff_output"].as<bool>())
+            {
+                windsim.setGeoTiffOutFlag( i_, true );
+            }
             if(vm["write_vtk_output"].as<bool>())
             {
                 windsim.setVtkOutFlag( i_, true );
@@ -2157,15 +2161,19 @@ int windNinjaCLI(int argc, char* argv[])
                 }
                 windsim.setPDFSize(i_, pdfHeight, pdfWidth, 150);
             }
-            if(vm["write_multiband_geotiff_output"].as<bool>())
-            {
-                windsim.setGeotiffOutFlag( i_, true );
-            }
         }   //end for loop over ninjas
 
         if(vm["write_farsite_atm"].as<bool>())
         {
             option_dependency(vm, "write_farsite_atm", "write_ascii_output");
+            if(!vm["write_ascii_output"].as<bool>() && !vm["write_geotiff_output"].as<bool>())
+            {
+                throw std::runtime_error("option 'write_farsite_atm' requires 'write_ascii_output' or 'write_geotiff_output' options to be set.");
+            }
+            else if(vm["write_ascii_output"].as<bool>() && vm["write_geotiff_output"].as<bool>())
+            {
+                throw std::runtime_error("only one of 'write_ascii_output' or 'write_geotiff_output' options can be set at a time when option 'write_farsite_atm' is set.");
+            }
 
             if((vm["output_wind_height"].as<double>() == 20 &&
                 lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()) == lengthUnits::feet &&
@@ -2176,7 +2184,6 @@ int windNinjaCLI(int argc, char* argv[])
             {
                 windsim.set_writeFarsiteAtmFile(true);
             }
-
             else
             {
                 throw std::runtime_error("The output wind settings for atm files must "

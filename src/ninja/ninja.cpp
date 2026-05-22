@@ -3112,7 +3112,7 @@ void ninja::writeOutputFiles()
     #pragma omp section
     {
         try{
-            if(input.fbGeoTiffOutFlag)
+            if(input.geoTiffOutFlag)
             {
                 AsciiGrid<double> *velTempGrid, *angTempGrid;
                 velTempGrid=NULL;
@@ -3143,15 +3143,15 @@ void ninja::writeOutputFiles()
                     velTempGrid->BufferToOverlapGrid(demGrid);
                 }
 
-                std::string velFbGeoTiffFile = input.fbGeoTiffFile;
-                std::string angFbGeoTiffFile = input.fbGeoTiffFile;
-                std::string cldFbGeoTiffFile = input.fbGeoTiffFile;
-                velFbGeoTiffFile.insert(velFbGeoTiffFile.find(".tif"), "_vel");
-                angFbGeoTiffFile.insert(angFbGeoTiffFile.find(".tif"), "_ang");
-                cldFbGeoTiffFile.insert(cldFbGeoTiffFile.find(".tif"), "_cld");
-                velTempGrid->exportToTiff(velFbGeoTiffFile);
-                angTempGrid->exportToTiff(angFbGeoTiffFile);
-                tempCloud.exportToTiff(cldFbGeoTiffFile);
+                std::string velGeoTiffFile = input.geoTiffFile;
+                std::string angGeoTiffFile = input.geoTiffFile;
+                std::string cldGeoTiffFile = input.geoTiffFile;
+                velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
+                velTempGrid->exportToTiff(velGeoTiffFile);
+                angTempGrid->exportToTiff(angGeoTiffFile);
+                tempCloud.exportToTiff(cldGeoTiffFile);
 
                 #ifdef FRICTION_VELOCITY
                 if(input.frictionVelocityFlag == 1)
@@ -3161,9 +3161,9 @@ void ninja::writeOutputFiles()
 
                     ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                    std::string ustarFbGeoTiffFile = input.fbGeoTiffFile;
-                    ustarFbGeoTiffFile.insert(ustarFbGeoTiffFile.find(".tif"), "_ustar");
-                    ustarTempGrid->exportToTiff(ustarFbGeoTiffFile);
+                    std::string ustarGeoTiffFile = input.geoTiffFile;
+                    ustarGeoTiffFile.insert(ustarGeoTiffFile.find(".tif"), "_ustar");
+                    ustarTempGrid->exportToTiff(ustarGeoTiffFile);
 
                     if(ustarTempGrid)
                     {
@@ -3180,9 +3180,9 @@ void ninja::writeOutputFiles()
 
                     dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                    std::string dustFbGeoTiffFile = input.fbGeoTiffFile;
-                    dustFbGeoTiffFile.insert(dustFbGeoTiffFile.find(".tif"), "_dust");
-                    dustTempGrid->exportToTiff(dustFbGeoTiffFile);
+                    std::string dustGeoTiffFile = input.geoTiffFile;
+                    dustGeoTiffFile.insert(dustGeoTiffFile.find(".tif"), "_dust");
+                    dustTempGrid->exportToTiff(dustGeoTiffFile);
 
                     if(dustTempGrid)
                     {
@@ -3206,7 +3206,7 @@ void ninja::writeOutputFiles()
                 if(input.writeAtmFile)
                 {
                     farsiteAtm atmosphere;
-                    atmosphere.push(input.ninjaTime, velFbGeoTiffFile, angFbGeoTiffFile, cldFbGeoTiffFile);
+                    atmosphere.push(input.ninjaTime, velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                     atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
                 }
             }
@@ -3452,40 +3452,42 @@ void ninja::writeOutputFiles()
 	}
 	} //end omp section
 
-#pragma omp section
-	{
-	try{
-		if(input.geotiffOutFlag==true)
-		{
-            OutputWriter output;
+//#pragma omp section
+//    {
+//    try{
+//        if(input.geoTiffOutFlag==true)
+//        {
+//            OutputWriter output;
+//
+//            if(!input.ninjaTime.is_not_a_date_time())
+//            {
+//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//            }
+//            output.setRunNumber(input.inputsRunNumber);
+//
+//            output.setDirGrid(AngleGrid);
+//            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
+//
+//            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
+//
+//            #ifdef EMISSIONS
+//            if(input.dustFlag == 1)
+//            {
+//                output.setDustGrid(DustGrid);
+//            }
+//            #endif
+//            output.write(input.geoTiffFile, "GTiff");
+//        }
+//    }catch (exception& e)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
+//    }catch (...)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
+//    }
+//    } //end omp section
 
-            if(!input.ninjaTime.is_not_a_date_time())
-            {
-                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
-            }
-            output.setRunNumber(input.inputsRunNumber);
-
-			output.setDirGrid(AngleGrid);
-			output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-
-			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
-
-#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                output.setDustGrid(DustGrid);
-            }
-#endif
-            output.write(input.geotiffFile, "GTiff");
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
-	}
-	} //end omp section
-	}	//end parallel sections region
+    }   //end parallel sections region
 }
 
 /**Deletes allocated dynamic memory.
@@ -5057,9 +5059,9 @@ void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits uni
     input.velResolution = input.angResolution = Resolution;
 }
 
-void ninja::set_fbGeoTiffOutFlag(bool flag)
+void ninja::set_geoTiffOutFlag(bool flag)
 {
-    input.fbGeoTiffOutFlag = flag;
+    input.geoTiffOutFlag = flag;
 }
 
 void ninja::set_txtOutFlag(bool flag)
@@ -5070,11 +5072,6 @@ void ninja::set_txtOutFlag(bool flag)
 void ninja::set_vtkOutFlag(bool flag)
 {
     input.volVTKOutFlag = flag;
-}
-
-void ninja::set_geotiffOutFlag(bool flag)
-{
-    input.geotiffOutFlag = flag;
 }
 
 void ninja::set_outputPath(std::string path)
@@ -5289,8 +5286,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
-    input.geotiffFile = rootFile + gtiff_fileAppend + ".tif";
-    input.fbGeoTiffFile = rootFile + +"_fb" + gtiff_fileAppend + ".tif";
+    input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";
