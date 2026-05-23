@@ -135,6 +135,10 @@ if(FIRELAB_PACKAGE)
     set(GS_ACCESS_KEY_ID "" CACHE STRING "Account ID Key for GCP")
     mark_as_advanced(GS_ACCESS_KEY_ID)
     add_definitions(-DGS_ACCESS_KEY_ID="${GS_ACCESS_KEY_ID}")
+
+    set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
+    mark_as_advanced(LF_PRIORITY_CODE)
+    add_definitions(-DLF_PRIORITY_CODE="${LF_PRIORITY_CODE}")
 endif(FIRELAB_PACKAGE)
 
 # Ninja executables

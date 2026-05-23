@@ -299,6 +299,9 @@ int NinjaInitialize(const char* typeofrun)
     CPLSetConfigOption("GS_ACCESS_KEY_ID", GS_ACCESS_KEY_ID);
     CPLDebug("WINDNINJA", "Setting GS_ACCESS_KEY_ID=%s", GS_ACCESS_KEY_ID);
 
+    CPLSetConfigOption("LF_PRIORITY_CODE", LF_PRIORITY_CODE);
+    CPLDebug("WINDNINJA", "Setting LF_PRIORITY_CODE=%s", LF_PRIORITY_CODE);
+
 #endif /* defined(FIRELAB_PACKAGE) */
 
 #if defined(NINJAFOAM) && defined(FIRELAB_PACKAGE)
