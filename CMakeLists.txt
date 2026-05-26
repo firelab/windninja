@@ -125,21 +125,12 @@ mark_as_advanced(FIRELAB_PACKAGE)
 
 if(FIRELAB_PACKAGE)
     set(CUSTOM_SRTM_API_KEY "" CACHE STRING "API key for downloading SRTM data")
-    mark_as_advanced(CUSTOM_SRTM_API_KEY)
-    add_definitions(-DCUSTOM_SRTM_API_KEY="${CUSTOM_SRTM_API_KEY}")
-
     set(GS_SECRET_ACCESS_KEY "" CACHE STRING "Access Key for GCP")
-    mark_as_advanced(GS_SECRET_ACCESS_KEY)
-    add_definitions(-DGS_SECRET_ACCESS_KEY="${GS_SECRET_ACCESS_KEY}")
-
     set(GS_ACCESS_KEY_ID "" CACHE STRING "Account ID Key for GCP")
-    mark_as_advanced(GS_ACCESS_KEY_ID)
-    add_definitions(-DGS_ACCESS_KEY_ID="${GS_ACCESS_KEY_ID}")
-
     set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
-    mark_as_advanced(LF_PRIORITY_CODE)
-    add_definitions(-DLF_PRIORITY_CODE="${LF_PRIORITY_CODE}")
-endif(FIRELAB_PACKAGE)
+
+    mark_as_advanced(CUSTOM_SRTM_API_KEY GS_SECRET_ACCESS_KEY GS_ACCESS_KEY_ID LF_PRIORITY_CODE)
+endif()
 
 # Ninja executables
 option(NINJA_GUI "Build Qt GUI" ON)
