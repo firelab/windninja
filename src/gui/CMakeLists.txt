@@ -84,12 +84,3 @@ install(TARGETS WindNinja
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(WindNinja)
 endif()
-
-if(FIRELAB_PACKAGE)
-    target_compile_definitions(WindNinja PRIVATE
-        NINJA_GUI_SRTM_API_KEY="${NINJA_GUI_SRTM_API_KEY}"
-        GS_SECRET_ACCESS_KEY="${GS_SECRET_ACCESS_KEY}"
-        GS_ACCESS_KEY_ID="${GS_ACCESS_KEY_ID}"
-        LF_PRIORITY_CODE="${LF_PRIORITY_CODE}"
-    )
-endif()

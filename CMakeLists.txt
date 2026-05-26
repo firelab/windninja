@@ -139,6 +139,13 @@ if(FIRELAB_PACKAGE)
     set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
     mark_as_advanced(LF_PRIORITY_CODE)
 
+    add_compile_definitions(
+        NINJA_CLI_SRTM_API_KEY="${NINJA_CLI_SRTM_API_KEY}"
+        NINJA_GUI_SRTM_API_KEY="${NINJA_GUI_SRTM_API_KEY}"
+        GS_SECRET_ACCESS_KEY="${GS_SECRET_ACCESS_KEY}"
+        GS_ACCESS_KEY_ID="${GS_ACCESS_KEY_ID}"
+        LF_PRIORITY_CODE="${LF_PRIORITY_CODE}"
+    )
 endif()
 
 # Ninja executables
