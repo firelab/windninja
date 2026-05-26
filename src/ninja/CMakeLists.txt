@@ -111,7 +111,8 @@ set(NINJA_SOURCES air.cpp
                   ninjaTools.h
                   ninjaTools.cpp
                   windninja.h
-                  ninjaArmy.h)
+                  ninjaArmy.h
+                  landfireclient.h)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp
