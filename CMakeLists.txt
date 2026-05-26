@@ -124,12 +124,21 @@ option(FIRELAB_PACKAGE "CMake options for installer environment variables" OFF)
 mark_as_advanced(FIRELAB_PACKAGE)
 
 if(FIRELAB_PACKAGE)
-    set(CUSTOM_SRTM_API_KEY "" CACHE STRING "API key for downloading SRTM data")
-    set(GS_SECRET_ACCESS_KEY "" CACHE STRING "Access Key for GCP")
-    set(GS_ACCESS_KEY_ID "" CACHE STRING "Account ID Key for GCP")
-    set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
+    set(NINJA_CLI_SRTM_API_KEY "" CACHE STRING "API key for downloading SRTM data, CLI")
+    mark_as_advanced(NINJA_CLI_SRTM_API_KEY)
 
-    mark_as_advanced(CUSTOM_SRTM_API_KEY GS_SECRET_ACCESS_KEY GS_ACCESS_KEY_ID LF_PRIORITY_CODE)
+    set(NINJA_GUI_SRTM_API_KEY "" CACHE STRING "API key for downloading SRTM data, GUI")
+    mark_as_advanced(NINJA_GUI_SRTM_API_KEY)
+
+    set(GS_SECRET_ACCESS_KEY "" CACHE STRING "Access Key for GCP")
+    mark_as_advanced(GS_SECRET_ACCESS_KEY)
+
+    set(GS_ACCESS_KEY_ID "" CACHE STRING "Account ID Key for GCP")
+    mark_as_advanced(GS_ACCESS_KEY_ID)
+
+    set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
+    mark_as_advanced(LF_PRIORITY_CODE)
+
 endif()
 
 # Ninja executables

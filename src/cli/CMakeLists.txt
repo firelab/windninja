@@ -60,7 +60,7 @@ install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
 
 if(FIRELAB_PACKAGE)
     target_compile_definitions(WindNinja_cli PRIVATE
-        CUSTOM_SRTM_API_KEY="${CUSTOM_SRTM_API_KEY}"
+        NINJA_CLI_SRTM_API_KEY="${NINJA_CLI_SRTM_API_KEY}"
         GS_SECRET_ACCESS_KEY="${GS_SECRET_ACCESS_KEY}"
         GS_ACCESS_KEY_ID="${GS_ACCESS_KEY_ID}"
     )

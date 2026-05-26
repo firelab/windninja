@@ -290,8 +290,11 @@ int NinjaInitialize(const char* typeofrun)
     //CPLDebug("WINDNINJA", "Setting GDAL_DRIVER_PATH: %s", pszPlugins);
     //CPLSetConfigOption("GDAL_DRIVER_PATH", pszPlugins);
 
-    CPLSetConfigOption("CUSTOM_SRTM_API_KEY", CUSTOM_SRTM_API_KEY);
-    CPLDebug("WINDNINJA", "Setting CUSTOM_SRTM_API_KEY=%s", CUSTOM_SRTM_API_KEY);
+    CPLSetConfigOption("NINJA_CLI_SRTM_API_KEY", NINJA_CLI_SRTM_API_KEY);
+    CPLDebug("WINDNINJA", "Setting NINJA_CLI_SRTM_API_KEY=%s", NINJA_CLI_SRTM_API_KEY);
+
+    CPLSetConfigOption("NINJA_GUI_SRTM_API_KEY", NINJA_GUI_SRTM_API_KEY);
+    CPLDebug("WINDNINJA", "Setting NINJA_GUI_SRTM_API_KEY=%s", NINJA_GUI_SRTM_API_KEY);
 
     CPLSetConfigOption("GS_SECRET_ACCESS_KEY", GS_SECRET_ACCESS_KEY);
     CPLDebug("WINDNINJA", "Setting GS_SECRET_ACCESS_KEY=%s", GS_SECRET_ACCESS_KEY);
