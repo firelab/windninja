@@ -3149,9 +3149,9 @@ void ninja::writeOutputFiles()
                 velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                 angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
                 cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                velTempGrid->exportToTiff(velGeoTiffFile);
-                angTempGrid->exportToTiff(angGeoTiffFile);
-                tempCloud.exportToTiff(cldGeoTiffFile);
+                velTempGrid->exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
+                angTempGrid->exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
+                tempCloud.exportToTiff(cldGeoTiffFile, "Cloud Cover", "percent");
 
                 #ifdef FRICTION_VELOCITY
                 if(input.frictionVelocityFlag == 1)
@@ -3163,7 +3163,7 @@ void ninja::writeOutputFiles()
 
                     std::string ustarGeoTiffFile = input.geoTiffFile;
                     ustarGeoTiffFile.insert(ustarGeoTiffFile.find(".tif"), "_ustar");
-                    ustarTempGrid->exportToTiff(ustarGeoTiffFile);
+                    ustarTempGrid->exportToTiff(ustarGeoTiffFile, "ustar", "m/s");
 
                     if(ustarTempGrid)
                     {
@@ -3182,7 +3182,7 @@ void ninja::writeOutputFiles()
 
                     std::string dustGeoTiffFile = input.geoTiffFile;
                     dustGeoTiffFile.insert(dustGeoTiffFile.find(".tif"), "_dust");
-                    dustTempGrid->exportToTiff(dustGeoTiffFile);
+                    dustTempGrid->exportToTiff(dustGeoTiffFile, "dust", "mg/(m^2*s)");  // Vertical (PM_10) dust Flux
 
                     if(dustTempGrid)
                     {

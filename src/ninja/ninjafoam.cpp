@@ -3604,9 +3604,9 @@ void NinjaFoam::WriteOutputFiles()
             velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
             angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
             cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-            velTempGrid->exportToTiff(velGeoTiffFile);
-            angTempGrid->exportToTiff(angGeoTiffFile);
-            tempCloud.exportToTiff(cldGeoTiffFile);
+            velTempGrid->exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
+            angTempGrid->exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
+            tempCloud.exportToTiff(cldGeoTiffFile, "Cloud Cover", "percent");
 
             if(angTempGrid)
             {
