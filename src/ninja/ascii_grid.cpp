@@ -2688,21 +2688,20 @@ std::ostream &operator<<(std::ostream &out, AsciiGrid<T1> &A)
  *
  * @param outFilename output file to write
  * @param type rgb or grayscale
- *
  */
-
 template <class T>
-void AsciiGrid<T>::exportToTiff( std::string outFilename, tiffType type )
+void AsciiGrid<T>::exportToTiff(std::string outFilename, tiffType type)
 {
     GDALDataset *poDS;
-    GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName( "GTiff" );
-    char** papszOptions = NULL;
-//    papszOptions = CSLAddString( papszOptions, "PROFILE=BASELINE" );
-    if( tiffDriver == NULL )
-    return;
+    GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    if(tiffDriver == NULL)
+    {
+        return;
+    }
 
-    poDS = tiffDriver->Create( outFilename.c_str(), get_nRows(), get_nCols(), 1,
-                   GDT_Float64, papszOptions );
+    char** papszOptions = NULL;
+//    papszOptions = CSLAddString(papszOptions, "PROFILE=BASELINE");
+    poDS = tiffDriver->Create(outFilename.c_str(), get_nRows(), get_nCols(), 1, GDT_Float64, papszOptions);
 
     double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
                                  get_yllCorner()+(get_nRows()*get_cellSize()),
@@ -2715,18 +2714,20 @@ void AsciiGrid<T>::exportToTiff( std::string outFilename, tiffType type )
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
 
-    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    GDALRasterBand *poBand = poDS->GetRasterBand(1);
 
     double *padfScanline;
     padfScanline = new double[nXSize];
-    for( int i = nYSize - 1;i >= 0;i-- ) {
-    for( int j = 0;j < nXSize;j++ )
-        padfScanline[j] = (double)get_cellValue( nYSize - 1 - i, j );
-
-    check(poBand->RasterIO( GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0));
+    for(int i = nYSize - 1; i >= 0; i--)
+    {
+        for(int j = 0; j < nXSize; j++)
+        {
+            padfScanline[j] = (double)get_cellValue( nYSize - 1 - i, j );
+        }
+        check(poBand->RasterIO( GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0));
     }
-    poBand->SetColorInterpretation( GCI_GrayIndex );
-    GDALClose((GDALDatasetH) poDS );
+    poBand->SetColorInterpretation(GCI_GrayIndex);
+    GDALClose((GDALDatasetH)poDS);
 }
 
 template <class T>

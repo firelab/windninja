@@ -209,7 +209,7 @@ public:
                    std::string scalarLegendFilename,
                    bool writeLegend, bool keepTiff);
 
-    void exportToTiff( std::string outFilename, tiffType type = tiffGray );
+    void exportToTiff(std::string outFilename, tiffType type=tiffGray);
 
     AsciiGrid<T> BufferGrid( int nAddCols=1, int nAddRows=1 );
     void BufferGridInPlace( int nAddCols=1, int nAddRows=1 );
