@@ -308,7 +308,10 @@ int windNinjaCLI(int argc, char* argv[])
 
                 ("ascii_out_resolution", po::value<double>()->default_value(-1.0), "resolution of ascii fire behavior output files (-1 to use mesh resolution)")
                 ("units_ascii_out_resolution", po::value<std::string>()->default_value("m"), "units of ascii fire behavior output file resolution (ft, m)")
+                ("write_wx_model_geotiff_output", po::value<bool>()->default_value(false), "write geotiff files for the raw wx model forecast (true, false)")
                 ("write_geotiff_output", po::value<bool>()->default_value(false), "write geotiff file (true, false)")
+                ("geotiff_out_resolution", po::value<double>()->default_value(-1.0), "resolution of geotiff output files (-1 to use mesh resolution)")
+                ("units_geotiff_out_resolution", po::value<std::string>()->default_value("m"), "units of geotiff output file resolution (ft, m)")
                 ("write_vtk_output", po::value<bool>()->default_value(false), "write VTK output file (true, false). For momentum solver runs, this is NOT of the full openfoam case but is actually of a corresponding mass solver mesh")
                 ("write_farsite_atm", po::value<bool>()->default_value(false), "write a FARSITE atm file (true, false)")
                 ("write_pdf_output", po::value<bool>()->default_value(false), "write PDF output file (true, false)")
@@ -2015,6 +2018,7 @@ int windNinjaCLI(int argc, char* argv[])
             if(!vm.count("write_wx_model_goog_output") &&
                     !vm.count("write_wx_model_shapefile_output") &&
                     !vm.count("write_wx_model_ascii_output") &&
+                    !vm.count("write_wx_model_geotiff_output") &&
                     !vm.count("write_goog_output") &&
                     !vm.count("write_shapefile_output") &&
                     !vm.count("write_ascii_output") &&
@@ -2031,6 +2035,7 @@ int windNinjaCLI(int argc, char* argv[])
             windsim.setWxModelGoogOutFlag( i_, vm["write_wx_model_goog_output"].as<bool>());
             windsim.setWxModelShpOutFlag( i_, vm["write_wx_model_shapefile_output"].as<bool>());
             windsim.setWxModelAsciiOutFlag( i_, vm["write_wx_model_ascii_output"].as<bool>());
+            windsim.setWxModelGeoTiffOutFlag( i_, vm["write_wx_model_geotiff_output"].as<bool>());
 
             if(vm["write_goog_output"].as<bool>())
             {
@@ -2097,7 +2102,10 @@ int windNinjaCLI(int argc, char* argv[])
             }
             if(vm["write_geotiff_output"].as<bool>())
             {
-                windsim.setGeoTiffOutFlag( i_, true );
+                windsim.setGeoTiffOutFlag(i_, true);
+
+                option_dependency(vm, "geotiff_out_resolution", "units_geotiff_out_resolution");
+                windsim.setGeoTiffResolution(i_, vm["geotiff_out_resolution"].as<double>(), lengthUnits::getUnit(vm["units_geotiff_out_resolution"].as<std::string>()));
             }
             if(vm["write_vtk_output"].as<bool>())
             {

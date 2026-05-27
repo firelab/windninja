@@ -1165,6 +1165,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
+    ninjaErr = NinjaSetGeoTiffResolution(ninjaArmy, i, ui->fireBehaviorGeoTiffMeshResolutionSpinBox->value(), ui->fireBehaviorGeoTiffMeshResolutionComboBox->itemData(ui->fireBehaviorGeoTiffMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGeoTiffResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
     ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
@@ -1248,6 +1255,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelGeoTiffOutFlag(ninjaArmy, i, ui->fireBehaviorGeoTiffGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelGeoTiffOutFlag: ninjaErr =" << ninjaErr;
             return false;
         }
     }

@@ -1031,6 +1031,14 @@ public:
     */
     int setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
+    * \brief Enable/disable the wxModel geotiff output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
     * \brief Enable/disable Google KML output for a ninja
     *
     * \param nIndex index of a ninja
@@ -1254,6 +1262,38 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resoultion of geotiff output for a ninja
+    * Set the resolution of geotiff output for a ninja given the resolution
+    * and units.
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units units of the resolution
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffResolution( const int nIndex, const double resolution,
+                              const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resolution of geotiff output for a ninja
+    * Set the resolution of geotiff output of a ninja given the resolution
+    * and string formatted units.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffResolution( const int nIndex, const double resolution,
+                              std::string units, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable VTK output for a ninja
     *

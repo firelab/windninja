@@ -3118,8 +3118,8 @@ void ninja::writeOutputFiles()
                 velTempGrid=NULL;
                 angTempGrid=NULL;
 
-                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
                 AsciiGrid<double> tempCloud(CloudGrid);
                 tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
@@ -3159,7 +3159,7 @@ void ninja::writeOutputFiles()
                     AsciiGrid<double> *ustarTempGrid;
                     ustarTempGrid=NULL;
 
-                    ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                    ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
                     std::string ustarGeoTiffFile = input.geoTiffFile;
                     ustarGeoTiffFile.insert(ustarGeoTiffFile.find(".tif"), "_ustar");
@@ -3178,7 +3178,7 @@ void ninja::writeOutputFiles()
                     AsciiGrid<double> *dustTempGrid;
                     dustTempGrid=NULL;
 
-                    dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+                    dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
                     std::string dustGeoTiffFile = input.geoTiffFile;
                     dustGeoTiffFile.insert(dustGeoTiffFile.find(".tif"), "_dust");
@@ -5059,9 +5059,20 @@ void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits uni
     input.velResolution = input.angResolution = Resolution;
 }
 
+void ninja::set_wxModelGeoTiffOutFlag(bool flag)
+{
+    input.wxModelGeoTiffOutFlag = flag;
+}
 void ninja::set_geoTiffOutFlag(bool flag)
 {
     input.geoTiffOutFlag = flag;
+}
+void ninja::set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits units)
+{
+    input.geoTiffUnits = units;
+    lengthUnits::toBaseUnits(Resolution, units);
+
+    input.geoTiffResolution = Resolution;
 }
 
 void ninja::set_txtOutFlag(bool flag)
@@ -5118,13 +5129,15 @@ void ninja::set_outputFilenames(double& meshResolution,
         input.velResolution = meshResolution;
     if( input.angResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.angResolution = meshResolution;
-    if( input.pdfResolution <= 0.0 )
+    if( input.pdfResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.pdfResolution = meshResolution;
+    if( input.geoTiffResolution <= 0.0 )  //if negative, use computational mesh resolution
+        input.geoTiffResolution = meshResolution;
 
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -5205,6 +5218,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     shp_mesh_units = lengthUnits::getString( input.shpUnits );
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
+    gtiff_mesh_units = lengthUnits::getString( input.geoTiffUnits );
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
@@ -5235,19 +5249,21 @@ void ninja::set_outputFilenames(double& meshResolution,
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+    double gtiffResolutionTemp = input.geoTiffResolution;
 
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
     lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
+    lengthUnits::fromBaseUnits(gtiffResolutionTemp, input.geoTiffUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
-    os_gtiff << "_" << timeAppend << (long) (meshResolutionTemp+0.5) << mesh_units;
+    os_gtiff << "_" << timeAppend << (long) (gtiffResolutionTemp+0.5) << gtiff_mesh_units;
 
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
@@ -5291,10 +5307,16 @@ void ninja::set_outputFilenames(double& meshResolution,
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";
 
+    //wxModelGeoTiffFile = wxModelTimeAppend + ".kmz";
+
     input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
+    if(input.geoTiffOutFlag == true)
+    {
+        input.atmFile = rootFile + gtiff_fileAppend + ".atm";
+    }
 
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";

@@ -1235,6 +1235,11 @@ void ninjaArmy::writeFarsiteAtmosphereFile()
                 throw std::runtime_error("Problem writing FARSITE atmosphere file.  The ninja ASCII velocity filename appears to be malformed.");
             }
 
+            if(ninjas[0]->input.geoTiffOutFlag == true)
+            {
+                fileroot = CPLGetBasename(ninjas[0]->input.geoTiffFile.c_str());
+            }
+
             //Form atm filename
             std::string filename( CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm") );
 
@@ -2435,6 +2440,11 @@ int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char *
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
+int ninjaArmy::setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_wxModelGeoTiffOutFlag( flag ) );
+}
 int ninjaArmy::setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
@@ -2605,6 +2615,33 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
 int ninjaArmy::setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geoTiffOutFlag( flag ) );
+}
+int ninjaArmy::setGeoTiffResolution( const int nIndex, const double resolution,
+                                     const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_geoTiffResolution( resolution, units ) );
+}
+int ninjaArmy::setGeoTiffResolution( const int nIndex, const double resolution,
+                                     std::string units, char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        //Parse units so it contains only lowercase letters
+        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+        try
+        {
+            ninjas[ nIndex ]->set_geoTiffResolution( resolution, lengthUnits::getUnit( units ) );
+            retval = NINJA_SUCCESS;
+        }
+        catch( std::logic_error &e )
+        {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
 }
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {

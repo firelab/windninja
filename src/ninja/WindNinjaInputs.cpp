@@ -86,9 +86,13 @@ WindNinjaInputs::WindNinjaInputs()
 
     geoTiffOutFlag = false;
     geoTiffFile = "!set";
+    geoTiffResolution = -1.0;
+    geoTiffUnits = lengthUnits::meters;
 
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
+    wxModelGeoTiffOutFlag = false;
+    wxModelGeoTiffFile = "!set";
     txtOutFlag = false;
     volVTKOutFlag = false;
     kmlFile = "!set";
@@ -289,9 +293,13 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 
     geoTiffOutFlag = rhs.geoTiffOutFlag;
     geoTiffFile = rhs.geoTiffFile;
+    geoTiffResolution = rhs.geoTiffResolution;
+    geoTiffUnits = rhs.geoTiffUnits;
 
     wxModelShpOutFlag = rhs.wxModelShpOutFlag;
     wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
+    wxModelGeoTiffOutFlag = rhs.wxModelGeoTiffOutFlag;
+    wxModelGeoTiffFile = rhs.wxModelGeoTiffFile;
     txtOutFlag = rhs.txtOutFlag;
     volVTKOutFlag = rhs.volVTKOutFlag;
     kmlFile = rhs.kmlFile;
@@ -504,9 +512,13 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 
       geoTiffOutFlag = rhs.geoTiffOutFlag;
       geoTiffFile = rhs.geoTiffFile;
+      geoTiffResolution = rhs.geoTiffResolution;
+      geoTiffUnits = rhs.geoTiffUnits;
 
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
+      wxModelGeoTiffOutFlag = rhs.wxModelGeoTiffOutFlag;
+      wxModelGeoTiffFile = rhs.wxModelGeoTiffFile;
       txtOutFlag = rhs.txtOutFlag;
       volVTKOutFlag = rhs.volVTKOutFlag;
       kmlFile = rhs.kmlFile;

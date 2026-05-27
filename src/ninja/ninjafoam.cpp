@@ -3321,8 +3321,10 @@ void NinjaFoam::SetOutputResolution()
         input.velResolution = input.dem.get_cellSize();
     if( input.angResolution <= 0.0 )  //if negative, use DEM resolution
         input.angResolution = input.dem.get_cellSize();
-    if( input.pdfResolution <= 0.0 )
+    if( input.pdfResolution <= 0.0 )  //if negative, use DEM resolution
         input.pdfResolution = input.dem.get_cellSize();
+    if( input.geoTiffResolution <= 0.0 )  //if negative, use DEM resolution
+        input.geoTiffResolution = input.dem.get_cellSize();
 }
 
 void NinjaFoam::SetOutputFilenames()
@@ -3330,7 +3332,7 @@ void NinjaFoam::SetOutputFilenames()
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -3388,6 +3390,7 @@ void NinjaFoam::SetOutputFilenames()
     shp_mesh_units = lengthUnits::getString( input.shpUnits );
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
+    gtiff_mesh_units = lengthUnits::getString(input.geoTiffUnits);
 
     ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
 
@@ -3407,6 +3410,7 @@ void NinjaFoam::SetOutputFilenames()
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+    double gtiffResolutionTemp = input.geoTiffResolution;
 
     lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
 
@@ -3415,13 +3419,14 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
+    lengthUnits::fromBaseUnits(gtiffResolutionTemp, input.geoTiffUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
-    os_gtiff << "_" << timeAppend << (long) (meshResolutionTemp+0.5) << mesh_units;
+    os_gtiff << "_" << timeAppend << (long) (gtiffResolutionTemp+0.5) << gtiff_mesh_units;
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
@@ -3443,6 +3448,10 @@ void NinjaFoam::SetOutputFilenames()
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
     input.atmFile = rootFile + ascii_fileAppend + ".atm";
+    if(input.geoTiffOutFlag == true)
+    {
+        input.atmFile = rootFile + gtiff_fileAppend + ".atm";
+    }
 
     input.volVTKFile = rootFile + fileAppend + ".vtk";
 
@@ -3573,8 +3582,8 @@ void NinjaFoam::WriteOutputFiles()
             velTempGrid=NULL;
             angTempGrid=NULL;
 
-            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
-            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
             AsciiGrid<double> tempCloud(CloudGrid);
             tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs

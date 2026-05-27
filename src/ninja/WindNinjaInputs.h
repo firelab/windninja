@@ -185,10 +185,14 @@ public:
 
     bool geoTiffOutFlag;  //flag specifying if fire behavior geotiff (raster) output should be written
     std::string geoTiffFile;
+    double geoTiffResolution;
+    lengthUnits::eLengthUnits geoTiffUnits;
 
     bool txtOutFlag;			//flag specifying if a text file (*.txt) comparing measured to simulated data at specified points should be written (filenames here are hard-coded into the write_compare_output() function in ninja.cpp)
     bool wxModelShpOutFlag;		//flag specifying if a wxModel shapefile should be written
     bool wxModelAsciiOutFlag;		//flag specifying if wxModel ESRI Ascii Raster files should be written
+    bool wxModelGeoTiffOutFlag;  //flag specifying if wxModel geotiff files should be written
+    std::string wxModelGeoTiffFile;
     bool volVTKOutFlag;			//flag specifying if a volume VTK file should be written
     std::string kmlFile;
     std::string kmzFile;

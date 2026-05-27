@@ -337,7 +337,10 @@ public:
     void set_asciiProjOutFlag(bool flag);
     void set_asciiGeogOutFlag(bool flag);
     void set_asciiUvOutFlag(bool flag);
+
+    void set_wxModelGeoTiffOutFlag(bool flag);
     void set_geoTiffOutFlag(bool flag);
+    void set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits units);
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
