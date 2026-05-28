@@ -69,7 +69,6 @@ WindNinjaInputs::WindNinjaInputs()
     googVectorScale = false;
     googUseConsistentColorScale = false;
 
-    writeAtmFile = false;
     googSpeedScaling = KmlVector::equal_interval;
     googLineWidth = 1.0;
     wxModelGoogOutFlag = false;
@@ -114,6 +113,7 @@ WindNinjaInputs::WindNinjaInputs()
     velResolution = -1.0;
     velOutputFileDistanceUnits = lengthUnits::meters;
     angFile = "!set";
+    atmOutFlag = false;
     atmFile = "!set";
     wxModelAngFile = "!set";
     angResolution = -1.0;
@@ -272,7 +272,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     longitude = rhs.longitude;
     numberCPUs = rhs.numberCPUs;
     outputBufferClipping = rhs.outputBufferClipping;
-    writeAtmFile = rhs.writeAtmFile;
     googOutFlag = rhs.googOutFlag;
     googSpeedScaling = rhs.googSpeedScaling;
     googLineWidth = rhs.googLineWidth;
@@ -331,6 +330,7 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     velResolution = rhs.velResolution;
     velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
     angFile = rhs.angFile;
+    atmOutFlag = rhs.atmOutFlag;
     atmFile = rhs.atmFile;
     wxModelAngFile = rhs.wxModelAngFile;
     angResolution = rhs.angResolution;
@@ -491,7 +491,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       longitude = rhs.longitude;
       numberCPUs = rhs.numberCPUs;
       outputBufferClipping = rhs.outputBufferClipping;
-      writeAtmFile = rhs.writeAtmFile;
       googOutFlag = rhs.googOutFlag;
       googSpeedScaling = rhs.googSpeedScaling;
       googLineWidth = rhs.googLineWidth;
@@ -550,6 +549,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       velResolution = rhs.velResolution;
       velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
       angFile = rhs.angFile;
+      atmOutFlag = rhs.atmOutFlag;
       atmFile = rhs.atmFile;
       wxModelAngFile = rhs.wxModelAngFile;
       angResolution = rhs.angResolution;

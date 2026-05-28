@@ -93,7 +93,6 @@
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "element.h"
-#include "farsiteAtm.h"
 #include "OutputWriter.h"
 
 #ifndef Q_MOC_RUN
@@ -315,7 +314,6 @@ public:
     double * get_v();
     double * get_w();
     void set_outputBufferClipping(double percent);
-    void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
 
     void set_googColor(std::string scheme,bool scaling);
@@ -337,10 +335,10 @@ public:
     void set_asciiProjOutFlag(bool flag);
     void set_asciiGeogOutFlag(bool flag);
     void set_asciiUvOutFlag(bool flag);
-
     void set_wxModelGeoTiffOutFlag(bool flag);
     void set_geoTiffOutFlag(bool flag);
     void set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits units);
+    void set_atmOutFlag(bool flag);
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used

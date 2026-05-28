@@ -150,9 +150,8 @@ bool startRuns(int numRuns, int numProcessors, ninja *windsim)
                         windsim[i].get_AngFileName(),
                         windsim[i].get_CldFileName() );
     }
-	atmosphere.writeAtmFile(std::string("farsite_atmosphere.atm"), 
-                            windsim[0].get_outputSpeedUnits(),
-                            windsim[0].get_outputWindHeight() );
+    bool writeSeparateAtmFiles = false;
+    atmosphere.writeAtmFile(writeSeparateAtmFiles, windsim[0].get_outputSpeedUnits(),windsim[0].get_outputWindHeight());
 
 	int j;
 

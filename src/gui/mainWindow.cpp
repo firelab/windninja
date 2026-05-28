@@ -908,14 +908,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     }
 
     char **papszOptions = nullptr;
-
-    ninjaErr = NinjaSetAtmOutFlag(ninjaArmy, ui->fireBehaviorAsciiAtmFileCheckBox->isChecked() || ui->fireBehaviorGeoTiffAtmFileCheckBox->isChecked(), papszOptions);
-    if(ninjaErr != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaSetAtmOutFlag: ninjaErr =" << ninjaErr;
-        return false;
-    }
-
     for(unsigned int i=0; i<numNinjas; i++)
     {
         /*
@@ -1169,6 +1161,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGeoTiffResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAtmOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiAtmFileCheckBox->isChecked() || ui->fireBehaviorGeoTiffAtmFileCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAtmOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 

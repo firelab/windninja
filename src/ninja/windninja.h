@@ -376,7 +376,7 @@ typedef int  NinjaErr;
           const char * units, char ** options );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetAtmOutFlag
-        ( NinjaArmyH * army, bool flag, char ** papszOptions);
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );

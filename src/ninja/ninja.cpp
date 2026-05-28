@@ -3010,7 +3010,7 @@ void ninja::writeOutputFiles()
 	#pragma omp parallel sections
 	{
 
-	//write FARSITE files
+	//write fire behavior ascii files, the .atm file is written in ninjaArmy
 	#pragma omp section
 	{
 	try{
@@ -3028,7 +3028,7 @@ void ninja::writeOutputFiles()
 
                     // if output clipping was set by the user, don't buffer to overlap the DEM
                     // but only if writing atm file for farsite grids
-                    if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                    if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
                     {
                         //ensure grids cover original DEM extents for FARSITE
                         AsciiGrid<double> demGrid;
@@ -3089,14 +3089,6 @@ void ninja::writeOutputFiles()
                             delete velTempGrid;
                             velTempGrid=NULL;
                     }
-
-                    //Write .atm file for this run.  Only has one time value in file.
-                    if(input.writeAtmFile)
-                    {
-                        farsiteAtm atmosphere;
-                        atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-                        atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-                    }
 		}
 	}catch (exception& e)
 	{
@@ -3108,7 +3100,7 @@ void ninja::writeOutputFiles()
 
 	}//end omp section
 
-    //write fire behavior geotiff files
+    //write fire behavior geotiff files, the .atm file is written in ninjaArmy
     #pragma omp section
     {
         try{
@@ -3126,7 +3118,7 @@ void ninja::writeOutputFiles()
 
                 // if output clipping was set by the user, don't buffer to overlap the DEM
                 // but only if writing atm file for farsite grids
-                if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
                 {
                     //ensure grids cover original DEM extents for FARSITE
                     AsciiGrid<double> demGrid;
@@ -3200,14 +3192,6 @@ void ninja::writeOutputFiles()
                 {
                     delete velTempGrid;
                     velTempGrid=NULL;
-                }
-
-                //Write .atm file for this run.  Only has one time value in file.
-                if(input.writeAtmFile)
-                {
-                    farsiteAtm atmosphere;
-                    atmosphere.push(input.ninjaTime, velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
-                    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
                 }
             }
         }catch (exception& e)
@@ -4889,11 +4873,6 @@ void ninja::set_outputBufferClipping(double percent)
     input.outputBufferClipping = percent;
 }
 
-void ninja::set_writeAtmFile(bool flag)
-{
-    input.writeAtmFile = flag;
-}
-
 void ninja::set_googOutFlag(bool flag)
 {
     input.googOutFlag = flag;
@@ -5073,6 +5052,10 @@ void ninja::set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits u
     lengthUnits::toBaseUnits(Resolution, units);
 
     input.geoTiffResolution = Resolution;
+}
+void ninja::set_atmOutFlag(bool flag)
+{
+    input.atmOutFlag = flag;
 }
 
 void ninja::set_txtOutFlag(bool flag)
@@ -5551,6 +5534,18 @@ void ninja::checkInputs()
         buff_str << "The output file buffer clipping is improperly set to "
                  << input.outputBufferClipping << ".  It should be 0-50 percent.";
         throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    if(input.atmOutFlag == true)
+    {
+        if(!input.asciiOutFlag && !input.geoTiffOutFlag)
+        {
+            throw std::runtime_error("atm output set without choosing 'ascii' or 'geotiff' output.");
+        }
+        else if(input.asciiOutFlag && input.geoTiffOutFlag)
+        {
+            throw std::runtime_error("only one of 'ascii' or 'geotiff' output can be set at a time for 'atm' file output.");
+        }
     }
 }
 

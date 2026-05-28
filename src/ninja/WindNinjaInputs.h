@@ -162,7 +162,6 @@ public:
      *  Output Parameters
      *-----------------------------------------------------------------------------*/
     double outputBufferClipping;	//specifies the percent to clip the output files around the perimeter.  Range 0-50.
-    bool writeAtmFile;          //flage specifying if a Farsite .atm file should be written.
     bool googOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
 
     std::string googColor; //sets color scheme for output /Colorblind mode
@@ -213,6 +212,7 @@ public:
     double velResolution;
     lengthUnits::eLengthUnits velOutputFileDistanceUnits;				//distance units of resolution
     std::string angFile;
+    bool atmOutFlag; // flag specifying if a Farsite .atm file should be written.
     std::string atmFile;
     std::string wxModelAngFile;
     double angResolution;

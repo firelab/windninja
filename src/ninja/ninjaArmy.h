@@ -161,7 +161,6 @@ public:
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> timeList, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
     
@@ -1223,7 +1222,7 @@ public:
     int setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
-    * \brief Set the resoultion of ASCII output for a ninja
+    * \brief Set the resolution of ASCII output for a ninja
     * Set the resolution of ASCII output for a ninja given the resolution
     * and units.
     *
@@ -1263,7 +1262,7 @@ public:
     */
     int setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Set the resoultion of geotiff output for a ninja
+    * \brief Set the resolution of geotiff output for a ninja
     * Set the resolution of geotiff output for a ninja given the resolution
     * and units.
     *
@@ -1294,6 +1293,14 @@ public:
     */
     int setGeoTiffResolution( const int nIndex, const double resolution,
                               std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable atm file output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAtmOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable VTK output for a ninja
     *
@@ -1420,9 +1427,7 @@ protected:
     std::vector<ninja*> ninjas;
     std::string tz;
 
-    bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
-    void setAtmFlags();
 
     void setCurrentRunKmzFilenames(int runNumber);
 

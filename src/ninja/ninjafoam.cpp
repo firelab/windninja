@@ -3496,6 +3496,7 @@ void NinjaFoam::WriteOutputFiles()
     /*-------------------------------------------------------------------*/
 
 	try{
+	    //write fire behavior ascii files, the .atm file is written in ninjaArmy
 		if(input.asciiOutFlag==true)
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
@@ -3528,7 +3529,7 @@ void NinjaFoam::WriteOutputFiles()
 
                         // if output clipping was set by the user, don't buffer to overlap the DEM
                         // but only if writing atm file for farsite grids
-                        if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                        if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
                         {
                             //ensure grids cover original DEM extents for FARSITE
                             AsciiGrid<double> demGrid;
@@ -3557,14 +3558,6 @@ void NinjaFoam::WriteOutputFiles()
 				delete velTempGrid;
 				velTempGrid=NULL;
 			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
 		}
 	}catch (exception& e)
 	{
@@ -3574,7 +3567,7 @@ void NinjaFoam::WriteOutputFiles()
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
 	}
 
-    //write fire behavior geotiff files
+    //write fire behavior geotiff files, the .atm file is written in ninjaArmy
     try{
         if(input.geoTiffOutFlag)
         {
@@ -3590,7 +3583,7 @@ void NinjaFoam::WriteOutputFiles()
 
             // if output clipping was set by the user, don't buffer to overlap the DEM
             // but only if writing atm file for farsite grids
-            if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+            if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
             {
                 //ensure grids cover original DEM extents for FARSITE
                 AsciiGrid<double> demGrid;
@@ -3626,13 +3619,6 @@ void NinjaFoam::WriteOutputFiles()
             {
                 delete velTempGrid;
                 velTempGrid=NULL;
-            }
-
-            if(input.writeAtmFile)
-            {
-                farsiteAtm atmosphere;
-                atmosphere.push(input.ninjaTime, velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
-                atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
             }
         }
     }catch (exception& e)

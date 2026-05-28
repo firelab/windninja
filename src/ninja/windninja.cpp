@@ -2201,28 +2201,21 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffResolution
  * \note Only valid if NinjaSetAsciiOutFlag or NinjaSetGeoTiffOutFlag is set to 1.
  *
  * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
  * \param flag The flag that determines whether to write the .atm file.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaSetAtmOutFlag
-    ( NinjaArmyH * army, bool flag, char ** papszOptions)
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions)
 {
     if( NULL != army)
     {
-        try
-        {
-            reinterpret_cast<ninjaArmy*>(army)->set_writeFarsiteAtmFile(flag);
-            return NINJA_SUCCESS;
-        }
-        catch (const std::exception& e)
-        {
-            return NINJA_E_OTHER;
-        }
+        return reinterpret_cast<ninjaArmy*>(army)->setAtmOutFlag( nIndex, flag );
     }
     else
     {
-        return 1;
+        return NINJA_E_NULL_PTR;
     }
 }
 

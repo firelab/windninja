@@ -34,13 +34,13 @@
 #include <fstream>
 	
 #include <string>
-#include "ninja.h"
+#include "ninja.h"  // for boost
 #include "ninjaMathUtility.h"
 #include "ninjaUnits.h"
 #include "cpl_conv.h"
 
-/** Class used for writing FARSITE atmosphere files (*.atm) when multiple ninja runs are done in a time sequence.
- *
+/*
+ * Class used for writing FARSITE atmosphere files (*.atm) when multiple ninja runs are done in a time sequence.
  */
 class farsiteAtm
 {	
@@ -49,9 +49,14 @@ public:
 	~farsiteAtm();
 
 	void push(boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName);
-	bool writeAtmFile(std::string filename, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths = true);
+	bool writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths = true);
 
 private:
+    // placeholder synthetic timestamp used when input time is invalid or missing.
+    // ensures each time.is_not_a_date_time() remains uniquely ordered instead of overwriting identical keys.
+    // the placeholder advances by one calendar day for each insertion.
+    // placeholder values are identified by a sentinel rule if(year < 1900).
+    boost::local_time::local_date_time missingTimeFiller;
 	std::map< boost::local_time::local_date_time, std::vector<std::string> > data;
 };
 

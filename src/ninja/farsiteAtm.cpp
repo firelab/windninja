@@ -30,8 +30,12 @@
 #include "farsiteAtm.h"
 
 farsiteAtm::farsiteAtm()
+: missingTimeFiller(boost::local_time::not_a_date_time)
 {
-
+    boost::gregorian::date d(1800,boost::gregorian::Jan,1);
+    boost::posix_time::time_duration td(0,0,0,0);
+    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("UTC"));
+    missingTimeFiller = boost::local_time::local_date_time(d, td, zone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
 }
 
 farsiteAtm::~farsiteAtm()
@@ -45,7 +49,20 @@ void farsiteAtm::push(boost::local_time::local_date_time inTime, std::string inS
     nameArray[0] = inSpeedName;
     nameArray[1] = inDirectionName;
     nameArray[2] = inCloudCoverName;
-    data.insert(std::pair< boost::local_time::local_date_time, std::vector<std::string> > (inTime, nameArray));
+
+    if(inTime.is_not_a_date_time())
+    {
+        data.insert(std::pair< boost::local_time::local_date_time, std::vector<std::string> > (missingTimeFiller, nameArray));
+        missingTimeFiller += boost::gregorian::days(1);
+    }
+    else if(data.find(inTime) != data.end())
+    {
+        throw std::runtime_error("attempting to add a duplicate time into farsiteAtm list.");
+    }
+    else
+    {
+        data.insert(std::pair< boost::local_time::local_date_time, std::vector<std::string> > (inTime, nameArray));
+    }
 }
 
 /**
@@ -56,13 +73,36 @@ void farsiteAtm::push(boost::local_time::local_date_time inTime, std::string inS
 * Also, all of the Windninja runs must be writing their output files to the same directory,
 * if not, the atmosphere file is not written.
 *
-* @param filename Name of atmosphere file, no directory path, just filename.
+* constructs the atm filename from the pushed speed files
+*
+* @param writeSeparateAtmFiles Whether to write a separate atm file for each run, or a single atm file for the combined set of runs.
 * @param velocityUnits Units of the velocity file.
 * @param windHeight Height of wind above vegetation.
+* @param stripPaths Optional parameter, whether to use filenames with or without paths. Default is without paths.
 * @return True if file is written, false if not written.
 */
-bool farsiteAtm::writeAtmFile(std::string filename, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths)
+bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths)
 {
+    map<boost::local_time::local_date_time, std::vector<string> >::iterator endIter = std::next(data.begin());  // numAtmFiles = 1;
+    if(writeSeparateAtmFiles == true)
+    {
+        endIter = data.end();  // numAtmFiles = data.size();
+    }
+
+    map<boost::local_time::local_date_time, std::vector<string> >::iterator iter;
+    for(iter = data.begin(); iter != endIter; ++iter)
+    {
+
+    std::string filePath = CPLGetPath((*iter).second[0].c_str());
+    std::string fileroot(CPLGetBasename((*iter).second[0].c_str()));
+    // remove the _vel, _ang, _cld part from the file basename
+    int stringPos = fileroot.find_last_of("_");
+    if(stringPos != fileroot.npos)
+    {
+        fileroot.erase(stringPos);
+    }
+    std::string filename(CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm"));
+
     //Open atm file for writing, if already exists replace
     std::ofstream outputFile(filename.c_str(), std::fstream::trunc);
     if(outputFile.bad())
@@ -104,8 +144,6 @@ bool farsiteAtm::writeAtmFile(std::string filename, velocityUnits::eVelocityUnit
     outputFile.imbue(std::locale(std::locale::classic(), timeOutputFacet));
     timeOutputFacet->format("%m %d %H%M");
 
-    map<boost::local_time::local_date_time, std::vector<string> >::iterator i;
-
     std::string tmp;
 
     //Make a default local/date time to use if there isn't any valid local date/time
@@ -114,32 +152,45 @@ bool farsiteAtm::writeAtmFile(std::string filename, velocityUnits::eVelocityUnit
     boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));   //doesn't matter what time zone is used...
     boost::local_time::local_date_time defaultDateTime(d, td, zone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
 
-    //Write the data
-    for(i=data.begin(); i!=data.end(); ++i)
+    // for numAtmFiles = 1;, numFilesPerAtm = data.size();
+    map<boost::local_time::local_date_time, std::vector<string> >::iterator fileStartIter = data.begin();
+    map<boost::local_time::local_date_time, std::vector<string> >::iterator fileEndIter = data.end();
+    if(writeSeparateAtmFiles == true)
     {
-        if((*i).first.is_not_a_date_time()) //if invalid time, just output default time
+        // for numAtmFiles = data.size();, numFilesPerAtm = 1;
+        fileStartIter = iter;
+        fileEndIter = std::next(iter);
+    }
+
+    //Write the data
+    map<boost::local_time::local_date_time, std::vector<string> >::iterator fileIter;
+    for(fileIter = fileStartIter; fileIter != fileEndIter; ++fileIter)
+    {
+        if((*fileIter).first.is_not_a_date_time() || (*fileIter).first.utc_time().date().year() < 1900) //if invalid time, just output default time
             outputFile << defaultDateTime;
         else
-            outputFile << (*i).first;
+            outputFile << (*fileIter).first;
 
         for(int j=0; j<3; j++)
         {
             if(stripPaths == true)
             {
-                tmp = (*i).second[j];
+                tmp = (*fileIter).second[j];
                 tmp = std::string(CPLGetFilename(tmp.c_str()));
 //                stringPos = tmp.find_last_of('/');
 //                if(stringPos > 0)
 //                    tmp = tmp.substr(stringPos+1);
                 outputFile << " " << tmp;
             }else
-                outputFile << " " << (*i).second[j];
+                outputFile << " " << (*fileIter).second[j];
         }
 
         outputFile << "\n";
-    }
+    }  // for(fileIter = fileStartIter; fileIter != fileEndIter; ++fileIter)
 
     outputFile.close();
+
+    }  // for(iter = data.begin(); iter != endIter; ++iter)
 
     return true;
 }
