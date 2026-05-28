@@ -109,7 +109,7 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
     {
         std::stringstream outMessage;
         outMessage << "Problem writing the FARSITE atmosphere file (*.asc) called " << filename \
-                << ".\nSometimes this happens because the file is already open by another program.\n";
+               << ".\nSometimes this happens because the file is already open by another program.\n";
         throw std::runtime_error(outMessage.str());
     }
 
@@ -118,9 +118,13 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
     double windHeightFeet = windHeight;
     lengthUnits::fromBaseUnits(windHeightFeet, lengthUnits::feet);
     if(velocityUnits == velocityUnits::milesPerHour && FloatingPoint<double>(windHeightFeet).AlmostEquals(FloatingPoint<double>(20.0)))
+    {
         outputFile << "ENGLISH\n";
+    }
     else if(velocityUnits == velocityUnits::kilometersPerHour && FloatingPoint<double>(windHeight).AlmostEquals(FloatingPoint<double>(10.0)))
+    {
         outputFile << "METRIC\n";
+    }
     else
     {
         double heightInFeet = windHeight;
@@ -167,9 +171,13 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
     for(fileIter = fileStartIter; fileIter != fileEndIter; ++fileIter)
     {
         if((*fileIter).first.is_not_a_date_time() || (*fileIter).first.utc_time().date().year() < 1900) //if invalid time, just output default time
+        {
             outputFile << defaultDateTime;
+        }
         else
+        {
             outputFile << (*fileIter).first;
+        }
 
         for(int j=0; j<3; j++)
         {
@@ -181,8 +189,11 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
 //                if(stringPos > 0)
 //                    tmp = tmp.substr(stringPos+1);
                 outputFile << " " << tmp;
-            }else
+            }
+            else
+            {
                 outputFile << " " << (*fileIter).second[j];
+            }
         }
 
         outputFile << "\n";
