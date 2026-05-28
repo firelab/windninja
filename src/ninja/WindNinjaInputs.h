@@ -213,7 +213,6 @@ public:
     lengthUnits::eLengthUnits velOutputFileDistanceUnits;				//distance units of resolution
     std::string angFile;
     bool atmOutFlag; // flag specifying if a Farsite .atm file should be written.
-    std::string atmFile;
     std::string wxModelAngFile;
     double angResolution;
     lengthUnits::eLengthUnits angOutputFileDistanceUnits;				//distance units of resolution

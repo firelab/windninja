@@ -95,8 +95,8 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
 
     std::string filePath = CPLGetPath((*iter).second[0].c_str());
     std::string fileroot(CPLGetBasename((*iter).second[0].c_str()));
-    // remove the _vel, _ang, _cld part from the file basename
-    int stringPos = fileroot.find_last_of("_");
+    // remove the _vel part from the file basename
+    int stringPos = fileroot.find_last_of("_vel");
     if(stringPos != fileroot.npos)
     {
         fileroot.erase(stringPos);

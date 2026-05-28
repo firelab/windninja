@@ -5295,11 +5295,6 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
-    input.atmFile = rootFile + ascii_fileAppend + ".atm";
-    if(input.geoTiffOutFlag == true)
-    {
-        input.atmFile = rootFile + gtiff_fileAppend + ".atm";
-    }
 
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";

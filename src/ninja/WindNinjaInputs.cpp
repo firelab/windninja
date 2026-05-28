@@ -114,7 +114,6 @@ WindNinjaInputs::WindNinjaInputs()
     velOutputFileDistanceUnits = lengthUnits::meters;
     angFile = "!set";
     atmOutFlag = false;
-    atmFile = "!set";
     wxModelAngFile = "!set";
     angResolution = -1.0;
     angOutputFileDistanceUnits = lengthUnits::meters;
@@ -331,7 +330,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
     angFile = rhs.angFile;
     atmOutFlag = rhs.atmOutFlag;
-    atmFile = rhs.atmFile;
     wxModelAngFile = rhs.wxModelAngFile;
     angResolution = rhs.angResolution;
     angOutputFileDistanceUnits = rhs.angOutputFileDistanceUnits;
@@ -550,7 +548,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
       angFile = rhs.angFile;
       atmOutFlag = rhs.atmOutFlag;
-      atmFile = rhs.atmFile;
       wxModelAngFile = rhs.wxModelAngFile;
       angResolution = rhs.angResolution;
       angOutputFileDistanceUnits = rhs.angOutputFileDistanceUnits;
