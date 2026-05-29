@@ -425,8 +425,8 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
         (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions );
-    WINDNINJADLL_EXPORT NinjaErr NinjaGetRunKmzFilenames(NinjaArmyH * army, int *numRuns, char*** kmzFilenames, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions);
-    WINDNINJADLL_EXPORT NinjaErr NinjaDestroyRunKmzFilenames(int numRuns, char** kmzFilenames, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions);
+    WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions);
+    WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, char** fgbzFilenames, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions);
     WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions);
 
 WN_C_END

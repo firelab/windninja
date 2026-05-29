@@ -1366,12 +1366,12 @@ public:
     * \brief Returns the output kmz filenames of each ninja, as well as the station kml filenames
     *        and the weather model filenames of each ninja if they were created for the run.
     *
-    * \param kmzFilenames The output kmz filenames of each ninja, to be filled.
+    * \param fgbzFilenames The output fgbz filenames of each ninja, to be filled.
     * \param stationKmlFilenames The station kml filenames of each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
     * \param weatherModelKmzFilenames The weather model kmz filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
     * \return errval Returns NINJA_SUCCESS upon success.
     */
-    int getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+    int getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
                             std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
@@ -1381,7 +1381,7 @@ public:
     void cancel();
     void cancelAndReset();
 
-    std::vector<std::string> kmzFilenames;
+    std::vector<std::string> fgbzFilenames;
     std::vector<std::string> stationKmlFilenames;
     std::vector<std::string> wxModelKmzFilenames;
 
@@ -1398,7 +1398,7 @@ protected:
     void writeFarsiteAtmosphereFile();
     void setAtmFlags();
 
-    void setCurrentRunKmzFilenames(int runNumber);
+    void setCurrentMapVisualizationFilenames(int runNumber);
 
     /*
     ** This function initializes various data for the lifetime of the

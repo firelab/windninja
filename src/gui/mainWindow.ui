@@ -837,7 +837,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>15</number>
+         <number>10</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -3436,8 +3436,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>390</width>
-               <height>350</height>
+               <width>730</width>
+               <height>456</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4370,8 +4370,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>357</width>
-               <height>274</height>
+               <width>730</width>
+               <height>456</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">

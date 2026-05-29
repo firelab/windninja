@@ -556,7 +556,7 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
-    kmzFilenames.resize(ninjas.size());
+    fgbzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
     wxModelKmzFilenames.resize(ninjas.size());
 
@@ -624,7 +624,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 writeFarsiteAtmosphereFile();
 
             //setup the run kmz filenames, for C-API calls
-            setCurrentRunKmzFilenames(0);
+            setCurrentMapVisualizationFilenames(0);
 
         }catch (bad_alloc& e)
         {
@@ -718,7 +718,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //setup the run kmz filenames, for C-API calls
-                setCurrentRunKmzFilenames(i);
+                setCurrentMapVisualizationFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
@@ -845,7 +845,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
 
                 //setup the run kmz filenames, for C-API calls
-                setCurrentRunKmzFilenames(i);
+                setCurrentMapVisualizationFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
@@ -2664,10 +2664,10 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
     return std::string("");
 }
 
-int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+int ninjaArmy::getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
                                    std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions )
 {
-    kmzFilenamesStr = kmzFilenames;
+    fgbzFilenamesStr = fgbzFilenames;
     stationKmlFilenamesStr = stationKmlFilenames;
     wxModelKmzFilenamesStr = wxModelKmzFilenames;
 
@@ -2699,9 +2699,9 @@ void ninjaArmy::cancelAndReset()
     reset();
 }
 
-void ninjaArmy::setCurrentRunKmzFilenames(int runNumber)
+void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
 {
-    kmzFilenames[runNumber] = ninjas[runNumber]->input.kmzFile;
+    fgbzFilenames[runNumber] = ninjas[runNumber]->input.flatGeoBuffFile;
 
     if(ninjas[runNumber]->input.stations.size() == 0)
     {

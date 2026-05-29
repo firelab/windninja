@@ -1327,7 +1327,7 @@ void MainWindow::plotKmzOutputs()
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
 
-    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    if(result == 1 && !progressDialog->wasCanceled() && ui->mapVisualizationCheckBox->isChecked() == true)
     {
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
@@ -1348,12 +1348,12 @@ void MainWindow::plotKmzOutputs()
 
         // vars to be filled
         int numRuns = 0;
-        char **kmzFilenames = NULL;
+        char **fgbzFilenames = NULL;
         char **stationKmlFilenames = NULL;
         char **weatherModelKmzFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
@@ -1368,7 +1368,7 @@ void MainWindow::plotKmzOutputs()
         wxModelKmzFilenamesStr.reserve(numRuns);
         for(int i = 0; i < numRuns; i++)
         {
-            kmzFilenamesStr.emplace_back(kmzFilenames[i]);
+            kmzFilenamesStr.emplace_back(fgbzFilenames[i]);
             stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
             wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
         }
@@ -1380,7 +1380,7 @@ void MainWindow::plotKmzOutputs()
         for(int i = 0; i < numRuns; i++)
         {
             // plot the output kmz of the run
-            QString outFileStr = QString::fromStdString(kmzFilenames[i]);
+            QString outFileStr = QString::fromStdString(fgbzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
@@ -1410,7 +1410,7 @@ void MainWindow::plotKmzOutputs()
 
             // if it is a weather model run, and weather model kmzs were created for the run,
             // then plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
+            if(ui->rawWeatherModelOutputCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isEnabled())
             {
                 QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
@@ -1423,7 +1423,7 @@ void MainWindow::plotKmzOutputs()
             }
         }
 
-        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
