@@ -42,6 +42,7 @@ const double OutputWriter::SIDE_MARGIN = 0.5;
 
 
 OutputWriter::OutputWriter ()
+    :ninjaTime(boost::local_time::not_a_date_time)
 {
     hSrcDS        = NULL;
     hDstDS        = NULL;
@@ -103,6 +104,11 @@ bool OutputWriter::_createTmpFiles()
     pszLegendFile = CPLStrdup( pszTmp );
     CPLDebug( "NINJA", "Using %s for pdf legend dataset", pszLegendFile );
 
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".bmp" );
+    pszDateTimeLegendFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for date time legend dataset", pszDateTimeLegendFile );
+
     return true;
 }
 
@@ -110,6 +116,7 @@ void OutputWriter::_deleteTmpFiles()
 {
     CPLFree( (void*)pszOgrFile );
     CPLFree( (void*)pszLegendFile );
+    CPLFree( (void*)pszDateTimeLegendFile) ;
     if( pszTmpDemFile != NULL )
     {
         GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
@@ -486,6 +493,125 @@ void OutputWriter::_destroyLegend()
     return;
 }
 
+
+bool OutputWriter::_createDateTimeLegend(bool wxModel)
+{
+    //make bitmap
+    int legendWidth;
+    if(wxModel)
+    {
+        legendWidth = 11.25 * wxModelName.size();
+    }
+    else
+    {
+        legendWidth = 285;
+    }
+    int legendHeight = 52;
+    BMP legend;
+
+    legend.SetSize(legendWidth,legendHeight);
+    legend.SetBitDepth(8);
+
+    //black legend
+    for(int i = 0;i < legendWidth;i++)
+    {
+        for(int j = 0;j < legendHeight;j++)
+        {
+            legend(i,j)->Alpha = 0;
+            legend(i,j)->Blue = 0;
+            legend(i,j)->Green = 0;
+            legend(i,j)->Red = 0;
+        }
+    }
+
+    //for white text
+    RGBApixel white;
+    white.Red = 255;
+    white.Green = 255;
+    white.Blue = 255;
+    white.Alpha = 0;
+
+    int textHeight = 12; //pixels- 10 for maximum speed of "999.99 - 555.55";
+    //12 for normal double digits
+    int titleX, titleY;
+
+    double x;
+    double y;
+
+    //print date
+    x = 0.05;
+    y = 0.15;
+    titleX = x * legendWidth;
+    titleY = y * legendHeight;
+
+    std::ostringstream os;
+    boost::local_time::local_time_facet* timeOutputFacet;
+    timeOutputFacet = new boost::local_time::local_time_facet();
+    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+    //      THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //      https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //      http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+    os.imbue(std::locale(std::locale::classic(), timeOutputFacet));
+    timeOutputFacet->format("%A, %B %d, %Y");
+
+    os << ninjaTime;
+
+    if (wxModel)
+    {
+        PrintString(legend,wxModelName.c_str(), titleX, titleY, textHeight, white);
+    }
+    else
+    {
+        PrintString(legend,os.str().c_str(), titleX, titleY, textHeight, white);\
+    }
+
+    //print time
+    x = 0.05;
+    y = 0.60;
+
+    titleX = x * legendWidth;
+    titleY = y * legendHeight;
+
+    os.str("");
+    //timeOutputFacet->format("%H:%M %z (%Q from UTC)");
+    timeOutputFacet->format("%H:%M %z (");
+    os << ninjaTime;
+
+    std::string timeStringLegend(os.str());
+
+    boost::posix_time::time_facet* timeOutputFacet2;
+    timeOutputFacet2 = new boost::posix_time::time_facet();
+    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+    //      THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //      https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //      http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+    os.imbue(std::locale(std::locale::classic(), timeOutputFacet2));
+
+    os.str("");
+    timeOutputFacet2->format("%H:%M UTC)");
+    os << ninjaTime.utc_time();
+
+    timeStringLegend.append(os.str());
+
+    PrintString(legend,timeStringLegend.c_str(), titleX, titleY, textHeight, white);
+
+    legend.WriteToFile(pszDateTimeLegendFile);
+
+    std::string shortName;
+    shortName = CPLGetFilename(pszDateTimeLegendFile);
+
+    return true;
+}
+
+void OutputWriter::_destroyDateTimeLegend()
+{
+    GDALDriverH hLegendDrv = GDALGetDriverByName( "BMP" );
+    GDALDeleteDataset( hLegendDrv, pszDateTimeLegendFile );
+    return;
+}
+
 void OutputWriter::_openSrcDataSet()
 {
     hSrcDS = GDALOpen( demFile.c_str(), GA_ReadOnly );
@@ -794,9 +920,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         char* pszDstWKT = (char*)spd.prjString.c_str();
         GDALSetProjection(hMemDS, pszDstWKT);
         GDALSetGeoTransform(hMemDS, adfGeoTransform);
-        
-        GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
-        
+                
         GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, 1 );
         
         GDALSetRasterNoDataValue(hBand, -9999.0);
@@ -842,7 +966,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         const char* startTime = GDALGetMetadataItem( hMemDS, "TIFFTAG_DATETIME", NULL );
         
         // calculate hours since startTime 
-        std::string s(ninjaTime);
+        std::string s;
         std::string s0(startTime);
         
         s.erase(s.length()-4); //get rid of tz
@@ -907,7 +1031,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
         GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
   
         // calculate hours since startTime 
-        std::string s(ninjaTime);
+        std::string s;
         std::string s0(startTime);
         
         s.erase(s.length()-4); //get rid of tz
@@ -983,8 +1107,8 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
     _createSplits();
     _createOGRFile(true);
     _createLegend();
+    _createDateTimeLegend(!wxModelName.empty());
     _openSrcDataSet();
-
 
     hDriver = OGRGetDriverByName("FlatGeobuf");
     if ( hDriver == NULL )
@@ -995,7 +1119,11 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
     std::string baseName = CPLGetBasename(filename.c_str());
 
     std::string vsiFgbPath = "/vsizip/" + filename + "/" + baseName + ".fgb";
-    std::string vsiLegendPath = "/vsizip/" + filename + "/" + baseName + ".bmp";
+    std::string vsiLegendPath =
+        "/vsizip/" + filename + "/" + baseName + "_legend.bmp";
+
+    std::string vsiDateTimeLegendPath =
+        "/vsizip/" + filename + "/" + baseName + "_datetime.bmp";
 
     papszOptions = CSLAddNameValue( papszOptions, "SPATIAL_INDEX", "YES" );
     hDstDS = GDALCreateCopy(hDriver, vsiFgbPath.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);
@@ -1010,7 +1138,14 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
         CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
     }
 
+    if (pszDateTimeLegendFile != nullptr && CPLCopyFile(vsiDateTimeLegendPath.c_str(), pszDateTimeLegendFile) != 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
+    }
+
     _destroyOptions();
+    _destroyLegend();
+    _destroyDateTimeLegend();
 
     OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 

@@ -3393,6 +3393,8 @@ void ninja::writeOutputFiles()
                 output.setLineWidth(input.pdfLineWidth);
                 output.setDPI(input.pdfDPI);
                 output.setSize(input.pdfWidth, input.pdfHeight);
+                output.setNinjaTime(input.ninjaTime);
+                output.setWxModelName(init->getForecastIdentifier());
                 output.write(input.flatGeoBuffFile, "FlatGeoBuf");
 
                 if(angTempGrid)

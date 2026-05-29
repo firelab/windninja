@@ -87,14 +87,14 @@ class OutputWriter
         void setDustGrid(AsciiGrid<double> &d);
 #endif
         void setDEMfile(std::string fname) {demFile=fname;}
-        void setNinjaTime(std::string t) {ninjaTime=t;}
+        void setNinjaTime(boost::local_time::local_date_time t) {ninjaTime=t;}
         void setRunNumber(int n) {runNumber=n;}
         void setMaxRunNumber(int n) {maxRunNumber=n;}
         void setLineWidth( const float w );
         void setDPI( const unsigned short d );
         void setSize( const double w, const double h );
-        
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
+        void setWxModelName(std::string name) {wxModelName=name;}
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -132,6 +132,9 @@ class OutputWriter
         bool _createLegend();
         void _destroyLegend();
 
+        bool _createDateTimeLegend(bool wxModel);
+        void _destroyDateTimeLegend();
+
         bool _createTmpFiles();
         void _deleteTmpFiles();
 
@@ -148,7 +151,7 @@ class OutputWriter
         GDALDatasetH hDirMemDs;
         GDALDatasetH hDustMemDs;
         
-        std::string ninjaTime;
+        boost::local_time::local_date_time ninjaTime;
         double resolution;
         std::string demFile;
         std::string inputSpeedFile;
@@ -168,6 +171,7 @@ class OutputWriter
 
         char * pszOgrFile;
         char * pszLegendFile;
+        char * pszDateTimeLegendFile;
         char * pszTmpDemFile;
 
         static const unsigned short NCOLORS = 5; 
