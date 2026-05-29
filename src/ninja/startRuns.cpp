@@ -149,8 +149,7 @@ bool startRuns(int numRuns, int numProcessors, ninja *windsim)
         atmosphere.push(i,
                         windsim[i].get_date_time(),
                         windsim[i].get_VelFileName(),
-                        windsim[i].get_AngFileName(),
-                        windsim[i].get_CldFileName());
+                        windsim[i].get_AngFileName());
     }
     bool writeSeparateAtmFiles = false;
     atmosphere.writeAtmFile(writeSeparateAtmFiles, windsim[0].get_outputSpeedUnits(), windsim[0].get_outputWindHeight());

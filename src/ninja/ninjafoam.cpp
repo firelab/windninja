@@ -3444,7 +3444,6 @@ void NinjaFoam::SetOutputFilenames()
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
-    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
 
@@ -3502,25 +3501,6 @@ void NinjaFoam::WriteOutputFiles()
                                                              AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
                                                              AsciiGrid<double>::order0));
-                        
-                        //Set cloud grid
-                        int longEdge = input.dem.get_nRows();
-                        if(input.dem.get_nRows() < input.dem.get_nCols())
-                            longEdge = input.dem.get_nCols();
-                        double tempCloudCover;
-                        if(input.cloudCover < 0){
-                            tempCloudCover = 0.0;
-                        }
-                        else{
-                            tempCloudCover = input.cloudCover;
-                        }
-
-                        CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
-                                input.dem.get_yllCorner(), (longEdge * input.dem.cellSize),
-                                -9999.0, tempCloudCover, input.dem.prjString);
-
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
                         // if output clipping was set by the user, don't buffer to overlap the DEM
                         // but only if writing atm file for farsite grids
@@ -3536,12 +3516,11 @@ void NinjaFoam::WriteOutputFiles()
                                         "Problem reading DEM during output writing." );
                             }
                             GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                            tempCloud.BufferToOverlapGrid(demGrid);
                             angTempGrid->BufferToOverlapGrid(demGrid);
                             velTempGrid->BufferToOverlapGrid(demGrid);
                         }
 
-			ninja::writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
+			ninja::writeAsciiOutputFiles(*angTempGrid, *velTempGrid);
 
 			if(angTempGrid)
 			{
@@ -3573,9 +3552,6 @@ void NinjaFoam::WriteOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
-            AsciiGrid<double> tempCloud(CloudGrid);
-            tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
-
             // if output clipping was set by the user, don't buffer to overlap the DEM
             // but only if writing atm file for farsite grids
             if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
@@ -3590,20 +3566,16 @@ void NinjaFoam::WriteOutputFiles()
                     "Problem reading DEM during output writing." );
                 }
                 GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                tempCloud.BufferToOverlapGrid(demGrid);
                 angTempGrid->BufferToOverlapGrid(demGrid);
                 velTempGrid->BufferToOverlapGrid(demGrid);
             }
 
             std::string velGeoTiffFile = input.geoTiffFile;
             std::string angGeoTiffFile = input.geoTiffFile;
-            std::string cldGeoTiffFile = input.geoTiffFile;
             velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
             angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
-            cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
             velTempGrid->exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
             angTempGrid->exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
-            tempCloud.exportToTiff(cldGeoTiffFile, "Cloud Cover", "percent");
 
             if(angTempGrid)
             {

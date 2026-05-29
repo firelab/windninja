@@ -600,7 +600,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //set filenames for atm file writing
                 ninjas[0]->input.velFile = diurnal_ninja->get_VelFileName();
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
-                ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
                 ninjas[0]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
                 //set kmzFile for setRunKmzFilenames(), for the GUI
@@ -615,15 +614,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                 {
                     std::string velGeoTiffFile = ninjas[0]->input.geoTiffFile;
                     std::string angGeoTiffFile = ninjas[0]->input.geoTiffFile;
-                    std::string cldGeoTiffFile = ninjas[0]->input.geoTiffFile;
                     velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                     angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
-                    cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                    atmosphere.push(0, ninjas[0]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
+                    atmosphere.push(0, ninjas[0]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
                 }
                 else
                 {
-                    atmosphere.push(0, ninjas[0]->get_date_time(), ninjas[0]->get_VelFileName(), ninjas[0]->get_AngFileName(), ninjas[0]->get_CldFileName());
+                    atmosphere.push(0, ninjas[0]->get_date_time(), ninjas[0]->get_VelFileName(), ninjas[0]->get_AngFileName());
                 }
             }
 
@@ -721,7 +718,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                     //set filenames for atm file writing
                     ninjas[i]->input.velFile = diurnal_ninja->get_VelFileName();
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
-                    ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
                     ninjas[i]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
                     //set kmzFile for setRunKmzFilenames(), for the GUI
@@ -735,15 +731,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     {
                         std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
                         std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
-                        std::string cldGeoTiffFile = ninjas[i]->input.geoTiffFile;
                         velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                         angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
-                        cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
                     }
                     else
                     {
-                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName());
                     }
                 }
 
@@ -850,15 +844,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     {
                         std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
                         std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
-                        std::string cldGeoTiffFile = ninjas[i]->input.geoTiffFile;
                         velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                         angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
-                        cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
                     }
                     else
                     {
-                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName());
                     }
                 }
 

@@ -1518,7 +1518,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         north = north + uGrid_wxModel.get_cellSize();
         uGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
         vGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
-        cloudCoverGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
 
         speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
         dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
@@ -1557,7 +1556,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
         std::string wxModelVelFileTemp = rootname + "_vel";
         std::string wxModelAngFileTemp = rootname + "_ang";
-        std::string wxModelCldFileTemp = rootname + "_cld";
         std::string wxModelShpFileTemp = rootname;
         std::string wxModelDbfFileTemp = rootname;
         std::string wxModelKmlFileTemp = rootname;
@@ -1568,7 +1566,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
         input.wxModelVelFile = CPLFormFilename(path.c_str(), wxModelVelFileTemp.c_str(), ".asc");
         input.wxModelAngFile = CPLFormFilename(path.c_str(), wxModelAngFileTemp.c_str(), ".asc");
-        input.wxModelCldFile = CPLFormFilename(path.c_str(), wxModelCldFileTemp.c_str(), ".asc");
         input.wxModelShpFile = CPLFormFilename(path.c_str(), wxModelShpFileTemp.c_str(), "shp");
         input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
         input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
@@ -1587,9 +1584,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         try{
         if(input.wxModelAsciiOutFlag==true)
             {
-            AsciiGrid<double> tempCloud(cloudCoverGrid_wxModel);
-            tempCloud *= 100.0;
-            tempCloud.write_Grid(input.wxModelCldFile.c_str(), 0);
             dirInitializationGrid_wxModel.write_Grid(input.wxModelAngFile.c_str(), 0);
             speedInitializationGrid_wxModel.write_Grid(input.wxModelVelFile.c_str(), 2);
             }
@@ -1611,17 +1605,11 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             {
                 std::string velGeoTiffFile = input.wxModelGeoTiffFile;
                 std::string angGeoTiffFile = input.wxModelGeoTiffFile;
-                std::string cldGeoTiffFile = input.wxModelGeoTiffFile;
                 velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                 angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
-                cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-
-                AsciiGrid<double> tempCloud(cloudCoverGrid_wxModel);
-                tempCloud *= 100.0;
 
                 speedInitializationGrid_wxModel.exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
                 dirInitializationGrid_wxModel.exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
-                tempCloud.exportToTiff(cldGeoTiffFile, "Cloud Cover", "percent");
             }
         }catch (exception& e)
         {

@@ -290,7 +290,6 @@ public:
 
     const std::string get_VelFileName() const; //returns the name of the velocity file name
     const std::string get_AngFileName() const; //returns the name of the ang output file
-    const std::string get_CldFileName() const; //returns the name of the cld output file
 
     //kyle set postion
     bool set_position();
@@ -368,7 +367,7 @@ public:
 protected:
     void checkCancel();
     void write_compare_output();
-    void writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
+    void writeAsciiOutputFiles(AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 
 private:
 

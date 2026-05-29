@@ -2795,7 +2795,7 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
-void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+void ninja::writeAsciiOutputFiles(AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
 {
     AsciiGrid<double> uGrid;
     AsciiGrid<double> vGrid;
@@ -2803,7 +2803,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     AsciiGrid<double> vGrid_latlon;
     AsciiGrid<double> velGrid_latlon;
     AsciiGrid<double> angGrid_latlon;
-    AsciiGrid<double> cldGrid_latlon;
 
     // fill the u,v grids, for uv output in dem projection coordinates, or for warping to geographic coordinates
     // always warp u,v NOT angGrid, to avoid angle interpolation issues with gdal
@@ -2826,7 +2825,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     {
         GDALDatasetH uGrid_hDS = uGrid.ascii2GDAL();
         GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
-        GDALDatasetH cldGrid_hDS = cldGrid.ascii2GDAL();
 
         // no need to calculate the coordinateTransformAngle FROM projected TO geographic, already have the angleFromNorth value
         // still need the pszDstWkt for warping the datasets though
@@ -2839,7 +2837,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
         GDALDatasetH uGrid_hVrtDS;
         GDALDatasetH vGrid_hVrtDS;
-        GDALDatasetH cldGrid_hVrtDS;
 
         // warp the u and v grids FROM dem projection coordinates TO geographic coordinates
         if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( uGrid_hDS, 1, uGrid_hVrtDS, pszDstWkt ))
@@ -2850,14 +2847,9 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         {
             throw std::runtime_error("Could not warp the output velocity and angle grids (vGrid).");
         }
-        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( cldGrid_hDS, 1, cldGrid_hVrtDS, pszDstWkt ))
-        {
-            throw std::runtime_error("Could not warp the output cloud grid.");
-        }
 
         GDAL2AsciiGrid( (GDALDataset*)uGrid_hVrtDS, 1, uGrid_latlon );
         GDAL2AsciiGrid( (GDALDataset*)vGrid_hVrtDS, 1, vGrid_latlon );
-        GDAL2AsciiGrid( (GDALDataset*)cldGrid_hVrtDS, 1, cldGrid_latlon );
 
         // attempt to crop NO_DATA off the warped datasets before continuing on, if required
         int asciiOutputNoDataCropThreshold = 0;
@@ -2876,10 +2868,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
             if(!vGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
             {
                 std::cerr << "failed to crop the warped output velocity and angle grids (vGrid)." << std::endl;
-            }
-            if(!cldGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
-            {
-                std::cerr << "warning, failed to crop the warped output cloud grid." << std::endl;
             }
         }
 
@@ -2906,7 +2894,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         }
 
         // close the gdal datasets
-        GDALClose(cldGrid_hVrtDS);
         GDALClose(uGrid_hVrtDS);
         GDALClose(vGrid_hVrtDS);
         GDALClose(uGrid_hDS);
@@ -2919,7 +2906,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
     if (input.asciiAaigridOutFlag) {
         if (input.asciiProjOutFlag) {
-            cldGrid.write_Grid( input.cldFile.c_str(), 1);
             angGrid.write_Grid( input.angFile.c_str(), 0);
             velGrid.write_Grid( input.velFile.c_str(), 2);
             if (input.asciiUvOutFlag) {
@@ -2928,7 +2914,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
             }
         }
         if (input.asciiGeogOutFlag){
-            cldGrid_latlon.write_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
             angGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
             velGrid_latlon.write_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
             if (input.asciiUvOutFlag) {
@@ -2940,7 +2925,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
     if (input.asciiJsonOutFlag) {
         if (input.asciiProjOutFlag) {
-            cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
             angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
             velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
             if (input.asciiUvOutFlag) {
@@ -2949,7 +2933,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
             }
         }
         if (input.asciiGeogOutFlag){
-            cldGrid_latlon.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
             angGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
             velGrid_latlon.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
             if (input.asciiUvOutFlag) {
@@ -2960,7 +2943,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     }
 
     // cleanup the finished use ascii grids
-    cldGrid_latlon.deallocate();
     velGrid_latlon.deallocate();
     angGrid_latlon.deallocate();
     uGrid_latlon.deallocate();
@@ -3023,9 +3005,6 @@ void ninja::writeOutputFiles()
                     angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
                     velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                    AsciiGrid<double> tempCloud(CloudGrid);
-                    tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
-
                     // if output clipping was set by the user, don't buffer to overlap the DEM
                     // but only if writing atm file for farsite grids
                     if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
@@ -3040,12 +3019,11 @@ void ninja::writeOutputFiles()
                                     "Problem reading DEM during output writing." );
                         }
                         GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                        tempCloud.BufferToOverlapGrid(demGrid);
                         angTempGrid->BufferToOverlapGrid(demGrid);
                         velTempGrid->BufferToOverlapGrid(demGrid);
                     }
 
-                    writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
+                    writeAsciiOutputFiles(*angTempGrid, *velTempGrid);
 
 #ifdef FRICTION_VELOCITY
                     if(input.frictionVelocityFlag == 1){
@@ -3113,9 +3091,6 @@ void ninja::writeOutputFiles()
                 angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
                 velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
-                AsciiGrid<double> tempCloud(CloudGrid);
-                tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
-
                 // if output clipping was set by the user, don't buffer to overlap the DEM
                 // but only if writing atm file for farsite grids
                 if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
@@ -3130,20 +3105,16 @@ void ninja::writeOutputFiles()
                         "Problem reading DEM during output writing." );
                     }
                     GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                    tempCloud.BufferToOverlapGrid(demGrid);
                     angTempGrid->BufferToOverlapGrid(demGrid);
                     velTempGrid->BufferToOverlapGrid(demGrid);
                 }
 
                 std::string velGeoTiffFile = input.geoTiffFile;
                 std::string angGeoTiffFile = input.geoTiffFile;
-                std::string cldGeoTiffFile = input.geoTiffFile;
                 velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                 angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
-                cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
                 velTempGrid->exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
                 angTempGrid->exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
-                tempCloud.exportToTiff(cldGeoTiffFile, "Cloud Cover", "percent");
 
                 #ifdef FRICTION_VELOCITY
                 if(input.frictionVelocityFlag == 1)
@@ -4277,11 +4248,6 @@ const std::string ninja::get_AngFileName() const
     return input.angFile;
 }
 
-const std::string ninja::get_CldFileName() const
-{
-    return input.cldFile;
-}
-
 void ninja::set_inputDirection(double direction)
 {
     if(direction<0.0 || direction>360.0)	//error checking
@@ -5292,7 +5258,6 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     //wxModelGeoTiffFile = wxModelTimeAppend + ".kmz";
 
-    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
 
@@ -5304,7 +5269,6 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.dustFile = rootFile + ascii_fileAppend + "_dust.asc";
     #endif //EMISSIONS
 
-    //wxModelCldFile = "wxModel" + wxModelTimeAppend + "_cld.asc";
     //wxModelVelFile = "wxModel" + wxModelTimeAppend + "_vel.asc";
     //wxModelAngFile = "wxModel" + wxModelTimeAppend + "_ang.asc";
 

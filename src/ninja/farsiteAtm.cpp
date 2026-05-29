@@ -43,16 +43,14 @@ void farsiteAtm::reset(std::size_t numRuns)
     times.resize(numRuns, boost::local_time::local_date_time(boost::local_time::not_a_date_time));
     speedNames.resize(numRuns);
     directionNames.resize(numRuns);
-    cloudCoverNames.resize(numRuns);
 }
 
-void farsiteAtm::push(unsigned int runNumber, boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName)
+void farsiteAtm::push(unsigned int runNumber, boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName)
 {
     //TODO: setup a way to handle replicate times, when "!inTime.is_not_a_date_time()", if that is even necessary
     times[runNumber] = inTime;
     speedNames[runNumber] = inSpeedName;
     directionNames[runNumber] = inDirectionName;
-    cloudCoverNames[runNumber] = inCloudCoverName;
 }
 
 /**
@@ -103,7 +101,7 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
             throw std::runtime_error(outMessage.str());
         }
 
-        outputFile << "WINDS_AND_CLOUDS\n";
+        outputFile << "WINDS\n";
 
         double windHeightFeet = windHeight;
         lengthUnits::fromBaseUnits(windHeightFeet, lengthUnits::feet);
@@ -170,13 +168,11 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
             {
                 outputFile << " " << CPLGetFilename(speedNames[fileIdx].c_str());
                 outputFile << " " << CPLGetFilename(directionNames[fileIdx].c_str());
-                outputFile << " " << CPLGetFilename(cloudCoverNames[fileIdx].c_str());
             }
             else
             {
                 outputFile << " " << speedNames[fileIdx];
                 outputFile << " " << directionNames[fileIdx];
-                outputFile << " " << cloudCoverNames[fileIdx];
             }
 
             outputFile << "\n";

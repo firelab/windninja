@@ -175,7 +175,7 @@ public:
     double wxModelGoogLineWidth;		//drawing line width for google output vectors
     bool shpOutFlag;			//flag specifying if a shapefile (*.shp, *.shx, *.dbf) should be written
     
-    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc, *_cld.asc) should be written
+    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc) should be written
     bool asciiAaigridOutFlag;   // write ascii output in standard AAIGRID (*.asc) format
     bool asciiJsonOutFlag;      // write ascii output in JSON (*.json) format
     bool asciiProjOutFlag;       // write ascii files using dem projection coordinates (standard output), this is UTM (northing,easting) grids for WindNinja downloaded dems
@@ -205,8 +205,6 @@ public:
     std::string wxModelDbfFile;
     double shpResolution;
     lengthUnits::eLengthUnits shpUnits;
-    std::string cldFile;
-    std::string wxModelCldFile;
     std::string velFile;
     std::string wxModelVelFile;
     double velResolution;
