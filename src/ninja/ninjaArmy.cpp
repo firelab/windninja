@@ -533,6 +533,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 //        }
 //    }
 
+    // prep/reset the stored atmosphere file data, to be filled before ninjas[i] gets deleted after each run
+    // also used to set the size of the outputs, to better handle multi-threading
+    atmosphere.reset(ninjas.size());
+
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
     kmzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
@@ -615,11 +619,11 @@ bool ninjaArmy::startRuns(int numProcessors)
                     velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                     angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
                     cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                    atmosphere.push(ninjas[0]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
+                    atmosphere.push(0, ninjas[0]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                 }
                 else
                 {
-                    atmosphere.push(ninjas[0]->get_date_time(), ninjas[0]->get_VelFileName(), ninjas[0]->get_AngFileName(), ninjas[0]->get_CldFileName());
+                    atmosphere.push(0, ninjas[0]->get_date_time(), ninjas[0]->get_VelFileName(), ninjas[0]->get_AngFileName(), ninjas[0]->get_CldFileName());
                 }
             }
 
@@ -735,11 +739,11 @@ bool ninjaArmy::startRuns(int numProcessors)
                         velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                         angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
                         cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                        atmosphere.push(ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                     }
                     else
                     {
-                        atmosphere.push(ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
                     }
                 }
 
@@ -850,11 +854,11 @@ bool ninjaArmy::startRuns(int numProcessors)
                         velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
                         angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
                         cldGeoTiffFile.insert(cldGeoTiffFile.find(".tif"), "_cld");
-                        atmosphere.push(ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile, cldGeoTiffFile);
                     }
                     else
                     {
-                        atmosphere.push(ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName());
                     }
                 }
 

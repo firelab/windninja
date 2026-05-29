@@ -34,7 +34,10 @@
 #include <fstream>
 
 #include <string>
-#include "ninja.h"  // for boost
+#ifndef Q_MOC_RUN
+#include "boost/date_time/local_time/local_time.hpp"
+#include "boost/date_time/posix_time/posix_time_types.hpp"
+#endif
 #include "ninjaMathUtility.h"
 #include "ninjaUnits.h"
 #include "cpl_conv.h"
@@ -48,16 +51,15 @@ public:
     farsiteAtm();
     ~farsiteAtm();
 
-    void push(boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName);
+    void reset(std::size_t numRuns);
+    void push(unsigned int runNumber, boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName);
     bool writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths = true);
 
 private:
-    // placeholder synthetic timestamp used when input time is invalid or missing.
-    // ensures each time.is_not_a_date_time() remains uniquely ordered instead of overwriting identical keys.
-    // the placeholder advances by one calendar day for each insertion.
-    // placeholder values are identified by a sentinel rule if(year < 1900).
-    boost::local_time::local_date_time missingTimeFiller;
-    std::map< boost::local_time::local_date_time, std::vector<std::string> > data;
+    std::vector<boost::local_time::local_date_time> times;
+    std::vector<std::string> speedNames;
+    std::vector<std::string> directionNames;
+    std::vector<std::string> cloudCoverNames;
 };
 
 #endif	//FARSITE_ATM_H

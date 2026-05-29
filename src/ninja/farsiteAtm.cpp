@@ -30,12 +30,7 @@
 #include "farsiteAtm.h"
 
 farsiteAtm::farsiteAtm()
-: missingTimeFiller(boost::local_time::not_a_date_time)
 {
-    boost::gregorian::date d(1800,boost::gregorian::Jan,1);
-    boost::posix_time::time_duration td(0,0,0,0);
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("UTC"));
-    missingTimeFiller = boost::local_time::local_date_time(d, td, zone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
 }
 
 farsiteAtm::~farsiteAtm()
@@ -43,26 +38,21 @@ farsiteAtm::~farsiteAtm()
 
 }
 
-void farsiteAtm::push(boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName)
+void farsiteAtm::reset(std::size_t numRuns)
 {
-    vector<std::string> nameArray(3);
-    nameArray[0] = inSpeedName;
-    nameArray[1] = inDirectionName;
-    nameArray[2] = inCloudCoverName;
+    times.resize(numRuns, boost::local_time::local_date_time(boost::local_time::not_a_date_time));
+    speedNames.resize(numRuns);
+    directionNames.resize(numRuns);
+    cloudCoverNames.resize(numRuns);
+}
 
-    if(inTime.is_not_a_date_time())
-    {
-        data.insert(std::pair< boost::local_time::local_date_time, std::vector<std::string> > (missingTimeFiller, nameArray));
-        missingTimeFiller += boost::gregorian::days(1);
-    }
-    else if(data.find(inTime) != data.end())
-    {
-        throw std::runtime_error("attempting to add a duplicate time into farsiteAtm list.");
-    }
-    else
-    {
-        data.insert(std::pair< boost::local_time::local_date_time, std::vector<std::string> > (inTime, nameArray));
-    }
+void farsiteAtm::push(unsigned int runNumber, boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName)
+{
+    //TODO: setup a way to handle replicate times, when "!inTime.is_not_a_date_time()", if that is even necessary
+    times[runNumber] = inTime;
+    speedNames[runNumber] = inSpeedName;
+    directionNames[runNumber] = inDirectionName;
+    cloudCoverNames[runNumber] = inCloudCoverName;
 }
 
 /**
@@ -83,20 +73,21 @@ void farsiteAtm::push(boost::local_time::local_date_time inTime, std::string inS
 */
 bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths)
 {
-    map<boost::local_time::local_date_time, std::vector<string> >::iterator endIter = std::next(data.begin());  // numAtmFiles = 1;
+    unsigned int numRuns = times.size();
+
+    unsigned int numAtmFiles = 1;
     if(writeSeparateAtmFiles == true)
     {
-        endIter = data.end();  // numAtmFiles = data.size();
+        numAtmFiles = numRuns;
     }
 
-    map<boost::local_time::local_date_time, std::vector<string> >::iterator iter;
-    for(iter = data.begin(); iter != endIter; ++iter)
+    for(unsigned int atmIdx = 0; atmIdx < numAtmFiles; atmIdx++)
     {
 
-    std::string filePath = CPLGetPath((*iter).second[0].c_str());
-    std::string fileroot(CPLGetBasename((*iter).second[0].c_str()));
+    std::string filePath = CPLGetPath(speedNames[atmIdx].c_str());
+    std::string fileroot(CPLGetBasename(speedNames[atmIdx].c_str()));
     // remove the _vel part from the file basename
-    int stringPos = fileroot.find_last_of("_vel");
+    size_t stringPos = fileroot.find("_vel");
     if(stringPos != fileroot.npos)
     {
         fileroot.erase(stringPos);
@@ -156,52 +147,60 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
     boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));   //doesn't matter what time zone is used...
     boost::local_time::local_date_time defaultDateTime(d, td, zone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
 
-    // for numAtmFiles = 1;, numFilesPerAtm = data.size();
-    map<boost::local_time::local_date_time, std::vector<string> >::iterator fileStartIter = data.begin();
-    map<boost::local_time::local_date_time, std::vector<string> >::iterator fileEndIter = data.end();
+    // for numAtmFiles = 1;
+    unsigned int fileStartIdx = atmIdx;
+    unsigned int fileStopIdx = numRuns;
     if(writeSeparateAtmFiles == true)
     {
-        // for numAtmFiles = data.size();, numFilesPerAtm = 1;
-        fileStartIter = iter;
-        fileEndIter = std::next(iter);
+        // for numAtmFiles = numRuns;
+        fileStartIdx = atmIdx;
+        fileStopIdx = atmIdx+1;
     }
 
     //Write the data
-    map<boost::local_time::local_date_time, std::vector<string> >::iterator fileIter;
-    for(fileIter = fileStartIter; fileIter != fileEndIter; ++fileIter)
+    for(unsigned int fileIdx = fileStartIdx; fileIdx < fileStopIdx; fileIdx++)
     {
-        if((*fileIter).first.is_not_a_date_time() || (*fileIter).first.utc_time().date().year() < 1900) //if invalid time, just output default time
+        if(times[fileIdx].is_not_a_date_time()) //if invalid time, just output default time
         {
             outputFile << defaultDateTime;
         }
         else
         {
-            outputFile << (*fileIter).first;
+            outputFile << times[fileIdx];
         }
 
-        for(int j=0; j<3; j++)
+        if(stripPaths == true)
         {
-            if(stripPaths == true)
-            {
-                tmp = (*fileIter).second[j];
-                tmp = std::string(CPLGetFilename(tmp.c_str()));
-//                stringPos = tmp.find_last_of('/');
-//                if(stringPos > 0)
-//                    tmp = tmp.substr(stringPos+1);
-                outputFile << " " << tmp;
-            }
-            else
-            {
-                outputFile << " " << (*fileIter).second[j];
-            }
+            tmp = speedNames[fileIdx];
+            tmp = std::string(CPLGetFilename(tmp.c_str()));
+//          stringPos = tmp.find_last_of('/');
+//          if(stringPos > 0)
+//          {
+//              tmp = tmp.substr(stringPos+1);
+//          }
+            outputFile << " " << tmp;
+
+            tmp = directionNames[fileIdx];
+            tmp = std::string(CPLGetFilename(tmp.c_str()));
+            outputFile << " " << tmp;
+
+            tmp = cloudCoverNames[fileIdx];
+            tmp = std::string(CPLGetFilename(tmp.c_str()));
+            outputFile << " " << tmp;
+        }
+        else
+        {
+            outputFile << " " << speedNames[fileIdx];
+            outputFile << " " << directionNames[fileIdx];
+            outputFile << " " << cloudCoverNames[fileIdx];
         }
 
         outputFile << "\n";
-    }  // for(fileIter = fileStartIter; fileIter != fileEndIter; ++fileIter)
+    }  // for(unsigned int fileIdx = fileStartIdx; fileIdx < fileStopIdx; fileIdx++)
 
     outputFile.close();
 
-    }  // for(iter = data.begin(); iter != endIter; ++iter)
+    }  // for(unsigned int atmIdx = 0; atmIdx < numAtmFiles; atmIdx++)
 
     return true;
 }
