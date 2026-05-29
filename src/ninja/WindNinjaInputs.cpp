@@ -38,7 +38,6 @@ WindNinjaInputs::WindNinjaInputs()
     hSpdMemDs = NULL;
     hDirMemDs = NULL;
     hDustMemDs = NULL;
-    armySize = 1;
     vegetation = WindNinjaInputs::trees;
     initializationMethod = WindNinjaInputs::noInitializationFlag;
     inputSpeedUnits = velocityUnits::milesPerHour;
@@ -70,7 +69,6 @@ WindNinjaInputs::WindNinjaInputs()
     googVectorScale = false;
     googUseConsistentColorScale = false;
 
-    writeAtmFile = false;
     googSpeedScaling = KmlVector::equal_interval;
     googLineWidth = 1.0;
     wxModelGoogOutFlag = false;
@@ -84,9 +82,16 @@ WindNinjaInputs::WindNinjaInputs()
     asciiProjOutFlag = false;
     asciiGeogOutFlag = false;
     asciiUvOutFlag = false;
-    
+
+    geoTiffOutFlag = false;
+    geoTiffFile = "!set";
+    geoTiffResolution = -1.0;
+    geoTiffUnits = lengthUnits::meters;
+
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
+    wxModelGeoTiffOutFlag = false;
+    wxModelGeoTiffFile = "!set";
     txtOutFlag = false;
     volVTKOutFlag = false;
     kmlFile = "!set";
@@ -101,14 +106,12 @@ WindNinjaInputs::WindNinjaInputs()
     wxModelDbfFile = "!set";
     shpResolution = -1.0;
     shpUnits = lengthUnits::meters;
-    cldFile = "!set";
     velFile = "!set";
-    wxModelCldFile = "!set";
     wxModelVelFile = "!set";
     velResolution = -1.0;
     velOutputFileDistanceUnits = lengthUnits::meters;
     angFile = "!set";
-    atmFile = "!set";
+    atmOutFlag = false;
     wxModelAngFile = "!set";
     angResolution = -1.0;
     angOutputFileDistanceUnits = lengthUnits::meters;
@@ -147,7 +150,6 @@ WindNinjaInputs::WindNinjaInputs()
     dustFlag = false;
     dustFile = "!set";
     ustarFile = "!set";
-    geotiffOutFlag = false;
 #endif
 #ifdef NINJAFOAM
     nIterations = 1000;
@@ -192,7 +194,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 
     inputsRunNumber = rhs.inputsRunNumber;
 
-    armySize = rhs.armySize;
     hSpdMemDs = rhs.hSpdMemDs;
     hDirMemDs = rhs.hDirMemDs;
     hDustMemDs = rhs.hDustMemDs;
@@ -228,8 +229,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     dustFlag = rhs.dustFlag;
     dustFilename = rhs.dustFilename;
     dustFileOut = rhs.dustFileOut;
-    geotiffOutFlag = rhs.geotiffOutFlag;
-    geotiffOutFilename = rhs.geotiffOutFilename;
     dustFile = rhs.dustFile;
     ustarFile = rhs.ustarFile;
 #endif
@@ -270,7 +269,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     longitude = rhs.longitude;
     numberCPUs = rhs.numberCPUs;
     outputBufferClipping = rhs.outputBufferClipping;
-    writeAtmFile = rhs.writeAtmFile;
     googOutFlag = rhs.googOutFlag;
     googSpeedScaling = rhs.googSpeedScaling;
     googLineWidth = rhs.googLineWidth;
@@ -289,8 +287,15 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     asciiGeogOutFlag = rhs.asciiGeogOutFlag;
     asciiUvOutFlag = rhs.asciiUvOutFlag;
 
+    geoTiffOutFlag = rhs.geoTiffOutFlag;
+    geoTiffFile = rhs.geoTiffFile;
+    geoTiffResolution = rhs.geoTiffResolution;
+    geoTiffUnits = rhs.geoTiffUnits;
+
     wxModelShpOutFlag = rhs.wxModelShpOutFlag;
     wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
+    wxModelGeoTiffOutFlag = rhs.wxModelGeoTiffOutFlag;
+    wxModelGeoTiffFile = rhs.wxModelGeoTiffFile;
     txtOutFlag = rhs.txtOutFlag;
     volVTKOutFlag = rhs.volVTKOutFlag;
     kmlFile = rhs.kmlFile;
@@ -315,14 +320,12 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     pdfWidth = rhs.pdfWidth;
     pdfHeight = rhs.pdfHeight;
     pdfDPI = rhs.pdfDPI;
-    cldFile = rhs.cldFile;
     velFile = rhs.velFile;
-    wxModelCldFile = rhs.wxModelCldFile;
     wxModelVelFile = rhs.wxModelVelFile;
     velResolution = rhs.velResolution;
     velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
     angFile = rhs.angFile;
-    atmFile = rhs.atmFile;
+    atmOutFlag = rhs.atmOutFlag;
     wxModelAngFile = rhs.wxModelAngFile;
     angResolution = rhs.angResolution;
     angOutputFileDistanceUnits = rhs.angOutputFileDistanceUnits;
@@ -407,7 +410,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 
       inputsRunNumber = rhs.inputsRunNumber;
 
-      armySize = rhs.armySize;
       hSpdMemDs = rhs.hSpdMemDs;
       hDirMemDs = rhs.hDirMemDs;
       hDustMemDs = rhs.hDustMemDs;
@@ -443,8 +445,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       dustFlag = rhs.dustFlag;
       dustFilename = rhs.dustFilename;
       dustFileOut = rhs.dustFileOut;
-      geotiffOutFlag = rhs.geotiffOutFlag;
-      geotiffOutFilename = rhs.geotiffOutFilename;
       dustFile = rhs.dustFile;
       ustarFile = rhs.ustarFile;
 #endif
@@ -485,7 +485,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       longitude = rhs.longitude;
       numberCPUs = rhs.numberCPUs;
       outputBufferClipping = rhs.outputBufferClipping;
-      writeAtmFile = rhs.writeAtmFile;
       googOutFlag = rhs.googOutFlag;
       googSpeedScaling = rhs.googSpeedScaling;
       googLineWidth = rhs.googLineWidth;
@@ -504,8 +503,15 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       asciiGeogOutFlag = rhs.asciiGeogOutFlag;
       asciiUvOutFlag = rhs.asciiUvOutFlag;
 
+      geoTiffOutFlag = rhs.geoTiffOutFlag;
+      geoTiffFile = rhs.geoTiffFile;
+      geoTiffResolution = rhs.geoTiffResolution;
+      geoTiffUnits = rhs.geoTiffUnits;
+
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
+      wxModelGeoTiffOutFlag = rhs.wxModelGeoTiffOutFlag;
+      wxModelGeoTiffFile = rhs.wxModelGeoTiffFile;
       txtOutFlag = rhs.txtOutFlag;
       volVTKOutFlag = rhs.volVTKOutFlag;
       kmlFile = rhs.kmlFile;
@@ -530,14 +536,12 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       pdfWidth = rhs.pdfWidth;
       pdfHeight = rhs.pdfHeight;
       pdfDPI = rhs.pdfDPI;
-      cldFile = rhs.cldFile;
       velFile = rhs.velFile;
-      wxModelCldFile = rhs.wxModelCldFile;
       wxModelVelFile = rhs.wxModelVelFile;
       velResolution = rhs.velResolution;
       velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
       angFile = rhs.angFile;
-      atmFile = rhs.atmFile;
+      atmOutFlag = rhs.atmOutFlag;
       wxModelAngFile = rhs.wxModelAngFile;
       angResolution = rhs.angResolution;
       angOutputFileDistanceUnits = rhs.angOutputFileDistanceUnits;

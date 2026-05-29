@@ -1842,6 +1842,34 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
 }
 
 /**
+ * \brief Set the flag to write the weather model winds used for initialzation as
+ *        a geotiff file.
+ *
+ * \note Only valid if wxModelInitialization is used.
+ *
+ * \see NinjaSetInitializationMethod
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not the weather model winds will be
+ *             written as a raster file (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGeoTiffOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setWxModelGeoTiffOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
  * \brief Set the flag to write Google Earth output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
@@ -2119,33 +2147,75 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiResolution
 }
 
 /**
- * \brief Set the resolution of the raster output for a simulation.
- *
- * \note Only valid if NinjaSetAsciiOutFlag is set to 1.
+ * \brief Set the flag to write geoTiff output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
- * \param flag That flag that determines whether to write the .atm file.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not geoTiff output will be written (0 = no, 1 = yes).
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
-    ( NinjaArmyH * army, bool flag, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
-    if( NULL != army)
+    if( NULL != army )
     {
-        try
-        {
-            reinterpret_cast<ninjaArmy*>(army)->set_writeFarsiteAtmFile(flag);
-            return NINJA_SUCCESS;
-        }
-        catch (const std::exception& e)
-        {
-            return NINJA_E_OTHER;
-        }
+        return reinterpret_cast<ninjaArmy*>( army )->setGeoTiffOutFlag( nIndex, flag );
     }
     else
     {
-        return 1;
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the resolution of the geotiff output for a simulation.
+ *
+ * \note Only valid if NinjaSetGeoTiffOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the output.
+ * \param units The units of the output resolution ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffResolution
+    ( NinjaArmyH * army, const int nIndex, const double resolution,
+      const char * units, char ** papszOptions )
+{
+    if( NULL != army && NULL != units )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setGeoTiffResolution
+            ( nIndex, resolution, units );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the flag to write atm file output for a simulation.
+ *
+ * \note Only valid if NinjaSetAsciiOutFlag or NinjaSetGeoTiffOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag that determines whether to write the .atm file.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetAtmOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions)
+{
+    if( NULL != army)
+    {
+        return reinterpret_cast<ninjaArmy*>(army)->setAtmOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
     }
 }
 

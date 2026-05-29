@@ -93,7 +93,6 @@
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "element.h"
-#include "farsiteAtm.h"
 #include "OutputWriter.h"
 
 #ifndef Q_MOC_RUN
@@ -181,8 +180,7 @@ public:
     void importGeoTIFF(GDALDataset*);
     void setSurfaceGrids();
 
-    void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 
-    void setArmySize(int n);
+    void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
     void set_DEM(std::string dem_file_name);		//Sets elevation filename (Should be in units of meters!)
     void set_DEM(const double* dem, const int nXSize, const int nYSize, const double* geoRef,
                  std::string prj);
@@ -269,9 +267,6 @@ public:
     void set_dustFlag(bool flag);
     void computeDustEmissions();
     const std::string get_DustFileName() const; //returns the name of the dust file name
-    const std::string get_GeotiffFileName() const; //returns the name of the geotiff file name
-    void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
-    void set_geotiffOutFlag(bool flag);
 #endif
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
@@ -295,7 +290,6 @@ public:
 
     const std::string get_VelFileName() const; //returns the name of the velocity file name
     const std::string get_AngFileName() const; //returns the name of the ang output file
-    const std::string get_CldFileName() const; //returns the name of the cld output file
 
     //kyle set postion
     bool set_position();
@@ -319,7 +313,6 @@ public:
     double * get_v();
     double * get_w();
     void set_outputBufferClipping(double percent);
-    void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
 
     void set_googColor(std::string scheme,bool scaling);
@@ -341,6 +334,10 @@ public:
     void set_asciiProjOutFlag(bool flag);
     void set_asciiGeogOutFlag(bool flag);
     void set_asciiUvOutFlag(bool flag);
+    void set_wxModelGeoTiffOutFlag(bool flag);
+    void set_geoTiffOutFlag(bool flag);
+    void set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits units);
+    void set_atmOutFlag(bool flag);
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
@@ -370,7 +367,7 @@ public:
 protected:
     void checkCancel();
     void write_compare_output();
-    void writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
+    void writeAsciiOutputFiles(AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 
 private:
 

@@ -33,7 +33,6 @@
 *
 */
 ninjaArmy::ninjaArmy()
-: writeFarsiteAtmFile(false)
 {
     Com = new ninjaComClass();
     Com->runNumber = 9999;
@@ -52,7 +51,6 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
     Com = new ninjaComClass(*A.Com);
 
-    writeFarsiteAtmFile = A.writeFarsiteAtmFile;
     ninjas = A.ninjas;
     copyLocalData( A );
 }
@@ -85,7 +83,6 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
         Com = new ninjaComClass();
         *Com = *A.Com;
 
-        writeFarsiteAtmFile = A.writeFarsiteAtmFile;
         ninjas = A.ninjas;
         copyLocalData( A );
     }
@@ -263,116 +260,57 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
     wxModelInitialization* model;
-    
-    tz = timeZone;
-    
-    //for a list of paths forecast files
-    if( strstr( forecastFilename.c_str(), ".csv" ) ){
-        FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
-        if(fcastList == NULL){
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Forecast list %s cannot be opened.", forecastFilename.c_str());
-            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() + std::string(" cannot be opened."));
-        }
-        while(1){
-            const char* f = CPLReadLine(fcastList);
-            if(f == NULL){
-                break;
-            }
-            wxList.push_back(f);
-        }
-        VSIFClose(fcastList);
-        
-        model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
-        
-        ninjas.resize(wxList.size());
-        
-        for(unsigned int i = 0; i < wxList.size(); i++)
-        {
-#ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
-            }
-            else{
-                 ninjas[i] = new ninja();
-            }
-#else
-            ninjas[i] = new ninja();
-#endif //NINJAFOAM
 
-            setNinjaCommunication( i, i );
-        }
-        
-        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-        
-        for(unsigned int i = 0; i < wxList.size(); i++)
-        {
-            ninjas[i]->set_date_time(timeList[0]);
-            ninjas[i]->set_wxModelFilename(wxList[i]);
-            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-            ninjas[i]->setArmySize(wxList.size());
-        }       
-        delete model;
+    model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
+
+    try
+    {
+        model->checkForValidData();
     }
-    
-    //Factory function that identifies the type of forecast file and makes appropriate class.
-    else{
-        model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
-
-        try
-        {
-            model->checkForValidData();
-        }
-        catch(armyException &e)
-        {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
-            throw;
-        }
-        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-        if(times.size() > 0) {
-          timeList = times;
-        }
-        ninjas.resize(timeList.size());
-        //reallocate ninjas after resizing
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        {
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
+        throw;
+    }
+    std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+    if(times.size() > 0) {
+      timeList = times;
+    }
+    ninjas.resize(timeList.size());
+    //reallocate ninjas after resizing
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    {
 #ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
-            }
-            else{
-                 ninjas[i] = new ninja();
-            }
+        if(momentumFlag == true){
+            ninjas[i] = new NinjaFoam();
+        }
+        else{
+             ninjas[i] = new ninja();
+        }
 #else
-            ninjas[i] = new ninja();
+        ninjas[i] = new ninja();
 #endif
 
-            setNinjaCommunication( i, i );
-        }
-
-
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        //int i = 0;
-        //FOR_EVERY( iter_ninja, ninjas )
-        {
-            ninjas[i]->set_date_time(timeList[i]);
-            ninjas[i]->set_wxModelFilename(forecastFilename);
-            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-
-            /*iter_ninja->set_date_time( timeList[i] );
-            iter_ninja->set_wxModelFilename( forecastFilename );
-            iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
-            iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
-            i++;*/
-        }
-        delete model;
+        setNinjaCommunication( i, i );
     }
-}
 
-void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
-{
-    writeFarsiteAtmFile = flag;
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    //int i = 0;
+    //FOR_EVERY( iter_ninja, ninjas )
+    {
+        ninjas[i]->set_date_time(timeList[i]);
+        ninjas[i]->set_wxModelFilename(forecastFilename);
+        ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
+        ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+
+        /*iter_ninja->set_date_time( timeList[i] );
+        iter_ninja->set_wxModelFilename( forecastFilename );
+        iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
+        iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
+        i++;*/
+    }
+
+    delete model;
 }
 
 /**
@@ -431,8 +369,8 @@ bool ninjaArmy::startRuns(int numProcessors)
     //omp_set_dynamic(true);
 #endif
 
-    setAtmFlags();
-   //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
+    //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
+
     /*
     ** Download a color relief file as the temp file allocated in
     ** initLocalData().  If we fail, clean up properly so we can save a
@@ -555,6 +493,50 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
+    hSpdMemDS = NULL;
+    hDirMemDS = NULL;
+    hDustMemDS = NULL;
+//    if(ninjas[0]->input.geoTiffOutFlag == true)
+//    {
+//        //create MEM datasets for GTiff output writer
+//        ninjas[0]->readInputFile();
+//        ninjas[0]->set_position();
+//        ninjas[0]->set_uniVegetation();
+//        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
+//
+//        int nXSize = ninjas[0]->input.dem.get_nCols();
+//        int nYSize = ninjas[0]->input.dem.get_nRows();
+//
+//        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
+//
+//        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+//        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+//        #ifdef EMISSIONS
+//        if(ninjas[0]->input.dustFlag == true)
+//        {
+//            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
+//        }
+//        #endif
+//
+//        //need the startTime already preset in the datasets, in case ninjas[0] doesn't run first
+//        if(!ninjas[0]->input.ninjaTime.is_not_a_date_time())
+//        {
+//            std::string ninjaTimeStr = boost::lexical_cast<std::string>(ninjas[0]->input.ninjaTime);
+//            GDALSetMetadataItem(hSpdMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+//            GDALSetMetadataItem(hDirMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+//            #ifdef EMISSIONS
+//            if(ninjas[0]->input.dustFlag == true)
+//            {
+//                GDALSetMetadataItem(hDustMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
+//            }
+//            #endif
+//        }
+//    }
+
+    // prep/reset the stored atmosphere file data, to be filled before ninjas[i] gets deleted after each run
+    // also used to set the size of the outputs, to better handle multi-threading
+    atmosphere.reset(ninjas.size());
+
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
     kmzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
@@ -565,6 +547,12 @@ bool ninjaArmy::startRuns(int numProcessors)
         //set number of threads for the run
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
+
+//            //set in-memory datasets for multi-band GTiff output writer
+//            if(ninjas[0]->input.geoTiffOutFlag == true)
+//            {
+//                ninjas[0]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+//            }
 
             if ((ninjas[0]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
             {
@@ -612,16 +600,35 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //set filenames for atm file writing
                 ninjas[0]->input.velFile = diurnal_ninja->get_VelFileName();
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
-                ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
+                ninjas[0]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
                 //set kmzFile for setRunKmzFilenames(), for the GUI
                 ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
-            } 
+            }
 #endif //NINJAFOAM            
 
+            //store data for atmosphere file
+            if(ninjas[0]->input.atmOutFlag)
+            {
+                if(ninjas[0]->input.geoTiffOutFlag == true)
+                {
+                    std::string velGeoTiffFile = ninjas[0]->input.geoTiffFile;
+                    std::string angGeoTiffFile = ninjas[0]->input.geoTiffFile;
+                    velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                    angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                    atmosphere.push(0, ninjas[0]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
+                }
+                else
+                {
+                    atmosphere.push(0, ninjas[0]->get_date_time(), ninjas[0]->get_VelFileName(), ninjas[0]->get_AngFileName());
+                }
+            }
+
             //write farsite atmosphere file
-            if(writeFarsiteAtmFile)
+            if(ninjas[0]->input.atmOutFlag)
+            {
                 writeFarsiteAtmosphereFile();
+            }
 
             //setup the run kmz filenames, for C-API calls
             setCurrentRunKmzFilenames(0);
@@ -659,6 +666,12 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
+
+//                //set in-memory datasets for multi-band GTiff output writer
+//                if(ninjas[i]->input.geoTiffOutFlag == true)
+//                {
+//                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+//                }
 
                 if((ninjas[i]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
                 {
@@ -705,16 +718,27 @@ bool ninjaArmy::startRuns(int numProcessors)
                     //set filenames for atm file writing
                     ninjas[i]->input.velFile = diurnal_ninja->get_VelFileName();
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
-                    ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
+                    ninjas[i]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
                     //set kmzFile for setRunKmzFilenames(), for the GUI
                     ninjas[i]->input.kmzFile = diurnal_ninja->input.kmzFile;
-                } 
+                }
+
                 //store data for atmosphere file
-                if(writeFarsiteAtmFile)
+                if(ninjas[i]->input.atmOutFlag)
                 {
-                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                    if(ninjas[i]->input.geoTiffOutFlag == true)
+                    {
+                        std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                        angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
+                    }
+                    else
+                    {
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName());
+                    }
                 }
 
                 //setup the run kmz filenames, for C-API calls
@@ -752,9 +776,10 @@ bool ninjaArmy::startRuns(int numProcessors)
         }
         try{
             //write farsite atmosphere file
-            if(writeFarsiteAtmFile)
+            if(ninjas[0]->input.atmOutFlag)
+            {
                 writeFarsiteAtmosphereFile();
-
+            }
         }catch (bad_alloc& e)
         {
             ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
@@ -795,22 +820,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         std::vector<int> anErrors( numProcessors);
         std::vector<std::string>asMessages( numProcessors );
         
-        std::vector<boost::local_time::local_date_time> timeList; 
-     
-        //create MEM datasets for GTiff output writer
-        ninjas[0]->readInputFile();
-        ninjas[0]->set_position();
-        ninjas[0]->set_uniVegetation();
-        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
-        
-        int nXSize = ninjas[0]->input.dem.get_nCols(); //57; 
-        int nYSize = ninjas[0]->input.dem.get_nRows(); //70; 
-    
-        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
-        
-        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
-        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
-        hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
+        std::vector<boost::local_time::local_date_time> timeList;
 
 	#pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
@@ -818,30 +828,30 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             try
             {
-                //list of paths to forecast files, possibly in various zip archives
-                if( wxList.size() > 1 )
-                {
-                    wxModelInitialization* model;
-                    model = wxModelInitializationFactory::makeWxInitialization(wxList[i]); 
-                
-                    timeList = model->getTimeList(tz);
-                    ninjas[i]->set_date_time(timeList[0]);
-                    ninjas[i]->set_wxModelFilename( wxList[i] );
-                    ninjas[i]->set_date_time( timeList[0] );
-                    //set in-memory datasets for GTiff output writer
-                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS); 
-                    
-                    delete model;
-                }
+//                //set in-memory datasets for multi-band GTiff output writer
+//                if(ninjas[i]->input.geoTiffOutFlag == true)
+//                {
+//                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
+//                }
 
                 //start the run
                 ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
 
                 //store data for atmosphere file
-                if(writeFarsiteAtmFile)
+                if(ninjas[i]->input.atmOutFlag)
                 {
-                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                    if(ninjas[i]->input.geoTiffOutFlag == true)
+                    {
+                        std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                        angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
+                    }
+                    else
+                    {
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName());
+                    }
                 }
 
                 //setup the run kmz filenames, for C-API calls
@@ -933,9 +943,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
         try{
             //write farsite atmosphere file
-            if(writeFarsiteAtmFile)
+            if(ninjas[0]->input.atmOutFlag)
+            {
                 writeFarsiteAtmosphereFile();
-
+            }
         }catch (bad_alloc& e)
         {
             ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
@@ -960,6 +971,33 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     try{
+//        // finalize the multi-band gtiff dataset and close the inMem datasets
+//        if(ninjas[0]->input.geoTiffOutFlag == true)
+//        {
+//            OutputWriter output;
+//            output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
+//
+//            output.finalizeWriteGtiff(ninjas[0]->input.geoTiffFile);
+//
+//            if(hSpdMemDS != NULL)
+//            {
+//                GDALClose(hSpdMemDS);
+//                hSpdMemDS = NULL;
+//            }
+//            if(hDirMemDS != NULL)
+//            {
+//                GDALClose(hDirMemDS);
+//                hDirMemDS = NULL;
+//            }
+//            #ifdef EMISSIONS
+//            if(hDustMemDS != NULL)
+//            {
+//                GDALClose(hDustMemDS);
+//                hDustMemDS = NULL;
+//            }
+//            #endif
+//        }
+
         //write consistent color scale outputs
         if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScale == true)
         {
@@ -1138,8 +1176,6 @@ bool ninjaArmy::startFirstRun()
 {
     bool status = true;
 
-    setAtmFlags();
-
     //set number of threads for the run
     ninjas[0]->set_numberCPUs(1);
     try
@@ -1182,64 +1218,23 @@ bool ninjaArmy::startFirstRun()
 /**
  * @brief write the atm file
  *
- * Write one or more atm files if needed.
- * @see setAtmFlag
+ * if wxModelInitialization or pointInitialization, make one .atm with all runs (times) listed,
+ * if domainAverageInitialization, make a separate .atm file for each and every single run.
  */
 void ninjaArmy::writeFarsiteAtmosphereFile()
 {
-    if(writeFarsiteAtmFile)
+    if(ninjas[0]->input.atmOutFlag)
     {
-        //If wxModelInitialization or pointInitialization, make one .atm with all runs (times) listed,
-        //else the setAtmFlags() function has already set each ninja to write their own atm file,
-        //so don't do it here!
         if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag ||
-           (ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && ninjas.size() > 1))
+           ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag)
         {
-            //Set directory path from first ninja's velocity file
-            std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
-
-            //Get filename from first ninja's velFile
-            std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
-            int stringPos = fileroot.find_last_of('_');
-            if(stringPos > 0)
-            {
-                fileroot.erase(stringPos);
-            } else
-            {
-                throw std::runtime_error("Problem writing FARSITE atmosphere file.  The ninja ASCII velocity filename appears to be malformed.");
-            }
-
-            //Form atm filename
-            std::string filename( CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm") );
-
-            //Write atm file
-            atmosphere.writeAtmFile(filename, ninjas[0]->get_outputSpeedUnits(),
-                                              ninjas[0]->get_outputWindHeight() );
+            bool writeSeparateAtmFiles = false;
+            atmosphere.writeAtmFile(writeSeparateAtmFiles, ninjas[0]->get_outputSpeedUnits(), ninjas[0]->get_outputWindHeight());
         }
-    }
-}
-
-/**
- * @brief Determine what type of atm file to write.
- *
- * If the run is a weather model run, we only need to write one atm file for
- * all of the output files.  This atm file will be named after the *first*
- * run of all the runs.
- */
-void ninjaArmy::setAtmFlags()
-{
-    if(writeFarsiteAtmFile)
-    {
-        //if it's not a weather model or point run, set all ninja's atm write flags
-        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag) &&
-           !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && 
-               ninjas.size() > 1))
+        else
         {
-            //FOR_EVERY( ninja, ninjas )
-            for(unsigned int i = 0; i < ninjas.size(); i++)
-            {
-                ninjas[i]->set_writeAtmFile(true);
-            }
+            bool writeSeparateAtmFiles = true;
+            atmosphere.writeAtmFile(writeSeparateAtmFiles, ninjas[0]->get_outputSpeedUnits(), ninjas[0]->get_outputWindHeight());
         }
     }
 }
@@ -1653,17 +1648,6 @@ int ninjaArmy::setDustFilename( const int nIndex, const std::string filename,
 int ninjaArmy::setDustFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFlag( flag ) );
-}
-
-int ninjaArmy::setGeotiffOutFilename( const int nIndex, const std::string filename,
-                                char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFilename( filename ) );
-}
-
-int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
 }
 #endif //EMISSIONS
 
@@ -2409,6 +2393,11 @@ int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char *
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
+int ninjaArmy::setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_wxModelGeoTiffOutFlag( flag ) );
+}
 int ninjaArmy::setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
@@ -2549,15 +2538,12 @@ int ninjaArmy::setAsciiUvOutFlag( const int nIndex, const bool flag, char ** pap
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUvOutFlag( flag ) );
 }
-
-
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_asciiResolution( resolution, units ) );
 }
-
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                                    std::string units, char ** papszOptions )
 {
@@ -2578,6 +2564,41 @@ int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
        }
    }
    return retval;
+}
+int ninjaArmy::setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geoTiffOutFlag( flag ) );
+}
+int ninjaArmy::setGeoTiffResolution( const int nIndex, const double resolution,
+                                     const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_geoTiffResolution( resolution, units ) );
+}
+int ninjaArmy::setGeoTiffResolution( const int nIndex, const double resolution,
+                                     std::string units, char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        //Parse units so it contains only lowercase letters
+        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+        try
+        {
+            ninjas[ nIndex ]->set_geoTiffResolution( resolution, lengthUnits::getUnit( units ) );
+            retval = NINJA_SUCCESS;
+        }
+        catch( std::logic_error &e )
+        {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
+}
+int ninjaArmy::setAtmOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_atmOutFlag( flag ) );
 }
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2676,7 +2697,6 @@ int ninjaArmy::getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, st
 void ninjaArmy::reset()
 {
     ninjas.clear();
-    writeFarsiteAtmFile = false;
 }
 
 void ninjaArmy::cancel()

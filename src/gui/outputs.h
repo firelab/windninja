@@ -16,26 +16,35 @@ public:
 
 signals:
     void updateGoogleState();
-    void updateFireBehaviorState();
+    void updateFireBehaviorAsciiState();
+    void updateFireBehaviorGeoTiffState();
     void updateShapeState();
     void updatePDFState();
     void updateVTKState();
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
+    void windHeightSpinBoxValueChanged();
+    void windHeightUnitsComboBoxCurrentIndexChanged();
+    void windSpeedUnitsComboBoxCurrentIndexChanged();
     void googleEarthCheckBoxToggled();
-    void fireBehaviorGroupBoxToggled();
+    void fireBehaviorAsciiGroupBoxToggled();
+    void fireBehaviorAsciiAtmFileCheckBoxClicked();
+    void fireBehaviorGeoTiffGroupBoxToggled();
+    void fireBehaviorGeoTiffAtmFileCheckBoxClicked();
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
     void VTKFilesCheckBoxClicked();
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
-    void fireBehaviorMeshResolutionGroupBoxToggled(bool checked);
+    void fireBehaviorAsciiMeshResolutionGroupBoxToggled(bool checked);
+    void fireBehaviorGeoTiffMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
     void meshResolutionSpinBoxValueChanged(double value);
     void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
     void googleEarthMeshResolutionSpinBoxValueChanged();
-    void fireBehaviorMeshResolutionSpinBoxValueChanged();
+    void fireBehaviorAsciiMeshResolutionSpinBoxValueChanged();
+    void fireBehaviorGeoTiffMeshResolutionSpinBoxValueChanged();
     void shapeFilesMeshResolutionSpinBoxValueChanged();
     void geospatialPDFFilesMeshResolutionSpinBoxValueChanged();
 

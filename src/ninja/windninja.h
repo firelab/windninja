@@ -326,6 +326,9 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGeoTiffOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
@@ -365,8 +368,15 @@ typedef int  NinjaErr;
         ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
           const char * units, char ** options );
 
-    WINDNINJADLL_EXPORT NinjaErr NinjaSetAsciiAtmFile
-        ( NinjaArmyH * army, bool flag, char ** papszOptions);
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetGeoTiffResolution
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
+          const char * units, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetAtmOutFlag
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );
 
     WINDNINJADLL_EXPORT NinjaErr NinjaSetVtkOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** papszOptions );

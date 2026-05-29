@@ -2795,7 +2795,7 @@ void ninja::computeDustEmissions()
 }
 #endif //EMISISONS
 
-void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
+void ninja::writeAsciiOutputFiles(AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid)
 {
     AsciiGrid<double> uGrid;
     AsciiGrid<double> vGrid;
@@ -2803,7 +2803,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     AsciiGrid<double> vGrid_latlon;
     AsciiGrid<double> velGrid_latlon;
     AsciiGrid<double> angGrid_latlon;
-    AsciiGrid<double> cldGrid_latlon;
 
     // fill the u,v grids, for uv output in dem projection coordinates, or for warping to geographic coordinates
     // always warp u,v NOT angGrid, to avoid angle interpolation issues with gdal
@@ -2826,7 +2825,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     {
         GDALDatasetH uGrid_hDS = uGrid.ascii2GDAL();
         GDALDatasetH vGrid_hDS = vGrid.ascii2GDAL();
-        GDALDatasetH cldGrid_hDS = cldGrid.ascii2GDAL();
 
         // no need to calculate the coordinateTransformAngle FROM projected TO geographic, already have the angleFromNorth value
         // still need the pszDstWkt for warping the datasets though
@@ -2839,7 +2837,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
         GDALDatasetH uGrid_hVrtDS;
         GDALDatasetH vGrid_hVrtDS;
-        GDALDatasetH cldGrid_hVrtDS;
 
         // warp the u and v grids FROM dem projection coordinates TO geographic coordinates
         if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( uGrid_hDS, 1, uGrid_hVrtDS, pszDstWkt ))
@@ -2850,14 +2847,9 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         {
             throw std::runtime_error("Could not warp the output velocity and angle grids (vGrid).");
         }
-        if(!GDALWarpToWKT_GDALAutoCreateWarpedVRT( cldGrid_hDS, 1, cldGrid_hVrtDS, pszDstWkt ))
-        {
-            throw std::runtime_error("Could not warp the output cloud grid.");
-        }
 
         GDAL2AsciiGrid( (GDALDataset*)uGrid_hVrtDS, 1, uGrid_latlon );
         GDAL2AsciiGrid( (GDALDataset*)vGrid_hVrtDS, 1, vGrid_latlon );
-        GDAL2AsciiGrid( (GDALDataset*)cldGrid_hVrtDS, 1, cldGrid_latlon );
 
         // attempt to crop NO_DATA off the warped datasets before continuing on, if required
         int asciiOutputNoDataCropThreshold = 0;
@@ -2876,10 +2868,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
             if(!vGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
             {
                 std::cerr << "failed to crop the warped output velocity and angle grids (vGrid)." << std::endl;
-            }
-            if(!cldGrid_latlon.crop_noData(asciiOutputNoDataCropThreshold))
-            {
-                std::cerr << "warning, failed to crop the warped output cloud grid." << std::endl;
             }
         }
 
@@ -2906,7 +2894,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
         }
 
         // close the gdal datasets
-        GDALClose(cldGrid_hVrtDS);
         GDALClose(uGrid_hVrtDS);
         GDALClose(vGrid_hVrtDS);
         GDALClose(uGrid_hDS);
@@ -2919,7 +2906,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
     if (input.asciiAaigridOutFlag) {
         if (input.asciiProjOutFlag) {
-            cldGrid.write_Grid( input.cldFile.c_str(), 1);
             angGrid.write_Grid( input.angFile.c_str(), 0);
             velGrid.write_Grid( input.velFile.c_str(), 2);
             if (input.asciiUvOutFlag) {
@@ -2928,7 +2914,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
             }
         }
         if (input.asciiGeogOutFlag){
-            cldGrid_latlon.write_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 1);
             angGrid_latlon.write_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 0);
             velGrid_latlon.write_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.([^.]+$)", "-4326.$1"), 2);
             if (input.asciiUvOutFlag) {
@@ -2940,7 +2925,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
 
     if (input.asciiJsonOutFlag) {
         if (input.asciiProjOutFlag) {
-            cldGrid.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", ".json"), 1);
             angGrid.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", ".json"), 0);
             velGrid.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", ".json"), 2);
             if (input.asciiUvOutFlag) {
@@ -2949,7 +2933,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
             }
         }
         if (input.asciiGeogOutFlag){
-            cldGrid_latlon.write_json_Grid( derived_pathname( input.cldFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 1);
             angGrid_latlon.write_json_Grid( derived_pathname( input.angFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 0);
             velGrid_latlon.write_json_Grid( derived_pathname( input.velFile.c_str(), NULL, "\\.[^.]+$", "-4326.json"), 2);
             if (input.asciiUvOutFlag) {
@@ -2960,7 +2943,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& cldGrid, AsciiGrid<double>&
     }
 
     // cleanup the finished use ascii grids
-    cldGrid_latlon.deallocate();
     velGrid_latlon.deallocate();
     angGrid_latlon.deallocate();
     uGrid_latlon.deallocate();
@@ -3010,7 +2992,7 @@ void ninja::writeOutputFiles()
 	#pragma omp parallel sections
 	{
 
-	//write FARSITE files
+	//write fire behavior ascii files, the .atm file is written in ninjaArmy
 	#pragma omp section
 	{
 	try{
@@ -3023,12 +3005,9 @@ void ninja::writeOutputFiles()
                     angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
                     velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                    AsciiGrid<double> tempCloud(CloudGrid);
-                    tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
-
                     // if output clipping was set by the user, don't buffer to overlap the DEM
                     // but only if writing atm file for farsite grids
-                    if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                    if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
                     {
                         //ensure grids cover original DEM extents for FARSITE
                         AsciiGrid<double> demGrid;
@@ -3040,12 +3019,11 @@ void ninja::writeOutputFiles()
                                     "Problem reading DEM during output writing." );
                         }
                         GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                        tempCloud.BufferToOverlapGrid(demGrid);
                         angTempGrid->BufferToOverlapGrid(demGrid);
                         velTempGrid->BufferToOverlapGrid(demGrid);
                     }
 
-                    writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
+                    writeAsciiOutputFiles(*angTempGrid, *velTempGrid);
 
 #ifdef FRICTION_VELOCITY
                     if(input.frictionVelocityFlag == 1){
@@ -3089,14 +3067,6 @@ void ninja::writeOutputFiles()
                             delete velTempGrid;
                             velTempGrid=NULL;
                     }
-
-                    //Write .atm file for this run.  Only has one time value in file.
-                    if(input.writeAtmFile)
-                    {
-                        farsiteAtm atmosphere;
-                        atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-                        atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-                    }
 		}
 	}catch (exception& e)
 	{
@@ -3107,6 +3077,103 @@ void ninja::writeOutputFiles()
 	}
 
 	}//end omp section
+
+    //write fire behavior geotiff files, the .atm file is written in ninjaArmy
+    #pragma omp section
+    {
+        try{
+            if(input.geoTiffOutFlag)
+            {
+                AsciiGrid<double> *velTempGrid, *angTempGrid;
+                velTempGrid=NULL;
+                angTempGrid=NULL;
+
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+
+                // if output clipping was set by the user, don't buffer to overlap the DEM
+                // but only if writing atm file for farsite grids
+                if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
+                {
+                    //ensure grids cover original DEM extents for FARSITE
+                    AsciiGrid<double> demGrid;
+                    GDALDatasetH hDS;
+                    hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                    if( hDS == NULL )
+                    {
+                        input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                        "Problem reading DEM during output writing." );
+                    }
+                    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                    angTempGrid->BufferToOverlapGrid(demGrid);
+                    velTempGrid->BufferToOverlapGrid(demGrid);
+                }
+
+                std::string velGeoTiffFile = input.geoTiffFile;
+                std::string angGeoTiffFile = input.geoTiffFile;
+                velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                velTempGrid->exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
+                angTempGrid->exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
+
+                #ifdef FRICTION_VELOCITY
+                if(input.frictionVelocityFlag == 1)
+                {
+                    AsciiGrid<double> *ustarTempGrid;
+                    ustarTempGrid=NULL;
+
+                    ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+
+                    std::string ustarGeoTiffFile = input.geoTiffFile;
+                    ustarGeoTiffFile.insert(ustarGeoTiffFile.find(".tif"), "_ustar");
+                    ustarTempGrid->exportToTiff(ustarGeoTiffFile, "ustar", "m/s");
+
+                    if(ustarTempGrid)
+                    {
+                        delete ustarTempGrid;
+                        ustarTempGrid=NULL;
+                    }
+                }
+                #endif
+                #ifdef EMISSIONS
+                if(input.dustFlag == 1)
+                {
+                    AsciiGrid<double> *dustTempGrid;
+                    dustTempGrid=NULL;
+
+                    dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+
+                    std::string dustGeoTiffFile = input.geoTiffFile;
+                    dustGeoTiffFile.insert(dustGeoTiffFile.find(".tif"), "_dust");
+                    dustTempGrid->exportToTiff(dustGeoTiffFile, "dust", "mg/(m^2*s)");  // Vertical (PM_10) dust Flux
+
+                    if(dustTempGrid)
+                    {
+                        delete dustTempGrid;
+                        dustTempGrid=NULL;
+                    }
+                }
+                #endif
+                if(angTempGrid)
+                {
+                    delete angTempGrid;
+                    angTempGrid=NULL;
+                }
+                if(velTempGrid)
+                {
+                    delete velTempGrid;
+                    velTempGrid=NULL;
+                }
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: Cannot determine exception type.");
+        }
+
+    }//end omp section
 
 
 	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
@@ -3340,41 +3407,42 @@ void ninja::writeOutputFiles()
 	}
 	} //end omp section
 
-#pragma omp section
-	{
-#ifdef EMISSIONS
-	try{
-		if(input.geotiffOutFlag==true)
-		{
-            OutputWriter output;
-            
-            output.setNinjaTime( boost::lexical_cast<std::string>(input.ninjaTime) );
-            output.setRunNumber(input.inputsRunNumber);
-            output.setMaxRunNumber(input.armySize-1);
+//#pragma omp section
+//    {
+//    try{
+//        if(input.geoTiffOutFlag==true)
+//        {
+//            OutputWriter output;
+//
+//            if(!input.ninjaTime.is_not_a_date_time())
+//            {
+//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//            }
+//            output.setRunNumber(input.inputsRunNumber);
+//
+//            output.setDirGrid(AngleGrid);
+//            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
+//
+//            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
+//
+//            #ifdef EMISSIONS
+//            if(input.dustFlag == 1)
+//            {
+//                output.setDustGrid(DustGrid);
+//            }
+//            #endif
+//            output.write(input.geoTiffFile, "GTiff");
+//        }
+//    }catch (exception& e)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
+//    }catch (...)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
+//    }
+//    } //end omp section
 
-			output.setDirGrid(AngleGrid);
-			output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-			
-			output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs);// set the in-memory datasets
-
-			
-#ifdef EMISSIONS
-			if(input.dustFlag == 1){
-                output.setDustGrid(DustGrid);
-            }
-#endif
-            output.write(input.geotiffOutFilename, "GTiff");
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
-	}
-#endif //EMISSIONS
-	} //end omp section
-	}	//end parallel sections region
+    }   //end parallel sections region
 }
 
 /**Deletes allocated dynamic memory.
@@ -3628,17 +3696,6 @@ void ninja::set_dustFileOut(std::string filename)
         input.dustFileOut = filename;
     }
 }
-void ninja::set_geotiffOutFlag(bool flag)
-{
-    input.geotiffOutFlag = flag;
-}
-void ninja::set_geotiffOutFilename(std::string filename)
-{
-    if( input.geotiffOutFlag==true )
-    {
-        input.geotiffOutFilename = filename; //if file exisits, bands are appended
-    }
-}
 #endif //EMISSIONS
 
 void ninja::set_DEM(std::string dem_file_name)
@@ -3746,10 +3803,6 @@ WindNinjaInputs::eVegetation ninja::get_eVegetationType(std::string veg)
     else{
         throw std::logic_error("Problem with vegetation string in ninja::get_vegetation().");
     }
-}
-void ninja::setArmySize(int n)
-{
-    input.armySize = n;
 }
 
 void ninja::set_stabilityFlag(bool flag)
@@ -4177,10 +4230,6 @@ const std::string ninja::get_DustFileName() const
 {
     return input.dustFile;
 }
-const std::string ninja::get_GeotiffFileName() const
-{
-    return input.geotiffOutFilename;
-}
 #endif
 #ifdef FRICTION_VELOCITY
 const std::string ninja::get_UstarFileName() const
@@ -4197,11 +4246,6 @@ const std::string ninja::get_VelFileName() const
 const std::string ninja::get_AngFileName() const
 {
     return input.angFile;
-}
-
-const std::string ninja::get_CldFileName() const
-{
-    return input.cldFile;
 }
 
 void ninja::set_inputDirection(double direction)
@@ -4795,11 +4839,6 @@ void ninja::set_outputBufferClipping(double percent)
     input.outputBufferClipping = percent;
 }
 
-void ninja::set_writeAtmFile(bool flag)
-{
-    input.writeAtmFile = flag;
-}
-
 void ninja::set_googOutFlag(bool flag)
 {
     input.googOutFlag = flag;
@@ -4965,6 +5004,26 @@ void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits uni
     input.velResolution = input.angResolution = Resolution;
 }
 
+void ninja::set_wxModelGeoTiffOutFlag(bool flag)
+{
+    input.wxModelGeoTiffOutFlag = flag;
+}
+void ninja::set_geoTiffOutFlag(bool flag)
+{
+    input.geoTiffOutFlag = flag;
+}
+void ninja::set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits units)
+{
+    input.geoTiffUnits = units;
+    lengthUnits::toBaseUnits(Resolution, units);
+
+    input.geoTiffResolution = Resolution;
+}
+void ninja::set_atmOutFlag(bool flag)
+{
+    input.atmOutFlag = flag;
+}
+
 void ninja::set_txtOutFlag(bool flag)
 {
     input.txtOutFlag = flag;
@@ -5019,13 +5078,15 @@ void ninja::set_outputFilenames(double& meshResolution,
         input.velResolution = meshResolution;
     if( input.angResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.angResolution = meshResolution;
-    if( input.pdfResolution <= 0.0 )
+    if( input.pdfResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.pdfResolution = meshResolution;
+    if( input.geoTiffResolution <= 0.0 )  //if negative, use computational mesh resolution
+        input.geoTiffResolution = meshResolution;
 
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -5106,8 +5167,9 @@ void ninja::set_outputFilenames(double& meshResolution,
     shp_mesh_units = lengthUnits::getString( input.shpUnits );
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
+    gtiff_mesh_units = lengthUnits::getString( input.geoTiffUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
         input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
@@ -5118,6 +5180,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_gtiff << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
@@ -5126,6 +5189,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp << "_point";
         os_ascii << "_point";
         os_pdf   << "_point";
+        os_gtiff << "_point";
     }
 
 
@@ -5134,18 +5198,21 @@ void ninja::set_outputFilenames(double& meshResolution,
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+    double gtiffResolutionTemp = input.geoTiffResolution;
 
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
     lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
+    lengthUnits::fromBaseUnits(gtiffResolutionTemp, input.geoTiffUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+    os_gtiff << "_" << timeAppend << (long) (gtiffResolutionTemp+0.5) << gtiff_mesh_units;
 
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
@@ -5154,6 +5221,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp   << "_alpha_" << input.alphaStability;
         os_ascii << "_alpha_" << input.alphaStability;
         os_pdf   << "_alpha_" << input.alphaStability;
+        os_gtiff << "_alpha_" << input.alphaStability;
     }
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
     {
@@ -5162,6 +5230,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_shp   << "_non_neutral_stability";
         os_ascii << "_non_neutral_stability";
         os_pdf   << "_non_neutral_stability";
+        os_gtiff << "_non_neutral_stability";
     }
 
     fileAppend = os.str();
@@ -5169,6 +5238,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+    gtiff_fileAppend = os_gtiff.str();
 
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
@@ -5181,14 +5251,15 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+    input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";
 
-    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
+    //wxModelGeoTiffFile = wxModelTimeAppend + ".kmz";
+
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
-    input.atmFile = rootFile + ascii_fileAppend + ".atm";
 
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";
@@ -5198,7 +5269,6 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.dustFile = rootFile + ascii_fileAppend + "_dust.asc";
     #endif //EMISSIONS
 
-    //wxModelCldFile = "wxModel" + wxModelTimeAppend + "_cld.asc";
     //wxModelVelFile = "wxModel" + wxModelTimeAppend + "_vel.asc";
     //wxModelAngFile = "wxModel" + wxModelTimeAppend + "_ang.asc";
 
@@ -5423,6 +5493,18 @@ void ninja::checkInputs()
         buff_str << "The output file buffer clipping is improperly set to "
                  << input.outputBufferClipping << ".  It should be 0-50 percent.";
         throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    if(input.atmOutFlag == true)
+    {
+        if(!input.asciiOutFlag && !input.geoTiffOutFlag)
+        {
+            throw std::runtime_error("atm output set without choosing 'ascii' or 'geotiff' output.");
+        }
+        else if(input.asciiOutFlag && input.geoTiffOutFlag)
+        {
+            throw std::runtime_error("only one of 'ascii' or 'geotiff' output can be set at a time for 'atm' file output.");
+        }
     }
 }
 

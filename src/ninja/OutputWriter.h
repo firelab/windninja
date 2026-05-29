@@ -89,7 +89,6 @@ class OutputWriter
         void setDEMfile(std::string fname) {demFile=fname;}
         void setNinjaTime(std::string t) {ninjaTime=t;}
         void setRunNumber(int n) {runNumber=n;}
-        void setMaxRunNumber(int n) {maxRunNumber=n;}
         void setLineWidth( const float w );
         void setDPI( const unsigned short d );
         void setSize( const double w, const double h );
@@ -98,6 +97,7 @@ class OutputWriter
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
+        bool finalizeWriteGtiff(std::string outputFilename);
 
         static const double BOTTOM_MARGIN;
         static const double TOP_MARGIN;
@@ -142,11 +142,10 @@ class OutputWriter
         AsciiGrid<double> dust;
 #endif
         int runNumber;
-        int maxRunNumber;
         GDALDatasetH hSpdMemDs;
         GDALDatasetH hDirMemDs;
         GDALDatasetH hDustMemDs;
-        
+
         std::string ninjaTime;
         double resolution;
         std::string demFile;

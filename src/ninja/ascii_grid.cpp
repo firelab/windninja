@@ -2683,26 +2683,40 @@ std::ostream &operator<<(std::ostream &out, AsciiGrid<T1> &A)
 }
 
 /**
- * Create a tiff for the ascii grid for debugging and other uses
- * This will create a grayscale tiff by default.
+ * Create a single band GeoTIFF of the ascii grid,
+ * for debugging and other uses.
+ *
+ * Output is written as a scalar value raster rather than
+ * as an RGB/RGBA or grayscale image raster.
  *
  * @param outFilename output file to write
- * @param type rgb or grayscale
- *
+ * @param dataName the name of the ascii grid data, to be used to set metadata for the gtiff.
+ * @param dataUnits the units of the ascii grid data, to be used to set metadata for the gtiff.
+ * @param type rgb or grayscale. --currently not used, was originally meant for future color table/rendering support.
  */
-
 template <class T>
-void AsciiGrid<T>::exportToTiff( std::string outFilename, tiffType type )
+void AsciiGrid<T>::exportToTiff(std::string outFilename, std::string dataName, std::string dataUnits, tiffType type)
 {
-    GDALDataset *poDS;
-    GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName( "GTiff" );
-    char** papszOptions = NULL;
-//    papszOptions = CSLAddString( papszOptions, "PROFILE=BASELINE" );
-    if( tiffDriver == NULL )
-    return;
+    (void)type;
 
-    poDS = tiffDriver->Create( outFilename.c_str(), get_nRows(), get_nCols(), 1,
-                   GDT_Float64, papszOptions );
+    GDALDataset *poDS;
+    GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    if(tiffDriver == NULL)
+    {
+        return;
+    }
+
+    char** papszOptions = NULL;
+    papszOptions = CSLAddString(papszOptions, "COMPRESS=LZW");
+    //papszOptions = CSLAddString(papszOptions, "PREDICTOR=2");  // valid for GDT_Float32 NOT GDT_Float64
+    papszOptions = CSLAddString(papszOptions, "TILED=YES");
+    papszOptions = CSLAddString(papszOptions, "BIGTIFF=IF_SAFER");
+
+    poDS = tiffDriver->Create(outFilename.c_str(), get_nRows(), get_nCols(), 1, GDT_Float64, papszOptions);
+    if(poDS == NULL)
+    {
+        return;
+    }
 
     double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
                                  get_yllCorner()+(get_nRows()*get_cellSize()),
@@ -2712,21 +2726,35 @@ void AsciiGrid<T>::exportToTiff( std::string outFilename, tiffType type )
     const char* raw_prj = (const char*)prjString.c_str();
     poDS->SetProjection(raw_prj);
 
+    poDS->SetMetadataItem("AREA_OR_POINT", "Area");
+
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
 
-    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    GDALRasterBand *poBand = poDS->GetRasterBand(1);
+
+    poBand->SetDescription(dataName.c_str());
+    poBand->SetMetadataItem("UNITS", dataUnits.c_str());
+
+    poBand->SetNoDataValue(get_NoDataValue());
 
     double *padfScanline;
     padfScanline = new double[nXSize];
-    for( int i = nYSize - 1;i >= 0;i-- ) {
-    for( int j = 0;j < nXSize;j++ )
-        padfScanline[j] = (double)get_cellValue( nYSize - 1 - i, j );
-
-    check(poBand->RasterIO( GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0));
+    for(int i = nYSize - 1; i >= 0; i--)
+    {
+        for(int j = 0; j < nXSize; j++)
+        {
+            padfScanline[j] = (double)get_cellValue( nYSize - 1 - i, j );
+        }
+        check(poBand->RasterIO( GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0));
     }
-    poBand->SetColorInterpretation( GCI_GrayIndex );
-    GDALClose((GDALDatasetH) poDS );
+    delete[] padfScanline;
+
+    ////poBand->SetColorInterpretation(GCI_GrayIndex);
+    //poBand->SetColorInterpretation(GCI_Undefined);
+
+    CSLDestroy(papszOptions);
+    GDALClose((GDALDatasetH)poDS);
 }
 
 template <class T>
