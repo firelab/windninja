@@ -508,22 +508,38 @@ void OutputWriter::_openSrcDataSet()
  * @post The OGR datasource is populated with features from simulation data
  */
 /* ----------------------------------------------------------------------------*/
-void OutputWriter::_createOGRFile()
+void OutputWriter::_createOGRFile(bool outputLatLon)
 {
     int ncols = spd.get_nCols();
     int nrows = spd.get_nRows();
     double x  = 0, y = 0;
 
-    _openSrcDataSet(); 
+    const char* pszSrcWkt = spd.prjString.c_str();
 
-    const char* pszSrcWkt = (char*) spd.prjString.c_str();
-    const char* pszDstWkt = GDALGetProjectionRef( hSrcDS );
-    hSrcSRS = OSRNewSpatialReference( pszSrcWkt );
-    hDestSRS   = OSRNewSpatialReference( pszDstWkt );
-    hTransform = OCTNewCoordinateTransformation( hSrcSRS, hDestSRS );
+    hSrcSRS = OSRNewSpatialReference(pszSrcWkt);
 
-    GDALGetGeoTransform( hSrcDS, adfGeoTransform );
-    GDALClose( hSrcDS );
+    if(outputLatLon)
+    {
+        hDestSRS = OSRNewSpatialReference(NULL);
+        OSRImportFromEPSG(hDestSRS, 4326);
+    }
+    else
+    {
+        _openSrcDataSet();
+
+        const char* pszDstWkt = GDALGetProjectionRef(hSrcDS);
+
+        hDestSRS = OSRNewSpatialReference(pszDstWkt);
+
+        GDALGetGeoTransform(hSrcDS, adfGeoTransform);
+
+        GDALClose(hSrcDS);
+    }
+
+    OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    OSRSetAxisMappingStrategy(hDestSRS, OAMS_TRADITIONAL_GIS_ORDER);
+
+    hTransform = OCTNewCoordinateTransformation(hSrcSRS, hDestSRS);
 
     if( NULL == hTransform )
     {
@@ -634,7 +650,7 @@ void OutputWriter::_createOGRFile()
 bool OutputWriter::_writePDF (std::string outputfn)
 {
     _createSplits();
-    _createOGRFile();
+    _createOGRFile(false);
     _closeOGRFile();
     _createLegend();
     _openSrcDataSet();
@@ -965,7 +981,7 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
 bool OutputWriter::_writeFlatGeoBuf(std::string filename)
 {
     _createSplits();
-    _createOGRFile();
+    _createOGRFile(true);
     _createLegend();
     _openSrcDataSet();
 

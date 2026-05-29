@@ -3436,8 +3436,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>390</width>
+               <height>350</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4370,8 +4370,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>357</width>
+               <height>274</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -6020,7 +6020,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <bool>true</bool>
     </property>
     <addaction name="exitWindNinjaAction"/>
-    <addaction name="loadKmzKmlAction"/>
+    <addaction name="loadMapVisualizationAction"/>
    </widget>
    <widget class="QMenu" name="optionsMenu">
     <property name="title">
@@ -6339,13 +6339,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>Ctrl+B</string>
    </property>
   </action>
-  <action name="loadKmzKmlAction">
+  <action name="loadMapVisualizationAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
      <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
    </property>
    <property name="text">
-    <string>Load KMZ/KML</string>
+    <string>Load Map Visualization</string>
    </property>
   </action>
  </widget>

@@ -149,7 +149,7 @@ void MainWindow::connectSignals()
     connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 
-    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::kmzLoadFinished);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -1303,7 +1303,7 @@ void MainWindow::finishedSolve()
 
     // one more process to do after finishedSolve() stuff
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
-               menuBar, &MenuBar::kmzLoadFinished);
+               menuBar, &MenuBar::mapVisualizationLoadFinished);
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
             this, &MainWindow::finishedLoadingMap,
             Qt::UniqueConnection);
@@ -1438,7 +1438,7 @@ void MainWindow::finishedLoadingMap()
     progressDialog->setLabelText("Simulation Finished.");
     progressDialog->setCancelButtonText("Close");
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
-    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::kmzLoadFinished);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
 void MainWindow::writeSettings()

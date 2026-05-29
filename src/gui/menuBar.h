@@ -54,7 +54,7 @@ public:
     MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent = nullptr);
 
 public slots:
-    void kmzLoadFinished();
+    void mapVisualizationLoadFinished();
 
 signals:
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
@@ -90,7 +90,7 @@ private slots:
     void supportEmailActionTriggered();
     void submitBugReportActionTriggered();
     void enableConsoleOutputActionToggled(bool toggled);
-    void loadKmzKmlActionTriggered();
+    void loadMapVisualizationActionTriggered();
 
 private:
     Ui::MainWindow* ui;

@@ -78,7 +78,7 @@ MenuBar::MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* par
     //connect(ui->aboutQtAction, &QAction::triggered, this, &QApplication::aboutQt);
     connect(ui->enableConsoleOutputAction, &QAction::toggled, this, &MenuBar::enableConsoleOutputActionToggled);
 
-    connect(ui->loadKmzKmlAction, &QAction::triggered, this, &MenuBar::loadKmzKmlActionTriggered);
+    connect(ui->loadMapVisualizationAction, &QAction::triggered, this, &MenuBar::loadMapVisualizationActionTriggered);
 }
 
 // void MenuBar::newProjectActionTriggered()
@@ -398,7 +398,7 @@ void MenuBar::enableConsoleOutputActionToggled(bool toggled)
     ui->consoleTextEdit->setVisible(toggled);
 }
 
-void MenuBar::loadKmzKmlActionTriggered()
+void MenuBar::loadMapVisualizationActionTriggered()
 {
     QString dir = ui->outputDirectoryLineEdit->text();
 
@@ -406,17 +406,17 @@ void MenuBar::loadKmzKmlActionTriggered()
         ui->centralwidget,
         "Select files",
         dir,
-        "KML/KMZ Files (*.kml *.kmz);;All Files (*)"
+        "All Files (*)"
         );
 
-    progress = new QProgressDialog("Loading KMZ/KML files...", QString(), 0, 0, ui->centralwidget);
+    progress = new QProgressDialog("Loading map visualization files...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::ApplicationModal);
     progress->setMinimumDuration(0);
     progress->setValue(0);
 
     for (const QString &outFileStr : files)
     {
-        qDebug() << "kmz outFile =" << outFileStr;
+        qDebug() << "Map visualization outFile =" << outFileStr;
 
         QString filePath = QUrl::fromLocalFile(outFileStr).toString();
         QFileInfo info(outFileStr);
@@ -427,7 +427,7 @@ void MenuBar::loadKmzKmlActionTriggered()
     }
 }
 
-void MenuBar::kmzLoadFinished()
+void MenuBar::mapVisualizationLoadFinished()
 {
     if (progress)
     {
@@ -436,5 +436,5 @@ void MenuBar::kmzLoadFinished()
         progress = nullptr;
     }
 
-    qDebug() << "KMZ/KML loading finished";
+    qDebug() << "Map visualization loading finished";
 }

@@ -120,7 +120,7 @@ class OutputWriter
         void _openSrcDataSet();
         void _closeDataSets();
 
-        void _createOGRFile();
+        void _createOGRFile(bool outputLatLon);
         void _closeOGRFile();
         void _destroyOGRFile();
 
