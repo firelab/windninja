@@ -83,123 +83,106 @@ bool farsiteAtm::writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVeloci
 
     for(unsigned int atmIdx = 0; atmIdx < numAtmFiles; atmIdx++)
     {
-
-    std::string filePath = CPLGetPath(speedNames[atmIdx].c_str());
-    std::string fileroot(CPLGetBasename(speedNames[atmIdx].c_str()));
-    // remove the _vel part from the file basename
-    size_t stringPos = fileroot.find("_vel");
-    if(stringPos != fileroot.npos)
-    {
-        fileroot.erase(stringPos);
-    }
-    std::string filename(CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm"));
-
-    //Open atm file for writing, if already exists replace
-    std::ofstream outputFile(filename.c_str(), std::fstream::trunc);
-    if(outputFile.bad())
-    {
-        std::stringstream outMessage;
-        outMessage << "Problem writing the FARSITE atmosphere file (*.asc) called " << filename \
-               << ".\nSometimes this happens because the file is already open by another program.\n";
-        throw std::runtime_error(outMessage.str());
-    }
-
-    outputFile << "WINDS_AND_CLOUDS\n";
-
-    double windHeightFeet = windHeight;
-    lengthUnits::fromBaseUnits(windHeightFeet, lengthUnits::feet);
-    if(velocityUnits == velocityUnits::milesPerHour && FloatingPoint<double>(windHeightFeet).AlmostEquals(FloatingPoint<double>(20.0)))
-    {
-        outputFile << "ENGLISH\n";
-    }
-    else if(velocityUnits == velocityUnits::kilometersPerHour && FloatingPoint<double>(windHeight).AlmostEquals(FloatingPoint<double>(10.0)))
-    {
-        outputFile << "METRIC\n";
-    }
-    else
-    {
-        double heightInFeet = windHeight;
-        lengthUnits::fromBaseUnits(heightInFeet, lengthUnits::feet);
-        std::stringstream outMessage;
-        outMessage << "FARSITE atmosphere file (*.atm) cannot be written because the speed units and/or output " \
-                "wind height above ground are incorrect.\n  The possible choices are:\n    Wind speed in mph and wind " \
-                "height at 20 feet.\n      or\n    Wind speed in kph and wind height at 10 meters.\n";
-        outMessage << "Your wind speed units are in " << velocityUnits::getString(velocityUnits) << " and output wind height is " \
-                << heightInFeet << " feet (" << windHeight << " meters)." << std::endl;
-        throw std::runtime_error(outMessage.str());
-    }
-
-    boost::local_time::local_time_facet* timeOutputFacet;
-    timeOutputFacet = new boost::local_time::local_time_facet();
-    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
-    //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
-    //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
-    //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
-
-    outputFile.imbue(std::locale(std::locale::classic(), timeOutputFacet));
-    timeOutputFacet->format("%m %d %H%M");
-
-    std::string tmp;
-
-    //Make a default local/date time to use if there isn't any valid local date/time
-    boost::gregorian::date d(2011,boost::gregorian::Jan,1);
-    boost::posix_time::time_duration td(12,0,0,0);
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));   //doesn't matter what time zone is used...
-    boost::local_time::local_date_time defaultDateTime(d, td, zone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-
-    // for numAtmFiles = 1;
-    unsigned int fileStartIdx = atmIdx;
-    unsigned int fileStopIdx = numRuns;
-    if(writeSeparateAtmFiles == true)
-    {
-        // for numAtmFiles = numRuns;
-        fileStartIdx = atmIdx;
-        fileStopIdx = atmIdx+1;
-    }
-
-    //Write the data
-    for(unsigned int fileIdx = fileStartIdx; fileIdx < fileStopIdx; fileIdx++)
-    {
-        if(times[fileIdx].is_not_a_date_time()) //if invalid time, just output default time
+        std::string filePath = CPLGetPath(speedNames[atmIdx].c_str());
+        std::string fileroot(CPLGetBasename(speedNames[atmIdx].c_str()));
+        // remove the _vel part from the file basename
+        size_t stringPos = fileroot.find("_vel");
+        if(stringPos != fileroot.npos)
         {
-            outputFile << defaultDateTime;
+            fileroot.erase(stringPos);
+        }
+        std::string filename(CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm"));
+
+        // Open atm file for writing, if already exists replace
+        std::ofstream outputFile(filename.c_str(), std::fstream::trunc);
+        if(outputFile.bad())
+        {
+            std::stringstream outMessage;
+            outMessage << "Problem writing the FARSITE atmosphere file (*.asc) called " << filename \
+                   << ".\nSometimes this happens because the file is already open by another program.\n";
+            throw std::runtime_error(outMessage.str());
+        }
+
+        outputFile << "WINDS_AND_CLOUDS\n";
+
+        double windHeightFeet = windHeight;
+        lengthUnits::fromBaseUnits(windHeightFeet, lengthUnits::feet);
+        if(velocityUnits == velocityUnits::milesPerHour && FloatingPoint<double>(windHeightFeet).AlmostEquals(FloatingPoint<double>(20.0)))
+        {
+            outputFile << "ENGLISH\n";
+        }
+        else if(velocityUnits == velocityUnits::kilometersPerHour && FloatingPoint<double>(windHeight).AlmostEquals(FloatingPoint<double>(10.0)))
+        {
+            outputFile << "METRIC\n";
         }
         else
         {
-            outputFile << times[fileIdx];
+            double heightInFeet = windHeight;
+            lengthUnits::fromBaseUnits(heightInFeet, lengthUnits::feet);
+            std::stringstream outMessage;
+            outMessage << "FARSITE atmosphere file (*.atm) cannot be written because the speed units and/or output " \
+                    "wind height above ground are incorrect.\n  The possible choices are:\n    Wind speed in mph and wind " \
+                    "height at 20 feet.\n      or\n    Wind speed in kph and wind height at 10 meters.\n";
+            outMessage << "Your wind speed units are in " << velocityUnits::getString(velocityUnits) << " and output wind height is " \
+                    << heightInFeet << " feet (" << windHeight << " meters)." << std::endl;
+            throw std::runtime_error(outMessage.str());
         }
 
-        if(stripPaths == true)
+        boost::local_time::local_time_facet* timeOutputFacet;
+        timeOutputFacet = new boost::local_time::local_time_facet();
+        //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+        //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+        //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+        //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+        outputFile.imbue(std::locale(std::locale::classic(), timeOutputFacet));
+        timeOutputFacet->format("%m %d %H%M");
+
+        //Make a default local/date time to use if there isn't any valid local date/time
+        boost::gregorian::date d(2011,boost::gregorian::Jan,1);
+        boost::posix_time::time_duration td(12,0,0,0);
+        boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));   //doesn't matter what time zone is used...
+        boost::local_time::local_date_time defaultDateTime(d, td, zone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
+
+        // for numAtmFiles = 1;
+        unsigned int fileStartIdx = atmIdx;
+        unsigned int fileStopIdx = numRuns;
+        if(writeSeparateAtmFiles == true)
         {
-            tmp = speedNames[fileIdx];
-            tmp = std::string(CPLGetFilename(tmp.c_str()));
-//          stringPos = tmp.find_last_of('/');
-//          if(stringPos > 0)
-//          {
-//              tmp = tmp.substr(stringPos+1);
-//          }
-            outputFile << " " << tmp;
-
-            tmp = directionNames[fileIdx];
-            tmp = std::string(CPLGetFilename(tmp.c_str()));
-            outputFile << " " << tmp;
-
-            tmp = cloudCoverNames[fileIdx];
-            tmp = std::string(CPLGetFilename(tmp.c_str()));
-            outputFile << " " << tmp;
+            // for numAtmFiles = numRuns;
+            fileStartIdx = atmIdx;
+            fileStopIdx = atmIdx+1;
         }
-        else
+
+        //Write the data
+        for(unsigned int fileIdx = fileStartIdx; fileIdx < fileStopIdx; fileIdx++)
         {
-            outputFile << " " << speedNames[fileIdx];
-            outputFile << " " << directionNames[fileIdx];
-            outputFile << " " << cloudCoverNames[fileIdx];
-        }
+            if(times[fileIdx].is_not_a_date_time()) //if invalid time, just output default time
+            {
+                outputFile << defaultDateTime;
+            }
+            else
+            {
+                outputFile << times[fileIdx];
+            }
 
-        outputFile << "\n";
-    }  // for(unsigned int fileIdx = fileStartIdx; fileIdx < fileStopIdx; fileIdx++)
+            if(stripPaths == true)
+            {
+                outputFile << " " << CPLGetFilename(speedNames[fileIdx].c_str());
+                outputFile << " " << CPLGetFilename(directionNames[fileIdx].c_str());
+                outputFile << " " << CPLGetFilename(cloudCoverNames[fileIdx].c_str());
+            }
+            else
+            {
+                outputFile << " " << speedNames[fileIdx];
+                outputFile << " " << directionNames[fileIdx];
+                outputFile << " " << cloudCoverNames[fileIdx];
+            }
 
-    outputFile.close();
+            outputFile << "\n";
+        }  // for(unsigned int fileIdx = fileStartIdx; fileIdx < fileStopIdx; fileIdx++)
 
+        outputFile.close();
     }  // for(unsigned int atmIdx = 0; atmIdx < numAtmFiles; atmIdx++)
 
     return true;
