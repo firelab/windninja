@@ -1050,6 +1050,14 @@ public:
     */
     int setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
+    * \brief Enable/disable the wxModel ASCII output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
     * \brief Enable/disable Google KML output for a ninja
     *
     * \param nIndex index of a ninja
@@ -1383,7 +1391,7 @@ public:
 
     std::vector<std::string> fgbzFilenames;
     std::vector<std::string> stationKmlFilenames;
-    std::vector<std::string> wxModelKmzFilenames;
+    std::vector<std::string> wxModelFgbFilenames;
 
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer

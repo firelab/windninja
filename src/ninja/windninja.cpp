@@ -1842,6 +1842,35 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
 }
 
 /**
+ * \brief Set the flag to write the weather model winds used for initialzation as
+ *        a raster file.
+ *
+ * \note Only valid if wxModelInitialization is used.
+ *
+ * \see NinjaSetInitializationMethod
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag which determines whether or not the weather model winds will be
+ *             written as a raster file (0 = no, 1 = yes).
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelFgbOutFlag
+    ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setWxModelFgbOutFlag( nIndex, flag );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+}
+
+/**
  * \brief Set the flag to write Google Earth output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
@@ -2603,15 +2632,15 @@ WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputSt
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelFgbFilenames, char ** papszOptions)
 {
     std::vector<std::string> fgbzFilenameStrings;
     std::vector<std::string> stationKmlFilenameStrings;
-    std::vector<std::string> wxModelKmzFilenameStrings;
+    std::vector<std::string> wxModelFgbFilenameStrings;
 
     if( NULL != army )
     {
-        NinjaErr retval = reinterpret_cast<ninjaArmy*>( army )->getMapVisualizationFilenames( fgbzFilenameStrings, stationKmlFilenameStrings, wxModelKmzFilenameStrings );
+        NinjaErr retval = reinterpret_cast<ninjaArmy*>( army )->getMapVisualizationFilenames( fgbzFilenameStrings, stationKmlFilenameStrings, wxModelFgbFilenameStrings );
         if( retval != NINJA_SUCCESS )
         {
             return retval;
@@ -2622,30 +2651,30 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army
 
         *fgbzFilenames = (char **)malloc(sizeof(char *) * n);
         *stationKmlFilenames = (char **)malloc(sizeof(char *) * n);
-        *weatherModelKmzFilenames = (char **)malloc(sizeof(char *) * n);
+        *weatherModelFgbFilenames = (char **)malloc(sizeof(char *) * n);
 
         for(int i = 0; i < n; i++)
         {
             std::string fgbzFilenameStr = fgbzFilenameStrings[i];
             std::string stationKmlFilenameStr = stationKmlFilenameStrings[i];
-            std::string wxModelKmzFilenameStr = wxModelKmzFilenameStrings[i];
+            std::string wxModelFgbFilenameStr = wxModelFgbFilenameStrings[i];
 
             char *fgbzFilename = (char *)malloc(fgbzFilenameStr.size() + 1);
             char *stationKmlFilename = (char *)malloc(stationKmlFilenameStr.size() + 1);
-            char *wxModelKmzFilename = (char *)malloc(wxModelKmzFilenameStr.size() + 1);
+            char *wxModelFgbFilename = (char *)malloc(wxModelFgbFilenameStr.size() + 1);
 
-            if(!fgbzFilename || !stationKmlFilename || !wxModelKmzFilename)
+            if(!fgbzFilename || !stationKmlFilename || !wxModelFgbFilename)
             {
                 return NINJA_E_BAD_ALLOC;
             }
 
             memcpy(fgbzFilename, fgbzFilenameStr.c_str(), fgbzFilenameStr.size() + 1);
             memcpy(stationKmlFilename, stationKmlFilenameStr.c_str(), stationKmlFilenameStr.size() + 1);
-            memcpy(wxModelKmzFilename, wxModelKmzFilenameStr.c_str(), wxModelKmzFilenameStr.size() + 1);
+            memcpy(wxModelFgbFilename, wxModelFgbFilenameStr.c_str(), wxModelFgbFilenameStr.size() + 1);
 
             (*fgbzFilenames)[i] = fgbzFilename;
             (*stationKmlFilenames)[i] = stationKmlFilename;
-            (*weatherModelKmzFilenames)[i] = wxModelKmzFilename;
+            (*weatherModelFgbFilenames)[i] = wxModelFgbFilename;
         }
 
         return NINJA_SUCCESS;

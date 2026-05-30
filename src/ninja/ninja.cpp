@@ -4998,6 +4998,11 @@ void ninja::set_wxModelAsciiOutFlag(bool flag)
     input.wxModelAsciiOutFlag = flag;
 }
 
+void ninja::set_wxModelFgbOutFlag(bool flag)
+{
+    input.wxModelFgbFlag = flag;
+}
+
 void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units)
 {
     input.velOutputFileDistanceUnits = units;

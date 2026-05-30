@@ -1501,7 +1501,7 @@ void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, co
 
 void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
-    if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
+    if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true || input.flatGeoBuffFlag)
     {
         // clip the output weather model ascii grids, to the area of the dem, plus one dem cell size.
         // actually, it looks best to use one wxModel cell size NOT one dem cell size.
@@ -1572,6 +1572,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
         input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
         input.wxModelKmzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "kmz");
+        input.wxModelFgbFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "zip");
         input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
         input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
     }
@@ -1673,6 +1674,32 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         }catch (...)
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
+        }
+    }
+#pragma omp section
+    {
+        try{
+            if(input.wxModelFgbFlag == true)
+            {
+                OutputWriter wxModelFgbFiles;
+
+                wxModelFgbFiles.setDEMfile(input.dem.fileName);
+
+                wxModelFgbFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+                //wxModelKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
+                wxModelFgbFiles.setDirGrid(dirInitializationGrid_wxModel);
+                wxModelFgbFiles.setLineWidth(input.wxModelGoogLineWidth);
+                wxModelFgbFiles.setNinjaTime(input.ninjaTime);
+                wxModelFgbFiles.setWxModelName(getForecastIdentifier());
+
+                wxModelFgbFiles.write(input.wxModelFgbFile, "FlatGeoBuf");
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Flatgeobuf writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Flatgeobuf file writing: Cannot determine exception type.");
         }
     }//end omp section
 

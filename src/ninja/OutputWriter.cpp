@@ -181,12 +181,22 @@ void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 }		/* -----  end of method OutputWriter::setDustGrid  ----- */
 #endif
 
-    void
-OutputWriter::setSpeedGrid ( AsciiGrid<double> &s,
-                             velocityUnits::eVelocityUnits u )
+void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocityUnits u )
 {
     spd = s;
     units = u;
+
+    for (int i = 0; i < spd.get_nRows(); ++i)
+    {
+        for (int j = 0; j < spd.get_nCols(); ++j)
+        {
+            if (spd(i, j) > 1e36)
+            {
+                spd(i, j) = spd.get_noDataValue();
+            }
+        }
+    }
+
     return;
 }		/* -----  end of method OutputWriter::setSpeedGrid  ----- */
 

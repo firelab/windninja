@@ -326,6 +326,9 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelFgbOutFlag
+        ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions );
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetGoogOutFlag
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 
@@ -425,7 +428,7 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaCheckTimeDuration
         (NinjaToolsH* tools, int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputStationFilename, char ** papszOptions );
-    WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelKmzFilenames, char ** papszOptions);
+    WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelFgbFilenames, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, char** fgbzFilenames, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions);
     WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions);
 

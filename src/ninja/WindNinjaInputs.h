@@ -239,6 +239,8 @@ public:
     unsigned short pdfDPI;
     bool        flatGeoBuffFlag;
     std::string flatGeoBuffFile;
+    bool wxModelFgbFlag;
+    std::string wxModelFgbFile;
 
     std::string customOutputPath; //user-specified path for output
 

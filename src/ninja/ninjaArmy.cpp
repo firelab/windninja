@@ -558,7 +558,7 @@ bool ninjaArmy::startRuns(int numProcessors)
     // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
     fgbzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
-    wxModelKmzFilenames.resize(ninjas.size());
+    wxModelFgbFilenames.resize(ninjas.size());
 
     if(ninjas.size() == 1)
     {
@@ -2409,6 +2409,11 @@ int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char *
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
+int ninjaArmy::setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+                       ninjas[ nIndex ]->set_wxModelFgbOutFlag( flag ) );
+}
 int ninjaArmy::setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
@@ -2665,11 +2670,11 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 }
 
 int ninjaArmy::getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
-                                   std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions )
+                                   std::vector<std::string>& wxModelFgbFilenameStr, char ** papszOptions )
 {
     fgbzFilenamesStr = fgbzFilenames;
     stationKmlFilenamesStr = stationKmlFilenames;
-    wxModelKmzFilenamesStr = wxModelKmzFilenames;
+    wxModelFgbFilenameStr = wxModelFgbFilenames;
 
     return NINJA_SUCCESS;
 }
@@ -2723,12 +2728,12 @@ void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
     }
 
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
-    if(ninjas[runNumber]->input.wxModelKmzFile == "!set")
+    if(ninjas[runNumber]->input.wxModelFgbFile == "!set")
     {
-        wxModelKmzFilenames[runNumber] = "";
+        wxModelFgbFilenames[runNumber] = "";
     } else
     {
-        wxModelKmzFilenames[runNumber] = ninjas[runNumber]->input.wxModelKmzFile;
+        wxModelFgbFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbFile;
     }
 }
 

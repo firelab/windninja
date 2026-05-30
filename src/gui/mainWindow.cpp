@@ -1259,6 +1259,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
             qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
             return false;
         }
+
+        ninjaErr = NinjaSetWxModelFgbOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
     }
 
     return true;

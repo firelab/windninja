@@ -126,6 +126,9 @@ WindNinjaInputs::WindNinjaInputs()
     pdfHeight = 11.0;
     pdfDPI = 150;
     flatGeoBuffFlag = false;
+    flatGeoBuffFile = "!set";
+    wxModelFgbFlag = false;
+    wxModelFgbFile = "!set";
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -332,6 +335,11 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     wxModelLegFile = rhs.wxModelLegFile;
     dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
     volVTKFile = rhs.volVTKFile;
+    keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+    flatGeoBuffFlag = rhs.flatGeoBuffFlag;
+    flatGeoBuffFile = rhs.flatGeoBuffFile;
+    wxModelFgbFlag = rhs.wxModelFgbFlag;
+    wxModelFgbFile = rhs.wxModelFgbFile;
     keepOutGridsInMemory = rhs.keepOutGridsInMemory;
     customOutputPath = rhs.customOutputPath;
 
