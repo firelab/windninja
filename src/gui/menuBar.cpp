@@ -409,6 +409,11 @@ void MenuBar::loadMapVisualizationActionTriggered()
         "All Files (*)"
         );
 
+    if (files.empty())
+    {
+        return;
+    }
+
     progress = new QProgressDialog("Loading map visualization files...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::ApplicationModal);
     progress->setMinimumDuration(0);
