@@ -2,9 +2,8 @@ WindNinja – Open‑Source Wind Modeling Software
 ================================================
 
 This repository contains the source code for **WindNinja**, a public‑domain
-software project developed by the Rocky Mountain Research Station (RMRS),
-U.S. Forest Service.  The main code itself is released into the public
-domain (see `LICENSE`).
+software project developed by the USDA Forest Service Missoula Fire Sciences 
+Laboratory. The main code itself is released into the public domain (see `LICENSE`).
 
 --------------------------------------------------------------------
 Third‑Party Dependencies and Their Licenses
