@@ -1314,7 +1314,7 @@ void MainWindow::finishedSolve()
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
             this, &MainWindow::finishedLoadingMap,
             Qt::UniqueConnection);
-    plotKmzOutputs();
+    plotOutputs();
 
     char **papszOptions = nullptr;
     int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
@@ -1329,7 +1329,7 @@ void MainWindow::finishedSolve()
     futureWatcher->deleteLater();
 }
 
-void MainWindow::plotKmzOutputs()
+void MainWindow::plotOutputs()
 {
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
@@ -1357,10 +1357,10 @@ void MainWindow::plotKmzOutputs()
         int numRuns = 0;
         char **fgbzFilenames = NULL;
         char **stationKmlFilenames = NULL;
-        char **weatherModelKmzFilenames = NULL;
+        char **weatherModelFgbFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelFgbFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
@@ -1368,21 +1368,21 @@ void MainWindow::plotKmzOutputs()
 
         std::vector<std::string> kmzFilenamesStr;
         std::vector<std::string> stationKmlFilenamesStr;
-        std::vector<std::string> wxModelKmzFilenamesStr;
+        std::vector<std::string> wxModelFgbFilenamesStr;
 
         kmzFilenamesStr.reserve(numRuns);
         stationKmlFilenamesStr.reserve(numRuns);
-        wxModelKmzFilenamesStr.reserve(numRuns);
+        wxModelFgbFilenamesStr.reserve(numRuns);
         for(int i = 0; i < numRuns; i++)
         {
             kmzFilenamesStr.emplace_back(fgbzFilenames[i]);
             stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
-            wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
+            wxModelFgbFilenamesStr.emplace_back(weatherModelFgbFilenames[i]);
         }
 
         outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
         outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
-        outputWxModelKmzFilenames.push_back(std::move( wxModelKmzFilenamesStr ));
+        outputWxModelKmzFilenames.push_back(std::move( wxModelFgbFilenamesStr ));
 
         for(int i = 0; i < numRuns; i++)
         {
@@ -1419,7 +1419,7 @@ void MainWindow::plotKmzOutputs()
             // then plot the weather model kmz of the run
             if(ui->rawWeatherModelOutputCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isEnabled())
             {
-                QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
+                QString outFileStr = QString::fromStdString(weatherModelFgbFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
@@ -1430,7 +1430,7 @@ void MainWindow::plotKmzOutputs()
             }
         }
 
-        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelFgbFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);

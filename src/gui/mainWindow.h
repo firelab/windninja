@@ -144,7 +144,7 @@ private:
 
     int startSolve(int numProcessors);
     void finishedSolve();
-    void plotKmzOutputs();
+    void plotOutputs();
 
     std::vector<std::vector<std::string>> outputKmzFilenames;
     std::vector<std::vector<std::string>> outputStationKmlFilenames;
