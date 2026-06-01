@@ -1111,7 +1111,6 @@ bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
 
     return true;
 }
-
 bool OutputWriter::_writeFlatGeoBuf(std::string filename)
 {
     _createSplits();
@@ -1126,14 +1125,13 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
         throw std::runtime_error("OutputWriter: FlatGeobuf driver not available.");
     }
 
+    VSIUnlink(filename.c_str());
+
     std::string baseName = CPLGetBasename(filename.c_str());
 
-    std::string vsiFgbPath = "/vsizip/" + filename + "/" + baseName + ".fgb";
-    std::string vsiLegendPath =
-        "/vsizip/" + filename + "/" + baseName + "_legend.bmp";
-
-    std::string vsiDateTimeLegendPath =
-        "/vsizip/" + filename + "/" + baseName + "_datetime.bmp";
+    std::string vsiFgbPath = "/vsizip/{" + filename + "}/" + baseName + ".fgb";
+    std::string vsiLegendPath = "/vsizip/{" + filename + "}/" + baseName + "_legend.bmp";
+    std::string vsiDateTimeLegendPath = "/vsizip/{" + filename + "}/" + baseName + "_datetime.bmp";
 
     papszOptions = CSLAddNameValue( papszOptions, "SPATIAL_INDEX", "YES" );
     hDstDS = GDALCreateCopy(hDriver, vsiFgbPath.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);

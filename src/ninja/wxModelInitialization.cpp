@@ -1572,7 +1572,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
         input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
         input.wxModelKmzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "kmz");
-        input.wxModelFgbFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "zip");
+        input.wxModelFgbFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "fgbz");
         input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
         input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
     }
