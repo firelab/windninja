@@ -406,7 +406,7 @@ void MenuBar::loadMapVisualizationActionTriggered()
         ui->centralwidget,
         "Select files",
         dir,
-        "All Files (*)"
+        "WindNinja Files (*.kml *.fgbz);;KML Files (*.kml);;FlatGeoBuf Zip Files (*.fgbz)"
         );
 
     if (files.empty())
