@@ -141,8 +141,29 @@ SURF_FETCH_E LandfireClient::FetchBoundingBox( double *bbox, double resolution,
     /*-----------------------------------------------------------------------------
      *  Request a Model via the lfps.usgs.gov REST client
      *-----------------------------------------------------------------------------*/
-    pszUrl = CPLSPrintf( LF_REQUEST_TEMPLATE, nEpsgCode, pszProduct, bbox[3], bbox[2], bbox[1],
-                                              bbox[0] );
+
+    const char* pszPriorityCode =
+        CPLGetConfigOption("LF_PRIORITY_CODE", NULL);
+
+    const char* pszPriorityString = "";
+
+    if( pszPriorityCode != NULL )
+    {
+        pszPriorityString =
+            CPLSPrintf(LF_PRIORITY_TEMPLATE, pszPriorityCode);
+    }
+
+    pszUrl = CPLSPrintf(
+        LF_REQUEST_TEMPLATE,
+        nEpsgCode,
+        pszProduct,
+        bbox[3],
+        bbox[2],
+        bbox[1],
+        bbox[0],
+        pszPriorityString
+        );
+
     CPLFree( (void*)pszProduct );
     CPLDebug("LCP_CLIENT", "Request URL: %s", pszUrl);
     m_poResult = CPLHTTPFetch( pszUrl, NULL );

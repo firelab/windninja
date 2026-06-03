@@ -3321,8 +3321,10 @@ void NinjaFoam::SetOutputResolution()
         input.velResolution = input.dem.get_cellSize();
     if( input.angResolution <= 0.0 )  //if negative, use DEM resolution
         input.angResolution = input.dem.get_cellSize();
-    if( input.pdfResolution <= 0.0 )
+    if( input.pdfResolution <= 0.0 )  //if negative, use DEM resolution
         input.pdfResolution = input.dem.get_cellSize();
+    if( input.geoTiffResolution <= 0.0 )  //if negative, use DEM resolution
+        input.geoTiffResolution = input.dem.get_cellSize();
 }
 
 void NinjaFoam::SetOutputFilenames()
@@ -3330,7 +3332,7 @@ void NinjaFoam::SetOutputFilenames()
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -3388,8 +3390,9 @@ void NinjaFoam::SetOutputFilenames()
     shp_mesh_units = lengthUnits::getString( input.shpUnits );
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
+    gtiff_mesh_units = lengthUnits::getString(input.geoTiffUnits);
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
@@ -3399,6 +3402,7 @@ void NinjaFoam::SetOutputFilenames()
         os_shp << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_gtiff << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
 
     double meshResolutionTemp = input.dem.get_cellSize();
@@ -3406,6 +3410,7 @@ void NinjaFoam::SetOutputFilenames()
     double shpResolutionTemp = input.shpResolution;
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
+    double gtiffResolutionTemp = input.geoTiffResolution;
 
     lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
 
@@ -3414,18 +3419,21 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::fromBaseUnits(shpResolutionTemp, input.shpUnits);
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
+    lengthUnits::fromBaseUnits(gtiffResolutionTemp, input.geoTiffUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
     os_shp << "_" << timeAppend << (long) (shpResolutionTemp+0.5)  << shp_mesh_units;
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
+    os_gtiff << "_" << timeAppend << (long) (gtiffResolutionTemp+0.5) << gtiff_mesh_units;
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
     shp_fileAppend = os_shp.str();
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
+    gtiff_fileAppend = os_gtiff.str();
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -3434,13 +3442,12 @@ void NinjaFoam::SetOutputFilenames()
     input.dbfFile = rootFile + shp_fileAppend + ".dbf";
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
+    input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
     input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
 
-    input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
-    input.atmFile = rootFile + ascii_fileAppend + ".atm";
 
     input.volVTKFile = rootFile + fileAppend + ".vtk";
 
@@ -3485,6 +3492,7 @@ void NinjaFoam::WriteOutputFiles()
     /*-------------------------------------------------------------------*/
 
 	try{
+	    //write fire behavior ascii files, the .atm file is written in ninjaArmy
 		if(input.asciiOutFlag==true)
 		{
 			AsciiGrid<double> *velTempGrid, *angTempGrid;
@@ -3495,29 +3503,10 @@ void NinjaFoam::WriteOutputFiles()
                                                              AsciiGrid<double>::order0));
 			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
                                                              AsciiGrid<double>::order0));
-                        
-                        //Set cloud grid
-                        int longEdge = input.dem.get_nRows();
-                        if(input.dem.get_nRows() < input.dem.get_nCols())
-                            longEdge = input.dem.get_nCols();
-                        double tempCloudCover;
-                        if(input.cloudCover < 0){
-                            tempCloudCover = 0.0;
-                        }
-                        else{
-                            tempCloudCover = input.cloudCover;
-                        }
-
-                        CloudGrid.set_headerData(1, 1, input.dem.get_xllCorner(),
-                                input.dem.get_yllCorner(), (longEdge * input.dem.cellSize),
-                                -9999.0, tempCloudCover, input.dem.prjString);
-
-			AsciiGrid<double> tempCloud(CloudGrid);
-			tempCloud *= 100.0;  //Change to percent, which is what FARSITE needs
 
                         // if output clipping was set by the user, don't buffer to overlap the DEM
                         // but only if writing atm file for farsite grids
-                        if(!input.outputBufferClipping > 0.0 && input.writeAtmFile == true)
+                        if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
                         {
                             //ensure grids cover original DEM extents for FARSITE
                             AsciiGrid<double> demGrid;
@@ -3529,12 +3518,11 @@ void NinjaFoam::WriteOutputFiles()
                                         "Problem reading DEM during output writing." );
                             }
                             GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
-                            tempCloud.BufferToOverlapGrid(demGrid);
                             angTempGrid->BufferToOverlapGrid(demGrid);
                             velTempGrid->BufferToOverlapGrid(demGrid);
                         }
 
-			ninja::writeAsciiOutputFiles(tempCloud, *angTempGrid, *velTempGrid);
+			ninja::writeAsciiOutputFiles(*angTempGrid, *velTempGrid);
 
 			if(angTempGrid)
 			{
@@ -3546,14 +3534,6 @@ void NinjaFoam::WriteOutputFiles()
 				delete velTempGrid;
 				velTempGrid=NULL;
 			}
-
-			//Write .atm file for this run.  Only has one time value in file.
-			if(input.writeAtmFile)
-			{
-			    farsiteAtm atmosphere;
-			    atmosphere.push(input.ninjaTime, input.velFile, input.angFile, input.cldFile);
-			    atmosphere.writeAtmFile(input.atmFile, input.outputSpeedUnits, input.outputWindHeight);
-			}
 		}
 	}catch (exception& e)
 	{
@@ -3562,6 +3542,61 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
 	}
+
+    //write fire behavior geotiff files, the .atm file is written in ninjaArmy
+    try{
+        if(input.geoTiffOutFlag)
+        {
+            AsciiGrid<double> *velTempGrid, *angTempGrid;
+            velTempGrid=NULL;
+            angTempGrid=NULL;
+
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+
+            // if output clipping was set by the user, don't buffer to overlap the DEM
+            // but only if writing atm file for farsite grids
+            if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
+            {
+                //ensure grids cover original DEM extents for FARSITE
+                AsciiGrid<double> demGrid;
+                GDALDatasetH hDS;
+                hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
+                if( hDS == NULL )
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaNone,
+                    "Problem reading DEM during output writing." );
+                }
+                GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
+                angTempGrid->BufferToOverlapGrid(demGrid);
+                velTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
+            std::string velGeoTiffFile = input.geoTiffFile;
+            std::string angGeoTiffFile = input.geoTiffFile;
+            velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+            angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+            velTempGrid->exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
+            angTempGrid->exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
+
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: Cannot determine exception type.");
+    }
 
 	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
 	try{
@@ -3785,8 +3820,33 @@ void NinjaFoam::WriteOutputFiles()
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
-	
-	
+
+//    try{
+//        if(input.geoTiffOutFlag==true)
+//        {
+//            OutputWriter output;
+//
+//            if(!input.ninjaTime.is_not_a_date_time())
+//            {
+//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//            }
+//            output.setRunNumber(input.inputsRunNumber);
+//
+//            output.setDirGrid(AngleGrid);
+//            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
+//
+//            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
+//
+//            output.write(input.geoTiffFile, "GTiff");
+//        }
+//    }catch (exception& e)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
+//    }catch (...)
+//    {
+//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
+//    }
+
 	try{
 	    if ( input.volVTKOutFlag == true ) {
 	        writeMassMeshVtkOutput();

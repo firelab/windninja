@@ -91,7 +91,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
     ui->treeWidget->topLevelItem(2)->child(5)->setData(0, Qt::UserRole, 15);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 16);
+    ui->treeWidget->topLevelItem(2)->child(6)->setData(0, Qt::UserRole, 16);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 17);
 
     connectSignals();
 
@@ -865,9 +866,13 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     {
         ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
     }
-    else if (item->text(0) == "Fire Behavior")
+    else if (item->text(0) == "Fire Behavior Ascii")
     {
-        ui->fireBehaviorGroupBox->setChecked(!ui->fireBehaviorGroupBox->isChecked());
+        ui->fireBehaviorAsciiGroupBox->setChecked(!ui->fireBehaviorAsciiGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Fire Behavior GeoTIFF")
+    {
+        ui->fireBehaviorGeoTiffGroupBox->setChecked(!ui->fireBehaviorGeoTiffGroupBox->isChecked());
     }
     else if (item->text(0) == "Shape Files")
     {
@@ -917,14 +922,6 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
     }
 
     char **papszOptions = nullptr;
-
-    ninjaErr = NinjaSetAsciiAtmFile(ninjaArmy, ui->fireBehaviorResolutionCheckBox->isChecked(), papszOptions);
-    if(ninjaErr != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaSetAsciiAtmFile: ninjaErr =" << ninjaErr;
-        return false;
-    }
-
     for(unsigned int i=0; i<numNinjas; i++)
     {
         /*
@@ -1139,31 +1136,52 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 
-    ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiAaigridOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 
-    ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiProjOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 
-    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorMeshResolutionSpinBox->value(), ui->fireBehaviorMeshResolutionComboBox->itemData(ui->fireBehaviorMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorAsciiMeshResolutionSpinBox->value(), ui->fireBehaviorAsciiMeshResolutionComboBox->itemData(ui->fireBehaviorAsciiMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGeoTiffOutFlag(ninjaArmy, i, ui->fireBehaviorGeoTiffGroupBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGeoTiffOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGeoTiffResolution(ninjaArmy, i, ui->fireBehaviorGeoTiffMeshResolutionSpinBox->value(), ui->fireBehaviorGeoTiffMeshResolutionComboBox->itemData(ui->fireBehaviorGeoTiffMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGeoTiffResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAtmOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiAtmFileCheckBox->isChecked() || ui->fireBehaviorGeoTiffAtmFileCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAtmOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 
@@ -1253,17 +1271,24 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
             return false;
         }
 
-        ninjaErr = NinjaSetWxModelAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorGroupBox->isChecked(), papszOptions);
+        ninjaErr = NinjaSetWxModelAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
             return false;
         }
 
+        ninjaErr = NinjaSetWxModelGeoTiffOutFlag(ninjaArmy, i, ui->fireBehaviorGeoTiffGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelGeoTiffOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
         ninjaErr = NinjaSetWxModelFgbOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
+            qDebug() << "NinjaSetWxModelFgbOutFlag: ninjaErr =" << ninjaErr;
             return false;
         }
     }

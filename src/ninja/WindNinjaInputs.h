@@ -65,23 +65,11 @@ public:
         brush,
         trees
     };
-    
-    enum eMeshType{
-        MDM,
-        SHM
-    };
-    
+
     enum eNinjafoamMeshChoice{
         coarse,
         medium,
         fine
-    };
-
-    enum eOutputType{
-        mesh,
-        google,
-        shapefile,
-        ASCII
     };
 
     enum ePDFBaseMap {
@@ -109,7 +97,6 @@ public:
     ninjaComClass *Com;  // pointer to a given ninjas[i] level com handler
     int inputsRunNumber;
 
-    int armySize;
     GDALDatasetH hSpdMemDs;
     GDALDatasetH hDirMemDs;
     GDALDatasetH hDustMemDs;
@@ -175,7 +162,6 @@ public:
      *  Output Parameters
      *-----------------------------------------------------------------------------*/
     double outputBufferClipping;	//specifies the percent to clip the output files around the perimeter.  Range 0-50.
-    bool writeAtmFile;          //flage specifying if a Farsite .atm file should be written.
     bool googOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
 
     std::string googColor; //sets color scheme for output /Colorblind mode
@@ -189,16 +175,23 @@ public:
     double wxModelGoogLineWidth;		//drawing line width for google output vectors
     bool shpOutFlag;			//flag specifying if a shapefile (*.shp, *.shx, *.dbf) should be written
     
-    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc, *_cld.asc) should be written
+    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc) should be written
     bool asciiAaigridOutFlag;   // write ascii output in standard AAIGRID (*.asc) format
     bool asciiJsonOutFlag;      // write ascii output in JSON (*.json) format
     bool asciiProjOutFlag;       // write ascii files using dem projection coordinates (standard output), this is UTM (northing,easting) grids for WindNinja downloaded dems
     bool asciiGeogOutFlag;      // write ascii files using geographic coordinates, EPSG:4326 (lat,lon) grids
     bool asciiUvOutFlag;        // write ascii output as u,v wind vector data
-    
+
+    bool geoTiffOutFlag;  //flag specifying if fire behavior geotiff (raster) output should be written
+    std::string geoTiffFile;
+    double geoTiffResolution;
+    lengthUnits::eLengthUnits geoTiffUnits;
+
     bool txtOutFlag;			//flag specifying if a text file (*.txt) comparing measured to simulated data at specified points should be written (filenames here are hard-coded into the write_compare_output() function in ninja.cpp)
     bool wxModelShpOutFlag;		//flag specifying if a wxModel shapefile should be written
     bool wxModelAsciiOutFlag;		//flag specifying if wxModel ESRI Ascii Raster files should be written
+    bool wxModelGeoTiffOutFlag;  //flag specifying if wxModel geotiff files should be written
+    std::string wxModelGeoTiffFile;
     bool volVTKOutFlag;			//flag specifying if a volume VTK file should be written
     std::string kmlFile;
     std::string kmzFile;
@@ -212,14 +205,12 @@ public:
     std::string wxModelDbfFile;
     double shpResolution;
     lengthUnits::eLengthUnits shpUnits;
-    std::string cldFile;
-    std::string wxModelCldFile;
     std::string velFile;
     std::string wxModelVelFile;
     double velResolution;
     lengthUnits::eLengthUnits velOutputFileDistanceUnits;				//distance units of resolution
     std::string angFile;
-    std::string atmFile;
+    bool atmOutFlag; // flag specifying if a Farsite .atm file should be written.
     std::string wxModelAngFile;
     double angResolution;
     lengthUnits::eLengthUnits angOutputFileDistanceUnits;				//distance units of resolution
@@ -272,8 +263,6 @@ public:
     std::string dustFileOut;   //filename of the output dust emissions file
     std::string dustFilename;   //filename of fire perimeter for dust emissions calculation
     std::string dustFile;
-    std::string geotiffOutFilename; //filename of multiband geotiff output file
-    bool geotiffOutFlag; //flag specifying if multiband geotiff output should be written
 #endif
 
     /*-----------------------------------------------------------------------------

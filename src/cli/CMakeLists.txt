@@ -57,3 +57,4 @@ if(MSVC)
 endif()
 
 install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
+

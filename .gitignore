@@ -59,3 +59,4 @@ doxy.tag
 
 /out/build/x64-Release
 /out/install/x64-Release
+.aider*

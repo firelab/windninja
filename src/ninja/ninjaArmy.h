@@ -161,7 +161,6 @@ public:
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> timeList, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    void set_writeFarsiteAtmFile(bool flag);
     bool startRuns(int numProcessors);
     bool startFirstRun();
     
@@ -320,25 +319,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDustFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    
-        /**
-    * \brief Set the dust geotiff file output name for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param filename name of the dust geotiff output file
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFilename( const int nIndex, const std::string filename, char ** papszOptions=NULL );
-
-    /**
-    * \brief Enable/disable dust geotiff file output for a ninja
-    *
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables dust geotiff output if true, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 #endif //EMISSIONS
 
 #ifdef NINJAFOAM
@@ -1050,13 +1030,21 @@ public:
     */
     int setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Enable/disable the wxModel ASCII output for a ninja
+    * \brief Enable/disable the wxModel fgb output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag Enabled if true, disabled if false
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable the wxModel geotiff output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable Google KML output for a ninja
     *
@@ -1242,7 +1230,7 @@ public:
     int setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
-    * \brief Set the resoultion of ASCII output for a ninja
+    * \brief Set the resolution of ASCII output for a ninja
     * Set the resolution of ASCII output for a ninja given the resolution
     * and units.
     *
@@ -1273,6 +1261,54 @@ public:
     */
     int setAsciiResolution( const int nIndex, const double resolution,
                             std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable fire behavior geotiff (raster) output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resolution of geotiff output for a ninja
+    * Set the resolution of geotiff output for a ninja given the resolution
+    * and units.
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units units of the resolution
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffResolution( const int nIndex, const double resolution,
+                              const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resolution of geotiff output for a ninja
+    * Set the resolution of geotiff output of a ninja given the resolution
+    * and string formatted units.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffResolution( const int nIndex, const double resolution,
+                              std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable atm file output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAtmOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable VTK output for a ninja
     *
@@ -1395,16 +1431,13 @@ public:
 
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
-    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer
+    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer. Left as NULL if EMISSIONS is not enabled and if compute_emissions is not set.
 
-    std::vector<std::string> wxList;
 protected:
     std::vector<ninja*> ninjas;
     std::string tz;
 
-    bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
-    void setAtmFlags();
 
     void setCurrentMapVisualizationFilenames(int runNumber);
 

@@ -775,7 +775,12 @@
          </item>
          <item>
           <property name="text">
-           <string>Fire Behavior</string>
+           <string>Fire Behavior Ascii</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Fire Behavior GeoTIFF</string>
           </property>
          </item>
          <item>
@@ -3437,7 +3442,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>456</height>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3904,7 +3909,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="fireBehaviorPage">
+        <widget class="QWidget" name="fireBehaviorAsciiPage">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -3931,7 +3936,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <number>5</number>
           </property>
           <item>
-           <widget class="QGroupBox" name="fireBehaviorGroupBox">
+           <widget class="QGroupBox" name="fireBehaviorAsciiGroupBox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -3967,7 +3975,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <number>5</number>
              </property>
              <item>
-              <widget class="QGroupBox" name="fireBehaviorResolutionGroupBox">
+              <widget class="QGroupBox" name="fireBehaviorAsciiResolutionGroupBox">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -3997,7 +4005,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QGroupBox" name="fireBehaviorMeshResolutionGroupBox">
+                 <widget class="QGroupBox" name="fireBehaviorAsciiMeshResolutionGroupBox">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -4030,7 +4038,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <number>5</number>
                    </property>
                    <item>
-                    <widget class="QDoubleSpinBox" name="fireBehaviorMeshResolutionSpinBox">
+                    <widget class="QDoubleSpinBox" name="fireBehaviorAsciiMeshResolutionSpinBox">
                      <property name="enabled">
                       <bool>false</bool>
                      </property>
@@ -4043,7 +4051,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </widget>
                    </item>
                    <item>
-                    <widget class="QComboBox" name="fireBehaviorMeshResolutionComboBox">
+                    <widget class="QComboBox" name="fireBehaviorAsciiMeshResolutionComboBox">
                      <property name="enabled">
                       <bool>false</bool>
                      </property>
@@ -4078,7 +4086,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </widget>
                    </item>
                    <item>
-                    <spacer name="fireBehaviorMeshResolutionSpacer">
+                    <spacer name="fireBehaviorAsciiMeshResolutionSpacer">
                      <property name="orientation">
                       <enum>Qt::Orientation::Horizontal</enum>
                      </property>
@@ -4094,7 +4102,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </widget>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="fireBehaviorResolutionCheckBox">
+                 <widget class="QCheckBox" name="fireBehaviorAsciiAtmFileCheckBox">
                   <property name="text">
                    <string>Create *.atm file(s)</string>
                   </property>
@@ -4107,7 +4115,227 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item>
-           <spacer name="fireBehaviorPageSpacer">
+           <spacer name="fireBehaviorAsciiPageSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="fireBehaviorGeoTiffPage">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_46" stretch="0,1">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
+          <item>
+           <widget class="QGroupBox" name="fireBehaviorGeoTiffGroupBox">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="title">
+             <string>Create Fire Behavior Files (*.tif)</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_47">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>5</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QGroupBox" name="fireBehaviorGeoTiffResolutionGroupBox">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>114</height>
+                </size>
+               </property>
+               <property name="title">
+                <string>Resolution</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_48">
+                <property name="leftMargin">
+                 <number>0</number>
+                </property>
+                <property name="topMargin">
+                 <number>0</number>
+                </property>
+                <property name="rightMargin">
+                 <number>0</number>
+                </property>
+                <property name="bottomMargin">
+                 <number>0</number>
+                </property>
+                <item>
+                 <widget class="QGroupBox" name="fireBehaviorGeoTiffMeshResolutionGroupBox">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>70</height>
+                   </size>
+                  </property>
+                  <property name="title">
+                   <string>Use Mesh Resolution</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_49">
+                   <property name="leftMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="topMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="rightMargin">
+                    <number>5</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>5</number>
+                   </property>
+                   <item>
+                    <widget class="QDoubleSpinBox" name="fireBehaviorGeoTiffMeshResolutionSpinBox">
+                     <property name="enabled">
+                      <bool>false</bool>
+                     </property>
+                     <property name="maximum">
+                      <double>5000.000000000000000</double>
+                     </property>
+                     <property name="value">
+                      <double>200.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QComboBox" name="fireBehaviorGeoTiffMeshResolutionComboBox">
+                     <property name="enabled">
+                      <bool>false</bool>
+                     </property>
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>80</width>
+                       <height>0</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>80</width>
+                       <height>16777215</height>
+                      </size>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>Meters</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Feet</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="fireBehaviorGeoTiffMeshResolutionSpacer">
+                     <property name="orientation">
+                      <enum>Qt::Orientation::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>302</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QCheckBox" name="fireBehaviorGeoTiffAtmFileCheckBox">
+                  <property name="text">
+                   <string>Create *.atm file(s)</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <spacer name="fireBehaviorGeoTiffPageSpacer">
             <property name="orientation">
              <enum>Qt::Orientation::Vertical</enum>
             </property>
@@ -4370,8 +4598,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>456</height>
+               <width>357</width>
+               <height>274</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">

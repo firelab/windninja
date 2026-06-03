@@ -180,12 +180,6 @@ int main()
     /*
      * Prepare the army
      */
-    // farsite atm file only works if very specific units. outputs in mph at 20 feet, or outputs in kph at 10 meters.
-    //err = NinjaSetAsciiAtmFile(ninjaArmy, outputFlag, papszOptions);
-    //if(err != NINJA_SUCCESS)
-    //{
-    //    printf("NinjaSetAsciiAtmFile: err = %d\n", err);
-    //}
     for(unsigned int i=0; i<numNinjas; i++)
     {
       /*
@@ -348,7 +342,7 @@ int main()
           printf("NinjaSetShpResolution: err = %d\n", err);
       }
 
-      /* Fire Behavior Output (.asc) */
+      /* Fire Behavior Ascii Output (.asc) */
       err = NinjaSetAsciiOutFlag(ninjaArmy, i, outputFlag, papszOptions);
       if(err != NINJA_SUCCESS)
       {
@@ -372,6 +366,31 @@ int main()
       {
           printf("NinjaSetAsciiResolution: err = %d\n", err);
       }
+
+      /* Fire Behavior GeoTIFF Output (.tif) */
+      err = NinjaSetGeoTiffOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGeoTiffOutFlag: err = %d\n", err);
+      }
+
+      err = NinjaSetGeoTiffResolution(ninjaArmy, i, outputResolution, units, papszOptions);
+      if(err != NINJA_SUCCESS)
+      {
+          printf("NinjaSetGeoTiffResolution: err = %d\n", err);
+      }
+
+      //// farsite atm file only works if very specific units. outputs in mph at 20 feet, or outputs in kph at 10 meters.
+      //// also only if one or the other ascii or gtiff output is selected
+      //if((speedUnits == "mph" && height == 20.0 && heightUnits == "ft") ||
+      //   (speedUnits == "kph" && height == 10.0 && heightUnits == "m"))
+      //{
+      //    err = NinjaSetAtmOutFlag(ninjaArmy, i, outputFlag, papszOptions);
+      //    if(err != NINJA_SUCCESS)
+      //    {
+      //        printf("NinjaSetAtmOutFlag: err = %d\n", err);
+      //    }
+      //}
 
       /* pdf output (.pdf) */
       err = NinjaSetPDFOutFlag(ninjaArmy, i, outputFlag, papszOptions);
@@ -416,6 +435,8 @@ int main()
       {
           printf("NinjaSetVtkOutFlag: err = %d\n", err);
       }
+
+      //TODO: add wxModel and pointInit specific outputs
     }
 
     /*

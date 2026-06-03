@@ -1501,7 +1501,7 @@ void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, co
 
 void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
-    if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true || input.flatGeoBuffFlag)
+    if(input.wxModelAsciiOutFlag==true || input.wxModelGeoTiffOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true || input.wxModelFgbFlag == true)
     {
         // clip the output weather model ascii grids, to the area of the dem, plus one dem cell size.
         // actually, it looks best to use one wxModel cell size NOT one dem cell size.
@@ -1518,7 +1518,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         north = north + uGrid_wxModel.get_cellSize();
         uGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
         vGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
-        cloudCoverGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
 
         speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
         dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
@@ -1557,17 +1556,16 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
         std::string wxModelVelFileTemp = rootname + "_vel";
         std::string wxModelAngFileTemp = rootname + "_ang";
-        std::string wxModelCldFileTemp = rootname + "_cld";
         std::string wxModelShpFileTemp = rootname;
         std::string wxModelDbfFileTemp = rootname;
         std::string wxModelKmlFileTemp = rootname;
         std::string wxModelKmzFileTemp = rootname;
         std::string wxModelLegFileTemp = rootname;
         std::string dateTimewxModelLegFileTemp = rootname + ".date_time";
+        std::string wxModelGeoTiffFileTemp = rootname;
 
         input.wxModelVelFile = CPLFormFilename(path.c_str(), wxModelVelFileTemp.c_str(), ".asc");
         input.wxModelAngFile = CPLFormFilename(path.c_str(), wxModelAngFileTemp.c_str(), ".asc");
-        input.wxModelCldFile = CPLFormFilename(path.c_str(), wxModelCldFileTemp.c_str(), ".asc");
         input.wxModelShpFile = CPLFormFilename(path.c_str(), wxModelShpFileTemp.c_str(), "shp");
         input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
         input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
@@ -1575,6 +1573,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         input.wxModelFgbFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "fgbz");
         input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
         input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
+        input.wxModelGeoTiffFile = CPLFormFilename(path.c_str(), wxModelGeoTiffFileTemp.c_str(), ".tif");
     }
     velocityUnits::fromBaseUnits(speedInitializationGrid_wxModel, input.outputSpeedUnits);
 
@@ -1586,9 +1585,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         try{
         if(input.wxModelAsciiOutFlag==true)
             {
-            AsciiGrid<double> tempCloud(cloudCoverGrid_wxModel);
-            tempCloud *= 100.0;
-            tempCloud.write_Grid(input.wxModelCldFile.c_str(), 0);
             dirInitializationGrid_wxModel.write_Grid(input.wxModelAngFile.c_str(), 0);
             speedInitializationGrid_wxModel.write_Grid(input.wxModelVelFile.c_str(), 2);
             }
@@ -1598,6 +1594,30 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         }catch (...)
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior file writing: Cannot determine exception type.");
+        }
+
+    }//end omp section
+
+    //write geotiff files
+#pragma omp section
+    {
+        try{
+            if(input.wxModelGeoTiffOutFlag==true)
+            {
+                std::string velGeoTiffFile = input.wxModelGeoTiffFile;
+                std::string angGeoTiffFile = input.wxModelGeoTiffFile;
+                velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+
+                speedInitializationGrid_wxModel.exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
+                dirInitializationGrid_wxModel.exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior geotiff file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior geotiff file writing: Cannot determine exception type.");
         }
 
     }//end omp section

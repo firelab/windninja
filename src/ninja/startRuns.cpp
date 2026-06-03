@@ -142,17 +142,17 @@ bool startRuns(int numRuns, int numProcessors, ninja *windsim)
 	//and a pointer to an array of ninja classes
 	//The function starts up the wind runs maximizing the number of processors desired.
 
-	farsiteAtm atmosphere;
-	for( int i=0; i<numRuns; i++ )
+    farsiteAtm atmosphere;
+    atmosphere.reset(numRuns);
+    for( int i=0; i<numRuns; i++ )
     {
-		atmosphere.push(windsim[i].get_date_time(), 
+        atmosphere.push(i,
+                        windsim[i].get_date_time(),
                         windsim[i].get_VelFileName(),
-                        windsim[i].get_AngFileName(),
-                        windsim[i].get_CldFileName() );
+                        windsim[i].get_AngFileName());
     }
-	atmosphere.writeAtmFile(std::string("farsite_atmosphere.atm"), 
-                            windsim[0].get_outputSpeedUnits(),
-                            windsim[0].get_outputWindHeight() );
+    bool writeSeparateAtmFiles = false;
+    atmosphere.writeAtmFile(writeSeparateAtmFiles, windsim[0].get_outputSpeedUnits(), windsim[0].get_outputWindHeight());
 
 	int j;
 

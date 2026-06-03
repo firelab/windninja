@@ -4,6 +4,12 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+if(FIRELAB_PACKAGE)
+    set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
+    mark_as_advanced(LF_PRIORITY_CODE)
+    add_definitions(-DLF_PRIORITY_CODE="${LF_PRIORITY_CODE}")
+endif(FIRELAB_PACKAGE)
+
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS
     Core

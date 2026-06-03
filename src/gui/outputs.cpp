@@ -17,8 +17,10 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->meshResolutionUnitsComboBox->setItemData(1, "ft");
     ui->googleEarthMeshResolutionComboBox->setItemData(0, "m");
     ui->googleEarthMeshResolutionComboBox->setItemData(1, "ft");
-    ui->fireBehaviorMeshResolutionComboBox->setItemData(0, "m");
-    ui->fireBehaviorMeshResolutionComboBox->setItemData(1, "ft");
+    ui->fireBehaviorAsciiMeshResolutionComboBox->setItemData(0, "m");
+    ui->fireBehaviorAsciiMeshResolutionComboBox->setItemData(1, "ft");
+    ui->fireBehaviorGeoTiffMeshResolutionComboBox->setItemData(0, "m");
+    ui->fireBehaviorGeoTiffMeshResolutionComboBox->setItemData(1, "ft");
     ui->shapeFilesMeshResolutionComboBox->setItemData(0, "m");
     ui->shapeFilesMeshResolutionComboBox->setItemData(1, "ft");
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(0, "m");
@@ -35,18 +37,26 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->legendComboBox->setItemData(1, "equal_color");
 
     connect(ui->outputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightComboBoxCurrentIndexChanged);
+    connect(ui->outputWindHeightSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::windHeightSpinBoxValueChanged);
+    connect(ui->outputWindHeightUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightUnitsComboBoxCurrentIndexChanged);
+    connect(ui->outputSpeedUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windSpeedUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthGroupBoxToggled);
-    connect(ui->fireBehaviorGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGroupBoxToggled);
+    connect(ui->fireBehaviorAsciiGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorAsciiGroupBoxToggled);
+    connect(ui->fireBehaviorAsciiAtmFileCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorAsciiAtmFileCheckBoxClicked);
+    connect(ui->fireBehaviorGeoTiffGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGeoTiffGroupBoxToggled);
+    connect(ui->fireBehaviorGeoTiffAtmFileCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorGeoTiffAtmFileCheckBoxClicked);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
     connect(ui->VTKFilesCheckBox, &QCheckBox::toggled, this, &Outputs::VTKFilesCheckBoxToggled);
     connect(ui->mapVisualizationCheckBox, &QCheckBox::toggled, this, &Outputs::mapVisualizationCheckBoxToggled);
     connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthMeshResolutionGroupBoxToggled);
-    connect(ui->fireBehaviorMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorMeshResolutionGroupBoxToggled);
+    connect(ui->fireBehaviorAsciiMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorAsciiMeshResolutionGroupBoxToggled);
+    connect(ui->fireBehaviorGeoTiffMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGeoTiffMeshResolutionGroupBoxToggled);
     connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesMeshResolutionGroupBoxToggled);
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesMeshResolutionGroupBoxToggled);
     connect(this, &Outputs::updateGoogleState, &AppState::instance(), &AppState::updateGoogleEarthOutputState);
-    connect(this, &Outputs::updateFireBehaviorState, &AppState::instance(), &AppState::updateFireBehaviorOutputState);
+    connect(this, &Outputs::updateFireBehaviorAsciiState, &AppState::instance(), &AppState::updateFireBehaviorAsciiOutputState);
+    connect(this, &Outputs::updateFireBehaviorGeoTiffState, &AppState::instance(), &AppState::updateFireBehaviorGeoTiffOutputState);
     connect(this, &Outputs::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
     connect(this, &Outputs::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
@@ -54,7 +64,8 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::googleEarthMeshResolutionSpinBoxValueChanged);
-    connect(ui->fireBehaviorMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::fireBehaviorMeshResolutionSpinBoxValueChanged);
+    connect(ui->fireBehaviorAsciiMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::fireBehaviorAsciiMeshResolutionSpinBoxValueChanged);
+    connect(ui->fireBehaviorGeoTiffMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::fireBehaviorGeoTiffMeshResolutionSpinBoxValueChanged);
     connect(ui->shapeFilesMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::shapeFilesMeshResolutionSpinBoxValueChanged);
     connect(ui->geospatialPDFFilesMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::geospatialPDFFilesMeshResolutionSpinBoxValueChanged);
 }
@@ -81,6 +92,27 @@ void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
         ui->outputWindHeightUnitsComboBox->setEnabled(true);
         break;
     }
+
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::windHeightSpinBoxValueChanged()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::windHeightUnitsComboBoxCurrentIndexChanged()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::windSpeedUnitsComboBoxCurrentIndexChanged()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
 }
 
 void Outputs::googleEarthGroupBoxToggled()
@@ -88,9 +120,28 @@ void Outputs::googleEarthGroupBoxToggled()
     emit updateGoogleState();
 }
 
-void Outputs::fireBehaviorGroupBoxToggled()
+void Outputs::fireBehaviorAsciiGroupBoxToggled()
 {
-    emit updateFireBehaviorState();
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::fireBehaviorAsciiAtmFileCheckBoxClicked()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::fireBehaviorGeoTiffGroupBoxToggled()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::fireBehaviorGeoTiffAtmFileCheckBoxClicked()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
 }
 
 void Outputs::shapeFilesGroupBoxToggled()
@@ -124,15 +175,28 @@ void Outputs::googleEarthMeshResolutionGroupBoxToggled(bool checked)
     emit updateGoogleState();
 }
 
-void Outputs::fireBehaviorMeshResolutionGroupBoxToggled(bool checked)
+void Outputs::fireBehaviorAsciiMeshResolutionGroupBoxToggled(bool checked)
 {
-    ui->fireBehaviorMeshResolutionSpinBox->setEnabled(!checked);
-    ui->fireBehaviorMeshResolutionComboBox->setEnabled(!checked);
+    ui->fireBehaviorAsciiMeshResolutionSpinBox->setEnabled(!checked);
+    ui->fireBehaviorAsciiMeshResolutionComboBox->setEnabled(!checked);
 
     emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
     emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
 
-    emit updateFireBehaviorState();
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::fireBehaviorGeoTiffMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->fireBehaviorGeoTiffMeshResolutionSpinBox->setEnabled(!checked);
+    ui->fireBehaviorGeoTiffMeshResolutionComboBox->setEnabled(!checked);
+
+    emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
+    emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
+
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
 }
 
 void Outputs::shapeFilesMeshResolutionGroupBoxToggled(bool checked)
@@ -165,10 +229,18 @@ void Outputs::meshResolutionSpinBoxValueChanged(double value)
         emit updateGoogleState();
     }
 
-    if(ui->fireBehaviorMeshResolutionGroupBox->isChecked())
+    if(ui->fireBehaviorAsciiMeshResolutionGroupBox->isChecked())
     {
-        ui->fireBehaviorMeshResolutionSpinBox->setValue(value);
-        emit updateFireBehaviorState();
+        ui->fireBehaviorAsciiMeshResolutionSpinBox->setValue(value);
+        emit updateFireBehaviorAsciiState();
+        emit updateFireBehaviorGeoTiffState();
+    }
+
+    if(ui->fireBehaviorGeoTiffMeshResolutionGroupBox->isChecked())
+    {
+        ui->fireBehaviorGeoTiffMeshResolutionSpinBox->setValue(value);
+        emit updateFireBehaviorAsciiState();
+        emit updateFireBehaviorGeoTiffState();
     }
 
     if(ui->shapeFilesMeshResolutionGroupBox->isChecked())
@@ -191,9 +263,14 @@ void Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
         ui->googleEarthMeshResolutionComboBox->setCurrentIndex(index);
     }
 
-    if(ui->fireBehaviorMeshResolutionGroupBox->isChecked())
+    if(ui->fireBehaviorAsciiMeshResolutionGroupBox->isChecked())
     {
-        ui->fireBehaviorMeshResolutionComboBox->setCurrentIndex(index);
+        ui->fireBehaviorAsciiMeshResolutionComboBox->setCurrentIndex(index);
+    }
+
+    if(ui->fireBehaviorGeoTiffMeshResolutionGroupBox->isChecked())
+    {
+        ui->fireBehaviorGeoTiffMeshResolutionComboBox->setCurrentIndex(index);
     }
 
     if(ui->shapeFilesMeshResolutionGroupBox->isChecked())
@@ -212,9 +289,16 @@ void Outputs::googleEarthMeshResolutionSpinBoxValueChanged()
     emit updateGoogleState();
 }
 
-void Outputs::fireBehaviorMeshResolutionSpinBoxValueChanged()
+void Outputs::fireBehaviorAsciiMeshResolutionSpinBoxValueChanged()
 {
-    emit updateFireBehaviorState();
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
+}
+
+void Outputs::fireBehaviorGeoTiffMeshResolutionSpinBoxValueChanged()
+{
+    emit updateFireBehaviorAsciiState();
+    emit updateFireBehaviorGeoTiffState();
 }
 
 void Outputs::shapeFilesMeshResolutionSpinBoxValueChanged()

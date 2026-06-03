@@ -414,7 +414,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
 
 void SurfaceInput::elevationInputFileDownloadButtonClicked()
 {
-    ui->inputsStackedWidget->setCurrentIndex(17);
+    ui->inputsStackedWidget->setCurrentIndex(18);
 }
 
 void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
@@ -943,7 +943,7 @@ bool SurfaceInput::checkAndFillDownloadedDemNoDataValues(const QString demFilePa
         qWarning() << "WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...";
         emit writeToConsoleSignal("WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...", QColor(255, 140, 0));
         QMessageBox::information(nullptr, tr("WindNinja"),
-                                 tr("The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data. Please click OK to proceed."),
+                                 tr("The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data. Please click OK to proceed.\n"),
                                  QMessageBox::Ok);
         // need this OR the QMessageBox and writeToConsoleSignal()
         //comMessageHandler("WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...", this);
@@ -954,7 +954,7 @@ bool SurfaceInput::checkAndFillDownloadedDemNoDataValues(const QString demFilePa
             qWarning() << "WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.";
             emit writeToConsoleSignal("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", QColor(255, 140, 0));
             QMessageBox::warning(nullptr, tr("WindNinja"),
-                                 tr("Could not fill NO_DATA pixels, too many pixels were invalid."),
+                                 tr("Could not fill NO_DATA pixels, too many pixels were invalid.\n"),
                                  QMessageBox::Ok);
             // again, need this OR the QMessageBox and writeToConsoleSignal()
             //comMessageHandler("WARNING: Could not fill no data pixels, too many pixels were invalid.", this);
@@ -964,7 +964,7 @@ bool SurfaceInput::checkAndFillDownloadedDemNoDataValues(const QString demFilePa
         qInfo() << "succeeded in filling NO_DATA pixels.";
         emit writeToConsoleSignal("succeeded in filling NO_DATA pixel.", Qt::darkGreen);
         QMessageBox::information(nullptr, tr("WindNinja"),
-                                 tr("Succeeded in filling NO_DATA pixels."),
+                                 tr("Succeeded in filling NO_DATA pixels.\n"),
                                  QMessageBox::Ok);
     }
 
@@ -995,7 +995,7 @@ bool SurfaceInput::checkAndFillToBeOpenedDemNoDataValues(const QString demFilePa
         int response = QMessageBox::warning(nullptr, tr("WindNinja"),
                                             tr("The input dataset contains pixels with NO_DATA. "
                                             "These datasets cannot be used by WindNinja, "
-                                            "would you like to attempt to fill those pixels?"),
+                                            "would you like to attempt to fill those pixels?\n"),
                                             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
         if(response == QMessageBox::Yes)
@@ -1037,13 +1037,12 @@ bool SurfaceInput::checkAndFillToBeOpenedDemNoDataValues(const QString demFilePa
                 qWarning() << "WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.";
                 emit writeToConsoleSignal("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", QColor(255, 140, 0));
                 QMessageBox::warning(nullptr, tr("WindNinja"),
-                                     tr("Could not fill NO_DATA pixels, too many pixels were invalid."),
+                                     tr("Could not fill NO_DATA pixels, too many pixels were invalid.\n"),
                                      QMessageBox::Ok);
                 // again, need this OR the QMessageBox and writeToConsoleSignal()
                 //comMessageHandler("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", this);
                 GDALClose(hNewDS);
                 GDALClose((GDALDatasetH)poDS);
-                VSIUnlink(nanFilledDemFilePath.toStdString().c_str());
                 nanFilledDemFilePath = "";
                 return false;
             }
@@ -1055,7 +1054,7 @@ bool SurfaceInput::checkAndFillToBeOpenedDemNoDataValues(const QString demFilePa
                 qInfo() << "succeeded in filling NO_DATA pixels.";
                 emit writeToConsoleSignal("succeeded in filling NO_DATA pixels.", Qt::darkGreen);
                 QMessageBox::information(nullptr, tr("WindNinja"),
-                                         tr("Succeeded in filling NO_DATA pixels."),
+                                         tr("Succeeded in filling NO_DATA pixels.\n"),
                                          QMessageBox::Ok);
                 return true;
             }

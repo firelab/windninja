@@ -228,37 +228,26 @@ OutputWriter::write (std::string outputFilename, std::string driver)
     }
     else if( 0 == driver.compare( "GTiff" ) )
     {
-        /*------------------------------------------*/
-        /*  Loop over spd, dir, dust grids          */
-        /*------------------------------------------*/
-        std::string outFilename;
-    
-        for(int grid=0; grid<3; grid++){
-            outFilename = outputFilename;
-            if(grid == 0){
-                outFilename.insert(outFilename.find(".tif"), "_spd");
-            }
-            else if(grid == 1){
-                outFilename.insert(outFilename.find(".tif"), "_dir");
-            }
-#ifdef EMISSIONS
-            else if(grid == 2){
-                outFilename.insert(outFilename.find(".tif"), "_dust");
-            }
-#endif
+        std::string outFilename_spd = outputFilename;
+        std::string outFilename_dir = outputFilename;
+        #ifdef EMISSIONS
+        std::string outFilename_dust = outputFilename;
+        #endif
 
-            if(outFilename.find("spd.tif") != outFilename.npos){
-                _writeGTiff(outFilename, hSpdMemDs);
-            }
-            else if(outFilename.find("dir.tif") != outFilename.npos){
-                _writeGTiff(outFilename, hDirMemDs);
-            }
-            else if(outFilename.find("dust.tif") != outFilename.npos){
-                 _writeGTiff(outFilename, hDustMemDs);
-            }
+        outFilename_spd.insert(outFilename_spd.find(".tif"), "_spd");
+        outFilename_dir.insert(outFilename_dir.find(".tif"), "_dir");
+        #ifdef EMISSIONS
+        outFilename_dust.insert(outFilename_dust.find(".tif"), "_dust");
+        #endif
 
-           //_writeGTiff(outFilename);
+        _writeGTiff(outFilename_spd, hSpdMemDs);
+        _writeGTiff(outFilename_dir, hDirMemDs);
+        #ifdef EMISSIONS
+        if(hDustMemDs)
+        {
+            _writeGTiff(outFilename_dust, hDustMemDs);
         }
+        #endif
     }
     else if ( 0 == driver.compare( "FlatGeoBuf" ) )
     {
@@ -270,6 +259,57 @@ OutputWriter::write (std::string outputFilename, std::string driver)
     }
     return true;
 }		/* -----  end of method OutputWriter::write  ----- */
+
+bool OutputWriter::finalizeWriteGtiff(std::string outputFilename)
+{
+    std::string outFilename_spd = outputFilename;
+    std::string outFilename_dir = outputFilename;
+    #ifdef EMISSIONS
+    std::string outFilename_dust = outputFilename;
+    #endif
+
+    outFilename_spd.insert(outFilename_spd.find(".tif"), "_spd");
+    outFilename_dir.insert(outFilename_dir.find(".tif"), "_dir");
+    #ifdef EMISSIONS
+    outFilename_dust.insert(outFilename_dust.find(".tif"), "_dust");
+    #endif
+
+    GDALDriverH hGtiffDriver = GDALGetDriverByName( "GTiff" );
+    papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");
+    papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );
+
+    /*--------------------------------------------*/
+    /*  Write the tif to disk for each file type  */
+    /*--------------------------------------------*/
+
+    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_spd.c_str(), hSpdMemDs, FALSE, papszOptions, NULL, NULL);
+    if(hDstDS != NULL)
+    {
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+    }
+
+    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dir.c_str(), hDirMemDs, FALSE, papszOptions, NULL, NULL);
+    if(hDstDS != NULL)
+    {
+        GDALClose(hDstDS);
+        hDstDS = NULL;
+    }
+
+    #ifdef EMISSIONS
+    if(hDustMemDs)
+    {
+        hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dust.c_str(), hDustMemDs, FALSE, papszOptions, NULL, NULL);
+        if(hDstDS != NULL)
+        {
+            GDALClose(hDstDS);
+            hDstDS = NULL;
+        }
+    }
+    #endif
+
+    return true;
+}
 
 std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
@@ -566,7 +606,7 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
     os.imbue(std::locale(std::locale::classic(), timeOutputFacet));
     timeOutputFacet->format("%A, %B %d, %Y");
 
-    os << ninjaTime;
+    os << wxModelStartTime;
 
     if (wxModel)
     {
@@ -587,7 +627,7 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
     os.str("");
     //timeOutputFacet->format("%H:%M %z (%Q from UTC)");
     timeOutputFacet->format("%H:%M %z (");
-    os << ninjaTime;
+    os << wxModelStartTime;
 
     std::string timeStringLegend(os.str());
 
@@ -602,7 +642,7 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
 
     os.str("");
     timeOutputFacet2->format("%H:%M UTC)");
-    os << ninjaTime.utc_time();
+    os << wxModelStartTime.utc_time();
 
     timeStringLegend.append(os.str());
 
@@ -904,214 +944,123 @@ bool OutputWriter::_writePDF (std::string outputfn)
     return true;
 }		/* -----  end of method OutputWriter::_writePDF  ----- */
 
-bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
+bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
 {
+    int maxRunNumber = GDALGetRasterCount(hMemDS);
+    if(runNumber > maxRunNumber)
+    {
+        throw std::runtime_error("OutputWriter: Error creating output gtiff file: runNumber > maxRunNumber");
+    }
+
     CPLSetConfigOption( "GDAL_CACHEMAX", "1024" );
-    
+
     int nXSize = spd.get_nCols();
     int nYSize = spd.get_nRows();
-    
-    double *padfScanline;
-    padfScanline = new double[nXSize];
-    CPLErr eErr = CE_None;
-    
+
     if(runNumber == 0)
     {
-        /*------------------------------------------*/
-        /* Set dataset metadata                     */
-        /*------------------------------------------*/
-                  
-        adfGeoTransform[0] = spd.get_xllCorner();
-        adfGeoTransform[1] = spd.get_cellSize();
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -spd.get_cellSize();
-        
-        char* pszDstWKT = (char*)spd.prjString.c_str();
-        GDALSetProjection(hMemDS, pszDstWKT);
-        GDALSetGeoTransform(hMemDS, adfGeoTransform);
-                
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, 1 );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-        GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
+            /*------------------------------------------*/
+            /* Set dataset metadata                     */
+            /*------------------------------------------*/
 
-        for(int i=nYSize-1; i>=0; i--)
+            adfGeoTransform[0] = spd.get_xllCorner();
+            adfGeoTransform[1] = spd.get_cellSize();
+            adfGeoTransform[2] = 0;
+            adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
+            adfGeoTransform[4] = 0;
+            adfGeoTransform[5] = -spd.get_cellSize();
+
+            char* pszDstWKT = (char*)spd.prjString.c_str();
+            GDALSetProjection(hMemDS, pszDstWKT);
+            GDALSetGeoTransform(hMemDS, adfGeoTransform);
+
+            //gets pre-set now, in case ninjas[0] doesn't run first
+            //if(!ninjaTime.empty())
+            //{
+            //    GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
+            //}
+
+        GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, runNumber+1);
+
+        if (!ninjaTime.is_not_a_date_time())
         {
-            for(int j=0; j<nXSize; j++)
-            {   
-                if(filename.find("spd.tif") != filename.npos){
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos){
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-#endif
-                else{
-                    return false;
-                }
-                
+            if (runNumber == 0)
+            {
+                GDALSetMetadataItem(hBand, "DT", "0", NULL);
             }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0);
-            assert( eErr == CE_None );
-        }
-    }
-    else if(runNumber < maxRunNumber){
-        /*------------------------------------------*/
-        /*  Add a new band                          */
-        /*------------------------------------------*/
-        
-        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
-        if(eErr != 0){
-            return false;
-        }
-        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
-        
-        const char* startTime = GDALGetMetadataItem( hMemDS, "TIFFTAG_DATETIME", NULL );
-        
-        // calculate hours since startTime 
-        std::string s;
-        std::string s0(startTime);
-        
-        s.erase(s.length()-4); //get rid of tz
-        s0.erase(s0.length()-4); //get rid of tz
-               
-        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
-        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-        
-        boost::posix_time::time_duration tdiff = t - t0;
-        
-        int hdiff = tdiff.hours();
+            else
+            {
+                const char* startTime =
+                    GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
 
-        std::string h(boost::lexical_cast<std::string>(hdiff));
-        
-        CPLDebug( "GTIFF", "offset in hours, DT = %s", h.c_str() );
-        
+                // calculate minutes since startTime
+                std::string s0(startTime);
+                s0.erase(s0.length() - 4); // get rid of tz
+
+                boost::posix_time::ptime t0(
+                    boost::posix_time::time_from_string(s0));
+
+                boost::posix_time::ptime t = ninjaTime.local_time();
+
+                boost::posix_time::time_duration tdiff = t - t0;
+
+                int mtdiff =
+                    static_cast<int>(tdiff.total_seconds() / 60);
+
+                std::string m =
+                    boost::lexical_cast<std::string>(mtdiff);
+
+                CPLDebug("GTIFF", "offset in minutes, DT = %s", m.c_str());
+
+                GDALSetMetadataItem(hBand, "DT", m.c_str(), NULL);
+            }
+
+            GDALSetMetadataItem(
+                hBand,
+                "DT_DESC",
+                "offset in minutes since first band",
+                NULL);
+        }
+
         GDALSetRasterNoDataValue(hBand, -9999.0);
-        
-        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
+
+        double *padfScanline;
+        padfScanline = new double[nXSize];
 
         CPLErr eErr = CE_None;
         for(int i=nYSize-1; i>=0; i--)
         {
             for(int j=0; j<nXSize; j++)
             {
-                if(filename.find("spd.tif") != filename.npos){
+                if(filename.find("spd.tif") != filename.npos)
+                {
                     padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
                 }
-                else if(filename.find("dir.tif") != filename.npos){
+                else if(filename.find("dir.tif") != filename.npos)
+                {
                     padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
                 }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
+                #ifdef EMISSIONS
+                else if(filename.find("dust.tif") != filename.npos)
+                {
                     padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
                 }
-#endif
-                else{
+                #endif
+                else
+                {
                     return false;
                 }
             }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0); 
-            assert( eErr == CE_None );
+            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
+            assert(eErr == CE_None);
         }
+
+        delete [] padfScanline;
+
+        return true;
     }
-    else{
-        /*------------------------------------------*/
-        /*  Write the tif to disk                   */
-        /*------------------------------------------*/
-        //get start time
-        const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
-
-        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
-        if(eErr != 0){
-            return false;
-        }
-        
-        //copy MEM to GTiff format
-        hDriver = GDALGetDriverByName( "GTiff" );
-
-        // write current grid to last band in hDstDS        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
-  
-        // calculate hours since startTime 
-        std::string s;
-        std::string s0(startTime);
-        
-        s.erase(s.length()-4); //get rid of tz
-        s0.erase(s0.length()-4); //get rid of tz
-               
-        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
-        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-        
-        boost::posix_time::time_duration tdiff = t - t0;
-        
-        int hdiff = tdiff.hours();
-
-        std::string h(boost::lexical_cast<std::string>(hdiff));
-        
-        CPLDebug( "GTIFF", "offset in hours, DT = %s", h.c_str() );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-        
-        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
-
-        CPLErr eErr;
-
-        for(int i=nYSize-1; i>=0; i--)
-        {
-            for(int j=0; j<nXSize; j++)
-            {
-                if(filename.find("spd.tif") != filename.npos){
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos){
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-#endif
-                else{
-                    return false;
-                }
-            }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0); 
-            assert( eErr == CE_None );
-        }
-        
-        
-        GDALDriverH hGtiffDriver = GDALGetDriverByName( "GTiff" );
-        papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");	
-        papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );        
-        hDstDS = GDALCreateCopy(hGtiffDriver, filename.c_str(), hMemDS, FALSE, papszOptions, NULL, NULL);
-        
-        //close MEM dataset
-        if( hMemDS != NULL ){
-            GDALClose( hMemDS );
-            hMemDS = NULL;
-        }
-    
-        //close GTiff dataset
-        if( hDstDS != NULL ){
-            GDALClose( hDstDS );
-            hDstDS = NULL;
-        }
-    }
-
-    delete [] padfScanline;
-
-    return true;
 }
+
 bool OutputWriter::_writeFlatGeoBuf(std::string filename)
 {
     _createSplits();
