@@ -3750,7 +3750,13 @@ void NinjaFoam::WriteOutputFiles()
                     output.setDPI(input.pdfDPI);
                     output.setSize(input.pdfWidth, input.pdfHeight);
                     output.setNinjaTime(input.ninjaTime);
-                    output.setWxModelName(init->getForecastIdentifier());
+
+                    if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                    {
+                        std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+                        output.setWxModel(init->getForecastIdentifier(), times[0]);
+                    }
+
                     output.write(input.flatGeoBuffFile, "FlatGeoBuf");
 
                     if(angTempGrid)

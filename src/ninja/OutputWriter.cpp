@@ -42,7 +42,8 @@ const double OutputWriter::SIDE_MARGIN = 0.5;
 
 
 OutputWriter::OutputWriter ()
-    :ninjaTime(boost::local_time::not_a_date_time)
+    :ninjaTime(boost::local_time::not_a_date_time),
+    wxModelStartTime(boost::local_time::not_a_date_time)
 {
     hSrcDS        = NULL;
     hDstDS        = NULL;

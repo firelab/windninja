@@ -94,7 +94,7 @@ class OutputWriter
         void setDPI( const unsigned short d );
         void setSize( const double w, const double h );
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
-        void setWxModelName(std::string name) {wxModelName=name;}
+        void setWxModel(std::string name, boost::local_time::local_date_time time) {wxModelName=name; wxModelStartTime = time;}
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -162,6 +162,7 @@ class OutputWriter
         std::string legendFile;
         std::string timeDateLegendFile;
         std::string wxModelName;
+        boost::local_time::local_date_time wxModelStartTime;
 
         static const char * SPEED;//      = "speed";
         static const char * DIR;//        = "dir";
