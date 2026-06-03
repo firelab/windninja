@@ -129,6 +129,9 @@
 
     <script src="./leaflet/flatGeoBuf/flatgeobuf-geojson.min.js"></script>
 
+    <script src="./leaflet/esri/esri-leaflet.js"></script>
+    <script src="./leaflet/esri/esri-leaflet-vector.js"></script>
+
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
@@ -168,6 +171,10 @@
                 maxZoom: 20,
                 attribution: 'USGS The National Map'
             }
+        );
+
+        const fsTopoBaseLayer = L.esri.Vector.vectorTileLayer(
+            "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer"
         );
 
         const map = new L.Map('map', {
@@ -239,7 +246,8 @@
                 { label: 'Streets', layer: streetBaseLayer },
                 { label: 'Satellite', layer: satelliteBaseLayer },
                 { label: 'Topographic', layer: topographicBaseLayer },
-                { label: 'USGS', layer: usgsTopoBaseLayer }
+                { label: 'USGS Topographic', layer: usgsTopoBaseLayer },
+                { label: 'Forest Service Topographic', layer: fsTopoBaseLayer }
             ]
         };
 
