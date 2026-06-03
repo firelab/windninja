@@ -1371,12 +1371,12 @@ public:
     std::string getOutputPath( const int nIndex, char ** papszOptions=NULL );
 
     /**
-    * \brief Returns the output kmz filenames of each ninja, as well as the station kml filenames
+    * \brief Returns the output fgb filenames of each ninja, as well as the station kml filenames
     *        and the weather model filenames of each ninja if they were created for the run.
     *
     * \param fgbzFilenames The output fgbz filenames of each ninja, to be filled.
     * \param stationKmlFilenames The station kml filenames of each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
-    * \param weatherModelKmzFilenames The weather model kmz filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+    * \param weatherModelKmzFilenames The weather model fgb filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
     * \return errval Returns NINJA_SUCCESS upon success.
     */
     int getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,

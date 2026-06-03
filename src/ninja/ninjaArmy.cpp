@@ -614,8 +614,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
                 ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
 
-                //set kmzFile for setRunKmzFilenames(), for the GUI
-                ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                //set fgbFile for setCurrentMapVisualization(), for the GUI
+                ninjas[0]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
             } 
 #endif //NINJAFOAM            
 
@@ -707,8 +707,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
                     ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
 
-                    //set kmzFile for setRunKmzFilenames(), for the GUI
-                    ninjas[i]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                    //set fgbFile for setCurrentMapVisualizationFilenames(), for the GUI
+                    ninjas[i]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
                 } 
                 //store data for atmosphere file
                 if(writeFarsiteAtmFile)

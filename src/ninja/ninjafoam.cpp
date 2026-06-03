@@ -3435,6 +3435,8 @@ void NinjaFoam::SetOutputFilenames()
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
 
+    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
+
     input.cldFile = rootFile + ascii_fileAppend + "_cld.asc";
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
@@ -3729,6 +3731,47 @@ void NinjaFoam::WriteOutputFiles()
 				velTempGrid=NULL;
 			}
 		}
+        {
+            try{
+                if(input.flatGeoBuffFlag == true)
+                {
+                    AsciiGrid<double> *velTempGrid, *angTempGrid;
+                    velTempGrid=NULL;
+                    angTempGrid=NULL;
+                    OutputWriter output;
+
+                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+
+                    output.setDirGrid(*angTempGrid);
+                    output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+                    output.setDEMfile(input.pdfDEMFileName);
+                    output.setLineWidth(input.pdfLineWidth);
+                    output.setDPI(input.pdfDPI);
+                    output.setSize(input.pdfWidth, input.pdfHeight);
+                    output.setNinjaTime(input.ninjaTime);
+                    output.setWxModelName(init->getForecastIdentifier());
+                    output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+
+                    if(angTempGrid)
+                    {
+                        delete angTempGrid;
+                        angTempGrid=NULL;
+                    }
+                    if(velTempGrid)
+                    {
+                        delete velTempGrid;
+                        velTempGrid=NULL;
+                    }
+                }
+            }catch (exception& e)
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+            }catch (...)
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+            }
+        }
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());

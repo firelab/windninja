@@ -2379,7 +2379,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
 }
 
 /**
- * \brief Set the flag to write PDF output for a simulation.
+ * \brief Set the flag to write FlatGeoBuf output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
