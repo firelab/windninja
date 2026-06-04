@@ -430,7 +430,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyArmy
  * \param adfPoint A pointer to an array of two doubles representing the point. [latitude, longitude]
  * \param adfBuff length of buffer for x and y
  * \param units buffer units
- * \param dfCellSize The resolution of the DEM file in meters.
+ * \param dfCellSize The desired resolution of the DEM file, in meters. If set to <= 0.0, the fetcher will use the raw DEM resolution.
  * \param pszDstFile Output file name
  * \param papszOptions options
  *
@@ -454,7 +454,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
  *
  * \param boundsBox A pointer to an array of four doubles representing the bounding box. [north, east, south, west]
  * \param fileName A valid path to a DEM file.
- * \param resolution The resolution of the DEM file in meters.
+ * \param resolution The desired resolution of the DEM file, in meters. If set to <= 0.0, the fetcher will use the raw DEM resolution.
  * \param fetchType A string representing the source of the DEM file (e.g. "srtm", "gmted", "relief").
  * 
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.

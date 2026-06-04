@@ -362,8 +362,6 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
         west
     };
 
-    double resolution = 30;
-
     QString defaultName = "";
     QString downloadsPath;
     QFileInfo inputFileDirInfo(inputFileDir);
@@ -393,6 +391,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
     }
     std::string demFile = demFilePath.toStdString();
 
+    double resolution = -1.0;  // let the dem fetcher use the raw dem resolution
     std::string fetchType;
     switch(ui->elevationFileTypeComboBox->currentIndex())
     {
@@ -401,8 +400,6 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
         break;
     case 1:
         fetchType = "gmted";
-        ////resolution = fetch->GetXRes() * 111325;  // convert from lat/lon to m. Equals 0.00208333 * 111325 = 231.927 m.
-        resolution = 231.927;  // m
         break;
     case 2:
         fetchType = "lcp";

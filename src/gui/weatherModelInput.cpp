@@ -458,12 +458,12 @@ void WeatherModelInput::weatherModelFileTreeViewItemSelectionChanged(const QItem
     emit updateState();
 }
 
-void WeatherModelInput::weatherModelTimeTreeViewItemSelectionChanged(const QItemSelection &selected)
+void WeatherModelInput::weatherModelTimeTreeViewItemSelectionChanged()
 {
     AppState& state = AppState::instance();
 
     state.isWeatherModelTimeSelected = true;
-    if(selected.indexes().empty())
+    if(!ui->weatherModelTimeTreeView->selectionModel()->hasSelection())
     {
         state.isWeatherModelTimeSelected = false;
     }
