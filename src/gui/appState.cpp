@@ -770,6 +770,10 @@ void AppState::updateOutputState()
             {
                 invalidCases.append(QString("VTK Files output"));
             }
+            if(ui->mapVisualizationCheckBox->isChecked() && !isMapVisualizationValid)
+            {
+                invalidCases.append(QString("Map Visualization Files output"));
+            }
 
             if(invalidCases.size() == 0)
             {
