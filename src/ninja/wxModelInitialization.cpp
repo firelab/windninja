@@ -1710,8 +1710,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
                 wxModelFgbFiles.setDirGrid(dirInitializationGrid_wxModel);
                 wxModelFgbFiles.setLineWidth(input.wxModelGoogLineWidth);
                 wxModelFgbFiles.setNinjaTime(input.ninjaTime);
-                std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
-                wxModelFgbFiles.setWxModel(getForecastIdentifier(), times[0]);
+                wxModelFgbFiles.setWxModel(getForecastIdentifier());
 
                 wxModelFgbFiles.write(input.wxModelFgbFile, "FlatGeoBuf");
             }

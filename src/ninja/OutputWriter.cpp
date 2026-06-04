@@ -42,8 +42,7 @@ const double OutputWriter::SIDE_MARGIN = 0.5;
 
 
 OutputWriter::OutputWriter ()
-    :ninjaTime(boost::local_time::not_a_date_time),
-    wxModelStartTime(boost::local_time::not_a_date_time)
+    :ninjaTime(boost::local_time::not_a_date_time)
 {
     hSrcDS        = NULL;
     hDstDS        = NULL;
@@ -606,7 +605,7 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
     os.imbue(std::locale(std::locale::classic(), timeOutputFacet));
     timeOutputFacet->format("%A, %B %d, %Y");
 
-    os << wxModelStartTime;
+    os << ninjaTime;
 
     if (wxModel)
     {
@@ -627,7 +626,8 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
     os.str("");
     //timeOutputFacet->format("%H:%M %z (%Q from UTC)");
     timeOutputFacet->format("%H:%M %z (");
-    os << wxModelStartTime;
+
+    os << ninjaTime;
 
     std::string timeStringLegend(os.str());
 
@@ -642,7 +642,8 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
 
     os.str("");
     timeOutputFacet2->format("%H:%M UTC)");
-    os << wxModelStartTime.utc_time();
+
+    os << ninjaTime.utc_time();
 
     timeStringLegend.append(os.str());
 
@@ -959,106 +960,98 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
 
     if(runNumber == 0)
     {
-            /*------------------------------------------*/
-            /* Set dataset metadata                     */
-            /*------------------------------------------*/
+        /*------------------------------------------*/
+        /* Set dataset metadata                     */
+        /*------------------------------------------*/
 
-            adfGeoTransform[0] = spd.get_xllCorner();
-            adfGeoTransform[1] = spd.get_cellSize();
-            adfGeoTransform[2] = 0;
-            adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
-            adfGeoTransform[4] = 0;
-            adfGeoTransform[5] = -spd.get_cellSize();
+        adfGeoTransform[0] = spd.get_xllCorner();
+        adfGeoTransform[1] = spd.get_cellSize();
+        adfGeoTransform[2] = 0;
+        adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
+        adfGeoTransform[4] = 0;
+        adfGeoTransform[5] = -spd.get_cellSize();
 
-            char* pszDstWKT = (char*)spd.prjString.c_str();
-            GDALSetProjection(hMemDS, pszDstWKT);
-            GDALSetGeoTransform(hMemDS, adfGeoTransform);
+        char* pszDstWKT = (char*)spd.prjString.c_str();
+        GDALSetProjection(hMemDS, pszDstWKT);
+        GDALSetGeoTransform(hMemDS, adfGeoTransform);
 
-            //gets pre-set now, in case ninjas[0] doesn't run first
-            //if(!ninjaTime.empty())
-            //{
-            //    GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
-            //}
+        //gets pre-set now, in case ninjas[0] doesn't run first
+        //if(!ninjaTime.empty())
+        //{
+        //    GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
+        //}
+    }
 
-        GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, runNumber+1);
+    GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, runNumber+1);
 
-        if (!ninjaTime.is_not_a_date_time())
+    if (!ninjaTime.is_not_a_date_time())
+    {
+        if (runNumber == 0)
         {
-            if (runNumber == 0)
+            GDALSetMetadataItem(hBand, "DT", "0", NULL);
+        }
+        else
+        {
+            const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
+
+            // calculate minutes since startTime
+            std::string s0(startTime);
+            s0.erase(s0.length() - 4); // get rid of tz
+
+            boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
+
+            boost::posix_time::ptime t = ninjaTime.local_time();
+
+            boost::posix_time::time_duration tdiff = t - t0;
+
+            int mtdiff = static_cast<int>(tdiff.total_seconds() / 60);
+
+            std::string m = boost::lexical_cast<std::string>(mtdiff);
+
+            CPLDebug("GTIFF", "offset in minutes, DT = %s", m.c_str());
+
+            GDALSetMetadataItem(hBand, "DT", m.c_str(), NULL);
+        }
+
+        GDALSetMetadataItem(hBand, "DT_DESC", "offset in minutes since first band", NULL);
+    }
+
+    GDALSetRasterNoDataValue(hBand, -9999.0);
+
+    double *padfScanline;
+    padfScanline = new double[nXSize];
+
+    CPLErr eErr = CE_None;
+    for(int i=nYSize-1; i>=0; i--)
+    {
+        for(int j=0; j<nXSize; j++)
+        {
+            if(filename.find("spd.tif") != filename.npos)
             {
-                GDALSetMetadataItem(hBand, "DT", "0", NULL);
+                padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
             }
+            else if(filename.find("dir.tif") != filename.npos)
+            {
+                padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
+            }
+            #ifdef EMISSIONS
+            else if(filename.find("dust.tif") != filename.npos)
+            {
+                padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
+            }
+            #endif
             else
             {
-                const char* startTime =
-                    GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
-
-                // calculate minutes since startTime
-                std::string s0(startTime);
-                s0.erase(s0.length() - 4); // get rid of tz
-
-                boost::posix_time::ptime t0(
-                    boost::posix_time::time_from_string(s0));
-
-                boost::posix_time::ptime t = ninjaTime.local_time();
-
-                boost::posix_time::time_duration tdiff = t - t0;
-
-                int mtdiff =
-                    static_cast<int>(tdiff.total_seconds() / 60);
-
-                std::string m =
-                    boost::lexical_cast<std::string>(mtdiff);
-
-                CPLDebug("GTIFF", "offset in minutes, DT = %s", m.c_str());
-
-                GDALSetMetadataItem(hBand, "DT", m.c_str(), NULL);
+                return false;
             }
-
-            GDALSetMetadataItem(
-                hBand,
-                "DT_DESC",
-                "offset in minutes since first band",
-                NULL);
         }
-
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-
-        double *padfScanline;
-        padfScanline = new double[nXSize];
-
-        CPLErr eErr = CE_None;
-        for(int i=nYSize-1; i>=0; i--)
-        {
-            for(int j=0; j<nXSize; j++)
-            {
-                if(filename.find("spd.tif") != filename.npos)
-                {
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos)
-                {
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-                #ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos)
-                {
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-                #endif
-                else
-                {
-                    return false;
-                }
-            }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
-            assert(eErr == CE_None);
-        }
-
-        delete [] padfScanline;
-
-        return true;
+        eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
+        assert(eErr == CE_None);
     }
+
+    delete [] padfScanline;
+
+    return true;
 }
 
 bool OutputWriter::_writeFlatGeoBuf(std::string filename)

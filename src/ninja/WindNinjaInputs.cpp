@@ -343,7 +343,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     flatGeoBuffFile = rhs.flatGeoBuffFile;
     wxModelFgbFlag = rhs.wxModelFgbFlag;
     wxModelFgbFile = rhs.wxModelFgbFile;
-    keepOutGridsInMemory = rhs.keepOutGridsInMemory;
     customOutputPath = rhs.customOutputPath;
 
 #ifdef NINJA_SPEED_TESTING

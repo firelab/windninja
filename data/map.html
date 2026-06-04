@@ -648,6 +648,10 @@
 
             windninjaOutputTree.children.push({ label: layerName, layer: fgbLegendLayer, radioGroup: 'windninjaOutput'});
 
+            windninjaOutputTree.children.sort((a, b) =>
+                a.label.localeCompare(b.label)
+            );
+
             updateOverlayTree();
 
             if (activeWindNinjaLayer) {

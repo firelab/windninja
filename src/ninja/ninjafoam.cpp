@@ -3788,8 +3788,7 @@ void NinjaFoam::WriteOutputFiles()
 
                     if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
                     {
-                        std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
-                        output.setWxModel(init->getForecastIdentifier(), times[0]);
+                        output.setWxModel(init->getForecastIdentifier());
                     }
 
                     output.write(input.flatGeoBuffFile, "FlatGeoBuf");

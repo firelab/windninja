@@ -1890,7 +1890,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelGeoTiffOutFlag
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setWxModelFgbOutFlag( nIndex, flag );
+        return reinterpret_cast<ninjaArmy*>( army )->setWxModelGeoTiffOutFlag( nIndex, flag );
     }
     else
     {
