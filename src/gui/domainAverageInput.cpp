@@ -37,6 +37,8 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     setupDomainAverageTableWidgets();
     ui->domainAverageTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+    ui->domainAverageTable->setTabKeyNavigation(false);
+
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
