@@ -976,7 +976,7 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
         GDALSetGeoTransform(hMemDS, adfGeoTransform);
 
         //gets pre-set now, in case ninjas[0] doesn't run first
-        //if(!ninjaTime.empty())
+        //if(!ninjaTime.is_not_a_date_time())
         //{
         //    GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
         //}

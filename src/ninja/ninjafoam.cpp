@@ -3827,7 +3827,7 @@ void NinjaFoam::WriteOutputFiles()
 //
 //            if(!input.ninjaTime.is_not_a_date_time())
 //            {
-//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//                output.setNinjaTime(input.ninjaTime);
 //            }
 //            output.setRunNumber(input.inputsRunNumber);
 //
