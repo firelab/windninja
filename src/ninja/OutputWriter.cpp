@@ -1053,10 +1053,15 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
 
 bool OutputWriter::_writeFlatGeoBuf(std::string filename)
 {
+    const bool hasDateTime = !ninjaTime.is_not_a_date_time();
+
     _createSplits();
     _createOGRFile(true);
     _createLegend();
-    _createDateTimeLegend(!wxModelName.empty());
+    if (hasDateTime)
+    {
+        _createDateTimeLegend(!wxModelName.empty());
+    }
     _openSrcDataSet();
 
     hDriver = OGRGetDriverByName("FlatGeobuf");
@@ -1093,7 +1098,11 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
 
     _destroyOptions();
     _destroyLegend();
-    _destroyDateTimeLegend();
+
+    if(hasDateTime)
+    {
+        _destroyDateTimeLegend();
+    }
 
     OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 
