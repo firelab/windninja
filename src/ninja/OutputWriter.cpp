@@ -1003,9 +1003,7 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
 
             boost::posix_time::time_duration tdiff = t - t0;
 
-            int hdiff = tdiff.hours();
-            int mdiff = tdiff.minutes();
-            int mtdiff = hdiff*60 + mdiff;
+            int mtdiff = static_cast<int>(tdiff.total_seconds() / 60);
 
             std::string m(boost::lexical_cast<std::string>(mtdiff));
 
