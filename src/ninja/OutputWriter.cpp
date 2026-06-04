@@ -984,9 +984,9 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
 
     GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, runNumber+1);
 
-    if (!ninjaTime.is_not_a_date_time())
+    if(!ninjaTime.is_not_a_date_time())
     {
-        if (runNumber == 0)
+        if(runNumber == 0)
         {
             GDALSetMetadataItem(hBand, "DT", "0", NULL);
         }
@@ -997,22 +997,21 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
             // calculate minutes since startTime
             std::string s0(startTime);
             s0.erase(s0.length() - 4); // get rid of tz
-
             boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
 
             boost::posix_time::ptime t = ninjaTime.local_time();
 
             boost::posix_time::time_duration tdiff = t - t0;
 
-            int mtdiff = static_cast<int>(tdiff.total_seconds() / 60);
+            int hdiff = tdiff.hours();
+            int mdiff = tdiff.minutes();
+            int mtdiff = hdiff*60 + mdiff;
 
-            std::string m = boost::lexical_cast<std::string>(mtdiff);
+            std::string m(boost::lexical_cast<std::string>(mtdiff));
 
             CPLDebug("GTIFF", "offset in minutes, DT = %s", m.c_str());
-
             GDALSetMetadataItem(hBand, "DT", m.c_str(), NULL);
         }
-
         GDALSetMetadataItem(hBand, "DT_DESC", "offset in minutes since first band", NULL);
     }
 
