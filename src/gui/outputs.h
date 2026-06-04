@@ -21,20 +21,22 @@ signals:
     void updateShapeState();
     void updatePDFState();
     void updateVTKState();
+    void updateMapVisualizationState();
 
 private slots:
     void windHeightComboBoxCurrentIndexChanged(int index);
     void windHeightSpinBoxValueChanged();
     void windHeightUnitsComboBoxCurrentIndexChanged();
     void windSpeedUnitsComboBoxCurrentIndexChanged();
-    void googleEarthCheckBoxToggled();
+    void googleEarthGroupBoxToggled();
     void fireBehaviorAsciiGroupBoxToggled();
     void fireBehaviorAsciiAtmFileCheckBoxClicked();
     void fireBehaviorGeoTiffGroupBoxToggled();
     void fireBehaviorGeoTiffAtmFileCheckBoxClicked();
     void shapeFilesGroupBoxToggled();
     void geospatialPDFFilesGroupBoxToggled();
-    void VTKFilesCheckBoxClicked();
+    void VTKFilesCheckBoxToggled();
+    void mapVisualizationCheckBoxToggled();
     void googleEarthMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorAsciiMeshResolutionGroupBoxToggled(bool checked);
     void fireBehaviorGeoTiffMeshResolutionGroupBoxToggled(bool checked);

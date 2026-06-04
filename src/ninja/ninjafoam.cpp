@@ -3444,6 +3444,8 @@ void NinjaFoam::SetOutputFilenames()
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
+    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
+
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
 
@@ -3764,6 +3766,52 @@ void NinjaFoam::WriteOutputFiles()
 				velTempGrid=NULL;
 			}
 		}
+        {
+            try{
+                if(input.flatGeoBuffFlag == true)
+                {
+                    AsciiGrid<double> *velTempGrid, *angTempGrid;
+                    velTempGrid=NULL;
+                    angTempGrid=NULL;
+                    OutputWriter output;
+
+                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+
+                    output.setDirGrid(*angTempGrid);
+                    output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+                    output.setDEMfile(input.pdfDEMFileName);
+                    output.setLineWidth(input.pdfLineWidth);
+                    output.setDPI(input.pdfDPI);
+                    output.setSize(input.pdfWidth, input.pdfHeight);
+                    output.setNinjaTime(input.ninjaTime);
+
+                    if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                    {
+                        output.setWxModel(init->getForecastIdentifier());
+                    }
+
+                    output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+
+                    if(angTempGrid)
+                    {
+                        delete angTempGrid;
+                        angTempGrid=NULL;
+                    }
+                    if(velTempGrid)
+                    {
+                        delete velTempGrid;
+                        velTempGrid=NULL;
+                    }
+                }
+            }catch (exception& e)
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+            }catch (...)
+            {
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+            }
+        }
 	}catch (exception& e)
 	{
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
@@ -3779,7 +3827,7 @@ void NinjaFoam::WriteOutputFiles()
 //
 //            if(!input.ninjaTime.is_not_a_date_time())
 //            {
-//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//                output.setNinjaTime(input.ninjaTime);
 //            }
 //            output.setRunNumber(input.inputsRunNumber);
 //

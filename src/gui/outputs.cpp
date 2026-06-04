@@ -40,14 +40,15 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->outputWindHeightSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::windHeightSpinBoxValueChanged);
     connect(ui->outputWindHeightUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightUnitsComboBoxCurrentIndexChanged);
     connect(ui->outputSpeedUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windSpeedUnitsComboBoxCurrentIndexChanged);
-    connect(ui->googleEarthCheckBox, &QCheckBox::toggled, this, &Outputs::googleEarthCheckBoxToggled);
+    connect(ui->googleEarthGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthGroupBoxToggled);
     connect(ui->fireBehaviorAsciiGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorAsciiGroupBoxToggled);
     connect(ui->fireBehaviorAsciiAtmFileCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorAsciiAtmFileCheckBoxClicked);
     connect(ui->fireBehaviorGeoTiffGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGeoTiffGroupBoxToggled);
     connect(ui->fireBehaviorGeoTiffAtmFileCheckBox, &QCheckBox::clicked, this, &Outputs::fireBehaviorGeoTiffAtmFileCheckBoxClicked);
     connect(ui->shapeFilesGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesGroupBoxToggled);
     connect(ui->geospatialPDFFilesGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesGroupBoxToggled);
-    connect(ui->VTKFilesCheckBox, &QCheckBox::clicked, this, &Outputs::VTKFilesCheckBoxClicked);
+    connect(ui->VTKFilesCheckBox, &QCheckBox::toggled, this, &Outputs::VTKFilesCheckBoxToggled);
+    connect(ui->mapVisualizationCheckBox, &QCheckBox::toggled, this, &Outputs::mapVisualizationCheckBoxToggled);
     connect(ui->googleEarthMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::googleEarthMeshResolutionGroupBoxToggled);
     connect(ui->fireBehaviorAsciiMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorAsciiMeshResolutionGroupBoxToggled);
     connect(ui->fireBehaviorGeoTiffMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGeoTiffMeshResolutionGroupBoxToggled);
@@ -59,6 +60,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(this, &Outputs::updateShapeState, &AppState::instance(), &AppState::updateShapeFilesOutputState);
     connect(this, &Outputs::updatePDFState, &AppState::instance(), &AppState::updateGeoSpatialPDFFilesOutputState);
     connect(this, &Outputs::updateVTKState, &AppState::instance(), &AppState::updateVTKFilesOutputState);
+    connect(this, &Outputs::updateMapVisualizationState, &AppState::instance(), &AppState::updateMapVisualizationOutputState);
     connect(ui->meshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::meshResolutionSpinBoxValueChanged);
     connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged);
     connect(ui->googleEarthMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::googleEarthMeshResolutionSpinBoxValueChanged);
@@ -113,7 +115,7 @@ void Outputs::windSpeedUnitsComboBoxCurrentIndexChanged()
     emit updateFireBehaviorGeoTiffState();
 }
 
-void Outputs::googleEarthCheckBoxToggled()
+void Outputs::googleEarthGroupBoxToggled()
 {
     emit updateGoogleState();
 }
@@ -152,9 +154,14 @@ void Outputs::geospatialPDFFilesGroupBoxToggled()
     emit updatePDFState();
 }
 
-void Outputs::VTKFilesCheckBoxClicked()
+void Outputs::VTKFilesCheckBoxToggled()
 {
     emit updateVTKState();
+}
+
+void Outputs::mapVisualizationCheckBoxToggled()
+{
+    emit updateMapVisualizationState();
 }
 
 void Outputs::googleEarthMeshResolutionGroupBoxToggled(bool checked)

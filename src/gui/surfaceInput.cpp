@@ -414,7 +414,7 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
 
 void SurfaceInput::elevationInputFileDownloadButtonClicked()
 {
-    ui->inputsStackedWidget->setCurrentIndex(17);
+    ui->inputsStackedWidget->setCurrentIndex(18);
 }
 
 void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)

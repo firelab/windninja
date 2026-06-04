@@ -71,6 +71,8 @@ namespace bpt = boost::posix_time;
 
 #include "ninja_init.h"
 
+#include "OutputWriter.h"
+
 #ifdef _OPENMP
 extern omp_lock_t netCDF_lock;
 #endif /* _OPENMP */

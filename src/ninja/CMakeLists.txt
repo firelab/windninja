@@ -112,7 +112,11 @@ set(NINJA_SOURCES air.cpp
                   ninjaTools.cpp
                   windninja.h
                   ninjaArmy.h
-                  landfireclient.h)
+                  OutputWriter.h
+                  WindNinjaInputs.h
+                  ninja.h
+                  KmlVector.h
+                  wxModelInitialization.h)
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES} 
                     ninjafoam.cpp

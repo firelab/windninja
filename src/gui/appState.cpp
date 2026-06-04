@@ -62,6 +62,7 @@ void AppState::setState()
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
+    updateMapVisualizationOutputState();
 }
 
 void AppState::updateSolverMethodologyState()
@@ -317,7 +318,7 @@ void AppState::updateWeatherModelInputState()
 
 void AppState::updateGoogleEarthOutputState()
 {
-    if(ui->googleEarthCheckBox->isChecked())
+    if(ui->googleEarthGroupBox->isChecked())
     {
         if(!isSurfaceInputValid)
         {
@@ -601,6 +602,40 @@ void AppState::updateVTKFilesOutputState()
     updateOutputState();
 }
 
+void AppState::updateMapVisualizationOutputState()
+{
+    if(ui->mapVisualizationCheckBox->isChecked())
+    {
+        if(!isSurfaceInputValid)
+        {
+            isMapVisualizationValid = false;
+            ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "Check Surface Input");
+        }
+        else if(!isInputValid)
+        {
+            isMapVisualizationValid = false;
+            ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, crossIcon);
+            ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "Check Inputs");
+        }
+        else
+        {
+            isMapVisualizationValid = true;
+            ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, tickIcon);
+            ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "Valid");
+        }
+    }
+    else
+    {
+        isMapVisualizationValid = false;
+        ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, bulletIcon);
+        ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "Not selected");
+    }
+
+    updateOutputState();
+}
+
+
 void AppState::updateInputState()
 {
     if(!isSurfaceInputValid)
@@ -683,6 +718,7 @@ void AppState::updateInputState()
     updateShapeFilesOutputState();
     updateGeoSpatialPDFFilesOutputState();
     updateVTKFilesOutputState();
+    updateMapVisualizationOutputState();
 }
 
 void AppState::updateOutputState()
@@ -701,7 +737,7 @@ void AppState::updateOutputState()
     }
     else
     {
-        if(!ui->googleEarthCheckBox->isChecked() && !ui->fireBehaviorAsciiGroupBox->isChecked() && !ui->fireBehaviorGeoTiffGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked())
+        if(!ui->googleEarthGroupBox->isChecked() && !ui->fireBehaviorAsciiGroupBox->isChecked() && !ui->fireBehaviorGeoTiffGroupBox->isChecked() && !ui->shapeFilesGroupBox->isChecked() && !ui->geospatialPDFFilesGroupBox->isChecked() && !ui->VTKFilesCheckBox->isChecked() && !ui->mapVisualizationCheckBox->isChecked())
         {
             isOutputValid = false;
             ui->treeWidget->topLevelItem(2)->setIcon(0, crossIcon);
@@ -710,7 +746,7 @@ void AppState::updateOutputState()
         else
         {
             QVector<QString> invalidCases;
-            if(ui->googleEarthCheckBox->isChecked() && !isGoogleEarthValid)
+            if(ui->googleEarthGroupBox->isChecked() && !isGoogleEarthValid)
             {
                 invalidCases.append(QString("Google Earth output"));
             }
@@ -733,6 +769,10 @@ void AppState::updateOutputState()
             if(ui->VTKFilesCheckBox->isChecked() && !isVTKFilesValid)
             {
                 invalidCases.append(QString("VTK Files output"));
+            }
+            if(ui->mapVisualizationCheckBox->isChecked() && !isMapVisualizationValid)
+            {
+                invalidCases.append(QString("Map Visualization Files output"));
             }
 
             if(invalidCases.size() == 0)

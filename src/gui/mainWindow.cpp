@@ -91,7 +91,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
     ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
     ui->treeWidget->topLevelItem(2)->child(5)->setData(0, Qt::UserRole, 15);
-    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 16);
+    ui->treeWidget->topLevelItem(2)->child(6)->setData(0, Qt::UserRole, 16);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 17);
 
     connectSignals();
 
@@ -121,10 +122,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::connectSignals()
 {
-    connect(ui->massSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::massSolverCheckBoxClicked);
-    connect(ui->momentumSolverCheckBox, &QCheckBox::clicked, this, &MainWindow::momentumSolverCheckBoxClicked);
-    connect(ui->diurnalCheckBox, &QCheckBox::clicked, this, &MainWindow::diurnalCheckBoxClicked);
-    connect(ui->stabilityCheckBox, &QCheckBox::clicked, this, &MainWindow::stabilityCheckBoxClicked);
+    connect(ui->massSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::massSolverCheckBoxToggled);
+    connect(ui->momentumSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::momentumSolverCheckBoxToggled);
+    connect(ui->diurnalCheckBox, &QCheckBox::toggled, this, &MainWindow::diurnalCheckBoxToggled);
+    connect(ui->stabilityCheckBox, &QCheckBox::toggled, this, &MainWindow::stabilityCheckBoxToggled);
     connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
     connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
     connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
@@ -149,7 +150,7 @@ void MainWindow::connectSignals()
     connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
     connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
 
-    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::kmzLoadFinished);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
 void MainWindow::writeToConsole(QString message, QColor color)
@@ -333,8 +334,11 @@ void MainWindow::treeWidgetItemSelectionChanged()
     ui->inputsStackedWidget->setCurrentIndex(pageIndex);
 }
 
-void MainWindow::massSolverCheckBoxClicked()
+void MainWindow::massSolverCheckBoxToggled()
 {
+    if(!ui->massSolverCheckBox->isChecked())
+        return;
+
     ui->stabilityCheckBox->setDisabled(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
@@ -353,8 +357,11 @@ void MainWindow::massSolverCheckBoxClicked()
     emit updateStabilityState();
 }
 
-void MainWindow::momentumSolverCheckBoxClicked()
+void MainWindow::momentumSolverCheckBoxToggled()
 {
+    if(!ui->momentumSolverCheckBox->isChecked())
+        return;
+
     ui->stabilityCheckBox->setChecked(false);
     ui->stabilityCheckBox->setDisabled(true);
     ui->ninjafoamCaseGroupBox->setVisible(true);
@@ -374,7 +381,7 @@ void MainWindow::momentumSolverCheckBoxClicked()
     emit updateStabilityState();
 }
 
-void MainWindow::diurnalCheckBoxClicked()
+void MainWindow::diurnalCheckBoxToggled()
 {
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
@@ -388,7 +395,7 @@ void MainWindow::diurnalCheckBoxClicked()
     emit updateDirunalState();
 }
 
-void MainWindow::stabilityCheckBoxClicked()
+void MainWindow::stabilityCheckBoxToggled()
 {
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
@@ -825,19 +832,19 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     if (item->text(0) == "Conservation of Mass")
     {
-        ui->massSolverCheckBox->click();
+        ui->massSolverCheckBox->setChecked(!ui->massSolverCheckBox->isChecked());
     }
     else if (item->text(0) == "Conservation of Mass and Momentum")
     {
-        ui->momentumSolverCheckBox->click();
+        ui->momentumSolverCheckBox->setChecked(!ui->momentumSolverCheckBox->isChecked());
     }
     else if (item->text(0) == "Diurnal Input")
     {
-        ui->diurnalCheckBox->click();
+        ui->diurnalCheckBox->setChecked(!ui->diurnalCheckBox->isChecked());
     }
     else if (item->text(0) == "Stability Input")
     {
-        ui->stabilityCheckBox->click();
+        ui->stabilityCheckBox->setChecked(!ui->stabilityCheckBox->isChecked());
     }
     else if (item->text(0) == "Domain Average Wind")
     {
@@ -857,7 +864,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Google Earth")
     {
-        ui->googleEarthCheckBox->setChecked(!ui->googleEarthCheckBox->isChecked());
+        ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
     }
     else if (item->text(0) == "Fire Behavior Ascii")
     {
@@ -877,7 +884,14 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "VTK Files")
     {
-        ui->VTKFilesCheckBox->click();
+        ui->VTKFilesCheckBox->setChecked(!ui->VTKFilesCheckBox->isChecked());
+    }
+    else if (item->text(0) == "Map Visualization")
+    {
+        if(ui->mapVisualizationCheckBox->isEnabled())
+        {
+            ui->mapVisualizationCheckBox->setChecked(!ui->mapVisualizationCheckBox->isChecked());
+        }
     }
 }
 
@@ -1080,7 +1094,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1234,9 +1248,16 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
+    ninjaErr = NinjaSetFlatGeoBufFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFlatGeoBufFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
     if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
     {
-        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthCheckBox->isChecked(), papszOptions);
+        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelGoogOutFlag: ninjaErr =" << ninjaErr;
@@ -1261,6 +1282,13 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         if (ninjaErr != NINJA_SUCCESS)
         {
             qDebug() << "NinjaSetWxModelGeoTiffOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelFgbOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelFgbOutFlag: ninjaErr =" << ninjaErr;
             return false;
         }
     }
@@ -1307,11 +1335,11 @@ void MainWindow::finishedSolve()
 
     // one more process to do after finishedSolve() stuff
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
-               menuBar, &MenuBar::kmzLoadFinished);
+               menuBar, &MenuBar::mapVisualizationLoadFinished);
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
             this, &MainWindow::finishedLoadingMap,
             Qt::UniqueConnection);
-    plotKmzOutputs();
+    plotOutputs();
 
     char **papszOptions = nullptr;
     int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
@@ -1326,12 +1354,12 @@ void MainWindow::finishedSolve()
     futureWatcher->deleteLater();
 }
 
-void MainWindow::plotKmzOutputs()
+void MainWindow::plotOutputs()
 {
     // get the return value of the QtConcurrent::run() function
     int result = futureWatcher->future().result();
 
-    if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
+    if(result == 1 && !progressDialog->wasCanceled() && ui->mapVisualizationCheckBox->isChecked() == true)
     {
         // enable QWebInspector for degugging the google maps widget
         if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
@@ -1352,12 +1380,12 @@ void MainWindow::plotKmzOutputs()
 
         // vars to be filled
         int numRuns = 0;
-        char **kmzFilenames = NULL;
+        char **fgbzFilenames = NULL;
         char **stationKmlFilenames = NULL;
-        char **weatherModelKmzFilenames = NULL;
+        char **weatherModelFgbFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetRunKmzFilenames(ninjaArmy, &numRuns, &kmzFilenames, &stationKmlFilenames, &weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelFgbFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
@@ -1365,26 +1393,26 @@ void MainWindow::plotKmzOutputs()
 
         std::vector<std::string> kmzFilenamesStr;
         std::vector<std::string> stationKmlFilenamesStr;
-        std::vector<std::string> wxModelKmzFilenamesStr;
+        std::vector<std::string> wxModelFgbFilenamesStr;
 
         kmzFilenamesStr.reserve(numRuns);
         stationKmlFilenamesStr.reserve(numRuns);
-        wxModelKmzFilenamesStr.reserve(numRuns);
+        wxModelFgbFilenamesStr.reserve(numRuns);
         for(int i = 0; i < numRuns; i++)
         {
-            kmzFilenamesStr.emplace_back(kmzFilenames[i]);
+            kmzFilenamesStr.emplace_back(fgbzFilenames[i]);
             stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
-            wxModelKmzFilenamesStr.emplace_back(weatherModelKmzFilenames[i]);
+            wxModelFgbFilenamesStr.emplace_back(weatherModelFgbFilenames[i]);
         }
 
         outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
         outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
-        outputWxModelKmzFilenames.push_back(std::move( wxModelKmzFilenamesStr ));
+        outputWxModelKmzFilenames.push_back(std::move( wxModelFgbFilenamesStr ));
 
         for(int i = 0; i < numRuns; i++)
         {
             // plot the output kmz of the run
-            QString outFileStr = QString::fromStdString(kmzFilenames[i]);
+            QString outFileStr = QString::fromStdString(fgbzFilenames[i]);
             qDebug() << "kmz outFile =" << outFileStr;
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
@@ -1414,9 +1442,9 @@ void MainWindow::plotKmzOutputs()
 
             // if it is a weather model run, and weather model kmzs were created for the run,
             // then plot the weather model kmz of the run
-            if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
+            if(ui->rawWeatherModelOutputCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isEnabled())
             {
-                QString outFileStr = QString::fromStdString(weatherModelKmzFilenames[i]);
+                QString outFileStr = QString::fromStdString(weatherModelFgbFilenames[i]);
                 qDebug() << "wx model kmz outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
@@ -1427,13 +1455,13 @@ void MainWindow::plotKmzOutputs()
             }
         }
 
-        ninjaErr = NinjaDestroyRunKmzFilenames(numRuns, kmzFilenames, stationKmlFilenames, weatherModelKmzFilenames, papszOptions);
+        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelFgbFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
             printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthCheckBox->isChecked() == true)
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
 }
 
 void MainWindow::finishedLoadingMap()
@@ -1442,7 +1470,7 @@ void MainWindow::finishedLoadingMap()
     progressDialog->setLabelText("Simulation Finished.");
     progressDialog->setCancelButtonText("Close");
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
-    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::kmzLoadFinished);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
 void MainWindow::writeSettings()

@@ -102,10 +102,10 @@ protected:
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
-    void massSolverCheckBoxClicked();
-    void momentumSolverCheckBoxClicked();
-    void diurnalCheckBoxClicked();
-    void stabilityCheckBoxClicked();
+    void massSolverCheckBoxToggled();
+    void momentumSolverCheckBoxToggled();
+    void diurnalCheckBoxToggled();
+    void stabilityCheckBoxToggled();
     void treeWidgetItemSelectionChanged();
     void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
     void solveButtonClicked();
@@ -144,7 +144,7 @@ private:
 
     int startSolve(int numProcessors);
     void finishedSolve();
-    void plotKmzOutputs();
+    void plotOutputs();
 
     std::vector<std::vector<std::string>> outputKmzFilenames;
     std::vector<std::vector<std::string>> outputStationKmlFilenames;

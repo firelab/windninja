@@ -228,6 +228,10 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
+    bool        flatGeoBuffFlag;
+    std::string flatGeoBuffFile;
+    bool wxModelFgbFlag;
+    std::string wxModelFgbFile;
 
     std::string customOutputPath; //user-specified path for output
 

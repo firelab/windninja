@@ -1030,6 +1030,14 @@ public:
     */
     int setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
+    * \brief Enable/disable the wxModel fgb output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
     * \brief Enable/disable the wxModel geotiff output for a ninja
     *
     * \param nIndex index of a ninja
@@ -1388,6 +1396,8 @@ public:
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
 
+    int setFlatGeoBufFlag( const int nIndex, const bool flag, char ** papszOptions );
+
     /**
     * \brief Returns the output path of a ninja
     *
@@ -1397,15 +1407,15 @@ public:
     std::string getOutputPath( const int nIndex, char ** papszOptions=NULL );
 
     /**
-    * \brief Returns the output kmz filenames of each ninja, as well as the station kml filenames
+    * \brief Returns the output fgb filenames of each ninja, as well as the station kml filenames
     *        and the weather model filenames of each ninja if they were created for the run.
     *
-    * \param kmzFilenames The output kmz filenames of each ninja, to be filled.
+    * \param fgbzFilenames The output fgbz filenames of each ninja, to be filled.
     * \param stationKmlFilenames The station kml filenames of each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
-    * \param weatherModelKmzFilenames The weather model kmz filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+    * \param weatherModelKmzFilenames The weather model fgb filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
     * \return errval Returns NINJA_SUCCESS upon success.
     */
-    int getRunKmzFilenames( std::vector<std::string>& kmzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+    int getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
                             std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
@@ -1415,9 +1425,9 @@ public:
     void cancel();
     void cancelAndReset();
 
-    std::vector<std::string> kmzFilenames;
+    std::vector<std::string> fgbzFilenames;
     std::vector<std::string> stationKmlFilenames;
-    std::vector<std::string> wxModelKmzFilenames;
+    std::vector<std::string> wxModelFgbFilenames;
 
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
@@ -1429,7 +1439,7 @@ protected:
 
     void writeFarsiteAtmosphereFile();
 
-    void setCurrentRunKmzFilenames(int runNumber);
+    void setCurrentMapVisualizationFilenames(int runNumber);
 
     /*
     ** This function initializes various data for the lifetime of the

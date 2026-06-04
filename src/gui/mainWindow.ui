@@ -798,6 +798,11 @@
            <string>VTK Files</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>Map Visualization</string>
+          </property>
+         </item>
         </item>
         <item>
          <property name="text">
@@ -837,7 +842,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>9</number>
+         <number>10</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1022,8 +1027,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>530</width>
+               <height>452</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1808,8 +1813,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>330</width>
+               <height>231</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2325,8 +2330,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>510</width>
+               <height>331</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2822,8 +2827,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>368</width>
+               <height>431</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3436,8 +3441,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>374</width>
-               <height>439</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3449,7 +3454,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <property name="layoutDirection">
               <enum>Qt::LayoutDirection::LeftToRight</enum>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
               <property name="leftMargin">
                <number>5</number>
               </property>
@@ -3463,58 +3468,23 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <number>5</number>
               </property>
               <item>
-               <widget class="QLabel" name="googleEarthLabel">
+               <widget class="QGroupBox" name="googleEarthGroupBox">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="text">
-                 <string>NOTE: Version 4.0.0 requires Google Earth (KML/KMZ) files to display simulations on the map. This requirement will be removed in version 4.0.1.</string>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="googleEarthCheckBox">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
+                <property name="title">
                  <string>Create Google Earth Files (*.kmz)</string>
                 </property>
-                <property name="checked">
+                <property name="checkable">
                  <bool>true</bool>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="legendGroupBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
+                <property name="checked">
+                 <bool>false</bool>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="title">
-                 <string>Legend</string>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                <layout class="QVBoxLayout" name="verticalLayout_12">
                  <property name="leftMargin">
                   <number>5</number>
                  </property>
@@ -3528,165 +3498,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <number>5</number>
                  </property>
                  <item>
-                  <widget class="QComboBox" name="legendComboBox">
-                   <property name="sizePolicy">
-                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                     <horstretch>0</horstretch>
-                     <verstretch>0</verstretch>
-                    </sizepolicy>
-                   </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>131</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <item>
-                    <property name="text">
-                     <string>Uniform Range</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Equal Count</string>
-                    </property>
-                   </item>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QCheckBox" name="legendCheckBox">
-                   <property name="text">
-                    <string>Use Consistent Color Scale</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="legendSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>153</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="googleEarthVectorsGroupBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="title">
-                 <string>Vectors</string>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_6">
-                 <property name="sizeConstraint">
-                  <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
-                 </property>
-                 <property name="leftMargin">
-                  <number>5</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>5</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>5</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>5</number>
-                 </property>
-                 <item>
-                  <widget class="QLabel" name="googleEarthVectorsLabel">
-                   <property name="text">
-                    <string>Line Width:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QDoubleSpinBox" name="googleEarthVectorsSpinBox">
-                   <property name="decimals">
-                    <number>1</number>
-                   </property>
-                   <property name="maximum">
-                    <double>10.000000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>1.000000000000000</double>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QCheckBox" name="googleEarthVectorScalingCheckBox">
-                   <property name="text">
-                    <string>Apply Vector Scaling</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="googleEarthVectorsGroupBoxSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="googleEarthResolutionGroupBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="title">
-                 <string>Resolution</string>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_37">
-                 <property name="spacing">
-                  <number>6</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="QGroupBox" name="googleEarthMeshResolutionGroupBox">
+                  <widget class="QGroupBox" name="legendGroupBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -3696,16 +3508,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>70</height>
+                     <height>0</height>
                     </size>
                    </property>
                    <property name="title">
-                    <string>Use Mesh Resolution</string>
+                    <string>Legend</string>
                    </property>
-                   <property name="checkable">
-                    <bool>true</bool>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_16">
+                   <layout class="QHBoxLayout" name="horizontalLayout_7">
                     <property name="leftMargin">
                      <number>5</number>
                     </property>
@@ -3719,23 +3528,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <number>5</number>
                     </property>
                     <item>
-                     <widget class="QDoubleSpinBox" name="googleEarthMeshResolutionSpinBox">
-                      <property name="enabled">
-                       <bool>false</bool>
-                      </property>
-                      <property name="maximum">
-                       <double>5000.000000000000000</double>
-                      </property>
-                      <property name="value">
-                       <double>200.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="googleEarthMeshResolutionComboBox">
-                      <property name="enabled">
-                       <bool>false</bool>
-                      </property>
+                     <widget class="QComboBox" name="legendComboBox">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                         <horstretch>0</horstretch>
@@ -3744,36 +3537,37 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </property>
                       <property name="minimumSize">
                        <size>
-                        <width>80</width>
+                        <width>131</width>
                         <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>80</width>
-                        <height>16777215</height>
                        </size>
                       </property>
                       <item>
                        <property name="text">
-                        <string>Meters</string>
+                        <string>Uniform Range</string>
                        </property>
                       </item>
                       <item>
                        <property name="text">
-                        <string>Feet</string>
+                        <string>Equal Count</string>
                        </property>
                       </item>
                      </widget>
                     </item>
                     <item>
-                     <spacer name="googleEarthMeshResolutionSpacer">
+                     <widget class="QCheckBox" name="legendCheckBox">
+                      <property name="text">
+                       <string>Use Consistent Color Scale</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="legendSpacer">
                       <property name="orientation">
                        <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
-                        <width>302</width>
+                        <width>153</width>
                         <height>20</height>
                        </size>
                       </property>
@@ -3782,107 +3576,316 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </layout>
                   </widget>
                  </item>
-                </layout>
-               </widget>
-              </item>
-              <item>
-               <widget class="QGroupBox" name="alternativeColorSchemeGroupBox">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="title">
-                 <string>Alternative Color Schemes</string>
-                </property>
-                <property name="checkable">
-                 <bool>true</bool>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_8">
-                 <property name="leftMargin">
-                  <number>5</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>5</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>5</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>5</number>
-                 </property>
                  <item>
-                  <widget class="QComboBox" name="alternativeColorSchemeComboBox">
+                  <widget class="QGroupBox" name="googleEarthVectorsGroupBox">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
-                   <item>
-                    <property name="text">
-                     <string>Default</string>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="title">
+                    <string>Vectors</string>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <property name="sizeConstraint">
+                     <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
                     </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>ROPGW (Red Orange Pink Green White)</string>
+                    <property name="leftMargin">
+                     <number>5</number>
                     </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Oranges</string>
+                    <property name="topMargin">
+                     <number>5</number>
                     </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Blues</string>
+                    <property name="rightMargin">
+                     <number>5</number>
                     </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Pinks</string>
+                    <property name="bottomMargin">
+                     <number>5</number>
                     </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Greens</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Magic Beans</string>
-                    </property>
-                   </item>
-                   <item>
-                    <property name="text">
-                     <string>Pink to Green</string>
-                    </property>
-                   </item>
+                    <item>
+                     <widget class="QLabel" name="googleEarthVectorsLabel">
+                      <property name="text">
+                       <string>Line Width:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QDoubleSpinBox" name="googleEarthVectorsSpinBox">
+                      <property name="decimals">
+                       <number>1</number>
+                      </property>
+                      <property name="maximum">
+                       <double>10.000000000000000</double>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QCheckBox" name="googleEarthVectorScalingCheckBox">
+                      <property name="text">
+                       <string>Apply Vector Scaling</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="googleEarthVectorsGroupBoxSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Orientation::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
                   </widget>
                  </item>
                  <item>
-                  <spacer name="alternativeColorSchemeSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                  <widget class="QGroupBox" name="googleEarthResolutionGroupBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
                    </property>
-                   <property name="sizeHint" stdset="0">
+                   <property name="minimumSize">
                     <size>
-                     <width>40</width>
-                     <height>20</height>
+                     <width>0</width>
+                     <height>0</height>
                     </size>
                    </property>
-                  </spacer>
+                   <property name="title">
+                    <string>Resolution</string>
+                   </property>
+                   <layout class="QVBoxLayout" name="verticalLayout_37">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QGroupBox" name="googleEarthMeshResolutionGroupBox">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>70</height>
+                       </size>
+                      </property>
+                      <property name="title">
+                       <string>Use Mesh Resolution</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <layout class="QHBoxLayout" name="horizontalLayout_16">
+                       <property name="leftMargin">
+                        <number>5</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>5</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>5</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>5</number>
+                       </property>
+                       <item>
+                        <widget class="QDoubleSpinBox" name="googleEarthMeshResolutionSpinBox">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="maximum">
+                          <double>5000.000000000000000</double>
+                         </property>
+                         <property name="value">
+                          <double>200.000000000000000</double>
+                         </property>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QComboBox" name="googleEarthMeshResolutionComboBox">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>80</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>80</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <item>
+                          <property name="text">
+                           <string>Meters</string>
+                          </property>
+                         </item>
+                         <item>
+                          <property name="text">
+                           <string>Feet</string>
+                          </property>
+                         </item>
+                        </widget>
+                       </item>
+                       <item>
+                        <spacer name="googleEarthMeshResolutionSpacer">
+                         <property name="orientation">
+                          <enum>Qt::Orientation::Horizontal</enum>
+                         </property>
+                         <property name="sizeHint" stdset="0">
+                          <size>
+                           <width>302</width>
+                           <height>20</height>
+                          </size>
+                         </property>
+                        </spacer>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QGroupBox" name="alternativeColorSchemeGroupBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>0</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="title">
+                    <string>Alternative Color Schemes</string>
+                   </property>
+                   <property name="checkable">
+                    <bool>true</bool>
+                   </property>
+                   <property name="checked">
+                    <bool>false</bool>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_8">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
+                    <item>
+                     <widget class="QComboBox" name="alternativeColorSchemeComboBox">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <item>
+                       <property name="text">
+                        <string>Default</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>ROPGW (Red Orange Pink Green White)</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Oranges</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Blues</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Pinks</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Greens</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Magic Beans</string>
+                       </property>
+                      </item>
+                      <item>
+                       <property name="text">
+                        <string>Pink to Green</string>
+                       </property>
+                      </item>
+                     </widget>
+                    </item>
+                    <item>
+                     <spacer name="alternativeColorSchemeSpacer">
+                      <property name="orientation">
+                       <enum>Qt::Orientation::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                   </layout>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -5085,6 +5088,64 @@ li.checked::marker { content: &quot;\2612&quot;; }
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="mapVisualizationPage">
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <property name="leftMargin">
+           <number>5</number>
+          </property>
+          <property name="topMargin">
+           <number>5</number>
+          </property>
+          <property name="rightMargin">
+           <number>5</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="mapVisualizationCheckBox">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Create Map Visualization Files (*.fgb)</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="googleEarthLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>NOTE: Version 4.0.0 requires map visualization files (*.fgb) to display simulations on the map. This requirement will be removed in version 4.0.1.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="mapVisualizationSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
         <widget class="QWidget" name="solverPage">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -6187,7 +6248,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
      <bool>true</bool>
     </property>
     <addaction name="exitWindNinjaAction"/>
-    <addaction name="loadKmzKmlAction"/>
+    <addaction name="loadMapVisualizationAction"/>
    </widget>
    <widget class="QMenu" name="optionsMenu">
     <property name="title">
@@ -6506,13 +6567,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <string>Ctrl+B</string>
    </property>
   </action>
-  <action name="loadKmzKmlAction">
+  <action name="loadMapVisualizationAction">
    <property name="icon">
     <iconset resource="../../wn-resources.qrc">
      <normaloff>:/folder_page.png</normaloff>:/folder_page.png</iconset>
    </property>
    <property name="text">
-    <string>Load KMZ/KML</string>
+    <string>Load Map Visualization</string>
    </property>
   </action>
  </widget>

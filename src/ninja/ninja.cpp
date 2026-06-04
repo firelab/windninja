@@ -3175,7 +3175,6 @@ void ninja::writeOutputFiles()
 
     }//end omp section
 
-
 	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
 	#pragma omp section
 	{
@@ -3406,7 +3405,6 @@ void ninja::writeOutputFiles()
 		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
 	}
 	} //end omp section
-
 //#pragma omp section
 //    {
 //    try{
@@ -3416,7 +3414,7 @@ void ninja::writeOutputFiles()
 //
 //            if(!input.ninjaTime.is_not_a_date_time())
 //            {
-//                output.setNinjaTime(boost::lexical_cast<std::string>(input.ninjaTime));
+//                output.setNinjaTime(input.ninjaTime);
 //            }
 //            output.setRunNumber(input.inputsRunNumber);
 //
@@ -3441,8 +3439,54 @@ void ninja::writeOutputFiles()
 //        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
 //    }
 //    } //end omp section
+#pragma omp section
+    {
+        try{
+            if(input.flatGeoBuffFlag == true)
+            {
+                AsciiGrid<double> *velTempGrid, *angTempGrid;
+                velTempGrid=NULL;
+                angTempGrid=NULL;
+                OutputWriter output;
 
-    }   //end parallel sections region
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+
+                output.setDirGrid(*angTempGrid);
+                output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+                output.setDEMfile(input.pdfDEMFileName);
+                output.setLineWidth(input.pdfLineWidth);
+                output.setDPI(input.pdfDPI);
+                output.setSize(input.pdfWidth, input.pdfHeight);
+                output.setNinjaTime(input.ninjaTime);
+
+                if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                {
+                    output.setWxModel(init->getForecastIdentifier());
+                }
+
+                output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+
+                if(angTempGrid)
+                {
+                    delete angTempGrid;
+                    angTempGrid=NULL;
+                }
+                if(velTempGrid)
+                {
+                    delete velTempGrid;
+                    velTempGrid=NULL;
+                }
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+        }
+    } //end omp section
+	}	//end parallel sections region
 }
 
 /**Deletes allocated dynamic memory.
@@ -4995,6 +5039,11 @@ void ninja::set_wxModelAsciiOutFlag(bool flag)
     input.wxModelAsciiOutFlag = flag;
 }
 
+void ninja::set_wxModelFgbOutFlag(bool flag)
+{
+    input.wxModelFgbFlag = flag;
+}
+
 void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units)
 {
     input.velOutputFileDistanceUnits = units;
@@ -5032,6 +5081,11 @@ void ninja::set_txtOutFlag(bool flag)
 void ninja::set_vtkOutFlag(bool flag)
 {
     input.volVTKOutFlag = flag;
+}
+
+void ninja::set_flatGeoBufFlag(bool flag)
+{
+    input.flatGeoBuffFlag = flag;
 }
 
 void ninja::set_outputPath(std::string path)
@@ -5252,6 +5306,8 @@ void ninja::set_outputFilenames(double& meshResolution,
 
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
+
+    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";
