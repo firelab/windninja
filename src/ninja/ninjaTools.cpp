@@ -36,11 +36,11 @@ ninjaTools::~ninjaTools()
         {
             if(nomadsModels[i])
             {
-                free(nomadsModels[i]);
+                delete(nomadsModels[i]);
             }
         }
 
-        free(nomadsModels);
+        delete[](nomadsModels);
     }
 
     delete Com;
