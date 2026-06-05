@@ -1310,6 +1310,7 @@ void MainWindow::finishedSolve()
     // ninjaCom handles most of the progress dialog, cli, and console window messaging now
     if( result == 1 ) // simulation properly finished
     {
+        progressDialog->setValue(maxProgress - 1);
         progressDialog->setLabelText("Rendering map layers...");
         progressDialog->setCancelButtonText("Cancel");
 
@@ -1334,11 +1335,8 @@ void MainWindow::finishedSolve()
     outputDir.setPath(ui->outputDirectoryLineEdit->text());
 
     // one more process to do after finishedSolve() stuff
-    disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
-               menuBar, &MenuBar::mapVisualizationLoadFinished);
-    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal,
-            this, &MainWindow::finishedLoadingMap,
-            Qt::UniqueConnection);
+    disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap, Qt::UniqueConnection);
     plotOutputs();
 
     char **papszOptions = nullptr;
