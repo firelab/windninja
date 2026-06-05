@@ -723,9 +723,18 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
 * @param uGrid The u velocity grid to be filled.
 * @param vGrid The v velocity grid to be filled.
 * @param wGrid The w velocity grid to be filled (filled with zeros).
+* @param doClipping If true, use west, east, south, north to clip the resulting grids.
+* @param west The west side of the clipping box
+* @param east The east side of the clipping box
+* @param south The south side of the clipping box
+* @param north The north side of the clipping box
 */
-void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx, const float &dx, const float &dy, const float &cenLat, const float &cenLon, const std::string &projString, AsciiGrid<double> &airGrid, AsciiGrid<double> &cloudGrid, AsciiGrid<double> &uGrid, AsciiGrid<double> &vGrid, AsciiGrid<double> &wGrid )
+void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx, const float &dx, const float &dy, const float &cenLat, const float &cenLon, const std::string &projString, AsciiGrid<double> &airGrid, AsciiGrid<double> &cloudGrid, AsciiGrid<double> &uGrid, AsciiGrid<double> &vGrid, AsciiGrid<double> &wGrid, const bool &doClipping, const double &west, const double &east, const double &south, const double &north )
 {
+    double clip_west = west;
+    double clip_east = east;
+    double clip_south = south;
+    double clip_north = north;
 
     int bandNum = timeBandIdx+1;  // timeIdx is 0 to N-1, bandNum is 1 to N.
 
@@ -883,6 +892,20 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                 cloudGrid.replaceNan( -9999.0 );
             }
         }
+
+        // since we didn't warp this dataset to lat/lon, need to transform the clipping points from lat/lon to the projection of the dataset
+        if(i == 1 && doClipping == true)
+        {
+            if(poCT==NULL || !poCT->Transform(1, &clip_west, &clip_south))
+            {
+                throw std::runtime_error("Transformation of west, south to dataset coordinate system failed!");
+            }
+            if(poCT==NULL || !poCT->Transform(1, &clip_east, &clip_north))
+            {
+                throw std::runtime_error("Transformation of east, north to dataset coordinate system failed!");
+            }
+        }
+
         CPLFree(srcWKT);
         CPLFree(dstWkt);
         delete poCT;
@@ -945,6 +968,16 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     //    dirGrid.deallocate();
     //}
     //// oh, no warp is actually done on this dataset till kmz output
+
+    // clip the ascii grids to the input bounding box
+    if(doClipping == true)
+    {
+        airGrid.clipGridInPlaceSnapToCells( clip_west, clip_east, clip_south, clip_north );
+        cloudGrid.clipGridInPlaceSnapToCells( clip_west, clip_east, clip_south, clip_north );
+        uGrid.clipGridInPlaceSnapToCells( clip_west, clip_east, clip_south, clip_north );
+        vGrid.clipGridInPlaceSnapToCells( clip_west, clip_east, clip_south, clip_north );
+        wGrid.clipGridInPlaceSnapToCells( clip_west, clip_east, clip_south, clip_north );
+    }
 }
 
 /**
@@ -1032,6 +1065,8 @@ void Usage()
 {
     printf("wrf_to_kmz [--osu/output_speed_units mph/mps/kph/kts]\n"
            "           [--op/output_path path]\n"
+           "           [--bbox north south east west]\n"
+           "           [--p/point cenLat cenLon lat_buff lon_buff]\n"
            "           input_wrf_filename\n"
            "\n"
            "Defaults:\n"
@@ -1041,6 +1076,15 @@ void Usage()
     exit(1);
 }
 
+void checkArgs( int argIdx, int nSubArgs, char* arg, int argc )
+{
+    if( (argIdx+nSubArgs) >= argc )
+    {
+        std::cout << "not enough args for input " << arg << ", input " << arg << " requires " << nSubArgs << " args" << std::endl;
+        Usage();
+    }
+}
+
 int main( int argc, char* argv[] )
 {
     NinjaInitialize();  // needed for GDALAllRegister()
@@ -1048,7 +1092,21 @@ int main( int argc, char* argv[] )
     std::string input_wrf_filename = "";
     std::string outputSpeedUnits_str = "mps";
     std::string output_path = ".";
-    
+
+    bool isBbox = false;
+    double north = 0.0;
+    double south = 0.0;
+    double east = 0.0;
+    double west = 0.0;
+
+    bool isPoint = false;
+    double cenLat = 0.0;
+    double cenLon = 0.0;
+    double lat_buff = 0.0;
+    double lon_buff = 0.0;
+
+    bool doClipping = false;
+
     // parse input arguments
     int i = 1;
     while( i < argc )
@@ -1059,6 +1117,32 @@ int main( int argc, char* argv[] )
         } else if( EQUAL(argv[i], "--output_path") || EQUAL(argv[i], "--op") )
         {
             output_path = std::string( argv[++i] );
+        } else if( EQUAL(argv[i], "--bbox") )
+        {
+            checkArgs( i, 4, argv[i], argc );
+            isBbox = true;
+            doClipping = true;
+            north = CPLAtof( argv[++i] );
+            south = CPLAtof( argv[++i] );
+            east = CPLAtof( argv[++i] );
+            west = CPLAtof( argv[++i] );
+            cenLat = (south+north)/2;
+            cenLon = (west+east)/2;
+            lat_buff = north-cenLat;
+            lon_buff = east-cenLon;
+        } else if( EQUAL(argv[i], "--point") || EQUAL(argv[i], "--p") )
+        {
+            checkArgs( i, 4, argv[i], argc );
+            isPoint = true;
+            doClipping = true;
+            cenLat = CPLAtof( argv[++i] );
+            cenLon = CPLAtof( argv[++i] );
+            lat_buff = CPLAtof( argv[++i] );
+            lon_buff = CPLAtof( argv[++i] );
+            north = cenLat + lat_buff;
+            south = cenLat - lat_buff;
+            east = cenLon + lon_buff;
+            west = cenLon - lon_buff;
         } else if( EQUAL(argv[i], "--help") || EQUAL(argv[i], "--h") || EQUAL(argv[i], "-help") || EQUAL(argv[i], "-h") )
         {
             Usage();
@@ -1078,6 +1162,11 @@ int main( int argc, char* argv[] )
         std::cout << "please enter a valid input_wrf_filename" << std::endl;
         Usage();
     }
+    if( isBbox == true && isPoint == true )
+    {
+        std::cout << "Too many clipping box options specified, must supply --bbox OR --p/point not BOTH" << std::endl;
+        Usage();
+    }
     int isValidFile = CPLCheckForFile((char*)input_wrf_filename.c_str(),NULL);
     if( isValidFile != 1 )
     {
@@ -1095,9 +1184,77 @@ int main( int argc, char* argv[] )
     }
     VSICloseDir(pathDir);
 
+    if( isBbox == true )
+    {
+        if( north < -90.0 || north > 90.0 )
+        {
+            printf("input --bbox north %f value does not go between -90 to 90!!\n",north);
+            Usage();
+        }
+        if( south < -90.0 || south > 90.0 )
+        {
+            printf("input --bbox south %f value does not go between -90 to 90!!\n",south);
+            Usage();
+        }
+        if( west < -180.0 || west > 180.0 )
+        {
+            printf("input --bbox west %f value does not go between -180 to 180!!\n",west);
+            Usage();
+        }
+        if( east < -180.0 || east > 180.0 )
+        {
+            printf("input --bbox east %f value does not go between -180 to 180!!\n",east);
+            Usage();
+        }
+    }
+    if( isPoint == true )
+    {
+        if( cenLat < -90.0 || cenLat > 90.0 )
+        {
+            printf("input --p/point cenLat %f value does not go between -90 to 90!!\n",cenLat);
+            Usage();
+        }
+        if( cenLon < -180.0 || cenLon > 180.0 )
+        {
+            printf("input --p/point cenLon %f value does not go between -180 to 180!!\n",cenLon);
+            Usage();
+        }
+        if( lat_buff < 0.0 )
+        {
+            printf("input --p/point lat_buff %f value must not be negative!!\n",lat_buff);
+            Usage();
+        }
+        if( lon_buff < 0.0 )
+        {
+            printf("input --p/point lon_buff %f value must not be negative!!\n",lat_buff);
+            Usage();
+        }
+        if( lat_buff >= 90.0 )
+        {
+            printf("input --p/point lat_buff %f value is >= 90, that value would loop around the world!!\n",lat_buff);
+            Usage();
+        }
+        if( lon_buff >= 180.0 )
+        {
+            printf("input --p/point lon_buff %f value is >= 180, that value would loop around the world!!\n",lat_buff);
+            Usage();
+        }
+    }
+
     std::cout << "input_wrf_filename = \"" << input_wrf_filename.c_str() << "\"" << std::endl;
     std::cout << "output_speed_units = \"" << outputSpeedUnits_str.c_str() << "\"" << std::endl;
     std::cout << "output_path = \"" << output_path.c_str() << "\"" << std::endl;
+    if( isBbox == true )
+    {
+        printf("north south east west = %f %f %f %f\n", north, south, east, west);
+        printf("  resulting cenLat cenLon = %f %f\n", cenLat, cenLon);
+        printf("  resulting lat_buff lon_buff = %f %f\n", lat_buff, lon_buff);
+    }
+    if( isPoint == true )
+    {
+        printf("cenLat cenLon lat_buff lon_buff = %f %f %f %f\n", cenLat, cenLon, lat_buff, lon_buff);
+        printf("  resulting north south east west = %f %f %f %f\n", north, south, east, west);
+    }
 
     // test and set units
     velocityUnits::eVelocityUnits outputSpeedUnits = velocityUnits::getUnit(outputSpeedUnits_str);
@@ -1113,12 +1270,20 @@ int main( int argc, char* argv[] )
     // now start processing the data
     float dx;
     float dy;
-    float cenLat;
-    float cenLon;
+    float data_cenLat;
+    float data_cenLon;
     std::string projString;
-    getNcGlobalAttributes( input_wrf_filename, dx, dy, cenLat, cenLon, projString );
+    getNcGlobalAttributes( input_wrf_filename, dx, dy, data_cenLat, data_cenLon, projString );
 
-    std::string timeZoneString = getTimeZoneString( cenLat, cenLon );
+    std::string timeZoneString;
+    if(doClipping == true)
+    {
+        timeZoneString = getTimeZoneString( cenLat, cenLon );
+    }
+    else
+    {
+        timeZoneString = getTimeZoneString( data_cenLat, data_cenLon );
+    }
 
     std::vector<boost::local_time::local_date_time> timeList = getTimeList( timeZoneString, input_wrf_filename );
 
@@ -1132,7 +1297,7 @@ int main( int argc, char* argv[] )
         AsciiGrid<double> vGrid;
         AsciiGrid<double> wGrid;
 
-        setSurfaceGrids( input_wrf_filename, timeIdx, dx, dy, cenLat, cenLon, projString, airGrid, cloudGrid, uGrid, vGrid, wGrid );
+        setSurfaceGrids( input_wrf_filename, timeIdx, dx, dy, data_cenLat, data_cenLon, projString, airGrid, cloudGrid, uGrid, vGrid, wGrid, doClipping, west, east, south, north );
 
         writeWxModelGrids( output_path, forecastTime, outputSpeedUnits, uGrid, vGrid );
     }
