@@ -103,7 +103,7 @@ int main()
     hBand = GDALGetRasterBand( hDataset, 1 );
     
     padfScanline = (double *) CPLMalloc(sizeof(double)*nXSize);
-    demValues = (double *)malloc(nXSize * nYSize * sizeof(double));
+    demValues = (double *)malloc((size_t)nXSize * (size_t)nYSize * sizeof(*demValues));
 
     for(int i = nYSize - 1; i >= 0; i--)
     {

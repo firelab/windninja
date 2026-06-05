@@ -31,7 +31,7 @@ Array2D<T>::Array2D(unsigned nRows, unsigned nCols)
     rows = nRows;
     cols = nCols;
 
-    matrix.resize(rows * cols); //Reserves size needed for matrix
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols); //Reserves size needed for matrix
 }
 
 
@@ -52,7 +52,7 @@ Array2D<T>::Array2D(unsigned nRows, unsigned nCols, T noDataVal)
     rows = nRows;
     cols = nCols;
 
-    matrix.resize(rows * cols); //Reserves exact size needed for matrix
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols); //Reserves size needed for matrix
     matrix.assign(matrix.size(), noDataValue);
 }
 
@@ -119,7 +119,7 @@ void Array2D<T>::setMatrix(unsigned nRows, unsigned nCols, T noDataVal)
     rows = nRows;
     cols = nCols;
     noDataValue = noDataVal;
-    matrix.resize(cols*rows, noDataValue);
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols, noDataValue);
 }
 
 /**
@@ -135,7 +135,7 @@ void Array2D<T>::setMatrix(unsigned nRows, unsigned nCols, T noDataVal, T defaul
     rows = nRows;
     cols = nCols;
     noDataValue = noDataVal;
-    matrix.resize(cols*rows, defaultValue);
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols, defaultValue);
 }
 
 /**

@@ -125,7 +125,7 @@ public:
     inline int get_nCols() const {return data.get_numCols();}
     void set_nRows(int m) { data.set_numRows(m); }
     void set_nCols(int n) { data.set_numCols(n); }
-    inline long get_arraySize() const {return data.get_numRows() * data.get_numCols();}
+    inline long get_arraySize() const {return static_cast<long>(data.get_numRows()) * static_cast<long>(data.get_numCols());}
     inline double get_xllCorner() const {return xllCorner;}
     inline double get_yllCorner() const {return yllCorner;}
     inline double get_noDataValue() const {return data.getNoDataValue();}
