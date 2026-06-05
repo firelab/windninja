@@ -2712,7 +2712,7 @@ void AsciiGrid<T>::exportToTiff(std::string outFilename, std::string dataName, s
     papszOptions = CSLAddString(papszOptions, "TILED=YES");
     papszOptions = CSLAddString(papszOptions, "BIGTIFF=IF_SAFER");
 
-    poDS = tiffDriver->Create(outFilename.c_str(), get_nRows(), get_nCols(), 1, GDT_Float64, papszOptions);
+    poDS = tiffDriver->Create(outFilename.c_str(), get_nCols(), get_nRows(), 1, GDT_Float64, papszOptions);
     if(poDS == NULL)
     {
         return;
