@@ -712,7 +712,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetArmyMultiComStream
     }
     else
     {
-        return NULL;
+        return NINJA_E_NULL_PTR;
     }
 }
 
