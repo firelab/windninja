@@ -39,6 +39,8 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
 
     ui->domainAverageTable->setTabKeyNavigation(false);
 
+    spinBoxLineEditWasBlank = false;
+
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
     connect(ui->clearTableButton, &QPushButton::clicked, this, &DomainAverageInput::clearTableButtonClicked);
     connect(ui->domainAverageTable, &QTableWidget::cellChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
@@ -47,6 +49,28 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageGroupBoxToggled);
     connect(ui->domainAverageGroupBox, &QGroupBox::toggled, this, &DomainAverageInput::domainAverageTableCheckRows);
     connect(this, &DomainAverageInput::updateState, &AppState::instance(), &AppState::updateDomainAverageInputState);
+}
+
+void DomainAverageInput::domainAverageTableOnSpinBoxLineEditTextEdited(const QString &text)
+{
+    spinBoxLineEditWasBlank = text.trimmed().isEmpty();
+}
+
+void DomainAverageInput::domainAverageTableOnSpinBoxLineEditEditingFinished()
+{
+    if(!spinBoxLineEditWasBlank)
+    {
+        return;
+    }
+
+    QDoubleSpinBox* spin = qobject_cast<QDoubleSpinBox*>(sender());
+    if(!spin)
+    {
+        return;
+    }
+
+    spin->setValue(spin->property("defaultValue").toDouble());
+    spinBoxLineEditWasBlank = false;
 }
 
 int DomainAverageInput::countNumRuns()
@@ -156,11 +180,15 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         speedSpins[row] = new QDoubleSpinBox(table);
         speedSpins[row]->setRange(0.0, 500.0);
         speedSpins[row]->setDecimals(2);
+        speedSpins[row]->setProperty("defaultValue", 0.0);
+        speedSpins[row]->setValue(speedSpins[row]->property("defaultValue").toDouble());
         table->setCellWidget(row, 0, speedSpins[row]);
 
         dirSpins[row] = new QDoubleSpinBox(table);
         dirSpins[row]->setRange(0.0, 359.9);
         dirSpins[row]->setDecimals(0);
+        dirSpins[row]->setProperty("defaultValue", 0.0);
+        dirSpins[row]->setValue(dirSpins[row]->property("defaultValue").toDouble());
         table->setCellWidget(row, 1, dirSpins[row]);
 
         timeEdits[row] = new QTimeEdit(QTime::currentTime(), table);
@@ -175,12 +203,15 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         cloudSpins[row] = new QDoubleSpinBox(table);
         cloudSpins[row]->setRange(0.0, 100.0);
         cloudSpins[row]->setDecimals(0);
+        cloudSpins[row]->setProperty("defaultValue", 0.0);
+        cloudSpins[row]->setValue(cloudSpins[row]->property("defaultValue").toDouble());
         table->setCellWidget(row, 4, cloudSpins[row]);
 
         airTempSpins[row] = new QDoubleSpinBox(table);
         airTempSpins[row]->setRange(-40.0, 200.0);
         airTempSpins[row]->setDecimals(0);
-        airTempSpins[row]->setValue(72.0);
+        airTempSpins[row]->setProperty("defaultValue", 72.0);
+        airTempSpins[row]->setValue(airTempSpins[row]->property("defaultValue").toDouble());
         table->setCellWidget(row, 5, airTempSpins[row]);
 
         connect(speedSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
@@ -189,6 +220,20 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         connect(dateEdits[row], &QDateEdit::dateChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
         connect(cloudSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
         connect(airTempSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
+
+        QLineEdit* speedSpinLineEdit = speedSpins[row]->findChild<QLineEdit*>();
+        QLineEdit* dirSpinLineEdit = dirSpins[row]->findChild<QLineEdit*>();
+        QLineEdit* cloudSpinLineEdit = cloudSpins[row]->findChild<QLineEdit*>();
+        QLineEdit* airTempSpinLineEdit = airTempSpins[row]->findChild<QLineEdit*>();
+        connect(speedSpinLineEdit, &QLineEdit::textEdited, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditTextEdited);
+        connect(dirSpinLineEdit, &QLineEdit::textEdited, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditTextEdited);
+        connect(cloudSpinLineEdit, &QLineEdit::textEdited, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditTextEdited);
+        connect(airTempSpinLineEdit, &QLineEdit::textEdited, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditTextEdited);
+
+        connect(speedSpins[row], &QDoubleSpinBox::editingFinished, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditEditingFinished);
+        connect(dirSpins[row], &QDoubleSpinBox::editingFinished, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditEditingFinished);
+        connect(cloudSpins[row], &QDoubleSpinBox::editingFinished, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditEditingFinished);
+        connect(airTempSpins[row], &QDoubleSpinBox::editingFinished, this, &DomainAverageInput::domainAverageTableOnSpinBoxLineEditEditingFinished);
     }
 
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();

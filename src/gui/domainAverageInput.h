@@ -55,6 +55,8 @@ public:
 
 private slots:
     void setupDomainAverageTableWidgets();
+    void domainAverageTableOnSpinBoxLineEditTextEdited(const QString &text);
+    void domainAverageTableOnSpinBoxLineEditEditingFinished();
     void domainAverageTableCheckRows();
     void clearTableButtonClicked();
     void domainAverageGroupBoxToggled();
@@ -62,6 +64,8 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    bool spinBoxLineEditWasBlank;
 
 };
 
