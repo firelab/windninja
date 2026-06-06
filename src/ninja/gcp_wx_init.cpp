@@ -839,12 +839,12 @@ void GCPWxModel::checkForValidData()
 
 int GCPWxModel::getEndHour()
 {
-    return NULL;
+    return 0;
 }
 
 int GCPWxModel::getStartHour()
 {
-    return NULL;
+    return 0;
 }
 
 void GCPWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
