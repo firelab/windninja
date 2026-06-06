@@ -133,7 +133,7 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
             throw std::logic_error( string("invalid elevation_file ") + *filename);
         }
     } else { // no elevation_file specified
-        return NULL; 
+        return NULL;
     }
 }
 
@@ -163,7 +163,7 @@ int windNinjaCLI(int argc, char* argv[])
     bool writeValues = false;
 
     //initializeOptions();
-    
+
     // Moved to initializeOptions()
     try {
         // Declare a group of options that will be
@@ -334,10 +334,10 @@ int windNinjaCLI(int argc, char* argv[])
                 ("input_points_file", po::value<std::string>(), "input file containing lat,long,z for requested output points (z in m above ground)")
                 ("output_points_file", po::value<std::string>(), "file to write containing output for requested points")
                 #ifdef NINJAFOAM
-                ("existing_case_directory", po::value<std::string>(), "path to an existing OpenFOAM case directory") 
+                ("existing_case_directory", po::value<std::string>(), "path to an existing OpenFOAM case directory")
                 ("momentum_flag", po::value<bool>()->default_value(false), "use momentum solver (true, false)")
-                ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver") 
-                ("mesh_count", po::value<int>(), "number of cells in the mesh") 
+                ("number_of_iterations", po::value<int>()->default_value(300), "number of iterations for momentum solver")
+                ("mesh_count", po::value<int>(), "number of cells in the mesh")
                 ("turbulence_output_flag", po::value<bool>()->default_value(false), "write turbulence output (true, false)")
                 #endif
                 #ifdef NINJA_SPEED_TESTING
@@ -609,13 +609,13 @@ int windNinjaCLI(int argc, char* argv[])
         ninjaArmy windsim;
 
         /* Do we have to fetch an elevation file */
-        
+
 #ifdef EMISSIONS
         /*------------------------------------------*/
         /* Download DEM covering the fire perimeter */
-        /* if elevation_file wasn't specified       */ 
-        /*------------------------------------------*/            
-         
+        /* if elevation_file wasn't specified       */
+        /*------------------------------------------*/
+
         if(vm["compute_emissions"].as<bool>() && !elevation_file){
             OGRDataSourceH hDS = 0;
             hDS = OGROpen(vm["fire_perimeter_file"].as<std::string>().c_str(), FALSE, 0);
@@ -644,10 +644,10 @@ int windNinjaCLI(int argc, char* argv[])
             bbox[1] = psEnvelope.MaxX; //east
             bbox[2] = psEnvelope.MinY; //south
             bbox[3] = psEnvelope.MinX; //west
-            
+
             OGRPointToLatLon(bbox[1], bbox[0], hDS, "WGS84");
             OGRPointToLatLon(bbox[3], bbox[2], hDS, "WGS84");
-            
+
             GDALClose(hDS);
 
             //add a buffer
@@ -655,16 +655,16 @@ int windNinjaCLI(int argc, char* argv[])
             bbox[1] += 0.042; //east
             bbox[2] -= 0.009; //south
             bbox[3] -= 0.042; //west
-            
+
             std::string new_elev = CPLGetBasename( vm["fire_perimeter_file"].as<std::string>().c_str() );
             new_elev += ".tif";
-            
+
             //if the elevation file doesn't exist, fetch it
             if(!CPLCheckForFile((char*)new_elev.c_str(), NULL)){
                 std::cout << "Downloading elevation file..." << std::endl;
-                
+
                 SurfaceFetch *fetch = FetchFactory::GetSurfaceFetch( "srtm" );
-            
+
                 if( NULL == fetch )
                 {
                     fprintf(stderr, "Invalid DEM Source\n");
@@ -736,7 +736,7 @@ int windNinjaCLI(int argc, char* argv[])
                     }
                 }
             }
-            
+
             elevation_file = new string(new_elev);
         }
         #endif //EMISSIONS
@@ -964,7 +964,6 @@ int windNinjaCLI(int argc, char* argv[])
             }
         }
 
-    
 
         if(vm["initialization_method"].as<std::string>()!=string("domainAverageInitialization") &&
                 vm["initialization_method"].as<std::string>() != string("pointInitialization") &&
@@ -976,12 +975,12 @@ int windNinjaCLI(int argc, char* argv[])
                      wxModelInitialization, or griddedInitialization.\n";
             return -1;
         }
-        
+
         //---------------------------------------------------------------------
         //  only some options are possible with momentum solver
         //---------------------------------------------------------------------
-#ifdef NINJAFOAM 
-        
+#ifdef NINJAFOAM
+
         if(vm["initialization_method"].as<std::string>()==string("pointInitialization") &&
            vm["momentum_flag"].as<bool>()){
             cout << "'pointInitialization' is not a valid 'initialization_method' if the momentum solver is enabled.\n";
@@ -997,9 +996,9 @@ int windNinjaCLI(int argc, char* argv[])
         conflicting_options(vm, "momentum_flag", "compute_emissions");
         #endif
         conflicting_options(vm, "momentum_flag", "non_neutral_stability");
-        
+
 #endif //NINJAFOAM
-        
+
         if(vm["initialization_method"].as<std::string>() == string("wxModelInitialization"))
         {
             conflicting_options(vm, "wx_model_type", "forecast_filename");
@@ -1233,7 +1232,7 @@ int windNinjaCLI(int argc, char* argv[])
         }
 //STATION_FETCH
         //---------------------------------------------------------------------
-        // Make army for pointInitialization  
+        // Make army for pointInitialization
         //---------------------------------------------------------------------
         if(vm["initialization_method"].as<std::string>() == string("pointInitialization"))
         {
@@ -1319,7 +1318,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                     //                    pointInitialization::writeStationLocationFile(vm["elevation_file"].as<std::string>());
                     pointInitialization::writeStationLocationFile(stationPathName,*elevation_file,vm["fetch_current_station_data"].as<bool>());
-                    
+
                 }
                 else if (vm["fetch_type"].as<std::string>()=="stid")
                 {
@@ -1333,9 +1332,9 @@ int windNinjaCLI(int argc, char* argv[])
                         pointInitialization::removeBadDirectory(stationPathName); //delete the generated dir
                         throw std::runtime_error(pointInitialization::error_msg);
                     }
-//                    pointInitialization::writeStationLocationFile(*elevation_file); 
+//                    pointInitialization::writeStationLocationFile(*elevation_file);
                     pointInitialization::writeStationLocationFile(stationPathName,*elevation_file,vm["fetch_current_station_data"].as<bool>());
-                    
+
                 }
                 else //If something else bad happens
                 {
@@ -1474,7 +1473,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                          vm["number_time_steps"].as<int>(),
                                                          osTimeZone );
                     std::vector<std::string> sFiles;
-                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());                   
+                    sFiles=pointInitialization::openCSVList(vm["wx_station_filename"].as<std::string>());
                     pointInitialization::storeFileNames(sFiles);
                     windsim.makePointArmy(timeList,osTimeZone,vm["wx_station_filename"].as<std::string>(),
                             *elevation_file,vm["match_points"].as<bool>(),false);
@@ -1524,10 +1523,10 @@ int windNinjaCLI(int argc, char* argv[])
             windsim.setNumberCPUs( i_, vm["num_threads"].as<int>() );
 
             //windsim.ninjas[i_].readInputFile(*elevation_file);
-            
+
             windsim.setDEM( i_, *elevation_file );
             windsim.setPosition( i_ );    //get position from DEM file
-            
+
             #ifdef NINJAFOAM
             if(vm["momentum_flag"].as<bool>()){
                 conflicting_options(vm, "mesh_choice", "mesh_count");
@@ -1570,7 +1569,7 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setOutputPointsFilename( i_,
                         vm["output_points_file"].as<std::string>() );
             }
-            
+
             #ifdef NINJA_SPEED_TESTING
             if(vm.count("initialization_speed_dampening_ratio"))
             {
@@ -1835,11 +1834,11 @@ int windNinjaCLI(int argc, char* argv[])
             }
             else if(vm["initialization_method"].as<std::string>() == string("griddedInitialization"))
             {
-                
+
                 verify_option_set(vm, "input_speed_grid");
                 option_dependency(vm, "input_speed_grid", "input_speed_units");
                 verify_option_set(vm, "input_dir_grid");
-                
+
                 verify_option_set(vm, "input_wind_height");
                 verify_option_set(vm, "output_wind_height");
                 option_dependency(vm, "input_wind_height", "units_input_wind_height");
@@ -1853,7 +1852,7 @@ int windNinjaCLI(int argc, char* argv[])
 
                 windsim.setOutputWindHeight( i_, vm["output_wind_height"].as<double>(),
                         lengthUnits::getUnit(vm["units_output_wind_height"].as<std::string>()));
-                
+
 
                 if(vm["diurnal_winds"].as<bool>())
                 {
@@ -1917,7 +1916,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                                osTimeZone);
                     }
                 }
-                
+
                 windsim.setSpeedInitGrid( i_, vm["input_speed_grid"].as<std::string>(),
                         velocityUnits::getUnit( vm["input_speed_units"].as<std::string>() ) );
 
@@ -2010,7 +2009,7 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm.count("output_path")){
                 windsim.setOutputPath( i_, vm["output_path"].as<std::string>());
             }
-            
+
             windsim.setOutputBufferClipping( i_, vm["output_buffer_clipping"].as<double>());
 
             if(!vm.count("write_wx_model_goog_output") &&

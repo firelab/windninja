@@ -157,13 +157,13 @@ public:
     void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
                           std::string demFile,bool matchPoints, bool momentumFlag );
-    
+
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
     void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> timeList, bool momentumFlag);
     std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     bool startRuns(int numProcessors);
     bool startFirstRun();
-    
+
     int ninjaInitialize();
 
     /*-----------------------------------------------------------------------------
@@ -240,7 +240,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDownDragCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set downslope entrainment coefficient for a ninja
     *
@@ -250,7 +250,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDownEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set upslope drag coefficient for a ninja
     *
@@ -260,7 +260,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setUpDragCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set upslope entrainment coefficient for a ninja
     *
@@ -271,7 +271,7 @@ public:
     */
     int setUpEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
 #endif
-    
+
     /*-----------------------------------------------------------------------------
      *  Friciton Velocity Methods
      *-----------------------------------------------------------------------------*/
@@ -333,7 +333,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the mesh count for a NinjaFOAM run
     *
@@ -342,7 +342,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setMeshCount( const int nIndex, const int meshCount, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the mesh count for a NinjaFOAM run
     *
@@ -350,19 +350,19 @@ public:
     * \param meshChoice Mesh resolution choice
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setMeshCount( const int nIndex, 
-                      const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+    int setMeshCount( const int nIndex,
+                      const WindNinjaInputs::eNinjafoamMeshChoice meshChoice,
                       char ** papszOptions=NULL );
 
     /**
     * \brief Set the path to an existing case for a NinjaFOAM run
     *
     * \param nIndex index of a ninja
-    * \param  path to existing directory 
+    * \param  path to existing directory
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions=NULL );
-        
+
     /**
     * \brief Set the flag to write turbulence output from a NinjaFOAM run
     *
@@ -385,7 +385,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions=NULL);
-    
+
     /*-----------------------------------------------------------------------------
      *  Point Initialization Methods
      *-----------------------------------------------------------------------------*/
@@ -421,11 +421,11 @@ public:
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
-     * Station Fetch Methods 
+     * Station Fetch Methods
      *-----------------------------------------------------------------------------*/
 
     /**
-    * \brief Enable/disable weather station fetching 
+    * \brief Enable/disable weather station fetching
     *
     * \param nIndex index of a ninja
     * \param flag Enables station fetch if true, disables if false
@@ -512,7 +512,7 @@ public:
     */
     int setSpeedInitGrid( const int nIndex, const std::string speedFile,
                           const velocityUnits::eVelocityUnits units, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the input direction grid filename from a NinjaFOAM run for use with diurnal
     *
@@ -521,7 +521,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the input speed with units of a ninja
     *
@@ -733,9 +733,8 @@ public:
     */
     int setDateTime( const int nIndex, int const &yr, int const &mo, int const &day,
                      int const &hr, int const &min, int const &sec,
-                     std::string const &timeZoneString, char ** papszOptions=NULL );        
-                          
-    
+                     std::string const &timeZoneString, char ** papszOptions=NULL );
+
     /**
     * \brief Set the wxStation filename for a ninja
     *
@@ -995,7 +994,7 @@ public:
     * \return number of rows in the output grid
     */
     const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the percent of output buffer clipping for a ninja
     *
@@ -1192,7 +1191,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Enable/disable JSON output for a ninja
     *
@@ -1326,7 +1325,7 @@ public:
     */
     int setTxtOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Enable/disable PDF output for a ninja 
+    * \brief Enable/disable PDF output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   determines if pdf output is enabled or not
@@ -1344,7 +1343,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setPDFResolution( const int nIndex, const double resolution,
-                                     const lengthUnits::eLengthUnits units, 
+                                     const lengthUnits::eLengthUnits units,
                                      char ** papszOptions=NULL );
     /**
     * \brief Set the resolution of PDF output for a ninja
@@ -1369,12 +1368,12 @@ public:
 
 
     /* --------------------------------------------------------------------------*/
-    /** 
+    /**
      * @brief Configures the PDF output vector line width (defaults to 1.0)
-     * 
+     *
      * @Param nIndex index of a ninja
      * @Param linewidth value of the desired line width ( > 0.0 )
-     * 
+     *
      * @Returns errval NINJA_SUCCESS if linewidth correctly set
      */
     /* ----------------------------------------------------------------------------*/

@@ -102,7 +102,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  *
  * Use this method to create a finite, known number of runs for windninja.
  * There are other creation methods that automatically allocate the correct
- * number of runs for the input type. 
+ * number of runs for the input type.
  *
  * \see NinjaMakeWeatherModelArmy
  * \see NinjaMakePointArmy
@@ -179,9 +179,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmy
  * \brief Generate a ninjaArmy from a weather station file.
  *
  * This method will create a set of runs for windninja based on the contents of
- * a weather station file and list of datetimes specified by arrays of years, months, days, and hours 
+ * a weather station file and list of datetimes specified by arrays of years, months, days, and hours
  * where the ith element of each array specifies a datetime within range of datetimes contained
- * in the weather station file. 
+ * in the weather station file.
  *
  * Avaliable Creation Options:
  *                             None
@@ -216,7 +216,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakePointArmy
  * \brief Generate a ninjaArmy from a forecast file.
  *
  * This method will create a set of runs for windninja based on the contents of
- * the weather forecast file.  One run is done for each timestep in the forecast 
+ * the weather forecast file.  One run is done for each timestep in the forecast
  * file.
  *
  * Avaliable Creation Options:
@@ -449,14 +449,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMPoint
 
 /**
  * \brief Fetch DEM file using a bounding box
- * 
+ *
  * This method will fetch a DEM file using a bounding box and a resolution from the specified source.
  *
  * \param boundsBox A pointer to an array of four doubles representing the bounding box. [north, east, south, west]
  * \param fileName A valid path to a DEM file.
  * \param resolution The desired resolution of the DEM file, in meters. If set to <= 0.0, the fetcher will use the raw DEM resolution.
  * \param fetchType A string representing the source of the DEM file (e.g. "srtm", "gmted", "relief").
- * 
+ *
  * \return NINJA_SUCCESS on success, NINJA_E_INVALID otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
@@ -495,14 +495,13 @@ WINDNINJADLL_EXPORT NinjaErr NinjaFetchDEMBBox
  *
  * \return Station file name on success, "exception" otherwise.
  * TODO: This function currently doesn't return a the path to a station file, need to determine what the proper behavior is
- *       Note: the pointInitialization class currently only has static public functions. We should consider if this is the best 
+ *       Note: the pointInitialization class currently only has static public functions. We should consider if this is the best
  *             approach or if the class should be refactored. For example, I was going to add a function to return a path to
  *             the stationLocationFilename (the path on disk to the list of station files that the user will need). But right
- *             now this isn't possible since that path is created by a static function, writeStationLocationFile. If we change 
- *             these functions to non-static to enhance functionality, we'll need to add accessor functions in ninja/ninjaArmy to access 
+ *             now this isn't possible since that path is created by a static function, writeStationLocationFile. If we change
+ *             these functions to non-static to enhance functionality, we'll need to add accessor functions in ninja/ninjaArmy to access
  *             functions on the pointInitialziation object. Another option for this immediate use case is to just change writeStationLocationFile
  *             to return the path to the file rather than a bool for success/failure. This might be the simplest for now.
- *             
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchStationFromBBox
     (NinjaToolsH* tools, const int* yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const int size, const char* elevationFile, double buffer, const char* units, const char* timeZone, bool fetchLatestFlag, const char* outputPath, bool locationFileFlag, char ** options)
@@ -1472,7 +1471,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedGridResolution
 {
     if( NULL != army && NULL != units )
     {
-        
+
         lengthUnits::eLengthUnits unitsEnum = lengthUnits::getUnit(std::string(units));
 
         return reinterpret_cast<ninjaArmy*>( army )->setOutputSpeedGridResolution
@@ -2323,7 +2322,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFOutFlag
  * \brief Set the line width of the PDF output for a simulation.
  *
  * \note Only valid if NinjaSetPDFOutFlag is set to 1.
- * 
+ *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param lineWidth The line width of the PDF output.
@@ -2348,7 +2347,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFLineWidth
  * \brief Set the base map of the PDF output for a simulation.
  *
  * \note Only valid if NinjaSetPDFOutFlag is set to 1.
- * 
+ *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param eType The base map at which to write the PDF output ("TOPOFIRE", "HILLSHADE").
@@ -2373,7 +2372,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFBaseMap
  * \brief Set the DEM of the PDF output for a simulation.
  *
  * \note Only valid if NinjaSetPDFOutFlag is set to 1.
- * 
+ *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param demFileName The filepath of the simulation DEM.
@@ -2398,7 +2397,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFDEM
  * \brief Set the size of the PDF output for a simulation
  *
  * \note Only valid if NinjaSetPDFOutFlag is set to 1.
- * 
+ *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param height The height at which to write the PDF output.
@@ -2418,14 +2417,14 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFSize
     else
     {
         return NINJA_E_NULL_PTR;
-    }   
+    }
 }
 
 /**
  * \brief Set the resolution of the PDF output for a simulation.
  *
  * \note Only valid if NinjaSetPDFOutFlag is set to 1.
- * 
+ *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param resolution The resolution at which to write the PDF output.
@@ -2499,7 +2498,7 @@ WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param papszOptions options.
- * 
+ *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaReset( NinjaArmyH * army, char ** papszOptions )
@@ -2520,7 +2519,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaReset( NinjaArmyH * army, char ** papszOptions
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param papszOptions options
- * 
+ *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaArmyH * army, char ** papszOptions )
@@ -2541,7 +2540,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancel( NinjaArmyH * army, char ** papszOption
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param papszOptions options
- * 
+ *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** papszOptions )
@@ -2559,7 +2558,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaCancelAndReset( NinjaArmyH * army, char ** pap
 
 /*-----------------------------------------------------------------------------
 *  Helper Methods
-*-----------------------------------------------------------------------------*/  
+*-----------------------------------------------------------------------------*/
 /**
  * \brief Get the header version for a weather station file.
  *

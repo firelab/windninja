@@ -282,7 +282,7 @@ typedef int  NinjaErr;
 
     /*-----------------------------------------------------------------------------
      *  Output Methods
-     *  TODO: Fully expose pdf functions 
+     *  TODO: Fully expose pdf functions
      *-----------------------------------------------------------------------------*/
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputPath
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * path, char ** options );

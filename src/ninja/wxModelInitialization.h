@@ -139,9 +139,9 @@ class wxModelInitialization : public initialize
                              double south, int hours);
     virtual std::string fetchForecast( std::string demFile, int nHours );
     std::string generateForecastName();
-    
+
     void setModelFileName( std::string filename ) {wxModelFileName = filename;}
-    
+
     void SetProgressFunc( GDALProgressFunc );
     void SetProgressArg( void *p );
 
@@ -172,23 +172,23 @@ class wxModelInitialization : public initialize
     #endif
 
     std::string GetTimeName(const char *pszVariable);
-    
+
     int wxModel_nLayers;
     int wxModel_nCols; //wx model ncols/nrows in reprojected coords (DEM space) after ndvs are stripped
     int wxModel_nRows; //from outer edges of image; for non-xy-staggered variables (T, ph, phb, etc.)
-    
+
     double dfNoData; // no data value from netcdf file
-    
+
     Mesh cellCenterWxMesh;
     Mesh xStaggerWxMesh;
     Mesh yStaggerWxMesh;
     Mesh zStaggerWxMesh;
-    
+
     wn_3dScalarField u3d;
     wn_3dScalarField v3d;
     wn_3dScalarField w3d;
     wn_3dScalarField cloud3d;
-    
+
     wn_3dScalarField wxU3d;
     wn_3dScalarField wxV3d;
     wn_3dScalarField wxW3d;

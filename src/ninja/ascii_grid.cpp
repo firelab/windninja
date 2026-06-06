@@ -13,12 +13,12 @@ template<> GDALDataType getGdalDataType<double>() { return GDT_Float64; }
 template<> GDALDataType getGdalDataType<short>() { return GDT_Int16; }
 template<> GDALDataType getGdalDataType<int>() { return GDT_Int32; }
 // ...and more specializations to follow
-// make the default throw so that we don't try to scan into a wrong type size 
-// note - older MSVCs seem to have problems with regex_replace(const char* fmt..) hene we have to pass in temporary strings 
-template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); } 
-template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("lf")); } 
-template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("d")); } 
-template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("hd")); } 
+// make the default throw so that we don't try to scan into a wrong type size
+// note - older MSVCs seem to have problems with regex_replace(const char* fmt..) hene we have to pass in temporary strings
+template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); }
+template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("lf")); }
+template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("d")); }
+template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("hd")); }
 
 template <class T> inline T epsClr() { throw std::runtime_error("unknown eps value"); }
 template<> inline double epsClr<double>() { return 0.001; }
@@ -141,7 +141,7 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
 }
 
 template <class T>
-AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band) 
+AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
 :data(poDS->GetRasterYSize(), poDS->GetRasterXSize(), poDS->GetRasterBand(band)->GetNoDataValue())
 {
     sortedData = nullptr;
@@ -160,7 +160,7 @@ AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
     //check for non-square cells
     /*
     if( abs( adfGeoTransform[1] ) - abs( adfGeoTransform[5] ) > 0.0001 )
-	CPLDebug( "GDAL2AsciiGrid", "Non-uniform cells" );
+    CPLDebug( "GDAL2AsciiGrid", "Non-uniform cells" );
     */
 
     GDALRasterBand *poBand;
@@ -172,7 +172,7 @@ AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
     int pbSuccess = 0;
     double dfNoData = poBand->GetNoDataValue( &pbSuccess );
     if( pbSuccess == false )
-	dfNoData = -9999.0;
+        dfNoData = -9999.0;
 
     //reallocate all memory and set header info
     set_headerData( nXSize, nYSize, adfCorner[0], adfCorner[1], adfGeoTransform[1], dfNoData, dfNoData);
@@ -411,10 +411,10 @@ void AsciiGrid<T>::GDALReadGrid(std::string inputFile, int band)
     if( pbSuccess == FALSE )
         dfNoData = -9999.0;
 
-    //reallocate all memory and set header info    
+    //reallocate all memory and set header info
     set_headerData(nXSize, nYSize, adfCorner[0], adfCorner[1],
                                adfGeoTransform[1], dfNoData, dfNoData, std::string(pszWkt));
-    
+
     //set the data
     double *padfScanline;
     padfScanline = new double[nXSize];
@@ -824,7 +824,7 @@ AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
                 j+nAddCols < 0 || j+nAddCols >= A.get_nCols())
             {
                 continue;
-            } 
+            }
             A.set_cellValue( i+nAddRows, j+nAddCols, get_cellValue(i, j));
         }
     }
@@ -887,7 +887,7 @@ void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
 }
 
 /**
- * \brief Check if one grid overlaps another 
+ * \brief Check if one grid overlaps another
  *
  * Check if one grid completely overlaps another grid.
  *
@@ -901,12 +901,12 @@ bool AsciiGrid<T>::CheckForGridOverlap( AsciiGrid &A )
     double xmax = xmin + get_nCols()*get_cellSize();
     double ymin = get_yllCorner();
     double ymax = ymin + get_nRows()*get_cellSize();
-    
+
     double A_xmin = A.get_xllCorner();
     double A_xmax = A_xmin + A.get_nCols()*A.get_cellSize();
     double A_ymin = A.get_yllCorner();
     double A_ymax = A_ymin + A.get_nRows()*A.get_cellSize();
-    
+
     if (A_xmin > xmin && A_xmax < xmax && A_ymin > ymin && A_ymax < ymax)
     {
         return true;
@@ -933,7 +933,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
         return true;
     else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
         throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
-    
+
     double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
     double sum;
     int nValues;
@@ -1074,7 +1074,7 @@ bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double max
         return true;
     else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
         throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
-    
+
     double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
     double sum;
     int nValues;
@@ -1112,7 +1112,7 @@ bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double max
                                     continue;
                                 }
 
-                                values.push_back( int(get_cellValue(ii, jj)) ); 
+                                values.push_back( int(get_cellValue(ii, jj)) );
                                 nValues++;
                             }
                         }
@@ -1735,9 +1735,9 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
     if(numDecimals < -1 || numDecimals > 3)
         numDecimals = 2;
 
-    if (numDecimals == -1) { 
+    if (numDecimals == -1) {
         write_integralGridData(fout);
-    } else { 
+    } else {
         write_fpGridData(fout,numDecimals);
     }
 
@@ -1853,13 +1853,13 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
     adfGeoTransform[3] = get_yllCorner()+(get_nRows()*get_cellSize());
     adfGeoTransform[4] = 0;
     adfGeoTransform[5] = -get_cellSize();
-    
+
     char* pszDstWKT = (char*)prjString.c_str();
     GDALSetProjection(hDS, pszDstWKT);
     GDALSetGeoTransform(hDS, adfGeoTransform);
-    
+
     GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
-    
+
     GDALSetRasterNoDataValue(hBand, get_noDataValue());
 
     for(int i=nYSize-1; i>=0; i--)
@@ -1869,7 +1869,7 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
             padfScanline[j] = get_cellValue(nYSize-1-i, j);
         }
         eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                            1, GDT_Float64, 0, 0); 
+                            1, GDT_Float64, 0, 0);
         assert( eErr == CE_None );
     }
 
@@ -2026,7 +2026,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     //std::cout << "outFilename = " << outFilename.c_str() << std::endl;
     //std::cout << "pos = " << pos << std::endl;
     if(pos != -1)
-	    base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
+        base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
     //std::cout << "base_outFilename = " << base_outFilename.c_str() << std::endl;
     std::string tiff_fileout_proj = base_outFilename + "_proj.tif";
     std::string tiff_fileout_geog = base_outFilename + "_geog.tif";
@@ -2048,7 +2048,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     int nYSize = poDS->GetRasterYSize();
 
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
-    
+
     //this->write_Grid("this_grid", 2);
 
 
@@ -2195,8 +2195,8 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         }
         BMP legend;
 
-	    std::string legendStrings[6];
-	    ostringstream os;
+        std::string legendStrings[6];
+        ostringstream os;
 
         double _brk0 = 0;
         double _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
@@ -2204,84 +2204,84 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         double _brk3 = desiredBrk2;
         double _brk4 = desiredBrk3;
 
-	    for(int labelIdx = 0; labelIdx < 5; labelIdx++)
-	    {
-		    os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
-		    if(labelIdx == 0)
+        for(int labelIdx = 0; labelIdx < 5; labelIdx++)
+        {
+            os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
+            if(labelIdx == 0)
                 os << (double)_brk4;
             else if(labelIdx == 1)
                 os << (double)_brk3;
-		    else if(labelIdx == 2)
-			    os << (double)_brk2;
+            else if(labelIdx == 2)
+                os << (double)_brk2;
             else if(labelIdx == 3)
                 os << (double)_brk1;  // ignored when nColorBreaks == 3
-		    else if(labelIdx == 4)
-			    os << "0.00";  // not currently used, but just in case leave it as a stored value
+            else if(labelIdx == 4)
+                os << "0.00";  // not currently used, but just in case leave it as a stored value
             legendStrings[labelIdx] = os.str();
-		    os.str("");
-	    }
-
-	    legend.SetSize(legendWidth,legendHeight);
-	    legend.SetBitDepth(8);
-
-	    //black legend
-	    for(int i = 0;i < legendWidth;i++)
-	    {
-		    for(int j = 0;j < legendHeight;j++)
-		    {
-			    legend(i,j)->Alpha = 0;
-			    legend(i,j)->Blue = 0;
-			    legend(i,j)->Green = 0;
-			    legend(i,j)->Red = 0;
-		    }
+            os.str("");
         }
 
-	    //for white text
-	    RGBApixel white;
-	    white.Red = 255;
-	    white.Green = 255;
-	    white.Blue = 255;
-	    white.Alpha = 0;
+        legend.SetSize(legendWidth,legendHeight);
+        legend.SetBitDepth(8);
 
-	    RGBApixel colors[10];
+        //black legend
+        for(int i = 0;i < legendWidth;i++)
+        {
+            for(int j = 0;j < legendHeight;j++)
+            {
+                legend(i,j)->Alpha = 0;
+                legend(i,j)->Blue = 0;
+                legend(i,j)->Green = 0;
+                legend(i,j)->Red = 0;
+            }
+        }
 
-	    //RGBApixel red, yellow, green, blue
-	    colors[0].Red = 255;  //Red
-	    colors[0].Green = 0;
-	    colors[0].Blue = 0;
-	    colors[0].Alpha = 0;
+        //for white text
+        RGBApixel white;
+        white.Red = 255;
+        white.Green = 255;
+        white.Blue = 255;
+        white.Alpha = 0;
+
+        RGBApixel colors[10];
+
+        //RGBApixel red, yellow, green, blue
+        colors[0].Red = 255;  //Red
+        colors[0].Green = 0;
+        colors[0].Blue = 0;
+        colors[0].Alpha = 0;
 
         colors[1].Red = 255;  //RRY
-	    colors[1].Green = 85;
-	    colors[1].Blue = 0;
-	    colors[1].Alpha = 0;
+        colors[1].Green = 85;
+        colors[1].Blue = 0;
+        colors[1].Alpha = 0;
 
-	    colors[2].Red = 255;  //RYY
-	    colors[2].Green = 170;
-	    colors[2].Blue = 0;
-	    colors[2].Alpha = 0;
+        colors[2].Red = 255;  //RYY
+        colors[2].Green = 170;
+        colors[2].Blue = 0;
+        colors[2].Alpha = 0;
 
-	    colors[3].Red = 255;  //Yellow
-	    colors[3].Green = 255;
-	    colors[3].Blue = 0;
-	    colors[3].Alpha = 0;
+        colors[3].Red = 255;  //Yellow
+        colors[3].Green = 255;
+        colors[3].Blue = 0;
+        colors[3].Alpha = 0;
 
-	    colors[4].Red = 170;  //YYG
-	    colors[4].Green = 255;
-	    colors[4].Blue = 0;
-	    colors[4].Alpha = 0;
+        colors[4].Red = 170;  //YYG
+        colors[4].Green = 255;
+        colors[4].Blue = 0;
+        colors[4].Alpha = 0;
 
-	    colors[5].Red = 85;  //YGG
-	    colors[5].Green = 255;
-	    colors[5].Blue = 0;
-	    colors[5].Alpha = 0;
+        colors[5].Red = 85;  //YGG
+        colors[5].Green = 255;
+        colors[5].Blue = 0;
+        colors[5].Alpha = 0;
 
-	    colors[6].Red = 0;  //Green
-	    colors[6].Green = 255;
-	    colors[6].Blue = 0;
-	    colors[6].Alpha = 0;
+        colors[6].Red = 0;  //Green
+        colors[6].Green = 255;
+        colors[6].Blue = 0;
+        colors[6].Alpha = 0;
 
-	    colors[7].Red = 0;  //GGB
+        colors[7].Red = 0;  //GGB
         colors[7].Green = 170;
         colors[7].Blue = 80;
         colors[7].Alpha = 0;
@@ -2397,18 +2397,18 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     /* -------------------------------------------------------------------- */
 
     GDALDataset *poDstDS_tiff;
-    
+
     CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF dirver data type error
     poDstDS_tiff = tiffDriver->CreateCopy(tiff_fileout_geog.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
     CPLPopErrorHandler();
-    
+
     /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
     /* -------------------------------------------------------------------- */
-    
+
     GDALDriver *poDstDriver = GetGDALDriverManager()->GetDriverByName("PNG");
     GDALDataset *poDstDS;
-    
+
     CPLPushErrorHandler(CPLQuietErrorHandler); //silence PNG dirver data type error
     poDstDS = poDstDriver->CreateCopy(outFilename.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
     CPLPopErrorHandler();
@@ -2417,7 +2417,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     /*AsciiGrid<double> poDstDS_grid;
     GDAL2AsciiGrid(poDstDS, 1, poDstDS_grid);
     poDstDS_grid.write_Grid("poDstDS_grid", 2);
-    
+
     AsciiGrid<double> wrpDS_grid;
     GDAL2AsciiGrid(wrpDS, 1, wrpDS_grid);
     wrpDS_grid.write_Grid("wrpDS_grid", 2);
@@ -2426,14 +2426,14 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDAL2AsciiGrid(poDS, 1, poDS2_grid);
     poDS2_grid.write_Grid("poDS2_grid", 2);*/
 
-    
+
     /* -------------------------------------------------------------------- */
     /*  clean up                                                            */
     /* -------------------------------------------------------------------- */
 
     CPLFree(pszSRS_WKT);
     CPLFree(pszDST_WKT);
-    
+
     delete [] padfScanline;
 
     GDALDestroyColorTable((GDALColorTableH) poCT);
@@ -3078,7 +3078,7 @@ bool AsciiGrid<T>::crop_noData (int noDataThreshold)
         if (minRow > 0 || minCol > 0 || maxRow < data.get_numRows()-1 || maxCol < data.get_numCols()-1) {
             xllCorner += minCol * cellSize;
             yllCorner += (data.get_numRows()-1 - maxRow) * cellSize;
-            data.crop( minRow, maxRow, minCol, maxCol); // note this crops in-place            
+            data.crop( minRow, maxRow, minCol, maxCol); // note this crops in-place
         }
         return true;
     } else {

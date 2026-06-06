@@ -108,7 +108,7 @@ void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
     }
 
     int i;
-    for( i=0; i < ninjas.size();i ++) 
+    for( i=0; i < ninjas.size();i ++)
         delete ninjas[i];
     ninjas.resize( nSize );
     for( i = 0; i < nSize; i++ ){
@@ -565,7 +565,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             if(!ninjas[0]->simulate_wind())
                printf("Return of false from simulate_wind()\n");
 #ifdef NINJAFOAM
-            //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+            //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with
             //a ninja run to add diurnal flow after the cfd solution is computed
             if ((ninjas[0]->identify() == "ninjafoam") & ninjas[0]->input.diurnalWinds){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
@@ -590,7 +590,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
                 //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
-                diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()\n");
                 }
@@ -604,9 +604,9 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                 //set fgbFile for setCurrentMapVisualization(), for the GUI
                 ninjas[0]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
-            } 
+            }
 
-#endif //NINJAFOAM            
+#endif //NINJAFOAM
 
             //store data for atmosphere file
             if(ninjas[0]->input.atmOutFlag)
@@ -684,7 +684,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(!ninjas[i]->simulate_wind()){
                     throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
                 }
-                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with
                 //a ninja run to add diurnal flow after the cfd solution is computed
                 if((ninjas[i]->identify() == "ninjafoam") && ninjas[i]->input.diurnalWinds){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
@@ -709,7 +709,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
                     //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
-                    diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                    diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
@@ -723,7 +723,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                     //set fgbFile for setCurrentMapVisualizationFilenames(), for the GUI
                     ninjas[i]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
-                } 
+                }
 
                 //store data for atmosphere file
                 if(ninjas[i]->input.atmOutFlag)
@@ -803,7 +803,7 @@ bool ninjaArmy::startRuns(int numProcessors)
             throw;
         }
     }
-#endif //NINJAFOAM            
+#endif //NINJAFOAM
     else
     {
         for(unsigned int i = 0; i < ninjas.size(); i++)
@@ -820,10 +820,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
         std::vector<int> anErrors( numProcessors);
         std::vector<std::string>asMessages( numProcessors );
-        
+
         std::vector<boost::local_time::local_date_time> timeList;
 
-	#pragma omp parallel for //spread runs on single threads
+    #pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
         for( int i = 0; i < ninjas.size(); i++ )
         {
@@ -836,7 +836,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 //                }
 
                 //start the run
-                ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_nested(false)
+                ninjas[i]->simulate_wind();  //runs are done on 1 thread each since omp_set_nested(false)
 
                 //store data for atmosphere file
                 if(ninjas[i]->input.atmOutFlag)
@@ -1664,8 +1664,8 @@ int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** paps
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
 }
-int ninjaArmy::setMeshCount( const int nIndex, 
-                             const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+int ninjaArmy::setMeshCount( const int nIndex,
+                             const WindNinjaInputs::eNinjafoamMeshChoice meshChoice,
                              char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
@@ -1713,7 +1713,7 @@ int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
 }
 
 /*-----------------------------------------------------------------------------
- * Station Fetch Methods 
+ * Station Fetch Methods
  *-----------------------------------------------------------------------------*/
 int ninjaArmy::setStationFetchFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1728,8 +1728,8 @@ int ninjaArmy::ninjaInitialize()
     int retval = NINJA_E_INVALID;
 
     retval = NinjaInitialize();
-    
-    return retval;    
+
+    return retval;
 }
 
 int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
@@ -2649,8 +2649,8 @@ int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
        {
            ninjas[ nIndex ]->set_pdfResolution( resolution, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
-       } 
-       catch( std::logic_error &e ) 
+       }
+       catch( std::logic_error &e )
        {
            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;

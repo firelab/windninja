@@ -94,7 +94,7 @@ void KmlVector::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits
 
 void KmlVector::setAngleFromNorth(const double angFromNorth)
 {
-	angleFromNorth = angFromNorth;
+    angleFromNorth = angFromNorth;
 }
 
 void KmlVector::setDirGrid(AsciiGrid<double> &d)

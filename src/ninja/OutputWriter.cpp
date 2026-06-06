@@ -2,10 +2,10 @@
 *
 * Filename: OutputWriter.cpp
 *
-* Project:  WindNinja 
+* Project:  WindNinja
 * Purpose:  Class to handle output of WindNinja simulations to various GDAL
 *           formats
-* Author:   Levi Malott, lmnn3@mst.edu 
+* Author:   Levi Malott, lmnn3@mst.edu
 *
 ******************************************************************************
 *
@@ -70,13 +70,13 @@ OutputWriter::OutputWriter ()
     _createTmpFiles();
 
     _createDefaultStyles();
-    
+
 }  /* -----  end of method OutputWriter::OutputWriter  (constructor)  ----- */
 
 
 OutputWriter::~OutputWriter ()
 {
-    
+
     OSRDestroySpatialReference( hSrcSRS );
     OSRDestroySpatialReference( hDestSRS );
     OCTDestroyCoordinateTransformation( hTransform );
@@ -89,7 +89,7 @@ OutputWriter::~OutputWriter ()
 
     _deleteTmpFiles();
     return;
-}		/* -----  end of method OutputWriter::~OutputWriter  ----- */
+}  /* -----  end of method OutputWriter::~OutputWriter  ----- */
 
 bool OutputWriter::_createTmpFiles()
 {
@@ -152,14 +152,13 @@ void OutputWriter::_destroyDefaultStyles()
 
 void OutputWriter::setLineWidth( const float w )
 {
-   linewidth = ( w >= 0.0f ) ? w : -w; 
+   linewidth = ( w >= 0.0f ) ? w : -w;
    if( areEqual( linewidth, 0.0f ) )
    {
        linewidth = 1.0f;
    }
    _destroyDefaultStyles();
    _createDefaultStyles();
-   
 }
 
 void OutputWriter::setDPI( const unsigned short d )
@@ -178,7 +177,7 @@ void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 {
     dust = d;
     return;
-}		/* -----  end of method OutputWriter::setDustGrid  ----- */
+}  /* -----  end of method OutputWriter::setDustGrid  ----- */
 #endif
 
 void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocityUnits u )
@@ -198,7 +197,7 @@ void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocity
     }
 
     return;
-}		/* -----  end of method OutputWriter::setSpeedGrid  ----- */
+}  /* -----  end of method OutputWriter::setSpeedGrid  ----- */
 
 
     void
@@ -206,10 +205,10 @@ OutputWriter::setDirGrid ( AsciiGrid<double> &d )
 {
     dir = d;
     return;
-}		/* -----  end of method OutputWriter::setDirGrid  ----- */
+}  /* -----  end of method OutputWriter::setDirGrid  ----- */
 
-void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs, 
-              GDALDatasetH hDirMemDs, 
+void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs,
+              GDALDatasetH hDirMemDs,
               GDALDatasetH hDustMemDs)
 {
     this->hSpdMemDs  = hSpdMemDs;
@@ -257,7 +256,7 @@ OutputWriter::write (std::string outputFilename, std::string driver)
         throw std::runtime_error("OutputWriter: unrecognized output format");
     }
     return true;
-}		/* -----  end of method OutputWriter::write  ----- */
+}  /* -----  end of method OutputWriter::write  ----- */
 
 bool OutputWriter::finalizeWriteGtiff(std::string outputFilename)
 {
@@ -313,7 +312,7 @@ bool OutputWriter::finalizeWriteGtiff(std::string outputFilename)
 std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
     std::string style = "none";
-    
+
     for ( int i = 1; i < NCOLORS; ++i )
     {
         if( spd <= split_vals[i] )
@@ -341,8 +340,7 @@ void OutputWriter::_closeDataSets()
         GDALClose(hDstDS);
         hDstDS = NULL;
     }
-    _closeOGRFile(); 
-
+    _closeOGRFile();
 }
 
 void OutputWriter::_destroyOptions()
@@ -374,7 +372,7 @@ void OutputWriter::_deleteSplits()
 
 void OutputWriter::_createSplits()
 {
-    _deleteSplits(); 
+    _deleteSplits();
     double interval = 0.0;
 
     split_vals = new double[NCOLORS];
@@ -388,54 +386,54 @@ void OutputWriter::_createSplits()
 }
 bool OutputWriter::_createLegend()
 {
-	//make bitmap
-	int legendWidth = LGND_WIDTH;
-	int legendHeight = LGND_HEIGHT;
-	BMP legend;
+    //make bitmap
+    int legendWidth = LGND_WIDTH;
+    int legendHeight = LGND_HEIGHT;
+    BMP legend;
 
-	std::string legendStrings[NCOLORS];
-	ostringstream os;
+    std::string legendStrings[NCOLORS];
+    ostringstream os;
 
-	double maxxx = spd.get_maxValue();
+    double maxxx = spd.get_maxValue();
 
-	for(int i = 0;i < NCOLORS; i++)
-	{
-		os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
-		if(i == 0)
-			os << split_vals[NCOLORS - 1] << " - " << maxxx;
-		else if(i == NCOLORS)
-			os << "0.00 - " << split_vals[1] - 0.01;
-		else if(i != 0)
-			os << split_vals[NCOLORS - i - 1] << " - " << split_vals[NCOLORS - i] - 0.01;
+    for(int i = 0;i < NCOLORS; i++)
+    {
+        os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
+        if(i == 0)
+            os << split_vals[NCOLORS - 1] << " - " << maxxx;
+        else if(i == NCOLORS)
+            os << "0.00 - " << split_vals[1] - 0.01;
+        else if(i != 0)
+            os << split_vals[NCOLORS - i - 1] << " - " << split_vals[NCOLORS - i] - 0.01;
 
         legendStrings[i] = os.str();
-		os.str("");
-	}
-	legend.SetSize(legendWidth,legendHeight);
-	legend.SetBitDepth(8);
+        os.str("");
+    }
+    legend.SetSize(legendWidth,legendHeight);
+    legend.SetBitDepth(8);
 
     //black legend
-	for(int i = 0;i < legendWidth;i++)
-	{
-		for(int j = 0;j < legendHeight;j++)
-		{
-			legend(i,j)->Alpha = 0;
-			legend(i,j)->Blue = 0;
-			legend(i,j)->Green = 0;
-			legend(i,j)->Red = 0;
-		}
+    for(int i = 0;i < legendWidth;i++)
+    {
+        for(int j = 0;j < legendHeight;j++)
+        {
+            legend(i,j)->Alpha = 0;
+            legend(i,j)->Blue = 0;
+            legend(i,j)->Green = 0;
+            legend(i,j)->Red = 0;
+        }
     }
-    
-	//for white text
-	RGBApixel white;
-	white.Red = 255;
-	white.Green = 255;
-	white.Blue = 255;
-	white.Alpha = 0;
 
-	RGBApixel lcolors[NCOLORS];
-	//RGBApixel red, orange, yellow, green, blue;
-	lcolors[0].Red = 255;
+    //for white text
+    RGBApixel white;
+    white.Red = 255;
+    white.Green = 255;
+    white.Blue = 255;
+    white.Alpha = 0;
+
+    RGBApixel lcolors[NCOLORS];
+    //RGBApixel red, orange, yellow, green, blue;
+    lcolors[0].Red = 255;
     lcolors[0].Green = 0;
     lcolors[0].Blue = 0;
     lcolors[0].Alpha = 0;
@@ -460,31 +458,31 @@ bool OutputWriter::_createLegend()
     lcolors[4].Blue = 255;
     lcolors[4].Alpha = 0;
 
-	int arrowLength = 40;	//pixels;
-	int arrowHeadLength = 10; // pixels;
-	int textHeight = 10;	//pixels- 8 for maximum speed of "999.99 - 555.55";
-							//10 for normal double digits
-	if(split_vals[NCOLORS-1] >= 100)
-		textHeight = 8;
-	int titleTextHeight = int(1.2 * textHeight);
-	int titleX, titleY;
+    int arrowLength = 40;  //pixels;
+    int arrowHeadLength = 10; // pixels;
+    int textHeight = 10;  //pixels- 8 for maximum speed of "999.99 - 555.55";
+                          //10 for normal double digits
+    if(split_vals[NCOLORS-1] >= 100)
+        textHeight = 8;
+    int titleTextHeight = int(1.2 * textHeight);
+    int titleX, titleY;
 
     int x1, x2, x3, x4;
-	double x;
-	int y1, y2, y3, y4;
-	double y;
+    double x;
+    int y1, y2, y3, y4;
+    double y;
 
-	int textX;
-	int textY;
+    int textX;
+    int textY;
 
-	x = 0.05;
-	y = 0.30;
+    x = 0.05;
+    y = 0.30;
 
 
-	titleX = x * legendWidth;
-	titleY = (y / 3) * legendHeight;
+    titleX = x * legendWidth;
+    titleY = (y / 3) * legendHeight;
 
-    
+
     //TODO: Add support for configuring wind speed units
     std::string unitsText = "";
     if(units == velocityUnits::metersPerSecond){
@@ -503,34 +501,34 @@ bool OutputWriter::_createLegend()
         throw std::runtime_error("OutputWriter: velocityUnits set incorrectly.");
     }
     PrintString(legend, CPLSPrintf("Wind Speed (%s)", unitsText.c_str()), titleX, titleY, titleTextHeight, white);
-	for(int i = 0;i < NCOLORS;i++)
-	{
-		x1 = int(legendWidth * x);
-		x2 = x1 + arrowLength;
-		y1 = int(legendHeight * y);
-		y2 = y1;
+    for(int i = 0;i < NCOLORS;i++)
+    {
+        x1 = int(legendWidth * x);
+        x2 = x1 + arrowLength;
+        y1 = int(legendHeight * y);
+        y2 = y1;
 
-		x3 = x2 - arrowHeadLength;
-		y3 = y2 + arrowHeadLength;
+        x3 = x2 - arrowHeadLength;
+        y3 = y2 + arrowHeadLength;
 
-		x4 = x2 - arrowHeadLength;
-		y4 = y2 - arrowHeadLength;
+        x4 = x2 - arrowHeadLength;
+        y4 = y2 - arrowHeadLength;
 
-		textX = x2 + 10;
-		textY = y2 - int(textHeight * 0.5);
-
-
-		DrawLine(legend, x1, y1, x2, y2, lcolors[i]);
-		DrawLine(legend, x2, y2, x3, y3, lcolors[i]);
-		DrawLine(legend, x2, y2, x4, y4, lcolors[i]);
-
-		PrintString(legend, legendStrings[i].c_str(), textX, textY, textHeight, white);
+        textX = x2 + 10;
+        textY = y2 - int(textHeight * 0.5);
 
 
-		y += 0.15;
-	}
+        DrawLine(legend, x1, y1, x2, y2, lcolors[i]);
+        DrawLine(legend, x2, y2, x3, y3, lcolors[i]);
+        DrawLine(legend, x2, y2, x4, y4, lcolors[i]);
 
-	legend.WriteToFile( pszLegendFile );
+        PrintString(legend, legendStrings[i].c_str(), textX, textY, textHeight, white);
+
+
+        y += 0.15;
+    }
+
+    legend.WriteToFile( pszLegendFile );
 
     return true;
 
@@ -675,12 +673,12 @@ void OutputWriter::_openSrcDataSet()
 }
 
 /* --------------------------------------------------------------------------*/
-/** 
+/**
  * @brief Creates an OGR datasource for holding vector features
  *
  * @pre base DEM file is specified
  * @pre speed grid is instantiated
- * 
+ *
  * @post hTransform contains coordinate transformation from speed grid to raster SRS
  * @post The source raster datasource is open
  * @post The OGR datasource is populated with features from simulation data
@@ -735,16 +733,16 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
     {
         throw std::runtime_error("OutputWriter: Failed to create OGR Memory datasource");
     }
-    
+
     //Create a new layer for the wind features
-    hLayer = OGR_DS_CreateLayer( hDataSource, "Wind Vectors" , hDestSRS, 
+    hLayer = OGR_DS_CreateLayer( hDataSource, "Wind Vectors" , hDestSRS,
                                  wkbLineString, NULL );
     if( hLayer == NULL )
     {
         throw std::runtime_error("OutputWriter: Failed to create wind vector layer");
     }
 
-        
+
     hFieldDefn = OGR_Fld_Create( SPEED, OFTReal );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
@@ -782,47 +780,47 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
             arrow = WN_Arrow( x, y, spd(i,j), dir(i,j), spd.get_cellSize(),
                               split_vals, NCOLORS);
 
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED), 
-                                   spd(i,j) );       
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR), 
+            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
+                                   spd(i,j) );
+            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
                                    (int)dir(i,j)+0.5);
 
 
             arrow.asGeometry( hLine );
             OGR_G_Transform( hLine, hTransform );
             OGR_F_SetGeometry( hFeature, hLine );
-            
+
             style = _getStyleFromSpeed( spd(i,j) );
-            
-            OGR_F_SetStyleString( hFeature, style.c_str() ); 
-            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"), 
+
+            OGR_F_SetStyleString( hFeature, style.c_str() );
+            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"),
                                   style.c_str() );
 
 
             if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
             {
                 throw std::runtime_error("OutputWriter: error creating features");
-            } 
+            }
             OGR_G_DestroyGeometry( hLine );
             OGR_F_Destroy( hFeature );
         }
     }
-    
+
     return ;
 
-}		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
+}  /* -----  end of method OutputWriter::createOGRFields  ----- */
 
 /* --------------------------------------------------------------------------*/
-/** 
+/**
  * @brief Creates a new PDF file from the base DEM and simulation output
- * 
+ *
  * @Param outputfn - specifies the name of the output PDF file
  *
  * @pre OGR datasource and source raster are created/opened
  * @post All datasources are closed, OGR datasource is deleted from system
  * @post Output PDF is created
- * 
- * @Returns True is successful. 
+ *
+ * @Returns True is successful.
  */
 /* ----------------------------------------------------------------------------*/
 bool OutputWriter::_writePDF (std::string outputfn)
@@ -917,7 +915,7 @@ bool OutputWriter::_writePDF (std::string outputfn)
         extra_imgs = extra_imgs + "," + extra_img_logo;
     }
 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile );
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
@@ -929,21 +927,21 @@ bool OutputWriter::_writePDF (std::string outputfn)
     papszOptions = CSLAddNameValue( papszOptions, "TOP_MARGIN", CPLSPrintf( "%d", topMargin ) );
     papszOptions = CSLAddNameValue( papszOptions, "BOTTOM_MARGIN", CPLSPrintf( "%d", bottomMargin ) );
 
-    hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
+    hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE,
                              papszOptions, NULL, NULL );
     if( NULL == hDstDS )
     {
         throw std::runtime_error("OutputWriter: Error creating output file");
     }
-    
+
     _closeDataSets();
     _destroyOptions();
     _destroyLegend();
-    
+
     OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 
     return true;
-}		/* -----  end of method OutputWriter::_writePDF  ----- */
+}  /* -----  end of method OutputWriter::_writePDF  ----- */
 
 bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
 {

@@ -564,8 +564,8 @@ bool NinjaFoam::simulate_wind()
        colMaxGrid.deallocate();
 
        massMesh_u.deallocate();
-	   massMesh_v.deallocate();
-	   massMesh_w.deallocate();
+       massMesh_v.deallocate();
+       massMesh_w.deallocate();
        massMesh_k.deallocate();
     }
 
@@ -3262,51 +3262,50 @@ void NinjaFoam::GenerateAndSampleMassMesh()
     
     // generate massMesh if required for other outputs
     try{
-	    if ( writeMassMesh == true ) {
-	        generateMassMesh();
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
-		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
-		input.writeTurbulence = false;
-		if(input.diurnalWinds == false){
-		    input.volVTKOutFlag = false;
-	    }
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
-		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
-		input.writeTurbulence = false;
-		if(input.diurnalWinds == false){
-		    input.volVTKOutFlag = false;
-	    }
-	}
+        if ( writeMassMesh == true ) {
+            generateMassMesh();
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: %s", e.what());
+        // disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+        input.writeTurbulence = false;
+        if(input.diurnalWinds == false){
+            input.volVTKOutFlag = false;
+        }
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh generation: Cannot determine exception type.");
+        // disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+        input.writeTurbulence = false;
+        if(input.diurnalWinds == false){
+            input.volVTKOutFlag = false;
+        }
+    }
     
     
     // prep colMaxGrid
     try{
-	    if ( input.writeTurbulence == true ) {
-	        generateColMaxGrid(massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, massMesh_k);
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
-		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
-		input.writeTurbulence = false;
-		if(input.diurnalWinds == false){
-		    input.volVTKOutFlag = false;
-	    }
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
-		// disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
-		input.writeTurbulence = false;
-		if(input.diurnalWinds == false){
-		    input.volVTKOutFlag = false;
-	    }
-	}
-    
+        if ( input.writeTurbulence == true ) {
+            generateColMaxGrid(massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh.meshResolution, input.dem.prjString, massMesh_k);
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: %s", e.what());
+        // disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+        input.writeTurbulence = false;
+        if(input.diurnalWinds == false){
+            input.volVTKOutFlag = false;
+        }
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during turbulence column max from NINJAFOAM mass mesh ascii grid generation: Cannot determine exception type.");
+        // disallow later outputs using the dataset, it wasn't created and later code would then reference outside the array
+        input.writeTurbulence = false;
+        if(input.diurnalWinds == false){
+            input.volVTKOutFlag = false;
+        }
+    }
 }
 
 
@@ -3337,9 +3336,9 @@ void NinjaFoam::SetOutputFilenames()
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
     //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
-    //		THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
-    //		https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
-    //		http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+    //      THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //      https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //      http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
 
     std::ostringstream timestream;
     timestream.imbue(std::locale(std::locale::classic(), timeOutputFacet));
@@ -3367,7 +3366,7 @@ void NinjaFoam::SetOutputFilenames()
     else{
         pathName = input.customOutputPath;
     }
-    
+
     rootFile = CPLFormFilename(pathName.c_str(), baseName.c_str(), NULL);
 
     /* set the output path member variable */
@@ -3452,7 +3451,7 @@ void NinjaFoam::SetOutputFilenames()
     input.volVTKFile = rootFile + fileAppend + ".vtk";
 
     input.legFile = rootFile + kmz_fileAppend + ".bmp";
-    if( input.ninjaTime.is_not_a_date_time() )	//date and time not set?
+    if( input.ninjaTime.is_not_a_date_time() )  //date and time not set?
         input.dateTimeLegFile = "";
     else
         input.dateTimeLegFile = rootFile + kmz_fileAppend + ".date_time" + ".bmp";
@@ -3491,17 +3490,17 @@ void NinjaFoam::WriteOutputFiles()
     /* write output files                                                */
     /*-------------------------------------------------------------------*/
 
-	try{
-	    //write fire behavior ascii files, the .atm file is written in ninjaArmy
-		if(input.asciiOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
+    try{
+        //write fire behavior ascii files, the .atm file is written in ninjaArmy
+        if(input.asciiOutFlag==true)
+        {
+            AsciiGrid<double> *velTempGrid, *angTempGrid;
+            velTempGrid=NULL;
+            angTempGrid=NULL;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution,
                                                              AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution,
                                                              AsciiGrid<double>::order0));
 
                         // if output clipping was set by the user, don't buffer to overlap the DEM
@@ -3522,26 +3521,26 @@ void NinjaFoam::WriteOutputFiles()
                             velTempGrid->BufferToOverlapGrid(demGrid);
                         }
 
-			ninja::writeAsciiOutputFiles(*angTempGrid, *velTempGrid);
+            ninja::writeAsciiOutputFiles(*angTempGrid, *velTempGrid);
 
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
-	}
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during ascii file writing: Cannot determine exception type.");
+    }
 
     //write fire behavior geotiff files, the .atm file is written in ninjaArmy
     try{
@@ -3598,156 +3597,159 @@ void NinjaFoam::WriteOutputFiles()
         input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during fire behavior geotiff file writing: Cannot determine exception type.");
     }
 
-	//write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
-	try{
-		if(input.txtOutFlag==true)
-			write_compare_output();
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
-	}
+    //write text file comparing measured to simulated winds (measured read from file, filename, etc. hard-coded in function)
+    try{
+        if(input.txtOutFlag==true)
+        {
+            write_compare_output();
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during text file writing: Cannot determine exception type.");
+    }
 
-	//write shape files
-	try{
-		if(input.shpOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
+    //write shape files
+    try{
+        if(input.shpOutFlag==true)
+        {
+            AsciiGrid<double> *velTempGrid, *angTempGrid;
+            velTempGrid=NULL;
+            angTempGrid=NULL;
 
-			ShapeVector ninjaShapeFiles;
+            ShapeVector ninjaShapeFiles;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
 
-			ninjaShapeFiles.setDirGrid(*angTempGrid);
-			ninjaShapeFiles.setSpeedGrid(*velTempGrid);
-			ninjaShapeFiles.setDataBaseName(input.dbfFile);
-			ninjaShapeFiles.setShapeFileName(input.shpFile);
-			ninjaShapeFiles.makeShapeFiles();
+            ninjaShapeFiles.setDirGrid(*angTempGrid);
+            ninjaShapeFiles.setSpeedGrid(*velTempGrid);
+            ninjaShapeFiles.setDataBaseName(input.dbfFile);
+            ninjaShapeFiles.setShapeFileName(input.shpFile);
+            ninjaShapeFiles.makeShapeFiles();
 
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
-	}
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during shape file writing: Cannot determine exception type.");
+    }
 
-	//write kmz file
-	try{
-		if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
+    //write kmz file
+    try{
+        if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
+        {
+            AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
+            velTempGrid=NULL;
+            angTempGrid=NULL;
+            turbTempGrid=NULL;
+            colMaxTempGrid=NULL;
 
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
-			turbTempGrid=NULL;
-			colMaxTempGrid=NULL;
+            KmlVector ninjaKmlFiles;
 
-			KmlVector ninjaKmlFiles;
-
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, 
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution,
                                     AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, 
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution,
                                     AsciiGrid<double>::order0));
                         if(input.writeTurbulence)
                         {
-                            //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, 
+                            //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution,
                             //            AsciiGrid<double>::order0));
                             //
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
-                            
-                            
-                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, 
+
+
+                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution,
                                         AsciiGrid<double>::order0));
 
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
-                            
+
                             //// for debugging
                             //colMaxGrid.ascii2png("colMaxGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true, false);
                             //colMaxTempGrid->ascii2png("colMaxTempGrid.png", "Speed Fluctuation", "(mph)", "colMax_legend", true, false);
                         }
 
-			ninjaKmlFiles.setKmlFile(input.kmlFile);
-			ninjaKmlFiles.setKmzFile(input.kmzFile);
-			ninjaKmlFiles.setDemFile(input.dem.fileName);
+            ninjaKmlFiles.setKmlFile(input.kmlFile);
+            ninjaKmlFiles.setKmzFile(input.kmzFile);
+            ninjaKmlFiles.setDemFile(input.dem.fileName);
 
-			ninjaKmlFiles.setLegendFile(input.legFile);
-			ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
-			ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-			ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
-			ninjaKmlFiles.setDirGrid(*angTempGrid);
+            ninjaKmlFiles.setLegendFile(input.legFile);
+            ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
+            ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+            ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
+            ninjaKmlFiles.setDirGrid(*angTempGrid);
 
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
-			ninjaKmlFiles.setTime(input.ninjaTime);
-			if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-			{
-			    std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
-			    ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
-			}
+            ninjaKmlFiles.setTime(input.ninjaTime);
+            if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                std::vector<boost::local_time::local_date_time> times(init->getTimeList(input.ninjaTimeZone));
+                ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
+            }
 
             if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
-			{
-				if(ninjaKmlFiles.makeKmz())
-					ninjaKmlFiles.removeKmlFile();
-			}
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-			}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-			if(turbTempGrid)
-			{
-				delete turbTempGrid;
-				turbTempGrid=NULL;
-			}
-			if(colMaxTempGrid)
-			{
-				delete colMaxTempGrid;
-				colMaxTempGrid=NULL;
-			}
-		}
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
-	}
+            {
+                if(ninjaKmlFiles.makeKmz())
+                {
+                    ninjaKmlFiles.removeKmlFile();
+                }
+            }
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+            if(turbTempGrid)
+            {
+                delete turbTempGrid;
+                turbTempGrid=NULL;
+            }
+            if(colMaxTempGrid)
+            {
+                delete colMaxTempGrid;
+                colMaxTempGrid=NULL;
+            }
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
+    }
 
-	try{
-		if(input.pdfOutFlag==true)
-		{
-			AsciiGrid<double> *velTempGrid, *angTempGrid;
-			velTempGrid=NULL;
-			angTempGrid=NULL;
+    try{
+        if(input.pdfOutFlag==true)
+        {
+            AsciiGrid<double> *velTempGrid, *angTempGrid;
+            velTempGrid=NULL;
+            angTempGrid=NULL;
             OutputWriter output;
 
-			angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-			velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+            angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+            velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
-			output.setDirGrid(*angTempGrid);
-			output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
+            output.setDirGrid(*angTempGrid);
+            output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
             output.setDEMfile(input.pdfDEMFileName);
             output.setLineWidth(input.pdfLineWidth);
             output.setDPI(input.pdfDPI);
@@ -3755,17 +3757,17 @@ void NinjaFoam::WriteOutputFiles()
             output.write(input.pdfFile, "PDF");
 
 
-			if(angTempGrid)
-			{
-				delete angTempGrid;
-				angTempGrid=NULL;
-		}
-			if(velTempGrid)
-			{
-				delete velTempGrid;
-				velTempGrid=NULL;
-			}
-		}
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid=NULL;
+            }
+            if(velTempGrid)
+            {
+                delete velTempGrid;
+                velTempGrid=NULL;
+            }
+        }
         {
             try{
                 if(input.flatGeoBuffFlag == true)
@@ -3812,13 +3814,13 @@ void NinjaFoam::WriteOutputFiles()
                 input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
             }
         }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
-	}
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
+    }
 
 //    try{
 //        if(input.geoTiffOutFlag==true)
@@ -3846,28 +3848,28 @@ void NinjaFoam::WriteOutputFiles()
 //        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
 //    }
 
-	try{
-	    if ( input.volVTKOutFlag == true ) {
-	        writeMassMeshVtkOutput();
-	    }
-	}catch (exception& e)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
-	}catch (...)
-	{
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
-	}
-	
+    try{
+        if ( input.volVTKOutFlag == true ) {
+            writeMassMeshVtkOutput();
+        }
+    }catch (exception& e)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: %s", e.what());
+    }catch (...)
+    {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during NINJAFOAM mass mesh vtk file writing: Cannot determine exception type.");
+    }
+
 }
 
 
 void NinjaFoam::writeMassMeshVtkOutput()
 {
     CPLDebug("NINJAFOAM", "writing mass mesh vtk output for foam simulation.");
-    
+
     try {
         bool vtk_out_as_ninja_mesh_coordinates = false;
-	    if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE")))
+        if(CSLTestBoolean(CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE")))
         {
             vtk_out_as_ninja_mesh_coordinates = CPLGetConfigOption("VTK_OUT_AS_NINJA_MESH_COORDINATES", "FALSE");
         }
@@ -3878,13 +3880,13 @@ void NinjaFoam::writeMassMeshVtkOutput()
         {
             vtkWriteFormat = found_vtkWriteFormat;
         }
-		volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_ninja_mesh_coordinates);
-	} catch (exception& e) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
-	} catch (...) {
-		input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
-	}
-	
+        volVTK VTK(massMesh_u, massMesh_v, massMesh_w, massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, input.volVTKFile, vtkWriteFormat, vtk_out_as_ninja_mesh_coordinates);
+    } catch (exception& e) {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: %s", e.what());
+    } catch (...) {
+        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during volume VTK file writing: Cannot determine exception type.");
+    }
+
 }
 
 

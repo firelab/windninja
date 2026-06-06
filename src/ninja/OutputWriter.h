@@ -2,10 +2,10 @@
 *
 * Filename: OutputWriter.h
 *
-* Project:  WindNinja 
+* Project:  WindNinja
 * Purpose:  Class to handle output of WindNinja simulations to various GDAL
 *           formats
-* Author:   Levi Malott, lmnn3@mst.edu 
+* Author:   Levi Malott, lmnn3@mst.edu
 *
 ******************************************************************************
 *
@@ -29,7 +29,7 @@
 *****************************************************************************/
 
 #ifndef OUTPUTWRITER_H
-#define OUTPUTWRITER_H 
+#define OUTPUTWRITER_H
 
 #include "ascii_grid.h"
 #include "EasyBMP.h"
@@ -172,9 +172,9 @@ class OutputWriter
         char * pszDateTimeLegendFile;
         char * pszTmpDemFile;
 
-        static const unsigned short NCOLORS = 5; 
+        static const unsigned short NCOLORS = 5;
         static const unsigned short LGND_WIDTH = 160;
-        static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4; 
+        static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4;
 
         double *split_vals;
         Style ** colors;
@@ -196,9 +196,8 @@ class OutputWriter
         char** papszOptions;
         OGRLayerH hLayer;
         OGRFieldDefnH hFieldDefn;
-        
+
         double adfGeoTransform[6];
-        
 
 }; /* -----  end of class OutputWriter  ----- */
 
