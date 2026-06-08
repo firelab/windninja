@@ -4237,7 +4237,7 @@ void NinjaFoam::ReadNinjaLog()
         pos2 = currentLine.length() - 1;
         currentSubstr = currentLine.substr(pos1, pos2-pos1+1);
         set_meshResolution( atof(currentSubstr.c_str()), lengthUnits::meters );
-        CPLDebug("NINJAFOAM", "meshResolution = %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits));
+        CPLDebug("NINJAFOAM", "meshResolution = %f %s", meshResolution, lengthUnits::getString(meshResolutionUnits).c_str());
     }
 
     currentLine = CPLReadLineL(fin);

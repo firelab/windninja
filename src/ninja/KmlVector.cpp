@@ -2107,39 +2107,39 @@ bool KmlVector::removeKmlFile()
     if(timeDateLegendFile != "")
         VSIUnlink(timeDateLegendFile.c_str());
 
-    if(turbulence_png.c_str() != "")
+    if(turbulence_png != "")
     {
         VSIUnlink(turbulence_png.c_str());
         VSIUnlink((turbulence_png + ".aux.xml").c_str());
     }
-    if(turbulence_legend.c_str() !="")
+    if(turbulence_legend !="")
         VSIUnlink(turbulence_legend.c_str());
 
-    if(colMax_png.c_str() != "")
+    if(colMax_png != "")
     {
         VSIUnlink(colMax_png.c_str());
         VSIUnlink((colMax_png + ".aux.xml").c_str());
     }
-    if(colMax_legend.c_str() !="")
+    if(colMax_legend !="")
         VSIUnlink(colMax_legend.c_str());
 
     #ifdef FRICTION_VELOCITY
-    if(ustar_png.c_str() != "")
+    if(ustar_png != "")
     {
         VSIUnlink(ustar_png.c_str());
         VSIUnlink((ustar_png + ".aux.xml").c_str());
     }
-    if(ustar_legend.c_str() !="")
+    if(ustar_legend !="")
         VSIUnlink(ustar_legend.c_str());
     #endif
 
     #ifdef EMISSIONS
-    if(dust_png.c_str() != "")
+    if(dust_png != "")
     {
         VSIUnlink(dust_png.c_str());
         VSIUnlink((dust_png + ".aux.xml").c_str());
     }
-    if(dust_legend.c_str() !="")
+    if(dust_legend !="")
         VSIUnlink(dust_legend.c_str());
     #endif
 
