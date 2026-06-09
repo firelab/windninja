@@ -1255,6 +1255,41 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
+    ninjaErr = NinjaSetFgbzResolution(ninjaArmy, i, ui->mapVisualizationMeshResolutionSpinBox->value(), ui->mapVisualizationMeshResolutionComboBox->itemData(ui->mapVisualizationMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzSpeedScaling(ninjaArmy, i, ui->mapVisualizationLegendComboBox->itemData(ui->mapVisualizationLegendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzSpeedScaling: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzLineWidth(ninjaArmy, i, ui->mapVisualizationVectorsSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzLineWidth: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzColor(ninjaArmy, i, ui->mapVisualizationAlternativeColorSchemeComboBox->itemData(ui->mapVisualizationAlternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->mapVisualizationVectorScalingCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzColor: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzConsistentColorScale(ninjaArmy, i, ui->mapVisualizationLegendCheckBox->isChecked(), numNinjas, papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzConsistentColorScale: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
     if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
     {
         ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);

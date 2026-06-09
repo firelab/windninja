@@ -5090,6 +5090,54 @@ void ninja::set_fgbzOutFlag(bool flag)
     input.fgbzOutFlag = flag;
 }
 
+void ninja::set_fgbzResolution(double Resolution, lengthUnits::eLengthUnits units)
+{
+    input.fgbzUnits = units;
+    lengthUnits::toBaseUnits(Resolution, units);
+
+    input.fgbzResolution = Resolution;
+}
+
+void ninja::set_fgbzSpeedScaling(KmlVector::egoogSpeedScaling scaling)
+{
+    if(scaling != KmlVector::equal_color && scaling != KmlVector::equal_interval)
+    {
+        throw std::logic_error("flatGeoBufZip speed scaling parameter not set properly"
+                               " in ninja::set_fgbzSpeedScaling().");
+    }
+
+    input.fgbzSpeedScaling = scaling;
+}
+
+void ninja::set_fgbzColor(std::string scheme, bool scaling)
+{
+    input.fgbzColor = scheme;
+    input.fgbzVectorScale = scaling;
+}
+
+void ninja::set_fgbzLineWidth(double width)
+{
+    if(width < 0.0 || width > 100.0)
+    {
+        throw std::range_error("Line width out of allowed range in "
+                               "ninja::set_fgbzLineWidth().");
+    }
+    else
+    {
+        input.fgbzLineWidth = width;
+    }
+}
+
+void ninja::set_fgbzConsistentColorScale(bool flag, int numRuns)
+{
+    input.fgbzUseConsistentColorScale = flag;
+    // don't actually want to do this if there is only a single run
+    if(numRuns <= 1)
+    {
+        input.fgbzUseConsistentColorScale = false;
+    }
+}
+
 void ninja::set_outputPath(std::string path)
 {
     VSIStatBufL sStat;

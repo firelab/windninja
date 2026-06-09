@@ -408,6 +408,22 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzOutFlag
         ( NinjaArmyH* army, const int nIndex, const bool flag, char ** papszOptions );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzResolution
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const double resolution,
+          const char * units, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzSpeedScaling
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const char * scaling, char ** options );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzColor
+        ( NinjaArmyH * army, const int nIndex, const char * colorScheme, bool scaling, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzLineWidth
+        ( NinjaArmyH * ninjaArmy, const int nIndex, const double width, char ** papszOptions );
+
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzConsistentColorScale
+        ( NinjaArmyH * army, const int nIndex, bool flag, int numRuns, char ** papszOptions);
+
     WINDNINJADLL_EXPORT const char * NinjaGetOutputPath
         ( NinjaArmyH * ninjaArmy, const int nIndex, char ** options );
 

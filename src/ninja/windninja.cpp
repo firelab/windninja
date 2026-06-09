@@ -2471,6 +2471,132 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzOutFlag
 }
 
 /**
+ * \brief Set the resolution of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the fgbz output.
+ * \param units The units of the fgbz output resolution ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzResolution
+    ( NinjaArmyH * army, const int nIndex, const double resolution,
+      const char * units, char ** papszOptions )
+{
+    if( NULL != army && NULL != units )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzResolution
+            ( nIndex, resolution, std::string( units ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the scaling of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param scaling The scaling at which to write the fgbz output. ("equal_color", "color", "equal_interval", "interval")
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzSpeedScaling
+    ( NinjaArmyH * army, const int nIndex, const char * scaling, char ** papszOptions )
+{
+    if( NULL != army && NULL != scaling )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzSpeedScaling
+            ( nIndex, std::string( scaling ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the line width of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param width The line width at which to write the fgbz output.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzLineWidth
+    ( NinjaArmyH * army, const int nIndex, const double width, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzLineWidth( nIndex, width );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the Color Scheme of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param colorScheme A string that specifies the color scheme ("default", "ROPGW", "oranges", "blues", "pinks", "greens", "magic_beans", "pink_to_greens").
+ * \param scaling The flag which determines if vector scaling will be used.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzColor
+    ( NinjaArmyH * army, const int nIndex, const char * colorScheme, bool scaling, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzColor(nIndex, std::string( colorScheme ), scaling);
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the flag to use a Consistent Color Scheme for all flatGeoBufZip Outputs of a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag that determines whether consistent color scaling will be used.
+ * \param numRuns The number of runs that will be simulated
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzConsistentColorScale
+    ( NinjaArmyH * army, const int nIndex, bool flag, int numRuns, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzConsistentColorScale(nIndex, flag, numRuns);
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
  * \brief Get the output path for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.

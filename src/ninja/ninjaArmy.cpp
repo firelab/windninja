@@ -2417,11 +2417,11 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
 }
 int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_googColor(colorScheme, scaling));
 }
 int ninjaArmy::setGoogConsistentColorScale(const int nIndex, bool flag, int numRuns)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googConsistentColorScale(flag, numRuns));
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_googConsistentColorScale(flag, numRuns));
 }
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
@@ -2484,7 +2484,6 @@ int ninjaArmy::setGoogLineWidth( const int nIndex, const double width,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_googLineWidth( width ) );
 }
-
 
 int ninjaArmy::setShpOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2680,6 +2679,80 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
 int ninjaArmy::setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzOutFlag( flag ) );
+}
+
+int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
+                                  const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_fgbzResolution( resolution, units ) );
+}
+
+int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_fgbzResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, const KmlVector::egoogSpeedScaling scaling,
+                                    char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzSpeedScaling( scaling ) );
+}
+
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, std::string scaling, char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+       if( scaling == "equal_color" || scaling == "color" )
+       {
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( KmlVector::equal_color );
+           retval = NINJA_SUCCESS;
+       }
+       else if( scaling == "equal_interval" || scaling == "interval" )
+       {
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( KmlVector::equal_interval );
+           retval = NINJA_SUCCESS;
+       }
+       else
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid speed scale '%s' in ninjaArmy::setFgbzSpeedScaling()\nchoices are: 'equal_color', 'color', 'equal_interval', 'interval'", scaling.c_str());
+           retval = NINJA_E_INVALID;
+       }
+    }
+    return retval;
+}
+
+int ninjaArmy::setFgbzColor(const int nIndex, string colorScheme, bool scaling)
+{
+    IF_VALID_INDEX_TRY(nIndex, ninjas, ninjas[nIndex]->set_fgbzColor(colorScheme, scaling));
+}
+
+int ninjaArmy::setFgbzLineWidth( const int nIndex, const double width, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzLineWidth( width ) );
+}
+
+int ninjaArmy::setFgbzConsistentColorScale(const int nIndex, bool flag, int numRuns)
+{
+    IF_VALID_INDEX_TRY(nIndex, ninjas, ninjas[nIndex]->set_fgbzConsistentColorScale(flag, numRuns));
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )

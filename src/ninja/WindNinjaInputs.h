@@ -230,6 +230,13 @@ public:
     unsigned short pdfDPI;
     bool fgbzOutFlag;
     std::string fgbzFile;
+    double fgbzResolution;
+    lengthUnits::eLengthUnits fgbzUnits;
+    KmlVector::egoogSpeedScaling fgbzSpeedScaling;  //flag specifying the speed scaling for the legend/colors in the *.fgbz file (0=>equal colors, 1=>equal interval)
+    std::string fgbzColor;  //sets color scheme for output /Colorblind mode
+    bool fgbzVectorScale;  //sets the vector scaling
+    double fgbzLineWidth;  //drawing line width for fgbz output vectors
+    bool fgbzUseConsistentColorScale;  //flag specifying whether to use a cross data color scale or a standard single data color scale, for fgbz files, for all simulations
     bool wxModelFgbzOutFlag;
     std::string wxModelFgbzFile;
 

@@ -1395,7 +1395,96 @@ public:
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
 
+    /**
+    * \brief Enable/disable fgbz output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   determines if fgbz output is enabled or not
+    * \return errval Returns NINJA_SUCCESS if successful
+    */
     int setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions );
+    /**
+     * @brief setFgbzResolution
+     * @param nIndex
+     * @param resolution
+     * @param units
+     * @param papszOptions
+     * @return
+     * Set the colorscheme for colorblind mode
+     */
+    int setFgbzResolution( const int nIndex, const double resolution,
+                           const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output resolution for a ninja
+    * Set the fgbz output resolution for a ninja given a resolution
+    * and a string formatted unit.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzResolution( const int nIndex, const double resolution,
+                           std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output speed scaling parameter for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param scaling scaling option
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzSpeedScaling( const int nIndex, const KmlVector::egoogSpeedScaling scaling,
+                             char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output speed scaling parameter for a ninja
+    * Set the fgbz output speed scaling parameter for a ninja given
+    * the ninja index and string formatted scaling option.
+    *
+    * _Valid scaling options_:
+    * - "equal_color"    = equal_color
+    * - "color"          = equal_color
+    * - "equal_interval" = equal_interval
+    * - "interval"       = equal_interval
+    *
+    * \param nIndex index of a ninja
+    * \param scaling string formatted scaling units
+    * \return
+    */
+    int setFgbzSpeedScaling( const int nIndex, std::string scaling, char ** papszOptions=NULL);
+    /**
+    * \brief Set the fgbz output color scheme and vector scaling for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param colorScheme desired colorScheme value
+    * \param scaling desired vector scaling value
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzColor(const int nIndex, std::string colorScheme, bool scaling);
+    /**
+    * \brief Set the fgbz output line width for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param width value of desired line width
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzLineWidth( const int nIndex, const double width, char ** papszOptions=NULL );
+    /**
+    * \brief Set the flatGeoBufZip fgbzUseConsistentColorScaleFlag value for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \param numRuns the number of ninjas/simulations to be run
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzConsistentColorScale(const int nIndex, bool flag, int numRuns);
 
     /**
     * \brief Returns the output path of a ninja
