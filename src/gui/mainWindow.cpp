@@ -1108,7 +1108,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->legendComboBox->itemData(ui->legendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->googleEarthLegendComboBox->itemData(ui->googleEarthLegendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogSpeedScaling: ninjaErr =" << ninjaErr;
@@ -1122,14 +1122,14 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->alternativeColorSchemeComboBox->itemData(ui->alternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->googleEarthAlternativeColorSchemeComboBox->itemData(ui->googleEarthAlternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogColor: ninjaErr =" << ninjaErr;
         return false;
     }
 
-    ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->legendCheckBox->isChecked(), numNinjas, papszOptions);
+    ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->googleEarthLegendCheckBox->isChecked(), numNinjas, papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaSetGoogConsistentColorScale: ninjaErr =" << ninjaErr;

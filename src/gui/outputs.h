@@ -42,6 +42,7 @@ private slots:
     void fireBehaviorGeoTiffMeshResolutionGroupBoxToggled(bool checked);
     void shapeFilesMeshResolutionGroupBoxToggled(bool checked);
     void geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked);
+    void mapVisualizationMeshResolutionGroupBoxToggled(bool checked);
     void meshResolutionSpinBoxValueChanged(double value);
     void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
     void googleEarthMeshResolutionSpinBoxValueChanged();
@@ -49,6 +50,7 @@ private slots:
     void fireBehaviorGeoTiffMeshResolutionSpinBoxValueChanged();
     void shapeFilesMeshResolutionSpinBoxValueChanged();
     void geospatialPDFFilesMeshResolutionSpinBoxValueChanged();
+    void mapVisualizationMeshResolutionSpinBoxValueChanged();
 
 private:
     Ui::MainWindow *ui;

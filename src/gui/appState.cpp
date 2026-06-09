@@ -620,9 +620,18 @@ void AppState::updateMapVisualizationOutputState()
         }
         else
         {
-            isMapVisualizationValid = true;
-            ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, tickIcon);
-            ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "Valid");
+            if(GDALCellSize > ui->mapVisualizationMeshResolutionSpinBox->value())
+            {
+                isMapVisualizationValid = false;
+                ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, warnIcon);
+                ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
+            }
+            else
+            {
+                isMapVisualizationValid = true;
+                ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, tickIcon);
+                ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "Valid");
+            }
         }
     }
     else
