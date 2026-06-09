@@ -886,7 +886,7 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     {
         ui->VTKFilesCheckBox->setChecked(!ui->VTKFilesCheckBox->isChecked());
     }
-    else if (item->text(0) == "Map Visualization")
+    else if (item->text(0) == "Map Visualization Files")
     {
         if(ui->mapVisualizationCheckBox->isEnabled())
         {
@@ -1248,10 +1248,10 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    ninjaErr = NinjaSetFlatGeoBufFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+    ninjaErr = NinjaSetFgbzOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
     if (ninjaErr != NINJA_SUCCESS)
     {
-        qDebug() << "NinjaSetFlatGeoBufFlag: ninjaErr =" << ninjaErr;
+        qDebug() << "NinjaSetFgbzOutFlag: ninjaErr =" << ninjaErr;
         return false;
     }
 
@@ -1285,10 +1285,10 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
             return false;
         }
 
-        ninjaErr = NinjaSetWxModelFgbOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+        ninjaErr = NinjaSetWxModelFgbzOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
         {
-            qDebug() << "NinjaSetWxModelFgbOutFlag: ninjaErr =" << ninjaErr;
+            qDebug() << "NinjaSetWxModelFgbzOutFlag: ninjaErr =" << ninjaErr;
             return false;
         }
     }
@@ -1380,38 +1380,38 @@ void MainWindow::plotOutputs()
         int numRuns = 0;
         char **fgbzFilenames = NULL;
         char **stationKmlFilenames = NULL;
-        char **weatherModelFgbFilenames = NULL;
+        char **weatherModelFgbzFilenames = NULL;
 
         char **papszOptions = nullptr;
-        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelFgbFilenames, papszOptions);
+        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelFgbzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
-            printf("NinjaGetRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
+            printf("NinjaGetMapVisualizationFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-        std::vector<std::string> kmzFilenamesStr;
+        std::vector<std::string> fgbzFilenamesStr;
         std::vector<std::string> stationKmlFilenamesStr;
-        std::vector<std::string> wxModelFgbFilenamesStr;
+        std::vector<std::string> wxModelFgbzFilenamesStr;
 
-        kmzFilenamesStr.reserve(numRuns);
+        fgbzFilenamesStr.reserve(numRuns);
         stationKmlFilenamesStr.reserve(numRuns);
-        wxModelFgbFilenamesStr.reserve(numRuns);
+        wxModelFgbzFilenamesStr.reserve(numRuns);
         for(int i = 0; i < numRuns; i++)
         {
-            kmzFilenamesStr.emplace_back(fgbzFilenames[i]);
+            fgbzFilenamesStr.emplace_back(fgbzFilenames[i]);
             stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
-            wxModelFgbFilenamesStr.emplace_back(weatherModelFgbFilenames[i]);
+            wxModelFgbzFilenamesStr.emplace_back(weatherModelFgbzFilenames[i]);
         }
 
-        outputKmzFilenames.push_back(std::move( kmzFilenamesStr ));
+        outputFgbzFilenames.push_back(std::move( fgbzFilenamesStr ));
         outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
-        outputWxModelKmzFilenames.push_back(std::move( wxModelFgbFilenamesStr ));
+        outputWxModelFgbzFilenames.push_back(std::move( wxModelFgbzFilenamesStr ));
 
         for(int i = 0; i < numRuns; i++)
         {
-            // plot the output kmz of the run
+            // plot the output fgbz of the run
             QString outFileStr = QString::fromStdString(fgbzFilenames[i]);
-            qDebug() << "kmz outFile =" << outFileStr;
+            qDebug() << "fgbz outFile =" << outFileStr;
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
             webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
@@ -1420,7 +1420,7 @@ void MainWindow::plotOutputs()
             QString filePath = QUrl::fromLocalFile(outFileStr).toString();
             QFileInfo info(outFileStr);
             QString fileName = info.fileName();
-            qDebug() << "file url =" << filePath;
+            //qDebug() << "file url =" << filePath;
             QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
             webEngineView->page()->runJavaScript(jsCall);
 
@@ -1434,32 +1434,34 @@ void MainWindow::plotOutputs()
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
                 QFileInfo info(outFileStr);
                 QString fileName = info.fileName();
+                //qDebug() << "file url =" << filePath;
                 QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
                 webEngineView->page()->runJavaScript(jsCall);
             }
 
-            // if it is a weather model run, and weather model kmzs were created for the run,
-            // then plot the weather model kmz of the run
+            // if it is a weather model run, and weather model fgbzs were created for the run,
+            // then plot the weather model fgbz of the run
             if(ui->rawWeatherModelOutputCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isEnabled())
             {
-                QString outFileStr = QString::fromStdString(weatherModelFgbFilenames[i]);
-                qDebug() << "wx model kmz outFile =" << outFileStr;
+                QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[i]);
+                qDebug() << "wx model fgbz outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
                 QFileInfo info(outFileStr);
                 QString fileName = info.fileName();
+                //qDebug() << "file url =" << filePath;
                 QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
                 webEngineView->page()->runJavaScript(jsCall);
             }
         }
 
-        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelFgbFilenames, papszOptions);
+        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelFgbzFilenames, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)
         {
-            printf("NinjaDestroyRunKmzFilenames: ninjaErr = %d\n", ninjaErr);
+            printf("NinjaDestroyMapVisualizationFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-    } // if(result == 1 && !progressDialog->wasCanceled() && ui->googleEarthGroupBox->isChecked() == true)
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->mapVisualizationCheckBox->isChecked() == true)
 }
 
 void MainWindow::finishedLoadingMap()

@@ -800,7 +800,7 @@
          </item>
          <item>
           <property name="text">
-           <string>Map Visualization</string>
+           <string>Map Visualization Files</string>
           </property>
          </item>
         </item>
@@ -5108,7 +5108,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              <bool>false</bool>
             </property>
             <property name="text">
-             <string>Create Map Visualization Files (*.fgb)</string>
+             <string>Create Map Visualization Files (*.fgbz)</string>
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -5116,7 +5116,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="googleEarthLabel">
+           <widget class="QLabel" name="mapVisualizationLabel">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -5124,7 +5124,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </sizepolicy>
             </property>
             <property name="text">
-             <string>NOTE: Version 4.0.0 requires map visualization files (*.fgb) to display simulations on the map. This requirement will be removed in version 4.0.1.</string>
+             <string>NOTE: Version 4.0.0 requires map visualization files (*.fgbz) to display simulations on the map. This requirement will be removed in version 4.0.1.</string>
             </property>
             <property name="wordWrap">
              <bool>true</bool>

@@ -247,9 +247,9 @@ OutputWriter::write (std::string outputFilename, std::string driver)
         }
         #endif
     }
-    else if ( 0 == driver.compare( "FlatGeoBuf" ) )
+    else if ( 0 == driver.compare( "FlatGeoBufZip" ) )
     {
-        _writeFlatGeoBuf(outputFilename);
+        _writeFlatGeoBufZip(outputFilename);
     }
     else
     {
@@ -1049,7 +1049,7 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
     return true;
 }
 
-bool OutputWriter::_writeFlatGeoBuf(std::string filename)
+bool OutputWriter::_writeFlatGeoBufZip(std::string filename)
 {
     const bool hasDateTime = !ninjaTime.is_not_a_date_time();
 

@@ -3444,7 +3444,7 @@ void ninja::writeOutputFiles()
 #pragma omp section
     {
         try{
-            if(input.flatGeoBuffFlag == true)
+            if(input.fgbzOutFlag == true)
             {
                 AsciiGrid<double> *velTempGrid, *angTempGrid;
                 velTempGrid=NULL;
@@ -3467,7 +3467,7 @@ void ninja::writeOutputFiles()
                     output.setWxModel(init->getForecastIdentifier());
                 }
 
-                output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+                output.write(input.fgbzFile, "FlatGeoBufZip");
 
                 if(angTempGrid)
                 {
@@ -3482,10 +3482,10 @@ void ninja::writeOutputFiles()
             }
         }catch (exception& e)
         {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: %s", e.what());
         }catch (...)
         {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: Cannot determine exception type.");
         }
     } //end omp section
     }   //end parallel sections region
@@ -5041,9 +5041,9 @@ void ninja::set_wxModelAsciiOutFlag(bool flag)
     input.wxModelAsciiOutFlag = flag;
 }
 
-void ninja::set_wxModelFgbOutFlag(bool flag)
+void ninja::set_wxModelFgbzOutFlag(bool flag)
 {
-    input.wxModelFgbFlag = flag;
+    input.wxModelFgbzOutFlag = flag;
 }
 
 void ninja::set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units)
@@ -5085,9 +5085,9 @@ void ninja::set_vtkOutFlag(bool flag)
     input.volVTKOutFlag = flag;
 }
 
-void ninja::set_flatGeoBufFlag(bool flag)
+void ninja::set_fgbzOutFlag(bool flag)
 {
-    input.flatGeoBuffFlag = flag;
+    input.fgbzOutFlag = flag;
 }
 
 void ninja::set_outputPath(std::string path)
@@ -5309,7 +5309,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
-    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
+    input.fgbzFile = rootFile + kmz_fileAppend + ".fgbz";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";

@@ -537,10 +537,10 @@ bool ninjaArmy::startRuns(int numProcessors)
     // also used to set the size of the outputs, to better handle multi-threading
     atmosphere.reset(ninjas.size());
 
-    // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
+    // prep a clean set of map visualization output filenames, to be filled before ninjas[i] gets deleted after each run
     fgbzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
-    wxModelFgbFilenames.resize(ninjas.size());
+    wxModelFgbzFilenames.resize(ninjas.size());
 
     if(ninjas.size() == 1)
     {
@@ -602,8 +602,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
                 ninjas[0]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
-                //set fgbFile for setCurrentMapVisualization(), for the GUI
-                ninjas[0]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
+                //set fgbzFile for setCurrentMapVisualization(), for the GUI
+                ninjas[0]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
             }
 
 #endif //NINJAFOAM
@@ -631,7 +631,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 writeFarsiteAtmosphereFile();
             }
 
-            //setup the run kmz filenames, for C-API calls
+            //setup the run map visualization filenames, for C-API calls
             setCurrentMapVisualizationFilenames(0);
 
         }catch (bad_alloc& e)
@@ -721,8 +721,8 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
                     ninjas[i]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
-                    //set fgbFile for setCurrentMapVisualizationFilenames(), for the GUI
-                    ninjas[i]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
+                    //set fgbzFile for setCurrentMapVisualizationFilenames(), for the GUI
+                    ninjas[i]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
                 }
 
                 //store data for atmosphere file
@@ -742,7 +742,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                 }
 
-                //setup the run kmz filenames, for C-API calls
+                //setup the run map visualization filenames, for C-API calls
                 setCurrentMapVisualizationFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
@@ -855,7 +855,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                 }
 
-                //setup the run kmz filenames, for C-API calls
+                //setup the run map visualization filenames, for C-API calls
                 setCurrentMapVisualizationFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
@@ -2394,10 +2394,10 @@ int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char *
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
-int ninjaArmy::setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setWxModelFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-                       ninjas[ nIndex ]->set_wxModelFgbOutFlag( flag ) );
+                       ninjas[ nIndex ]->set_wxModelFgbzOutFlag( flag ) );
 }
 int ninjaArmy::setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2677,9 +2677,9 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
 }
 
-int ninjaArmy::setFlatGeoBufFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_flatGeoBufFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzOutFlag( flag ) );
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
@@ -2692,11 +2692,11 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 }
 
 int ninjaArmy::getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
-                                   std::vector<std::string>& wxModelFgbFilenameStr, char ** papszOptions )
+                                             std::vector<std::string>& wxModelFgbzFilenameStr, char ** papszOptions )
 {
     fgbzFilenamesStr = fgbzFilenames;
     stationKmlFilenamesStr = stationKmlFilenames;
-    wxModelFgbFilenameStr = wxModelFgbFilenames;
+    wxModelFgbzFilenameStr = wxModelFgbzFilenames;
 
     return NINJA_SUCCESS;
 }
@@ -2727,7 +2727,7 @@ void ninjaArmy::cancelAndReset()
 
 void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
 {
-    fgbzFilenames[runNumber] = ninjas[runNumber]->input.flatGeoBuffFile;
+    fgbzFilenames[runNumber] = ninjas[runNumber]->input.fgbzFile;
 
     if(ninjas[runNumber]->input.stations.size() == 0)
     {
@@ -2749,12 +2749,12 @@ void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
     }
 
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
-    if(ninjas[runNumber]->input.wxModelFgbFile == "!set")
+    if(ninjas[runNumber]->input.wxModelFgbzFile == "!set")
     {
-        wxModelFgbFilenames[runNumber] = "";
+        wxModelFgbzFilenames[runNumber] = "";
     } else
     {
-        wxModelFgbFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbFile;
+        wxModelFgbzFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbzFile;
     }
 }
 

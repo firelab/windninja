@@ -3443,7 +3443,7 @@ void NinjaFoam::SetOutputFilenames()
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
-    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
+    input.fgbzFile = rootFile + kmz_fileAppend + ".fgbz";
 
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
@@ -3770,7 +3770,7 @@ void NinjaFoam::WriteOutputFiles()
         }
         {
             try{
-                if(input.flatGeoBuffFlag == true)
+                if(input.fgbzOutFlag == true)
                 {
                     AsciiGrid<double> *velTempGrid, *angTempGrid;
                     velTempGrid=NULL;
@@ -3793,7 +3793,7 @@ void NinjaFoam::WriteOutputFiles()
                         output.setWxModel(init->getForecastIdentifier());
                     }
 
-                    output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+                    output.write(input.fgbzFile, "FlatGeoBufZip");
 
                     if(angTempGrid)
                     {
@@ -3808,10 +3808,10 @@ void NinjaFoam::WriteOutputFiles()
                 }
             }catch (exception& e)
             {
-                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: %s", e.what());
             }catch (...)
             {
-                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: Cannot determine exception type.");
             }
         }
     }catch (exception& e)

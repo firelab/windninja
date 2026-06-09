@@ -1501,7 +1501,7 @@ void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, co
 
 void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
-    if(input.wxModelAsciiOutFlag==true || input.wxModelGeoTiffOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true || input.wxModelFgbFlag == true)
+    if(input.wxModelAsciiOutFlag==true || input.wxModelGeoTiffOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true || input.wxModelFgbzOutFlag == true)
     {
         // clip the output weather model ascii grids, to the area of the dem, plus one dem cell size.
         // actually, it looks best to use one wxModel cell size NOT one dem cell size.
@@ -1570,7 +1570,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
         input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
         input.wxModelKmzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "kmz");
-        input.wxModelFgbFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "fgbz");
+        input.wxModelFgbzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "fgbz");
         input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
         input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
         input.wxModelGeoTiffFile = CPLFormFilename(path.c_str(), wxModelGeoTiffFileTemp.c_str(), ".tif");
@@ -1699,27 +1699,27 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 #pragma omp section
     {
         try{
-            if(input.wxModelFgbFlag == true)
+            if(input.wxModelFgbzOutFlag == true)
             {
-                OutputWriter wxModelFgbFiles;
+                OutputWriter wxModelFgbzFiles;
 
-                wxModelFgbFiles.setDEMfile(input.dem.fileName);
+                wxModelFgbzFiles.setDEMfile(input.dem.fileName);
 
-                wxModelFgbFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
-                //wxModelKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
-                wxModelFgbFiles.setDirGrid(dirInitializationGrid_wxModel);
-                wxModelFgbFiles.setLineWidth(input.wxModelGoogLineWidth);
-                wxModelFgbFiles.setNinjaTime(input.ninjaTime);
-                wxModelFgbFiles.setWxModel(getForecastIdentifier());
+                wxModelFgbzFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+                //wxModelFgbzFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
+                wxModelFgbzFiles.setDirGrid(dirInitializationGrid_wxModel);
+                wxModelFgbzFiles.setLineWidth(input.wxModelGoogLineWidth);
+                wxModelFgbzFiles.setNinjaTime(input.ninjaTime);
+                wxModelFgbzFiles.setWxModel(getForecastIdentifier());
 
-                wxModelFgbFiles.write(input.wxModelFgbFile, "FlatGeoBuf");
+                wxModelFgbzFiles.write(input.wxModelFgbzFile, "FlatGeoBufZip");
             }
         }catch (exception& e)
         {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Flatgeobuf writing: %s", e.what());
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip writing: %s", e.what());
         }catch (...)
         {
-            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Flatgeobuf file writing: Cannot determine exception type.");
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: Cannot determine exception type.");
         }
     }//end omp section
 
