@@ -3313,7 +3313,6 @@ void ninja::writeOutputFiles()
             ninjaKmlFiles.setKmzFile(input.kmzFile);
             ninjaKmlFiles.setDemFile(input.dem.fileName);
 
-
             ninjaKmlFiles.setLegendFile(input.legFile);
             ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
             ninjaKmlFiles.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
@@ -3451,8 +3450,8 @@ void ninja::writeOutputFiles()
                 angTempGrid=NULL;
                 OutputWriter output;
 
-                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
+                velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
 
                 output.setDirGrid(*angTempGrid);
                 output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
@@ -5186,11 +5185,14 @@ void ninja::set_outputFilenames(double& meshResolution,
         input.pdfResolution = meshResolution;
     if( input.geoTiffResolution <= 0.0 )  //if negative, use computational mesh resolution
         input.geoTiffResolution = meshResolution;
+    if( input.fgbzResolution <= 0.0 )  //if negative, use computational mesh resolution
+        input.fgbzResolution = meshResolution;
 
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, fileAppend, timeAppend, wxModelTimeAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, volVTK_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units, \
+        fgbz_fileAppend, fgbz_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -5272,8 +5274,9 @@ void ninja::set_outputFilenames(double& meshResolution,
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
     gtiff_mesh_units = lengthUnits::getString( input.geoTiffUnits );
+    fgbz_mesh_units = lengthUnits::getString( input.fgbzUnits );
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff, os_fgbz;
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ||
         input.initializationMethod == WindNinjaInputs::foamDomainAverageInitializationFlag )
     {
@@ -5285,6 +5288,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_gtiff << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_fgbz << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
     else if( input.initializationMethod == WindNinjaInputs::pointInitializationFlag )
     {
@@ -5294,6 +5298,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_ascii << "_point";
         os_pdf   << "_point";
         os_gtiff << "_point";
+        os_fgbz << "_point";
     }
 
 
@@ -5303,6 +5308,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
     double gtiffResolutionTemp = input.geoTiffResolution;
+    double fgbzResolutionTemp = input.fgbzResolution;
 
     lengthUnits::fromBaseUnits(meshResolutionTemp, meshResolutionUnits);
     lengthUnits::fromBaseUnits(kmzResolutionTemp, input.kmzUnits);
@@ -5310,6 +5316,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
     lengthUnits::fromBaseUnits(gtiffResolutionTemp, input.geoTiffUnits);
+    lengthUnits::fromBaseUnits(fgbzResolutionTemp, input.fgbzUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
@@ -5317,6 +5324,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
     os_gtiff << "_" << timeAppend << (long) (gtiffResolutionTemp+0.5) << gtiff_mesh_units;
+    os_fgbz << "_" << timeAppend << (long) (fgbzResolutionTemp+0.5) << fgbz_mesh_units;
 
     if( input.stabilityFlag == true && input.alphaStability != -1 )
     {
@@ -5326,6 +5334,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_ascii << "_alpha_" << input.alphaStability;
         os_pdf   << "_alpha_" << input.alphaStability;
         os_gtiff << "_alpha_" << input.alphaStability;
+        os_fgbz << "_alpha_" << input.alphaStability;
     }
     else if( input.stabilityFlag == true && input.alphaStability == -1 )
     {
@@ -5335,6 +5344,7 @@ void ninja::set_outputFilenames(double& meshResolution,
         os_ascii << "_non_neutral_stability";
         os_pdf   << "_non_neutral_stability";
         os_gtiff << "_non_neutral_stability";
+        os_fgbz << "_non_neutral_stability";
     }
 
     fileAppend = os.str();
@@ -5343,6 +5353,7 @@ void ninja::set_outputFilenames(double& meshResolution,
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
     gtiff_fileAppend = os_gtiff.str();
+    fgbz_fileAppend = os_fgbz.str();
 
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
@@ -5357,12 +5368,14 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
-    input.fgbzFile = rootFile + kmz_fileAppend + ".fgbz";
+    input.fgbzFile = rootFile + fgbz_fileAppend + ".fgbz";
 
     //wxModelShpFile = wxModelTimeAppend + ".shp";
     //wxModelDbfFile = wxModelTimeAppend + ".dbf";
 
-    //wxModelGeoTiffFile = wxModelTimeAppend + ".kmz";
+    //wxModelGeoTiffFile = wxModelTimeAppend + ".tif";
+
+    //wxModelFgbzFile = wxModelTimeAppend + ".tif";
 
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
