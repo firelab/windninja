@@ -1441,7 +1441,7 @@ public:
     * \param scaling scaling option
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setFgbzSpeedScaling( const int nIndex, const KmlVector::egoogSpeedScaling scaling,
+    int setFgbzSpeedScaling( const int nIndex, const OutputWriter::eSpeedScaling scaling,
                              char ** papszOptions=NULL );
     /**
     * \brief Set the fgbz output speed scaling parameter for a ninja

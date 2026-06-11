@@ -135,10 +135,12 @@ WindNinjaInputs::WindNinjaInputs()
     fgbzColor = "default";
     fgbzVectorScale = false;
     fgbzUseConsistentColorScale = false;
-    fgbzSpeedScaling = KmlVector::equal_interval;
+    fgbzSpeedScaling = OutputWriter::equal_interval;
     fgbzLineWidth = 1.0;
     wxModelFgbzOutFlag = false;
     wxModelFgbzFile = "!set";
+    wxModelFgbzSpeedScaling = OutputWriter::equal_interval;
+    wxModelFgbzLineWidth = 3.0;
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -357,6 +359,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     fgbzUseConsistentColorScale = rhs.fgbzUseConsistentColorScale;
     wxModelFgbzOutFlag = rhs.wxModelFgbzOutFlag;
     wxModelFgbzFile = rhs.wxModelFgbzFile;
+    wxModelFgbzSpeedScaling = rhs.wxModelFgbzSpeedScaling;
+    wxModelFgbzLineWidth = rhs.wxModelFgbzLineWidth;
     customOutputPath = rhs.customOutputPath;
 
 #ifdef NINJA_SPEED_TESTING
@@ -584,6 +588,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       fgbzUseConsistentColorScale = rhs.fgbzUseConsistentColorScale;
       wxModelFgbzOutFlag = rhs.wxModelFgbzOutFlag;
       wxModelFgbzFile = rhs.wxModelFgbzFile;
+      wxModelFgbzSpeedScaling = rhs.wxModelFgbzSpeedScaling;
+      wxModelFgbzLineWidth = rhs.wxModelFgbzLineWidth;
       customOutputPath = rhs.customOutputPath;
 
 #ifdef NINJA_SPEED_TESTING

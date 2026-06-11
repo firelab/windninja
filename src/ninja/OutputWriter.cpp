@@ -63,6 +63,10 @@ OutputWriter::OutputWriter ()
     split_vals    = NULL;
     linewidth     = 1.0;
 
+    speedScaling = equal_interval;
+    colorScheme = "default";
+    useVectorScaling = false;
+
     pszOgrFile    = NULL;
     pszLegendFile = NULL;
     pszTmpDemFile = NULL;
@@ -76,7 +80,6 @@ OutputWriter::OutputWriter ()
 
 OutputWriter::~OutputWriter ()
 {
-
     OSRDestroySpatialReference( hSrcSRS );
     OSRDestroySpatialReference( hDestSRS );
     OCTDestroyCoordinateTransformation( hTransform );

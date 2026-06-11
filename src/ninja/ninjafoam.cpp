@@ -3764,7 +3764,6 @@ void NinjaFoam::WriteOutputFiles()
             output.setSize(input.pdfWidth, input.pdfHeight);
             output.write(input.pdfFile, "PDF");
 
-
             if(angTempGrid)
             {
                 delete angTempGrid;
@@ -3790,9 +3789,11 @@ void NinjaFoam::WriteOutputFiles()
 
                     output.setDirGrid(*angTempGrid);
                     output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-                    output.setLineWidth(input.pdfLineWidth);
-                    output.setDPI(input.pdfDPI);
-                    output.setSize(input.pdfWidth, input.pdfHeight);
+
+                    output.setSpeedScaling(input.fgbzSpeedScaling);
+                    output.setColorScheme(input.fgbzColor);
+                    output.setVectorScaling(input.fgbzVectorScale);
+                    output.setLineWidth(input.fgbzLineWidth);
                     output.setNinjaTime(input.ninjaTime);
 
                     if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)

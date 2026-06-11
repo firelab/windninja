@@ -77,6 +77,11 @@ class OutputWriter
         OutputWriter ();                             /* constructor */
         ~OutputWriter();
 
+        enum eSpeedScaling{
+            equal_color,
+            equal_interval
+        };
+
         /* ====================  ACCESSORS     ======================================= */
 
         /* ====================  MUTATORS      ======================================= */
@@ -94,6 +99,9 @@ class OutputWriter
         void setSize( const double w, const double h );
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
         void setWxModel(std::string name) {wxModelName=name;}
+        void setSpeedScaling(eSpeedScaling scaling) {speedScaling=scaling;}
+        void setColorScheme(std::string cScheme) {colorScheme=cScheme;}
+        void setVectorScaling(bool vec_scaling) {useVectorScaling=vec_scaling;}
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -183,6 +191,9 @@ class OutputWriter
         double margin;
         double height, width;
 
+        eSpeedScaling speedScaling;
+        std::string colorScheme;
+        bool useVectorScaling;
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;

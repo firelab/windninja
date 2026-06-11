@@ -2709,7 +2709,7 @@ int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
    return retval;
 }
 
-int ninjaArmy::setFgbzSpeedScaling( const int nIndex, const KmlVector::egoogSpeedScaling scaling,
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, const OutputWriter::eSpeedScaling scaling,
                                     char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzSpeedScaling( scaling ) );
@@ -2722,12 +2722,12 @@ int ninjaArmy::setFgbzSpeedScaling( const int nIndex, std::string scaling, char 
     {
        if( scaling == "equal_color" || scaling == "color" )
        {
-           ninjas[ nIndex ]->set_fgbzSpeedScaling( KmlVector::equal_color );
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( OutputWriter::equal_color );
            retval = NINJA_SUCCESS;
        }
        else if( scaling == "equal_interval" || scaling == "interval" )
        {
-           ninjas[ nIndex ]->set_fgbzSpeedScaling( KmlVector::equal_interval );
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( OutputWriter::equal_interval );
            retval = NINJA_SUCCESS;
        }
        else

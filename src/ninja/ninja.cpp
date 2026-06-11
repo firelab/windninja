@@ -3454,9 +3454,11 @@ void ninja::writeOutputFiles()
 
                 output.setDirGrid(*angTempGrid);
                 output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-                output.setLineWidth(input.pdfLineWidth);
-                output.setDPI(input.pdfDPI);
-                output.setSize(input.pdfWidth, input.pdfHeight);
+
+                output.setSpeedScaling(input.fgbzSpeedScaling);
+                output.setColorScheme(input.fgbzColor);
+                output.setVectorScaling(input.fgbzVectorScale);
+                output.setLineWidth(input.fgbzLineWidth);
                 output.setNinjaTime(input.ninjaTime);
 
                 if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
@@ -5095,9 +5097,9 @@ void ninja::set_fgbzResolution(double Resolution, lengthUnits::eLengthUnits unit
     input.fgbzResolution = Resolution;
 }
 
-void ninja::set_fgbzSpeedScaling(KmlVector::egoogSpeedScaling scaling)
+void ninja::set_fgbzSpeedScaling(OutputWriter::eSpeedScaling scaling)
 {
-    if(scaling != KmlVector::equal_color && scaling != KmlVector::equal_interval)
+    if(scaling != OutputWriter::equal_color && scaling != OutputWriter::equal_interval)
     {
         throw std::logic_error("flatGeoBufZip speed scaling parameter not set properly"
                                " in ninja::set_fgbzSpeedScaling().");

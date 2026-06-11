@@ -1705,7 +1705,11 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
                 wxModelFgbzFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
                 //wxModelFgbzFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
                 wxModelFgbzFiles.setDirGrid(dirInitializationGrid_wxModel);
-                wxModelFgbzFiles.setLineWidth(input.wxModelGoogLineWidth);
+
+                wxModelFgbzFiles.setSpeedScaling(input.wxModelFgbzSpeedScaling);
+                wxModelFgbzFiles.setColorScheme(input.fgbzColor);
+                wxModelFgbzFiles.setVectorScaling(input.fgbzVectorScale);
+                wxModelFgbzFiles.setLineWidth(input.wxModelFgbzLineWidth);
                 wxModelFgbzFiles.setNinjaTime(input.ninjaTime);
                 wxModelFgbzFiles.setWxModel(getForecastIdentifier());
 
