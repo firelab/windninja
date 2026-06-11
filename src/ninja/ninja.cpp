@@ -3311,7 +3311,6 @@ void ninja::writeOutputFiles()
 
             ninjaKmlFiles.setKmlFile(input.kmlFile);
             ninjaKmlFiles.setKmzFile(input.kmzFile);
-            ninjaKmlFiles.setDemFile(input.dem.fileName);
 
             ninjaKmlFiles.setLegendFile(input.legFile);
             ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
@@ -3455,7 +3454,6 @@ void ninja::writeOutputFiles()
 
                 output.setDirGrid(*angTempGrid);
                 output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-                output.setDEMfile(input.pdfDEMFileName);
                 output.setLineWidth(input.pdfLineWidth);
                 output.setDPI(input.pdfDPI);
                 output.setSize(input.pdfWidth, input.pdfHeight);

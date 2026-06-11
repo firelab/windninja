@@ -287,7 +287,7 @@ bool KmlVector::setOGR()
         free((void*)q);
         if(rc != OGRERR_NONE)
         {
-            throw std::logic_error("cannot create SRS from DEM, kmz creation failed");
+            throw std::logic_error("cannot create SRS from spd grid, kmz creation failed");
         }
         rc = oTargetSRS.importFromEPSG(4326);
         if(rc != OGRERR_NONE)

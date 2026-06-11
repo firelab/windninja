@@ -1044,7 +1044,6 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                 ninjaKmlFiles[i]->setKmlFile(ninjas[i]->input.kmlFile);
                 ninjaKmlFiles[i]->setKmzFile(ninjas[i]->input.kmzFile);
-                ninjaKmlFiles[i]->setDemFile(ninjas[i]->input.dem.fileName);
 
                 ninjaKmlFiles[i]->setLegendFile(ninjas[i]->input.legFile);
                 ninjaKmlFiles[i]->setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);

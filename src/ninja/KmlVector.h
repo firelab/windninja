@@ -134,7 +134,6 @@ public:
     bool writeDust(FILE *fileOut);
     #endif
 
-    void setDemFile(std::string fileName){demFile = fileName;}
     void setKmzFile(std::string fileName){kmzFile = fileName;}
     void setKmlFile(std::string fileName){kmlFile = fileName;}
     void setLegendFile(std::string fileName){legendFile = fileName;}
@@ -171,7 +170,6 @@ public:
 
 private:
     double resolution;
-    std::string demFile;
     std::string inputSpeedFile;
     velocityUnits::eVelocityUnits speedUnits;
     std::string inputDirFile;

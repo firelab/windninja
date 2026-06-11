@@ -611,7 +611,7 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
     }
     else
     {
-        PrintString(legend,os.str().c_str(), titleX, titleY, textHeight, white);\
+        PrintString(legend,os.str().c_str(), titleX, titleY, textHeight, white);
     }
 
     //print time
@@ -1056,11 +1056,10 @@ bool OutputWriter::_writeFlatGeoBufZip(std::string filename)
     _createSplits();
     _createOGRFile(true);
     _createLegend();
-    if (hasDateTime)
+    if(hasDateTime)
     {
         _createDateTimeLegend(!wxModelName.empty());
     }
-    _openSrcDataSet();
 
     hDriver = OGRGetDriverByName("FlatGeobuf");
     if ( hDriver == NULL )

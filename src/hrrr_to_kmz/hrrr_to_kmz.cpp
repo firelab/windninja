@@ -599,7 +599,6 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
 
     ninjaKmlFiles.setKmlFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kml") );
     ninjaKmlFiles.setKmzFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "kmz") );
-    ////ninjaKmlFiles.setDemFile(dem_filename);  // turns out to be redundant and doesn't do anything, which is good because don't want this dependency
 
     //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
     double angleFromNorth = 0.0;

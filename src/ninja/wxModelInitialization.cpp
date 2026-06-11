@@ -1655,7 +1655,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
             wxModelKmlFiles.setKmlFile(input.wxModelKmlFile);
             wxModelKmlFiles.setKmzFile(input.wxModelKmzFile);
-            wxModelKmlFiles.setDemFile(input.dem.fileName);
             wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
@@ -1702,8 +1701,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             if(input.wxModelFgbzOutFlag == true)
             {
                 OutputWriter wxModelFgbzFiles;
-
-                wxModelFgbzFiles.setDEMfile(input.dem.fileName);
 
                 wxModelFgbzFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
                 //wxModelFgbzFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
