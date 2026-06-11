@@ -1083,16 +1083,17 @@ bool OutputWriter::_writeFlatGeoBufZip(std::string filename)
         throw std::runtime_error("OutputWriter: Error creating output file");
     }
 
-    if (pszLegendFile != nullptr && CPLCopyFile(vsiLegendPath.c_str(), pszLegendFile) != 0)
+    if(pszLegendFile != nullptr && CPLCopyFile(vsiLegendPath.c_str(), pszLegendFile) != 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
     }
 
-    if (pszDateTimeLegendFile != nullptr && CPLCopyFile(vsiDateTimeLegendPath.c_str(), pszDateTimeLegendFile) != 0)
+    if(hasDateTime == true && pszDateTimeLegendFile != nullptr && CPLCopyFile(vsiDateTimeLegendPath.c_str(), pszDateTimeLegendFile) != 0)
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add date time legend file to ZIP archive.");
     }
 
+    _closeDataSets();
     _destroyOptions();
     _destroyLegend();
 
