@@ -3452,6 +3452,7 @@ void ninja::writeOutputFiles()
                 angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
                 velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
 
+                output.setAngleFromNorth(input.dem.getAngleFromNorth());
                 output.setDirGrid(*angTempGrid);
                 output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
 

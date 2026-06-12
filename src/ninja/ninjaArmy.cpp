@@ -1048,6 +1048,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninjaKmlFiles[i]->setLegendFile(ninjas[i]->input.legFile);
                 ninjaKmlFiles[i]->setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
                 ninjaKmlFiles[i]->setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+                ninjaKmlFiles[i]->setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
                 ninjaKmlFiles[i]->setDirGrid(*angTempGrid);
 
                 ninjaKmlFiles[i]->setLineWidth(ninjas[i]->input.googLineWidth);

@@ -1703,7 +1703,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
                 OutputWriter wxModelFgbzFiles;
 
                 wxModelFgbzFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
-                //wxModelFgbzFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
+                wxModelFgbzFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
                 wxModelFgbzFiles.setDirGrid(dirInitializationGrid_wxModel);
 
                 wxModelFgbzFiles.setSpeedScaling(input.wxModelFgbzSpeedScaling);

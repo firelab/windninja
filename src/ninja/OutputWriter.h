@@ -87,6 +87,9 @@ class OutputWriter
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s,
                           velocityUnits::eVelocityUnits units);
+        // angleFromNorth calculations only technically required for flatGeoBuf output. pdf and gtiff don't warp
+        double angleFromNorth;
+        void setAngleFromNorth(const double angFromNorth);
         void setDirGrid(AsciiGrid<double> &d);
 #ifdef EMISSIONS
         void setDustGrid(AsciiGrid<double> &d);

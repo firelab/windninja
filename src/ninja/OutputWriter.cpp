@@ -64,6 +64,8 @@ OutputWriter::OutputWriter ()
     split_vals    = NULL;
     linewidth     = 1.0;
 
+    angleFromNorth = 0.0;
+
     speedScaling = equal_interval;
     colorScheme = "default";
     useVectorScaling = false;
@@ -279,7 +281,7 @@ void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 }  /* -----  end of method OutputWriter::setDustGrid  ----- */
 #endif
 
-void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocityUnits u )
+void OutputWriter::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits u)
 {
     spd = s;
     units = u;
@@ -298,9 +300,12 @@ void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocity
     return;
 }  /* -----  end of method OutputWriter::setSpeedGrid  ----- */
 
+void OutputWriter::setAngleFromNorth(const double angFromNorth)
+{
+    angleFromNorth = angFromNorth;
+}
 
-    void
-OutputWriter::setDirGrid ( AsciiGrid<double> &d )
+void OutputWriter::setDirGrid(AsciiGrid<double> &d)
 {
     dir = d;
     return;
@@ -315,10 +320,8 @@ void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs,
     this->hDustMemDs = hDustMemDs;
 }
 
-    bool
-OutputWriter::write (std::string outputFilename, std::string driver)
+bool OutputWriter::write(std::string outputFilename, std::string driver)
 {
-
     if( 0 == driver.compare( "PDF" ) )
     {
         _writePDF(outputFilename);
@@ -1099,8 +1102,15 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
             OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
             WN_Arrow     arrow;
 
+            double dir_prj = dir(i,j);
+            double dir_geo = dir_prj;
+            if(outputLatLon == true)
+            {
+                dir_geo = wrap0to360(dir_prj + angleFromNorth); //convert FROM projected TO geographic coordinates
+            }
+
             spd.get_cellPosition(i, j, &x, &y);
-            arrow = WN_Arrow( x, y, spd(i,j), dir(i,j), spd.get_cellSize(),
+            arrow = WN_Arrow( x, y, spd(i,j), dir_prj, spd.get_cellSize(),
                               split_vals, NCOLORS);
 
             std::ostringstream os;
@@ -1111,7 +1121,7 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
             OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
                                    spd(i,j) );
             OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
-                                   (int)dir(i,j)+0.5);
+                                   (int)dir_geo+0.5);
 
 
             arrow.asGeometry( hLine );
