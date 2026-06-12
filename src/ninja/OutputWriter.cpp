@@ -411,7 +411,7 @@ std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
     std::string style = "none";
 
-    for ( int i = 1; i < NCOLORS; ++i )
+    for(int i = 1; i <= NCOLORS; i++)
     {
         if( spd <= split_vals[i] )
         {
@@ -472,19 +472,19 @@ void OutputWriter::_createSplits()
 {
     _deleteSplits();
 
-    split_vals = new double[NCOLORS];
+    split_vals = new double[NSPLITS];
     switch(speedScaling)
     {
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            spd.divide_gridData(split_vals, NCOLORS);
+            spd.divide_gridData(split_vals, NSPLITS);
             break;
         }
         case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
         {
-            double interval = spd.get_maxValue()/(float)NCOLORS;
-            //double interval = (spd.get_maxValue() - spd.get_minValue()) / ((float)NCOLORS);
-            for(int i = 0; i < NCOLORS; i++)
+            double interval = spd.get_maxValue()/(float)(NSPLITS-1);
+            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(NSPLITS-1);
+            for(int i = 0; i < NSPLITS; i++)
             {
                 split_vals[i] = i * interval;
                 //split_vals[i] = i * interval + spd.get_minValue();
@@ -493,7 +493,7 @@ void OutputWriter::_createSplits()
         }
         default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            spd.divide_gridData(split_vals, NCOLORS);
+            spd.divide_gridData(split_vals, NSPLITS);
             break;
         }
     }
@@ -514,11 +514,19 @@ bool OutputWriter::_createLegend()
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
-            os << split_vals[NCOLORS - 1] << " - " << maxxx;
-        else if(i == NCOLORS)
+        {
+            //os << split_vals[NSPLITS-2] << " + ";
+            os << split_vals[NSPLITS-2] << " - " << split_vals[NSPLITS-1];
+        }
+        else if(i == NCOLORS-1)
+        {
             os << "0.00 - " << split_vals[1] - 0.01;
-        else if(i != 0)
-            os << split_vals[NCOLORS - i - 1] << " - " << split_vals[NCOLORS - i] - 0.01;
+            //os << split_vals[0] << " - " << split_vals[1] - 0.01;
+        }
+        else
+        {
+            os << split_vals[NSPLITS - i - 2] << " - " << split_vals[NSPLITS - i - 1] - 0.01;
+        }
 
         legendStrings[i] = os.str();
         os.str("");
@@ -768,7 +776,7 @@ bool OutputWriter::_createLegend()
     int arrowHeadLength = 10; // pixels;
     int textHeight = 10;  //pixels- 8 for maximum speed of "999.99 - 555.55";
                           //10 for normal double digits
-    if(split_vals[NCOLORS-1] >= 100)
+    if(split_vals[NSPLITS-1] >= 100)
         textHeight = 8;
     int titleTextHeight = int(1.2 * textHeight);
     int titleX, titleY;

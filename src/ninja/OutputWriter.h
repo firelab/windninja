@@ -181,6 +181,7 @@ class OutputWriter
         char * pszTmpDemFile;
 
         static const unsigned short NCOLORS = 5;
+        static const unsigned short NSPLITS = 6;  // NCOLORS+1
         static const unsigned short LGND_WIDTH = 160;
         static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4;
 

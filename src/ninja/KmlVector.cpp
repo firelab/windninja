@@ -699,13 +699,19 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
+        {
             //os << splitValue[numSplits-2] << " + ";
             os << splitValue[numSplits-2] << " - " << splitValue[numSplits-1];
+        }
         else if(i == numColors-1)
+        {
             os << "0.00 - " << splitValue[1] - 0.01;
             //os << splitValue[0] << " - " << splitValue[1] - 0.01;
+        }
         else
+        {
             os << splitValue[numSplits - i - 2] << " - " << splitValue[numSplits - i - 1] - 0.01;
+        }
 
         legendStrings[i] = os.str();
         os.str("");

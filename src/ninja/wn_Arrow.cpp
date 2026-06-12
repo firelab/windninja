@@ -12,7 +12,7 @@ WN_Arrow::WN_Arrow()
     m_x          = m_y           = m_speed      = m_dir         = 0;
     m_xtip       = m_ytip        = m_xtail      = m_ytail       = 0;
     m_xhead_left = m_xhead_right = m_yhead_left = m_yhead_right = 0;
-    m_cell_size  = m_nsplits     = 0;
+    m_cell_size  = m_ncolors     = 0;
 
     m_thresholds = NULL;
 }
@@ -21,7 +21,7 @@ WN_Arrow::WN_Arrow(
         const double &x,           const double &y,
         const double &speed,       const double &direction,
         const double &cell_size,   const double *thresholds,
-        const unsigned int nsplits
+        const unsigned int ncolors
         )
 {
     m_x          = x;
@@ -30,7 +30,7 @@ WN_Arrow::WN_Arrow(
     m_dir        = direction;
     m_cell_size  = cell_size;
     m_thresholds = thresholds;
-    m_nsplits    = nsplits;
+    m_ncolors    = ncolors;
 
     if( NULL == m_thresholds )
     {
@@ -71,8 +71,8 @@ void WN_Arrow::_computeVectorPoints()
     double cos_theta = 0;
 
 
-    float scale_factor =  1.0 / m_nsplits;
-    for ( unsigned int i = 0; i < m_nsplits; ++i )
+    float scale_factor =  1.0 / m_ncolors;
+    for(unsigned int i = 0; i < m_ncolors; i++)
     {
         if( m_speed <= m_thresholds[i] )
         {
