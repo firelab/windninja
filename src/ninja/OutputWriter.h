@@ -169,6 +169,7 @@ class OutputWriter
         std::string timeDateLegendFile;
         std::string wxModelName;
 
+        static const char * NAME;//       = "name";
         static const char * SPEED;//      = "speed";
         static const char * DIR;//        = "dir";
         static const char * AV_DIR;//     = "AV_dir";

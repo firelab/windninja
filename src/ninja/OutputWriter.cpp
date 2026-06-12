@@ -30,6 +30,7 @@
 
 #include "OutputWriter.h"
 
+const char * OutputWriter::NAME      = "name";
 const char * OutputWriter::SPEED     = "speed";
 const char * OutputWriter::DIR       = "dir";
 const char * OutputWriter::AV_DIR    = "AV_dir";
@@ -1057,6 +1058,14 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
     }
 
 
+    hFieldDefn = OGR_Fld_Create( NAME, OFTString );
+    OGR_Fld_SetWidth( hFieldDefn, 32 );
+    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
+    {
+        throw std::runtime_error("OutputWriter: Creating NAME field failed");
+    }
+    OGR_Fld_Destroy(hFieldDefn);
+
     hFieldDefn = OGR_Fld_Create( SPEED, OFTReal );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
@@ -1076,7 +1085,7 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
     OGR_Fld_SetWidth( hFieldDefn, 32 );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
-        throw std::runtime_error("OutputWriter: Creating SPEED field failed");
+        throw std::runtime_error("OutputWriter: Creating OGR_STYLE field failed");
     }
     OGR_Fld_Destroy(hFieldDefn);
 
@@ -1094,6 +1103,11 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
             arrow = WN_Arrow( x, y, spd(i,j), dir(i,j), spd.get_cellSize(),
                               split_vals, NCOLORS);
 
+            std::ostringstream os;
+            os << "Cell " << i << "," << j;
+            std::string name = os.str();
+            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, NAME),
+                                  name.c_str() );
             OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
                                    spd(i,j) );
             OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
