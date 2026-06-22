@@ -863,16 +863,16 @@ void OutputWriter::_destroyLegend()
 bool OutputWriter::_createDateTimeLegend(bool wxModel)
 {
     //make bitmap
-    int legendWidth;
-    if(wxModel)
-    {
-        legendWidth = 11.25 * wxModelName.size();
-    }
-    else
+    int legendWidth = 11.25 * wxModelName.size();
+    if(legendWidth < 285)
     {
         legendWidth = 285;
     }
     int legendHeight = 52;
+    if(wxModel)
+    {
+        legendHeight = 78;
+    }
     BMP legend;
 
     legend.SetSize(legendWidth,legendHeight);
@@ -923,18 +923,33 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
 
     os << ninjaTime;
 
-    if (wxModel)
+    if(wxModel)
     {
-        PrintString(legend,wxModelName.c_str(), titleX, titleY, textHeight, white);
+        //print wxModel identifier
+        PrintString(legend, wxModelName.c_str(), titleX, titleY, textHeight, white);
+
+        //print date
+        x = 0.05;
+        y = 0.40;
+        titleX = x * legendWidth;
+        titleY = y * legendHeight;
+        PrintString(legend, os.str().c_str(), titleX, titleY, textHeight, white);
+
+        //prep to print time
+        x = 0.05;
+        y = 0.70;
     }
     else
     {
-        PrintString(legend,os.str().c_str(), titleX, titleY, textHeight, white);
+        //print date
+        PrintString(legend, os.str().c_str(), titleX, titleY, textHeight, white);
+
+        //prep to print time
+        x = 0.05;
+        y = 0.60;
     }
 
     //print time
-    x = 0.05;
-    y = 0.60;
 
     titleX = x * legendWidth;
     titleY = y * legendHeight;
