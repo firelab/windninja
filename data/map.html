@@ -491,7 +491,7 @@
             const arrayBuffer = await response.arrayBuffer();
             const zip = await JSZip.loadAsync(arrayBuffer);
 
-            const keywords = ["NOMADS", "UCAR", "PASTCAST"];
+            const keywords = ["NOMADS", "UCAR", "NCEP", "PASTCAST", "WRF", "HRRR"];
             const containsKeyword = Object.keys(zip.files).some(fileName => 
                 keywords.some(keyword => fileName.toUpperCase().includes(keyword))
             );
