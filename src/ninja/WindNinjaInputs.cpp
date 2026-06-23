@@ -174,6 +174,7 @@ WindNinjaInputs::WindNinjaInputs()
     dirInitGridFilename= "!set";
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
+    foamWxForecastIdentifier = "!set";
     writeTurbulence = false;
     colMax_colHeightAGL = 457.2;  // default value of 457.2 m is 1500 ft
     colMax_colHeightAGL_units = lengthUnits::meters;
@@ -253,6 +254,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     stlFile = rhs.stlFile;
     foamVelocityGrid = rhs.foamVelocityGrid;
     foamAngleGrid = rhs.foamAngleGrid;
+    foamWxTimeList = rhs.foamWxTimeList;
+    foamWxForecastIdentifier = rhs.foamWxForecastIdentifier;
     writeTurbulence = rhs.writeTurbulence;
     colMax_colHeightAGL = rhs.colMax_colHeightAGL;
     colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
@@ -482,6 +485,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       stlFile = rhs.stlFile;
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
+      foamWxTimeList = rhs.foamWxTimeList;
+      foamWxForecastIdentifier = rhs.foamWxForecastIdentifier;
       writeTurbulence = rhs.writeTurbulence;
       colMax_colHeightAGL = rhs.colMax_colHeightAGL;
       colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;

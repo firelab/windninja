@@ -591,6 +591,12 @@ bool ninjaArmy::startRuns(int numProcessors)
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
                 //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                 diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
+                //need to set some wxModelInit metadata from init-> to help with wxModel legend output
+                if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                {
+                    diurnal_ninja->input.foamWxTimeList = ninjas[0]->init->getTimeList(ninjas[0]->input.ninjaTimeZone);
+                    diurnal_ninja->input.foamWxForecastIdentifier = ninjas[0]->init->getForecastIdentifier();
+                }
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()\n");
                 }
@@ -710,6 +716,12 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
                     //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                     diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
+                    //need to set some wxModelInit metadata from init-> to help with wxModel legend output
+                    if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                    {
+                        diurnal_ninja->input.foamWxTimeList = ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone);
+                        diurnal_ninja->input.foamWxForecastIdentifier = ninjas[i]->init->getForecastIdentifier();
+                    }
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }

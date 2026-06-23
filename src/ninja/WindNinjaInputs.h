@@ -306,6 +306,8 @@ public:
     std::string stlFile; //path/filename of an STL file
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
+    std::vector<blt::local_date_time> foamWxTimeList; //wxModelInit getTimeList() from ninjafoam
+    std::string foamWxForecastIdentifier; //wxModelInit getForecastIdentifier() from ninjafoam
     bool writeTurbulence;
     double colMax_colHeightAGL;
     lengthUnits::eLengthUnits colMax_colHeightAGL_units;
