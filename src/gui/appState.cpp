@@ -400,7 +400,7 @@ void AppState::updateFireBehaviorAsciiOutputState()
             {
                 isFireBehaviorAsciiValid = true;
                 ui->treeWidget->topLevelItem(2)->child(1)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+                ui->treeWidget->topLevelItem(2)->child(1)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
             }
             else if(ui->fireBehaviorAsciiAtmFileCheckBox->isChecked() && !isAtmValid)
             {
@@ -459,7 +459,7 @@ void AppState::updateFireBehaviorGeoTiffOutputState()
             {
                 isFireBehaviorGeoTiffValid = true;
                 ui->treeWidget->topLevelItem(2)->child(2)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+                ui->treeWidget->topLevelItem(2)->child(2)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
             }
             else if(ui->fireBehaviorGeoTiffAtmFileCheckBox->isChecked() && !isAtmValid)
             {
@@ -507,7 +507,7 @@ void AppState::updateShapeFilesOutputState()
             {
                 isShapeFilesValid = true;
                 ui->treeWidget->topLevelItem(2)->child(3)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+                ui->treeWidget->topLevelItem(2)->child(3)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
             }
             else
             {
@@ -549,7 +549,7 @@ void AppState::updateGeoSpatialPDFFilesOutputState()
             {
                 isGeoSpatialPDFFilesValid = true;
                 ui->treeWidget->topLevelItem(2)->child(4)->setIcon(0, warnIcon);
-                ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "The output resolutions is finer than the Surface Input file resolution");
+                ui->treeWidget->topLevelItem(2)->child(4)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
             }
             else
             {
@@ -622,7 +622,7 @@ void AppState::updateMapVisualizationOutputState()
         {
             if(GDALCellSize > ui->mapVisualizationMeshResolutionSpinBox->value())
             {
-                isMapVisualizationValid = false;
+                isMapVisualizationValid = true;
                 ui->treeWidget->topLevelItem(2)->child(6)->setIcon(0, warnIcon);
                 ui->treeWidget->topLevelItem(2)->child(6)->setToolTip(0, "The output resolution is finer than the Surface Input file resolution");
             }
