@@ -734,6 +734,9 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
             psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
         }
 
+        // set the dataset projection
+        int rc = srcDS->SetProjection(projString.c_str());
+
         // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
         // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
         // in this case, going FROM weather model projection coordinates TO dem projection coordinates
