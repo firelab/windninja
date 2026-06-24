@@ -253,19 +253,18 @@ void checkForValidData( std::string wxModelFileName )
             }
 
             const char * poBand_units = poBand->GetUnitType();
-            if( varList[i] == "T2" )
+            if(varList[i] == "T2")
             {
-                T_units = processTemperatureUnits( poBand_units );
+                T_units = processTemperatureUnits(poBand_units);
             }
-            if( varList[i] == "V10" || varList[i] == "U10" )
+            if(varList[i] == "V10" || varList[i] == "U10")
             {
-                spd_units = processVelocityUnits( poBand_units );
+                spd_units = processVelocityUnits(poBand_units);
             }
 
             // set the data
             padfScanline = new double[nXSize*nYSize];
-            poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize,
-                    GDT_Float64, 0, 0);
+            poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize, GDT_Float64, 0, 0);
             for(int k = 0;k < nXSize*nYSize; k++)
             {
                 double current_val = padfScanline[k];
@@ -840,13 +839,13 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         }
 
         const char * poBand_units = poBand->GetUnitType();
-        if( varList[i] == "T2" )
+        if(varList[i] == "T2")
         {
-            T_units = processTemperatureUnits( poBand_units );
+            T_units = processTemperatureUnits(poBand_units);
         }
-        if( varList[i] == "V10" || varList[i] == "U10" )
+        if(varList[i] == "V10" || varList[i] == "U10")
         {
-            spd_units = processVelocityUnits( poBand_units );
+            spd_units = processVelocityUnits(poBand_units);
         }
 
         // set the dataset projection
@@ -870,7 +869,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
 
         // final setting of the datasets to ascii grids, in the past usually done using a wrp dataset
-        // TODO: data must be in SI units, need to check units here and convert if necessary
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
             temperatureUnits::toBaseUnits( airGrid, T_units );

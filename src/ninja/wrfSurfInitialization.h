@@ -59,6 +59,8 @@ class wrfSurfInitialization : public wxModelInitialization
 
  protected:
 
+    velocityUnits::eVelocityUnits processVelocityUnits(std::string unit_string);
+    temperatureUnits::eTempUnits processTemperatureUnits(std::string unit_string);
     void getNcGlobalAttributes(float &dx, float &dy, float &cenLat, float &cenLon, std::string &projString);
 
     virtual void setSurfaceGrids( WindNinjaInputs &input,
