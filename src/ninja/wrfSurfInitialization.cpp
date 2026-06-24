@@ -293,6 +293,250 @@ bool wrfSurfInitialization::identify( std::string fileName )
     return identified;
 }
 
+/**
+* Uses netcfd c api commands to get wrf netcdf file global attributes, to use later
+* to set the gdal dataset projection and geotransform information, which are required
+* to allow the wrf netcdf file data to be accessible by standard gdal commands.
+* @param dx The cell size x value of the dataset to be filled.
+* @param dy The cell size y value of the dataset to be filled.
+* @param cenLat The center latitude value of the dataset to be filled.
+* @param cenLon The center longitude value of the dataset to be filled.
+* @param projString The projection string of the dataset to be filled.
+* Note: there are additional wrf netcdf file global attributes that are accessed and used to get and process the projection string,
+* but are not used outside this function, so they are not returned. These include mapProj, moadCenLat, standLon, trueLat1, trueLat2.
+*/
+void wrfSurfInitialization::getNcGlobalAttributes(float &dx, float &dy, float &cenLat, float &cenLon, std::string &projString)
+{
+    //==========get global attributes to set projection===========================
+//    // Acquire a lock to protect the non-thread safe netCDF library
+//#ifdef _OPENMP
+//    omp_guard netCDF_guard(netCDF_lock);
+//#endif
+
+    // Open the dataset
+    int status, ncid;
+    status = nc_open( wxModelFileName.c_str(), 0, &ncid );
+    if ( status != NC_NOERR ) {
+        ostringstream os;
+        os << "The netcdf file: " << wxModelFileName
+           << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+
+    // Get global attribute MAP_PROJ
+    // 1 = Lambert Conformal Conic
+    // 2 = Polar Stereographic
+    // 3 = Mercator
+    // 6 = Lat/Long
+
+    int mapProj;
+    nc_type type;
+    size_t len;
+    status = nc_inq_att( ncid, NC_GLOBAL, "MAP_PROJ", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute 'MAP_PROJ' in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_int( ncid, NC_GLOBAL, "MAP_PROJ", &mapProj );
+    }
+
+    CPLDebug("WRF", "MAP_PROJ = %d", mapProj);
+
+    // Get global attributes DX, DY
+    status = nc_inq_att( ncid, NC_GLOBAL, "DX", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute DX in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "DX", &dx );
+    }
+    status = nc_inq_att( ncid, NC_GLOBAL, "DY", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute DY in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "DY", &dy );
+    }
+
+    // Get global attributes CEN_LAT, CEN_LON
+    status = nc_inq_att( ncid, NC_GLOBAL, "CEN_LAT", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute CEN_LAT in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "CEN_LAT", &cenLat );
+    }
+    status = nc_inq_att( ncid, NC_GLOBAL, "CEN_LON", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute CEN_LON in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "CEN_LON", &cenLon );
+    }
+
+    // Get global attributes MOAD_CEN_LAT, STAND_LON
+    float moadCenLat, standLon;
+    status = nc_inq_att( ncid, NC_GLOBAL, "MOAD_CEN_LAT", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute MOAD_CEN_LAT in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "MOAD_CEN_LAT", &moadCenLat );
+    }
+    status = nc_inq_att( ncid, NC_GLOBAL, "STAND_LON", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute STAND_LON in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "STAND_LON", &standLon );
+    }
+
+    // Get global attributes TRUELAT1, TRUELAT2
+    float trueLat1, trueLat2;
+    status = nc_inq_att( ncid, NC_GLOBAL, "TRUELAT1", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute TRUELAT1 in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "TRUELAT1", &trueLat1 );
+    }
+    status = nc_inq_att( ncid, NC_GLOBAL, "TRUELAT2", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute TRUELAT2 in the netcdf file: " << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_float( ncid, NC_GLOBAL, "TRUELAT2", &trueLat2 );
+    }
+
+    // Get global attribute BOTTOM-TOP_GRID_DIMENSION
+    status = nc_inq_att( ncid, NC_GLOBAL, "BOTTOM-TOP_GRID_DIMENSION", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute BOTTOM-TOP_GRID_DIMENSION  in the netcdf file: "
+        << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_int( ncid, NC_GLOBAL, "BOTTOM-TOP_GRID_DIMENSION", &wxModel_nLayers );
+    }
+
+    // Get global attribute WEST-EAST_GRID_DIMENSION
+    // Not currently used. WX model x/y dims set based on
+    // reprojected image (in DEM space).
+    /*status = nc_inq_att( ncid, NC_GLOBAL, "WEST-EAST_GRID_DIMENSION", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute WEST-EAST_GRID_DIMENSION  in the netcdf file: "
+        << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_int( ncid, NC_GLOBAL, "WEST-EAST_GRID_DIMENSION", &wxModel_nCols );
+    }*/
+
+    // Get global attribute SOUTH-NORTH_GRID_DIMENSION
+    // Not currently used. WX model x/y dims set based on
+    // reprojected image (in DEM space).
+    /*status = nc_inq_att( ncid, NC_GLOBAL, "SOUTH-NORTH_GRID_DIMENSION", &type, &len );
+    if( status != NC_NOERR ){
+        ostringstream os;
+        os << "Global attribute SOUTH-NORTH_GRID_DIMENSION  in the netcdf file: "
+        << wxModelFileName
+        << " cannot be opened\n";
+        throw std::runtime_error( os.str() );
+    }
+    else {
+        status = nc_get_att_int( ncid, NC_GLOBAL, "SOUTH-NORTH_GRID_DIMENSION", &wxModel_nRows );
+    }*/
+
+    // Close the dataset
+    status = nc_close( ncid );
+    if( status != NC_NOERR ) {
+        ostringstream os;
+        os << "The netcdf file: " << wxModelFileName
+           << " cannot be closed\n";
+        throw std::runtime_error( os.str() );
+    }
+
+    //======end get global attributes========================================
+
+
+    //std::string projString;  // this is a function input, to be filled
+    if(mapProj == 1){  //lambert conformal conic
+        projString = "PROJCS[\"WGC 84 / WRF Lambert\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",\
+                      SPHEROID[\"WGS 84\",6378137.0,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],\
+                      PRIMEM[\"Greenwich\",0.0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.017453292519943295],\
+                      AXIS[\"Geodetic longitude\",EAST],AXIS[\"Geodetic latitude\",NORTH],AUTHORITY[\"EPSG\",\"4326\"]],\
+                      PROJECTION[\"Lambert_Conformal_Conic_2SP\"],\
+                      PARAMETER[\"central_meridian\","+boost::lexical_cast<std::string>(standLon)+"],\
+                      PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
+                      PARAMETER[\"standard_parallel_1\","+boost::lexical_cast<std::string>(trueLat1)+"],\
+                      PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0],\
+                      PARAMETER[\"standard_parallel_2\","+boost::lexical_cast<std::string>(trueLat2)+"],\
+                      UNIT[\"m\",1.0],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]";
+    }
+    else if(mapProj == 2){  //polar stereographic
+        projString = "PROJCS[\"WGS 84 / Antarctic Polar Stereographic\",GEOGCS[\"WGS 84\",\
+                     DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],\
+                     AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],\
+                     UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],\
+                     AUTHORITY[\"EPSG\",\"4326\"]],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],\
+                     PROJECTION[\"Polar_Stereographic\"],\
+                     PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
+                     PARAMETER[\"central_meridian\","+boost::lexical_cast<std::string>(standLon)+"],\
+                     PARAMETER[\"scale_factor\",1],\
+                     PARAMETER[\"false_easting\",0],\
+                     PARAMETER[\"false_northing\",0],AUTHORITY[\"EPSG\",\"3031\"],\
+                     AXIS[\"Easting\",UNKNOWN],AXIS[\"Northing\",UNKNOWN]]";
+    }
+    else if(mapProj == 3){  //mercator
+        projString = "PROJCS[\"World_Mercator\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"WGS_1984\",\
+                      SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],\
+                      UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Mercator_1SP\"],\
+                      PARAMETER[\"False_Easting\",0],\
+                      PARAMETER[\"False_Northing\",0],\
+                      PARAMETER[\"Central_Meridian\","+boost::lexical_cast<std::string>(standLon)+"],\
+                      PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
+                      UNIT[\"Meter\",1]]";
+    }
+    else if(mapProj == 6)  //lat/long
+    {
+        throw badForecastFile("Cannot initialize with a forecast file in lat/long spacing. Forecast file must be in a projected coordinate system.");
+    }
+    else
+    {
+        throw badForecastFile("Cannot determine projection from the forecast file information.");
+    }
+}
 
 /**
 * Sets the surface grids based on a WRF (surface only!) forecast.
@@ -352,209 +596,12 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 #ifdef _OPENMP
     omp_guard netCDF_guard(netCDF_lock);
 #endif
-
-    /*
-     * Open the dataset
-     */
-    int status, ncid;
-    status = nc_open( wxModelFileName.c_str(), 0, &ncid );
-    if ( status != NC_NOERR ) {
-        ostringstream os;
-        os << "The netcdf file: " << wxModelFileName
-           << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-
-    /*
-     * Get global attribute MAP_PROJ
-     * 1 = Lambert Conformal Conic
-     * 2 = Polar Stereographic
-     * 3 = Mercator
-     * 6 = Lat/Long
-     */
-
-    int mapProj;
-    nc_type type;
-    size_t len;
-    status = nc_inq_att( ncid, NC_GLOBAL, "MAP_PROJ", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute 'MAP_PROJ' in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_int( ncid, NC_GLOBAL, "MAP_PROJ", &mapProj );
-    }
-
-    CPLDebug("WRF", "MAP_PROJ = %d", mapProj);
-
-    /*
-     * Get global attributes DX, DY
-     *
-     */
-    float dx, dy;
-    status = nc_inq_att( ncid, NC_GLOBAL, "DX", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute DX in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "DX", &dx );
-    }
-    status = nc_inq_att( ncid, NC_GLOBAL, "DY", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute DY in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "DY", &dy );
-    }
-
-    /*
-     * Get global attributes CEN_LAT, CEN_LON
-     *
-     */
-    float cenLat, cenLon;
-    status = nc_inq_att( ncid, NC_GLOBAL, "CEN_LAT", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute CEN_LAT in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "CEN_LAT", &cenLat );
-    }
-    status = nc_inq_att( ncid, NC_GLOBAL, "CEN_LON", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute CEN_LON in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "CEN_LON", &cenLon );
-    }
-
-    /*
-     * Get global attributes MOAD_CEN_LAT, STAND_LON
-     *
-     */
-    float moadCenLat, standLon;
-    status = nc_inq_att( ncid, NC_GLOBAL, "MOAD_CEN_LAT", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute MOAD_CEN_LAT in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "MOAD_CEN_LAT", &moadCenLat );
-    }
-    status = nc_inq_att( ncid, NC_GLOBAL, "STAND_LON", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute STAND_LON in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "STAND_LON", &standLon );
-    }
-
-    /*
-     * Get global attributes TRUELAT1, TRUELAT2
-     *
-     */
-    float trueLat1, trueLat2;
-    status = nc_inq_att( ncid, NC_GLOBAL, "TRUELAT1", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute TRUELAT1 in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "TRUELAT1", &trueLat1 );
-    }
-    status = nc_inq_att( ncid, NC_GLOBAL, "TRUELAT2", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute TRUELAT2 in the netcdf file: " << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_float( ncid, NC_GLOBAL, "TRUELAT2", &trueLat2 );
-    }
-
-    /*
-     * Get global attribute BOTTOM-TOP_GRID_DIMENSION
-     *
-     */
-    status = nc_inq_att( ncid, NC_GLOBAL, "BOTTOM-TOP_GRID_DIMENSION", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute BOTTOM-TOP_GRID_DIMENSION  in the netcdf file: "
-        << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_int( ncid, NC_GLOBAL, "BOTTOM-TOP_GRID_DIMENSION", &wxModel_nLayers );
-    }
-    
-    /*
-     * Get global attribute WEST-EAST_GRID_DIMENSION
-     * Not currently used. WX model x/y dims set based on
-     * reprojected image (in DEM space).
-     */
-    /*status = nc_inq_att( ncid, NC_GLOBAL, "WEST-EAST_GRID_DIMENSION", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute WEST-EAST_GRID_DIMENSION  in the netcdf file: "
-        << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_int( ncid, NC_GLOBAL, "WEST-EAST_GRID_DIMENSION", &wxModel_nCols );
-    }*/
-    
-    /*
-     * Get global attribute SOUTH-NORTH_GRID_DIMENSION
-     * Not currently used. WX model x/y dims set based on
-     * reprojected image (in DEM space).
-     */
-    /*status = nc_inq_att( ncid, NC_GLOBAL, "SOUTH-NORTH_GRID_DIMENSION", &type, &len );
-    if( status != NC_NOERR ){
-        ostringstream os;
-        os << "Global attribute SOUTH-NORTH_GRID_DIMENSION  in the netcdf file: "
-        << wxModelFileName
-        << " cannot be opened\n";
-        throw std::runtime_error( os.str() );
-    }
-    else {
-        status = nc_get_att_int( ncid, NC_GLOBAL, "SOUTH-NORTH_GRID_DIMENSION", &wxModel_nRows );
-    }*/
-
-    /*
-     * Close the dataset
-     *
-     */
-    status = nc_close( ncid );
-    if( status != NC_NOERR ) {
-        ostringstream os;
-        os << "The netcdf file: " << wxModelFileName
-           << " cannot be closed\n";
-        throw std::runtime_error( os.str() );
-    }
-
+    float dx;
+    float dy;
+    float cenLat;
+    float cenLon;
+    std::string projString;
+    getNcGlobalAttributes(dx, dy, cenLat, cenLon, projString);
 //======end get global attributes========================================
 
     CPLPushErrorHandler(&CPLQuietErrorHandler);
@@ -592,54 +639,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
          * Set up spatial reference stuff for setting projections
          * and geotransformations
          */
-
-        std::string projString;
-        if(mapProj == 1){  //lambert conformal conic
-            projString = "PROJCS[\"WGC 84 / WRF Lambert\",GEOGCS[\"WGS 84\",DATUM[\"World Geodetic System 1984\",\
-                          SPHEROID[\"WGS 84\",6378137.0,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],\
-                          PRIMEM[\"Greenwich\",0.0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.017453292519943295],\
-                          AXIS[\"Geodetic longitude\",EAST],AXIS[\"Geodetic latitude\",NORTH],AUTHORITY[\"EPSG\",\"4326\"]],\
-                          PROJECTION[\"Lambert_Conformal_Conic_2SP\"],\
-                          PARAMETER[\"central_meridian\","+boost::lexical_cast<std::string>(standLon)+"],\
-                          PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
-                          PARAMETER[\"standard_parallel_1\","+boost::lexical_cast<std::string>(trueLat1)+"],\
-                          PARAMETER[\"false_easting\",0.0],PARAMETER[\"false_northing\",0.0],\
-                          PARAMETER[\"standard_parallel_2\","+boost::lexical_cast<std::string>(trueLat2)+"],\
-                          UNIT[\"m\",1.0],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]";
-        }
-        else if(mapProj == 2){  //polar stereographic
-            projString = "PROJCS[\"WGS 84 / Antarctic Polar Stereographic\",GEOGCS[\"WGS 84\",\
-                         DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],\
-                         AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],\
-                         UNIT[\"degree\",0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],\
-                         AUTHORITY[\"EPSG\",\"4326\"]],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],\
-                         PROJECTION[\"Polar_Stereographic\"],\
-                         PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
-                         PARAMETER[\"central_meridian\","+boost::lexical_cast<std::string>(standLon)+"],\
-                         PARAMETER[\"scale_factor\",1],\
-                         PARAMETER[\"false_easting\",0],\
-                         PARAMETER[\"false_northing\",0],AUTHORITY[\"EPSG\",\"3031\"],\
-                         AXIS[\"Easting\",UNKNOWN],AXIS[\"Northing\",UNKNOWN]]";
-        }
-        else if(mapProj == 3){  //mercator
-            projString = "PROJCS[\"World_Mercator\",GEOGCS[\"GCS_WGS_1984\",DATUM[\"WGS_1984\",\
-                          SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],\
-                          UNIT[\"Degree\",0.017453292519943295]],PROJECTION[\"Mercator_1SP\"],\
-                          PARAMETER[\"False_Easting\",0],\
-                          PARAMETER[\"False_Northing\",0],\
-                          PARAMETER[\"Central_Meridian\","+boost::lexical_cast<std::string>(standLon)+"],\
-                          PARAMETER[\"latitude_of_origin\","+boost::lexical_cast<std::string>(moadCenLat)+"],\
-                          UNIT[\"Meter\",1]]";
-        }
-        else if(mapProj == 6)  // lat/long
-        {
-            throw badForecastFile("Cannot initialize with a forecast file in lat/long spacing. Forecast file must be in a projected coordinate system.");
-        }
-        else
-        {
-            throw badForecastFile("Cannot determine projection from the forecast file information.");
-        }
-
         OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
         char* prj2 = (char*)projString.c_str();

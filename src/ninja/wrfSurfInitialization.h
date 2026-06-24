@@ -58,6 +58,9 @@ class wrfSurfInitialization : public wxModelInitialization
     virtual double Get_Wind_Height();
 
  protected:
+
+    void getNcGlobalAttributes(float &dx, float &dy, float &cenLat, float &cenLon, std::string &projString);
+
     virtual void setSurfaceGrids( WindNinjaInputs &input,
                                   AsciiGrid<double> &airGrid,
                                   AsciiGrid<double> &cloudGrid,
