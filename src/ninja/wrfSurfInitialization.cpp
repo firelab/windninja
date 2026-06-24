@@ -158,8 +158,10 @@ void wrfSurfInitialization::checkForValidData()
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
-        if( srcDS == NULL )
+        if(srcDS == NULL)
+        {
             throw badForecastFile("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
+        }
 
         //Get total bands (time steps)
         nBands = srcDS->GetRasterCount();
@@ -182,9 +184,11 @@ void wrfSurfInitialization::checkForValidData()
             poBand = srcDS->GetRasterBand( j );
 
             pbSuccess = 0;
-            dfNoData = poBand->GetNoDataValue( &pbSuccess );
-            if( pbSuccess == false )
+            dfNoData = poBand->GetNoDataValue(&pbSuccess);
+            if(pbSuccess == false)
+            {
                 noDataValueExists = false;
+            }
             else
             {
                 noDataValueExists = true;
@@ -244,7 +248,6 @@ void wrfSurfInitialization::checkForValidData()
 * Uses netcdf c api
 *
 * @param fileName netcdf filename
-*
 * @return true if the forecast is a WRF forecast
 */
 bool wrfSurfInitialization::identify( std::string fileName )
@@ -308,10 +311,6 @@ bool wrfSurfInitialization::identify( std::string fileName )
 void wrfSurfInitialization::getNcGlobalAttributes(float &dx, float &dy, float &cenLat, float &cenLon, std::string &projString)
 {
     //==========get global attributes to set projection===========================
-//    // Acquire a lock to protect the non-thread safe netCDF library
-//#ifdef _OPENMP
-//    omp_guard netCDF_guard(netCDF_lock);
-//#endif
 
     // Open the dataset
     int status, ncid;
@@ -612,7 +611,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
     GDALClose((GDALDatasetH) poDS); // close original wxModel file
 
-    // open ds one by one, set projection, warp, then write to grid
+    // open ds one by one, set geotranform, set projection, warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
     std::string temp;
     std::vector<std::string> varList = getVariableList();
@@ -647,7 +646,6 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         CPLDebug("WRF", "srcWKT= %s", srcWKT);
 
-        OGRCoordinateTransformation *poCT;
         poLatLong = oSRS.CloneGeogCS();
 
         /*
@@ -665,6 +663,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
+        OGRCoordinateTransformation *poCT;
         poCT = OGRCreateCoordinateTransformation(poLatLong, &oSRS);
         delete poLatLong;
 
@@ -707,9 +706,8 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         int nBandCount = srcDS->GetRasterCount();
         CPLDebug("WRF", "band count = %d", nBandCount);
 
-        // Grab the first band to get the NO_DATA value for the variable,
-        // assume all bands have the same NO_DATA value
-        GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
+        // get the noDataValue from the current band
+        GDALRasterBand *poBand = srcDS->GetRasterBand( bandNum );
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue(&pbSuccess);
         if(pbSuccess == false)
@@ -828,6 +826,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
     }
     cloudGrid /= 100.0;
+
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
 
