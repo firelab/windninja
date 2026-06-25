@@ -562,12 +562,15 @@ bool NinjaFoam::simulate_wind()
        VelocityGrid.deallocate();
        TurbulenceGrid.deallocate();
        colMaxGrid.deallocate();
-
+    }
+    // always deallocate the 3D data grids, until we figure out how to use them for diurnal inputs
+    //if(input.diurnalWinds == false)
+    //{
        massMesh_u.deallocate();
        massMesh_v.deallocate();
        massMesh_w.deallocate();
        massMesh_k.deallocate();
-    }
+    //}
 
     if(input.diurnalWinds == true){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding diurnal winds...");
