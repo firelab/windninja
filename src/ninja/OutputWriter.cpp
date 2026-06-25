@@ -320,6 +320,122 @@ void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs,
     this->hDustMemDs = hDustMemDs;
 }
 
+void OutputWriter::setSplitVals(const double *splitVals, const unsigned short size)
+{
+    if(size != NSPLITS)
+    {
+        throw std::runtime_error("OutputWriter::setSplitVals() input array size does not match OutputWriter numSplits!!");
+    }
+
+    _deleteSplits();
+
+    split_vals = new double[NSPLITS];
+    for(int i = 0; i < NSPLITS; i++)
+    {
+        split_vals[i] = splitVals[i];
+    }
+}
+
+void OutputWriter::calcSplitVals(double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling)
+{
+    *outSize = NSPLITS;
+    *outSplitVals = new double[NSPLITS];
+    switch(scaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(*outSplitVals, NSPLITS);
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double interval = spd.get_maxValue()/(float)(NSPLITS-1);
+            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(NSPLITS-1);
+            for(int i = 0; i < NSPLITS; i++)
+            {
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + spd.get_minValue();
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(*outSplitVals, NSPLITS);
+            break;
+        }
+    }
+}
+
+void OutputWriter::calcSplitValsFromSplitVals(const double **inSplitVals, const int nSets, const unsigned short numSplits, double **outSplitVals, const eSpeedScaling scaling)
+{
+    if(numSplits != NSPLITS)
+    {
+        throw std::runtime_error("outputWriter::calcSplitValsFromSplitVals() input array size does not match OutputWriter numSplits!!");
+    }
+
+    *outSplitVals = new double[numSplits];
+
+    double minVal = 9999;
+    double maxVal = -9999;
+    for( int j = 0; j < nSets; j++ )
+    {
+        if( inSplitVals[j][0] < minVal )
+        {
+            minVal = inSplitVals[j][0];
+        }
+        if( inSplitVals[j][numSplits-1] > maxVal )
+        {
+            maxVal = inSplitVals[j][numSplits-1];
+        }
+    }
+    (*outSplitVals)[0] = 0.0;
+    //(*outSplitVals)[0] = minVal;
+    (*outSplitVals)[numSplits-1] = maxVal;
+
+    double interval;
+    double sum;
+    switch(scaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            for(int i = 1; i < numSplits-1; i++)
+            {
+                sum = 0;
+                for( int j = 0; j < nSets; j++ )
+                {
+                    sum = sum + inSplitVals[j][i];
+                }
+                (*outSplitVals)[i] = sum / nSets;
+            }
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            interval = maxVal/(numSplits-1);
+            //interval = (maxVal-minVal)/(numSplits-1);
+            for(int i = 1; i < numSplits-1; i++)
+            {
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + minVal;
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            for(int i = 1; i < numSplits-1; i++)
+            {
+                sum = 0;
+                for( int j = 0; j < nSets; j++ )
+                {
+                    sum = sum + inSplitVals[j][i];
+                }
+                (*outSplitVals)[i] = sum / nSets;
+            }
+            break;
+        }
+    }
+}
+
 bool OutputWriter::write(std::string outputFilename, std::string driver)
 {
     if( 0 == driver.compare( "PDF" ) )
@@ -474,34 +590,22 @@ void OutputWriter::_deleteSplits()
 
 void OutputWriter::_createSplits()
 {
+    // only create them if they haven't already been set/created,
+    // so that setSplitVals() gets precedence over just creating the values
+    if(split_vals != NULL)
+    {
+        return;
+    }
+
     _deleteSplits();
 
-    split_vals = new double[NSPLITS];
-    switch(speedScaling)
-    {
-        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
-        {
-            spd.divide_gridData(split_vals, NSPLITS);
-            break;
-        }
-        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-        {
-            double interval = spd.get_maxValue()/(float)(NSPLITS-1);
-            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(NSPLITS-1);
-            for(int i = 0; i < NSPLITS; i++)
-            {
-                split_vals[i] = i * interval;
-                //split_vals[i] = i * interval + spd.get_minValue();
-            }
-            break;
-        }
-        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
-        {
-            spd.divide_gridData(split_vals, NSPLITS);
-            break;
-        }
-    }
+    double *tmp = NULL;
+    unsigned short size = 0;
+    calcSplitVals(&tmp, &size, speedScaling);
+
+    split_vals = tmp;
 }
+
 bool OutputWriter::_createLegend()
 {
     //make bitmap

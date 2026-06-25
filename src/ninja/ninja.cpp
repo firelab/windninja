@@ -264,7 +264,7 @@ bool ninja::simulate_wind()
     keepOutputGridsInMemory(true);
 #endif
 
-    if(input.googUseConsistentColorScale)
+    if(input.googUseConsistentColorScale || input.fgbzUseConsistentColorScale)
     {
         keepOutputGridsInMemory(true);
     }
@@ -3239,7 +3239,7 @@ void ninja::writeOutputFiles()
     #pragma omp section
     {
     try{
-        if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
+        if(input.googOutFlag == true && input.googUseConsistentColorScale == false)
         {
             AsciiGrid<double> *velTempGrid, *angTempGrid;
 #ifdef NINJAFOAM
@@ -3449,7 +3449,7 @@ void ninja::writeOutputFiles()
 #pragma omp section
     {
         try{
-            if(input.fgbzOutFlag == true)
+            if(input.fgbzOutFlag == true && input.fgbzUseConsistentColorScale == false)
             {
                 AsciiGrid<double> *velTempGrid, *angTempGrid;
                 velTempGrid=NULL;

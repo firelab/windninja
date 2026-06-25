@@ -83,6 +83,7 @@ class OutputWriter
         };
 
         /* ====================  ACCESSORS     ======================================= */
+        unsigned short getNumSplits() {return NSPLITS;}
 
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s,
@@ -105,6 +106,11 @@ class OutputWriter
         void setSpeedScaling(eSpeedScaling scaling) {speedScaling=scaling;}
         void setColorScheme(std::string cScheme);
         void setVectorScaling(bool vec_scaling) {useVectorScaling=vec_scaling;}
+        void setSplitVals(const double *splitVals, const unsigned short size);
+
+        /* ====================  UTILITY HELPER FUNCTIONS  =========================== */
+        void calcSplitVals(double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling);
+        void calcSplitValsFromSplitVals(const double **inSplitVals, const int nSets, const unsigned short numSplits, double **outSplitVals, const eSpeedScaling scaling);
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);

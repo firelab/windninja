@@ -226,7 +226,7 @@ bool NinjaFoam::simulate_wind()
     keepOutputGridsInMemory(true);
 #endif
 
-    if(input.googUseConsistentColorScale)
+    if(input.googUseConsistentColorScale || input.fgbzUseConsistentColorScale)
     {
         keepOutputGridsInMemory(true);
     }
@@ -3663,7 +3663,7 @@ void NinjaFoam::WriteOutputFiles()
 
     //write kmz file
     try{
-        if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
+        if(input.googOutFlag == true && input.googUseConsistentColorScale == false)
         {
             AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
             velTempGrid=NULL;
@@ -3780,7 +3780,7 @@ void NinjaFoam::WriteOutputFiles()
         }
         {
             try{
-                if(input.fgbzOutFlag == true)
+                if(input.fgbzOutFlag == true && input.fgbzUseConsistentColorScale == false)
                 {
                     AsciiGrid<double> *velTempGrid, *angTempGrid;
                     velTempGrid=NULL;
