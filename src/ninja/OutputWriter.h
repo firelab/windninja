@@ -83,7 +83,6 @@ class OutputWriter
         };
 
         /* ====================  ACCESSORS     ======================================= */
-        unsigned short getNumSplits() {return NSPLITS;}
 
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s,

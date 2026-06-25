@@ -1117,9 +1117,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                         ninjaKmlFiles[i]->setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
                     }
 
-                    ninjaKmlFiles[i]->calcSpeedSplitVals(ninjas[i]->input.googSpeedScaling);
-
-                    speedSplitVals[i] = ninjaKmlFiles[i]->getSpeedSplitVals(numColors);
+                    ninjaKmlFiles[i]->calcSpeedSplitVals(&speedSplitVals[i], &numColors, ninjas[i]->input.googSpeedScaling);
 
                     if(angTempGrid)
                     {
@@ -1159,13 +1157,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     #endif //EMISSIONS
                 }
 
-                ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors, ninjas[0]->input.googSpeedScaling);
-                double *finalSpeedSplitVals = ninjaKmlFiles[0]->getSpeedSplitVals(numColors);
+                double *finalSpeedSplitVals = NULL;
+                ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors, &finalSpeedSplitVals, ninjas[0]->input.googSpeedScaling);
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
-                    ninjaKmlFiles[i]->setSpeedSplitVals(finalSpeedSplitVals,numColors);
-                    if(ninjaKmlFiles[i]->writeKml(ninjas[i]->input.googSpeedScaling,ninjas[i]->input.googColor,ninjas[i]->input.googVectorScale))
+                    ninjaKmlFiles[i]->setSpeedSplitVals(finalSpeedSplitVals, numColors);
+                    if(ninjaKmlFiles[i]->writeKml(ninjas[i]->input.googSpeedScaling, ninjas[i]->input.googColor, ninjas[i]->input.googVectorScale))
                     {
                         if(ninjaKmlFiles[i]->makeKmz())
                             ninjaKmlFiles[i]->removeKmlFile();
@@ -1223,7 +1221,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     #endif
 
-                    speedSplitVals[i] = NULL;
                     outputFiles[i]->calcSplitVals(&speedSplitVals[i], &numColors, ninjas[i]->input.fgbzSpeedScaling);
 
                     if(angTempGrid)

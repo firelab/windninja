@@ -599,11 +599,8 @@ void OutputWriter::_createSplits()
 
     _deleteSplits();
 
-    double *tmp = NULL;
     unsigned short size = 0;
-    calcSplitVals(&tmp, &size, speedScaling);
-
-    split_vals = tmp;
+    calcSplitVals(&split_vals, &size, speedScaling);
 }
 
 bool OutputWriter::_createLegend()

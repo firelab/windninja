@@ -103,9 +103,8 @@ public:
 
     inline void setLineWidth(double width){lineWidth = width;}
     bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
-    void calcSpeedSplitVals(egoogSpeedScaling scaling);
-    void calcSplitValsFromSplitVals(double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling);
-    double* getSpeedSplitVals(int &size);
+    void calcSpeedSplitVals(double **outSplitVals, int *outSize, const egoogSpeedScaling scaling);
+    void calcSplitValsFromSplitVals(const double **inSplitVals, const int nSets, const int numSplitVals, double **outSplitVals, const egoogSpeedScaling scaling);
     void setSpeedSplitVals(const double *speedSplitVals, const int size);
 
     inline void setKmzFileName(std::string fileName){kmzFile = fileName;}

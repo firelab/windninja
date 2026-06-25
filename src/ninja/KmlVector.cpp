@@ -310,121 +310,104 @@ bool KmlVector::setOGR()
     return false;
 }
 
-void KmlVector::calcSpeedSplitVals(egoogSpeedScaling scaling)
+void KmlVector::calcSpeedSplitVals(double **outSplitVals, int *outSize, const egoogSpeedScaling scaling)
 {
-    if(splitValue)
-    {
-        delete[] splitValue;
-        splitValue = NULL;
-    }
-
-    splitValue = new double[numSplits];
-    double interval;
+    *outSize = numSplits;
+    *outSplitVals = new double[numSplits];
     switch(scaling)
     {
-        case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
-            spd.divide_gridData(splitValue, numSplits);
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(*outSplitVals, numSplits);
             break;
-        case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
-            interval = spd.get_maxValue()/(numSplits-1);
-            //interval = (spd.get_maxValue()-spd.get_minValue())/(numSplits-1);
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double interval = spd.get_maxValue()/(float)(numSplits-1);
+            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(numSplits-1);
             for(int i = 0; i < numSplits; i++)
             {
-                splitValue[i] = i * interval;
-                //splitValue[i] = i * interval + spd.get_minValue();
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + spd.get_minValue();
             }
             break;
-        default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
-            spd.divide_gridData(splitValue, numSplits);
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(*outSplitVals, numSplits);
             break;
+        }
     }
 }
 
-void KmlVector::calcSplitValsFromSplitVals(double **speedSplitVals, const int nSets, const int numSplitVals, egoogSpeedScaling scaling)
+void KmlVector::calcSplitValsFromSplitVals(const double **inSplitVals, const int nSets, const int numSplitVals, double **outSplitVals, const egoogSpeedScaling scaling)
 {
     if(numSplitVals != numSplits)
     {
-        throw std::runtime_error("KmlVector::calcSplitValsFromSplitVals() input array in array size does not match KmlVector numSplits!!");
+        throw std::runtime_error("KmlVector::calcSplitValsFromSplitVals() input array size does not match KmlVector numSplits!!");
     }
 
-    if(splitValue)
-    {
-        delete[] splitValue;
-        splitValue = NULL;
-    }
-
-    splitValue = new double[numSplits];
+    *outSplitVals = new double[numSplits];
 
     double minVal = 9999;
     double maxVal = -9999;
     for( int j = 0; j < nSets; j++ )
     {
-        if( speedSplitVals[j][0] < minVal )
+        if( inSplitVals[j][0] < minVal )
         {
-            minVal = speedSplitVals[j][0];
+            minVal = inSplitVals[j][0];
         }
-        if( speedSplitVals[j][numSplits-1] > maxVal )
+        if( inSplitVals[j][numSplits-1] > maxVal )
         {
-            maxVal = speedSplitVals[j][numSplits-1];
+            maxVal = inSplitVals[j][numSplits-1];
         }
     }
-    splitValue[0] = 0.0;
-    //splitValue[0] = minVal;
-    splitValue[numSplits-1] = maxVal;
+    (*outSplitVals)[0] = 0.0;
+    //(*outSplitVals)[0] = minVal;
+    (*outSplitVals)[numSplits-1] = maxVal;
 
     double interval;
     double sum;
     switch(scaling)
     {
-        case equal_color:       //divide legend speeds using equal color method (equal numbers of arrows for each color)
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
             for(int i = 1; i < numSplits-1; i++)
             {
                 sum = 0;
                 for( int j = 0; j < nSets; j++ )
                 {
-                    sum = sum + speedSplitVals[j][i];
+                    sum = sum + inSplitVals[j][i];
                 }
-                splitValue[i] = sum / nSets;
+                (*outSplitVals)[i] = sum / nSets;
             }
             break;
-        case equal_interval:    //divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
             interval = maxVal/(numSplits-1);
             //interval = (maxVal-minVal)/(numSplits-1);
             for(int i = 1; i < numSplits-1; i++)
             {
-                splitValue[i] = i * interval;
-                //splitValue[i] = i * interval + minVal;
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + minVal;
             }
             break;
-        default:                //divide legend speeds using equal color method (equal numbers of arrows for each color)
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
             for(int i = 1; i < numSplits-1; i++)
             {
                 sum = 0;
                 for( int j = 0; j < nSets; j++ )
                 {
-                    sum = sum + speedSplitVals[j][i];
+                    sum = sum + inSplitVals[j][i];
                 }
-                splitValue[i] = sum / nSets;
+                (*outSplitVals)[i] = sum / nSets;
             }
             break;
+        }
     }
-}
-
-double* KmlVector::getSpeedSplitVals(int &size)
-{
-    if(!splitValue)
-    {
-        throw std::runtime_error("KmlVector::getSpeedSplitVals() called before a call to KmlVector::calcSpeedSplitVals()!! No speedSplitValues available to get!!");
-    }
-
-    double* speedSplitVals = new double[numSplits];
-    for(int i = 0; i < numSplits; i++)
-    {
-        speedSplitVals[i] = splitValue[i];
-    }
-
-    size = numSplits;  // need to pass back the size of the array too
-    return speedSplitVals;
 }
 
 void KmlVector::setSpeedSplitVals(const double *speedSplitVals, const int size)
@@ -464,7 +447,8 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
 
     if(!splitValue)
     {
-        calcSpeedSplitVals(scaling);
+        int size = 0;
+        calcSpeedSplitVals(&splitValue, &size, scaling);
     }
 
     writeHeader(fout);
