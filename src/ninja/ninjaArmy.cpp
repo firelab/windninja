@@ -610,6 +610,12 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                 //set fgbzFile for setCurrentMapVisualization(), for the GUI
                 ninjas[0]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
+
+                //set other filenames needed for consistentColorScale outputs
+                ninjas[0]->input.kmlFile = diurnal_ninja->input.kmlFile;
+                ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                ninjas[0]->input.legFile = diurnal_ninja->input.legFile;
+                ninjas[0]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
             }
 
 #endif //NINJAFOAM
@@ -735,6 +741,12 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                     //set fgbzFile for setCurrentMapVisualizationFilenames(), for the GUI
                     ninjas[i]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
+
+                    //set other filenames needed for consistentColorScale outputs
+                    ninjas[i]->input.kmlFile = diurnal_ninja->input.kmlFile;
+                    ninjas[i]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                    ninjas[i]->input.legFile = diurnal_ninja->input.legFile;
+                    ninjas[i]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
                 }
 
                 //store data for atmosphere file
