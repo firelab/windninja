@@ -616,6 +616,22 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
                 ninjas[0]->input.legFile = diurnal_ninja->input.legFile;
                 ninjas[0]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
+
+                //also need to transfer the 2D output grids back to the original ninja, for consistentColorScale outputs
+                //note the TurbulenceGrid and colMaxGrid are NOT altered by the mass solver, so can skip those grids
+                ninjas[0]->VelocityGrid = diurnal_ninja->VelocityGrid;
+                ninjas[0]->AngleGrid = diurnal_ninja->AngleGrid;
+                ninjas[0]->CloudGrid = diurnal_ninja->CloudGrid;
+                //#ifdef NINJAFOAM
+                //ninjas[0]->TurbulenceGrid = diurnal_ninja->TurbulenceGrid;
+                //ninjas[0]->colMaxGrid = diurnal_ninja->colMaxGrid;
+                //#endif
+                #ifdef FRICTION_VELOCITY
+                ninjas[0]->UstarGrid = diurnal_ninja->UstarGrid;
+                #endif
+                #ifdef EMISSIONS
+                ninjas[0]->DustGrid = diurnal_ninja->DustGrid;
+                #endif
             }
 
 #endif //NINJAFOAM
@@ -747,6 +763,22 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjas[i]->input.kmzFile = diurnal_ninja->input.kmzFile;
                     ninjas[i]->input.legFile = diurnal_ninja->input.legFile;
                     ninjas[i]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
+
+                    //also need to transfer the 2D output grids back to the original ninja, for consistentColorScale outputs
+                    //note the TurbulenceGrid and colMaxGrid are NOT altered by the mass solver, so can skip those grids
+                    ninjas[i]->VelocityGrid = diurnal_ninja->VelocityGrid;
+                    ninjas[i]->AngleGrid = diurnal_ninja->AngleGrid;
+                    ninjas[i]->CloudGrid = diurnal_ninja->CloudGrid;
+                    //#ifdef NINJAFOAM
+                    //ninjas[i]->TurbulenceGrid = diurnal_ninja->TurbulenceGrid;
+                    //ninjas[i]->colMaxGrid = diurnal_ninja->colMaxGrid;
+                    //#endif
+                    #ifdef FRICTION_VELOCITY
+                    ninjas[i]->UstarGrid = diurnal_ninja->UstarGrid;
+                    #endif
+                    #ifdef EMISSIONS
+                    ninjas[i]->DustGrid = diurnal_ninja->DustGrid;
+                    #endif
                 }
 
                 //store data for atmosphere file
