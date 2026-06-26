@@ -336,7 +336,7 @@ void OutputWriter::setSplitVals(const double *splitVals, const unsigned short si
     }
 }
 
-void OutputWriter::calcSplitVals(double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling)
+void OutputWriter::calcSpeedSplitVals(const AsciiGrid<double> &inSpdGrid, double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling)
 {
     *outSize = NSPLITS;
     *outSplitVals = new double[NSPLITS];
@@ -344,23 +344,23 @@ void OutputWriter::calcSplitVals(double **outSplitVals, unsigned short *outSize,
     {
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            spd.divide_gridData(*outSplitVals, NSPLITS);
+            inSpdGrid.divide_gridData(*outSplitVals, NSPLITS);
             break;
         }
         case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
         {
-            double interval = spd.get_maxValue()/(float)(NSPLITS-1);
-            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(NSPLITS-1);
+            double interval = inSpdGrid.get_maxValue()/(float)(NSPLITS-1);
+            //double interval = (inSpdGrid.get_maxValue() - inSpdGrid.get_minValue()) / (float)(NSPLITS-1);
             for(int i = 0; i < NSPLITS; i++)
             {
                 (*outSplitVals)[i] = i * interval;
-                //(*outSplitVals)[i] = i * interval + spd.get_minValue();
+                //(*outSplitVals)[i] = i * interval + inSpdGrid.get_minValue();
             }
             break;
         }
         default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            spd.divide_gridData(*outSplitVals, NSPLITS);
+            inSpdGrid.divide_gridData(*outSplitVals, NSPLITS);
             break;
         }
     }
@@ -598,7 +598,7 @@ void OutputWriter::_createSplits()
     }
 
     unsigned short size = 0;
-    calcSplitVals(&split_vals, &size, speedScaling);
+    calcSpeedSplitVals(spd, &split_vals, &size, speedScaling);
 }
 
 bool OutputWriter::_createLegend()

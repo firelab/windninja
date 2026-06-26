@@ -1117,7 +1117,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                         ninjaKmlFiles[i]->setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
                     }
 
-                    ninjaKmlFiles[i]->calcSpeedSplitVals(&speedSplitVals[i], &numColors, ninjas[i]->input.googSpeedScaling);
+                    ninjaKmlFiles[i]->calcSpeedSplitVals(*velTempGrid, &speedSplitVals[i], &numColors, ninjas[i]->input.googSpeedScaling);
 
                     if(angTempGrid)
                     {
@@ -1221,7 +1221,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     #endif
 
-                    outputFiles[i]->calcSplitVals(&speedSplitVals[i], &numColors, ninjas[i]->input.fgbzSpeedScaling);
+                    outputFiles[i]->calcSpeedSplitVals(*velTempGrid, &speedSplitVals[i], &numColors, ninjas[i]->input.fgbzSpeedScaling);
 
                     if(angTempGrid)
                     {

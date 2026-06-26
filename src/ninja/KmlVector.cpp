@@ -310,7 +310,7 @@ bool KmlVector::setOGR()
     return false;
 }
 
-void KmlVector::calcSpeedSplitVals(double **outSplitVals, int *outSize, const egoogSpeedScaling scaling)
+void KmlVector::calcSpeedSplitVals(const AsciiGrid<double> &inSpdGrid, double **outSplitVals, int *outSize, const egoogSpeedScaling scaling)
 {
     *outSize = numSplits;
     *outSplitVals = new double[numSplits];
@@ -318,23 +318,23 @@ void KmlVector::calcSpeedSplitVals(double **outSplitVals, int *outSize, const eg
     {
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            spd.divide_gridData(*outSplitVals, numSplits);
+            inSpdGrid.divide_gridData(*outSplitVals, numSplits);
             break;
         }
         case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
         {
-            double interval = spd.get_maxValue()/(float)(numSplits-1);
-            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(numSplits-1);
+            double interval = inSpdGrid.get_maxValue()/(float)(numSplits-1);
+            //double interval = (inSpdGrid.get_maxValue() - inSpdGrid.get_minValue()) / (float)(numSplits-1);
             for(int i = 0; i < numSplits; i++)
             {
                 (*outSplitVals)[i] = i * interval;
-                //(*outSplitVals)[i] = i * interval + spd.get_minValue();
+                //(*outSplitVals)[i] = i * interval + inSpdGrid.get_minValue();
             }
             break;
         }
         default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            spd.divide_gridData(*outSplitVals, numSplits);
+            inSpdGrid.divide_gridData(*outSplitVals, numSplits);
             break;
         }
     }
@@ -448,7 +448,7 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
     if(!splitValue)
     {
         int size = 0;
-        calcSpeedSplitVals(&splitValue, &size, scaling);
+        calcSpeedSplitVals(spd, &splitValue, &size, scaling);
     }
 
     writeHeader(fout);

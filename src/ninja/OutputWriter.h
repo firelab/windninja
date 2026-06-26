@@ -108,7 +108,7 @@ class OutputWriter
         void setSplitVals(const double *splitVals, const unsigned short size);
 
         /* ====================  UTILITY HELPER FUNCTIONS  =========================== */
-        void calcSplitVals(double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling);
+        void calcSpeedSplitVals(const AsciiGrid<double> &inSpdGrid, double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling);
         void calcSplitValsFromSplitVals(const double **inSplitVals, const int nSets, const unsigned short numSplits, double **outSplitVals, const eSpeedScaling scaling);
 
         /* ====================  OPERATORS     ======================================= */
