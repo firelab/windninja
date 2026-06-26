@@ -116,6 +116,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    webEngineView->deleteLater();
+
     delete serverBridge;
     delete ui;
 }
@@ -1543,6 +1545,12 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    if (webEngineView)
+    {
+        webEngineView->deleteLater();
+        webEngineView = nullptr;
+    }
+
     writeSettings();
     QMainWindow::closeEvent(event);
 }
