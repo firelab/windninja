@@ -1176,7 +1176,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     delete ninjaKmlFiles[i];
                     ninjaKmlFiles[i] = NULL;
 
-                    delete speedSplitVals[i];
+                    delete[] speedSplitVals[i];
                     speedSplitVals[i] = NULL;
                 }
                 delete[] ninjaKmlFiles;
@@ -1251,7 +1251,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     delete outputFiles[i];
                     outputFiles[i] = NULL;
 
-                    delete speedSplitVals[i];
+                    delete[] speedSplitVals[i];
                     speedSplitVals[i] = NULL;
                 }
                 delete[] outputFiles;

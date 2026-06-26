@@ -597,8 +597,6 @@ void OutputWriter::_createSplits()
         return;
     }
 
-    _deleteSplits();
-
     unsigned short size = 0;
     calcSplitVals(&split_vals, &size, speedScaling);
 }
