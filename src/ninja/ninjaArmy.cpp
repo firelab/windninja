@@ -3003,29 +3003,34 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
     {
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            double **splitVals = new double*[nSets];
+            std::vector<double> combinedGridValues;
+            size_t nMaxCells = inSpdGrids[0]->get_nRows()*inSpdGrids[0]->get_nCols()*nSets;
+            combinedGridValues.reserve(nMaxCells);
             for(int j = 0; j < nSets; j++)
             {
-                splitVals[j] = new double[numSplits];
-                inSpdGrids[j]->divide_gridData(splitVals[j], numSplits);
-            }
-
-            for(int i = 1; i < numSplits-1; i++)
-            {
-                double sum = 0;
-                for(int j = 0; j < nSets; j++)
+                const AsciiGrid<double>* current_grid = inSpdGrids[j];
+                for(int rowIdx = 0; rowIdx < current_grid->get_nRows(); rowIdx++)
                 {
-                    sum = sum + splitVals[j][i];
+                    for(int colIdx = 0; colIdx < current_grid->get_nCols(); colIdx++)
+                    {
+                        double current_val = current_grid->get_cellValue(rowIdx, colIdx);
+                        if(current_val != current_grid->get_noDataValue() && !std::isnan(current_val))
+                        {
+                            combinedGridValues.push_back(current_val);
+                        }
+                    }
                 }
-                (*outSplitVals)[i] = sum / nSets;
             }
 
-            for(int j = 0; j < nSets; j++)
+            std::sort(combinedGridValues.begin(), combinedGridValues.end());
+
+            size_t step = combinedGridValues.size() / (numSplits - 1);
+
+            for(int i = 0; i < numSplits - 1; i++)
             {
-                delete[] splitVals[j];
+                (*outSplitVals)[i] = combinedGridValues[i * step];
             }
-
-            delete[] splitVals;
+            //(*outSplitVals)[numSplits - 1] = combinedGridValues.back();
 
             break;
         }
@@ -3042,29 +3047,34 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
         }
         default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
-            double **splitVals = new double*[nSets];
+            std::vector<double> combinedGridValues;
+            size_t nMaxCells = inSpdGrids[0]->get_nRows()*inSpdGrids[0]->get_nCols()*nSets;
+            combinedGridValues.reserve(nMaxCells);
             for(int j = 0; j < nSets; j++)
             {
-                splitVals[j] = new double[numSplits];
-                inSpdGrids[j]->divide_gridData(splitVals[j], numSplits);
-            }
-
-            for(int i = 1; i < numSplits-1; i++)
-            {
-                double sum = 0;
-                for(int j = 0; j < nSets; j++)
+                const AsciiGrid<double>* current_grid = inSpdGrids[j];
+                for(int rowIdx = 0; rowIdx < current_grid->get_nRows(); rowIdx++)
                 {
-                    sum = sum + splitVals[j][i];
+                    for(int colIdx = 0; colIdx < current_grid->get_nCols(); colIdx++)
+                    {
+                        double current_val = current_grid->get_cellValue(rowIdx, colIdx);
+                        if(current_val != current_grid->get_noDataValue() && !std::isnan(current_val))
+                        {
+                            combinedGridValues.push_back(current_val);
+                        }
+                    }
                 }
-                (*outSplitVals)[i] = sum / nSets;
             }
 
-            for(int j = 0; j < nSets; j++)
+            std::sort(combinedGridValues.begin(), combinedGridValues.end());
+
+            size_t step = combinedGridValues.size() / (numSplits - 1);
+
+            for(int i = 0; i < numSplits - 1; i++)
             {
-                delete[] splitVals[j];
+                (*outSplitVals)[i] = combinedGridValues[i * step];
             }
-
-            delete[] splitVals;
+            //(*outSplitVals)[numSplits - 1] = combinedGridValues.back();
 
             break;
         }
