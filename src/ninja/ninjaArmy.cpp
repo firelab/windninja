@@ -1090,18 +1090,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
-                    delete resampledVelGrids[i];
-                    resampledVelGrids[i] = NULL;
-                }
-                delete[] resampledVelGrids;
-                resampledVelGrids = NULL;
-
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
                     KmlVector ninjaKmlFiles;
 
                     AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                    AsciiGrid<double> *velTempGrid = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                    AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
                     #ifdef NINJAFOAM
                     AsciiGrid<double> *turbTempGrid = NULL;
                     AsciiGrid<double> *colMaxTempGrid = NULL;
@@ -1162,11 +1154,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                         delete angTempGrid;
                         angTempGrid = NULL;
                     }
-                    if(velTempGrid)
-                    {
-                        delete velTempGrid;
-                        velTempGrid = NULL;
-                    }
                     #ifdef NINJAFOAM
                     if(turbTempGrid)
                     {
@@ -1194,6 +1181,15 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     #endif //EMISSIONS
                 }
+
+                //cleanup
+                for( int i = 0; i < ninjas.size(); i++ )
+                {
+                    delete resampledVelGrids[i];
+                    resampledVelGrids[i] = NULL;
+                }
+                delete[] resampledVelGrids;
+                resampledVelGrids = NULL;
 
                 delete[] finalSpeedSplitVals;
                 finalSpeedSplitVals = NULL;
@@ -1226,18 +1222,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
-                    delete resampledVelGrids[i];
-                    resampledVelGrids[i] = NULL;
-                }
-                delete[] resampledVelGrids;
-                resampledVelGrids = NULL;
-
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
                     OutputWriter output;
 
                     AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
-                    AsciiGrid<double> *velTempGrid = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+                    AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
 
                     output.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
                     output.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
@@ -1269,12 +1257,16 @@ bool ninjaArmy::startRuns(int numProcessors)
                         delete angTempGrid;
                         angTempGrid = NULL;
                     }
-                    if(velTempGrid)
-                    {
-                        delete velTempGrid;
-                        velTempGrid = NULL;
-                    }
                 }
+
+                //cleanup
+                for( int i = 0; i < ninjas.size(); i++ )
+                {
+                    delete resampledVelGrids[i];
+                    resampledVelGrids[i] = NULL;
+                }
+                delete[] resampledVelGrids;
+                resampledVelGrids = NULL;
 
                 delete[] finalSpeedSplitVals;
                 finalSpeedSplitVals = NULL;
