@@ -1064,10 +1064,12 @@ bool ninjaArmy::startRuns(int numProcessors)
             {
                 int numColors;
                 KmlVector **ninjaKmlFiles = new KmlVector*[ninjas.size()];
-                double **speedSplitVals = new double*[ninjas.size()];
+                AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
                     ninjaKmlFiles[i] = new KmlVector;
+
+                    resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
 
                     AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
                     AsciiGrid<double> *velTempGrid = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
@@ -1117,8 +1119,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                         ninjaKmlFiles[i]->setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
                     }
 
-                    ninjaKmlFiles[i]->calcSpeedSplitVals(*velTempGrid, &speedSplitVals[i], &numColors, ninjas[i]->input.googSpeedScaling);
-
                     if(angTempGrid)
                     {
                         delete angTempGrid;
@@ -1157,8 +1157,23 @@ bool ninjaArmy::startRuns(int numProcessors)
                     #endif //EMISSIONS
                 }
 
+                eArmySpeedScaling speedScaling;
+                if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_color)
+                {
+                    speedScaling = ninjaArmy::equal_color;
+                }
+                else if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
+                {
+                    speedScaling = ninjaArmy::equal_interval;
+                }
+                // should probably have an else, and a throw, but that would suck to throw here at the end, rather than during a check at the beginning ...
+                // hrm, even if we set it ahead of time, in WindNinjaInputs, as we set the other ones, that would mean two copies, one for each enum type, in WindNinjaInputs to be set.
+                // almost sounds like we need to set a single enum type, to be shared, where the enum type is defined once at a level where everything can access it, like in an output manager class.
+                // or just go back to using strings, no more "switch" "case" logic.
+
                 double *finalSpeedSplitVals = NULL;
-                ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors, &finalSpeedSplitVals, ninjas[0]->input.googSpeedScaling);
+                numColors = ninjaKmlFiles[0]->getNumSplits();
+                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), numColors, &finalSpeedSplitVals, speedScaling);
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
@@ -1176,13 +1191,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     delete ninjaKmlFiles[i];
                     ninjaKmlFiles[i] = NULL;
 
-                    delete[] speedSplitVals[i];
-                    speedSplitVals[i] = NULL;
+                    delete resampledVelGrids[i];
+                    resampledVelGrids[i] = NULL;
                 }
                 delete[] ninjaKmlFiles;
                 ninjaKmlFiles = NULL;
-                delete[] speedSplitVals;
-                speedSplitVals = NULL;
+                delete[] resampledVelGrids;
+                resampledVelGrids = NULL;
 
                 delete[] finalSpeedSplitVals;
                 finalSpeedSplitVals = NULL;
@@ -1192,10 +1207,12 @@ bool ninjaArmy::startRuns(int numProcessors)
             {
                 unsigned short numColors;
                 OutputWriter **outputFiles = new OutputWriter*[ninjas.size()];
-                double **speedSplitVals = new double*[ninjas.size()];
+                AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
                     outputFiles[i] = new OutputWriter;
+
+                    resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
 
                     AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
                     AsciiGrid<double> *velTempGrid = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
@@ -1221,8 +1238,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     #endif
 
-                    outputFiles[i]->calcSpeedSplitVals(*velTempGrid, &speedSplitVals[i], &numColors, ninjas[i]->input.fgbzSpeedScaling);
-
                     if(angTempGrid)
                     {
                         delete angTempGrid;
@@ -1235,8 +1250,20 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                 }
 
+                eArmySpeedScaling speedScaling;
+                if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_color)
+                {
+                    speedScaling = ninjaArmy::equal_color;
+                }
+                else if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_interval)
+                {
+                    speedScaling = ninjaArmy::equal_interval;
+                }
+                // see kmz version of this, for comments related to a throw statement here, and using a WindNinjaInputs defined enum type, or a string.
+
                 double *finalSpeedSplitVals = NULL;
-                outputFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors, &finalSpeedSplitVals, ninjas[0]->input.fgbzSpeedScaling);
+                numColors = outputFiles[0]->getNumSplits();
+                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), numColors, &finalSpeedSplitVals, speedScaling);
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
@@ -1251,13 +1278,13 @@ bool ninjaArmy::startRuns(int numProcessors)
                     delete outputFiles[i];
                     outputFiles[i] = NULL;
 
-                    delete[] speedSplitVals[i];
-                    speedSplitVals[i] = NULL;
+                    delete resampledVelGrids[i];
+                    resampledVelGrids[i] = NULL;
                 }
                 delete[] outputFiles;
                 outputFiles = NULL;
-                delete[] speedSplitVals;
-                speedSplitVals = NULL;
+                delete[] resampledVelGrids;
+                resampledVelGrids = NULL;
 
                 delete[] finalSpeedSplitVals;
                 finalSpeedSplitVals = NULL;
@@ -2964,6 +2991,101 @@ void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
     } else
     {
         wxModelFgbzFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbzFile;
+    }
+}
+
+void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, const int numSplits, double **outSplitVals, eArmySpeedScaling scaling)
+{
+    *outSplitVals = new double[numSplits];
+
+    double minVal = 9999;
+    double maxVal = -9999;
+    for(int j = 0; j < nSets; j++)
+    {
+        double current_minVal = inSpdGrids[j]->get_minValue();
+        double current_maxVal = inSpdGrids[j]->get_maxValue();
+        if( current_minVal < minVal )
+        {
+            minVal = current_minVal;
+        }
+        if( current_maxVal > maxVal )
+        {
+            maxVal = current_maxVal;
+        }
+    }
+    (*outSplitVals)[0] = 0.0;
+    //(*outSplitVals)[0] = minVal;
+    (*outSplitVals)[numSplits-1] = maxVal;
+
+    switch(scaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            double **splitVals = new double*[nSets];
+            for(int j = 0; j < nSets; j++)
+            {
+                splitVals[j] = new double[numSplits];
+                inSpdGrids[j]->divide_gridData(splitVals[j], numSplits);
+            }
+
+            for(int i = 1; i < numSplits-1; i++)
+            {
+                double sum = 0;
+                for(int j = 0; j < nSets; j++)
+                {
+                    sum = sum + splitVals[j][i];
+                }
+                (*outSplitVals)[i] = sum / nSets;
+            }
+
+            for(int j = 0; j < nSets; j++)
+            {
+                delete[] splitVals[j];
+            }
+
+            delete[] splitVals;
+
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double interval = maxVal/(numSplits-1);
+            //double interval = (maxVal-minVal)/(numSplits-1);
+            for(int i = 1; i < numSplits-1; i++)
+            {
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + minVal;
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            double **splitVals = new double*[nSets];
+            for(int j = 0; j < nSets; j++)
+            {
+                splitVals[j] = new double[numSplits];
+                inSpdGrids[j]->divide_gridData(splitVals[j], numSplits);
+            }
+
+            for(int i = 1; i < numSplits-1; i++)
+            {
+                double sum = 0;
+                for(int j = 0; j < nSets; j++)
+                {
+                    sum = sum + splitVals[j][i];
+                }
+                (*outSplitVals)[i] = sum / nSets;
+            }
+
+            for(int j = 0; j < nSets; j++)
+            {
+                delete[] splitVals[j];
+            }
+
+            delete[] splitVals;
+
+            break;
+        }
     }
 }
 

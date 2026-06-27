@@ -104,7 +104,6 @@ public:
     inline void setLineWidth(double width){lineWidth = width;}
     bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
     void calcSpeedSplitVals(const AsciiGrid<double> &inSpdGrid, double **outSplitVals, int *outSize, const egoogSpeedScaling scaling);
-    void calcSplitValsFromSplitVals(const double **inSplitVals, const int nSets, const int numSplitVals, double **outSplitVals, const egoogSpeedScaling scaling);
     void setSpeedSplitVals(const double *speedSplitVals, const int size);
 
     inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
@@ -158,6 +157,8 @@ public:
     void setWxModel(const std::string& modelName, const boost::local_time::local_date_time& startTime);
 
     std::string getShortName(std::string file);
+
+    const int getNumSplits() {return numSplits;}
 
     //bool readPrjFile();
     bool setProj4(std::string prj);

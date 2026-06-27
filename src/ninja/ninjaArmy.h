@@ -152,6 +152,12 @@ public:
         ncepGfsSurf
     };
 
+    enum eArmySpeedScaling
+    {
+        equal_color,
+        equal_interval
+    };
+
     void makeDomainAverageArmy( int nRuns, bool momentumFlag );
 
     void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
@@ -1528,6 +1534,8 @@ protected:
     void writeFarsiteAtmosphereFile();
 
     void setCurrentMapVisualizationFilenames(int runNumber);
+
+    void calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, const int numSplits, double **outSplitVals, const eArmySpeedScaling scaling);
 
     /*
     ** This function initializes various data for the lifetime of the
