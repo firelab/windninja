@@ -1676,15 +1676,20 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
             wxModelKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
             wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
+            wxModelKmlFiles.setSpeedScaling(input.wxModelGoogSpeedScaling);
+            wxModelKmlFiles.setColorScheme(input.googColor);
+            wxModelKmlFiles.setVectorScaling(input.googVectorScale);
             wxModelKmlFiles.setLineWidth(input.wxModelGoogLineWidth);
             wxModelKmlFiles.setTime(input.ninjaTime);
             std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
             wxModelKmlFiles.setWxModel(getForecastIdentifier(), times[0]);
 
-            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling,input.googColor,input.googVectorScale))
+            if(wxModelKmlFiles.writeKml())
             {
                 if(wxModelKmlFiles.makeKmz())
+                {
                     wxModelKmlFiles.removeKmlFile();
+                }
             }
             }
         }catch (exception& e)

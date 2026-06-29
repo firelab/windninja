@@ -101,14 +101,17 @@ public:
         equal_interval
     };
 
+    void setSpeedScaling(egoogSpeedScaling scaling) {speedScaling=scaling;}
+    void setColorScheme(std::string cScheme);
+    void setVectorScaling(bool vec_scaling) {useVectorScaling=vec_scaling;}
     inline void setLineWidth(double width){lineWidth = width;}
-    bool makeDefaultStyles(std::string cScheme,bool vec_scaling);
-    void calcSpeedSplitVals(const egoogSpeedScaling scaling);
+    bool makeDefaultStyles();
+    void calcSpeedSplitVals();
     void setSpeedSplitVals(const double *speedSplitVals, const int size);
 
     inline void setKmzFileName(std::string fileName){kmzFile = fileName;}
 
-    bool writeKml(egoogSpeedScaling scaling, std::string cScheme, bool vector_scaling);
+    bool writeKml();
     bool makeKmz();
     bool removeKmlFile();
 
@@ -118,7 +121,7 @@ public:
     bool writeRegion(VSILFILE *fileOut);
     bool writeStyles(VSILFILE *fileOut);
     bool writeHtmlLegend(VSILFILE *fileOut);
-    bool writeScreenOverlayLegend(VSILFILE *fileOut,std::string cScheme);
+    bool writeScreenOverlayLegend(VSILFILE *fileOut);
     bool writeScreenOverlayDateTimeLegend(VSILFILE *fileOut);
     bool writeScreenOverlayDateTimeLegendWxModelRun(VSILFILE *fileOut);
 
@@ -212,6 +215,9 @@ private:
     double northExtent, eastExtent, southExtent, westExtent;
     double lineWidth;
 
+    egoogSpeedScaling speedScaling;
+    std::string colorScheme;
+    bool useVectorScaling;
 };
 
 #endif  //KMLVECTOR_H

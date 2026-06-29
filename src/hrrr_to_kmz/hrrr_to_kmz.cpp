@@ -617,6 +617,10 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
 	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
+    // default values for input.wxModelGoogSpeedScaling/input.googSpeedScaling,input.googColor,input.googVectorScale are KmlVector::equal_interval,"default",false respectively
+    ninjaKmlFiles.setSpeedScaling(KmlVector::equal_interval);
+    ninjaKmlFiles.setColorScheme("default");
+    ninjaKmlFiles.setVectorScaling(false);
     //ninjaKmlFiles.setLineWidth(1.0);  // input.googLineWidth value
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
     std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
@@ -624,11 +628,12 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
 
-    // default values for input.wxModelGoogSpeedScaling/input.googSpeedScaling,input.googColor,input.googVectorScale are KmlVector::equal_interval,"default",false respectively
-    if(ninjaKmlFiles.writeKml(KmlVector::equal_interval,"default",false))
+    if(ninjaKmlFiles.writeKml())
 	{
 		if(ninjaKmlFiles.makeKmz())
+		{
 			ninjaKmlFiles.removeKmlFile();
+		}
 	}
 }
 

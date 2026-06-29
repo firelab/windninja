@@ -3704,6 +3704,9 @@ void NinjaFoam::WriteOutputFiles()
             ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
             ninjaKmlFiles.setDirGrid(*angTempGrid);
 
+            ninjaKmlFiles.setSpeedScaling(input.googSpeedScaling);
+            ninjaKmlFiles.setColorScheme(input.googColor);
+            ninjaKmlFiles.setVectorScaling(input.googVectorScale);
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
             ninjaKmlFiles.setTime(input.ninjaTime);
             if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
@@ -3712,7 +3715,7 @@ void NinjaFoam::WriteOutputFiles()
                 ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
             }
 
-            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
+            if(ninjaKmlFiles.writeKml())
             {
                 if(ninjaKmlFiles.makeKmz())
                 {

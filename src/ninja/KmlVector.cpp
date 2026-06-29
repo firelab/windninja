@@ -36,6 +36,9 @@ KmlVector::KmlVector()
     colors = NULL;
     splitValue = NULL;
     coordTransform = NULL;
+    speedScaling = equal_interval;
+    colorScheme = "default";
+    useVectorScaling = false;
     lineWidth = 1.0;
     resolution = -1.0;
     speedUnits = velocityUnits::milesPerHour;
@@ -161,7 +164,17 @@ void KmlVector::setWxModel(const std::string& modelName, const boost::local_time
     wxModelStartTime = startTime;
 }
 
-bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
+void KmlVector::setColorScheme(std::string cScheme)
+{
+    if(cScheme.compare("default") != 0 && cScheme.compare("oranges") != 0 && cScheme.compare("blues") != 0 && cScheme.compare("greens") != 0 && cScheme.compare("pinks") != 0 && cScheme.compare("magic_beans") != 0 && cScheme.compare("pink_to_green") != 0 && cScheme.compare("ROPGW") != 0)
+    {
+        throw std::runtime_error("Invalid input cScheme '"+cScheme+"' in OutputWriter:setColorScheme()\nvalid choices are: 'default', 'oranges', 'blues', 'greens', 'pinks', 'magic_beans', 'pink_to_green', 'ROPGW'");
+    }
+
+    colorScheme = cScheme;
+}
+
+bool KmlVector::makeDefaultStyles()
 {
     if(colors)
     {
@@ -179,15 +192,13 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
 //  colors[1] = new Style("green", 255, 141, 236,229, 1.5*arrowWidth); //moderate low
 //  colors[0] = new Style("blue", 255, 229, 243, 239, arrowWidth); //very low
 
-    bool scaling=vec_scaling;
-
     double blueWidth;
     double greenWidth;
     double yellowWidth;
     double orangeWidth;
     double redWidth;
 
-    if(scaling==true)
+    if(useVectorScaling == true)
     {
         redWidth=4.0*lineWidth;
         orangeWidth=3.0*lineWidth;
@@ -195,7 +206,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         greenWidth=1.5*lineWidth;
         blueWidth=1.0*lineWidth;
     }
-    if(scaling==false)
+    else // if(useVectorScaling == false)
     {
         redWidth=lineWidth;
         orangeWidth=lineWidth;
@@ -207,7 +218,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
     colors = new Style*[numColors];
 
     //Alpha, B G R
-    if (cScheme=="default")
+    if(colorScheme == "default")
     {
         colors[0] = new Style("blue", 255, 255, 0, 0, blueWidth);
         colors[1] = new Style("green", 255, 0, 255, 0, greenWidth);
@@ -215,7 +226,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[3] = new Style("orange", 255, 0, 127, 255, orangeWidth);
         colors[4] = new Style("red", 255, 0, 0, 255, redWidth);
     }
-    if (cScheme=="oranges")
+    if(colorScheme == "oranges")
     {
         colors[0] = new Style("blue", 255, 217, 240, 254, blueWidth);
         colors[1] = new Style("green", 255, 138, 204, 253, greenWidth);
@@ -223,7 +234,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[3] = new Style("orange", 255, 51, 74, 227, orangeWidth);
         colors[4] = new Style("red", 255, 0, 0, 179, redWidth);
     }
-    if(cScheme=="blues")
+    if(colorScheme == "blues")
     {
         colors[0] = new Style("blue", 255, 254, 243, 239, blueWidth);
         colors[1] = new Style("green", 255, 231, 215, 189, greenWidth);
@@ -231,7 +242,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[3] = new Style("orange", 255, 189, 130, 49, orangeWidth);
         colors[4] = new Style("red", 255, 156, 81, 8, redWidth);
     }
-    if (cScheme=="greens")
+    if(colorScheme == "greens")
     {
         colors[0] = new Style("blue", 255, 233, 248, 237, blueWidth);
         colors[1] = new Style("green", 255, 179, 228, 186, greenWidth);
@@ -239,7 +250,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[3] = new Style("orange", 255, 84, 163, 49, orangeWidth);
         colors[4] = new Style("red", 255, 44, 109, 0, redWidth);
     }
-    if (cScheme=="pinks")
+    if(colorScheme == "pinks")
     {
         colors[0] = new Style("blue", 255, 246, 238, 241, blueWidth);
         colors[1] = new Style("green", 255, 216, 181, 215, greenWidth);
@@ -247,7 +258,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[3] = new Style("orange", 255, 119, 28,221, orangeWidth);
         colors[4] = new Style("red", 255, 67, 0, 152, redWidth);
     }
-    if (cScheme=="magic_beans")
+    if(colorScheme == "magic_beans")
     {
         colors[4] = new Style("red", 255, 32, 0, 202, redWidth);
         colors[3] = new Style("orange", 255, 130, 165, 244, orangeWidth);
@@ -257,7 +268,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         //Google earth will not render with a Red = 5, works fine with 0 or 30 though...
         colors[0] = new Style("blue", 255, 176, 113, 30, blueWidth);
     }
-    if (cScheme=="pink_to_green")
+    if(colorScheme == "pink_to_green")
     {
         colors[4] = new Style("red", 255, 148, 50, 123, redWidth);
         colors[3] = new Style("orange", 255, 207, 165, 194, orangeWidth);
@@ -265,7 +276,7 @@ bool KmlVector::makeDefaultStyles(string cScheme, bool vec_scaling)
         colors[1] = new Style("green", 255, 160, 219,166, greenWidth);
         colors[0] = new Style("blue", 255, 55, 136, 0, blueWidth);
     }
-    if (cScheme=="ROPGW") //Red Orange Pink Green White
+    if(colorScheme == "ROPGW") //Red Orange Pink Green White
     {// Alpha BGR
         colors[4] = new Style("red", 255, 27, 31, 166, redWidth); //highest windspeed
         colors[3] = new Style("orange", 255, 114, 162, 198, orangeWidth); //2nd highest
@@ -310,7 +321,7 @@ bool KmlVector::setOGR()
     return false;
 }
 
-void KmlVector::calcSpeedSplitVals(const egoogSpeedScaling scaling)
+void KmlVector::calcSpeedSplitVals()
 {
     if(splitValue)
     {
@@ -320,7 +331,7 @@ void KmlVector::calcSpeedSplitVals(const egoogSpeedScaling scaling)
 
     splitValue = new double[numSplits];
 
-    switch(scaling)
+    switch(speedScaling)
     {
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
@@ -366,11 +377,11 @@ void KmlVector::setSpeedSplitVals(const double *speedSplitVals, const int size)
     }
 }
 
-bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_scaling)
+bool KmlVector::writeKml()
 {
     VSILFILE *fout;
 
-    makeDefaultStyles(cScheme,vector_scaling);
+    makeDefaultStyles();
     if((fout = VSIFOpenL(kmlFile.c_str(),"w")) == NULL)
     {
         return false;
@@ -383,14 +394,14 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
 
     if(!splitValue)
     {
-        calcSpeedSplitVals(scaling);
+        calcSpeedSplitVals();
     }
 
     writeHeader(fout);
     writeRegion(fout);
     writeStyles(fout);
     //writeHtmlLegend(fout);
-    writeScreenOverlayLegend(fout,cScheme);
+    writeScreenOverlayLegend(fout);
     if(wxModelName.empty())
         writeScreenOverlayDateTimeLegend(fout);
     else
@@ -604,7 +615,7 @@ bool KmlVector::writeHtmlLegend(VSILFILE *fileOut)
     return true;
 }
 
-bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
+bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut)
 {
     //make bitmap
     int legendWidth = 180;
@@ -678,7 +689,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
 
     RGBApixel colors[numColors];
 //  RGBApixel red, orange, yellow, green, blue;
-    if(cScheme=="default")
+    if(colorScheme == "default")
     {
         colors[0].Red = 255; //max wind
         colors[0].Green = 0;
@@ -706,7 +717,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[4].Alpha = 0;
 
     }
-    if (cScheme=="oranges")
+    if(colorScheme == "oranges")
     {
         colors[0].Red = 179; //0=Highest wind speed: its reversed from above...
         colors[0].Green = 0;
@@ -733,7 +744,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[4].Blue = 217;
         colors[4].Alpha = 0;
     }
-    if (cScheme=="blues")
+    if(colorScheme == "blues")
     {
         colors[4].Red = 239; //0=Highest wind speed: its reversed from above...
         colors[4].Green = 243;
@@ -760,7 +771,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[0].Blue = 156;
         colors[0].Alpha = 0;
     }
-    if (cScheme=="greens")
+    if(colorScheme == "greens")
     {
         colors[4].Red = 237; //0=Highest wind speed: its reversed from above...
         colors[4].Green = 248;
@@ -787,7 +798,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[0].Blue = 44;
         colors[0].Alpha = 0;
     }
-    if (cScheme=="pinks")
+    if(colorScheme == "pinks")
     {
         colors[4].Red = 241; //0=Highest wind speed: its reversed from above...
         colors[4].Green = 238;
@@ -814,7 +825,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[0].Blue = 67;
         colors[0].Alpha = 0;
     }
-    if (cScheme=="magic_beans")
+    if(colorScheme == "magic_beans")
     {
         colors[0].Red = 202; //0=Highest wind speed: its reversed from above...
         colors[0].Green = 0;
@@ -841,7 +852,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[4].Blue = 176;
         colors[4].Alpha = 0;
     }
-    if (cScheme=="pink_to_green")
+    if(colorScheme == "pink_to_green")
     {
         colors[0].Red = 123; //0=Highest wind speed: its reversed from above...
         colors[0].Green = 50;
@@ -868,7 +879,7 @@ bool KmlVector::writeScreenOverlayLegend(VSILFILE *fileOut, std::string cScheme)
         colors[4].Blue = 55;
         colors[4].Alpha = 0;
     }
-    if (cScheme=="ROPGW")
+    if(colorScheme == "ROPGW")
     {
         colors[0].Red = 166; //0=Highest wind speed: its reversed from above...
         colors[0].Green = 31; //red

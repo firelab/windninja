@@ -1132,6 +1132,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjaKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
                     ninjaKmlFiles.setDirGrid(*angTempGrid);
 
+                    ninjaKmlFiles.setSpeedScaling(ninjas[i]->input.googSpeedScaling);
+                    ninjaKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+                    ninjaKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
                     ninjaKmlFiles.setLineWidth(ninjas[i]->input.googLineWidth);
                     ninjaKmlFiles.setTime(ninjas[i]->input.ninjaTime);
                     if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
@@ -1141,7 +1144,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
 
                     ninjaKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
-                    if(ninjaKmlFiles.writeKml(ninjas[i]->input.googSpeedScaling, ninjas[i]->input.googColor, ninjas[i]->input.googVectorScale))
+                    if(ninjaKmlFiles.writeKml())
                     {
                         if(ninjaKmlFiles.makeKmz())
                         {
