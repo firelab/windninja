@@ -2769,25 +2769,6 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
     *outSize = numSplits;
     *outSplitVals = new double[numSplits];
 
-    double minVal = 9999;
-    double maxVal = -9999;
-    for(int j = 0; j < nSets; j++)
-    {
-        double current_minVal = inSpdGrids[j]->get_minValue();
-        double current_maxVal = inSpdGrids[j]->get_maxValue();
-        if( current_minVal < minVal )
-        {
-            minVal = current_minVal;
-        }
-        if( current_maxVal > maxVal )
-        {
-            maxVal = current_maxVal;
-        }
-    }
-    (*outSplitVals)[0] = 0.0;
-    //(*outSplitVals)[0] = minVal;
-    (*outSplitVals)[numSplits-1] = maxVal;
-
     switch(scaling)
     {
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
@@ -2815,19 +2796,38 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
 
             size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
 
-            for(int i = 1; i < numSplits - 1; i++)
+            for(int i = 0; i < numSplits - 1; i++)
             {
                 (*outSplitVals)[i] = combinedGridValues[i * step];
             }
-            //(*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+            (*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+
+            // if you want to use the actual minVal as the first splitVal, comment this line out
+            (*outSplitVals)[0] = 0.0;
 
             break;
         }
         case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
         {
-            double interval = maxVal/(numSplits-1);
-            //double interval = (maxVal-minVal)/(numSplits-1);
-            for(int i = 1; i < numSplits-1; i++)
+            double minVal = 9999;
+            double maxVal = -9999;
+            for(int j = 0; j < nSets; j++)
+            {
+                double current_minVal = inSpdGrids[j]->get_minValue();
+                double current_maxVal = inSpdGrids[j]->get_maxValue();
+                if( current_minVal < minVal )
+                {
+                    minVal = current_minVal;
+                }
+                if( current_maxVal > maxVal )
+                {
+                    maxVal = current_maxVal;
+                }
+            }
+
+            double interval = maxVal / (float)(numSplits-1);
+            //double interval = (maxVal - minVal) / (float)(numSplits-1);
+            for(int i = 0; i < numSplits; i++)
             {
                 (*outSplitVals)[i] = i * interval;
                 //(*outSplitVals)[i] = i * interval + minVal;
@@ -2859,11 +2859,14 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
 
             size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
 
-            for(int i = 1; i < numSplits - 1; i++)
+            for(int i = 0; i < numSplits - 1; i++)
             {
                 (*outSplitVals)[i] = combinedGridValues[i * step];
             }
-            //(*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+            (*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+
+            // if you want to use the actual minVal as the first splitVal, comment this line out
+            (*outSplitVals)[0] = 0.0;
 
             break;
         }
