@@ -161,8 +161,6 @@ public:
 
     std::string getShortName(std::string file);
 
-    const int getNumSplits() {return numSplits;}
-
     //bool readPrjFile();
     bool setProj4(std::string prj);
 

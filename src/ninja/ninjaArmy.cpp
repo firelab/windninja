@@ -1082,11 +1082,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                 // almost sounds like we need to set a single enum type, to be shared, where the enum type is defined once at a level where everything can access it, like in an output manager class.
                 // or just go back to using strings, no more "switch" "case" logic.
 
-                KmlVector tmp_ninjaKmlFiles;
-                int numSplits = tmp_ninjaKmlFiles.getNumSplits();
-
+                int numSplits;
                 double *finalSpeedSplitVals = NULL;
-                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), numSplits, &finalSpeedSplitVals, speedScaling);
+                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
@@ -1217,11 +1215,9 @@ bool ninjaArmy::startRuns(int numProcessors)
                 }
                 // see kmz version of this, for comments related to a throw statement here, and using a WindNinjaInputs defined enum type, or a string.
 
-                OutputWriter tmp_output;
-                unsigned short numSplits = tmp_output.getNumSplits();
-
+                int numSplits;
                 double *finalSpeedSplitVals = NULL;
-                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), numSplits, &finalSpeedSplitVals, speedScaling);
+                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
                 for( int i = 0; i < ninjas.size(); i++ )
                 {
@@ -1251,7 +1247,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                     #endif
 
-                    output.setSplitVals(finalSpeedSplitVals, numSplits);
+                    output.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
 
                     output.write(ninjas[i]->input.fgbzFile, "FlatGeoBufZip");
 
@@ -2979,8 +2975,12 @@ void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
     }
 }
 
-void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, const int numSplits, double **outSplitVals, eArmySpeedScaling scaling)
+void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, eArmySpeedScaling scaling)
 {
+    // make sure this value matches that of OutputWriter and KmlVector, or there will be problems using the calculated splitVals
+    int numSplits = 6;
+
+    *outSize = numSplits;
     *outSplitVals = new double[numSplits];
 
     double minVal = 9999;
