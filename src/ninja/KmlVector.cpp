@@ -381,12 +381,10 @@ bool KmlVector::writeKml(egoogSpeedScaling scaling, string cScheme, bool vector_
         return false;
     }
 
-    if(splitValue)
+    if(!splitValue)
     {
-        delete[] splitValue;
-        splitValue = NULL;
+        calcSpeedSplitVals(scaling);
     }
-    calcSpeedSplitVals(scaling);
 
     writeHeader(fout);
     writeRegion(fout);

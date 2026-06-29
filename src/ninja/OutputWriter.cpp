@@ -490,7 +490,12 @@ void OutputWriter::_deleteSplits()
 
 void OutputWriter::_createSplits()
 {
-    _deleteSplits();
+    // only create them if they haven't already been set/created,
+    // so that setSplitVals() gets precedence over just creating the values
+    if(split_vals != NULL)
+    {
+        return;
+    }
 
     split_vals = new double[NSPLITS];
 
