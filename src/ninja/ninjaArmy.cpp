@@ -2815,7 +2815,7 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
 
             size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
 
-            for(int i = 0; i < numSplits - 1; i++)
+            for(int i = 1; i < numSplits - 1; i++)
             {
                 (*outSplitVals)[i] = combinedGridValues[i * step];
             }
@@ -2859,7 +2859,7 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
 
             size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
 
-            for(int i = 0; i < numSplits - 1; i++)
+            for(int i = 1; i < numSplits - 1; i++)
             {
                 (*outSplitVals)[i] = combinedGridValues[i * step];
             }
