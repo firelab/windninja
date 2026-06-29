@@ -1536,6 +1536,7 @@ protected:
     void setCurrentMapVisualizationFilenames(int runNumber);
 
     void calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, const eArmySpeedScaling scaling);
+    void writeConsistentColorScaleOutputs();
 
     /*
     ** This function initializes various data for the lifetime of the

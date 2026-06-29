@@ -1058,221 +1058,7 @@ bool ninjaArmy::startRuns(int numProcessors)
         //write consistent color scale outputs
         if(ninjas.size() > 1 && (ninjas[0]->input.googUseConsistentColorScale == true || ninjas[0]->input.fgbzUseConsistentColorScale == true))
         {
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent color scale output files...");
-
-            if(ninjas[0]->input.googUseConsistentColorScale == true)
-            {
-                AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
-                    resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                }
-
-                eArmySpeedScaling speedScaling;
-                if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_color)
-                {
-                    speedScaling = ninjaArmy::equal_color;
-                }
-                else if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
-                {
-                    speedScaling = ninjaArmy::equal_interval;
-                }
-                // should probably have an else, and a throw, but that would suck to throw here at the end, rather than during a check at the beginning ...
-                // hrm, even if we set it ahead of time, in WindNinjaInputs, as we set the other ones, that would mean two copies, one for each enum type, in WindNinjaInputs to be set.
-                // almost sounds like we need to set a single enum type, to be shared, where the enum type is defined once at a level where everything can access it, like in an output manager class.
-                // or just go back to using strings, no more "switch" "case" logic.
-
-                int numSplits;
-                double *finalSpeedSplitVals = NULL;
-                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
-
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
-                    KmlVector ninjaKmlFiles;
-
-                    AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                    AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
-                    #ifdef NINJAFOAM
-                    AsciiGrid<double> *turbTempGrid = NULL;
-                    AsciiGrid<double> *colMaxTempGrid = NULL;
-                    if(ninjas[i]->input.writeTurbulence)
-                    {
-                        //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                        //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, ninjas[i]->input.outputSpeedUnits);
-
-                        colMaxTempGrid = new AsciiGrid<double> (ninjas[i]->colMaxGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                        ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, ninjas[i]->input.outputSpeedUnits,  ninjas[i]->input.colMax_colHeightAGL, ninjas[i]->input.colMax_colHeightAGL_units);
-                    }
-                    #endif //NINJAFOAM
-                    #ifdef FRICTION_VELOCITY
-                    AsciiGrid<double> *ustarTempGrid = NULL;
-                    if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
-                    {
-                        ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                        ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
-                    }
-                    #endif //FRICTION_VELOCITY
-                    #ifdef EMISSIONS
-                    AsciiGrid<double> *dustTempGrid = NULL;
-                    if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
-                    {
-                        dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                        ninjaKmlFiles.setDustGrid(*dustTempGrid);
-                    }
-                    #endif //EMISSIONS
-
-                    ninjaKmlFiles.setKmlFile(ninjas[i]->input.kmlFile);
-                    ninjaKmlFiles.setKmzFile(ninjas[i]->input.kmzFile);
-
-                    ninjaKmlFiles.setLegendFile(ninjas[i]->input.legFile);
-                    ninjaKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
-                    ninjaKmlFiles.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
-                    ninjaKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
-                    ninjaKmlFiles.setDirGrid(*angTempGrid);
-
-                    ninjaKmlFiles.setSpeedScaling(ninjas[i]->input.googSpeedScaling);
-                    ninjaKmlFiles.setColorScheme(ninjas[i]->input.googColor);
-                    ninjaKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
-                    ninjaKmlFiles.setLineWidth(ninjas[i]->input.googLineWidth);
-                    ninjaKmlFiles.setTime(ninjas[i]->input.ninjaTime);
-                    if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-                    {
-                        std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
-                        ninjaKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
-                    }
-
-                    ninjaKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
-                    if(ninjaKmlFiles.writeKml())
-                    {
-                        if(ninjaKmlFiles.makeKmz())
-                        {
-                            ninjaKmlFiles.removeKmlFile();
-                        }
-                    }
-
-                    if(angTempGrid)
-                    {
-                        delete angTempGrid;
-                        angTempGrid = NULL;
-                    }
-                    #ifdef NINJAFOAM
-                    if(turbTempGrid)
-                    {
-                        delete turbTempGrid;
-                        turbTempGrid = NULL;
-                    }
-                    if(colMaxTempGrid)
-                    {
-                        delete colMaxTempGrid;
-                        colMaxTempGrid = NULL;
-                    }
-                    #endif //NINJAFOAM
-                    #ifdef FRICTION_VELOCITY
-                    if(ustarTempGrid)
-                    {
-                        delete ustarTempGrid;
-                        ustarTempGrid = NULL;
-                    }
-                    #endif //FRICTION_VELOCITY
-                    #ifdef EMISSIONS
-                    if(dustTempGrid)
-                    {
-                        delete dustTempGrid;
-                        dustTempGrid = NULL;
-                    }
-                    #endif //EMISSIONS
-                }
-
-                //cleanup
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
-                    delete resampledVelGrids[i];
-                    resampledVelGrids[i] = NULL;
-                }
-                delete[] resampledVelGrids;
-                resampledVelGrids = NULL;
-
-                delete[] finalSpeedSplitVals;
-                finalSpeedSplitVals = NULL;
-            }
-
-            if(ninjas[0]->input.fgbzUseConsistentColorScale == true)
-            {
-                AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
-                    resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
-                }
-
-                eArmySpeedScaling speedScaling;
-                if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_color)
-                {
-                    speedScaling = ninjaArmy::equal_color;
-                }
-                else if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_interval)
-                {
-                    speedScaling = ninjaArmy::equal_interval;
-                }
-                // see kmz version of this, for comments related to a throw statement here, and using a WindNinjaInputs defined enum type, or a string.
-
-                int numSplits;
-                double *finalSpeedSplitVals = NULL;
-                calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
-
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
-                    OutputWriter output;
-
-                    AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
-                    AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
-
-                    output.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
-                    output.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
-                    output.setDirGrid(*angTempGrid);
-
-                    output.setSpeedScaling(ninjas[i]->input.fgbzSpeedScaling);
-                    output.setColorScheme(ninjas[i]->input.fgbzColor);
-                    output.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
-                    output.setLineWidth(ninjas[i]->input.fgbzLineWidth);
-                    output.setNinjaTime(ninjas[i]->input.ninjaTime);
-
-                    if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-                    {
-                        output.setWxModel(ninjas[i]->init->getForecastIdentifier());
-                    }
-                    #ifdef NINJAFOAM
-                    else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag)
-                    {
-                        output.setWxModel(ninjas[i]->input.foamWxForecastIdentifier);
-                    }
-                    #endif
-
-                    output.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
-
-                    output.write(ninjas[i]->input.fgbzFile, "FlatGeoBufZip");
-
-                    if(angTempGrid)
-                    {
-                        delete angTempGrid;
-                        angTempGrid = NULL;
-                    }
-                }
-
-                //cleanup
-                for( int i = 0; i < ninjas.size(); i++ )
-                {
-                    delete resampledVelGrids[i];
-                    resampledVelGrids[i] = NULL;
-                }
-                delete[] resampledVelGrids;
-                resampledVelGrids = NULL;
-
-                delete[] finalSpeedSplitVals;
-                finalSpeedSplitVals = NULL;
-            }
-
-            // put this here, rather than after the cleanup, because all but the first ninja are deleted during cleanup
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");
+            writeConsistentColorScaleOutputs();
 
             //cleanup at the end
             for( int i = 0; i < ninjas.size(); i++ )
@@ -3082,6 +2868,224 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
             break;
         }
     }
+}
+
+void ninjaArmy::writeConsistentColorScaleOutputs()
+{
+    ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent color scale output files...");
+
+    if(ninjas[0]->input.googUseConsistentColorScale == true)
+    {
+        AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+        }
+
+        eArmySpeedScaling speedScaling;
+        if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_color)
+        {
+            speedScaling = ninjaArmy::equal_color;
+        }
+        else if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
+        {
+            speedScaling = ninjaArmy::equal_interval;
+        }
+        // should probably have an else, and a throw, but that would suck to throw here at the end, rather than during a check at the beginning ...
+        // hrm, even if we set it ahead of time, in WindNinjaInputs, as we set the other ones, that would mean two copies, one for each enum type, in WindNinjaInputs to be set.
+        // almost sounds like we need to set a single enum type, to be shared, where the enum type is defined once at a level where everything can access it, like in an output manager class.
+        // or just go back to using strings, no more "switch" "case" logic.
+
+        int numSplits;
+        double *finalSpeedSplitVals = NULL;
+        calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            KmlVector ninjaKmlFiles;
+
+            AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+            AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
+            #ifdef NINJAFOAM
+            AsciiGrid<double> *turbTempGrid = NULL;
+            AsciiGrid<double> *colMaxTempGrid = NULL;
+            if(ninjas[i]->input.writeTurbulence)
+            {
+                //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, ninjas[i]->input.outputSpeedUnits);
+
+                colMaxTempGrid = new AsciiGrid<double> (ninjas[i]->colMaxGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, ninjas[i]->input.outputSpeedUnits,  ninjas[i]->input.colMax_colHeightAGL, ninjas[i]->input.colMax_colHeightAGL_units);
+            }
+            #endif //NINJAFOAM
+            #ifdef FRICTION_VELOCITY
+            AsciiGrid<double> *ustarTempGrid = NULL;
+            if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
+            {
+                ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
+            }
+            #endif //FRICTION_VELOCITY
+            #ifdef EMISSIONS
+            AsciiGrid<double> *dustTempGrid = NULL;
+            if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
+            {
+                dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                ninjaKmlFiles.setDustGrid(*dustTempGrid);
+            }
+            #endif //EMISSIONS
+
+            ninjaKmlFiles.setKmlFile(ninjas[i]->input.kmlFile);
+            ninjaKmlFiles.setKmzFile(ninjas[i]->input.kmzFile);
+
+            ninjaKmlFiles.setLegendFile(ninjas[i]->input.legFile);
+            ninjaKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
+            ninjaKmlFiles.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+            ninjaKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+            ninjaKmlFiles.setDirGrid(*angTempGrid);
+
+            ninjaKmlFiles.setSpeedScaling(ninjas[i]->input.googSpeedScaling);
+            ninjaKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+            ninjaKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
+            ninjaKmlFiles.setLineWidth(ninjas[i]->input.googLineWidth);
+            ninjaKmlFiles.setTime(ninjas[i]->input.ninjaTime);
+            if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                ninjaKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+            }
+
+            ninjaKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+            if(ninjaKmlFiles.writeKml())
+            {
+                if(ninjaKmlFiles.makeKmz())
+                {
+                    ninjaKmlFiles.removeKmlFile();
+                }
+            }
+
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid = NULL;
+            }
+            #ifdef NINJAFOAM
+            if(turbTempGrid)
+            {
+                delete turbTempGrid;
+                turbTempGrid = NULL;
+            }
+            if(colMaxTempGrid)
+            {
+                delete colMaxTempGrid;
+                colMaxTempGrid = NULL;
+            }
+            #endif //NINJAFOAM
+            #ifdef FRICTION_VELOCITY
+            if(ustarTempGrid)
+            {
+                delete ustarTempGrid;
+                ustarTempGrid = NULL;
+            }
+            #endif //FRICTION_VELOCITY
+            #ifdef EMISSIONS
+            if(dustTempGrid)
+            {
+                delete dustTempGrid;
+                dustTempGrid = NULL;
+            }
+            #endif //EMISSIONS
+        }
+
+        //cleanup
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            delete resampledVelGrids[i];
+            resampledVelGrids[i] = NULL;
+        }
+        delete[] resampledVelGrids;
+        resampledVelGrids = NULL;
+
+        delete[] finalSpeedSplitVals;
+        finalSpeedSplitVals = NULL;
+    }
+
+    if(ninjas[0]->input.fgbzUseConsistentColorScale == true)
+    {
+        AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+        }
+
+        eArmySpeedScaling speedScaling;
+        if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_color)
+        {
+            speedScaling = ninjaArmy::equal_color;
+        }
+        else if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_interval)
+        {
+            speedScaling = ninjaArmy::equal_interval;
+        }
+        // see kmz version of this, for comments related to a throw statement here, and using a WindNinjaInputs defined enum type, or a string.
+
+        int numSplits;
+        double *finalSpeedSplitVals = NULL;
+        calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            OutputWriter output;
+
+            AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+            AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
+
+            output.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+            output.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+            output.setDirGrid(*angTempGrid);
+
+            output.setSpeedScaling(ninjas[i]->input.fgbzSpeedScaling);
+            output.setColorScheme(ninjas[i]->input.fgbzColor);
+            output.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
+            output.setLineWidth(ninjas[i]->input.fgbzLineWidth);
+            output.setNinjaTime(ninjas[i]->input.ninjaTime);
+
+            if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                output.setWxModel(ninjas[i]->init->getForecastIdentifier());
+            }
+            #ifdef NINJAFOAM
+            else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag)
+            {
+                output.setWxModel(ninjas[i]->input.foamWxForecastIdentifier);
+            }
+            #endif
+
+            output.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
+
+            output.write(ninjas[i]->input.fgbzFile, "FlatGeoBufZip");
+
+            if(angTempGrid)
+            {
+                delete angTempGrid;
+                angTempGrid = NULL;
+            }
+        }
+
+        //cleanup
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            delete resampledVelGrids[i];
+            resampledVelGrids[i] = NULL;
+        }
+        delete[] resampledVelGrids;
+        resampledVelGrids = NULL;
+
+        delete[] finalSpeedSplitVals;
+        finalSpeedSplitVals = NULL;
+    }
+
+    ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");
 }
 
 void ninjaArmy::initLocalData(void)
