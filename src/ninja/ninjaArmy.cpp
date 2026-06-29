@@ -3004,7 +3004,7 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
         case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
             std::vector<double> combinedGridValues;
-            size_t nMaxCells = inSpdGrids[0]->get_nRows()*inSpdGrids[0]->get_nCols()*nSets;
+            size_t nMaxCells = static_cast<size_t>(inSpdGrids[0]->get_nRows()) * static_cast<size_t>(inSpdGrids[0]->get_nCols()) * static_cast<size_t>(nSets);
             combinedGridValues.reserve(nMaxCells);
             for(int j = 0; j < nSets; j++)
             {
@@ -3024,7 +3024,7 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
 
             std::sort(combinedGridValues.begin(), combinedGridValues.end());
 
-            size_t step = combinedGridValues.size() / (numSplits - 1);
+            size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
 
             for(int i = 0; i < numSplits - 1; i++)
             {
@@ -3048,7 +3048,7 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
         default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
         {
             std::vector<double> combinedGridValues;
-            size_t nMaxCells = inSpdGrids[0]->get_nRows()*inSpdGrids[0]->get_nCols()*nSets;
+            size_t nMaxCells = static_cast<size_t>(inSpdGrids[0]->get_nRows()) * static_cast<size_t>(inSpdGrids[0]->get_nCols()) * static_cast<size_t>(nSets);
             combinedGridValues.reserve(nMaxCells);
             for(int j = 0; j < nSets; j++)
             {
@@ -3068,7 +3068,7 @@ void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrid
 
             std::sort(combinedGridValues.begin(), combinedGridValues.end());
 
-            size_t step = combinedGridValues.size() / (numSplits - 1);
+            size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
 
             for(int i = 0; i < numSplits - 1; i++)
             {
