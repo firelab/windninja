@@ -108,9 +108,6 @@ class OutputWriter
         void setVectorScaling(bool vec_scaling) {useVectorScaling=vec_scaling;}
         void setSplitVals(const double *splitVals, const unsigned short size);
 
-        /* ====================  UTILITY HELPER FUNCTIONS  =========================== */
-        void calcSpeedSplitVals(const AsciiGrid<double> &inSpdGrid, double **outSplitVals, unsigned short *outSize, const eSpeedScaling scaling);
-
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
         bool finalizeWriteGtiff(std::string outputFilename);
