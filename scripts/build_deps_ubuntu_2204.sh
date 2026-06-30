@@ -21,7 +21,7 @@ sudo apt install -y libfontconfig1-dev \
                     libshp-dev
 
 # Install qt6 libs
-sudo apt install qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
+##sudo apt install qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
 
 # Install Poppler for PDF support in GDAL
 wget https://poppler.freedesktop.org/$POPPLER.tar.xz
