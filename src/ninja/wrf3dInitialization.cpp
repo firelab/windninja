@@ -421,6 +421,9 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
             psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
         }
 
+        // set the dataset projection
+        int rc = srcDS->SetProjection(projString.c_str());
+
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWKT,
                                                         dstWkt.c_str(),
                                                         GRA_NearestNeighbour,

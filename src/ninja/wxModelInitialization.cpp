@@ -776,7 +776,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
     status = nc_inq_varid( ncid, timename.c_str(), &varid );
     if( status != NC_NOERR ) {
         ostringstream os;
-        os << "The variable \"time\" in the netcdf file: "
+        os << "The variable \"" << timename << "\" in the netcdf file: "
            << wxModelFileName << " cannot be read\n";
         throw std::runtime_error( os.str() );
     }
