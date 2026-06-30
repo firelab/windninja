@@ -66,7 +66,7 @@ class Array2D
     T max() const;
     T min() const;
     double mean() const;
-    T* sortData();
+    std::vector<T> sortData();
     void dumpMatrix();
     void dumpMatrix(std::string file);
 

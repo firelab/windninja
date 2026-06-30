@@ -263,7 +263,7 @@ public:
 
 
 private:
-    T *sortedData;
+    std::vector<T> sortedData;
     //do not change!!!!!--This means you Jason!!!!!!!
     //consider this deprecated, but we *might* have written a binary grid
     //at some point.  *sigh* leave it in.  My bad -kss.

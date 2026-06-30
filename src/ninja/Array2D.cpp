@@ -247,33 +247,23 @@ double Array2D<T>::mean() const
 
 /**
 *@brief uses quicksort method to sort data within matrix, dropping nans from the size
-*@return returns a pointer to the new sorted data array
+*@return returns a vector of the sorted data
 */
 template<typename T>
-T* Array2D<T>::sortData()
+std::vector<T> Array2D<T>::sortData()
 {
-    size_t nValid = 0;
-    for(int i = 0; i < matrix.size(); i++)
+    std::vector<T> sorted;
+    sorted.reserve(matrix.size());
+
+    for(size_t i = 0; i < matrix.size(); i++)
     {
         if(matrix[i] != noDataValue && !std::isnan(matrix[i]))
         {
-            nValid++;
+            sorted.push_back(matrix[i]);
         }
     }
 
-    T* sorted = new T[nValid];
-
-    size_t writeIdx = 0;
-    for(int i = 0; i < matrix.size(); i++)
-    {
-        if(matrix[i] != noDataValue && !std::isnan(matrix[i]))
-        {
-            sorted[writeIdx] = matrix[i];
-            writeIdx++;
-        }
-    }
-
-    std::sort(sorted, sorted + nValid);
+    std::sort(sorted.begin(), sorted.end());
     return sorted;
 }
 
