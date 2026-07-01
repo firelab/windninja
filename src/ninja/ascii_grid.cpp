@@ -516,13 +516,13 @@ void AsciiGrid<T>::get_nearestCellIndex(double xCoord, double yCoord, int *i, in
 }
 
 template <class T>
-T AsciiGrid<T>::get_maxValue()
+T AsciiGrid<T>::get_maxValue() const
 {
     return data.max();
 }
 
 template <class T>
-T AsciiGrid<T>::get_minValue()
+T AsciiGrid<T>::get_minValue() const
 {
     return data.min();
 }

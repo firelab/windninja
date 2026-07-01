@@ -145,8 +145,8 @@ public:
 
     void get_gridCenter(double *x, double *y);
 
-    T get_maxValue();
-    T get_minValue();
+    T get_maxValue() const;
+    T get_minValue() const;
 
     double get_meanValue() const;
     bool fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
