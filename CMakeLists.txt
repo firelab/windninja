@@ -530,8 +530,12 @@ if(WIN32)
         COMPONENT apps)
 
     # Installs Boost from VCPKG to bin directory for WindNinja_cli
+    get_target_property(
+        BOOST_PROGRAM_OPTIONS_DLL
+        Boost::program_options
+        IMPORTED_LOCATION_RELEASE)
     install(
-        FILES "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/bin/boost_program_options-vc143-mt-x64-1_90.dll"
+        FILES "${BOOST_PROGRAM_OPTIONS_DLL}"
         DESTINATION bin
         COMPONENT apps)
 
