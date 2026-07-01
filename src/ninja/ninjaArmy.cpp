@@ -2887,22 +2887,18 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
         }
 
-        eArmySpeedScaling speedScaling;
+        eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
         if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_color)
         {
             speedScaling = ninjaArmy::equal_color;
         }
-        else if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
+        if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
         {
             speedScaling = ninjaArmy::equal_interval;
         }
-        // should probably have an else, and a throw, but that would suck to throw here at the end, rather than during a check at the beginning ...
-        // hrm, even if we set it ahead of time, in WindNinjaInputs, as we set the other ones, that would mean two copies, one for each enum type, in WindNinjaInputs to be set.
-        // almost sounds like we need to set a single enum type, to be shared, where the enum type is defined once at a level where everything can access it, like in an output manager class.
-        // or just go back to using strings, no more "switch" "case" logic.
 
         int numSplits;
-        double *finalSpeedSplitVals = NULL;
+        double *finalSpeedSplitVals = nullptr;
         calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
         for(int i = 0; i < ninjas.size(); i++)
@@ -2912,8 +2908,8 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
             AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
             #ifdef NINJAFOAM
-            AsciiGrid<double> *turbTempGrid = NULL;
-            AsciiGrid<double> *colMaxTempGrid = NULL;
+            AsciiGrid<double> *turbTempGrid = nullptr;
+            AsciiGrid<double> *colMaxTempGrid = nullptr;
             if(ninjas[i]->input.writeTurbulence)
             {
                 //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
@@ -2924,7 +2920,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             }
             #endif //NINJAFOAM
             #ifdef FRICTION_VELOCITY
-            AsciiGrid<double> *ustarTempGrid = NULL;
+            AsciiGrid<double> *ustarTempGrid = nullptr;
             if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
             {
                 ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
@@ -2932,7 +2928,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             }
             #endif //FRICTION_VELOCITY
             #ifdef EMISSIONS
-            AsciiGrid<double> *dustTempGrid = NULL;
+            AsciiGrid<double> *dustTempGrid = nullptr;
             if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
             {
                 dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
@@ -2969,36 +2965,21 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
                 }
             }
 
-            if(angTempGrid)
-            {
-                delete angTempGrid;
-                angTempGrid = NULL;
-            }
+            delete angTempGrid;
+            angTempGrid = nullptr;
             #ifdef NINJAFOAM
-            if(turbTempGrid)
-            {
-                delete turbTempGrid;
-                turbTempGrid = NULL;
-            }
-            if(colMaxTempGrid)
-            {
-                delete colMaxTempGrid;
-                colMaxTempGrid = NULL;
-            }
+            delete turbTempGrid;
+            turbTempGrid = nullptr;
+            delete colMaxTempGrid;
+            colMaxTempGrid = nullptr;
             #endif //NINJAFOAM
             #ifdef FRICTION_VELOCITY
-            if(ustarTempGrid)
-            {
-                delete ustarTempGrid;
-                ustarTempGrid = NULL;
-            }
+            delete ustarTempGrid;
+            ustarTempGrid = nullptr;
             #endif //FRICTION_VELOCITY
             #ifdef EMISSIONS
-            if(dustTempGrid)
-            {
-                delete dustTempGrid;
-                dustTempGrid = NULL;
-            }
+            delete dustTempGrid;
+            dustTempGrid = nullptr;
             #endif //EMISSIONS
         }
 
@@ -3006,13 +2987,13 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
         for(int i = 0; i < ninjas.size(); i++)
         {
             delete resampledVelGrids[i];
-            resampledVelGrids[i] = NULL;
+            resampledVelGrids[i] = nullptr;
         }
         delete[] resampledVelGrids;
-        resampledVelGrids = NULL;
+        resampledVelGrids = nullptr;
 
         delete[] finalSpeedSplitVals;
-        finalSpeedSplitVals = NULL;
+        finalSpeedSplitVals = nullptr;
     }
 
     if(ninjas[0]->input.fgbzUseConsistentColorScale == true)
@@ -3023,7 +3004,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
         }
 
-        eArmySpeedScaling speedScaling;
+        eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
         if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_color)
         {
             speedScaling = ninjaArmy::equal_color;
@@ -3032,10 +3013,9 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
         {
             speedScaling = ninjaArmy::equal_interval;
         }
-        // see kmz version of this, for comments related to a throw statement here, and using a WindNinjaInputs defined enum type, or a string.
 
         int numSplits;
-        double *finalSpeedSplitVals = NULL;
+        double *finalSpeedSplitVals = nullptr;
         calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
         for(int i = 0; i < ninjas.size(); i++)
@@ -3070,24 +3050,21 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
 
             output.write(ninjas[i]->input.fgbzFile, "FlatGeoBufZip");
 
-            if(angTempGrid)
-            {
-                delete angTempGrid;
-                angTempGrid = NULL;
-            }
+            delete angTempGrid;
+            angTempGrid = nullptr;
         }
 
         //cleanup
         for(int i = 0; i < ninjas.size(); i++)
         {
             delete resampledVelGrids[i];
-            resampledVelGrids[i] = NULL;
+            resampledVelGrids[i] = nullptr;
         }
         delete[] resampledVelGrids;
-        resampledVelGrids = NULL;
+        resampledVelGrids = nullptr;
 
         delete[] finalSpeedSplitVals;
-        finalSpeedSplitVals = NULL;
+        finalSpeedSplitVals = nullptr;
     }
 
     ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");
