@@ -315,7 +315,7 @@ public:
     void set_outputBufferClipping(double percent);
     void set_googOutFlag(bool flag);
 
-    void set_googColor(std::string scheme,bool scaling);
+    void set_googColor(std::string scheme, bool scaling);
     void set_googConsistentColorScale(bool flag, int numRuns);
 
     void set_wxModelGoogOutFlag(bool flag);
@@ -349,8 +349,13 @@ public:
     void set_pdfLineWidth(const float w);
     void set_pdfBaseMap(const int b);
     void set_pdfSize( const double height, const double width, const unsigned short dpi );
-    void set_flatGeoBufFlag(bool flag);
-    void set_wxModelFgbOutFlag(bool flag);
+    void set_fgbzOutFlag(bool flag);
+    void set_fgbzResolution(double Resolution, lengthUnits::eLengthUnits units);  //sets the output resolution of the flatGeoBufZip .fgbz file, if negative value the computational mesh resolution is used
+    void set_fgbzSpeedScaling(OutputWriter::eSpeedScaling scaling);  //sets the desired method of speed scaling in the flatGeoBufZip legend (equal_color=>equal numbers of arrows for each color, equal_interval=>equal speed intervals over the speed range)
+    void set_fgbzColor(std::string scheme, bool scaling);
+    void set_fgbzLineWidth(double width);  //sets the line width for the vectors in the flatGeoBufZip .fgbz file
+    void set_fgbzConsistentColorScale(bool flag, int numRuns);
+    void set_wxModelFgbzOutFlag(bool flag);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);

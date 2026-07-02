@@ -491,7 +491,7 @@
             const arrayBuffer = await response.arrayBuffer();
             const zip = await JSZip.loadAsync(arrayBuffer);
 
-            const keywords = ["NOMADS", "UCAR", "PASTCAST"];
+            const keywords = ["NOMADS", "UCAR", "NCEP", "PASTCAST", "WRF", "HRRR"];
             const containsKeyword = Object.keys(zip.files).some(fileName => 
                 keywords.some(keyword => fileName.toUpperCase().includes(keyword))
             );
@@ -553,7 +553,7 @@
                     layer.bindPopup(`
                         <strong>${name}</strong><br>
                         Speed: ${props.speed ?? 'n/a'}<br>
-                        Angle: ${props.angle ?? 'n/a'}
+                        Angle: ${props.dir ?? 'n/a'}
                     `);
                 }
             });
@@ -817,7 +817,7 @@
                     layer.bindPopup(`
                         <strong>${name}</strong><br>
                         Speed: ${props.speed ?? 'n/a'}<br>
-                        Angle: ${props.angle ?? 'n/a'}
+                        Angle: ${props.dir ?? 'n/a'}
                     `);
                 }
             });

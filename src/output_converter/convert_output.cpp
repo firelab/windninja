@@ -363,7 +363,6 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
     
     ninjaKmlFiles.setKmlFile(output_file_base + ".kml");
 	ninjaKmlFiles.setKmzFile(output_file_base + ".kmz");
-	//ninjaKmlFiles.setDemFile(dem_filename);
 
 	ninjaKmlFiles.setLegendFile(output_file_base + ".bmp");
 	//ninjaKmlFiles.setDateTimeLegendFile("out_kml_time.bmp", "ninjatime.bmp");

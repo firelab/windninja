@@ -152,6 +152,12 @@ public:
         ncepGfsSurf
     };
 
+    enum eArmySpeedScaling
+    {
+        equal_color,
+        equal_interval
+    };
+
     void makeDomainAverageArmy( int nRuns, bool momentumFlag );
 
     void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
@@ -1029,13 +1035,13 @@ public:
     */
     int setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Enable/disable the wxModel fgb output for a ninja
+    * \brief Enable/disable the wxModel flatGeoBufZip output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag Enabled if true, disabled if false
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    int setWxModelFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
     * \brief Enable/disable the wxModel geotiff output for a ninja
     *
@@ -1395,7 +1401,96 @@ public:
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
 
-    int setFlatGeoBufFlag( const int nIndex, const bool flag, char ** papszOptions );
+    /**
+    * \brief Enable/disable fgbz output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   determines if fgbz output is enabled or not
+    * \return errval Returns NINJA_SUCCESS if successful
+    */
+    int setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions );
+    /**
+     * @brief setFgbzResolution
+     * @param nIndex
+     * @param resolution
+     * @param units
+     * @param papszOptions
+     * @return
+     * Set the colorscheme for colorblind mode
+     */
+    int setFgbzResolution( const int nIndex, const double resolution,
+                           const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output resolution for a ninja
+    * Set the fgbz output resolution for a ninja given a resolution
+    * and a string formatted unit.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzResolution( const int nIndex, const double resolution,
+                           std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output speed scaling parameter for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param scaling scaling option
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzSpeedScaling( const int nIndex, const OutputWriter::eSpeedScaling scaling,
+                             char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output speed scaling parameter for a ninja
+    * Set the fgbz output speed scaling parameter for a ninja given
+    * the ninja index and string formatted scaling option.
+    *
+    * _Valid scaling options_:
+    * - "equal_color"    = equal_color
+    * - "color"          = equal_color
+    * - "equal_interval" = equal_interval
+    * - "interval"       = equal_interval
+    *
+    * \param nIndex index of a ninja
+    * \param scaling string formatted scaling units
+    * \return
+    */
+    int setFgbzSpeedScaling( const int nIndex, std::string scaling, char ** papszOptions=NULL);
+    /**
+    * \brief Set the fgbz output color scheme and vector scaling for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param colorScheme desired colorScheme value
+    * \param scaling desired vector scaling value
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzColor(const int nIndex, std::string colorScheme, bool scaling);
+    /**
+    * \brief Set the fgbz output line width for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param width value of desired line width
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzLineWidth( const int nIndex, const double width, char ** papszOptions=NULL );
+    /**
+    * \brief Set the flatGeoBufZip fgbzUseConsistentColorScaleFlag value for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \param numRuns the number of ninjas/simulations to be run
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzConsistentColorScale(const int nIndex, bool flag, int numRuns);
 
     /**
     * \brief Returns the output path of a ninja
@@ -1406,16 +1501,16 @@ public:
     std::string getOutputPath( const int nIndex, char ** papszOptions=NULL );
 
     /**
-    * \brief Returns the output fgb filenames of each ninja, as well as the station kml filenames
-    *        and the weather model filenames of each ninja if they were created for the run.
+    * \brief Returns the output fgbz filenames of each ninja, as well as the station kml filenames
+    *        and the weather model fgbz filenames of each ninja if they were created for the run.
     *
     * \param fgbzFilenames The output fgbz filenames of each ninja, to be filled.
     * \param stationKmlFilenames The station kml filenames of each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
-    * \param weatherModelKmzFilenames The weather model fgb filenames of each ninja, to be filled. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+    * \param weatherModelFgbzFilenames The weather model fgbz filenames of each ninja, to be filled. Runs without weather model fgbz file output use "" for the weather model fgbz filenames.
     * \return errval Returns NINJA_SUCCESS upon success.
     */
     int getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
-                            std::vector<std::string>& wxModelKmzFilenamesStr, char ** papszOptions=NULL );
+                            std::vector<std::string>& wxModelFgbzFilenamesStr, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
      *  Termination Section
@@ -1426,7 +1521,7 @@ public:
 
     std::vector<std::string> fgbzFilenames;
     std::vector<std::string> stationKmlFilenames;
-    std::vector<std::string> wxModelFgbFilenames;
+    std::vector<std::string> wxModelFgbzFilenames;
 
     GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
     GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
@@ -1439,6 +1534,9 @@ protected:
     void writeFarsiteAtmosphereFile();
 
     void setCurrentMapVisualizationFilenames(int runNumber);
+
+    void calcConsistentColorScaleSplits(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, const eArmySpeedScaling scaling);
+    void writeConsistentColorScaleOutputs();
 
     /*
     ** This function initializes various data for the lifetime of the

@@ -77,11 +77,19 @@ class OutputWriter
         OutputWriter ();                             /* constructor */
         ~OutputWriter();
 
+        enum eSpeedScaling{
+            equal_color,
+            equal_interval
+        };
+
         /* ====================  ACCESSORS     ======================================= */
 
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s,
                           velocityUnits::eVelocityUnits units);
+        // angleFromNorth calculations only technically required for flatGeoBuf output. pdf and gtiff don't warp
+        double angleFromNorth;
+        void setAngleFromNorth(const double angFromNorth);
         void setDirGrid(AsciiGrid<double> &d);
 #ifdef EMISSIONS
         void setDustGrid(AsciiGrid<double> &d);
@@ -94,6 +102,10 @@ class OutputWriter
         void setSize( const double w, const double h );
         void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
         void setWxModel(std::string name) {wxModelName=name;}
+        void setSpeedScaling(eSpeedScaling scaling) {speedScaling=scaling;}
+        void setColorScheme(std::string cScheme);
+        void setVectorScaling(bool vec_scaling) {useVectorScaling=vec_scaling;}
+        void setSplitVals(const double *splitVals, const unsigned short size);
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -115,7 +127,7 @@ class OutputWriter
 
         bool _writePDF(std::string outputfn);
         bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
-        bool _writeFlatGeoBuf(std::string filename);
+        bool _writeFlatGeoBufZip(std::string filename);
         std::string _getStyleFromSpeed( const double & spd );
         void _openSrcDataSet();
         void _closeDataSets();
@@ -161,6 +173,7 @@ class OutputWriter
         std::string timeDateLegendFile;
         std::string wxModelName;
 
+        static const char * NAME;//       = "name";
         static const char * SPEED;//      = "speed";
         static const char * DIR;//        = "dir";
         static const char * AV_DIR;//     = "AV_dir";
@@ -173,6 +186,7 @@ class OutputWriter
         char * pszTmpDemFile;
 
         static const unsigned short NCOLORS = 5;
+        static const unsigned short NSPLITS = 6;  // NCOLORS+1
         static const unsigned short LGND_WIDTH = 160;
         static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4;
 
@@ -183,6 +197,9 @@ class OutputWriter
         double margin;
         double height, width;
 
+        eSpeedScaling speedScaling;
+        std::string colorScheme;
+        bool useVectorScaling;
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;

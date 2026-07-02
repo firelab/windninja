@@ -1842,7 +1842,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
 
 /**
  * \brief Set the flag to write the weather model winds used for initialzation as
- *        a fgb file.
+ *        a flatGeoBufZip file.
  *
  * \note Only valid if wxModelInitialization is used.
  *
@@ -1851,16 +1851,16 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelAsciiOutFlag
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
  * \param flag The flag which determines whether or not the weather model winds will be
- *             written as a raster file (0 = no, 1 = yes).
+ *             written as an fgbz file (0 = no, 1 = yes).
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelFgbOutFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetWxModelFgbzOutFlag
     ( NinjaArmyH * army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setWxModelFgbOutFlag( nIndex, flag );
+        return reinterpret_cast<ninjaArmy*>( army )->setWxModelFgbzOutFlag( nIndex, flag );
     }
     else
     {
@@ -2448,21 +2448,147 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetPDFResolution
 }
 
 /**
- * \brief Set the flag to write FlatGeoBuf output for a simulation.
+ * \brief Set the flag to write flatGeoBufZip output for a simulation.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param nIndex The run to apply the setting to.
- * \param flag The flag which determines whether or not VTK output will be
+ * \param flag The flag which determines whether or not fgbz output will be
  *             written (0 = no, 1 = yes).
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaSetFlatGeoBufFlag
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzOutFlag
     ( NinjaArmyH* army, const int nIndex, const bool flag, char ** papszOptions )
 {
     if( NULL != army )
     {
-        return reinterpret_cast<ninjaArmy*>( army )->setFlatGeoBufFlag( nIndex, flag, papszOptions );
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzOutFlag( nIndex, flag, papszOptions );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the resolution of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param resolution The resolution at which to write the fgbz output.
+ * \param units The units of the fgbz output resolution ("ft", "m").
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzResolution
+    ( NinjaArmyH * army, const int nIndex, const double resolution,
+      const char * units, char ** papszOptions )
+{
+    if( NULL != army && NULL != units )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzResolution
+            ( nIndex, resolution, std::string( units ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the scaling of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param scaling The scaling at which to write the fgbz output. ("equal_color", "color", "equal_interval", "interval")
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzSpeedScaling
+    ( NinjaArmyH * army, const int nIndex, const char * scaling, char ** papszOptions )
+{
+    if( NULL != army && NULL != scaling )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzSpeedScaling
+            ( nIndex, std::string( scaling ) );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the line width of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param width The line width at which to write the fgbz output.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzLineWidth
+    ( NinjaArmyH * army, const int nIndex, const double width, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzLineWidth( nIndex, width );
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the Color Scheme of the flatGeoBufZip output for a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param colorScheme A string that specifies the color scheme ("default", "ROPGW", "oranges", "blues", "pinks", "greens", "magic_beans", "pink_to_greens").
+ * \param scaling The flag which determines if vector scaling will be used.
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzColor
+    ( NinjaArmyH * army, const int nIndex, const char * colorScheme, bool scaling, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzColor(nIndex, std::string( colorScheme ), scaling);
+    }
+    else
+    {
+        return NINJA_E_NULL_PTR;
+    }
+}
+
+/**
+ * \brief Set the flag to use a Consistent Color Scheme for all flatGeoBufZip Outputs of a simulation.
+ *
+ * \note Only valid if NinjaSetFgbzOutFlag is set to 1.
+ *
+ * \param army An opaque handle to a valid ninjaArmy.
+ * \param nIndex The run to apply the setting to.
+ * \param flag The flag that determines whether consistent color scaling will be used.
+ * \param numRuns The number of runs that will be simulated
+ *
+ * \return NINJA_SUCCESS on success, non-zero otherwise.
+ */
+WINDNINJADLL_EXPORT NinjaErr NinjaSetFgbzConsistentColorScale
+    ( NinjaArmyH * army, const int nIndex, bool flag, int numRuns, char ** papszOptions )
+{
+    if( NULL != army )
+    {
+        return reinterpret_cast<ninjaArmy*>( army )->setFgbzConsistentColorScale(nIndex, flag, numRuns);
     }
     else
     {
@@ -2685,31 +2811,31 @@ WINDNINJADLL_EXPORT NinjaErr NinjaWriteBlankWxStationFile( const char * outputSt
 }
 
 /**
- * \brief calls ninjaArmy::getRunKmzFilenames(), which gets the ninjas[i] output kmz filenames,
- *        as well as ninjas[i] station kml filenames and ninjas[i] weather model filenames,
+ * \brief calls ninjaArmy::getMapVisualizationFilenames(), which gets the ninjas[i] output fgbz filenames,
+ *        as well as ninjas[i] station kml filenames and ninjas[i] weather model fgbz filenames,
  *        if they were created for the run.
  *
  * \note Must be called after NinjaStartRuns is called and finished successfully.
- * \note NinjaDestroyRunKmzFilenames() must be called on the run kmz filenames when done with the filenames, to properly deallocate the filenames memory.
+ * \note NinjaDestroyMapVisualizationFilenames() must be called on the run fgbz filenames when done with the filenames, to properly deallocate the filenames memory.
  *
  * \param army An opaque handle to a valid ninjaArmy.
  * \param numRuns The number of runs that were simulated, to be filled. Also the expected size of the filled filename arrays.
- * \param kmzFilenames The ninjas[i] output kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns.
+ * \param fgbzFilenames The ninjas[i] output fgbz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns.
  * \param stationKmlFilenames The ninjas[i] station kml filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without station kml file output use "" for the station kml filenames.
- * \param weatherModelKmzFilenames The ninjas[i] weather model kmz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without weather model kmz file output use "" for the weather model kmz filenames.
+ * \param weatherModelFgbzFilenames The ninjas[i] weather model fgbz filenames array, as a NULL char**, to be created and filled, to be created of size numRuns. Runs without weather model fgbz file output use "" for the weather model fgbz filenames.
  * \param papszOptions options
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
-WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelFgbFilenames, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelFgbzFilenames, char ** papszOptions)
 {
     std::vector<std::string> fgbzFilenameStrings;
     std::vector<std::string> stationKmlFilenameStrings;
-    std::vector<std::string> wxModelFgbFilenameStrings;
+    std::vector<std::string> wxModelFgbzFilenameStrings;
 
     if( NULL != army )
     {
-        NinjaErr retval = reinterpret_cast<ninjaArmy*>( army )->getMapVisualizationFilenames( fgbzFilenameStrings, stationKmlFilenameStrings, wxModelFgbFilenameStrings );
+        NinjaErr retval = reinterpret_cast<ninjaArmy*>( army )->getMapVisualizationFilenames( fgbzFilenameStrings, stationKmlFilenameStrings, wxModelFgbzFilenameStrings );
         if( retval != NINJA_SUCCESS )
         {
             return retval;
@@ -2720,30 +2846,30 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army
 
         *fgbzFilenames = (char **)malloc(sizeof(char *) * n);
         *stationKmlFilenames = (char **)malloc(sizeof(char *) * n);
-        *weatherModelFgbFilenames = (char **)malloc(sizeof(char *) * n);
+        *weatherModelFgbzFilenames = (char **)malloc(sizeof(char *) * n);
 
         for(int i = 0; i < n; i++)
         {
             std::string fgbzFilenameStr = fgbzFilenameStrings[i];
             std::string stationKmlFilenameStr = stationKmlFilenameStrings[i];
-            std::string wxModelFgbFilenameStr = wxModelFgbFilenameStrings[i];
+            std::string wxModelFgbzFilenameStr = wxModelFgbzFilenameStrings[i];
 
             char *fgbzFilename = (char *)malloc(fgbzFilenameStr.size() + 1);
             char *stationKmlFilename = (char *)malloc(stationKmlFilenameStr.size() + 1);
-            char *wxModelFgbFilename = (char *)malloc(wxModelFgbFilenameStr.size() + 1);
+            char *wxModelFgbzFilename = (char *)malloc(wxModelFgbzFilenameStr.size() + 1);
 
-            if(!fgbzFilename || !stationKmlFilename || !wxModelFgbFilename)
+            if(!fgbzFilename || !stationKmlFilename || !wxModelFgbzFilename)
             {
                 return NINJA_E_BAD_ALLOC;
             }
 
             memcpy(fgbzFilename, fgbzFilenameStr.c_str(), fgbzFilenameStr.size() + 1);
             memcpy(stationKmlFilename, stationKmlFilenameStr.c_str(), stationKmlFilenameStr.size() + 1);
-            memcpy(wxModelFgbFilename, wxModelFgbFilenameStr.c_str(), wxModelFgbFilenameStr.size() + 1);
+            memcpy(wxModelFgbzFilename, wxModelFgbzFilenameStr.c_str(), wxModelFgbzFilenameStr.size() + 1);
 
             (*fgbzFilenames)[i] = fgbzFilename;
             (*stationKmlFilenames)[i] = stationKmlFilename;
-            (*weatherModelFgbFilenames)[i] = wxModelFgbFilename;
+            (*weatherModelFgbzFilenames)[i] = wxModelFgbzFilename;
         }
 
         return NINJA_SUCCESS;
@@ -2754,7 +2880,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army
     }
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, char** fgbzFilenames, char** stationKmlFilenames, char** weatherModelKmzFilenames, char ** papszOptions)
+WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, char** fgbzFilenames, char** stationKmlFilenames, char** weatherModelFgbzFilenames, char ** papszOptions)
 {
     for(int i = 0; i < numRuns; i++)
     {
@@ -2774,11 +2900,11 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, 
             }
         }
 
-        if(weatherModelKmzFilenames)
+        if(weatherModelFgbzFilenames)
         {
-            if(weatherModelKmzFilenames[i])
+            if(weatherModelFgbzFilenames[i])
             {
-                free(weatherModelKmzFilenames[i]);
+                free(weatherModelFgbzFilenames[i]);
             }
         }
     }
@@ -2791,9 +2917,9 @@ WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, 
     {
         free(stationKmlFilenames);
     }
-    if(weatherModelKmzFilenames)
+    if(weatherModelFgbzFilenames)
     {
-        free(weatherModelKmzFilenames);
+        free(weatherModelFgbzFilenames);
     }
 
     return NINJA_SUCCESS;

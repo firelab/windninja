@@ -23,16 +23,28 @@ Outputs::Outputs(Ui::MainWindow *ui,
     ui->shapeFilesMeshResolutionComboBox->setItemData(1, "ft");
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(0, "m");
     ui->geospatialPDFFilesMeshResolutionComboBox->setItemData(1, "ft");
-    ui->alternativeColorSchemeComboBox->setItemData(0, "default");
-    ui->alternativeColorSchemeComboBox->setItemData(1, "ROPGW");
-    ui->alternativeColorSchemeComboBox->setItemData(2, "oranges");
-    ui->alternativeColorSchemeComboBox->setItemData(3, "blues");
-    ui->alternativeColorSchemeComboBox->setItemData(4, "pinks");
-    ui->alternativeColorSchemeComboBox->setItemData(5, "greens");
-    ui->alternativeColorSchemeComboBox->setItemData(6, "magic_beans");
-    ui->alternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
-    ui->legendComboBox->setItemData(0, "equal_interval");
-    ui->legendComboBox->setItemData(1, "equal_color");
+    ui->mapVisualizationMeshResolutionComboBox->setItemData(0, "m");
+    ui->mapVisualizationMeshResolutionComboBox->setItemData(1, "ft");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(0, "default");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(1, "ROPGW");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(2, "oranges");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(3, "blues");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(4, "pinks");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(5, "greens");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(6, "magic_beans");
+    ui->googleEarthAlternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
+    ui->googleEarthLegendComboBox->setItemData(0, "equal_interval");
+    ui->googleEarthLegendComboBox->setItemData(1, "equal_color");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(0, "default");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(1, "ROPGW");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(2, "oranges");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(3, "blues");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(4, "pinks");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(5, "greens");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(6, "magic_beans");
+    ui->mapVisualizationAlternativeColorSchemeComboBox->setItemData(7, "pink_to_green");
+    ui->mapVisualizationLegendComboBox->setItemData(0, "equal_interval");
+    ui->mapVisualizationLegendComboBox->setItemData(1, "equal_color");
 
     connect(ui->outputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &Outputs::windHeightComboBoxCurrentIndexChanged);
     connect(ui->outputWindHeightSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::windHeightSpinBoxValueChanged);
@@ -52,6 +64,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->fireBehaviorGeoTiffMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::fireBehaviorGeoTiffMeshResolutionGroupBoxToggled);
     connect(ui->shapeFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::shapeFilesMeshResolutionGroupBoxToggled);
     connect(ui->geospatialPDFFilesMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::geospatialPDFFilesMeshResolutionGroupBoxToggled);
+    connect(ui->mapVisualizationMeshResolutionGroupBox, &QGroupBox::toggled, this, &Outputs::mapVisualizationMeshResolutionGroupBoxToggled);
     connect(this, &Outputs::updateGoogleState, &AppState::instance(), &AppState::updateGoogleEarthOutputState);
     connect(this, &Outputs::updateFireBehaviorAsciiState, &AppState::instance(), &AppState::updateFireBehaviorAsciiOutputState);
     connect(this, &Outputs::updateFireBehaviorGeoTiffState, &AppState::instance(), &AppState::updateFireBehaviorGeoTiffOutputState);
@@ -66,6 +79,7 @@ Outputs::Outputs(Ui::MainWindow *ui,
     connect(ui->fireBehaviorGeoTiffMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::fireBehaviorGeoTiffMeshResolutionSpinBoxValueChanged);
     connect(ui->shapeFilesMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::shapeFilesMeshResolutionSpinBoxValueChanged);
     connect(ui->geospatialPDFFilesMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::geospatialPDFFilesMeshResolutionSpinBoxValueChanged);
+    connect(ui->mapVisualizationMeshResolutionSpinBox, &QDoubleSpinBox::valueChanged, this, &Outputs::mapVisualizationMeshResolutionSpinBoxValueChanged);
 }
 
 void Outputs::windHeightComboBoxCurrentIndexChanged(int index)
@@ -219,6 +233,17 @@ void Outputs::geospatialPDFFilesMeshResolutionGroupBoxToggled(bool checked)
     emit updatePDFState();
 }
 
+void Outputs::mapVisualizationMeshResolutionGroupBoxToggled(bool checked)
+{
+    ui->mapVisualizationMeshResolutionSpinBox->setEnabled(!checked);
+    ui->mapVisualizationMeshResolutionComboBox->setEnabled(!checked);
+
+    emit meshResolutionSpinBoxValueChanged(ui->meshResolutionSpinBox->value());
+    emit meshResolutionUnitsComboBoxCurrentIndexChanged(ui->meshResolutionUnitsComboBox->currentIndex());
+
+    emit updateMapVisualizationState();
+}
+
 void Outputs::meshResolutionSpinBoxValueChanged(double value)
 {
     if(ui->googleEarthMeshResolutionGroupBox->isChecked())
@@ -252,6 +277,12 @@ void Outputs::meshResolutionSpinBoxValueChanged(double value)
         ui->geospatialPDFFilesMeshResolutionSpinBox->setValue(value);
         emit updatePDFState();
     }
+
+    if(ui->mapVisualizationMeshResolutionGroupBox->isChecked())
+    {
+        ui->mapVisualizationMeshResolutionSpinBox->setValue(value);
+        emit updateMapVisualizationState();
+    }
 }
 
 void Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
@@ -280,6 +311,11 @@ void Outputs::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
     {
         ui->geospatialPDFFilesMeshResolutionComboBox->setCurrentIndex(index);
     }
+
+    if(ui->mapVisualizationMeshResolutionGroupBox->isChecked())
+    {
+        ui->mapVisualizationMeshResolutionComboBox->setCurrentIndex(index);
+    }
 }
 
 void Outputs::googleEarthMeshResolutionSpinBoxValueChanged()
@@ -307,5 +343,10 @@ void Outputs::shapeFilesMeshResolutionSpinBoxValueChanged()
 void Outputs::geospatialPDFFilesMeshResolutionSpinBoxValueChanged()
 {
     emit updatePDFState();
+}
+
+void Outputs::mapVisualizationMeshResolutionSpinBoxValueChanged()
+{
+    emit updateMapVisualizationState();
 }
 

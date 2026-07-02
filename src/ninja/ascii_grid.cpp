@@ -36,12 +36,10 @@ AsciiGrid<T>::AsciiGrid()
     cellSize = 0;
     xllCorner = 0;
     yllCorner = 0;
-    sortedData = 0;
 
     #ifdef ASCII_GRID_DEBUG
         std::cout << "Created AsciiGrid using AsciiGrid()" << std::endl;
     #endif
-
 }
 
 /**
@@ -55,10 +53,8 @@ template <class T>
 AsciiGrid<T>::AsciiGrid(const std::string fileName)
 {
     prjString = "";
-    sortedData = 0;
 
     read_Grid(fileName);
-
 }
 
 /**
@@ -71,20 +67,12 @@ AsciiGrid<T>::AsciiGrid(const std::string fileName)
 template <class T>
 AsciiGrid<T>::AsciiGrid(const AsciiGrid &A)
 {
-    sortedData = 0;
     data = A.data;
     cellSize = A.cellSize;
     xllCorner = A.xllCorner;
     yllCorner = A.yllCorner;
     prjString = A.prjString;
-
-    if(A.sortedData != NULL)
-    {
-        sortedData = new T[data.get_numRows() * data.get_numCols()];
-        for(int i = 0; i < data.get_numRows() * data.get_numCols(); i++)
-            sortedData[i] = A.sortedData[i];
-    }
-
+    sortedData = A.sortedData;
 }
 
 /**
@@ -108,7 +96,6 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
     xllCorner = 0;
     yllCorner = 0;
     prjString = prjStr;
-    sortedData = 0;
     cellSize = cS;
     xllCorner = xL;
     yllCorner = yL;
@@ -133,7 +120,6 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
 :data(nR, nC, nDV)
 {
     prjString = prjStr;
-    sortedData = 0;
     cellSize = cS;
     xllCorner = xL;
     yllCorner = yL;
@@ -144,8 +130,6 @@ template <class T>
 AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
 :data(poDS->GetRasterYSize(), poDS->GetRasterXSize(), poDS->GetRasterBand(band)->GetNoDataValue())
 {
-    sortedData = nullptr;
-
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
 
@@ -217,12 +201,6 @@ AsciiGrid<T>::~AsciiGrid()
 template <class T>
 void AsciiGrid<T>::deallocate()
 {
-    if(sortedData)
-    {
-        delete[]sortedData;
-        sortedData = NULL;
-    }
-
     cellSize = 0.0;
     xllCorner = 0.0;
     yllCorner = 0.0;
@@ -538,13 +516,13 @@ void AsciiGrid<T>::get_nearestCellIndex(double xCoord, double yCoord, int *i, in
 }
 
 template <class T>
-T AsciiGrid<T>::get_maxValue()
+T AsciiGrid<T>::get_maxValue() const
 {
     return data.max();
 }
 
 template <class T>
-T AsciiGrid<T>::get_minValue()
+T AsciiGrid<T>::get_minValue() const
 {
     return data.min();
 }
@@ -1769,25 +1747,22 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
 template<class T>
 void AsciiGrid<T>::sort_grid()
 {
-    if(sortedData)
-        delete[]sortedData;
-
     sortedData = data.sortData();
-
 }
 
 template<class T>
 void AsciiGrid<T>::divide_gridData(double *d, int splits)
 {
-    if(!sortedData)
-        sort_grid();
-    int x = int(floor((double)(data.size() / (splits-1))));
+    sort_grid();
+
+    size_t step = sortedData.size() / static_cast<size_t>(splits - 1);
+
     // do the final value as the exact last index
     for(int i = 0; i < splits-1; i++)
     {
-        d[i] = sortedData[i * x];
+        d[i] = sortedData[i * step];
     }
-    d[splits-1] = sortedData[data.size()-1];
+    d[splits-1] = sortedData[sortedData.size()-1];
 }
 
 template<class T>
@@ -2551,19 +2526,7 @@ AsciiGrid<T> &AsciiGrid<T>::operator=(const AsciiGrid &A)
         xllCorner = A.xllCorner;
         yllCorner = A.yllCorner;
         prjString = A.prjString;
-
-        if(A.sortedData == NULL)
-        {
-            delete[] sortedData;
-            sortedData = NULL;
-        }
-        else{
-            delete[] sortedData;
-
-            sortedData = new T[data.get_numRows()*data.get_numCols()];
-            for(int i = 0; i < data.get_numRows()*data.get_numCols(); i++)
-                sortedData[i] = A.sortedData[i];
-        }
+        sortedData = A.sortedData;
     }
     return *this;
 }

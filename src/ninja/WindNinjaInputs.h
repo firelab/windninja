@@ -42,6 +42,7 @@
 #include "Elevation.h"
 #include "ninjaUnits.h"
 #include "KmlVector.h"
+#include "OutputWriter.h"
 #include "wxStation.h"
 #include "ninjaCom.h"
 #include "ninja_conv.h"
@@ -228,10 +229,19 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
-    bool        flatGeoBuffFlag;
-    std::string flatGeoBuffFile;
-    bool wxModelFgbFlag;
-    std::string wxModelFgbFile;
+    bool fgbzOutFlag;
+    std::string fgbzFile;
+    double fgbzResolution;
+    lengthUnits::eLengthUnits fgbzUnits;
+    OutputWriter::eSpeedScaling fgbzSpeedScaling;  //flag specifying the speed scaling for the legend/colors in the *.fgbz file (0=>equal colors, 1=>equal interval)
+    std::string fgbzColor;  //sets color scheme for output /Colorblind mode
+    bool fgbzVectorScale;  //sets the vector scaling
+    double fgbzLineWidth;  //drawing line width for fgbz output vectors
+    bool fgbzUseConsistentColorScale;  //flag specifying whether to use a cross data color scale or a standard single data color scale, for fgbz files, for all simulations
+    bool wxModelFgbzOutFlag;
+    std::string wxModelFgbzFile;
+    OutputWriter::eSpeedScaling wxModelFgbzSpeedScaling;  //flag specifying the speed scaling for the legend/colors in the wxModel *.fgbz file (0=>equal colors, 1=>equal interval)
+    double wxModelFgbzLineWidth;  //drawing line width for wxModel fgbz output vectors
 
     std::string customOutputPath; //user-specified path for output
 
@@ -296,6 +306,8 @@ public:
     std::string stlFile; //path/filename of an STL file
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
+    std::vector<blt::local_date_time> foamWxTimeList; //wxModelInit getTimeList() from ninjafoam
+    std::string foamWxForecastIdentifier; //wxModelInit getForecastIdentifier() from ninjafoam
     bool writeTurbulence;
     double colMax_colHeightAGL;
     lengthUnits::eLengthUnits colMax_colHeightAGL_units;
