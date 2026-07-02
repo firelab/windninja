@@ -537,10 +537,10 @@ bool ninjaArmy::startRuns(int numProcessors)
     // also used to set the size of the outputs, to better handle multi-threading
     atmosphere.reset(ninjas.size());
 
-    // prep a clean set of kmz output filenames, to be filled before ninjas[i] gets deleted after each run
+    // prep a clean set of map visualization output filenames, to be filled before ninjas[i] gets deleted after each run
     fgbzFilenames.resize(ninjas.size());
     stationKmlFilenames.resize(ninjas.size());
-    wxModelFgbFilenames.resize(ninjas.size());
+    wxModelFgbzFilenames.resize(ninjas.size());
 
     if(ninjas.size() == 1)
     {
@@ -591,6 +591,12 @@ bool ninjaArmy::startRuns(int numProcessors)
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
                 //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                 diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
+                //need to set some wxModelInit metadata from init-> to help with wxModel legend output
+                if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                {
+                    diurnal_ninja->input.foamWxTimeList = ninjas[0]->init->getTimeList(ninjas[0]->input.ninjaTimeZone);
+                    diurnal_ninja->input.foamWxForecastIdentifier = ninjas[0]->init->getForecastIdentifier();
+                }
                 if(!diurnal_ninja->simulate_wind()){
                     printf("Return of false from simulate_wind()\n");
                 }
@@ -602,8 +608,30 @@ bool ninjaArmy::startRuns(int numProcessors)
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
                 ninjas[0]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
-                //set fgbFile for setCurrentMapVisualization(), for the GUI
-                ninjas[0]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
+                //set fgbzFile for setCurrentMapVisualization(), for the GUI
+                ninjas[0]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
+
+                //set other filenames needed for consistentColorScale outputs
+                ninjas[0]->input.kmlFile = diurnal_ninja->input.kmlFile;
+                ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                ninjas[0]->input.legFile = diurnal_ninja->input.legFile;
+                ninjas[0]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
+
+                //also need to transfer the 2D output grids back to the original ninja, for consistentColorScale outputs
+                //note the TurbulenceGrid and colMaxGrid are NOT altered by the mass solver, so can skip those grids
+                ninjas[0]->VelocityGrid = diurnal_ninja->VelocityGrid;
+                ninjas[0]->AngleGrid = diurnal_ninja->AngleGrid;
+                ninjas[0]->CloudGrid = diurnal_ninja->CloudGrid;
+                //#ifdef NINJAFOAM
+                //ninjas[0]->TurbulenceGrid = diurnal_ninja->TurbulenceGrid;
+                //ninjas[0]->colMaxGrid = diurnal_ninja->colMaxGrid;
+                //#endif
+                #ifdef FRICTION_VELOCITY
+                ninjas[0]->UstarGrid = diurnal_ninja->UstarGrid;
+                #endif
+                #ifdef EMISSIONS
+                ninjas[0]->DustGrid = diurnal_ninja->DustGrid;
+                #endif
             }
 
 #endif //NINJAFOAM
@@ -631,7 +659,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 writeFarsiteAtmosphereFile();
             }
 
-            //setup the run kmz filenames, for C-API calls
+            //setup the run map visualization filenames, for C-API calls
             setCurrentMapVisualizationFilenames(0);
 
         }catch (bad_alloc& e)
@@ -710,6 +738,12 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
                     //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
                     diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
+                    //need to set some wxModelInit metadata from init-> to help with wxModel legend output
+                    if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                    {
+                        diurnal_ninja->input.foamWxTimeList = ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone);
+                        diurnal_ninja->input.foamWxForecastIdentifier = ninjas[i]->init->getForecastIdentifier();
+                    }
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
@@ -721,8 +755,30 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
                     ninjas[i]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
 
-                    //set fgbFile for setCurrentMapVisualizationFilenames(), for the GUI
-                    ninjas[i]->input.flatGeoBuffFile = diurnal_ninja->input.flatGeoBuffFile;
+                    //set fgbzFile for setCurrentMapVisualizationFilenames(), for the GUI
+                    ninjas[i]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
+
+                    //set other filenames needed for consistentColorScale outputs
+                    ninjas[i]->input.kmlFile = diurnal_ninja->input.kmlFile;
+                    ninjas[i]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                    ninjas[i]->input.legFile = diurnal_ninja->input.legFile;
+                    ninjas[i]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
+
+                    //also need to transfer the 2D output grids back to the original ninja, for consistentColorScale outputs
+                    //note the TurbulenceGrid and colMaxGrid are NOT altered by the mass solver, so can skip those grids
+                    ninjas[i]->VelocityGrid = diurnal_ninja->VelocityGrid;
+                    ninjas[i]->AngleGrid = diurnal_ninja->AngleGrid;
+                    ninjas[i]->CloudGrid = diurnal_ninja->CloudGrid;
+                    //#ifdef NINJAFOAM
+                    //ninjas[i]->TurbulenceGrid = diurnal_ninja->TurbulenceGrid;
+                    //ninjas[i]->colMaxGrid = diurnal_ninja->colMaxGrid;
+                    //#endif
+                    #ifdef FRICTION_VELOCITY
+                    ninjas[i]->UstarGrid = diurnal_ninja->UstarGrid;
+                    #endif
+                    #ifdef EMISSIONS
+                    ninjas[i]->DustGrid = diurnal_ninja->DustGrid;
+                    #endif
                 }
 
                 //store data for atmosphere file
@@ -742,12 +798,12 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                 }
 
-                //setup the run kmz filenames, for C-API calls
+                //setup the run map visualization filenames, for C-API calls
                 setCurrentMapVisualizationFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
-                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false )
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false && ninjas[0]->input.fgbzUseConsistentColorScale == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -855,12 +911,12 @@ bool ninjaArmy::startRuns(int numProcessors)
                     }
                 }
 
-                //setup the run kmz filenames, for C-API calls
+                //setup the run map visualization filenames, for C-API calls
                 setCurrentMapVisualizationFilenames(i);
 
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 //need to keep the ninjas for now, if doing a consistent color scale set of outputs
-                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false )
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false && ninjas[0]->input.fgbzUseConsistentColorScale == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -1000,132 +1056,13 @@ bool ninjaArmy::startRuns(int numProcessors)
 //        }
 
         //write consistent color scale outputs
-        if(ninjas.size() > 1 && ninjas[0]->input.googUseConsistentColorScale == true)
+        if(ninjas.size() > 1 && (ninjas[0]->input.googUseConsistentColorScale == true || ninjas[0]->input.fgbzUseConsistentColorScale == true))
         {
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent color scale output files...");
-
-            int numColors;
-            KmlVector **ninjaKmlFiles = new KmlVector*[ninjas.size()];
-            double **speedSplitVals = new double*[ninjas.size()];
-            for( int i = 0; i < ninjas.size(); i++ )
-            {
-                ninjaKmlFiles[i] = new KmlVector;
-
-                AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                AsciiGrid<double> *velTempGrid = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                #ifdef NINJAFOAM
-                AsciiGrid<double> *turbTempGrid = NULL;
-                AsciiGrid<double> *colMaxTempGrid = NULL;
-                if(ninjas[i]->input.writeTurbulence)
-                {
-                    //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                    //ninjaKmlFiles[i]->setTurbulenceGrid(*turbTempGrid, ninjas[i]->input.outputSpeedUnits);
-
-                    colMaxTempGrid = new AsciiGrid<double> (ninjas[i]->colMaxGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                    ninjaKmlFiles[i]->setColMaxGrid(*colMaxTempGrid, ninjas[i]->input.outputSpeedUnits,  ninjas[i]->input.colMax_colHeightAGL, ninjas[i]->input.colMax_colHeightAGL_units);
-                }
-                #endif //NINJAFOAM
-                #ifdef FRICTION_VELOCITY
-                AsciiGrid<double> *ustarTempGrid = NULL;
-                if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
-                {
-                    ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                    ninjaKmlFiles[i]->setUstarGrid(*ustarTempGrid);
-                }
-                #endif //FRICTION_VELOCITY
-                #ifdef EMISSIONS
-                AsciiGrid<double> *dustTempGrid = NULL;
-                if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
-                {
-                    dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                    ninjaKmlFiles[i]->setDustGrid(*dustTempGrid);
-                }
-                #endif //EMISSIONS
-
-                ninjaKmlFiles[i]->setKmlFile(ninjas[i]->input.kmlFile);
-                ninjaKmlFiles[i]->setKmzFile(ninjas[i]->input.kmzFile);
-                ninjaKmlFiles[i]->setDemFile(ninjas[i]->input.dem.fileName);
-
-                ninjaKmlFiles[i]->setLegendFile(ninjas[i]->input.legFile);
-                ninjaKmlFiles[i]->setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
-                ninjaKmlFiles[i]->setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
-                ninjaKmlFiles[i]->setDirGrid(*angTempGrid);
-
-                ninjaKmlFiles[i]->setLineWidth(ninjas[i]->input.googLineWidth);
-                ninjaKmlFiles[i]->setTime(ninjas[i]->input.ninjaTime);
-                if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
-                {
-                    std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
-                    ninjaKmlFiles[i]->setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
-                }
-
-                ninjaKmlFiles[i]->calcSpeedSplitVals(ninjas[i]->input.googSpeedScaling);
-
-                speedSplitVals[i] = ninjaKmlFiles[i]->getSpeedSplitVals(numColors);
-
-                if(angTempGrid)
-                {
-                    delete angTempGrid;
-                    angTempGrid = NULL;
-                }
-                if(velTempGrid)
-                {
-                    delete velTempGrid;
-                    velTempGrid = NULL;
-                }
-                #ifdef NINJAFOAM
-                if(turbTempGrid)
-                {
-                    delete turbTempGrid;
-                    turbTempGrid = NULL;
-                }
-                if(colMaxTempGrid)
-                {
-                    delete colMaxTempGrid;
-                    colMaxTempGrid = NULL;
-                }
-                #endif //NINJAFOAM
-                #ifdef FRICTION_VELOCITY
-                if(ustarTempGrid)
-                {
-                    delete ustarTempGrid;
-                    ustarTempGrid = NULL;
-                }
-                #endif //FRICTION_VELOCITY
-                #ifdef EMISSIONS
-                if(dustTempGrid)
-                {
-                    delete dustTempGrid;
-                    dustTempGrid = NULL;
-                }
-                #endif //EMISSIONS
-            }
-
-            ninjaKmlFiles[0]->calcSplitValsFromSplitVals(speedSplitVals, ninjas.size(), numColors, ninjas[0]->input.googSpeedScaling);
-            double *finalSpeedSplitVals = ninjaKmlFiles[0]->getSpeedSplitVals(numColors);
-
-            for( int i = 0; i < ninjas.size(); i++ )
-            {
-                ninjaKmlFiles[i]->setSpeedSplitVals(finalSpeedSplitVals,numColors);
-                if(ninjaKmlFiles[i]->writeKml(ninjas[i]->input.googSpeedScaling,ninjas[i]->input.googColor,ninjas[i]->input.googVectorScale))
-                {
-                    if(ninjaKmlFiles[i]->makeKmz())
-                        ninjaKmlFiles[i]->removeKmlFile();
-                }
-            }
-
-            // put this here, rather than after the cleanup, because all but the first ninja are deleted during cleanup
-            ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");
+            writeConsistentColorScaleOutputs();
 
             //cleanup at the end
             for( int i = 0; i < ninjas.size(); i++ )
             {
-                delete ninjaKmlFiles[i];
-                ninjaKmlFiles[i] = NULL;
-
-                delete speedSplitVals[i];
-                speedSplitVals[i] = NULL;
-
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
                 if( i != 0 )
                 {
@@ -1133,13 +1070,6 @@ bool ninjaArmy::startRuns(int numProcessors)
                     ninjas[i] = NULL;
                 }
             }
-            delete[] ninjaKmlFiles;
-            ninjaKmlFiles = NULL;
-            delete[] speedSplitVals;
-            speedSplitVals = NULL;
-
-            delete[] finalSpeedSplitVals;
-            finalSpeedSplitVals = NULL;
         }
     }catch (bad_alloc& e)
     {
@@ -2394,10 +2324,10 @@ int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char *
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
-int ninjaArmy::setWxModelFgbOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setWxModelFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-                       ninjas[ nIndex ]->set_wxModelFgbOutFlag( flag ) );
+                       ninjas[ nIndex ]->set_wxModelFgbzOutFlag( flag ) );
 }
 int ninjaArmy::setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2417,11 +2347,11 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
 }
 int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_googColor(colorScheme, scaling));
 }
 int ninjaArmy::setGoogConsistentColorScale(const int nIndex, bool flag, int numRuns)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googConsistentColorScale(flag, numRuns));
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_googConsistentColorScale(flag, numRuns));
 }
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
@@ -2484,7 +2414,6 @@ int ninjaArmy::setGoogLineWidth( const int nIndex, const double width,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_googLineWidth( width ) );
 }
-
 
 int ninjaArmy::setShpOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -2677,9 +2606,83 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
 }
 
-int ninjaArmy::setFlatGeoBufFlag( const int nIndex, const bool flag, char ** papszOptions )
+int ninjaArmy::setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_flatGeoBufFlag( flag ) );
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzOutFlag( flag ) );
+}
+
+int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
+                                  const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_fgbzResolution( resolution, units ) );
+}
+
+int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_fgbzResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, const OutputWriter::eSpeedScaling scaling,
+                                    char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzSpeedScaling( scaling ) );
+}
+
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, std::string scaling, char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+       if( scaling == "equal_color" || scaling == "color" )
+       {
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( OutputWriter::equal_color );
+           retval = NINJA_SUCCESS;
+       }
+       else if( scaling == "equal_interval" || scaling == "interval" )
+       {
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( OutputWriter::equal_interval );
+           retval = NINJA_SUCCESS;
+       }
+       else
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid speed scale '%s' in ninjaArmy::setFgbzSpeedScaling()\nchoices are: 'equal_color', 'color', 'equal_interval', 'interval'", scaling.c_str());
+           retval = NINJA_E_INVALID;
+       }
+    }
+    return retval;
+}
+
+int ninjaArmy::setFgbzColor(const int nIndex, string colorScheme, bool scaling)
+{
+    IF_VALID_INDEX_TRY(nIndex, ninjas, ninjas[nIndex]->set_fgbzColor(colorScheme, scaling));
+}
+
+int ninjaArmy::setFgbzLineWidth( const int nIndex, const double width, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzLineWidth( width ) );
+}
+
+int ninjaArmy::setFgbzConsistentColorScale(const int nIndex, bool flag, int numRuns)
+{
+    IF_VALID_INDEX_TRY(nIndex, ninjas, ninjas[nIndex]->set_fgbzConsistentColorScale(flag, numRuns));
 }
 
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
@@ -2692,11 +2695,11 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 }
 
 int ninjaArmy::getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
-                                   std::vector<std::string>& wxModelFgbFilenameStr, char ** papszOptions )
+                                             std::vector<std::string>& wxModelFgbzFilenameStr, char ** papszOptions )
 {
     fgbzFilenamesStr = fgbzFilenames;
     stationKmlFilenamesStr = stationKmlFilenames;
-    wxModelFgbFilenameStr = wxModelFgbFilenames;
+    wxModelFgbzFilenameStr = wxModelFgbzFilenames;
 
     return NINJA_SUCCESS;
 }
@@ -2727,7 +2730,7 @@ void ninjaArmy::cancelAndReset()
 
 void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
 {
-    fgbzFilenames[runNumber] = ninjas[runNumber]->input.flatGeoBuffFile;
+    fgbzFilenames[runNumber] = ninjas[runNumber]->input.fgbzFile;
 
     if(ninjas[runNumber]->input.stations.size() == 0)
     {
@@ -2749,13 +2752,430 @@ void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
     }
 
     // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
-    if(ninjas[runNumber]->input.wxModelFgbFile == "!set")
+    if(ninjas[runNumber]->input.wxModelFgbzFile == "!set")
     {
-        wxModelFgbFilenames[runNumber] = "";
+        wxModelFgbzFilenames[runNumber] = "";
     } else
     {
-        wxModelFgbFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbFile;
+        wxModelFgbzFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbzFile;
     }
+}
+
+void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, eArmySpeedScaling scaling)
+{
+    // make sure this value matches that of OutputWriter and KmlVector, or there will be problems using the calculated splitVals
+    int numSplits = 6;
+
+    *outSize = numSplits;
+    *outSplitVals = new double[numSplits];
+
+    switch(scaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            std::vector<double> combinedGridValues;
+            size_t nMaxCells = static_cast<size_t>(inSpdGrids[0]->get_nRows()) * static_cast<size_t>(inSpdGrids[0]->get_nCols()) * static_cast<size_t>(nSets);
+            combinedGridValues.reserve(nMaxCells);
+            for(int j = 0; j < nSets; j++)
+            {
+                const AsciiGrid<double>* current_grid = inSpdGrids[j];
+                for(int rowIdx = 0; rowIdx < current_grid->get_nRows(); rowIdx++)
+                {
+                    for(int colIdx = 0; colIdx < current_grid->get_nCols(); colIdx++)
+                    {
+                        double current_val = current_grid->get_cellValue(rowIdx, colIdx);
+                        if(current_val != current_grid->get_noDataValue() && !std::isnan(current_val))
+                        {
+                            combinedGridValues.push_back(current_val);
+                        }
+                    }
+                }
+            }
+
+            std::sort(combinedGridValues.begin(), combinedGridValues.end());
+
+            size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
+
+            // do the final value as the exact last index
+            for(int i = 0; i < numSplits - 1; i++)
+            {
+                (*outSplitVals)[i] = combinedGridValues[i * step];
+            }
+            (*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+
+            // if you want to use the actual minVal as the first splitVal, comment this line out
+            (*outSplitVals)[0] = 0.0;
+
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double minVal = 9999;
+            double maxVal = -9999;
+            for(int j = 0; j < nSets; j++)
+            {
+                double current_minVal = inSpdGrids[j]->get_minValue();
+                double current_maxVal = inSpdGrids[j]->get_maxValue();
+                if( current_minVal < minVal )
+                {
+                    minVal = current_minVal;
+                }
+                if( current_maxVal > maxVal )
+                {
+                    maxVal = current_maxVal;
+                }
+            }
+
+            double interval = maxVal / (float)(numSplits-1);
+            //double interval = (maxVal - minVal) / (float)(numSplits-1);
+            for(int i = 0; i < numSplits; i++)
+            {
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + minVal;
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            std::vector<double> combinedGridValues;
+            size_t nMaxCells = static_cast<size_t>(inSpdGrids[0]->get_nRows()) * static_cast<size_t>(inSpdGrids[0]->get_nCols()) * static_cast<size_t>(nSets);
+            combinedGridValues.reserve(nMaxCells);
+            for(int j = 0; j < nSets; j++)
+            {
+                const AsciiGrid<double>* current_grid = inSpdGrids[j];
+                for(int rowIdx = 0; rowIdx < current_grid->get_nRows(); rowIdx++)
+                {
+                    for(int colIdx = 0; colIdx < current_grid->get_nCols(); colIdx++)
+                    {
+                        double current_val = current_grid->get_cellValue(rowIdx, colIdx);
+                        if(current_val != current_grid->get_noDataValue() && !std::isnan(current_val))
+                        {
+                            combinedGridValues.push_back(current_val);
+                        }
+                    }
+                }
+            }
+
+            std::sort(combinedGridValues.begin(), combinedGridValues.end());
+
+            size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
+
+            // do the final value as the exact last index
+            for(int i = 0; i < numSplits - 1; i++)
+            {
+                (*outSplitVals)[i] = combinedGridValues[i * step];
+            }
+            (*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+
+            // if you want to use the actual minVal as the first splitVal, comment this line out
+            (*outSplitVals)[0] = 0.0;
+
+            break;
+        }
+    }
+}
+
+void ninjaArmy::writeConsistentColorScaleOutputs()
+{
+    ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent color scale output files...");
+
+    if(ninjas[0]->input.googUseConsistentColorScale == true)
+    {
+        AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+        }
+
+        eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+        if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_color)
+        {
+            speedScaling = ninjaArmy::equal_color;
+        }
+        if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
+        {
+            speedScaling = ninjaArmy::equal_interval;
+        }
+
+        int numSplits;
+        double *finalSpeedSplitVals = nullptr;
+        calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            KmlVector ninjaKmlFiles;
+
+            AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+            AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
+            #ifdef NINJAFOAM
+            AsciiGrid<double> *turbTempGrid = nullptr;
+            AsciiGrid<double> *colMaxTempGrid = nullptr;
+            if(ninjas[i]->input.writeTurbulence)
+            {
+                //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, ninjas[i]->input.outputSpeedUnits);
+
+                colMaxTempGrid = new AsciiGrid<double> (ninjas[i]->colMaxGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, ninjas[i]->input.outputSpeedUnits,  ninjas[i]->input.colMax_colHeightAGL, ninjas[i]->input.colMax_colHeightAGL_units);
+            }
+            #endif //NINJAFOAM
+            #ifdef FRICTION_VELOCITY
+            AsciiGrid<double> *ustarTempGrid = nullptr;
+            if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
+            {
+                ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
+            }
+            #endif //FRICTION_VELOCITY
+            #ifdef EMISSIONS
+            AsciiGrid<double> *dustTempGrid = nullptr;
+            if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
+            {
+                dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                ninjaKmlFiles.setDustGrid(*dustTempGrid);
+            }
+            #endif //EMISSIONS
+
+            ninjaKmlFiles.setKmlFile(ninjas[i]->input.kmlFile);
+            ninjaKmlFiles.setKmzFile(ninjas[i]->input.kmzFile);
+
+            ninjaKmlFiles.setLegendFile(ninjas[i]->input.legFile);
+            ninjaKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
+            ninjaKmlFiles.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+            ninjaKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+            ninjaKmlFiles.setDirGrid(*angTempGrid);
+
+            ninjaKmlFiles.setSpeedScaling(ninjas[i]->input.googSpeedScaling);
+            ninjaKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+            ninjaKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
+            ninjaKmlFiles.setLineWidth(ninjas[i]->input.googLineWidth);
+            ninjaKmlFiles.setTime(ninjas[i]->input.ninjaTime);
+            if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                ninjaKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+            }
+
+            ninjaKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+
+            if(ninjaKmlFiles.writeKml())
+            {
+                if(ninjaKmlFiles.makeKmz())
+                {
+                    ninjaKmlFiles.removeKmlFile();
+                }
+            }
+
+            delete angTempGrid;
+            angTempGrid = nullptr;
+            #ifdef NINJAFOAM
+            delete turbTempGrid;
+            turbTempGrid = nullptr;
+            delete colMaxTempGrid;
+            colMaxTempGrid = nullptr;
+            #endif //NINJAFOAM
+            #ifdef FRICTION_VELOCITY
+            delete ustarTempGrid;
+            ustarTempGrid = nullptr;
+            #endif //FRICTION_VELOCITY
+            #ifdef EMISSIONS
+            delete dustTempGrid;
+            dustTempGrid = nullptr;
+            #endif //EMISSIONS
+        }
+
+        //cleanup
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            delete resampledVelGrids[i];
+            resampledVelGrids[i] = nullptr;
+        }
+        delete[] resampledVelGrids;
+        resampledVelGrids = nullptr;
+
+        delete[] finalSpeedSplitVals;
+        finalSpeedSplitVals = nullptr;
+    }
+
+    if(ninjas[0]->input.fgbzUseConsistentColorScale == true)
+    {
+        AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+        }
+
+        eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+        if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_color)
+        {
+            speedScaling = ninjaArmy::equal_color;
+        }
+        else if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_interval)
+        {
+            speedScaling = ninjaArmy::equal_interval;
+        }
+
+        int numSplits;
+        double *finalSpeedSplitVals = nullptr;
+        calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            OutputWriter output;
+
+            AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+            AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
+
+            output.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+            output.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+            output.setDirGrid(*angTempGrid);
+
+            output.setSpeedScaling(ninjas[i]->input.fgbzSpeedScaling);
+            output.setColorScheme(ninjas[i]->input.fgbzColor);
+            output.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
+            output.setLineWidth(ninjas[i]->input.fgbzLineWidth);
+            output.setNinjaTime(ninjas[i]->input.ninjaTime);
+
+            if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                output.setWxModel(ninjas[i]->init->getForecastIdentifier());
+            }
+            #ifdef NINJAFOAM
+            else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag)
+            {
+                output.setWxModel(ninjas[i]->input.foamWxForecastIdentifier);
+            }
+            #endif
+
+            output.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
+
+            output.write(ninjas[i]->input.fgbzFile, "FlatGeoBufZip");
+
+            delete angTempGrid;
+            angTempGrid = nullptr;
+        }
+
+        //cleanup
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            delete resampledVelGrids[i];
+            resampledVelGrids[i] = nullptr;
+        }
+        delete[] resampledVelGrids;
+        resampledVelGrids = nullptr;
+
+        delete[] finalSpeedSplitVals;
+        finalSpeedSplitVals = nullptr;
+    }
+
+    if(ninjas[0]->input.wxModelGoogOutFlag == true || ninjas[0]->input.wxModelFgbzOutFlag == true)
+    {
+        // the wxModel outputs aren't resampling datasets, can just reuse the same single set of outputs once for each output type
+        AsciiGrid<double> **wxModelVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            wxModelVelGrids[i] = ninjas[i]->init->getWxSpeedGrid();
+        }
+
+        if(ninjas[0]->input.wxModelGoogOutFlag == true && ninjas[0]->input.googUseConsistentColorScale == true)
+        {
+            eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+            if(ninjas[0]->input.wxModelGoogSpeedScaling == KmlVector::equal_color)
+            {
+                speedScaling = ninjaArmy::equal_color;
+            }
+            if(ninjas[0]->input.wxModelGoogSpeedScaling == KmlVector::equal_interval)
+            {
+                speedScaling = ninjaArmy::equal_interval;
+            }
+
+            int numSplits;
+            double *finalSpeedSplitVals = nullptr;
+            calcSpeedSplitValsArmy(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+            for(int i = 0; i < ninjas.size(); i++)
+            {
+                KmlVector wxModelKmlFiles;
+
+                wxModelKmlFiles.setKmlFile(ninjas[i]->input.wxModelKmlFile);
+                wxModelKmlFiles.setKmzFile(ninjas[i]->input.wxModelKmzFile);
+                wxModelKmlFiles.setLegendFile(ninjas[i]->input.wxModelLegFile);
+                wxModelKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimewxModelLegFile, ninjas[i]->input.ninjaTime);
+                wxModelKmlFiles.setSpeedGrid(*ninjas[i]->init->getWxSpeedGrid(), ninjas[i]->input.outputSpeedUnits);
+                wxModelKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+                wxModelKmlFiles.setDirGrid(*ninjas[i]->init->getWxAngleGrid());
+
+                wxModelKmlFiles.setSpeedScaling(ninjas[i]->input.wxModelGoogSpeedScaling);
+                wxModelKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+                wxModelKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
+                wxModelKmlFiles.setLineWidth(ninjas[i]->input.wxModelGoogLineWidth);
+                wxModelKmlFiles.setTime(ninjas[i]->input.ninjaTime);
+
+                std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                wxModelKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+
+                wxModelKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+
+                if(wxModelKmlFiles.writeKml())
+                {
+                    if(wxModelKmlFiles.makeKmz())
+                    {
+                        wxModelKmlFiles.removeKmlFile();
+                    }
+                }
+            }
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = nullptr;
+        }
+
+        if(ninjas[0]->input.wxModelFgbzOutFlag == true && ninjas[0]->input.fgbzUseConsistentColorScale == true)
+        {
+            eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+            if(ninjas[0]->input.wxModelFgbzSpeedScaling == OutputWriter::equal_color)
+            {
+                speedScaling = ninjaArmy::equal_color;
+            }
+            else if(ninjas[0]->input.wxModelFgbzSpeedScaling == OutputWriter::equal_interval)
+            {
+                speedScaling = ninjaArmy::equal_interval;
+            }
+
+            int numSplits;
+            double *finalSpeedSplitVals = nullptr;
+            calcSpeedSplitValsArmy(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+            for(int i = 0; i < ninjas.size(); i++)
+            {
+                OutputWriter wxModelFgbzFiles;
+
+                wxModelFgbzFiles.setSpeedGrid(*ninjas[i]->init->getWxSpeedGrid(), ninjas[i]->input.outputSpeedUnits);
+                wxModelFgbzFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+                wxModelFgbzFiles.setDirGrid(*ninjas[i]->init->getWxAngleGrid());
+
+                wxModelFgbzFiles.setSpeedScaling(ninjas[i]->input.wxModelFgbzSpeedScaling);
+                wxModelFgbzFiles.setColorScheme(ninjas[i]->input.fgbzColor);
+                wxModelFgbzFiles.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
+                wxModelFgbzFiles.setLineWidth(ninjas[i]->input.wxModelFgbzLineWidth);
+                wxModelFgbzFiles.setNinjaTime(ninjas[i]->input.ninjaTime);
+
+                wxModelFgbzFiles.setWxModel(ninjas[i]->init->getForecastIdentifier());
+
+                wxModelFgbzFiles.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
+
+                wxModelFgbzFiles.write(ninjas[i]->input.wxModelFgbzFile, "FlatGeoBufZip");
+            }
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = nullptr;
+        }
+
+        //cleanup
+        delete[] wxModelVelGrids;
+        wxModelVelGrids = nullptr;
+    }
+
+    ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");
 }
 
 void ninjaArmy::initLocalData(void)

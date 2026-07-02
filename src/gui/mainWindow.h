@@ -83,9 +83,6 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    void toggleExpandCollapse(const QModelIndex &index);
-    void loadMapKMZ(const std::vector<std::string>& input);
-
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
@@ -146,9 +143,9 @@ private:
     void finishedSolve();
     void plotOutputs();
 
-    std::vector<std::vector<std::string>> outputKmzFilenames;
+    std::vector<std::vector<std::string>> outputFgbzFilenames;
     std::vector<std::vector<std::string>> outputStationKmlFilenames;
-    std::vector<std::vector<std::string>> outputWxModelKmzFilenames;
+    std::vector<std::vector<std::string>> outputWxModelFgbzFilenames;
 
     void connectSignals();
     bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);

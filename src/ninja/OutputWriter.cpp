@@ -30,6 +30,7 @@
 
 #include "OutputWriter.h"
 
+const char * OutputWriter::NAME      = "name";
 const char * OutputWriter::SPEED     = "speed";
 const char * OutputWriter::DIR       = "dir";
 const char * OutputWriter::AV_DIR    = "AV_dir";
@@ -63,6 +64,12 @@ OutputWriter::OutputWriter ()
     split_vals    = NULL;
     linewidth     = 1.0;
 
+    angleFromNorth = 0.0;
+
+    speedScaling = equal_interval;
+    colorScheme = "default";
+    useVectorScaling = false;
+
     pszOgrFile    = NULL;
     pszLegendFile = NULL;
     pszTmpDemFile = NULL;
@@ -76,7 +83,6 @@ OutputWriter::OutputWriter ()
 
 OutputWriter::~OutputWriter ()
 {
-
     OSRDestroySpatialReference( hSrcSRS );
     OSRDestroySpatialReference( hDestSRS );
     OCTDestroyCoordinateTransformation( hTransform );
@@ -128,12 +134,97 @@ void OutputWriter::_deleteTmpFiles()
 
 void OutputWriter::_createDefaultStyles()
 {
+    double   blueWidth;
+    double  greenWidth;
+    double yellowWidth;
+    double orangeWidth;
+    double    redWidth;
+    if(useVectorScaling == true)
+    {
+           redWidth =  4.0*linewidth;
+        orangeWidth =  3.0*linewidth;
+        yellowWidth = 1.75*linewidth;
+         greenWidth =  1.5*linewidth;
+          blueWidth =  1.0*linewidth;
+    }
+    else
+    {
+           redWidth = linewidth;
+        orangeWidth = linewidth;
+        yellowWidth = linewidth;
+         greenWidth = linewidth;
+          blueWidth = linewidth;
+    }
+
     colors    = new Style*[ NCOLORS ];
-    colors[0] = new Style( "blue"  , 255, 255,  0,   0, linewidth );
-    colors[1] = new Style( "green" , 255, 0,  255,   0, linewidth );
-    colors[2] = new Style( "yellow", 255, 0,  255, 255, linewidth );
-    colors[3] = new Style( "orange", 255, 0,  127, 255, linewidth );
-    colors[4] = new Style( "red"   , 255, 0,    0, 255, linewidth );
+
+    // Alpha, B G R
+    if(colorScheme == "default")
+    {
+        colors[0] = new Style(  "blue", 255, 255,   0,   0,   blueWidth);
+        colors[1] = new Style( "green", 255,   0, 255,   0,  greenWidth);
+        colors[2] = new Style("yellow", 255,   0, 255, 255, yellowWidth);
+        colors[3] = new Style("orange", 255,   0, 127, 255, orangeWidth);
+        colors[4] = new Style(   "red", 255,   0,   0, 255,    redWidth);
+    }
+    if(colorScheme == "oranges")
+    {
+        colors[0] = new Style(  "blue", 255, 217, 240, 254,   blueWidth);
+        colors[1] = new Style( "green", 255, 138, 204, 253,  greenWidth);
+        colors[2] = new Style("yellow", 255,  89, 141, 252, yellowWidth);
+        colors[3] = new Style("orange", 255,  51,  74, 227, orangeWidth);
+        colors[4] = new Style(   "red", 255,   0,   0, 179,    redWidth);
+    }
+    if(colorScheme == "blues")
+    {
+        colors[0] = new Style(  "blue", 255, 254, 243, 239,   blueWidth);
+        colors[1] = new Style( "green", 255, 231, 215, 189,  greenWidth);
+        colors[2] = new Style("yellow", 255, 214, 174, 107, yellowWidth);
+        colors[3] = new Style("orange", 255, 189, 130,  49, orangeWidth);
+        colors[4] = new Style(   "red", 255, 156,  81,   8,    redWidth);
+    }
+    if(colorScheme == "greens")
+    {
+        colors[0] = new Style(  "blue", 255, 233, 248, 237,   blueWidth);
+        colors[1] = new Style( "green", 255, 179, 228, 186,  greenWidth);
+        colors[2] = new Style("yellow", 255, 118, 196, 116, yellowWidth);
+        colors[3] = new Style("orange", 255,  84, 163,  49, orangeWidth);
+        colors[4] = new Style(   "red", 255,  44, 109,   0,    redWidth);
+    }
+    if(colorScheme == "pinks")
+    {
+        colors[0] = new Style(  "blue", 255, 246, 238, 241,   blueWidth);
+        colors[1] = new Style( "green", 255, 216, 181, 215,  greenWidth);
+        colors[2] = new Style("yellow", 255, 176, 101, 223, yellowWidth);
+        colors[3] = new Style("orange", 255, 119,  28, 221, orangeWidth);
+        colors[4] = new Style(   "red", 255,  67,   0, 152,    redWidth);
+    }
+    if(colorScheme == "magic_beans")
+    {
+        colors[4] = new Style(   "red", 255,  32,   0, 202,    redWidth);
+        colors[3] = new Style("orange", 255, 130, 165, 244, orangeWidth);
+        colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
+        colors[1] = new Style( "green", 255, 222, 197, 146,  greenWidth);
+        ////colors[0] = new Style("blue", 255, 176, 113, 5, blueWidth); // for some reason
+        ////google earth will not render with a red = 5, works fine with 0 or 30 though...
+        colors[0] = new Style(  "blue", 255, 176, 113,  30,   blueWidth);
+    }
+    if(colorScheme == "pink_to_green")
+    {
+        colors[4] = new Style(   "red", 255, 148,  50, 123,    redWidth);
+        colors[3] = new Style("orange", 255, 207, 165, 194, orangeWidth);
+        colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
+        colors[1] = new Style( "green", 255, 160, 219, 166,  greenWidth);
+        colors[0] = new Style(  "blue", 255,  55, 136,   0,   blueWidth);
+    }
+    if(colorScheme == "ROPGW") // Red Orange Pink Green White
+    {
+        colors[4] = new Style(   "red", 255,  27,  31, 166,    redWidth);  // highest windspeed
+        colors[3] = new Style("orange", 255, 114, 162, 198, orangeWidth);  // 2nd highest
+        colors[2] = new Style("yellow", 255, 216, 204, 222, yellowWidth);  // moderate
+        colors[1] = new Style( "green", 255, 141, 236, 229,  greenWidth);  // moderate low
+        colors[0] = new Style(  "blue", 255, 229, 243, 239,   blueWidth);  // very low
+    }
 
     return;
 }
@@ -172,6 +263,16 @@ void OutputWriter::setSize( const double w, const double h )
     height = h;
 }
 
+void OutputWriter::setColorScheme(std::string cScheme)
+{
+    if(cScheme.compare("default") != 0 && cScheme.compare("oranges") != 0 && cScheme.compare("blues") != 0 && cScheme.compare("greens") != 0 && cScheme.compare("pinks") != 0 && cScheme.compare("magic_beans") != 0 && cScheme.compare("pink_to_green") != 0 && cScheme.compare("ROPGW") != 0)
+    {
+        throw std::runtime_error("Invalid input cScheme '"+cScheme+"' in OutputWriter:setColorScheme()\nvalid choices are: 'default', 'oranges', 'blues', 'greens', 'pinks', 'magic_beans', 'pink_to_green', 'ROPGW'");
+    }
+
+    colorScheme = cScheme;
+}
+
 #ifdef EMISSIONS
 void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 {
@@ -180,7 +281,7 @@ void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 }  /* -----  end of method OutputWriter::setDustGrid  ----- */
 #endif
 
-void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocityUnits u )
+void OutputWriter::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits u)
 {
     spd = s;
     units = u;
@@ -199,9 +300,12 @@ void OutputWriter::setSpeedGrid ( AsciiGrid<double> &s, velocityUnits::eVelocity
     return;
 }  /* -----  end of method OutputWriter::setSpeedGrid  ----- */
 
+void OutputWriter::setAngleFromNorth(const double angFromNorth)
+{
+    angleFromNorth = angFromNorth;
+}
 
-    void
-OutputWriter::setDirGrid ( AsciiGrid<double> &d )
+void OutputWriter::setDirGrid(AsciiGrid<double> &d)
 {
     dir = d;
     return;
@@ -216,10 +320,24 @@ void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs,
     this->hDustMemDs = hDustMemDs;
 }
 
-    bool
-OutputWriter::write (std::string outputFilename, std::string driver)
+void OutputWriter::setSplitVals(const double *splitVals, const unsigned short size)
 {
+    if(size != NSPLITS)
+    {
+        throw std::runtime_error("OutputWriter::setSplitVals() input array size does not match OutputWriter numSplits!!");
+    }
 
+    _deleteSplits();
+
+    split_vals = new double[NSPLITS];
+    for(int i = 0; i < NSPLITS; i++)
+    {
+        split_vals[i] = splitVals[i];
+    }
+}
+
+bool OutputWriter::write(std::string outputFilename, std::string driver)
+{
     if( 0 == driver.compare( "PDF" ) )
     {
         _writePDF(outputFilename);
@@ -247,9 +365,9 @@ OutputWriter::write (std::string outputFilename, std::string driver)
         }
         #endif
     }
-    else if ( 0 == driver.compare( "FlatGeoBuf" ) )
+    else if ( 0 == driver.compare( "FlatGeoBufZip" ) )
     {
-        _writeFlatGeoBuf(outputFilename);
+        _writeFlatGeoBufZip(outputFilename);
     }
     else
     {
@@ -313,7 +431,7 @@ std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
     std::string style = "none";
 
-    for ( int i = 1; i < NCOLORS; ++i )
+    for(int i = 1; i <= NCOLORS; i++)
     {
         if( spd <= split_vals[i] )
         {
@@ -372,18 +490,41 @@ void OutputWriter::_deleteSplits()
 
 void OutputWriter::_createSplits()
 {
-    _deleteSplits();
-    double interval = 0.0;
-
-    split_vals = new double[NCOLORS];
-    interval = spd.get_maxValue()/(float)NCOLORS;
-    for(int i = 0;i < NCOLORS;i++)
+    // only create them if they haven't already been set/created,
+    // so that setSplitVals() gets precedence over just creating the values
+    if(split_vals != NULL)
     {
-        split_vals[i] = i * interval;
+        return;
     }
 
+    split_vals = new double[NSPLITS];
 
+    switch(speedScaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(split_vals, NSPLITS);
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double interval = spd.get_maxValue() / (float)(NSPLITS-1);
+            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(NSPLITS-1);
+            for(int i = 0; i < NSPLITS; i++)
+            {
+                split_vals[i] = i * interval;
+                //split_vals[i] = i * interval + spd.get_minValue();
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(split_vals, NSPLITS);
+            break;
+        }
+    }
 }
+
 bool OutputWriter::_createLegend()
 {
     //make bitmap
@@ -400,11 +541,19 @@ bool OutputWriter::_createLegend()
     {
         os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
         if(i == 0)
-            os << split_vals[NCOLORS - 1] << " - " << maxxx;
-        else if(i == NCOLORS)
+        {
+            //os << split_vals[NSPLITS-2] << " + ";
+            os << split_vals[NSPLITS-2] << " - " << split_vals[NSPLITS-1];
+        }
+        else if(i == NCOLORS-1)
+        {
             os << "0.00 - " << split_vals[1] - 0.01;
-        else if(i != 0)
-            os << split_vals[NCOLORS - i - 1] << " - " << split_vals[NCOLORS - i] - 0.01;
+            //os << split_vals[0] << " - " << split_vals[1] - 0.01;
+        }
+        else
+        {
+            os << split_vals[NSPLITS - i - 2] << " - " << split_vals[NSPLITS - i - 1] - 0.01;
+        }
 
         legendStrings[i] = os.str();
         os.str("");
@@ -433,36 +582,228 @@ bool OutputWriter::_createLegend()
 
     RGBApixel lcolors[NCOLORS];
     //RGBApixel red, orange, yellow, green, blue;
-    lcolors[0].Red = 255;
-    lcolors[0].Green = 0;
-    lcolors[0].Blue = 0;
-    lcolors[0].Alpha = 0;
+    if(colorScheme == "default")
+    {
+        lcolors[0].Red = 255; //max wind
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 0;
+        lcolors[0].Alpha = 0;
 
-    lcolors[1].Red = 255;
-    lcolors[1].Green = 127;
-    lcolors[1].Blue = 0;
-    lcolors[1].Alpha = 0;
+        lcolors[1].Red = 255;
+        lcolors[1].Green = 127;
+        lcolors[1].Blue = 0;
+        lcolors[1].Alpha = 0;
 
-    lcolors[2].Red = 255;
-    lcolors[2].Green = 255;
-    lcolors[2].Blue = 0;
-    lcolors[2].Alpha = 0;
+        lcolors[2].Red = 255;
+        lcolors[2].Green = 255;
+        lcolors[2].Blue = 0;
+        lcolors[2].Alpha = 0;
 
-    lcolors[3].Red = 0;
-    lcolors[3].Green = 255;
-    lcolors[3].Blue = 0;
-    lcolors[3].Alpha = 0;
+        lcolors[3].Red = 0;
+        lcolors[3].Green = 255;
+        lcolors[3].Blue = 0;
+        lcolors[3].Alpha = 0;
 
-    lcolors[4].Red = 0;
-    lcolors[4].Green = 0;
-    lcolors[4].Blue = 255;
-    lcolors[4].Alpha = 0;
+        lcolors[4].Red = 0;
+        lcolors[4].Green = 0;
+        lcolors[4].Blue = 255;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "oranges")
+    {
+        lcolors[0].Red = 179; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 0;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 227;
+        lcolors[1].Green = 74;
+        lcolors[1].Blue = 51;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 252;
+        lcolors[2].Green = 141;
+        lcolors[2].Blue = 89;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 253;
+        lcolors[3].Green = 204;
+        lcolors[3].Blue = 138;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 254;
+        lcolors[4].Green = 240;
+        lcolors[4].Blue = 217;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "blues")
+    {
+        lcolors[4].Red = 239; //0=Highest wind speed: its reversed from above...
+        lcolors[4].Green = 243;
+        lcolors[4].Blue = 255;
+        lcolors[4].Alpha = 0;
+
+        lcolors[3].Red = 189;
+        lcolors[3].Green = 215;
+        lcolors[3].Blue = 231;
+        lcolors[3].Alpha = 0;
+
+        lcolors[2].Red = 107;
+        lcolors[2].Green = 174;
+        lcolors[2].Blue = 214;
+        lcolors[2].Alpha = 0;
+
+        lcolors[1].Red = 49;
+        lcolors[1].Green = 130;
+        lcolors[1].Blue = 189;
+        lcolors[1].Alpha = 0;
+
+        lcolors[0].Red = 8;
+        lcolors[0].Green = 81;
+        lcolors[0].Blue = 156;
+        lcolors[0].Alpha = 0;
+    }
+    if(colorScheme == "greens")
+    {
+        lcolors[4].Red = 237; //0=Highest wind speed: its reversed from above...
+        lcolors[4].Green = 248;
+        lcolors[4].Blue = 233;
+        lcolors[4].Alpha = 0;
+
+        lcolors[3].Red = 186;
+        lcolors[3].Green = 228;
+        lcolors[3].Blue = 179;
+        lcolors[3].Alpha = 0;
+
+        lcolors[2].Red = 116;
+        lcolors[2].Green = 196;
+        lcolors[2].Blue = 118;
+        lcolors[2].Alpha = 0;
+
+        lcolors[1].Red = 49;
+        lcolors[1].Green = 163;
+        lcolors[1].Blue = 84;
+        lcolors[1].Alpha = 0;
+
+        lcolors[0].Red = 0;
+        lcolors[0].Green = 109;
+        lcolors[0].Blue = 44;
+        lcolors[0].Alpha = 0;
+    }
+    if(colorScheme == "pinks")
+    {
+        lcolors[4].Red = 241; //0=Highest wind speed: its reversed from above...
+        lcolors[4].Green = 238;
+        lcolors[4].Blue = 246;
+        lcolors[4].Alpha = 0;
+
+        lcolors[3].Red = 215;
+        lcolors[3].Green = 181;
+        lcolors[3].Blue = 216;
+        lcolors[3].Alpha = 0;
+
+        lcolors[2].Red = 223;
+        lcolors[2].Green = 101;
+        lcolors[2].Blue = 176;
+        lcolors[2].Alpha = 0;
+
+        lcolors[1].Red = 221;
+        lcolors[1].Green = 28;
+        lcolors[1].Blue = 119;
+        lcolors[1].Alpha = 0;
+
+        lcolors[0].Red = 152;
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 67;
+        lcolors[0].Alpha = 0;
+    }
+    if(colorScheme == "magic_beans")
+    {
+        lcolors[0].Red = 202; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 32;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 244;
+        lcolors[1].Green = 165;
+        lcolors[1].Blue = 130;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 247;
+        lcolors[2].Green = 247;
+        lcolors[2].Blue = 247;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 146;
+        lcolors[3].Green = 197;
+        lcolors[3].Blue = 222;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 5;
+        lcolors[4].Green = 113;
+        lcolors[4].Blue = 176;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "pink_to_green")
+    {
+        lcolors[0].Red = 123; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 50;
+        lcolors[0].Blue = 148;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 194;
+        lcolors[1].Green = 165;
+        lcolors[1].Blue = 207;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 247;
+        lcolors[2].Green = 247;
+        lcolors[2].Blue = 247;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 146;
+        lcolors[3].Green = 219;
+        lcolors[3].Blue = 160;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 0;
+        lcolors[4].Green = 136;
+        lcolors[4].Blue = 55;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "ROPGW")
+    {
+        lcolors[0].Red = 166; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 31; //red
+        lcolors[0].Blue = 27;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 198; //orange
+        lcolors[1].Green = 162;
+        lcolors[1].Blue = 114;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 222; //pink
+        lcolors[2].Green = 204;
+        lcolors[2].Blue = 216;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 229; //green
+        lcolors[3].Green = 236;
+        lcolors[3].Blue = 141;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 239; //White
+        lcolors[4].Green = 243;
+        lcolors[4].Blue = 229;
+        lcolors[4].Alpha = 0;
+    }
 
     int arrowLength = 40;  //pixels;
     int arrowHeadLength = 10; // pixels;
     int textHeight = 10;  //pixels- 8 for maximum speed of "999.99 - 555.55";
                           //10 for normal double digits
-    if(split_vals[NCOLORS-1] >= 100)
+    if(split_vals[NSPLITS-1] >= 100)
         textHeight = 8;
     int titleTextHeight = int(1.2 * textHeight);
     int titleX, titleY;
@@ -545,16 +886,16 @@ void OutputWriter::_destroyLegend()
 bool OutputWriter::_createDateTimeLegend(bool wxModel)
 {
     //make bitmap
-    int legendWidth;
-    if(wxModel)
-    {
-        legendWidth = 11.25 * wxModelName.size();
-    }
-    else
+    int legendWidth = 11.25 * wxModelName.size();
+    if(legendWidth < 285)
     {
         legendWidth = 285;
     }
     int legendHeight = 52;
+    if(wxModel)
+    {
+        legendHeight = 78;
+    }
     BMP legend;
 
     legend.SetSize(legendWidth,legendHeight);
@@ -605,18 +946,33 @@ bool OutputWriter::_createDateTimeLegend(bool wxModel)
 
     os << ninjaTime;
 
-    if (wxModel)
+    if(wxModel)
     {
-        PrintString(legend,wxModelName.c_str(), titleX, titleY, textHeight, white);
+        //print wxModel identifier
+        PrintString(legend, wxModelName.c_str(), titleX, titleY, textHeight, white);
+
+        //print date
+        x = 0.05;
+        y = 0.40;
+        titleX = x * legendWidth;
+        titleY = y * legendHeight;
+        PrintString(legend, os.str().c_str(), titleX, titleY, textHeight, white);
+
+        //prep to print time
+        x = 0.05;
+        y = 0.70;
     }
     else
     {
-        PrintString(legend,os.str().c_str(), titleX, titleY, textHeight, white);\
+        //print date
+        PrintString(legend, os.str().c_str(), titleX, titleY, textHeight, white);
+
+        //prep to print time
+        x = 0.05;
+        y = 0.60;
     }
 
     //print time
-    x = 0.05;
-    y = 0.60;
 
     titleX = x * legendWidth;
     titleY = y * legendHeight;
@@ -743,6 +1099,14 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
     }
 
 
+    hFieldDefn = OGR_Fld_Create( NAME, OFTString );
+    OGR_Fld_SetWidth( hFieldDefn, 32 );
+    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
+    {
+        throw std::runtime_error("OutputWriter: Creating NAME field failed");
+    }
+    OGR_Fld_Destroy(hFieldDefn);
+
     hFieldDefn = OGR_Fld_Create( SPEED, OFTReal );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
@@ -762,7 +1126,7 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
     OGR_Fld_SetWidth( hFieldDefn, 32 );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
-        throw std::runtime_error("OutputWriter: Creating SPEED field failed");
+        throw std::runtime_error("OutputWriter: Creating OGR_STYLE field failed");
     }
     OGR_Fld_Destroy(hFieldDefn);
 
@@ -776,14 +1140,26 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
             OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
             WN_Arrow     arrow;
 
+            double dir_prj = dir(i,j);
+            double dir_geo = dir_prj;
+            if(outputLatLon == true)
+            {
+                dir_geo = wrap0to360(dir_prj + angleFromNorth); //convert FROM projected TO geographic coordinates
+            }
+
             spd.get_cellPosition(i, j, &x, &y);
-            arrow = WN_Arrow( x, y, spd(i,j), dir(i,j), spd.get_cellSize(),
+            arrow = WN_Arrow( x, y, spd(i,j), dir_prj, spd.get_cellSize(),
                               split_vals, NCOLORS);
 
+            std::ostringstream os;
+            os << "Cell " << i << "," << j;
+            std::string name = os.str();
+            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, NAME),
+                                  name.c_str() );
             OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
                                    spd(i,j) );
             OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
-                                   (int)dir(i,j)+0.5);
+                                   (int)dir_geo+0.5);
 
 
             arrow.asGeometry( hLine );
@@ -1049,18 +1425,17 @@ bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
     return true;
 }
 
-bool OutputWriter::_writeFlatGeoBuf(std::string filename)
+bool OutputWriter::_writeFlatGeoBufZip(std::string filename)
 {
     const bool hasDateTime = !ninjaTime.is_not_a_date_time();
 
     _createSplits();
     _createOGRFile(true);
     _createLegend();
-    if (hasDateTime)
+    if(hasDateTime)
     {
         _createDateTimeLegend(!wxModelName.empty());
     }
-    _openSrcDataSet();
 
     hDriver = OGRGetDriverByName("FlatGeobuf");
     if ( hDriver == NULL )
@@ -1084,16 +1459,17 @@ bool OutputWriter::_writeFlatGeoBuf(std::string filename)
         throw std::runtime_error("OutputWriter: Error creating output file");
     }
 
-    if (pszLegendFile != nullptr && CPLCopyFile(vsiLegendPath.c_str(), pszLegendFile) != 0)
+    if(pszLegendFile != nullptr && CPLCopyFile(vsiLegendPath.c_str(), pszLegendFile) != 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
     }
 
-    if (pszDateTimeLegendFile != nullptr && CPLCopyFile(vsiDateTimeLegendPath.c_str(), pszDateTimeLegendFile) != 0)
+    if(hasDateTime == true && pszDateTimeLegendFile != nullptr && CPLCopyFile(vsiDateTimeLegendPath.c_str(), pszDateTimeLegendFile) != 0)
     {
-        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add date time legend file to ZIP archive.");
     }
 
+    _closeDataSets();
     _destroyOptions();
     _destroyLegend();
 

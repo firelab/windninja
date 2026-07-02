@@ -63,7 +63,9 @@ class initialize
 
         /*TODO: refactor so these aren't accessed directly in ninja */
         virtual std::string getForecastIdentifier();
-        virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr); 
+        virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr);
+        virtual AsciiGrid<double>* getWxSpeedGrid() { return nullptr; }
+        virtual AsciiGrid<double>* getWxAngleGrid() { return nullptr; }
 
         wn_3dScalarField air3d; //perturbation potential temperature
         std::vector<double> u10List;

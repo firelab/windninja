@@ -128,10 +128,19 @@ WindNinjaInputs::WindNinjaInputs()
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
-    flatGeoBuffFlag = false;
-    flatGeoBuffFile = "!set";
-    wxModelFgbFlag = false;
-    wxModelFgbFile = "!set";
+    fgbzOutFlag = false;
+    fgbzFile = "!set";
+    fgbzResolution = -1.0;
+    fgbzUnits = lengthUnits::meters;
+    fgbzColor = "default";
+    fgbzVectorScale = false;
+    fgbzUseConsistentColorScale = false;
+    fgbzSpeedScaling = OutputWriter::equal_interval;
+    fgbzLineWidth = 1.0;
+    wxModelFgbzOutFlag = false;
+    wxModelFgbzFile = "!set";
+    wxModelFgbzSpeedScaling = OutputWriter::equal_interval;
+    wxModelFgbzLineWidth = 3.0;
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -165,6 +174,7 @@ WindNinjaInputs::WindNinjaInputs()
     dirInitGridFilename= "!set";
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
+    foamWxForecastIdentifier = "!set";
     writeTurbulence = false;
     colMax_colHeightAGL = 457.2;  // default value of 457.2 m is 1500 ft
     colMax_colHeightAGL_units = lengthUnits::meters;
@@ -244,6 +254,8 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     stlFile = rhs.stlFile;
     foamVelocityGrid = rhs.foamVelocityGrid;
     foamAngleGrid = rhs.foamAngleGrid;
+    foamWxTimeList = rhs.foamWxTimeList;
+    foamWxForecastIdentifier = rhs.foamWxForecastIdentifier;
     writeTurbulence = rhs.writeTurbulence;
     colMax_colHeightAGL = rhs.colMax_colHeightAGL;
     colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
@@ -339,10 +351,19 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
     volVTKFile = rhs.volVTKFile;
     keepOutGridsInMemory = rhs.keepOutGridsInMemory;
-    flatGeoBuffFlag = rhs.flatGeoBuffFlag;
-    flatGeoBuffFile = rhs.flatGeoBuffFile;
-    wxModelFgbFlag = rhs.wxModelFgbFlag;
-    wxModelFgbFile = rhs.wxModelFgbFile;
+    fgbzOutFlag = rhs.fgbzOutFlag;
+    fgbzFile = rhs.fgbzFile;
+    fgbzResolution = rhs.fgbzResolution;
+    fgbzUnits = rhs.fgbzUnits;
+    fgbzSpeedScaling = rhs.fgbzSpeedScaling;
+    fgbzColor = rhs.fgbzColor;
+    fgbzVectorScale = rhs.fgbzVectorScale;
+    fgbzLineWidth = rhs.fgbzLineWidth;
+    fgbzUseConsistentColorScale = rhs.fgbzUseConsistentColorScale;
+    wxModelFgbzOutFlag = rhs.wxModelFgbzOutFlag;
+    wxModelFgbzFile = rhs.wxModelFgbzFile;
+    wxModelFgbzSpeedScaling = rhs.wxModelFgbzSpeedScaling;
+    wxModelFgbzLineWidth = rhs.wxModelFgbzLineWidth;
     customOutputPath = rhs.customOutputPath;
 
 #ifdef NINJA_SPEED_TESTING
@@ -464,6 +485,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       stlFile = rhs.stlFile;
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
+      foamWxTimeList = rhs.foamWxTimeList;
+      foamWxForecastIdentifier = rhs.foamWxForecastIdentifier;
       writeTurbulence = rhs.writeTurbulence;
       colMax_colHeightAGL = rhs.colMax_colHeightAGL;
       colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
@@ -559,6 +582,19 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
       volVTKFile = rhs.volVTKFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+      fgbzOutFlag = rhs.fgbzOutFlag;
+      fgbzFile = rhs.fgbzFile;
+      fgbzResolution = rhs.fgbzResolution;
+      fgbzUnits = rhs.fgbzUnits;
+      fgbzSpeedScaling = rhs.fgbzSpeedScaling;
+      fgbzColor = rhs.fgbzColor;
+      fgbzVectorScale = rhs.fgbzVectorScale;
+      fgbzLineWidth = rhs.fgbzLineWidth;
+      fgbzUseConsistentColorScale = rhs.fgbzUseConsistentColorScale;
+      wxModelFgbzOutFlag = rhs.wxModelFgbzOutFlag;
+      wxModelFgbzFile = rhs.wxModelFgbzFile;
+      wxModelFgbzSpeedScaling = rhs.wxModelFgbzSpeedScaling;
+      wxModelFgbzLineWidth = rhs.wxModelFgbzLineWidth;
       customOutputPath = rhs.customOutputPath;
 
 #ifdef NINJA_SPEED_TESTING

@@ -226,7 +226,7 @@ bool NinjaFoam::simulate_wind()
     keepOutputGridsInMemory(true);
 #endif
 
-    if(input.googUseConsistentColorScale)
+    if(input.googUseConsistentColorScale || input.fgbzUseConsistentColorScale)
     {
         keepOutputGridsInMemory(true);
     }
@@ -562,12 +562,15 @@ bool NinjaFoam::simulate_wind()
        VelocityGrid.deallocate();
        TurbulenceGrid.deallocate();
        colMaxGrid.deallocate();
-
+    }
+    // always deallocate the 3D data grids, until we figure out how to use them for diurnal inputs
+    //if(input.diurnalWinds == false)
+    //{
        massMesh_u.deallocate();
        massMesh_v.deallocate();
        massMesh_w.deallocate();
        massMesh_k.deallocate();
-    }
+    //}
 
     if(input.diurnalWinds == true){
         input.Com->ninjaCom(ninjaComClass::ninjaNone, "Adding diurnal winds...");
@@ -3324,6 +3327,8 @@ void NinjaFoam::SetOutputResolution()
         input.pdfResolution = input.dem.get_cellSize();
     if( input.geoTiffResolution <= 0.0 )  //if negative, use DEM resolution
         input.geoTiffResolution = input.dem.get_cellSize();
+    if( input.fgbzResolution <= 0.0 )  //if negative, use DEM resolution
+        input.fgbzResolution = input.dem.get_cellSize();
 }
 
 void NinjaFoam::SetOutputFilenames()
@@ -3331,7 +3336,8 @@ void NinjaFoam::SetOutputFilenames()
     //Do file naming string stuff for all output files
     std::string rootFile, rootName, timeAppend, wxModelTimeAppend, fileAppend, kmz_fileAppend, \
         shp_fileAppend, ascii_fileAppend, mesh_units, kmz_mesh_units, \
-        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units;
+        shp_mesh_units, ascii_mesh_units, pdf_fileAppend, pdf_mesh_units, gtiff_fileAppend, gtiff_mesh_units, \
+        fgbz_fileAppend, fgbz_mesh_units;
 
     boost::local_time::local_time_facet* timeOutputFacet;
     timeOutputFacet = new boost::local_time::local_time_facet();
@@ -3390,8 +3396,9 @@ void NinjaFoam::SetOutputFilenames()
     ascii_mesh_units = lengthUnits::getString( input.velOutputFileDistanceUnits );
     pdf_mesh_units   = lengthUnits::getString( input.pdfUnits );
     gtiff_mesh_units = lengthUnits::getString(input.geoTiffUnits);
+    fgbz_mesh_units = lengthUnits::getString(input.fgbzUnits);
 
-    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff;
+    ostringstream os, os_kmz, os_shp, os_ascii, os_pdf, os_gtiff, os_fgbz;
 
     if( input.initializationMethod == WindNinjaInputs::domainAverageInitializationFlag ){
         double tempSpeed = input.inputSpeed;
@@ -3402,6 +3409,7 @@ void NinjaFoam::SetOutputFilenames()
         os_ascii << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_pdf << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
         os_gtiff << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
+        os_fgbz << "_" << (long) (input.inputDirection_geog+0.5) << "_" << (long) (tempSpeed+0.5);
     }
 
     double meshResolutionTemp = input.dem.get_cellSize();
@@ -3410,6 +3418,7 @@ void NinjaFoam::SetOutputFilenames()
     double velResolutionTemp = input.velResolution;
     double pdfResolutionTemp = input.pdfResolution;
     double gtiffResolutionTemp = input.geoTiffResolution;
+    double fgbzResolutionTemp = input.fgbzResolution;
 
     lengthUnits::eLengthUnits meshResolutionUnits = lengthUnits::meters;
 
@@ -3419,6 +3428,7 @@ void NinjaFoam::SetOutputFilenames()
     lengthUnits::fromBaseUnits(velResolutionTemp, input.velOutputFileDistanceUnits);
     lengthUnits::fromBaseUnits(pdfResolutionTemp, input.pdfUnits);
     lengthUnits::fromBaseUnits(gtiffResolutionTemp, input.geoTiffUnits);
+    lengthUnits::fromBaseUnits(fgbzResolutionTemp, input.fgbzUnits);
 
     os << "_" << timeAppend << (long) (meshResolutionTemp+0.5)  << mesh_units;
     os_kmz << "_" << timeAppend << (long) (kmzResolutionTemp+0.5)  << kmz_mesh_units;
@@ -3426,6 +3436,7 @@ void NinjaFoam::SetOutputFilenames()
     os_ascii << "_" << timeAppend << (long) (velResolutionTemp+0.5)  << ascii_mesh_units;
     os_pdf << "_" << timeAppend << (long) (pdfResolutionTemp+0.5)    << pdf_mesh_units;
     os_gtiff << "_" << timeAppend << (long) (gtiffResolutionTemp+0.5) << gtiff_mesh_units;
+    os_fgbz << "_" << timeAppend << (long) (fgbzResolutionTemp+0.5) << fgbz_mesh_units;
 
     fileAppend = os.str();
     kmz_fileAppend = os_kmz.str();
@@ -3433,6 +3444,7 @@ void NinjaFoam::SetOutputFilenames()
     ascii_fileAppend = os_ascii.str();
     pdf_fileAppend   = os_pdf.str();
     gtiff_fileAppend = os_gtiff.str();
+    fgbz_fileAppend = os_fgbz.str();
 
     input.kmlFile = rootFile + kmz_fileAppend + ".kml";
     input.kmzFile = rootFile + kmz_fileAppend + ".kmz";
@@ -3443,7 +3455,7 @@ void NinjaFoam::SetOutputFilenames()
     input.pdfFile = rootFile + pdf_fileAppend + ".pdf";
     input.geoTiffFile = rootFile + gtiff_fileAppend + ".tif";
 
-    input.flatGeoBuffFile = rootFile + kmz_fileAppend + ".fgbz";
+    input.fgbzFile = rootFile + fgbz_fileAppend + ".fgbz";
 
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
@@ -3651,7 +3663,7 @@ void NinjaFoam::WriteOutputFiles()
 
     //write kmz file
     try{
-        if(input.googOutFlag==true && input.googUseConsistentColorScale==false)
+        if(input.googOutFlag == true && input.googUseConsistentColorScale == false)
         {
             AsciiGrid<double> *velTempGrid, *angTempGrid, *turbTempGrid, *colMaxTempGrid;
             velTempGrid=NULL;
@@ -3685,7 +3697,6 @@ void NinjaFoam::WriteOutputFiles()
 
             ninjaKmlFiles.setKmlFile(input.kmlFile);
             ninjaKmlFiles.setKmzFile(input.kmzFile);
-            ninjaKmlFiles.setDemFile(input.dem.fileName);
 
             ninjaKmlFiles.setLegendFile(input.legFile);
             ninjaKmlFiles.setDateTimeLegendFile(input.dateTimeLegFile, input.ninjaTime);
@@ -3693,6 +3704,9 @@ void NinjaFoam::WriteOutputFiles()
             ninjaKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
             ninjaKmlFiles.setDirGrid(*angTempGrid);
 
+            ninjaKmlFiles.setSpeedScaling(input.googSpeedScaling);
+            ninjaKmlFiles.setColorScheme(input.googColor);
+            ninjaKmlFiles.setVectorScaling(input.googVectorScale);
             ninjaKmlFiles.setLineWidth(input.googLineWidth);
             ninjaKmlFiles.setTime(input.ninjaTime);
             if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
@@ -3701,7 +3715,7 @@ void NinjaFoam::WriteOutputFiles()
                 ninjaKmlFiles.setWxModel(init->getForecastIdentifier(), times[0]);
             }
 
-            if(ninjaKmlFiles.writeKml(input.googSpeedScaling,input.googColor,input.googVectorScale))
+            if(ninjaKmlFiles.writeKml())
             {
                 if(ninjaKmlFiles.makeKmz())
                 {
@@ -3756,7 +3770,6 @@ void NinjaFoam::WriteOutputFiles()
             output.setSize(input.pdfWidth, input.pdfHeight);
             output.write(input.pdfFile, "PDF");
 
-
             if(angTempGrid)
             {
                 delete angTempGrid;
@@ -3770,22 +3783,24 @@ void NinjaFoam::WriteOutputFiles()
         }
         {
             try{
-                if(input.flatGeoBuffFlag == true)
+                if(input.fgbzOutFlag == true && input.fgbzUseConsistentColorScale == false)
                 {
                     AsciiGrid<double> *velTempGrid, *angTempGrid;
                     velTempGrid=NULL;
                     angTempGrid=NULL;
                     OutputWriter output;
 
-                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
-                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
+                    angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
+                    velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
 
+                    output.setAngleFromNorth(input.dem.getAngleFromNorth());
                     output.setDirGrid(*angTempGrid);
                     output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
-                    output.setDEMfile(input.pdfDEMFileName);
-                    output.setLineWidth(input.pdfLineWidth);
-                    output.setDPI(input.pdfDPI);
-                    output.setSize(input.pdfWidth, input.pdfHeight);
+
+                    output.setSpeedScaling(input.fgbzSpeedScaling);
+                    output.setColorScheme(input.fgbzColor);
+                    output.setVectorScaling(input.fgbzVectorScale);
+                    output.setLineWidth(input.fgbzLineWidth);
                     output.setNinjaTime(input.ninjaTime);
 
                     if(input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
@@ -3793,7 +3808,7 @@ void NinjaFoam::WriteOutputFiles()
                         output.setWxModel(init->getForecastIdentifier());
                     }
 
-                    output.write(input.flatGeoBuffFile, "FlatGeoBuf");
+                    output.write(input.fgbzFile, "FlatGeoBufZip");
 
                     if(angTempGrid)
                     {
@@ -3808,10 +3823,10 @@ void NinjaFoam::WriteOutputFiles()
                 }
             }catch (exception& e)
             {
-                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: %s", e.what());
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: %s", e.what());
             }catch (...)
             {
-                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBuf file writing: Cannot determine exception type.");
+                input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: Cannot determine exception type.");
             }
         }
     }catch (exception& e)

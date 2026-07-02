@@ -113,6 +113,9 @@ class wxModelInitialization : public initialize
     virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr);
     virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
 
+    virtual AsciiGrid<double>* getWxSpeedGrid();
+    virtual AsciiGrid<double>* getWxAngleGrid();
+
     // Allow specifying a subset of the time list to run
     void setRunTimes(std::vector<blt::local_date_time> times) {
         runTimeList = times;

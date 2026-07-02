@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <cmath>
 /**
  * @class Array2D
  * @brief Container for any template data type that uses a 1-dimensional vector to store 2-dimensional data using [row * numberColumns + columns] zero based format.
@@ -65,7 +66,7 @@ class Array2D
     T max() const;
     T min() const;
     double mean() const;
-    T* sortData();
+    std::vector<T> sortData();
     void dumpMatrix();
     void dumpMatrix(std::string file);
 

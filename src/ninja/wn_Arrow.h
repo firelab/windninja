@@ -53,7 +53,7 @@ public:
     WN_Arrow(    const double &x,         const double &y,
                  const double &speed,     const double &direction,
                  const double &cell_size, const double *thresholds,
-                 const unsigned int nsplits );
+                 const unsigned int ncolors );
     void asGeometry( OGRGeometryH & hLine);
 
     /**
@@ -71,7 +71,7 @@ private:
     double   m_dir;
     double   m_cell_size;
     const double * m_thresholds;
-    unsigned int   m_nsplits;
+    unsigned int   m_ncolors;
     double m_xtip, m_ytip, m_xtail, m_ytail,
            m_xhead_left,   m_xhead_right, 
            m_yhead_left,   m_yhead_right;
