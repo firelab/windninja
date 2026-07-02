@@ -513,7 +513,7 @@ void MainWindow::solveButtonClicked()
         }
 
         bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
-        QString speedUnits =  ui->tableSpeedUnits->currentText();
+        QString speedUnits =  ui->tableSpeedUnits->itemData(ui->tableSpeedUnits->currentIndex()).toString();
         QString airTempUnits =  ui->tableTempUnits->currentText().remove("°");
         QString cloudCoverUnits = "percent";
         if(ninjaErr == NINJA_SUCCESS)

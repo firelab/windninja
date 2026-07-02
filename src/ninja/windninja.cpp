@@ -114,7 +114,7 @@ WINDNINJADLL_EXPORT NinjaArmyH* NinjaInitializeArmy()
  * \param numNinjas The number of runs to create.
  * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
  * \param speedList List of wind speeds to simulate.
- * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "knots").
+ * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "kts").
  * \param directionList List of wind directions to simulate in degrees.
  * \param yearList List of years to simulate (only needed if diurnal or stability is going to be used), can be NULL.
  * \param monthList List of months to simulate (only needed if diurnal or stability is going to be used), can be NULL.
@@ -159,7 +159,7 @@ WINDNINJADLL_EXPORT NinjaErr NinjaMakeDomainAverageArmyThermalParameterization
  * \param numNinjas The number of runs to create.
  * \param momentumFlag Flag specifying if the mass and momentum solver should be used.
  * \param speedList List of wind speeds to simulate.
- * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "knots").
+ * \param speedUnits String indicating wind speed units ("mph", "mps", "kph", "kts").
  * \param directionList List of wind directions to simulate in degrees.
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.

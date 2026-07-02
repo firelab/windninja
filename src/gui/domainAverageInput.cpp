@@ -39,6 +39,15 @@ DomainAverageInput::DomainAverageInput(Ui::MainWindow* ui, QObject* parent)
 
     ui->domainAverageTable->setTabKeyNavigation(false);
 
+    ui->inputWindHeightUnitsComboBox->setItemData(0, "ft");
+    ui->inputWindHeightUnitsComboBox->setItemData(1, "m");
+
+    ui->tableSpeedUnits->setItemData(0, "mph");
+    ui->tableSpeedUnits->setItemData(1, "mps");
+    ui->tableSpeedUnits->setItemData(2, "kph");
+    ui->tableSpeedUnits->setItemData(3, "kts");
+
+
     spinBoxLineEditWasBlank = false;
 
     connect(ui->inputWindHeightComboBox, &QComboBox::currentIndexChanged, this, &DomainAverageInput::windHeightComboBoxCurrentIndexChanged);
