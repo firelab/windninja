@@ -2761,7 +2761,7 @@ void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
     }
 }
 
-void ninjaArmy::calcSpeedSplitValsArmy(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, eArmySpeedScaling scaling)
+void ninjaArmy::calcConsistentColorScaleSplits(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, eArmySpeedScaling scaling)
 {
     // make sure this value matches that of OutputWriter and KmlVector, or there will be problems using the calculated splitVals
     int numSplits = 6;
@@ -2899,7 +2899,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
 
         int numSplits;
         double *finalSpeedSplitVals = nullptr;
-        calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+        calcConsistentColorScaleSplits(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
         for(int i = 0; i < ninjas.size(); i++)
         {
@@ -3017,7 +3017,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
 
         int numSplits;
         double *finalSpeedSplitVals = nullptr;
-        calcSpeedSplitValsArmy(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+        calcConsistentColorScaleSplits(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
         for(int i = 0; i < ninjas.size(); i++)
         {
@@ -3091,7 +3091,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
 
             int numSplits;
             double *finalSpeedSplitVals = nullptr;
-            calcSpeedSplitValsArmy(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+            calcConsistentColorScaleSplits(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
             for(int i = 0; i < ninjas.size(); i++)
             {
@@ -3143,7 +3143,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
 
             int numSplits;
             double *finalSpeedSplitVals = nullptr;
-            calcSpeedSplitValsArmy(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+            calcConsistentColorScaleSplits(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
 
             for(int i = 0; i < ninjas.size(); i++)
             {
