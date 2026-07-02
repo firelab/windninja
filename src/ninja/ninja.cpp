@@ -5595,6 +5595,18 @@ void ninja::checkInputs()
             throw std::logic_error("The weather station filename is not set.");
     }
 
+    if(input.initializationMethod != WindNinjaInputs::wxModelInitializationFlag && input.initializationMethod != WindNinjaInputs::foamWxModelInitializationFlag)
+    {
+        if(input.wxModelGoogOutFlag == true)
+        {
+            throw std::runtime_error("wxModelGoogOutFlag set for non-wxModel initialization.");
+        }
+        if(input.wxModelFgbzOutFlag == true)
+        {
+            throw std::runtime_error("wxModelFgbzOutFlag set for non-wxModel initialization.");
+        }
+    }
+
     if( input.outputWindHeight < 0.0 )
         throw std::out_of_range("The output wind height should be greater than 0.");
 

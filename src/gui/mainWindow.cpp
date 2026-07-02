@@ -1290,7 +1290,7 @@ bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
         return false;
     }
 
-    if(ui->rawWeatherModelOutputCheckBox->isCheckable() && ui->rawWeatherModelOutputCheckBox->isChecked())
+    if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
     {
         ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
         if (ninjaErr != NINJA_SUCCESS)
@@ -1476,7 +1476,7 @@ void MainWindow::plotOutputs()
 
             // if it is a weather model run, and weather model fgbzs were created for the run,
             // then plot the weather model fgbz of the run
-            if(ui->rawWeatherModelOutputCheckBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isEnabled())
+            if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
                 QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[i]);
                 qDebug() << "wx model fgbz outFile =" << outFileStr;

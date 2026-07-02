@@ -3068,7 +3068,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
         finalSpeedSplitVals = nullptr;
     }
 
-    if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag && (ninjas[0]->input.wxModelGoogOutFlag == true || ninjas[0]->input.wxModelFgbzOutFlag == true))
+    if(ninjas[0]->input.wxModelGoogOutFlag == true || ninjas[0]->input.wxModelFgbzOutFlag == true)
     {
         // the wxModel outputs aren't resampling datasets, can just reuse the same single set of outputs once for each output type
         AsciiGrid<double> **wxModelVelGrids = new AsciiGrid<double>*[ninjas.size()];
