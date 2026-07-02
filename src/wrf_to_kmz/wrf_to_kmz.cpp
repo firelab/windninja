@@ -128,6 +128,7 @@ temperatureUnits::eTempUnits processTemperatureUnits( std::string unit_string )
 /**
 * Static identifier to determine if the netcdf file is a WRF forecast.
 * Uses netcdf c api.
+*
 * @param fileName netcdf filename.
 * @return true if the forecast is a WRF forecast.
 */
@@ -191,8 +192,15 @@ std::vector<std::string> getVariableList()
 */
 void checkForValidData( std::string wxModelFileName )
 {
-    // open ds variable by variable
     GDALDataset *srcDS;
+    srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
+    if(srcDS == NULL)
+    {
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
+    }
+    GDALClose((GDALDatasetH)srcDS);
+
+    // open ds variable by variable
     std::string temp;
     std::string srcWkt;
     int nBands = 0;
@@ -211,11 +219,12 @@ void checkForValidData( std::string wxModelFileName )
         CPLPushErrorHandler(&CPLQuietErrorHandler);
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
-        if( srcDS == NULL )
-            throw badForecastFile("Cannot open forecast file.");
+        if(srcDS == NULL)
+        {
+            throw badForecastFile("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
+        }
 
         // Get total bands (time steps)
-        nBands = srcDS->GetRasterCount();
         nBands = srcDS->GetRasterCount();
         int nXSize, nYSize;
         GDALRasterBand *poBand;
@@ -232,9 +241,11 @@ void checkForValidData( std::string wxModelFileName )
             poBand = srcDS->GetRasterBand( j );
 
             pbSuccess = 0;
-            dfNoData = poBand->GetNoDataValue( &pbSuccess );
-            if( pbSuccess == false )
+            dfNoData = poBand->GetNoDataValue(&pbSuccess);
+            if(pbSuccess == false)
+            {
                 noDataValueExists = false;
+            }
             else
             {
                 noDataValueExists = true;
@@ -242,19 +253,18 @@ void checkForValidData( std::string wxModelFileName )
             }
 
             const char * poBand_units = poBand->GetUnitType();
-            if( varList[i] == "T2" )
+            if(varList[i] == "T2")
             {
-                T_units = processTemperatureUnits( poBand_units );
+                T_units = processTemperatureUnits(poBand_units);
             }
-            if( varList[i] == "V10" || varList[i] == "U10" )
+            if(varList[i] == "V10" || varList[i] == "U10")
             {
-                spd_units = processVelocityUnits( poBand_units );
+                spd_units = processVelocityUnits(poBand_units);
             }
 
             // set the data
             padfScanline = new double[nXSize*nYSize];
-            poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize,
-                    GDT_Float64, 0, 0);
+            poBand->RasterIO(GF_Read, 0, 0, nXSize, nYSize, padfScanline, nXSize, nYSize, GDT_Float64, 0, 0);
             for(int k = 0;k < nXSize*nYSize; k++)
             {
                 double current_val = padfScanline[k];
@@ -305,7 +315,7 @@ void checkForValidData( std::string wxModelFileName )
 
 
 /**
-* Uses netcfd c api commands to get wrf netcdf file global attributes, to later use
+* Uses netcfd c api commands to get wrf netcdf file global attributes, to use later
 * to set the gdal dataset projection and geotransform information, which are required
 * to allow the wrf netcdf file data to be accessible by standard gdal commands.
 * @param wxModelFileName wrf netcdf weather model filename, from which the global attributes data are read in and processed.
@@ -314,7 +324,7 @@ void checkForValidData( std::string wxModelFileName )
 * @param cenLat The center latitude value of the dataset to be filled.
 * @param cenLon The center longitude value of the dataset to be filled.
 * @param projString The projection string of the dataset to be filled.
-* Note: there are additional wrf netcdf file global attributes that are accessed and used to get and process the projection string, 
+* Note: there are additional wrf netcdf file global attributes that are accessed and used to get and process the projection string,
 * but are not used outside this function, so they are not returned. These include mapProj, moadCenLat, standLon, trueLat1, trueLat2.
 */
 void getNcGlobalAttributes( const std::string &wxModelFileName, float &dx, float &dy, float &cenLat, float &cenLon, std::string &projString )
@@ -580,8 +590,7 @@ getTimeList( const std::string &timeZoneString, const std::string &wxModelFileNa
     status = nc_inq_varid( ncid, timename.c_str(), &varid );
     if( status != NC_NOERR ) {
         ostringstream os;
-        //os << "The variable \"time\" in the netcdf file: "
-        os << "The variable \"Times\" in the netcdf file: "
+        os << "The variable \"" << timename << "\" in the netcdf file: "
            << wxModelFileName << " cannot be read\n";
         throw std::runtime_error( os.str() );
     }
@@ -743,11 +752,9 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     poDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
     CPLPopErrorHandler();
     if( poDS == NULL ) {
-        throw badForecastFile("Cannot open forecast file in setSurfaceGrids()");
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
-    else {
-        GDALClose((GDALDatasetH) poDS ); // close original wxModel file
-    }
+    GDALClose((GDALDatasetH) poDS); // close original wxModel file
 
     // open ds one by one, set geotranform, set projection, then write to grid
     GDALDataset *srcDS;
@@ -768,7 +775,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         CPLPopErrorHandler();
         if( srcDS == NULL ) {
-            throw badForecastFile("Cannot open forecast file in setSurfaceGrids()");
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         // Set up spatial reference stuff for setting projections
@@ -801,7 +808,9 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         delete poLatLong;
 
         if(poCT==NULL || !poCT->Transform(1, &xCenter, &yCenter))
-            throw std::runtime_error("Transformation of lat/lon center to dataset coordinate system failed!");
+        {
+            throw std::runtime_error("Transformation of dataset center from dataset coordinate system to lat/lon failed.");
+        }
 
         // Set the geostransform for the WRF file
         // upper corner is calculated from transformed x, y
@@ -818,29 +827,29 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
         srcDS->SetGeoTransform(adfGeoTransform);
 
+        int nBandCount = srcDS->GetRasterCount();
+
         // get the noDataValue from the current band
         GDALRasterBand *poBand = srcDS->GetRasterBand( bandNum );
         int pbSuccess;
-        double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-
-        int nBandCount = srcDS->GetRasterCount();
-
-        if( pbSuccess == false )
+        double dfNoData = poBand->GetNoDataValue(&pbSuccess);
+        if(pbSuccess == false)
+        {
             dfNoData = -9999.0;
+        }
 
         const char * poBand_units = poBand->GetUnitType();
-        if( varList[i] == "T2" )
+        if(varList[i] == "T2")
         {
-            T_units = processTemperatureUnits( poBand_units );
+            T_units = processTemperatureUnits(poBand_units);
         }
-        if( varList[i] == "V10" || varList[i] == "U10" )
+        if(varList[i] == "V10" || varList[i] == "U10")
         {
-            spd_units = processVelocityUnits( poBand_units );
+            spd_units = processVelocityUnits(poBand_units);
         }
 
         // set the dataset projection
         int rc = srcDS->SetProjection( projString.c_str() );
-
 
         //// compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
         //// going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
@@ -860,7 +869,6 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
 
         // final setting of the datasets to ascii grids, in the past usually done using a wrp dataset
-        // TODO: data must be in SI units, need to check units here and convert if necessary
         if( varList[i] == "T2" ) {
             GDAL2AsciiGrid( srcDS, bandNum, airGrid );
             temperatureUnits::toBaseUnits( airGrid, T_units );
@@ -1043,6 +1051,8 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     }
 
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
+    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
+    ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
 	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
 	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
@@ -1052,9 +1062,7 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setColorScheme("default");
     ninjaKmlFiles.setVectorScaling(false);
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
-    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setTime(forecastTime);
-    ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
 
     if(ninjaKmlFiles.writeKml())
@@ -1265,12 +1273,12 @@ int main( int argc, char* argv[] )
     velocityUnits::eVelocityUnits outputSpeedUnits = velocityUnits::getUnit(outputSpeedUnits_str);
 
     // check dataset to verify it is a wrf dataset, and to verify it is readable
-    if ( identify( input_wrf_filename ) == false )
+    if(identify(input_wrf_filename) == false)
     {
         NinjaFinalize();
         throw badForecastFile("input input_wrf_filename is not a valid WRF file!!!");
     }
-    checkForValidData( input_wrf_filename );
+    checkForValidData(input_wrf_filename);
 
     // now start processing the data
     float dx;

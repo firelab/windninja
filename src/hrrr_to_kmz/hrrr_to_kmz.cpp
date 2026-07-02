@@ -361,6 +361,10 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
 
     std::string srcWkt;
     srcWkt = srcDS->GetProjectionRef();
+    if(srcWkt.empty())
+    {
+        throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
+    }
 
     OGRSpatialReference oSRS, *poLatLong;
     oSRS.importFromWkt(srcWkt.c_str());
@@ -432,8 +436,9 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
                                                     GRA_NearestNeighbour,
                                                     1.0, psWarpOptions );
 
-    if (wrpDS == NULL) {
-        throw std::runtime_error("Warp operation failed!");
+    if(wrpDS == NULL)
+    {
+        throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
     }
 
     std::vector<std::string> varList = getVariableList();
@@ -613,7 +618,9 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     }
 
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
-	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
+    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
+	ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
+    ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
 	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
@@ -623,9 +630,7 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setVectorScaling(false);
     //ninjaKmlFiles.setLineWidth(1.0);  // input.googLineWidth value
     ninjaKmlFiles.setLineWidth(3.0);  // input.wxModelGoogLineWidth value
-    std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setTime(forecastTime);
-    ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
 
     if(ninjaKmlFiles.writeKml())
