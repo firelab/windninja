@@ -2957,6 +2957,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             }
 
             ninjaKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+
             if(ninjaKmlFiles.writeKml())
             {
                 if(ninjaKmlFiles.makeKmz())
@@ -3065,6 +3066,113 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
 
         delete[] finalSpeedSplitVals;
         finalSpeedSplitVals = nullptr;
+    }
+
+    if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag && (ninjas[0]->input.wxModelGoogOutFlag == true || ninjas[0]->input.wxModelFgbzOutFlag == true))
+    {
+        // the wxModel outputs aren't resampling datasets, can just reuse the same single set of outputs once for each output type
+        AsciiGrid<double> **wxModelVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            wxModelVelGrids[i] = ninjas[i]->init->getWxSpeedGrid();
+        }
+
+        if(ninjas[0]->input.wxModelGoogOutFlag == true && ninjas[0]->input.googUseConsistentColorScale == true)
+        {
+            eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+            if(ninjas[0]->input.wxModelGoogSpeedScaling == KmlVector::equal_color)
+            {
+                speedScaling = ninjaArmy::equal_color;
+            }
+            if(ninjas[0]->input.wxModelGoogSpeedScaling == KmlVector::equal_interval)
+            {
+                speedScaling = ninjaArmy::equal_interval;
+            }
+
+            int numSplits;
+            double *finalSpeedSplitVals = nullptr;
+            calcSpeedSplitValsArmy(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+            for(int i = 0; i < ninjas.size(); i++)
+            {
+                KmlVector wxModelKmlFiles;
+
+                wxModelKmlFiles.setKmlFile(ninjas[i]->input.wxModelKmlFile);
+                wxModelKmlFiles.setKmzFile(ninjas[i]->input.wxModelKmzFile);
+                wxModelKmlFiles.setLegendFile(ninjas[i]->input.wxModelLegFile);
+                wxModelKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimewxModelLegFile, ninjas[i]->input.ninjaTime);
+                wxModelKmlFiles.setSpeedGrid(*ninjas[i]->init->getWxSpeedGrid(), ninjas[i]->input.outputSpeedUnits);
+                wxModelKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+                wxModelKmlFiles.setDirGrid(*ninjas[i]->init->getWxAngleGrid());
+
+                wxModelKmlFiles.setSpeedScaling(ninjas[i]->input.wxModelGoogSpeedScaling);
+                wxModelKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+                wxModelKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
+                wxModelKmlFiles.setLineWidth(ninjas[i]->input.wxModelGoogLineWidth);
+                wxModelKmlFiles.setTime(ninjas[i]->input.ninjaTime);
+
+                std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                wxModelKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+
+                wxModelKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+
+                if(wxModelKmlFiles.writeKml())
+                {
+                    if(wxModelKmlFiles.makeKmz())
+                    {
+                        wxModelKmlFiles.removeKmlFile();
+                    }
+                }
+            }
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = nullptr;
+        }
+
+        if(ninjas[0]->input.wxModelFgbzOutFlag == true && ninjas[0]->input.fgbzUseConsistentColorScale == true)
+        {
+            eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+            if(ninjas[0]->input.wxModelFgbzSpeedScaling == OutputWriter::equal_color)
+            {
+                speedScaling = ninjaArmy::equal_color;
+            }
+            else if(ninjas[0]->input.wxModelFgbzSpeedScaling == OutputWriter::equal_interval)
+            {
+                speedScaling = ninjaArmy::equal_interval;
+            }
+
+            int numSplits;
+            double *finalSpeedSplitVals = nullptr;
+            calcSpeedSplitValsArmy(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+            for(int i = 0; i < ninjas.size(); i++)
+            {
+                OutputWriter wxModelFgbzFiles;
+
+                wxModelFgbzFiles.setSpeedGrid(*ninjas[i]->init->getWxSpeedGrid(), ninjas[i]->input.outputSpeedUnits);
+                wxModelFgbzFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+                wxModelFgbzFiles.setDirGrid(*ninjas[i]->init->getWxAngleGrid());
+
+                wxModelFgbzFiles.setSpeedScaling(ninjas[i]->input.wxModelFgbzSpeedScaling);
+                wxModelFgbzFiles.setColorScheme(ninjas[i]->input.fgbzColor);
+                wxModelFgbzFiles.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
+                wxModelFgbzFiles.setLineWidth(ninjas[i]->input.wxModelFgbzLineWidth);
+                wxModelFgbzFiles.setNinjaTime(ninjas[i]->input.ninjaTime);
+
+                wxModelFgbzFiles.setWxModel(ninjas[i]->init->getForecastIdentifier());
+
+                wxModelFgbzFiles.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
+
+                wxModelFgbzFiles.write(ninjas[i]->input.wxModelFgbzFile, "FlatGeoBufZip");
+            }
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = nullptr;
+        }
+
+        //cleanup
+        delete[] wxModelVelGrids;
+        wxModelVelGrids = nullptr;
     }
 
     ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");

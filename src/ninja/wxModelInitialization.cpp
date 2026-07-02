@@ -1073,6 +1073,17 @@ wxModelInitialization::getTimeList(const char *pszVariable,
     return timeList;
 }
 
+// used to get a pointer to the output wxModel grids, for consistent color scale output methods
+AsciiGrid<double>* wxModelInitialization::getWxSpeedGrid()
+{
+    return &speedInitializationGrid_wxModel;
+}
+
+AsciiGrid<double>* wxModelInitialization::getWxAngleGrid()
+{
+    return &dirInitializationGrid_wxModel;
+}
+
 /**
  *
  */
@@ -1501,7 +1512,7 @@ void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, co
 
 void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
-    if(input.wxModelAsciiOutFlag==true || input.wxModelGeoTiffOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true || input.wxModelFgbzOutFlag == true)
+    if(input.wxModelAsciiOutFlag == true || input.wxModelGeoTiffOutFlag == true || input.wxModelShpOutFlag == true || input.wxModelGoogOutFlag == true || input.wxModelFgbzOutFlag == true)
     {
         // clip the output weather model ascii grids, to the area of the dem, plus one dem cell size.
         // actually, it looks best to use one wxModel cell size NOT one dem cell size.
@@ -1649,7 +1660,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 #pragma omp section
     {
         try{
-        if(input.wxModelGoogOutFlag == true)
+        if(input.wxModelGoogOutFlag == true && input.googUseConsistentColorScale == false)
             {
             KmlVector wxModelKmlFiles;
 
@@ -1703,7 +1714,7 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 #pragma omp section
     {
         try{
-            if(input.wxModelFgbzOutFlag == true)
+            if(input.wxModelFgbzOutFlag == true && input.fgbzUseConsistentColorScale == false)
             {
                 OutputWriter wxModelFgbzFiles;
 
