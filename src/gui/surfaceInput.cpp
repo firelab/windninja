@@ -288,18 +288,18 @@ void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
 {
     ui->inputsStackedWidget->setCurrentIndex(3);
 
-    ui->elevationInputTypeComboBox->setCurrentIndex(0);
-    ui->elevationFileTypeComboBox->setCurrentIndex(0);
+    // ui->elevationInputTypeComboBox->setCurrentIndex(0);
+    // ui->elevationFileTypeComboBox->setCurrentIndex(0);
     ui->elevationInputTypePushButton->setChecked(false);
 
-    ui->boundingBoxNorthLineEdit->clear();
-    ui->boundingBoxEastLineEdit->clear();
-    ui->boundingBoxSouthLineEdit->clear();
-    ui->boundingBoxWestLineEdit->clear();
+    // ui->boundingBoxNorthLineEdit->clear();
+    // ui->boundingBoxEastLineEdit->clear();
+    // ui->boundingBoxSouthLineEdit->clear();
+    // ui->boundingBoxWestLineEdit->clear();
 
-    ui->pointRadiusLatLineEdit->clear();
-    ui->pointRadiusLonLineEdit->clear();
-    ui->pointRadiusRadiusLineEdit->clear();
+    // ui->pointRadiusLatLineEdit->clear();
+    // ui->pointRadiusLonLineEdit->clear();
+    // ui->pointRadiusRadiusLineEdit->clear();
 
     webEngineView->page()->runJavaScript("stopRectangleDrawing();");
 

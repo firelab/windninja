@@ -75,12 +75,6 @@ void PointInitializationInput::pointInitializationGroupBoxToggled()
 
 void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
 {
-    ui->weatherStationDataSourceComboBox->setCurrentIndex(0);
-    ui->weatherStationDataTimeComboBox->setCurrentIndex(0);
-
-    ui->downloadFromStationIDLineEdit->clear();
-    ui->downloadFromDEMSpinBox->setValue(0);
-
     ui->inputsStackedWidget->setCurrentIndex(19);
 }
 
