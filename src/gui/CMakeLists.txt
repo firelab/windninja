@@ -53,6 +53,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         weatherModelInput.cpp
         outputs.h
         outputs.cpp
+        noWheelDoubleSpinBox.h
     )
 else()
     add_executable(WindNinja

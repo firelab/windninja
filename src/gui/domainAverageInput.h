@@ -32,6 +32,7 @@
 
 #include "appState.h"
 #include "ui_mainWindow.h"
+#include "noWheelDoubleSpinBox.h"
 #include <QObject>
 
 class DomainAverageInput: public QObject
@@ -46,12 +47,12 @@ public:
 
     int countNumRuns();
 
-    QVector<QDoubleSpinBox*> speedSpins;
-    QVector<QDoubleSpinBox*> dirSpins;
+    QVector<NoWheelDoubleSpinBox*> speedSpins;
+    QVector<NoWheelDoubleSpinBox*> dirSpins;
     QVector<QTimeEdit*>      timeEdits;
     QVector<QDateEdit*>      dateEdits;
-    QVector<QDoubleSpinBox*> cloudSpins;
-    QVector<QDoubleSpinBox*> airTempSpins;
+    QVector<NoWheelDoubleSpinBox*> cloudSpins;
+    QVector<NoWheelDoubleSpinBox*> airTempSpins;
 
 private slots:
     void setupDomainAverageTableWidgets();

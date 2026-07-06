@@ -186,18 +186,24 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
 
     for(int row = 0; row < rows; row++)
     {
-        speedSpins[row] = new QDoubleSpinBox(table);
+        speedSpins[row] = new NoWheelDoubleSpinBox(table);
         speedSpins[row]->setRange(0.0, 500.0);
         speedSpins[row]->setDecimals(2);
         speedSpins[row]->setProperty("defaultValue", 0.0);
         speedSpins[row]->setValue(speedSpins[row]->property("defaultValue").toDouble());
+        speedSpins[row]->setFocusPolicy(Qt::StrongFocus);
+        speedSpins[row]->setAttribute(Qt::WA_AcceptTouchEvents, false);
+        speedSpins[row]->setKeyboardTracking(false);
         table->setCellWidget(row, 0, speedSpins[row]);
 
-        dirSpins[row] = new QDoubleSpinBox(table);
+        dirSpins[row] = new NoWheelDoubleSpinBox(table);
         dirSpins[row]->setRange(0.0, 359.9);
         dirSpins[row]->setDecimals(0);
         dirSpins[row]->setProperty("defaultValue", 0.0);
         dirSpins[row]->setValue(dirSpins[row]->property("defaultValue").toDouble());
+        dirSpins[row]->setFocusPolicy(Qt::StrongFocus);
+        dirSpins[row]->setAttribute(Qt::WA_AcceptTouchEvents, false);
+        dirSpins[row]->setKeyboardTracking(false);
         table->setCellWidget(row, 1, dirSpins[row]);
 
         timeEdits[row] = new QTimeEdit(QTime::currentTime(), table);
@@ -209,18 +215,24 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
         dateEdits[row]->setDisplayFormat("MM/dd/yyyy");
         table->setCellWidget(row, 3, dateEdits[row]);
 
-        cloudSpins[row] = new QDoubleSpinBox(table);
+        cloudSpins[row] = new NoWheelDoubleSpinBox(table);
         cloudSpins[row]->setRange(0.0, 100.0);
         cloudSpins[row]->setDecimals(0);
         cloudSpins[row]->setProperty("defaultValue", 0.0);
         cloudSpins[row]->setValue(cloudSpins[row]->property("defaultValue").toDouble());
+        cloudSpins[row]->setFocusPolicy(Qt::StrongFocus);
+        cloudSpins[row]->setAttribute(Qt::WA_AcceptTouchEvents, false);
+        cloudSpins[row]->setKeyboardTracking(false);
         table->setCellWidget(row, 4, cloudSpins[row]);
 
-        airTempSpins[row] = new QDoubleSpinBox(table);
+        airTempSpins[row] = new NoWheelDoubleSpinBox(table);
         airTempSpins[row]->setRange(-40.0, 200.0);
         airTempSpins[row]->setDecimals(0);
         airTempSpins[row]->setProperty("defaultValue", 72.0);
         airTempSpins[row]->setValue(airTempSpins[row]->property("defaultValue").toDouble());
+        airTempSpins[row]->setFocusPolicy(Qt::StrongFocus);
+        airTempSpins[row]->setAttribute(Qt::WA_AcceptTouchEvents, false);
+        airTempSpins[row]->setKeyboardTracking(false);
         table->setCellWidget(row, 5, airTempSpins[row]);
 
         connect(speedSpins[row], &QDoubleSpinBox::valueChanged, this, &DomainAverageInput::domainAverageTableCheckRows);
