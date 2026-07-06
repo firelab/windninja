@@ -78,7 +78,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
 
-    connect(ui->ninjafoamCaseButton, &QPushButton::clicked, this, &SurfaceInput::ninjafoamCaseButtonClicked);
+    connect(ui->ninjafoamCaseOpenButton, &QPushButton::clicked, this, &SurfaceInput::ninjafoamCaseOpenButtonClicked);
 
     connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
 
@@ -465,7 +465,7 @@ void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFileP
     emit updateTreeView();
 }
 
-void SurfaceInput::ninjafoamCaseButtonClicked()
+void SurfaceInput::ninjafoamCaseOpenButtonClicked()
 {
     QString directoryPath;
     QFileInfo inputFileDirInfo(inputFileDir);
@@ -492,7 +492,6 @@ void SurfaceInput::ninjafoamCaseButtonClicked()
 
     if (ninjafoamDir.isEmpty())
     {
-        showInvalidCase("Invalid Existing Case. \nCase directory was empty.");
         return;
     }
 

@@ -842,7 +842,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>10</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1027,8 +1027,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>530</width>
-               <height>452</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1075,7 +1075,7 @@
                   <widget class="QLineEdit" name="ninjafoamCaseLineEdit"/>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="ninjafoamCaseButton">
+                  <widget class="QPushButton" name="ninjafoamCaseOpenButton">
                    <property name="text">
                     <string>Open Case</string>
                    </property>
@@ -1813,7 +1813,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>330</width>
+               <width>350</width>
                <height>231</height>
               </rect>
              </property>

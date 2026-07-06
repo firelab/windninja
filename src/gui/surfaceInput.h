@@ -77,7 +77,7 @@ private slots:
     void elevationInputTypePushButtonClicked();
     void boundingBoxLineEditsTextChanged();
     void pointRadiusLineEditsTextChanged();
-    void ninjafoamCaseButtonClicked();
+    void ninjafoamCaseOpenButtonClicked();
     void elevationInputFileDownloadButtonClicked();
     void elevationInputFileLineEditTextChanged(const QString &arg1);
     void meshResolutionComboBoxCurrentIndexChanged(int index);
