@@ -2083,15 +2083,15 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <property name="cursor">
                       <cursorShape>PointingHandCursor</cursorShape>
                      </property>
+                     <property name="toolTip">
+                      <string>Clear all entries</string>
+                     </property>
                      <property name="text">
                       <string>Clear Table</string>
                      </property>
                      <property name="icon">
                       <iconset resource="../../wn-resources.qrc">
                        <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
-                     </property>
-                     <property name="toolTip">
-                      <string>Clear all entries</string>
                      </property>
                     </widget>
                    </item>
@@ -2396,14 +2396,14 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
-                     <property name="text">
-                      <string>Select Weather Stations</string>
-                     </property>
                      <property name="toolTip">
                       <string>Select Weather Stations from available files.
 Click a file to add it to the list of included stations.
 Click it again to remove it from the included stations.
 Available formats are time series and one step runs with time data.</string>
+                     </property>
+                     <property name="text">
+                      <string>Select Weather Stations</string>
                      </property>
                     </widget>
                    </item>
@@ -2437,15 +2437,15 @@ Available formats are time series and one step runs with time data.</string>
                      <property name="cursor">
                       <cursorShape>PointingHandCursor</cursorShape>
                      </property>
+                     <property name="toolTip">
+                      <string>Download weather station data from the Mesonet API</string>
+                     </property>
                      <property name="text">
                       <string>Download Data</string>
                      </property>
                      <property name="icon">
                       <iconset resource="../../wn-resources.qrc">
                        <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
-                     </property>
-                     <property name="toolTip">
-                      <string>Download weather station data from the Mesonet API</string>
                      </property>
                     </widget>
                    </item>
@@ -2623,14 +2623,14 @@ Available formats are time series and one step runs with time data.</string>
                        <property name="cursor">
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
+                       <property name="toolTip">
+                        <string>Enter the simulation start time</string>
+                       </property>
                        <property name="displayFormat">
                         <string>MM/dd/yyyy HH:mm</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>Enter the simulation start time</string>
                        </property>
                       </widget>
                      </item>
@@ -2652,6 +2652,9 @@ Available formats are time series and one step runs with time data.</string>
                        <property name="enabled">
                         <bool>false</bool>
                        </property>
+                       <property name="toolTip">
+                        <string>Enter the simulation stop time</string>
+                       </property>
                        <property name="dateTime">
                         <datetime>
                          <hour>0</hour>
@@ -2667,9 +2670,6 @@ Available formats are time series and one step runs with time data.</string>
                        </property>
                        <property name="calendarPopup">
                         <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>Enter the simulation stop time</string>
                        </property>
                       </widget>
                      </item>
@@ -2691,6 +2691,9 @@ Available formats are time series and one step runs with time data.</string>
                        <property name="enabled">
                         <bool>false</bool>
                        </property>
+                       <property name="toolTip">
+                        <string>Enter the number of time steps</string>
+                       </property>
                        <property name="minimum">
                         <number>1</number>
                        </property>
@@ -2702,9 +2705,6 @@ Available formats are time series and one step runs with time data.</string>
                        </property>
                        <property name="value">
                         <number>24</number>
-                       </property>
-                       <property name="toolTip">
-                        <string>Enter the number of time steps</string>
                        </property>
                       </widget>
                      </item>
@@ -2791,16 +2791,16 @@ Available formats are time series and one step runs with time data.</string>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
                    </property>
+                   <property name="toolTip">
+                    <string>Time Series: Writes a KML for each time step with time interpolated station data
+Single Step: Writes a KML of weather station data</string>
+                   </property>
                    <property name="text">
                     <string>Write Station KML</string>
                    </property>
                    <property name="icon">
                     <iconset resource="../../wn-resources.qrc">
                      <normaloff>:/weather_cloudy.png</normaloff>:/weather_cloudy.png</iconset>
-                   </property>
-                   <property name="toolTip">
-                    <string>Time Series: Writes a KML for each time step with time interpolated station data
-Single Step: Writes a KML of weather station data</string>
                    </property>
                   </widget>
                  </item>
@@ -3137,21 +3137,21 @@ Single Step: Writes a KML of weather station data</string>
                          </item>
                          <item>
                           <widget class="QPushButton" name="weatherModelTimeSelectAllButton">
-                           <property name="text">
-                            <string>Select All</string>
-                           </property>
                            <property name="toolTip">
                             <string>Select all forecast times</string>
+                           </property>
+                           <property name="text">
+                            <string>Select All</string>
                            </property>
                           </widget>
                          </item>
                          <item>
                           <widget class="QPushButton" name="weatherModelTimeSelectNoneButton">
-                           <property name="text">
-                            <string>Select None</string>
-                           </property>
                            <property name="toolTip">
                             <string>Select no forecast times</string>
+                           </property>
+                           <property name="text">
+                            <string>Select None</string>
                            </property>
                           </widget>
                          </item>
@@ -3586,11 +3586,11 @@ Single Step: Writes a KML of weather station data</string>
                     </item>
                     <item>
                      <widget class="QCheckBox" name="googleEarthLegendCheckBox">
-                      <property name="text">
-                       <string>Use Consistent Color Scale</string>
-                      </property>
                       <property name="toolTip">
                        <string>Use a consistent color scale across simulations</string>
+                      </property>
+                      <property name="text">
+                       <string>Use Consistent Color Scale</string>
                       </property>
                      </widget>
                     </item>
@@ -3665,11 +3665,11 @@ Single Step: Writes a KML of weather station data</string>
                     </item>
                     <item>
                      <widget class="QCheckBox" name="googleEarthVectorScalingCheckBox">
-                      <property name="text">
-                       <string>Apply Vector Scaling</string>
-                      </property>
                       <property name="toolTip">
                        <string>Enable vector scaling to increase line width with wind speed</string>
+                      </property>
+                      <property name="text">
+                       <string>Apply Vector Scaling</string>
                       </property>
                      </widget>
                     </item>
@@ -4749,11 +4749,11 @@ Single Step: Writes a KML of weather station data</string>
                     </item>
                     <item>
                      <widget class="QCheckBox" name="geospatialPDFFilesVectorsCheckBox">
-                      <property name="text">
-                       <string>Apply Vector Scaling</string>
-                      </property>
                       <property name="toolTip">
                        <string>Enable vector scaling to increase line width with wind speed</string>
+                      </property>
+                      <property name="text">
+                       <string>Apply Vector Scaling</string>
                       </property>
                      </widget>
                     </item>
@@ -5292,11 +5292,11 @@ Single Step: Writes a KML of weather station data</string>
                  </item>
                  <item>
                   <widget class="QCheckBox" name="mapVisualizationLegendCheckBox">
-                   <property name="text">
-                    <string>Use Consistent Color Scale</string>
-                   </property>
                    <property name="toolTip">
                     <string>Use a consistent color scale across simulations</string>
+                   </property>
+                   <property name="text">
+                    <string>Use Consistent Color Scale</string>
                    </property>
                   </widget>
                  </item>
@@ -5371,11 +5371,11 @@ Single Step: Writes a KML of weather station data</string>
                  </item>
                  <item>
                   <widget class="QCheckBox" name="mapVisualizationVectorScalingCheckBox">
-                   <property name="text">
-                    <string>Apply Vector Scaling</string>
-                   </property>
                    <property name="toolTip">
                     <string>Enable vector scaling to increase line width with wind speed</string>
+                   </property>
+                   <property name="text">
+                    <string>Apply Vector Scaling</string>
                    </property>
                   </widget>
                  </item>
@@ -6113,15 +6113,15 @@ Single Step: Writes a KML of weather station data</string>
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>Download the elevation file</string>
+              </property>
               <property name="text">
                <string>Download File</string>
               </property>
               <property name="icon">
                <iconset resource="../../wn-resources.qrc">
                 <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
-              </property>
-              <property name="toolTip">
-               <string>Download the elevation file</string>
               </property>
              </widget>
             </item>
@@ -6248,6 +6248,10 @@ Single Step: Writes a KML of weather station data</string>
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
+               <property name="toolTip">
+                <string>Download From DEM: Download all active weather stations with the bounds of the selected surface input.
+Download By Station ID: Manually enter weather station IDs separated by commas. e.g. KMSO,PNTM8</string>
+               </property>
                <item>
                 <property name="text">
                  <string>Download from DEM</string>
@@ -6258,10 +6262,6 @@ Single Step: Writes a KML of weather station data</string>
                  <string>Download by Station ID</string>
                 </property>
                </item>
-               <property name="toolTip">
-                <string>Download From DEM: Download all active weather stations with the bounds of the selected surface input.
-Download By Station ID: Manually enter weather station IDs separated by commas. e.g. KMSO,PNTM8</string>
-               </property>
               </widget>
              </item>
              <item>
@@ -6439,6 +6439,10 @@ Download By Station ID: Manually enter weather station IDs separated by commas. 
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
+               <property name="toolTip">
+                <string>Download Most Recent Data: Download one time step of the latest data available in the mesowest API.
+Download Between Two Dates: Download all weather station data within a specified start and stop time.</string>
+               </property>
                <item>
                 <property name="text">
                  <string>Download Most Recent Data</string>
@@ -6449,10 +6453,6 @@ Download By Station ID: Manually enter weather station IDs separated by commas. 
                  <string>Download Between Two Dates</string>
                 </property>
                </item>
-               <property name="toolTip">
-                <string>Download Most Recent Data: Download one time step of the latest data available in the mesowest API.
-Download Between Two Dates: Download all weather station data within a specified start and stop time.</string>
-               </property>
               </widget>
              </item>
              <item>
@@ -6607,15 +6607,15 @@ Download Between Two Dates: Download all weather station data within a specified
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Fetches weather data based on above specified parameters</string>
+              </property>
               <property name="text">
                <string>Download Data</string>
               </property>
               <property name="icon">
                <iconset resource="../../wn-resources.qrc">
                 <normaloff>:/server_go.png</normaloff>:/server_go.png</iconset>
-              </property>
-              <property name="toolTip">
-               <string>Fetches weather data based on above specified parameters</string>
               </property>
              </widget>
             </item>
@@ -6633,15 +6633,15 @@ Download Between Two Dates: Download all weather station data within a specified
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Close Weather Station Data Download page</string>
+              </property>
               <property name="text">
                <string>Cancel</string>
               </property>
               <property name="icon">
                <iconset resource="../../wn-resources.qrc">
                 <normaloff>:/cancel.png</normaloff>:/cancel.png</iconset>
-              </property>
-              <property name="toolTip">
-               <string>Close Weather Station Data Download page</string>
               </property>
              </widget>
             </item>
