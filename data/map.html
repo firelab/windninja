@@ -454,10 +454,37 @@
         let fgbTimeSeriesImgTimeSeriesImgUrl = null;
         let pendingFiles = 0;
 
-        function finishKmzLoad() {
+        function finishFileLoad() {
             pendingFiles--;
 
             if (pendingFiles === 0) {
+
+                const windninjaLayers = windninjaOutputTree.children.filter(
+                    x => x.label !== 'No Output'
+                );
+
+                if (windninjaLayers.length > 0) {
+                    windninjaLayers.forEach(item => {
+                        map.removeLayer(item.layer);
+                    });
+
+                    const firstLayer = windninjaLayers[0];
+                    map.addLayer(firstLayer.layer);
+                }
+
+                const initializationLayers = initializationOutputTree.children.filter(
+                    x => x.label !== 'No Output'
+                );
+
+                if (initializationLayers.length > 0) {
+                    initializationLayers.forEach(item => {
+                        map.removeLayer(item.layer);
+                    });
+
+                    const firstLayer = initializationLayers[0];
+                    map.addLayer(firstLayer.layer);
+                }
+
                 centerMapOnActiveLayer(); 
 
                 if (window.bridge?.receiveBoundingBox) {
@@ -483,7 +510,7 @@
 
             const handled = await handleKml(data, fileName);
             if (handled) {
-                finishKmzLoad();   
+                finishFileLoad();   
                 return; 
             }
 
@@ -491,7 +518,7 @@
             const arrayBuffer = await response.arrayBuffer();
             const zip = await JSZip.loadAsync(arrayBuffer);
 
-            const keywords = ["NOMADS", "UCAR", "NCEP", "PASTCAST", "WRF", "HRRR"];
+            const keywords = ["NOMADS", "UCAR", "PASTCAST"];
             const containsKeyword = Object.keys(zip.files).some(fileName => 
                 keywords.some(keyword => fileName.toUpperCase().includes(keyword))
             );
@@ -553,7 +580,7 @@
                     layer.bindPopup(`
                         <strong>${name}</strong><br>
                         Speed: ${props.speed ?? 'n/a'}<br>
-                        Angle: ${props.dir ?? 'n/a'}
+                        Angle: ${props.angle ?? 'n/a'}
                     `);
                 }
             });
@@ -648,16 +675,13 @@
 
             windninjaOutputTree.children.push({ label: layerName, layer: fgbLegendLayer, radioGroup: 'windninjaOutput'});
 
-            windninjaOutputTree.children.sort((a, b) =>
-                a.label.localeCompare(b.label)
-            );
+            windninjaOutputTree.children.sort((a, b) => {
+                if (a.label === 'No Output') return 1;
+                if (b.label === 'No Output') return -1;
+                return a.label.localeCompare(b.label);
+            });
 
             updateOverlayTree();
-
-            if (activeWindNinjaLayer) {
-                map.removeLayer(activeWindNinjaLayer);
-            }
-            map.addLayer(fgbLegendLayer);
 
             if (!map.hasLayer(windninjaLegendToggle)) {
                 map.addLayer(windninjaLegendToggle);
@@ -669,7 +693,7 @@
             windninjaLegendEnabled = true;
             windninjaTimeSeriesEnabled = true;
             
-            finishKmzLoad();
+            finishFileLoad();
             showCenterControl();
         }
 
@@ -729,6 +753,13 @@
                     layer: kmlLegendLayer,
                     radioGroup: 'stationOutput'
                 });
+
+                stationOutputTree.children.sort((a, b) => {
+                    if (a.label === 'No Output') return -1;
+                    if (b.label === 'No Output') return 1;
+                    return a.label.localeCompare(b.label);
+                });
+
             } else {
                 if (!layerName.toLowerCase().endsWith('.kml')) {
                     layerName += '.kml';
@@ -817,7 +848,7 @@
                     layer.bindPopup(`
                         <strong>${name}</strong><br>
                         Speed: ${props.speed ?? 'n/a'}<br>
-                        Angle: ${props.dir ?? 'n/a'}
+                        Angle: ${props.angle ?? 'n/a'}
                     `);
                 }
             });
@@ -906,12 +937,13 @@
 
             initializationOutputTree.children.push({ label: layerName, layer: fgbLegendLayer, radioGroup: 'initializationOutput'});
 
-            updateOverlayTree();
+            initializationOutputTree.children.sort((a, b) => {
+                if (a.label === 'No Output') return 1;
+                if (b.label === 'No Output') return -1;
+                return a.label.localeCompare(b.label);
+            });
 
-            if (activeInitializationLayer) {
-                map.removeLayer(activeInitializationLayer);
-            }
-            map.addLayer(fgbLegendLayer);
+            updateOverlayTree();
 
             if (!map.hasLayer(initializationLegendToggle)) {
                 map.addLayer(initializationLegendToggle);
@@ -923,7 +955,7 @@
             initializationLegendEnabled = true;
             initializationTimeSeriesEnabled = true;
 
-            finishKmzLoad();
+            finishFileLoad();
             showCenterControl();
         }
 
