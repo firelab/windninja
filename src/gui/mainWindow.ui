@@ -842,7 +842,7 @@
          <enum>QFrame::Shadow::Sunken</enum>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>8</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -2827,8 +2827,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>368</width>
-               <height>431</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3026,7 +3026,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="checkable">
                     <bool>false</bool>
                    </property>
-                   <layout class="QVBoxLayout" name="verticalLayout_25" stretch="0,0">
+                   <layout class="QVBoxLayout" name="verticalLayout_25" stretch="0,0,0">
                     <property name="leftMargin">
                      <number>5</number>
                     </property>
@@ -3129,6 +3129,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       </layout>
                      </widget>
                     </item>
+                    <item>
+                     <widget class="QCheckBox" name="rawWeatherModelOutputCheckBox">
+                      <property name="enabled">
+                       <bool>false</bool>
+                      </property>
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="text">
+                       <string>Write Raw Weather Model Output</string>
+                      </property>
+                      <property name="checkable">
+                       <bool>true</bool>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
                    </layout>
                   </widget>
                  </item>
@@ -3154,7 +3176,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <height>16777215</height>
           </size>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,1">
+         <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,1">
           <property name="leftMargin">
            <number>5</number>
           </property>
@@ -3358,28 +3380,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
              </spacer>
             </item>
            </layout>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="rawWeatherModelOutputCheckBox">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Write Raw Weather Model Output</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
           </item>
           <item>
            <spacer name="outputsPageSpacer">
@@ -4598,8 +4598,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>357</width>
-               <height>274</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -5133,8 +5133,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>374</width>
-               <height>439</height>
+               <width>730</width>
+               <height>556</height>
               </rect>
              </property>
              <property name="sizePolicy">
