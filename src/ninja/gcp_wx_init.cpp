@@ -197,7 +197,7 @@ std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
     boost::posix_time::ptime startDateTime(startDate, boost::posix_time::duration_from_string(starthours + ":00:00"));
     boost::posix_time::ptime endDateTime(endDate, boost::posix_time::duration_from_string(endhours + ":00:00"));
     std::string path(CPLGetDirname(demFile.c_str()));
-    std::string fileName(CPLGetFilename(demFile.c_str()));
+    std::string fileName(CPLGetBasename(demFile.c_str()));
     std::string startDateStr = boost::gregorian::to_iso_string(startDateTime.date());
 
     // Extract hour string: HH (zero-padded)

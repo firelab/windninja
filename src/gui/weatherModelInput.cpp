@@ -355,7 +355,7 @@ void WeatherModelInput::updateTreeView()
     QStringList filters;
     for(int i = 0; i < ui->weatherModelComboBox->count(); i++)
     {
-        filters << ui->weatherModelComboBox->itemText(i) + "-" + demFileInfo.fileName();
+        filters << ui->weatherModelComboBox->itemText(i) + "-" + demFileInfo.baseName();
     }
     filters << "20*.zip";
     filters << "20*T*";

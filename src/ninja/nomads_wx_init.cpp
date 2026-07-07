@@ -255,7 +255,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     GDALClose( hDS );
 
     std::string path( CPLGetDirname( demFile.c_str() ) );
-    std::string fileName( CPLGetFilename( demFile.c_str() ) );
+    std::string fileName( CPLGetBasename( demFile.c_str() ) );
     std::string newPath( path + "/" + getForecastReadable('-')
              + "-" + fileName + "/" );
     int rc;
