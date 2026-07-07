@@ -325,8 +325,8 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
 
     if(!isNorthValid || !isEastValid || !isSouthValid || !isWestValid)
     {
-        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.";
-        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.", this);
+        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool, entering a point and radius, or entering the bounding box coordinates.";
+        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool, entering a point and radius, or entering the bounding box coordinates.", this);
         return;
     }
 
@@ -697,7 +697,6 @@ void SurfaceInput::fetchDEMFinished()
         else
         {
             emit writeToConsoleSignal("Failed to download DEM file.");
-//            updateProgressMessage("The surface data download failed. \nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
         }
 
         // delete the futureWatcher every time, whether success or failure
