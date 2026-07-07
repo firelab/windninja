@@ -488,12 +488,6 @@ void MainWindow::solveButtonClicked()
     }
 
     // do some pre-checks. Some of these could probably be moved to appState
-    if((ui->timeZoneComboBox->currentIndex() <= 0 || ui->timeZoneComboBox->currentText() == "") && (ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked() || ui->weatherModelGroupBox->isChecked() || ui->pointInitializationGroupBox->isChecked()))
-    {
-        ninjaErr = NINJA_E_INVALID;
-        qCritical() << "ERROR: Could not auto-identify time zone, please specify one in Surface Input page.";
-        comMessageHandler("ERROR: Could not auto-identify time zone, please specify one in Surface Input page.", this);
-    }
     if(ui->outputDirectoryLineEdit->text().isEmpty() || !QFileInfo(ui->outputDirectoryLineEdit->text()).exists())
     {
         ninjaErr = NINJA_E_INVALID;

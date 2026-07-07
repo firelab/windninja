@@ -174,12 +174,6 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
         QDateTime start = ui->pastcastStartDateTimeEdit->dateTime();
         QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
 
-        if(start > end)
-        {
-            qCritical() << "Invalid Range: The start time must be before the stop time.";
-            comMessageHandler("Invalid Range: The start time must be before the stop time.", this);
-            return;
-        }
         if(start.daysTo(end) > 14)
         {
             qCritical() << "Invalid Range: The time range cannot exceed 14 days.";
