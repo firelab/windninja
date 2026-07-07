@@ -657,7 +657,7 @@ void SurfaceInput::fetchDEMFinished()
     {
         // get the return value of the QtConcurrent::run() function
         int result = futureWatcher->future().result();
-result = -1;
+
         if(result >= 0)  // returned NINJA_SUCCESS, or a nNoDataCount value
         {
             emit writeToConsoleSignal("Finished downloading DEM file.", Qt::darkGreen);
