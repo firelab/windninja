@@ -339,9 +339,14 @@ void MainWindow::treeWidgetItemSelectionChanged()
 void MainWindow::massSolverCheckBoxToggled()
 {
     if(!ui->massSolverCheckBox->isChecked())
+    {
         return;
+    }
 
     ui->stabilityCheckBox->setDisabled(false);
+    ui->stabilityCheckBox->setToolTip("");
+    ui->pointInitializationGroupBox->setDisabled(false);
+    ui->pointInitializationGroupBox->setToolTip("");
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
     if(ui->momentumSolverCheckBox->isChecked())
@@ -362,10 +367,16 @@ void MainWindow::massSolverCheckBoxToggled()
 void MainWindow::momentumSolverCheckBoxToggled()
 {
     if(!ui->momentumSolverCheckBox->isChecked())
+    {
         return;
+    }
 
     ui->stabilityCheckBox->setChecked(false);
     ui->stabilityCheckBox->setDisabled(true);
+    ui->stabilityCheckBox->setToolTip("The non-neutral stability option is not currently available for the momentum solver.");
+    ui->pointInitializationGroupBox->setChecked(false);
+    ui->pointInitializationGroupBox->setDisabled(true);
+    ui->pointInitializationGroupBox->setToolTip("The point initialization option is not currently available for the momentum solver.");
     ui->ninjafoamCaseGroupBox->setVisible(true);
 
     if(ui->massSolverCheckBox->isChecked())
