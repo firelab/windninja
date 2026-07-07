@@ -657,7 +657,7 @@ void SurfaceInput::fetchDEMFinished()
     {
         // get the return value of the QtConcurrent::run() function
         int result = futureWatcher->future().result();
-
+result = -1;
         if(result >= 0)  // returned NINJA_SUCCESS, or a nNoDataCount value
         {
             emit writeToConsoleSignal("Finished downloading DEM file.", Qt::darkGreen);
@@ -697,6 +697,7 @@ void SurfaceInput::fetchDEMFinished()
         else
         {
             emit writeToConsoleSignal("Failed to download DEM file.");
+//            updateProgressMessage("The surface data download failed. \nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.");
         }
 
         // delete the futureWatcher every time, whether success or failure

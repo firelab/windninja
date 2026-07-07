@@ -39,6 +39,11 @@ int main(int argc, char *argv[])
         w->setMinimumSize(800, 600);
         w->resize(800, 600);
     } catch (...) {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            "WindNinja failed to initialize.\nMost likely cause is failure to find data dependencies.\nTry setting the environment variable WINDNINJA_DATA.\n"
+        );
         ninjaErr = NinjaFinalize(options);
         if(ninjaErr != NINJA_SUCCESS)
         {

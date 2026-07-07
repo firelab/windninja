@@ -62,57 +62,6 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
 
-void WeatherModelInput::weatherModelDownloadButtonClicked()
-{
-    emit writeToConsoleSignal("Downloading weather model data...");
-
-    progress = new QProgressDialog("Downloading Forecast Data...", QString(), 0, 0, ui->centralwidget);
-    progress->setWindowModality(Qt::WindowModal);
-    progress->setCancelButton(nullptr);
-    progress->setMinimumDuration(0);
-    progress->setAutoClose(true);
-    progress->show();
-
-    int hours = ui->weatherModelSpinBox->value();
-
-    futureWatcher = new QFutureWatcher<int>(this);
-    QFuture<int> future;
-
-    if (ui->weatherModelComboBox->currentText().contains("PASTCAST"))
-    {
-        progress->setLabelText("Downloading Pastcast Data...");
-
-        QDateTime start = ui->pastcastStartDateTimeEdit->dateTime();
-        QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
-
-        future = QtConcurrent::run(
-            &WeatherModelInput::fetchPastcastWeather,
-            this,
-            ninjaTools,
-            ui->weatherModelComboBox->currentText(),
-            ui->elevationInputFileLineEdit->property("fullpath").toString(),
-            ui->timeZoneComboBox->currentText(),
-            start.date().year(), start.date().month(), start.date().day(), start.time().hour(),
-            end.date().year(),   end.date().month(),   end.date().day(),   end.time().hour());
-    }
-    else
-    {
-        future = QtConcurrent::run(
-            &WeatherModelInput::fetchForecastWeather,
-            this,
-            ninjaTools,
-            ui->weatherModelComboBox->currentText(),
-            ui->elevationInputFileLineEdit->property("fullpath").toString(),
-            hours);
-    }
-
-    futureWatcher->setFuture(future);
-
-    connect(futureWatcher, &QFutureWatcher<int>::finished,
-            this, &WeatherModelInput::weatherModelDownloadFinished);
-    connect(progress, &QProgressDialog::canceled, this, &WeatherModelInput::weatherModelDownloadFinished);
-}
-
 void WeatherModelInput::updateProgressMessage(const QString message)
 {
     if(progress)
@@ -200,6 +149,70 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         emit self->updateProgressMessageSignal(QString::fromStdString(msg));
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
+}
+
+void WeatherModelInput::weatherModelDownloadButtonClicked()
+{
+    emit writeToConsoleSignal("Downloading weather model data...");
+
+    progress = new QProgressDialog("Downloading Forecast Data...", QString(), 0, 0, ui->centralwidget);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setCancelButton(nullptr);
+    progress->setMinimumDuration(0);
+    progress->setAutoClose(true);
+    progress->show();
+
+    int hours = ui->weatherModelSpinBox->value();
+
+    futureWatcher = new QFutureWatcher<int>(this);
+    QFuture<int> future;
+
+    if (ui->weatherModelComboBox->currentText().contains("PASTCAST"))
+    {
+        progress->setLabelText("Downloading Pastcast Data...");
+
+        QDateTime start = ui->pastcastStartDateTimeEdit->dateTime();
+        QDateTime end   = ui->pastcastEndDateTimeEdit->dateTime();
+
+        if(start > end)
+        {
+            qCritical() << "Invalid Range: The start time must be before the stop time.";
+            comMessageHandler("Invalid Range: The start time must be before the stop time.", this);
+            return;
+        }
+        if(start.daysTo(end) > 14)
+        {
+            qCritical() << "Invalid Range: The time range cannot exceed 14 days.";
+            comMessageHandler("Invalid Range: The time range cannot exceed 14 days.", this);
+            return;
+        }
+
+        future = QtConcurrent::run(
+            &WeatherModelInput::fetchPastcastWeather,
+            this,
+            ninjaTools,
+            ui->weatherModelComboBox->currentText(),
+            ui->elevationInputFileLineEdit->property("fullpath").toString(),
+            ui->timeZoneComboBox->currentText(),
+            start.date().year(), start.date().month(), start.date().day(), start.time().hour(),
+            end.date().year(),   end.date().month(),   end.date().day(),   end.time().hour());
+    }
+    else
+    {
+        future = QtConcurrent::run(
+            &WeatherModelInput::fetchForecastWeather,
+            this,
+            ninjaTools,
+            ui->weatherModelComboBox->currentText(),
+            ui->elevationInputFileLineEdit->property("fullpath").toString(),
+            hours);
+    }
+
+    futureWatcher->setFuture(future);
+
+    connect(futureWatcher, &QFutureWatcher<int>::finished,
+            this, &WeatherModelInput::weatherModelDownloadFinished);
+    connect(progress, &QProgressDialog::canceled, this, &WeatherModelInput::weatherModelDownloadFinished);
 }
 
 int WeatherModelInput::fetchForecastWeather(
