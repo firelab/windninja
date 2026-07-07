@@ -10,6 +10,15 @@ if(FIRELAB_PACKAGE)
     add_definitions(-DLF_PRIORITY_CODE="${LF_PRIORITY_CODE}")
 endif(FIRELAB_PACKAGE)
 
+set(CONSOLE_FLAG "")
+if(WIN32)
+    option(ENABLE_CONSOLE "Build the WindNinja GUI without a console window on Windows" OFF)
+
+    if(NOT ENABLE_CONSOLE)
+        set(CONSOLE_FLAG WIN32)
+    endif()
+endif()
+
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt6 REQUIRED COMPONENTS
     Core
@@ -26,7 +35,7 @@ set(PROJECT_SOURCES
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(WindNinja
+    qt_add_executable(WindNinja ${CONSOLE_FLAG}
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
         ${CMAKE_SOURCE_DIR}/wn-resources.qrc
