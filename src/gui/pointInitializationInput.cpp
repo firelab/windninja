@@ -298,8 +298,8 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     }
 
     bool fetchLatestFlag = ui->weatherStationDataTimeComboBox->currentIndex() ? 0 : 1;
-    QString outputPath = ui->outputDirectoryLineEdit->text();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QString outputPath = QFileInfo(elevationFile).absolutePath();
 
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future;

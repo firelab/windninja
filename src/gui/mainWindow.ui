@@ -806,7 +806,7 @@
         </item>
         <item>
          <property name="text">
-          <string>Solver</string>
+          <string>Solve</string>
          </property>
         </item>
        </widget>
@@ -2083,6 +2083,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <property name="cursor">
                       <cursorShape>PointingHandCursor</cursorShape>
                      </property>
+                     <property name="toolTip">
+                      <string>Clear all entries</string>
+                     </property>
                      <property name="text">
                       <string>Clear Table</string>
                      </property>
@@ -2393,6 +2396,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
+                     <property name="toolTip">
+                      <string>Select Weather Stations from available files.
+Click a file to add it to the list of included stations.
+Click it again to remove it from the included stations.
+Available formats are time series and one step runs with time data.</string>
+                     </property>
                      <property name="text">
                       <string>Select Weather Stations</string>
                      </property>
@@ -2427,6 +2436,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </property>
                      <property name="cursor">
                       <cursorShape>PointingHandCursor</cursorShape>
+                     </property>
+                     <property name="toolTip">
+                      <string>Download weather station data from the Mesonet API</string>
                      </property>
                      <property name="text">
                       <string>Download Data</string>
@@ -2611,6 +2623,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <property name="cursor">
                         <cursorShape>PointingHandCursor</cursorShape>
                        </property>
+                       <property name="toolTip">
+                        <string>Enter the simulation start time</string>
+                       </property>
                        <property name="displayFormat">
                         <string>MM/dd/yyyy HH:mm</string>
                        </property>
@@ -2636,6 +2651,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <widget class="QDateTimeEdit" name="weatherStationDataEndDateTimeEdit">
                        <property name="enabled">
                         <bool>false</bool>
+                       </property>
+                       <property name="toolTip">
+                        <string>Enter the simulation stop time</string>
                        </property>
                        <property name="dateTime">
                         <datetime>
@@ -2672,6 +2690,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <widget class="QSpinBox" name="weatherStationDataTimestepsSpinBox">
                        <property name="enabled">
                         <bool>false</bool>
+                       </property>
+                       <property name="toolTip">
+                        <string>Enter the number of time steps</string>
                        </property>
                        <property name="minimum">
                         <number>1</number>
@@ -2769,6 +2790,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    </property>
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="toolTip">
+                    <string>Time Series: Writes a KML for each time step with time interpolated station data
+Single Step: Writes a KML of weather station data</string>
                    </property>
                    <property name="text">
                     <string>Write Station KML</string>
@@ -2942,7 +2967,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                        <cursorShape>PointingHandCursor</cursorShape>
                       </property>
                       <property name="text">
-                       <string>Download</string>
+                       <string>Download Data</string>
                       </property>
                       <property name="icon">
                        <iconset resource="../../wn-resources.qrc">
@@ -3112,6 +3137,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </item>
                          <item>
                           <widget class="QPushButton" name="weatherModelTimeSelectAllButton">
+                           <property name="toolTip">
+                            <string>Select all forecast times</string>
+                           </property>
                            <property name="text">
                             <string>Select All</string>
                            </property>
@@ -3119,6 +3147,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                          </item>
                          <item>
                           <widget class="QPushButton" name="weatherModelTimeSelectNoneButton">
+                           <property name="toolTip">
+                            <string>Select no forecast times</string>
+                           </property>
                            <property name="text">
                             <string>Select None</string>
                            </property>
@@ -3555,6 +3586,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </item>
                     <item>
                      <widget class="QCheckBox" name="googleEarthLegendCheckBox">
+                      <property name="toolTip">
+                       <string>Use a consistent color scale across simulations</string>
+                      </property>
                       <property name="text">
                        <string>Use Consistent Color Scale</string>
                       </property>
@@ -3631,6 +3665,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </item>
                     <item>
                      <widget class="QCheckBox" name="googleEarthVectorScalingCheckBox">
+                      <property name="toolTip">
+                       <string>Enable vector scaling to increase line width with wind speed</string>
+                      </property>
                       <property name="text">
                        <string>Apply Vector Scaling</string>
                       </property>
@@ -4711,13 +4748,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      </widget>
                     </item>
                     <item>
-                     <widget class="QCheckBox" name="geospatialPDFFilesVectorsCheckBox">
-                      <property name="text">
-                       <string>Apply Vector Scaling</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
                      <spacer name="geospatialPDFFilesVectorsSpacer">
                       <property name="orientation">
                        <enum>Qt::Orientation::Horizontal</enum>
@@ -5252,6 +5282,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QCheckBox" name="mapVisualizationLegendCheckBox">
+                   <property name="toolTip">
+                    <string>Use a consistent color scale across simulations</string>
+                   </property>
                    <property name="text">
                     <string>Use Consistent Color Scale</string>
                    </property>
@@ -5328,6 +5361,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </item>
                  <item>
                   <widget class="QCheckBox" name="mapVisualizationVectorScalingCheckBox">
+                   <property name="toolTip">
+                    <string>Enable vector scaling to increase line width with wind speed</string>
+                   </property>
                    <property name="text">
                     <string>Apply Vector Scaling</string>
                    </property>
@@ -6067,6 +6103,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>Download the elevation file</string>
+              </property>
               <property name="text">
                <string>Download File</string>
               </property>
@@ -6199,6 +6238,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
                </property>
+               <property name="toolTip">
+                <string>Download From DEM: Download all active weather stations with the bounds of the selected surface input.
+Download By Station ID: Manually enter weather station IDs separated by commas. e.g. KMSO,PNTM8</string>
+               </property>
                <item>
                 <property name="text">
                  <string>Download from DEM</string>
@@ -6268,6 +6311,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   <widget class="QSpinBox" name="downloadFromDEMSpinBox">
                    <property name="cursor">
                     <cursorShape>PointingHandCursor</cursorShape>
+                   </property>
+                   <property name="toolTip">
+                    <string>Add a buffer to download stations outside the DEM</string>
                    </property>
                   </widget>
                  </item>
@@ -6382,6 +6428,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
                </property>
                <property name="cursor">
                 <cursorShape>PointingHandCursor</cursorShape>
+               </property>
+               <property name="toolTip">
+                <string>Download Most Recent Data: Download one time step of the latest data available in the mesowest API.
+Download Between Two Dates: Download all weather station data within a specified start and stop time.</string>
                </property>
                <item>
                 <property name="text">
@@ -6547,6 +6597,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>Fetches weather data based on above specified parameters</string>
+              </property>
               <property name="text">
                <string>Download Data</string>
               </property>
@@ -6569,6 +6622,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                 <width>80</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>Close Weather Station Data Download page</string>
               </property>
               <property name="text">
                <string>Cancel</string>

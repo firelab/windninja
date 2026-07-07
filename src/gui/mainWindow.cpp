@@ -316,8 +316,8 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
-    //qDebug() << "Canceling...";
-    //writeToConsole( "Canceling...", QColor(255, 140, 0));
+    qDebug() << "Canceling...";
+    writeToConsole( "Canceling...", QColor(255, 140, 0));
 
     char **papszOptions = nullptr;
     ninjaErr  = NinjaCancel(ninjaArmy, papszOptions);
@@ -339,9 +339,16 @@ void MainWindow::treeWidgetItemSelectionChanged()
 void MainWindow::massSolverCheckBoxToggled()
 {
     if(!ui->massSolverCheckBox->isChecked())
+    {
+        emit updateMetholodyState();
+        emit updateStabilityState();
         return;
+    }
 
     ui->stabilityCheckBox->setDisabled(false);
+    ui->stabilityCheckBox->setToolTip("");
+    ui->pointInitializationGroupBox->setDisabled(false);
+    ui->pointInitializationGroupBox->setToolTip("");
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
     if(ui->momentumSolverCheckBox->isChecked())
@@ -362,10 +369,23 @@ void MainWindow::massSolverCheckBoxToggled()
 void MainWindow::momentumSolverCheckBoxToggled()
 {
     if(!ui->momentumSolverCheckBox->isChecked())
+    {
+        ui->stabilityCheckBox->setDisabled(false);
+        ui->stabilityCheckBox->setToolTip("");
+        ui->pointInitializationGroupBox->setDisabled(false);
+        ui->pointInitializationGroupBox->setToolTip("");
+        ui->ninjafoamCaseGroupBox->setVisible(false);
+        emit updateMetholodyState();
+        emit updateStabilityState();
         return;
+    }
 
     ui->stabilityCheckBox->setChecked(false);
     ui->stabilityCheckBox->setDisabled(true);
+    ui->stabilityCheckBox->setToolTip("The non-neutral stability option is not currently available for the momentum solver.");
+    ui->pointInitializationGroupBox->setChecked(false);
+    ui->pointInitializationGroupBox->setDisabled(true);
+    ui->pointInitializationGroupBox->setToolTip("The point initialization option is not currently available for the momentum solver.");
     ui->ninjafoamCaseGroupBox->setVisible(true);
 
     if(ui->massSolverCheckBox->isChecked())

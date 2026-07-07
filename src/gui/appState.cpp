@@ -829,6 +829,13 @@ void AppState::updateOverallState()
         ui->treeWidget->topLevelItem(3)->setIcon(0, tickIcon);
         ui->treeWidget->topLevelItem(3)->setToolTip(0, "You may start the solver");
     }
+    else if(!isSolverMethodologyValid)
+    {
+        ui->numberOfProcessorsSolveButton->setEnabled(false);
+        ui->numberOfProcessorsSolveButton->setToolTip("Check Solver Methodology");
+        ui->treeWidget->topLevelItem(3)->setIcon(0, crossIcon);
+        ui->treeWidget->topLevelItem(3)->setToolTip(0, "Check Solver Methodology");
+    }
     else if(!isSurfaceInputValid)
     {
         ui->numberOfProcessorsSolveButton->setEnabled(false);

@@ -325,8 +325,8 @@ void SurfaceInput::surfaceInputDownloadButtonClicked()
 
     if(!isNorthValid || !isEastValid || !isSouthValid || !isWestValid)
     {
-        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.";
-        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool on the upper right corner of the map, entering a point and radius, or entering the bounding box coordinates.", this);
+        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool, entering a point and radius, or entering the bounding box coordinates.";
+        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool, entering a point and radius, or entering the bounding box coordinates.", this);
         return;
     }
 
