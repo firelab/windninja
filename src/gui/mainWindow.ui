@@ -4748,16 +4748,6 @@ Single Step: Writes a KML of weather station data</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QCheckBox" name="geospatialPDFFilesVectorsCheckBox">
-                      <property name="toolTip">
-                       <string>Enable vector scaling to increase line width with wind speed</string>
-                      </property>
-                      <property name="text">
-                       <string>Apply Vector Scaling</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
                      <spacer name="geospatialPDFFilesVectorsSpacer">
                       <property name="orientation">
                        <enum>Qt::Orientation::Horizontal</enum>
