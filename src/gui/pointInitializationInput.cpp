@@ -243,31 +243,6 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     QVector<int> minute = {start.time().minute(), end.time().minute()};
     QVector<int> outYear(2), outMonth(2), outDay(2), outHour(2), outMinute(2);
 
-    if(ui->outputDirectoryLineEdit->text().isEmpty() || !QFileInfo(ui->outputDirectoryLineEdit->text()).exists())
-    {
-        qCritical() << "ERROR: invalid Output Directory specified in Solve page.";
-        comMessageHandler("ERROR: invalid Output Directory specified in Solve page.", this);
-
-        progress->setWindowTitle(tr("Error"));
-        progress->setCancelButtonText("Close");
-        progress->setAutoClose(false);
-        progress->setAutoReset(false);
-        progress->setRange(0, 1);
-        progress->setValue(progress->maximum());
-
-        // do cleanup before the return, similar to finishedSolve()
-
-//        ninjaErr = NinjaDestroyTools(ninjaTools, papszOptions);
-//        if(ninjaErr != NINJA_SUCCESS)
-//        {
-//            printf("NinjaDestroyTools: ninjaErr = %d\n", ninjaErr);
-//        }
-
-        //futureWatcher->deleteLater();
-
-        return;
-    }
-
     ninjaErr = NinjaGetTimeList(
         ninjaTools,
         year.data(), month.data(), day.data(),
@@ -329,8 +304,8 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
     }
 
     bool fetchLatestFlag = ui->weatherStationDataTimeComboBox->currentIndex() ? 0 : 1;
-    QString outputPath = ui->outputDirectoryLineEdit->text();
     QString elevationFile = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QString outputPath = QFileInfo(elevationFile).absolutePath();
 
     futureWatcher = new QFutureWatcher<int>(this);
     QFuture<int> future;

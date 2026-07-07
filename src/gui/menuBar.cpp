@@ -401,14 +401,6 @@ void MenuBar::enableConsoleOutputActionToggled(bool toggled)
 void MenuBar::loadMapVisualizationActionTriggered()
 {
     QString dir = ui->outputDirectoryLineEdit->text();
-    if(ui->outputDirectoryLineEdit->text().isEmpty() || !QFileInfo(ui->outputDirectoryLineEdit->text()).exists())
-    {
-        QMessageBox::critical(
-            nullptr,
-            QApplication::tr("Error"),
-            "ERROR: invalid Output Directory specified in Solve page.\n"
-        );
-    }
 
     QStringList files = QFileDialog::getOpenFileNames(
         ui->centralwidget,
