@@ -357,9 +357,9 @@ void WeatherModelInput::updateTreeView()
     {
         filters << ui->weatherModelComboBox->itemText(i) + "-" + demFileInfo.baseName();
     }
-    filters << "20*.zip";
-    filters << "20*T*";
-    filters << "*.nc";
+    filters << "20??????T????";
+    filters << "20??????T????.zip";
+    filters << "20??????T????.nc";
     fileModel->setNameFilters(filters);
 
     ui->weatherModelFileTreeView->setModel(fileModel);
