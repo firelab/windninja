@@ -340,6 +340,8 @@ void MainWindow::massSolverCheckBoxToggled()
 {
     if(!ui->massSolverCheckBox->isChecked())
     {
+        emit updateMetholodyState();
+        emit updateStabilityState();
         return;
     }
 
@@ -368,6 +370,13 @@ void MainWindow::momentumSolverCheckBoxToggled()
 {
     if(!ui->momentumSolverCheckBox->isChecked())
     {
+        ui->stabilityCheckBox->setDisabled(false);
+        ui->stabilityCheckBox->setToolTip("");
+        ui->pointInitializationGroupBox->setDisabled(false);
+        ui->pointInitializationGroupBox->setToolTip("");
+        ui->ninjafoamCaseGroupBox->setVisible(false);
+        emit updateMetholodyState();
+        emit updateStabilityState();
         return;
     }
 
