@@ -677,6 +677,11 @@ void SurfaceInput::fetchDEMFinished()
                 elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(pendingDownloadDemFilePath).fileName());
                 ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
                 ui->inputsStackedWidget->setCurrentIndex(3);
+
+                webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+                webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+                webEngineView->page()->runJavaScript("clearStationOutputTree();");
+                webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
             }
 
             //else  // if(retVal == false)
