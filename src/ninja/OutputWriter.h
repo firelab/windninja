@@ -62,8 +62,6 @@
 #endif
 
 
-
-
 /*
  * =====================================================================================
  *        Class:  OutputWriter
@@ -87,7 +85,7 @@ class OutputWriter
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s,
                           velocityUnits::eVelocityUnits units);
-        // angleFromNorth calculations only technically required for flatGeoBuf output. pdf and gtiff don't warp
+        // angleFromNorth calculations only technically required for flatGeoBuf output. pdf doesn't warp
         double angleFromNorth;
         void setAngleFromNorth(const double angFromNorth);
         void setDirGrid(AsciiGrid<double> &d);
@@ -100,7 +98,6 @@ class OutputWriter
         void setLineWidth( const float w );
         void setDPI( const unsigned short d );
         void setSize( const double w, const double h );
-        void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
         void setWxModel(std::string name) {wxModelName=name;}
         void setSpeedScaling(eSpeedScaling scaling) {speedScaling=scaling;}
         void setColorScheme(std::string cScheme);
@@ -109,7 +106,6 @@ class OutputWriter
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
-        bool finalizeWriteGtiff(std::string outputFilename);
 
         static const double BOTTOM_MARGIN;
         static const double TOP_MARGIN;
@@ -126,7 +122,6 @@ class OutputWriter
         void _destroyDefaultStyles();
 
         bool _writePDF(std::string outputfn);
-        bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
         bool _writeFlatGeoBufZip(std::string filename);
         std::string _getStyleFromSpeed( const double & spd );
         void _openSrcDataSet();
@@ -158,9 +153,6 @@ class OutputWriter
         AsciiGrid<double> dust;
 #endif
         int runNumber;
-        GDALDatasetH hSpdMemDs;
-        GDALDatasetH hDirMemDs;
-        GDALDatasetH hDustMemDs;
         boost::local_time::local_date_time ninjaTime;
         double resolution;
         std::string demFile;

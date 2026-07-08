@@ -1523,10 +1523,6 @@ public:
     std::vector<std::string> stationKmlFilenames;
     std::vector<std::string> wxModelFgbzFilenames;
 
-    GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
-    GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
-    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer. Left as NULL if EMISSIONS is not enabled and if compute_emissions is not set.
-
 protected:
     std::vector<ninja*> ninjas;
     std::string tz;

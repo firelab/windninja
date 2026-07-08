@@ -3837,32 +3837,6 @@ void NinjaFoam::WriteOutputFiles()
         input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
     }
 
-//    try{
-//        if(input.geoTiffOutFlag==true)
-//        {
-//            OutputWriter output;
-//
-//            if(!input.ninjaTime.is_not_a_date_time())
-//            {
-//                output.setNinjaTime(input.ninjaTime);
-//            }
-//            output.setRunNumber(input.inputsRunNumber);
-//
-//            output.setDirGrid(AngleGrid);
-//            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-//
-//            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
-//
-//            output.write(input.geoTiffFile, "GTiff");
-//        }
-//    }catch (exception& e)
-//    {
-//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
-//    }catch (...)
-//    {
-//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
-//    }
-
     try{
         if ( input.volVTKOutFlag == true ) {
             writeMassMeshVtkOutput();

@@ -493,46 +493,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
-    hSpdMemDS = NULL;
-    hDirMemDS = NULL;
-    hDustMemDS = NULL;
-//    if(ninjas[0]->input.geoTiffOutFlag == true)
-//    {
-//        //create MEM datasets for GTiff output writer
-//        ninjas[0]->readInputFile();
-//        ninjas[0]->set_position();
-//        ninjas[0]->set_uniVegetation();
-//        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
-//
-//        int nXSize = ninjas[0]->input.dem.get_nCols();
-//        int nYSize = ninjas[0]->input.dem.get_nRows();
-//
-//        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
-//
-//        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-//        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-//        #ifdef EMISSIONS
-//        if(ninjas[0]->input.dustFlag == true)
-//        {
-//            hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, ninjas.size(), GDT_Float64, NULL);
-//        }
-//        #endif
-//
-//        //need the startTime already preset in the datasets, in case ninjas[0] doesn't run first
-//        if(!ninjas[0]->input.ninjaTime.is_not_a_date_time())
-//        {
-//            std::string ninjaTimeStr = boost::lexical_cast<std::string>(ninjas[0]->input.ninjaTime);
-//            GDALSetMetadataItem(hSpdMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
-//            GDALSetMetadataItem(hDirMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
-//            #ifdef EMISSIONS
-//            if(ninjas[0]->input.dustFlag == true)
-//            {
-//                GDALSetMetadataItem(hDustMemDS, "TIFFTAG_DATETIME", ninjaTimeStr.c_str(), NULL);
-//            }
-//            #endif
-//        }
-//    }
-
     // prep/reset the stored atmosphere file data, to be filled before ninjas[i] gets deleted after each run
     // also used to set the size of the outputs, to better handle multi-threading
     atmosphere.reset(ninjas.size());
@@ -547,13 +507,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         //set number of threads for the run
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
-
-//            //set in-memory datasets for multi-band GTiff output writer
-//            if(ninjas[0]->input.geoTiffOutFlag == true)
-//            {
-//                ninjas[0]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
-//            }
-
             if ((ninjas[0]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
             {
                 //Set the ninjafoam solver progress bar to stop at 80% so that
@@ -695,12 +648,6 @@ bool ninjaArmy::startRuns(int numProcessors)
             try{
                 //set number of threads for the run
                 ninjas[i]->set_numberCPUs( numProcessors );
-
-//                //set in-memory datasets for multi-band GTiff output writer
-//                if(ninjas[i]->input.geoTiffOutFlag == true)
-//                {
-//                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
-//                }
 
                 if((ninjas[i]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
                 {
@@ -885,12 +832,6 @@ bool ninjaArmy::startRuns(int numProcessors)
         {
             try
             {
-//                //set in-memory datasets for multi-band GTiff output writer
-//                if(ninjas[i]->input.geoTiffOutFlag == true)
-//                {
-//                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS);
-//                }
-
                 //start the run
                 ninjas[i]->simulate_wind();  //runs are done on 1 thread each since omp_set_nested(false)
 
@@ -1028,33 +969,6 @@ bool ninjaArmy::startRuns(int numProcessors)
     }
 
     try{
-//        // finalize the multi-band gtiff dataset and close the inMem datasets
-//        if(ninjas[0]->input.geoTiffOutFlag == true)
-//        {
-//            OutputWriter output;
-//            output.setMemDs(hSpdMemDS, hDirMemDS, hDustMemDS); // set the in-memory datasets
-//
-//            output.finalizeWriteGtiff(ninjas[0]->input.geoTiffFile);
-//
-//            if(hSpdMemDS != NULL)
-//            {
-//                GDALClose(hSpdMemDS);
-//                hSpdMemDS = NULL;
-//            }
-//            if(hDirMemDS != NULL)
-//            {
-//                GDALClose(hDirMemDS);
-//                hDirMemDS = NULL;
-//            }
-//            #ifdef EMISSIONS
-//            if(hDustMemDS != NULL)
-//            {
-//                GDALClose(hDustMemDS);
-//                hDustMemDS = NULL;
-//            }
-//            #endif
-//        }
-
         //write consistent color scale outputs
         if(ninjas.size() > 1 && (ninjas[0]->input.googUseConsistentColorScale == true || ninjas[0]->input.fgbzUseConsistentColorScale == true))
         {

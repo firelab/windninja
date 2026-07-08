@@ -3415,40 +3415,7 @@ void ninja::writeOutputFiles()
         input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during pdf file writing: Cannot determine exception type.");
     }
     } //end omp section
-//#pragma omp section
-//    {
-//    try{
-//        if(input.geoTiffOutFlag==true)
-//        {
-//            OutputWriter output;
-//
-//            if(!input.ninjaTime.is_not_a_date_time())
-//            {
-//                output.setNinjaTime(input.ninjaTime);
-//            }
-//            output.setRunNumber(input.inputsRunNumber);
-//
-//            output.setDirGrid(AngleGrid);
-//            output.setSpeedGrid(VelocityGrid, input.outputSpeedUnits);
-//
-//            output.setMemDs(input.hSpdMemDs, input.hDirMemDs, input.hDustMemDs); // set the in-memory datasets
-//
-//            #ifdef EMISSIONS
-//            if(input.dustFlag == 1)
-//            {
-//                output.setDustGrid(DustGrid);
-//            }
-//            #endif
-//            output.write(input.geoTiffFile, "GTiff");
-//        }
-//    }catch (exception& e)
-//    {
-//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: %s", e.what());
-//    }catch (...)
-//    {
-//        input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during geotiff file writing: Cannot determine exception type.");
-//    }
-//    } //end omp section
+
 #pragma omp section
     {
         try{
@@ -4492,19 +4459,6 @@ void ninja::set_uniCloudCover(double cloud_cover, coverUnits::eCoverUnits units)
     input.cloudCoverUnits = units;
     coverUnits::toBaseUnits(cloud_cover, units);
     input.cloudCover = cloud_cover;
-}
-
-/**
- * Sets the in-memory datasets for GTiff output writer.
- * @param hSpdMemDS Name of the in-memory speed dataset.
- * @param hDirMemDS Name of the in-memory direction dataset.
- * @param hDustMemDS Name of the in-memory dust dataset.
- */
-void ninja::set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs)
-{
-    input.hSpdMemDs = hSpdMemDs;
-    input.hDirMemDs = hDirMemDs;
-    input.hDustMemDs = hDustMemDs;
 }
 
 /**

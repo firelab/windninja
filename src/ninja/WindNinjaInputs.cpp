@@ -35,9 +35,6 @@ WindNinjaInputs::WindNinjaInputs()
     //Initialize variables
     Com = new ninjaComClass();
     inputsRunNumber = -9999;
-    hSpdMemDs = NULL;
-    hDirMemDs = NULL;
-    hDustMemDs = NULL;
     vegetation = WindNinjaInputs::trees;
     initializationMethod = WindNinjaInputs::noInitializationFlag;
     inputSpeedUnits = velocityUnits::milesPerHour;
@@ -207,10 +204,6 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     Com = new ninjaComClass(*rhs.Com);
 
     inputsRunNumber = rhs.inputsRunNumber;
-
-    hSpdMemDs = rhs.hSpdMemDs;
-    hDirMemDs = rhs.hDirMemDs;
-    hDustMemDs = rhs.hDustMemDs;
 
     vegetation = rhs.vegetation;
 
@@ -438,10 +431,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       *Com = *rhs.Com;
 
       inputsRunNumber = rhs.inputsRunNumber;
-
-      hSpdMemDs = rhs.hSpdMemDs;
-      hDirMemDs = rhs.hDirMemDs;
-      hDustMemDs = rhs.hDustMemDs;
 
       vegetation = rhs.vegetation;
 

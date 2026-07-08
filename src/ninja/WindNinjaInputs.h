@@ -98,10 +98,6 @@ public:
     ninjaComClass *Com;  // pointer to a given ninjas[i] level com handler
     int inputsRunNumber;
 
-    GDALDatasetH hSpdMemDs;
-    GDALDatasetH hDirMemDs;
-    GDALDatasetH hDustMemDs;
-
 
     //DEM input
     Elevation dem;				//elevation data in gridded format, HORIZONTAL UNITS MUST ALWAYS BE IN METERS, INCLUDING WHEN IT IS READ IN FROM A FILE!

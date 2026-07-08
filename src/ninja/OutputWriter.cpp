@@ -54,9 +54,6 @@ OutputWriter::OutputWriter ()
     hDataSource   = NULL;
     hOGRDriver    = NULL;
     papszOptions  = NULL;
-    hSpdMemDs     = NULL;
-    hDirMemDs     = NULL;
-    hDustMemDs    = NULL;
     hSrcSRS       = NULL;
     hDestSRS      = NULL;
     hTransform    = NULL;
@@ -311,15 +308,6 @@ void OutputWriter::setDirGrid(AsciiGrid<double> &d)
     return;
 }  /* -----  end of method OutputWriter::setDirGrid  ----- */
 
-void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs,
-              GDALDatasetH hDirMemDs,
-              GDALDatasetH hDustMemDs)
-{
-    this->hSpdMemDs  = hSpdMemDs;
-    this->hDirMemDs  = hDirMemDs;
-    this->hDustMemDs = hDustMemDs;
-}
-
 void OutputWriter::setSplitVals(const double *splitVals, const unsigned short size)
 {
     if(size != NSPLITS)
@@ -342,29 +330,6 @@ bool OutputWriter::write(std::string outputFilename, std::string driver)
     {
         _writePDF(outputFilename);
     }
-    else if( 0 == driver.compare( "GTiff" ) )
-    {
-        std::string outFilename_spd = outputFilename;
-        std::string outFilename_dir = outputFilename;
-        #ifdef EMISSIONS
-        std::string outFilename_dust = outputFilename;
-        #endif
-
-        outFilename_spd.insert(outFilename_spd.find(".tif"), "_spd");
-        outFilename_dir.insert(outFilename_dir.find(".tif"), "_dir");
-        #ifdef EMISSIONS
-        outFilename_dust.insert(outFilename_dust.find(".tif"), "_dust");
-        #endif
-
-        _writeGTiff(outFilename_spd, hSpdMemDs);
-        _writeGTiff(outFilename_dir, hDirMemDs);
-        #ifdef EMISSIONS
-        if(hDustMemDs)
-        {
-            _writeGTiff(outFilename_dust, hDustMemDs);
-        }
-        #endif
-    }
     else if ( 0 == driver.compare( "FlatGeoBufZip" ) )
     {
         _writeFlatGeoBufZip(outputFilename);
@@ -375,57 +340,6 @@ bool OutputWriter::write(std::string outputFilename, std::string driver)
     }
     return true;
 }  /* -----  end of method OutputWriter::write  ----- */
-
-bool OutputWriter::finalizeWriteGtiff(std::string outputFilename)
-{
-    std::string outFilename_spd = outputFilename;
-    std::string outFilename_dir = outputFilename;
-    #ifdef EMISSIONS
-    std::string outFilename_dust = outputFilename;
-    #endif
-
-    outFilename_spd.insert(outFilename_spd.find(".tif"), "_spd");
-    outFilename_dir.insert(outFilename_dir.find(".tif"), "_dir");
-    #ifdef EMISSIONS
-    outFilename_dust.insert(outFilename_dust.find(".tif"), "_dust");
-    #endif
-
-    GDALDriverH hGtiffDriver = GDALGetDriverByName( "GTiff" );
-    papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");
-    papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );
-
-    /*--------------------------------------------*/
-    /*  Write the tif to disk for each file type  */
-    /*--------------------------------------------*/
-
-    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_spd.c_str(), hSpdMemDs, FALSE, papszOptions, NULL, NULL);
-    if(hDstDS != NULL)
-    {
-        GDALClose(hDstDS);
-        hDstDS = NULL;
-    }
-
-    hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dir.c_str(), hDirMemDs, FALSE, papszOptions, NULL, NULL);
-    if(hDstDS != NULL)
-    {
-        GDALClose(hDstDS);
-        hDstDS = NULL;
-    }
-
-    #ifdef EMISSIONS
-    if(hDustMemDs)
-    {
-        hDstDS = GDALCreateCopy(hGtiffDriver, outFilename_dust.c_str(), hDustMemDs, FALSE, papszOptions, NULL, NULL);
-        if(hDstDS != NULL)
-        {
-            GDALClose(hDstDS);
-            hDstDS = NULL;
-        }
-    }
-    #endif
-
-    return true;
-}
 
 std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
@@ -1318,112 +1232,6 @@ bool OutputWriter::_writePDF (std::string outputfn)
 
     return true;
 }  /* -----  end of method OutputWriter::_writePDF  ----- */
-
-bool OutputWriter::_writeGTiff(std::string filename, GDALDatasetH &hMemDS)
-{
-    int maxRunNumber = GDALGetRasterCount(hMemDS);
-    if(runNumber > maxRunNumber)
-    {
-        throw std::runtime_error("OutputWriter: Error creating output gtiff file: runNumber > maxRunNumber");
-    }
-
-    CPLSetConfigOption( "GDAL_CACHEMAX", "1024" );
-
-    int nXSize = spd.get_nCols();
-    int nYSize = spd.get_nRows();
-
-    if(runNumber == 0)
-    {
-        /*------------------------------------------*/
-        /* Set dataset metadata                     */
-        /*------------------------------------------*/
-
-        adfGeoTransform[0] = spd.get_xllCorner();
-        adfGeoTransform[1] = spd.get_cellSize();
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -spd.get_cellSize();
-
-        char* pszDstWKT = (char*)spd.prjString.c_str();
-        GDALSetProjection(hMemDS, pszDstWKT);
-        GDALSetGeoTransform(hMemDS, adfGeoTransform);
-
-        //gets pre-set now, in case ninjas[0] doesn't run first
-        //if(!ninjaTime.is_not_a_date_time())
-        //{
-        //    GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL);
-        //}
-    }
-
-    GDALRasterBandH hBand = GDALGetRasterBand(hMemDS, runNumber+1);
-
-    if(!ninjaTime.is_not_a_date_time())
-    {
-        if(runNumber == 0)
-        {
-            GDALSetMetadataItem(hBand, "DT", "0", NULL);
-        }
-        else
-        {
-            const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
-
-            // calculate minutes since startTime
-            std::string s0(startTime);
-            s0.erase(s0.length() - 4); // get rid of tz
-            boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-
-            boost::posix_time::ptime t = ninjaTime.local_time();
-
-            boost::posix_time::time_duration tdiff = t - t0;
-
-            int mtdiff = static_cast<int>(tdiff.total_seconds() / 60);
-
-            std::string m(boost::lexical_cast<std::string>(mtdiff));
-
-            CPLDebug("GTIFF", "offset in minutes, DT = %s", m.c_str());
-            GDALSetMetadataItem(hBand, "DT", m.c_str(), NULL);
-        }
-        GDALSetMetadataItem(hBand, "DT_DESC", "offset in minutes since first band", NULL);
-    }
-
-    GDALSetRasterNoDataValue(hBand, -9999.0);
-
-    double *padfScanline;
-    padfScanline = new double[nXSize];
-
-    CPLErr eErr = CE_None;
-    for(int i=nYSize-1; i>=0; i--)
-    {
-        for(int j=0; j<nXSize; j++)
-        {
-            if(filename.find("spd.tif") != filename.npos)
-            {
-                padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-            }
-            else if(filename.find("dir.tif") != filename.npos)
-            {
-                padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-            }
-            #ifdef EMISSIONS
-            else if(filename.find("dust.tif") != filename.npos)
-            {
-                padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-            }
-            #endif
-            else
-            {
-                return false;
-            }
-        }
-        eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0);
-        assert(eErr == CE_None);
-    }
-
-    delete [] padfScanline;
-
-    return true;
-}
 
 bool OutputWriter::_writeFlatGeoBufZip(std::string filename)
 {
