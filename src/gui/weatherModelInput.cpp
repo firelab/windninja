@@ -37,6 +37,8 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
 
     initNinjaTools();
 
+    connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
+
     ui->pastcastGroupBox->hide();
     int identifiersSize = 0;
     const char** identifiers = NinjaGetAllWeatherModelIdentifiers(ninjaTools, &identifiersSize);
@@ -58,8 +60,6 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
     connect(ui->pastcastEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &WeatherModelInput::pastcastEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &WeatherModelInput::updateDateTime);
     connect(this, &WeatherModelInput::updateState, &AppState::instance(), &AppState::updateWeatherModelInputState);
-
-    connect(this, &WeatherModelInput::updateProgressMessageSignal, this, &WeatherModelInput::updateProgressMessage, Qt::QueuedConnection);
 }
 
 void WeatherModelInput::updateProgressMessage(const QString message)
@@ -148,6 +148,18 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
     {
         emit self->updateProgressMessageSignal(QString::fromStdString(msg));
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+}
+
+void WeatherModelInput::initNinjaTools()
+{
+    ninjaTools = NinjaMakeTools();
+
+    char **papszOptions = NULL;
+    NinjaErr ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 }
 
@@ -585,17 +597,5 @@ void WeatherModelInput::updateDateTime()
     {
         QModelIndex idx = timeModel->index(row, 0);
         timeSelectionModel->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
-    }
-}
-
-void WeatherModelInput::initNinjaTools()
-{
-    ninjaTools = NinjaMakeTools();
-
-    char **papszOptions = NULL;
-    NinjaErr ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
-    if(ninjaErr != NINJA_SUCCESS)
-    {
-        qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
     }
 }

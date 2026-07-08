@@ -50,14 +50,15 @@ public:
     explicit WeatherModelInput(Ui::MainWindow* ui, QObject* parent = nullptr);
 
 signals:
-    void updateState();
     void updateProgressMessageSignal(const QString &msg);
     void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
+    void updateState();
 
 public slots:
     void updateTreeView();
 
 private slots:
+    void updateProgressMessage(const QString message);
     void weatherModelDownloadButtonClicked();
     void weatherModelFileTreeViewItemSelectionChanged(const QItemSelection &selected);
     void weatherModelTimeTreeViewItemSelectionChanged();
@@ -66,14 +67,16 @@ private slots:
     void weatherModelGroupBoxToggled();
     void weatherModelComboBoxCurrentIndexChanged(int index);
     void weatherModelDownloadFinished();
-    void updateProgressMessage(const QString message);
     void pastcastStartDateTimeEditChanged();
     void pastcastEndDateTimeEditChanged();
     void updateDateTime();
 
-
 private:
     NinjaToolsH* ninjaTools;
+
+    // this function is for trying to force the static comMessageHandler()
+    // to be defined BEFORE the constructor call, without reorganizing the code
+    void initNinjaTools();
 
     Ui::MainWindow *ui;
     QFileSystemModel *fileModel;
@@ -109,10 +112,6 @@ private:
         const QString& timeZoneStr,
         int startYear, int startMonth, int startDay, int startHour,
         int endYear, int endMonth, int endDay, int endHour);
-
-    // this function is for trying to force the static comMessageHandler()
-    // to be defined BEFORE the constructor call, without reorganizing the code
-    void initNinjaTools();
 };
 
 #endif // WEATHERMODELINPUT_H

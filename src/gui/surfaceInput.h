@@ -60,10 +60,10 @@ public:
     void setInputFileDir(QString dir);
 
 signals:
-    void updateState();
-    void updateTreeView();
     void updateProgressMessageSignal(const QString &msg);
     void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
+    void updateState();
+    void updateTreeView();
 
 public slots:
     void boundingBoxReceived(double north, double south, double east, double west);

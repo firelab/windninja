@@ -51,14 +51,15 @@ public:
     QVector<QString> getStationFiles();
 
 signals:
-    void updateState();
     void updateProgressMessageSignal(const QString &msg);
     void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
+    void updateState();
 
 public slots:
     void updateTreeView();
 
 private slots:
+    void updateProgressMessage(const QString message);
     void pointInitializationGroupBoxToggled();
     void pointInitializationDownloadDataButtonClicked();
     void weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged();
@@ -73,7 +74,6 @@ private slots:
     void folderExpanded(const QModelIndex &index);
     void folderCollapsed(const QModelIndex &index);
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
-    void updateProgressMessage(const QString message);
     void weatherStationDataStartDateTimeEditChanged();
     void weatherStationDataEndDateTimeEditChanged();
     void updateDateTime();

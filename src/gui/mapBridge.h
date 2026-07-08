@@ -46,8 +46,8 @@ public:
     MapBridge(QObject *parent = nullptr) : QObject(parent) {}
 
 signals:
-    void boundingBoxReceived(double north, double south, double east, double west);
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
+    void boundingBoxReceived(double north, double south, double east, double west);
     void mapLayersLoadingFinishedSignal();
 
 public slots:

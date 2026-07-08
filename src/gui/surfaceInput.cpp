@@ -37,6 +37,9 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
       webEngineView(webEngineView)
 {
     progress = nullptr;
+
+    connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
+
     GDALXSize = 0;
     GDALYSize = 0;
     GDALCellSize = 0.0;
@@ -79,8 +82,6 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
 
     connect(ui->ninjafoamCaseOpenButton, &QPushButton::clicked, this, &SurfaceInput::ninjafoamCaseOpenButtonClicked);
-
-    connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
 
     connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
 }

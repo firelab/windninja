@@ -122,52 +122,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::connectSignals()
-{
-    connect(ui->massSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::massSolverCheckBoxToggled);
-    connect(ui->momentumSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::momentumSolverCheckBoxToggled);
-    connect(ui->diurnalCheckBox, &QCheckBox::toggled, this, &MainWindow::diurnalCheckBoxToggled);
-    connect(ui->stabilityCheckBox, &QCheckBox::toggled, this, &MainWindow::stabilityCheckBoxToggled);
-    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
-    connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
-    connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
-    connect(ui->outputDirectoryOpenButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryOpenButtonClicked);
-    connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
-
-    connect(menuBar, &MenuBar::writeToConsoleSignal, this, &MainWindow::writeToConsole);
-    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
-    connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
-    connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
-    connect(webEngineView, &QWebEngineView::loadFinished, this, &MainWindow::readSettings);
-
-    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
-    connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
-    connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
-    connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
-    connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
-    connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
-
-    connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
-    connect(pointInitializationInput, &PointInitializationInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
-    connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
-    connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
-
-    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
-}
-
-void MainWindow::writeToConsole(QString message, QColor color)
-{
-    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
-    // {
-    //     color = Qt::black;
-    // }
-
-    ui->consoleTextEdit->setTextColor(color);
-    ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
-    ui->consoleTextEdit->repaint();
-    lineNumber++;
-}
-
 void MainWindow::updateProgressMessage(const QString message)
 {
     if(progressDialog)
@@ -311,6 +265,53 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         emit self->updateProgressMessageSignal(QString::fromStdString(msg));
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
+}
+
+void MainWindow::writeToConsole(QString message, QColor color)
+{
+    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
+    // {
+    //     color = Qt::black;
+    // }
+
+    ui->consoleTextEdit->setTextColor(color);
+    ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
+    ui->consoleTextEdit->repaint();
+    lineNumber++;
+}
+
+void MainWindow::connectSignals()
+{
+    connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
+    connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
+    connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+    connect(menuBar, &MenuBar::writeToConsoleSignal, this, &MainWindow::writeToConsole);
+    connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(pointInitializationInput, &PointInitializationInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+    connect(ui->massSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::massSolverCheckBoxToggled);
+    connect(ui->momentumSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::momentumSolverCheckBoxToggled);
+    connect(ui->diurnalCheckBox, &QCheckBox::toggled, this, &MainWindow::diurnalCheckBoxToggled);
+    connect(ui->stabilityCheckBox, &QCheckBox::toggled, this, &MainWindow::stabilityCheckBoxToggled);
+    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
+    connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
+    connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
+    connect(ui->outputDirectoryOpenButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryOpenButtonClicked);
+    connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
+
+    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
+    connect(webEngineView, &QWebEngineView::loadFinished, this, &MainWindow::readSettings);
+
+    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
+    connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
+    connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
+
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
 void MainWindow::cancelSolve()

@@ -87,18 +87,21 @@ public:
     ~MainWindow();
 
 signals:
+    void updateProgressMessageSignal(const QString &msg);
+    void updateProgressValueSignal(int run, int progress);
+    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
     void updateMetholodyState();
     void updateDirunalState();
     void updateStabilityState();
-    void updateProgressValueSignal(int run, int progress);
-    void updateProgressMessageSignal(const QString &msg);
-    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
 
 protected:
     void showEvent(QShowEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
 private slots:
+    void updateProgressMessage(const QString message);
+    void updateProgressValue(int run, int progress);
+    void writeToConsole(QString message, QColor color=Qt::black);
     void massSolverCheckBoxToggled();
     void momentumSolverCheckBoxToggled();
     void diurnalCheckBoxToggled();
@@ -108,9 +111,6 @@ private slots:
     void solveButtonClicked();
     void outputDirectoryButtonClicked();
     void outputDirectoryOpenButtonClicked();
-    void writeToConsole(QString message, QColor color=Qt::black);
-    void updateProgressValue(int run, int progress);
-    void updateProgressMessage(const QString message);
     void cancelSolve();
     void finishedLoadingMap();
 

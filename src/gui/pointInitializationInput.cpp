@@ -32,7 +32,9 @@
 PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
     : QObject(parent),
     ui(ui)
-{    
+{
+    connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
+
     ui->pointInitializationDataTimeStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(0);
     ui->weatherStationDataTimeStackedWidget->setCurrentIndex(0);
@@ -58,52 +60,6 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataEndDateTimeEditChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
-
-    connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
-}
-
-void PointInitializationInput::pointInitializationGroupBoxToggled()
-{
-    if(ui->pointInitializationGroupBox->isChecked())
-    {
-        ui->domainAverageGroupBox->setChecked(false);
-        ui->weatherModelGroupBox->setChecked(false);
-    }
-
-    emit updateState();
-}
-
-void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
-{
-    ui->inputsStackedWidget->setCurrentIndex(19);
-}
-
-void PointInitializationInput::weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged()
-{
-    if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
-    {
-        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing End Time...");
-        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING END TIME");
-        ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime().addSecs(3600));
-    }
-    updateTimeSteps();
-}
-
-void PointInitializationInput::weatherStationDownloadBetweenDatesEndTimeDateTimeEditChanged()
-{
-    if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
-    {
-        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing Start Time...");
-        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING START TIME");
-        ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime().addSecs(-3600));
-    }
-    updateTimeSteps();
-}
-
-void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
-{
-    ui->pointInitializationTreeView->collapseAll();
-    ui->inputsStackedWidget->setCurrentIndex(7);
 }
 
 void PointInitializationInput::updateProgressMessage(const QString message)
@@ -193,6 +149,50 @@ static void comMessageHandler(const char *pszMessage, void *pUser)
         emit self->updateProgressMessageSignal(QString::fromStdString(msg));
         emit self->writeToConsoleSignal(QString::fromStdString(msg));
     }
+}
+
+void PointInitializationInput::pointInitializationGroupBoxToggled()
+{
+    if(ui->pointInitializationGroupBox->isChecked())
+    {
+        ui->domainAverageGroupBox->setChecked(false);
+        ui->weatherModelGroupBox->setChecked(false);
+    }
+
+    emit updateState();
+}
+
+void PointInitializationInput::pointInitializationDownloadDataButtonClicked()
+{
+    ui->inputsStackedWidget->setCurrentIndex(19);
+}
+
+void PointInitializationInput::weatherStationDownloadBetweenDatesStartTimeDateTimeEditChanged()
+{
+    if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
+    {
+        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing End Time...");
+        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING END TIME");
+        ui->downloadBetweenDatesEndTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime().addSecs(3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::weatherStationDownloadBetweenDatesEndTimeDateTimeEditChanged()
+{
+    if(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime() < ui->downloadBetweenDatesStartTimeDateTimeEdit->dateTime())
+    {
+        emit writeToConsoleSignal("Start Time is greater than End Time!, fixing Start Time...");
+        CPLDebug("STATION_FETCH", "START TIME > END TIME, FIXING START TIME");
+        ui->downloadBetweenDatesStartTimeDateTimeEdit->setDateTime(ui->downloadBetweenDatesEndTimeDateTimeEdit->dateTime().addSecs(-3600));
+    }
+    updateTimeSteps();
+}
+
+void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
+{
+    ui->pointInitializationTreeView->collapseAll();
+    ui->inputsStackedWidget->setCurrentIndex(7);
 }
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
