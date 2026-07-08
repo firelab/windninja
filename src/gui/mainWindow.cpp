@@ -988,6 +988,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
             return false;
         }
 
+        #ifdef NINJAFOAM
         if(ui->momentumSolverCheckBox->isChecked() && !ui->ninjafoamCaseLineEdit->text().isEmpty())
         {
             ninjaErr = NinjaSetExistingCaseDirectory(ninjaArmy, i, ui->ninjafoamCaseLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
@@ -997,6 +998,7 @@ bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* i
                 return false;
             }
         }
+        #endif //NINJAFOAM
 
         ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);
         if(ninjaErr != NINJA_SUCCESS)

@@ -782,23 +782,6 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetDem
     }
 }
 
-WINDNINJADLL_EXPORT NinjaErr NinjaSetExistingCaseDirectory(NinjaArmyH * army, const int nIndex, const char * directory, char ** options)
-{
-    if( NULL == army || NULL == directory )
-    {
-        return NINJA_E_NULL_PTR;
-    }
-
-#ifdef NINJAFOAM
-    return reinterpret_cast<ninjaArmy*>( army )->setExistingCaseDirectory
-        ( nIndex, std::string( directory ), options );
-#else
-    (void)nIndex;
-    (void)options;
-    return NINJA_E_INVALID;
-#endif
-}
-
 /**
  * \brief Set an in-memory DEM to use for the simulations.
  *
@@ -1346,6 +1329,17 @@ WINDNINJADLL_EXPORT NinjaErr NinjaSetMeshCount
         return NINJA_E_NULL_PTR;
     }
 
+}
+
+WINDNINJADLL_EXPORT NinjaErr NinjaSetExistingCaseDirectory(NinjaArmyH * army, const int nIndex, const char * directory, char ** options)
+{
+    if( NULL == army || NULL == directory )
+    {
+        return NINJA_E_NULL_PTR;
+    }
+
+    return reinterpret_cast<ninjaArmy*>( army )->setExistingCaseDirectory
+        ( nIndex, std::string( directory ), options );
 }
 #endif //NINJAFOAM
 
