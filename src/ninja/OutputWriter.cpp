@@ -1050,49 +1050,52 @@ void OutputWriter::_createOGRFile(bool outputLatLon)
     {
         for( int j = 0; j < ncols; j++ )
         {
-            OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
-            OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
-            WN_Arrow     arrow;
-
-            double dir_prj = dir(i,j);
-            double dir_geo = dir_prj;
-            if(outputLatLon == true)
+            if(spd(i,j) != spd.get_noDataValue() && dir(i,j) != dir.get_noDataValue())
             {
-                dir_geo = wrap0to360(dir_prj + angleFromNorth); //convert FROM projected TO geographic coordinates
+                OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+                OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
+                WN_Arrow     arrow;
+
+                double dir_prj = dir(i,j);
+                double dir_geo = dir_prj;
+                if(outputLatLon == true)
+                {
+                    dir_geo = wrap0to360(dir_prj + angleFromNorth); //convert FROM projected TO geographic coordinates
+                }
+
+                spd.get_cellPosition(i, j, &x, &y);
+                arrow = WN_Arrow( x, y, spd(i,j), dir_prj, spd.get_cellSize(),
+                                  split_vals, NCOLORS);
+
+                std::ostringstream os;
+                os << "Cell " << i << "," << j;
+                std::string name = os.str();
+                OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, NAME),
+                                      name.c_str() );
+                OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
+                                       spd(i,j) );
+                OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
+                                       (int)dir_geo+0.5);
+
+
+                arrow.asGeometry( hLine );
+                OGR_G_Transform( hLine, hTransform );
+                OGR_F_SetGeometry( hFeature, hLine );
+
+                style = _getStyleFromSpeed( spd(i,j) );
+
+                OGR_F_SetStyleString( hFeature, style.c_str() );
+                OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"),
+                                      style.c_str() );
+
+
+                if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+                {
+                    throw std::runtime_error("OutputWriter: error creating features");
+                }
+                OGR_G_DestroyGeometry( hLine );
+                OGR_F_Destroy( hFeature );
             }
-
-            spd.get_cellPosition(i, j, &x, &y);
-            arrow = WN_Arrow( x, y, spd(i,j), dir_prj, spd.get_cellSize(),
-                              split_vals, NCOLORS);
-
-            std::ostringstream os;
-            os << "Cell " << i << "," << j;
-            std::string name = os.str();
-            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, NAME),
-                                  name.c_str() );
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
-                                   spd(i,j) );
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
-                                   (int)dir_geo+0.5);
-
-
-            arrow.asGeometry( hLine );
-            OGR_G_Transform( hLine, hTransform );
-            OGR_F_SetGeometry( hFeature, hLine );
-
-            style = _getStyleFromSpeed( spd(i,j) );
-
-            OGR_F_SetStyleString( hFeature, style.c_str() );
-            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"),
-                                  style.c_str() );
-
-
-            if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
-            {
-                throw std::runtime_error("OutputWriter: error creating features");
-            }
-            OGR_G_DestroyGeometry( hLine );
-            OGR_F_Destroy( hFeature );
         }
     }
 
