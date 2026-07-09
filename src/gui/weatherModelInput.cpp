@@ -538,7 +538,7 @@ void WeatherModelInput::updateDateTime()
     QDateTime minUtcDateTime(
         minDate,
         QTime(18, 0),
-        QTimeZone::UTC
+        QTimeZone("UTC")
     );
 
     QDateTime minLocalDateTime = minUtcDateTime.toTimeZone(timeZone);
@@ -556,17 +556,18 @@ void WeatherModelInput::updateDateTime()
     );
     ui->pastcastGroupBox->updateGeometry();
 
-    ui->pastcastStartDateTimeEdit->setTimeZone(timeZone);
-    ui->pastcastEndDateTimeEdit->setTimeZone(timeZone);
 
-    ui->pastcastStartDateTimeEdit->setDateTimeRange(minLocalDateTime, maxLocalDateTime);
-    ui->pastcastEndDateTimeEdit->setDateTimeRange(minLocalDateTime, maxLocalDateTime);
 
     ui->pastcastStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
     ui->pastcastEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
 
-    ui->pastcastStartDateTimeEdit->setDateTime(maxLocalDateTime);
-    ui->pastcastEndDateTimeEdit->setDateTime(maxLocalDateTime);
+    QDateTime maxDisplayTime(maxLocalDateTime.date(), maxLocalDateTime.time(), Qt::LocalTime);
+    QDateTime minDisplayTime(minLocalDateTime.date(), minLocalDateTime.time(), Qt::LocalTime);
+
+    ui->pastcastStartDateTimeEdit->setDateTimeRange(minDisplayTime, maxDisplayTime);
+    ui->pastcastEndDateTimeEdit->setDateTimeRange(minDisplayTime, maxDisplayTime);
+    ui->pastcastStartDateTimeEdit->setDateTime(maxDisplayTime);
+    ui->pastcastEndDateTimeEdit->setDateTime(maxDisplayTime);
 
     // Update selected wx model time series
     QItemSelectionModel *fileSelectionModel = ui->weatherModelFileTreeView->selectionModel();

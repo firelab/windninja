@@ -1475,11 +1475,19 @@ void MainWindow::plotOutputs()
             webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
             webEngineView->page()->runJavaScript("clearStationOutputTree();");
             webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
-            QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+            QFile file(outFileStr);
             QFileInfo info(outFileStr);
+            if (!file.open(QIODevice::ReadOnly))
+            {
+                qDebug() << "Failed to open fgbz file:" << outFileStr;
+                qDebug() << "Error:" << file.errorString();
+                continue;
+            }
             QString fileName = info.fileName();
-            //qDebug() << "file url =" << filePath;
-            QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+            QByteArray bytes = file.readAll();
+            QString base64 = QString::fromLatin1(bytes.toBase64());
+            QString jsCall = QString("loadSimulation('%1', '%2');").arg(base64, fileName);
+
             webEngineView->page()->runJavaScript(jsCall);
 
             // if it is a point initialization run, and station kmls were created for the run,

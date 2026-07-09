@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1969</width>
-    <height>1000</height>
+    <width>1645</width>
+    <height>892</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -196,15 +196,6 @@
        </color>
       </brush>
      </colorrole>
-     <colorrole role="Accent">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>233</red>
-        <green>84</green>
-        <blue>32</blue>
-       </color>
-      </brush>
-     </colorrole>
     </active>
     <inactive>
      <colorrole role="WindowText">
@@ -369,15 +360,6 @@
        </color>
       </brush>
      </colorrole>
-     <colorrole role="Accent">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>233</red>
-        <green>84</green>
-        <blue>32</blue>
-       </color>
-      </brush>
-     </colorrole>
     </inactive>
     <disabled>
      <colorrole role="WindowText">
@@ -488,6 +470,15 @@
        </color>
       </brush>
      </colorrole>
+     <colorrole role="Highlight">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>145</red>
+        <green>145</green>
+        <blue>145</blue>
+       </color>
+      </brush>
+     </colorrole>
      <colorrole role="HighlightedText">
       <brush brushstyle="SolidPattern">
        <color alpha="255">
@@ -533,15 +524,6 @@
        </color>
       </brush>
      </colorrole>
-     <colorrole role="Accent">
-      <brush brushstyle="SolidPattern">
-       <color alpha="255">
-        <red>233</red>
-        <green>84</green>
-        <blue>32</blue>
-       </color>
-      </brush>
-     </colorrole>
     </disabled>
    </palette>
   </property>
@@ -578,9 +560,6 @@
     <string notr="true"/>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_9">
-    <property name="spacing">
-     <number>0</number>
-    </property>
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -594,28 +573,19 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QSplitter" name="mapSplitter">
+     <widget class="QSplitter" name="MapSplitter">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <property name="handleWidth">
        <number>4</number>
       </property>
-      <property name="childrenCollapsible">
-       <bool>false</bool>
-      </property>
-      <widget class="QSplitter" name="inputsStackedWidgetSplitter">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+      <widget class="QSplitter" name="InputsSplitter">
        <property name="orientation">
-        <enum>Qt::Orientation::Vertical</enum>
+        <enum>Qt::Vertical</enum>
        </property>
-       <property name="childrenCollapsible">
-        <bool>false</bool>
+       <property name="handleWidth">
+        <number>4</number>
        </property>
        <widget class="QTreeWidget" name="treeWidget">
         <property name="sizePolicy">
@@ -648,7 +618,7 @@
          <string notr="true"/>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::StyledPanel</enum>
+         <enum>QFrame::NoFrame</enum>
         </property>
         <property name="autoExpandDelay">
          <number>0</number>
@@ -836,13 +806,10 @@
          </size>
         </property>
         <property name="frameShape">
-         <enum>QFrame::Shape::StyledPanel</enum>
-        </property>
-        <property name="frameShadow">
-         <enum>QFrame::Shadow::Sunken</enum>
+         <enum>QFrame::NoFrame</enum>
         </property>
         <property name="currentIndex">
-         <number>8</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -909,7 +876,7 @@
           <item>
            <spacer name="massSolverPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -970,7 +937,7 @@
           <item>
            <spacer name="momentumSolverPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -1017,7 +984,7 @@
           <item>
            <widget class="QScrollArea" name="surfaceInputScrollArea">
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -1027,8 +994,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>556</height>
+               <width>716</width>
+               <height>492</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1037,7 +1004,7 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0">
               <property name="spacing">
                <number>6</number>
               </property>
@@ -1088,7 +1055,7 @@
                  <item>
                   <spacer name="ninjaFoamCaseGroupBoxSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1187,7 +1154,7 @@
                  <item>
                   <spacer name="elevationInputFileGroupBoxSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1239,7 +1206,7 @@
                     </sizepolicy>
                    </property>
                    <property name="currentIndex">
-                    <number>1</number>
+                    <number>0</number>
                    </property>
                    <widget class="QWidget" name="vegetationSelectionPage">
                     <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -1286,7 +1253,7 @@
                      <item>
                       <spacer name="vegetationGroupBoxSpacer">
                        <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
+                        <enum>Qt::Horizontal</enum>
                        </property>
                        <property name="sizeHint" stdset="0">
                         <size>
@@ -1328,11 +1295,11 @@
                      <item>
                       <spacer name="horizontalSpacer_2">
                        <property name="orientation">
-                        <enum>Qt::Orientation::Horizontal</enum>
+                        <enum>Qt::Horizontal</enum>
                        </property>
                        <property name="sizeHint" stdset="0">
                         <size>
-                         <width>40</width>
+                         <width>20</width>
                          <height>20</height>
                         </size>
                        </property>
@@ -1453,7 +1420,7 @@
                  <item>
                   <spacer name="meshResolutionGroupBoxSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -1483,7 +1450,7 @@
                 <property name="title">
                  <string>Time Zone</string>
                 </property>
-                <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0" columnstretch="0">
+                <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0" columnstretch="0">
                  <item row="0" column="0">
                   <layout class="QHBoxLayout" name="timeZoneInputLayout">
                    <item>
@@ -1519,7 +1486,7 @@
                       <number>10</number>
                      </property>
                      <property name="sizeAdjustPolicy">
-                      <enum>QComboBox::SizeAdjustPolicy::AdjustToContentsOnFirstShow</enum>
+                      <enum>QComboBox::AdjustToContents</enum>
                      </property>
                     </widget>
                    </item>
@@ -1561,7 +1528,7 @@
                    <item>
                     <spacer name="timeZoneLayoutSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -1589,11 +1556,8 @@
                    </property>
                    <property name="html">
                     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-hr { height: 1px; border-width: 0; }
-li.unchecked::marker { content: &quot;\2610&quot;; }
-li.checked::marker { content: &quot;\2612&quot;; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Standard Name:       Mountain Standard Time&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Daylight Name:       Mountain Daylight Time&lt;/p&gt;
@@ -1601,28 +1565,28 @@ li.checked::marker { content: &quot;\2612&quot;; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Daylight Offset from UTC:    -06:00:00&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="textInteractionFlags">
-                    <set>Qt::TextInteractionFlag::NoTextInteraction</set>
+                    <set>Qt::NoTextInteraction</set>
                    </property>
                   </widget>
                  </item>
+                 <item row="2" column="0">
+                  <spacer name="sufaceInputPageSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::Expanding</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>20</width>
+                     <height>40</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
                 </layout>
                </widget>
-              </item>
-              <item>
-               <spacer name="sufaceInputPageSpacer">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeType">
-                 <enum>QSizePolicy::Policy::Expanding</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </widget>
@@ -1643,13 +1607,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
            <height>16777215</height>
           </size>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,1">
-          <property name="spacing">
-           <number>0</number>
-          </property>
-          <property name="sizeConstraint">
-           <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
-          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
           <property name="leftMargin">
            <number>5</number>
           </property>
@@ -1687,10 +1645,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <spacer name="diurnalInputPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Policy::Expanding</enum>
+             <enum>QSizePolicy::Expanding</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -1750,7 +1708,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <spacer name="stabilityInputPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -1800,7 +1758,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <widget class="QScrollArea" name="domainAverageScrollArea">
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="lineWidth">
              <number>1</number>
@@ -1813,8 +1771,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>350</width>
-               <height>231</height>
+               <width>730</width>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1823,7 +1781,19 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_31" stretch="1">
+             <layout class="QVBoxLayout" name="verticalLayout_31" stretch="0">
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QGroupBox" name="domainAverageGroupBox">
                 <property name="sizePolicy">
@@ -1948,7 +1918,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <item>
                      <spacer name="inputWindHeightGroupBoxSpacer">
                       <property name="orientation">
-                       <enum>Qt::Orientation::Horizontal</enum>
+                       <enum>Qt::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -2045,7 +2015,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                       <cursorShape>PointingHandCursor</cursorShape>
                      </property>
                      <property name="layoutDirection">
-                      <enum>Qt::LayoutDirection::LeftToRight</enum>
+                      <enum>Qt::LeftToRight</enum>
                      </property>
                      <item>
                       <property name="text">
@@ -2062,7 +2032,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <item>
                     <spacer name="tableLayoutSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -2105,12 +2075,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>0</height>
-                    </size>
-                   </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
@@ -2118,24 +2082,9 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     </size>
                    </property>
                    <property name="frameShape">
-                    <enum>QFrame::Shape::StyledPanel</enum>
+                    <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="dragEnabled">
-                    <bool>true</bool>
-                   </property>
-                   <property name="dragDropMode">
-                    <enum>QAbstractItemView::DragDropMode::DragDrop</enum>
-                   </property>
-                   <property name="defaultDropAction">
-                    <enum>Qt::DropAction::MoveAction</enum>
-                   </property>
-                   <property name="showGrid">
-                    <bool>true</bool>
-                   </property>
-                   <property name="sortingEnabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="wordWrap">
                     <bool>true</bool>
                    </property>
                    <property name="cornerButtonEnabled">
@@ -2144,12 +2093,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <property name="rowCount">
                     <number>30</number>
                    </property>
-                   <property name="supportedDragActions">
-                    <set>Qt::DropAction::IgnoreAction</set>
-                   </property>
-                   <attribute name="horizontalHeaderVisible">
-                    <bool>true</bool>
-                   </attribute>
                    <attribute name="horizontalHeaderCascadingSectionResizes">
                     <bool>false</bool>
                    </attribute>
@@ -2162,9 +2105,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
                    <attribute name="horizontalHeaderStretchLastSection">
                     <bool>true</bool>
                    </attribute>
-                   <attribute name="verticalHeaderCascadingSectionResizes">
-                    <bool>false</bool>
-                   </attribute>
                    <attribute name="verticalHeaderMinimumSectionSize">
                     <number>20</number>
                    </attribute>
@@ -2172,7 +2112,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <number>20</number>
                    </attribute>
                    <attribute name="verticalHeaderStretchLastSection">
-                    <bool>true</bool>
+                    <bool>false</bool>
                    </attribute>
                    <row/>
                    <row/>
@@ -2208,76 +2148,46 @@ li.checked::marker { content: &quot;\2612&quot;; }
                     <property name="text">
                      <string>Speed</string>
                     </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>10</pointsize>
-                     </font>
-                    </property>
                    </column>
                    <column>
                     <property name="text">
                      <string>Direction</string>
-                    </property>
-                    <property name="toolTip">
-                     <string extracomment="degrees"/>
-                    </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>10</pointsize>
-                     </font>
                     </property>
                    </column>
                    <column>
                     <property name="text">
                      <string>Time</string>
                     </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>10</pointsize>
-                     </font>
-                    </property>
                    </column>
                    <column>
                     <property name="text">
                      <string>Date</string>
-                    </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>10</pointsize>
-                     </font>
                     </property>
                    </column>
                    <column>
                     <property name="text">
                      <string>Cloud Cover (%)</string>
                     </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>10</pointsize>
-                     </font>
-                    </property>
                    </column>
                    <column>
                     <property name="text">
                      <string>Air Temp</string>
                     </property>
-                    <property name="font">
-                     <font>
-                      <pointsize>10</pointsize>
-                     </font>
-                    </property>
                    </column>
                   </widget>
                  </item>
                  <item>
-                  <spacer name="verticalSpacer">
+                  <spacer name="domainAverageGroupBoxSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Vertical</enum>
+                    <enum>Qt::Vertical</enum>
+                   </property>
+                   <property name="sizeType">
+                    <enum>QSizePolicy::MinimumExpanding</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>20</width>
-                     <height>40</height>
+                     <width>0</width>
+                     <height>1</height>
                     </size>
                    </property>
                   </spacer>
@@ -2320,21 +2230,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
           <item>
            <widget class="QScrollArea" name="pointInitializationScrollArea">
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTop|Qt::AlignmentFlag::AlignTrailing</set>
             </property>
             <widget class="QWidget" name="pointInitializationScrollAreaWidget">
              <property name="geometry">
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>510</width>
-               <height>331</height>
+               <width>730</width>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2344,6 +2251,18 @@ li.checked::marker { content: &quot;\2612&quot;; }
               </sizepolicy>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_19">
+              <property name="leftMargin">
+               <number>5</number>
+              </property>
+              <property name="topMargin">
+               <number>5</number>
+              </property>
+              <property name="rightMargin">
+               <number>5</number>
+              </property>
+              <property name="bottomMargin">
+               <number>5</number>
+              </property>
               <item>
                <widget class="QGroupBox" name="pointInitializationGroupBox">
                 <property name="sizePolicy">
@@ -2410,7 +2329,7 @@ Available formats are time series and one step runs with time data.</string>
                    <item>
                     <spacer name="pointInitlializationDownloadLayoutSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -2477,9 +2396,6 @@ Available formats are time series and one step runs with time data.</string>
                      <height>0</height>
                     </size>
                    </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Shadow::Sunken</enum>
-                   </property>
                    <property name="sortingEnabled">
                     <bool>true</bool>
                    </property>
@@ -2499,10 +2415,13 @@ Available formats are time series and one step runs with time data.</string>
                  </item>
                  <item>
                   <layout class="QHBoxLayout" name="pointInitializationSelectLayout">
+                   <property name="sizeConstraint">
+                    <enum>QLayout::SetNoConstraint</enum>
+                   </property>
                    <item>
                     <spacer name="pointInitializationSelectLayoutSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -2515,7 +2434,7 @@ Available formats are time series and one step runs with time data.</string>
                    <item>
                     <widget class="QPushButton" name="pointInitializationSelectAllButton">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -2528,7 +2447,7 @@ Available formats are time series and one step runs with time data.</string>
                    <item>
                     <widget class="QPushButton" name="pointInitializationSelectNoneButton">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -2549,7 +2468,7 @@ Available formats are time series and one step runs with time data.</string>
                     </sizepolicy>
                    </property>
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Vertical</enum>
                    </property>
                   </widget>
                  </item>
@@ -2776,7 +2695,7 @@ Available formats are time series and one step runs with time data.</string>
                     </sizepolicy>
                    </property>
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Vertical</enum>
                    </property>
                   </widget>
                  </item>
@@ -2842,7 +2761,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <widget class="QScrollArea" name="weatherModelScrollArea">
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -2853,7 +2772,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>556</height>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3017,7 +2936,7 @@ Single Step: Writes a KML of weather station data</string>
                        <bool>true</bool>
                       </property>
                       <property name="timeSpec">
-                       <enum>Qt::TimeSpec::LocalTime</enum>
+                       <enum>Qt::LocalTime</enum>
                       </property>
                      </widget>
                     </item>
@@ -3030,7 +2949,7 @@ Single Step: Writes a KML of weather station data</string>
                        <bool>true</bool>
                       </property>
                       <property name="timeSpec">
-                       <enum>Qt::TimeSpec::LocalTime</enum>
+                       <enum>Qt::LocalTime</enum>
                       </property>
                      </widget>
                     </item>
@@ -3125,7 +3044,7 @@ Single Step: Writes a KML of weather station data</string>
                          <item>
                           <spacer name="weatherModelTimeLayoutSpacer">
                            <property name="orientation">
-                            <enum>Qt::Orientation::Horizontal</enum>
+                            <enum>Qt::Horizontal</enum>
                            </property>
                            <property name="sizeHint" stdset="0">
                             <size>
@@ -3320,7 +3239,7 @@ Single Step: Writes a KML of weather station data</string>
              <item>
               <spacer name="outputWindHeightGroupBoxSpacer">
                <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
+                <enum>Qt::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -3369,7 +3288,7 @@ Single Step: Writes a KML of weather station data</string>
             <item>
              <spacer name="outputSpeedUnitsSpacer">
               <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+               <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -3400,7 +3319,7 @@ Single Step: Writes a KML of weather station data</string>
             <item>
              <spacer name="clipOutputSpacer">
               <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+               <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -3415,7 +3334,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="outputsPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -3462,7 +3381,7 @@ Single Step: Writes a KML of weather station data</string>
              </sizepolicy>
             </property>
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -3473,7 +3392,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>556</height>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3483,7 +3402,7 @@ Single Step: Writes a KML of weather station data</string>
               </sizepolicy>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::LayoutDirection::LeftToRight</enum>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_1" stretch="0,0">
               <property name="leftMargin">
@@ -3597,11 +3516,11 @@ Single Step: Writes a KML of weather station data</string>
                     <item>
                      <spacer name="googleEarthLegendSpacer">
                       <property name="orientation">
-                       <enum>Qt::Orientation::Horizontal</enum>
+                       <enum>Qt::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
-                        <width>153</width>
+                        <width>40</width>
                         <height>20</height>
                        </size>
                       </property>
@@ -3629,7 +3548,7 @@ Single Step: Writes a KML of weather station data</string>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_6">
                     <property name="sizeConstraint">
-                     <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+                     <enum>QLayout::SetDefaultConstraint</enum>
                     </property>
                     <property name="leftMargin">
                      <number>5</number>
@@ -3676,7 +3595,7 @@ Single Step: Writes a KML of weather station data</string>
                     <item>
                      <spacer name="googleEarthVectorsGroupBoxSpacer">
                       <property name="orientation">
-                       <enum>Qt::Orientation::Horizontal</enum>
+                       <enum>Qt::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -3806,11 +3725,11 @@ Single Step: Writes a KML of weather station data</string>
                        <item>
                         <spacer name="googleEarthMeshResolutionSpacer">
                          <property name="orientation">
-                          <enum>Qt::Orientation::Horizontal</enum>
+                          <enum>Qt::Horizontal</enum>
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>302</width>
+                           <width>40</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -3911,7 +3830,7 @@ Single Step: Writes a KML of weather station data</string>
                     <item>
                      <spacer name="googleEarthAlternativeColorSchemeSpacer">
                       <property name="orientation">
-                       <enum>Qt::Orientation::Horizontal</enum>
+                       <enum>Qt::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -3930,7 +3849,7 @@ Single Step: Writes a KML of weather station data</string>
               <item>
                <spacer name="googleEarthSpacer">
                 <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
+                 <enum>Qt::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -4125,11 +4044,11 @@ Single Step: Writes a KML of weather station data</string>
                    <item>
                     <spacer name="fireBehaviorAsciiMeshResolutionSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>302</width>
+                       <width>40</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -4154,7 +4073,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="fireBehaviorAsciiPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -4345,11 +4264,11 @@ Single Step: Writes a KML of weather station data</string>
                    <item>
                     <spacer name="fireBehaviorGeoTiffMeshResolutionSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>302</width>
+                       <width>40</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -4374,7 +4293,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="fireBehaviorGeoTiffPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -4562,11 +4481,11 @@ Single Step: Writes a KML of weather station data</string>
                    <item>
                     <spacer name="shapeFilesMeshResolutionSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>302</width>
+                       <width>40</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -4584,7 +4503,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="shapeFilesPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -4625,7 +4544,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <widget class="QScrollArea" name="geospatialPDFFilesScrollArea">
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -4636,7 +4555,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>556</height>
+               <height>484</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -4750,7 +4669,7 @@ Single Step: Writes a KML of weather station data</string>
                     <item>
                      <spacer name="geospatialPDFFilesVectorsSpacer">
                       <property name="orientation">
-                       <enum>Qt::Orientation::Horizontal</enum>
+                       <enum>Qt::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -4807,7 +4726,7 @@ Single Step: Writes a KML of weather station data</string>
                    <item>
                     <spacer name="basemapLayoutSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -4876,7 +4795,7 @@ Single Step: Writes a KML of weather station data</string>
                    <item>
                     <spacer name="sizeLayoutSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -5008,11 +4927,11 @@ Single Step: Writes a KML of weather station data</string>
                        <item>
                         <spacer name="geospatialPDFFilesMeshResolutionSpacer">
                          <property name="orientation">
-                          <enum>Qt::Orientation::Horizontal</enum>
+                          <enum>Qt::Horizontal</enum>
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
-                           <width>302</width>
+                           <width>40</width>
                            <height>20</height>
                           </size>
                          </property>
@@ -5030,7 +4949,7 @@ Single Step: Writes a KML of weather station data</string>
               <item>
                <spacer name="verticalSpacer_3">
                 <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
+                 <enum>Qt::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -5087,14 +5006,25 @@ Single Step: Writes a KML of weather station data</string>
           </item>
           <item>
            <widget class="QLabel" name="VTKFilesLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
-             <string>Write VTK surface and volume files
-</string>
+             <string>Write VTK surface and volume files</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QLabel" name="VTKFilesNoteLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Note that *vtk files are for advanced users and are rarely used by fire managers/modelers</string>
             </property>
@@ -5106,7 +5036,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="VTKFilesPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -5153,7 +5083,7 @@ Single Step: Writes a KML of weather station data</string>
              </sizepolicy>
             </property>
             <property name="frameShape">
-             <enum>QFrame::Shape::NoFrame</enum>
+             <enum>QFrame::NoFrame</enum>
             </property>
             <property name="widgetResizable">
              <bool>true</bool>
@@ -5164,7 +5094,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>556</height>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -5174,7 +5104,7 @@ Single Step: Writes a KML of weather station data</string>
               </sizepolicy>
              </property>
              <property name="layoutDirection">
-              <enum>Qt::LayoutDirection::LeftToRight</enum>
+              <enum>Qt::LeftToRight</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0">
               <property name="leftMargin">
@@ -5198,7 +5128,7 @@ Single Step: Writes a KML of weather station data</string>
                  </sizepolicy>
                 </property>
                 <property name="text">
-                 <string>NOTE: Version 4.0.0 requires map visualization files (*.fgbz) to display simulations on the map. This requirement will be removed in version 4.0.1.</string>
+                 <string>NOTE: Version 4.0.0 requires map visualization files (*.fgbz) to display simulations on the map. This requirement will be removed in version 4.1.0</string>
                 </property>
                 <property name="wordWrap">
                  <bool>true</bool>
@@ -5293,11 +5223,11 @@ Single Step: Writes a KML of weather station data</string>
                  <item>
                   <spacer name="mapVisualizationLegendSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>153</width>
+                     <width>40</width>
                      <height>20</height>
                     </size>
                    </property>
@@ -5325,7 +5255,7 @@ Single Step: Writes a KML of weather station data</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_25">
                  <property name="sizeConstraint">
-                  <enum>QLayout::SizeConstraint::SetNoConstraint</enum>
+                  <enum>QLayout::SetDefaultConstraint</enum>
                  </property>
                  <property name="leftMargin">
                   <number>5</number>
@@ -5372,7 +5302,7 @@ Single Step: Writes a KML of weather station data</string>
                  <item>
                   <spacer name="mapVisualizationVectorsGroupBoxSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -5502,11 +5432,11 @@ Single Step: Writes a KML of weather station data</string>
                     <item>
                      <spacer name="mapVisualizationMeshResolutionSpacer">
                       <property name="orientation">
-                       <enum>Qt::Orientation::Horizontal</enum>
+                       <enum>Qt::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
-                        <width>302</width>
+                        <width>40</width>
                         <height>20</height>
                        </size>
                       </property>
@@ -5607,7 +5537,7 @@ Single Step: Writes a KML of weather station data</string>
                  <item>
                   <spacer name="mapVisualizationAlternativeColorSchemeSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -5623,7 +5553,7 @@ Single Step: Writes a KML of weather station data</string>
               <item>
                <spacer name="mapVisualizationSpacer">
                 <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
+                 <enum>Qt::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -5654,7 +5584,7 @@ Single Step: Writes a KML of weather station data</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,1">
           <property name="sizeConstraint">
-           <enum>QLayout::SizeConstraint::SetDefaultConstraint</enum>
+           <enum>QLayout::SetDefaultConstraint</enum>
           </property>
           <property name="leftMargin">
            <number>5</number>
@@ -5729,7 +5659,7 @@ Single Step: Writes a KML of weather station data</string>
             <item>
              <spacer name="numberOfProcessorsSpacer">
               <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+               <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -5806,7 +5736,7 @@ Single Step: Writes a KML of weather station data</string>
              <item>
               <spacer name="outputDirectorySpacer">
                <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
+                <enum>Qt::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -5822,7 +5752,7 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="solverPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -5951,7 +5881,7 @@ Single Step: Writes a KML of weather station data</string>
                <item>
                 <spacer name="elevationInputTypeGroupBoxSpacer">
                  <property name="orientation">
-                  <enum>Qt::Orientation::Horizontal</enum>
+                  <enum>Qt::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -6135,7 +6065,7 @@ Single Step: Writes a KML of weather station data</string>
             <item>
              <spacer name="surfaceinputDownloadButtonsSpacer">
               <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+               <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -6150,10 +6080,10 @@ Single Step: Writes a KML of weather station data</string>
           <item>
            <spacer name="surfaceInputDownloadPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeType">
-             <enum>QSizePolicy::Policy::Expanding</enum>
+             <enum>QSizePolicy::Expanding</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -6343,7 +6273,7 @@ Download By Station ID: Manually enter weather station IDs separated by commas. 
                  <item>
                   <spacer name="downloadFromDEMPageSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -6404,7 +6334,7 @@ Download By Station ID: Manually enter weather station IDs separated by commas. 
                  <item>
                   <spacer name="horizontalSpacer">
                    <property name="orientation">
-                    <enum>Qt::Orientation::Horizontal</enum>
+                    <enum>Qt::Horizontal</enum>
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
@@ -6562,11 +6492,11 @@ Download Between Two Dates: Download all weather station data within a specified
                    <item>
                     <spacer name="downloadBetweenDatesPageSpacer">
                      <property name="orientation">
-                      <enum>Qt::Orientation::Horizontal</enum>
+                      <enum>Qt::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>51</width>
+                       <width>40</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -6638,7 +6568,7 @@ Download Between Two Dates: Download all weather station data within a specified
             <item>
              <spacer name="weatherStationDataDownloadButtonsLayoutSpacer">
               <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
+               <enum>Qt::Horizontal</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -6653,7 +6583,7 @@ Download Between Two Dates: Download all weather station data within a specified
           <item>
            <spacer name="pointInitializationDownloadPageSpacer">
             <property name="orientation">
-             <enum>Qt::Orientation::Vertical</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -6733,7 +6663,17 @@ Download Between Two Dates: Download all weather station data within a specified
            </brush>
           </colorrole>
          </inactive>
-         <disabled/>
+         <disabled>
+          <colorrole role="ButtonText">
+           <brush brushstyle="SolidPattern">
+            <color alpha="255">
+             <red>190</red>
+             <green>190</green>
+             <blue>190</blue>
+            </color>
+           </brush>
+          </colorrole>
+         </disabled>
         </palette>
        </property>
        <property name="styleSheet">
@@ -6749,7 +6689,7 @@ Download Between Two Dates: Download all weather station data within a specified
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1969</width>
+     <width>1645</width>
      <height>22</height>
     </rect>
    </property>
