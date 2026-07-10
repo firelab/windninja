@@ -1475,18 +1475,11 @@ void MainWindow::plotOutputs()
             webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
             webEngineView->page()->runJavaScript("clearStationOutputTree();");
             webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
-            QFile file(outFileStr);
+            QString filePath = QUrl::fromLocalFile(outFileStr).toString();
             QFileInfo info(outFileStr);
-            if (!file.open(QIODevice::ReadOnly))
-            {
-                qDebug() << "Failed to open fgbz file:" << outFileStr;
-                qDebug() << "Error:" << file.errorString();
-                continue;
-            }
             QString fileName = info.fileName();
-            QByteArray bytes = file.readAll();
-            QString base64 = QString::fromLatin1(bytes.toBase64());
-            QString jsCall = QString("loadSimulation('%1', '%2');").arg(base64, fileName);
+            //qDebug() << "file url =" << filePath;
+            QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
 
             webEngineView->page()->runJavaScript(jsCall);
 

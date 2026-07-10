@@ -514,8 +514,25 @@
                 return; 
             }
 
-            const response = await fetch(data);
-            const arrayBuffer = await response.arrayBuffer();
+            const arrayBuffer = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', data, true);
+                xhr.responseType = 'arraybuffer';
+
+                xhr.onload = function() {
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        resolve(xhr.response);
+                    } else {
+                        reject(new Error(`Failed to load file: ${xhr.statusText}`));
+                    }
+                };
+
+                xhr.onerror = function() {
+                    reject(new Error("Network error occurred while reading local file."));
+                };
+
+                xhr.send();
+            });
             const zip = await JSZip.loadAsync(arrayBuffer);
 
             const keywords = ["NOMADS", "UCAR", "PASTCAST"];
@@ -722,9 +739,22 @@
         }
 
         async function handleKml(data, fileName) {
-            const response = await fetch(data);
-            const kmlText = await response.text();
+            const kmlText = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', data, true);
+                xhr.responseType = 'text'; // Expecting text instead of an arraybuffer
 
+                xhr.onload = function() {
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        resolve(xhr.responseText);
+                    } else {
+                        reject(new Error(`Status: ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error("XHR Error loading KML"));
+                xhr.send();
+            });
             const trimmed = kmlText.trim();
             if (!trimmed.startsWith('<')) {
                 return false;
@@ -793,8 +823,25 @@
         }
 
         async function loadWxModel(data, fileName) {
-            const response = await fetch(data);
-            const arrayBuffer = await response.arrayBuffer();
+            const arrayBuffer = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', data, true);
+                xhr.responseType = 'arraybuffer';
+
+                xhr.onload = function() {
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        resolve(xhr.response);
+                    } else {
+                        reject(new Error(`Failed to load file: ${xhr.statusText}`));
+                    }
+                };
+
+                xhr.onerror = function() {
+                    reject(new Error("Network error occurred while reading local file."));
+                };
+
+                xhr.send();
+            });
             const zip = await JSZip.loadAsync(arrayBuffer);
             const fgbEntry = Object.values(zip.files).filter(entry =>
                 entry.name.toLowerCase().endsWith('.fgb')
