@@ -1,33 +1,32 @@
 #!/bin/bash
 
+
+
 # Install necessary dependencies
+sudo apt install -y libfontconfig1-dev \
+                    libcurl4-gnutls-dev \
+                    libnetcdf-dev \
+                    libboost-program-options-dev \
+                    libboost-date-time-dev \
+                    libgeos-dev \
+                    libboost-test-dev \
+                    libsqlite3-dev \
+                    sqlite3 \
+                    libopenjp2-7-dev \
+                    libtiff-dev \
+                    libshp-dev
+
+# Install qt6 libs
+sudo apt install qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
+
+# Install Poppler, Proj, GDAL
 sudo apt install -y \
-    build-essential \
-    cmake \
-    wget \
-    pkg-config \
-    libfontconfig1-dev \
-    libcurl4-gnutls-dev \
-    libnetcdf-dev \
-    libboost-program-options-dev \
-    libboost-date-time-dev \
-    libboost-test-dev \
-    libgeos-dev \
-    libsqlite3-dev \
-    sqlite3 \
-    libopenjp2-7-dev \
-    libtiff-dev \
-    libshp-dev \
-    libpoppler-dev \
-    libproj-dev \
-    proj-bin \
-    proj-data \
-    libgdal-dev \
     gdal-bin \
-    qt6-base-dev \
-    qt6-base-dev-tools \
-    qt6-webengine-dev \
-    qt6-webengine-dev-tools
+    libgdal-dev \
+    proj-bin \
+    libproj-dev \
+    poppler-utils \
+    libpoppler-dev
 
 # Use OpenFOAM 9; OpenFOAM 8 not available for Ubuntu 22.04
 # add the dl.openfoam.org repo and install OpenFOAM 9
