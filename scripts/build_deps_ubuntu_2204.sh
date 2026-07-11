@@ -17,21 +17,18 @@ sudo apt install -y libfontconfig1-dev \
                     libshp-dev
 
 # Install qt6 libs
-sudo apt install qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
+sudo apt install -y qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
 
 # Install Poppler, Proj, GDAL
 sudo apt install -y \
-    gdal-bin \
     libgdal-dev \
-    proj-bin \
     libproj-dev \
-    poppler-utils \
     libpoppler-dev
 
 # Use OpenFOAM 9; OpenFOAM 8 not available for Ubuntu 22.04
 # add the dl.openfoam.org repo and install OpenFOAM 9
 sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
-sudo add-apt-repository http://dl.openfoam.org/ubuntu
+sudo add-apt-repository -y http://dl.openfoam.org/ubuntu
 sudo apt update
 sudo apt install -y openfoam9
 echo "source /opt/openfoam9/etc/bashrc" >> ~/.bashrc
