@@ -102,23 +102,28 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->blockSignals(false);
 
     nThreads = QThread::idealThreadCount();
+    nCores = countNumCores();
 
-    hwloc_topology_t topology;
-    hwloc_topology_init(&topology);
-    hwloc_topology_load(topology);
+    if(nProcessors == -1)
+    {
+        if(ui->momentumSolverCheckBox->isChecked())
+        {
+            nProcessors = nCores;
+        }
+        else
+        {
+            nProcessors = nThreads;
+        }
+    }
 
-    nCores = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
-
-    hwloc_topology_destroy(topology);
+    ui->numberOfProcessorsSpinBox->setValue(nProcessors);
 
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
     ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
-    ui->numberOfProcessorsSpinBox->setValue(nThreads);
     if(ui->momentumSolverCheckBox->isChecked())
     {
         ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
         ui->numberOfProcessorsSpinBox->setMaximum(nCores);
-        ui->numberOfProcessorsSpinBox->setValue(nCores);
     }
 
     QString version(NINJA_VERSION_STRING);
@@ -329,6 +334,21 @@ void MainWindow::connectSignals()
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
+int MainWindow::countNumCores()
+{
+    int coresCount;
+
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+
+    hwloc_topology_destroy(topology);
+
+    return coresCount;
+}
+
 void MainWindow::cancelSolve()
 {
     progressDialog->setLabelText("Canceling...");
@@ -367,9 +387,16 @@ void MainWindow::massSolverCheckBoxToggled()
     ui->pointInitializationGroupBox->setToolTip("");
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
+    if(ui->numberOfProcessorsSpinBox->value() > nThreads)
+    {
+        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
+        if(nProcessors > nThreads)
+        {
+            ui->numberOfProcessorsSpinBox->setValue(nThreads);
+        }
+    }
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
     ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
-    ui->numberOfProcessorsSpinBox->setValue(nThreads);
 
     if(ui->momentumSolverCheckBox->isChecked())
     {
@@ -408,9 +435,16 @@ void MainWindow::momentumSolverCheckBoxToggled()
     ui->pointInitializationGroupBox->setToolTip("The point initialization option is not currently available for the momentum solver.");
     ui->ninjafoamCaseGroupBox->setVisible(true);
 
+    if(ui->numberOfProcessorsSpinBox->value() > nCores)
+    {
+        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
+        if(nProcessors > nCores)
+        {
+            ui->numberOfProcessorsSpinBox->setValue(nCores);
+        }
+    }
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
     ui->numberOfProcessorsSpinBox->setMaximum(nCores);
-    ui->numberOfProcessorsSpinBox->setValue(nCores);
 
     if(ui->massSolverCheckBox->isChecked())
     {
@@ -1616,7 +1650,8 @@ void MainWindow::readSettings()
     }
     if(settings.contains("nProcessors"))
     {
-        ui->numberOfProcessorsSpinBox->setValue(settings.value("nProcessors").toInt());
+        nProcessors = settings.value("nProcessors").toInt();
+        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
     }
 
     writeToConsole("Settings read successfully.", Qt::darkGreen);

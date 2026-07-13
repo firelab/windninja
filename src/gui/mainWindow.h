@@ -141,9 +141,10 @@ private:
 
     QDir outputDir;
 
-    int nThreads;
-    int nCores;
+    int nThreads;  // max available
+    int nCores;  // max available
     int countNumCores();
+    int nProcessors = -1;  // settings value
 
     int startSolve(int numProcessors);
     void finishedSolve();
