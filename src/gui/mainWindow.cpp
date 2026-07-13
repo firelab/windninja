@@ -101,10 +101,25 @@ MainWindow::MainWindow(QWidget *parent)
     ui->inputsStackedWidget->setCurrentIndex(1);
     ui->treeWidget->blockSignals(false);
 
-    int nCPUs = QThread::idealThreadCount();
-    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCPUs));
-    ui->numberOfProcessorsSpinBox->setMaximum(nCPUs);
-    ui->numberOfProcessorsSpinBox->setValue(nCPUs);
+    nThreads = QThread::idealThreadCount();
+
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    nCores = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+
+    hwloc_topology_destroy(topology);
+
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
+    ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
+    ui->numberOfProcessorsSpinBox->setValue(nThreads);
+    if(ui->momentumSolverCheckBox->isChecked())
+    {
+        ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
+        ui->numberOfProcessorsSpinBox->setMaximum(nCores);
+        ui->numberOfProcessorsSpinBox->setValue(nCores);
+    }
 
     QString version(NINJA_VERSION_STRING);
     version = "Welcome to WindNinja " + version;
@@ -352,6 +367,10 @@ void MainWindow::massSolverCheckBoxToggled()
     ui->pointInitializationGroupBox->setToolTip("");
     ui->ninjafoamCaseGroupBox->setVisible(false);
 
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
+    ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
+    ui->numberOfProcessorsSpinBox->setValue(nThreads);
+
     if(ui->momentumSolverCheckBox->isChecked())
     {
         ui->momentumSolverCheckBox->setChecked(false);
@@ -388,6 +407,10 @@ void MainWindow::momentumSolverCheckBoxToggled()
     ui->pointInitializationGroupBox->setDisabled(true);
     ui->pointInitializationGroupBox->setToolTip("The point initialization option is not currently available for the momentum solver.");
     ui->ninjafoamCaseGroupBox->setVisible(true);
+
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
+    ui->numberOfProcessorsSpinBox->setMaximum(nCores);
+    ui->numberOfProcessorsSpinBox->setValue(nCores);
 
     if(ui->massSolverCheckBox->isChecked())
     {
