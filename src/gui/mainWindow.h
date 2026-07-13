@@ -141,8 +141,8 @@ private:
 
     QDir outputDir;
 
-    int nThreads;  // max available
-    int nCores;  // max available
+    int nThreads;
+    int nCores;
     int countNumCores();
     int nProcessors = -1;  // settings value
 

@@ -389,11 +389,7 @@ void MainWindow::massSolverCheckBoxToggled()
 
     if(ui->numberOfProcessorsSpinBox->value() > nThreads)
     {
-        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
-        if(nProcessors > nThreads)
-        {
-            ui->numberOfProcessorsSpinBox->setValue(nThreads);
-        }
+        ui->numberOfProcessorsSpinBox->setValue(nThreads);
     }
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
     ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
@@ -437,11 +433,7 @@ void MainWindow::momentumSolverCheckBoxToggled()
 
     if(ui->numberOfProcessorsSpinBox->value() > nCores)
     {
-        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
-        if(nProcessors > nCores)
-        {
-            ui->numberOfProcessorsSpinBox->setValue(nCores);
-        }
+        ui->numberOfProcessorsSpinBox->setValue(nCores);
     }
     ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
     ui->numberOfProcessorsSpinBox->setMaximum(nCores);
