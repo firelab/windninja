@@ -815,7 +815,7 @@
          <enum>QFrame::NoFrame</enum>
         </property>
         <property name="currentIndex">
-         <number>8</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1000,8 +1000,8 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>716</width>
-               <height>492</height>
+               <width>730</width>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -1010,7 +1010,7 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_29" stretch="0,0,0,0,0,0">
               <property name="spacing">
                <number>6</number>
               </property>
@@ -1575,24 +1575,24 @@ p, li { white-space: pre-wrap; }
                    </property>
                   </widget>
                  </item>
-                 <item row="2" column="0">
-                  <spacer name="sufaceInputPageSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Vertical</enum>
-                   </property>
-                   <property name="sizeType">
-                    <enum>QSizePolicy::Expanding</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>20</width>
-                     <height>40</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
                 </layout>
                </widget>
+              </item>
+              <item>
+               <spacer name="sufaceInputPageSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Expanding</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </widget>
@@ -1778,7 +1778,7 @@ p, li { white-space: pre-wrap; }
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>518</height>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2247,7 +2247,7 @@ p, li { white-space: pre-wrap; }
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>501</height>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2776,7 +2776,7 @@ Single Step: Writes a KML of weather station data</string>
              <property name="geometry">
               <rect>
                <x>0</x>
-               <y>-71</y>
+               <y>0</y>
                <width>716</width>
                <height>555</height>
               </rect>
@@ -3409,8 +3409,8 @@ Single Step: Writes a KML of weather station data</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>501</height>
+               <width>391</width>
+               <height>350</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4572,8 +4572,8 @@ Single Step: Writes a KML of weather station data</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>501</height>
+               <width>321</width>
+               <height>274</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -5111,8 +5111,8 @@ Single Step: Writes a KML of weather station data</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>730</width>
-               <height>501</height>
+               <width>375</width>
+               <height>440</height>
               </rect>
              </property>
              <property name="sizePolicy">
