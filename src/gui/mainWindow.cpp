@@ -1482,6 +1482,7 @@ void MainWindow::plotOutputs()
             QString fileName = info.fileName();
             //qDebug() << "file url =" << filePath;
             QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+
             webEngineView->page()->runJavaScript(jsCall);
 
             // if it is a point initialization run, and station kmls were created for the run,
