@@ -4712,12 +4712,24 @@ void ninja::set_position(double lat_degrees, double lat_minutes, double lat_seco
 void ninja::set_numberCPUs(int CPUs)
 {
     if(CPUs < 1)
+    {
         throw std::range_error("Number of CPUs is less than one in ninja::set_numberCPUs().");
+    }
+
+    #ifdef _OPENMP
+    int nMaxThreads = omp_get_num_procs();
+    if(CPUs > nMaxThreads)
+    {
+        ostringstream os;
+        os << "Number of CPUs '" << CPUs << "' is greater than maxNumThreads '" << nMaxThreads << "' in ninja::set_numberCPUs().";
+        throw std::range_error(os.str());
+    }
+    #endif
 
     input.numberCPUs = CPUs;
 
     #ifdef _OPENMP
-    omp_set_num_threads( input.numberCPUs );
+    omp_set_num_threads(input.numberCPUs);
     /*
         if(omp_in_parallel())
         {

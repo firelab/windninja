@@ -72,14 +72,8 @@ endif()
 
 find_package(GDAL REQUIRED)
 
-find_path(HWLOC_INCLUDE_DIR hwloc.h)
-find_library(HWLOC_LIBRARY hwloc)
-##find_package(hwloc REQUIRED)
-
-target_include_directories(WindNinja PRIVATE ${HWLOC_INCLUDE_DIR})
-
 if(WIN32)
-  target_link_libraries(WindNinja PRIVATE shapelib::shp ${HWLOC_LIBRARY})
+  target_link_libraries(WindNinja PRIVATE shapelib::shp)
 endif()
 
 target_link_libraries(WindNinja
@@ -89,10 +83,7 @@ target_link_libraries(WindNinja
     Qt6::Core
     PRIVATE ninja
     GDAL::GDAL
-    ${HWLOC_LIBRARY}
 )
-
-target_compile_definitions(WindNinja PRIVATE WITH_HWLOC)
 
 include(GNUInstallDirs)
 install(TARGETS WindNinja

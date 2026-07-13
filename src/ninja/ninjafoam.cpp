@@ -108,6 +108,43 @@ NinjaFoam::~NinjaFoam()
     CPLFree( (void*)pszTurbulenceGridFilename );
 }
 
+int NinjaFoam::countNumCores()
+{
+    int coresCount;
+
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+
+    hwloc_topology_destroy(topology);
+
+    return coresCount;
+}
+
+void NinjaFoam::set_numberCPUs(int CPUs)
+{
+    if(CPUs < 1)
+    {
+        throw std::range_error("Number of CPUs is less than one in ninjafoam::set_numberCPUs().");
+    }
+
+    int nMaxCores = countNumCores();
+    if(CPUs > nMaxCores)
+    {
+        ostringstream os;
+        os << "Number of CPUs '" << CPUs << "' is greater than maxNumCores '" << nMaxCores << "' in ninjafoam::set_numberCPUs().";
+        throw std::range_error(os.str());
+    }
+
+    input.numberCPUs = CPUs;
+
+    #ifdef _OPENMP
+    omp_set_num_threads(input.numberCPUs);
+    #endif
+}
+
 void NinjaFoam::set_meshResolution(double resolution, lengthUnits::eLengthUnits units)
 {
     //set mesh resolution, always stored in meters

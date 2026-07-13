@@ -137,6 +137,21 @@ const std::string* get_checked_elevation_file (po::variables_map& vm)
     }
 }
 
+int countNumCores()
+{
+    int coresCount;
+
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+
+    hwloc_topology_destroy(topology);
+
+    return coresCount;
+}
+
 /**
  * Command line implementation (CLI) of WindNinja.  Can be run using command line args or
  * from an input file.
@@ -602,6 +617,41 @@ int windNinjaCLI(int argc, char* argv[])
                  }
             }
         }
+
+        #ifdef NINJAFOAM
+        if(vm["momentum_flag"].as<bool>())
+        {
+            int nMaxCores = countNumCores();
+            if(vm["num_threads"].as<int>() > nMaxCores)
+            {
+                ostringstream os;
+                os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumCores '" << nMaxCores << "' when option 'momentum_flag' is set to 'true'.";
+                throw std::range_error(os.str());
+            }
+        }
+        else
+        {
+            #ifdef _OPENMP
+            int nMaxThreads = omp_get_num_procs();
+            if(vm["num_threads"].as<int>() > nMaxThreads)
+            {
+                ostringstream os;
+                os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumThreads '" << nMaxThreads << "' when option 'momentum_flag' is set to 'false'.";
+                throw std::range_error(os.str());
+            }
+            #endif
+        }
+        #else // NINJAFOAM
+        #ifdef _OPENMP
+        int nMaxThreads = omp_get_num_procs();
+        if(vm["num_threads"].as<int>() > nMaxThreads)
+        {
+            ostringstream os;
+            os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumThreads '" << nMaxThreads << "' when option 'momentum_flag' is set to 'false'.";
+            throw std::range_error(os.str());
+        }
+        #endif // NINJAFOAM
+        #endif // _OPENMP
 
         const std::string* elevation_file = get_checked_elevation_file(vm); // might either be NULL or set dynamically
         std::string output_path = vm.count("output_path") ? vm["output_path"].as<std::string>() : "";

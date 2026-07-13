@@ -27,6 +27,7 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
                    ${CURL_INCLUDE_DIRS}
                    ${Boost_INCLUDE_DIRS}
+                   ${HWLOC_INCLUDE_DIR}
                    ${PROJECT_SOURCE_DIR}/src)
 
 set(NINJA_SOURCES air.cpp
@@ -140,7 +141,8 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${GDAL_LIBRARY} 
               ${CURL_LIBRARIES}
               ${Boost_LIBRARIES}
-              ${SHAPELIB_LIBRARY})
+              ${SHAPELIB_LIBRARY}
+              ${HWLOC_LIBRARY})
 
 
 include_directories(${NINJA_INCLUDES})

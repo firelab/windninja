@@ -297,7 +297,7 @@ public:
 
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
-    void set_numberCPUs(int CPUs);
+    virtual void set_numberCPUs(int CPUs);
     void set_outputSpeedGridResolution(double resolution, lengthUnits::eLengthUnits units);
     void set_outputDirectionGridResolution(double resolution, lengthUnits::eLengthUnits units);
     double *get_outputSpeedGrid();
