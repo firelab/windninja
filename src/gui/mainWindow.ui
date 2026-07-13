@@ -2776,9 +2776,9 @@ Single Step: Writes a KML of weather station data</string>
              <property name="geometry">
               <rect>
                <x>0</x>
-               <y>-129</y>
+               <y>-71</y>
                <width>716</width>
-               <height>630</height>
+               <height>555</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -3000,7 +3000,7 @@ Single Step: Writes a KML of weather station data</string>
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>150</height>
+                        <height>125</height>
                        </size>
                       </property>
                       <property name="sortingEnabled">
@@ -3049,7 +3049,7 @@ Single Step: Writes a KML of weather station data</string>
                          <property name="minimumSize">
                           <size>
                            <width>0</width>
-                           <height>150</height>
+                           <height>100</height>
                           </size>
                          </property>
                          <property name="sortingEnabled">
