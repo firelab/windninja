@@ -581,6 +581,12 @@
        <number>4</number>
       </property>
       <widget class="QSplitter" name="InputsSplitter">
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -809,7 +815,7 @@
          <enum>QFrame::NoFrame</enum>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>8</number>
         </property>
         <widget class="QWidget" name="blankPage"/>
         <widget class="QWidget" name="massSolverPage">
@@ -1772,7 +1778,7 @@ p, li { white-space: pre-wrap; }
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>484</height>
+               <height>518</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2241,7 +2247,7 @@ p, li { white-space: pre-wrap; }
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>484</height>
+               <height>501</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2381,7 +2387,7 @@ Available formats are time series and one step runs with time data.</string>
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>0</height>
+                     <height>150</height>
                     </size>
                    </property>
                    <property name="maximumSize">
@@ -2770,9 +2776,9 @@ Single Step: Writes a KML of weather station data</string>
              <property name="geometry">
               <rect>
                <x>0</x>
-               <y>0</y>
-               <width>730</width>
-               <height>484</height>
+               <y>-129</y>
+               <width>716</width>
+               <height>630</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -2991,6 +2997,12 @@ Single Step: Writes a KML of weather station data</string>
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>150</height>
+                       </size>
+                      </property>
                       <property name="sortingEnabled">
                        <bool>true</bool>
                       </property>
@@ -3015,16 +3027,16 @@ Single Step: Writes a KML of weather station data</string>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_45">
                        <property name="leftMargin">
-                        <number>0</number>
+                        <number>5</number>
                        </property>
                        <property name="topMargin">
-                        <number>0</number>
+                        <number>5</number>
                        </property>
                        <property name="rightMargin">
-                        <number>0</number>
+                        <number>5</number>
                        </property>
                        <property name="bottomMargin">
-                        <number>0</number>
+                        <number>5</number>
                        </property>
                        <item>
                         <widget class="QTreeView" name="weatherModelTimeTreeView">
@@ -3033,6 +3045,12 @@ Single Step: Writes a KML of weather station data</string>
                            <horstretch>0</horstretch>
                            <verstretch>0</verstretch>
                           </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>150</height>
+                          </size>
                          </property>
                          <property name="sortingEnabled">
                           <bool>true</bool>
@@ -3392,7 +3410,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>484</height>
+               <height>501</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4555,7 +4573,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>484</height>
+               <height>501</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -5094,7 +5112,7 @@ Single Step: Writes a KML of weather station data</string>
                <x>0</x>
                <y>0</y>
                <width>730</width>
-               <height>484</height>
+               <height>501</height>
               </rect>
              </property>
              <property name="sizePolicy">
