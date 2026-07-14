@@ -67,8 +67,8 @@ Typically, the input information comes from observations at weather stations suc
 But other possibilities exist, and users could even use this method to “craft” their own wind fields.  
 For readability, this tutorial (and WindNinja) will call these locations “weather stations”, although, as mentioned, they don't necessarily have to be actual weather stations.  
 You can have as many weather stations as you like, and the stations are not even constrained to be located in the modeling domain. 
-RAWS and ASOS data can be downloaded from MesoWest using a built-in interface.  
-WindNinja accesses the data through the \href{https://synopticlabs.org/api/mesonet/}{Mesonet API} from Synoptic Labs and the MesoWest Research Group.
+RAWS and ASOS data can be downloaded from Synoptic using a built-in interface.  
+WindNinja accesses the data through the \href{https://synopticlabs.org/api/mesonet/}{Mesonet API} from Synoptic Labs and the Synoptic Research Group.
 
 \section*{How does point initialization work?}
 
@@ -370,7 +370,7 @@ If this is left blank, only one observation may be stored in the file, and it ma
 
 \section{Using a Custom API token}
 
-If you want to download more data than WindNinja allows (1 year and stations within a 100 mile buffer from your DEM), you will need to specify your own \textbf{token} for the Mesonet API (this is related to the code WindNinja uses to download weather data from MesoWest). 
+If you want to download more data than WindNinja allows (1 year and stations within a 100 mile buffer from your DEM), you will need to specify your own \textbf{token} for the Mesonet API (this is related to the code WindNinja uses to download weather data from Synoptic). 
 To do this, follow the instructions on \url{https://synopticlabs.org/api/mesonet/} to get an API key and \textbf{token}.
 
 Once you have a \textbf{token}, you can specify in WindNinja via the configuration option \textbf{CUSTOM\_API\_KEY}.
@@ -382,12 +382,12 @@ Click OK, to finalize.
 \begin{figure}[H]
 	\centering
 	\label{}
-	\includegraphics[scale=0.5]{point6}
+	\includegraphics[scale=0.35]{point6}
 \end{figure}
 
 This concludes \textbf{WindNinja Tutorial 3: Point Initialization}
 
 \section*{Acknowledgements}
-The incorporation of weather station downloads in WindNinja was made possible in part due to the data made available by \href{https://synopticlabs.org/api/mesonet/}{MesoWest/SynopticLabs} though the Mesonet API.
+The incorporation of weather station downloads in WindNinja was made possible in part due to the data made available by \href{https://synopticlabs.org/api/mesonet/}{Synoptic} though the Mesonet API.
 
 \end{document}

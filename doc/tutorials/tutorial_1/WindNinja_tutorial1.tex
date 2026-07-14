@@ -52,6 +52,7 @@
 \end{titlepage}
 
 \section*{Introduction}
+
 \noindent
 Welcome to \textbf{WindNinja Tutorial 1: The Basics}.  
 This tutorial will step you through the process of running a basic WindNinja simulation, including how to obtain the necessary elevation data for your specific area.  
@@ -63,6 +64,7 @@ After the tutorial, you should feel comfortable obtaining elevation data, runnin
 \noindent Note:  All required user actions in this tutorial are shown in \textbf{\color{red} red}.
 
 \section*{What is WindNinja?}
+
 WindNinja is a computer program that computes spatially varying wind fields for wildland fire applications.  
 It is specifically designed to simulate the effect of terrain on wind flow.  
 Unlike traditional weather models, WindNinja does not predict wind for future times, rather it simulates the spatial variation of wind for one instant in time (it does not step forward in time).  
@@ -103,6 +105,7 @@ The major differences, from a user's perspective, between the two solvers are li
 \item WindNinja has a feature that allows users to enter measured wind information at several locations to drive the flow.  WindNinja will produce a wind field that matches the winds as these locations.  This feature is not currently available for the conservation of mass and momentum solver.\end{itemize}
 
 \section{Getting Started}
+
 You can download the WindNinja installation file from \url{www.firelab.org}.  
 Step through the simple installation process to install WindNinja.
 
@@ -154,6 +157,7 @@ Unavailable options will not be selectable in the navigation tree.
 
 \section{Input}
 \subsection{Surface Input}
+
 \textbf{\color{red}In the navigation tree, left-click on “Surface Input”.}
 
 \begin{figure}[H]
@@ -163,6 +167,7 @@ Unavailable options will not be selectable in the navigation tree.
 \end{figure}
 
 \subsubsection{Obtaining and Specifying the Elevation File}
+
 WindNinja uses an elevation file to obtain the necessary elevation information to simulate wind flow for your specific area.  
 Several elevation file formats can be read into WindNinja.  
 They are:
@@ -231,6 +236,7 @@ You can also download an elevation file by clicking on “Download File.”}
 
 
 \subsubsection{Using an Existing Case (Conservation of Mass and Momentum Solver)}
+
 Because of the longer simulation times required for the conservation of mass and momentum solver, we provide the option of using an existing case from a previous simulation. 
 This is useful if you do a conservation of mass and momentum simulation and then later want to re-run the same domain at the same resolution, but with a different wind input.
 
@@ -253,6 +259,7 @@ If an existing case is used, the computational domain (the mesh) from the existi
 This can reduce the total simulation time by up to 40\%.
 
 \subsubsection{Setting the Dominant Vegetation Type}
+
 WindNinja approximates the drag effect that vegetation has on wind flow in a very simple way.  
 This requires basic information about the vegetation in the modeling area.  If you used a FARSITE landscape file (*.lcp) for the elevation file, then WindNinja will use the canopy and fuels information in the landscape file to infer the vegetation drag information.  
 No vegetation input is required by you.  But, if you are using another elevation file type (*.asc, *.tif, or *.img), then you have to choose the dominant vegetation type for your area.  
@@ -264,6 +271,7 @@ If your elevation file was a FARSITE landscape file, this drop-down box will be 
 In this case, you do not need to select a vegetation type.}
 
 \subsubsection{Choosing the Mesh Resolution}
+
 The mesh resolution selection controls the resolution of the wind simulation.  
 There are four choices for mesh resolution: Coarse, Medium, Fine, and Custom.  
 The finer the mesh, the longer your simulation will take but smaller undulations in the terrain will be better resolved.  
@@ -292,21 +300,25 @@ Fine & 35 s & 3 hr \\ \bottomrule
 Notice that if you choose Coarse, Medium, or Fine, the actual resolution of the simulation in meters or feet is displayed in the grayed-out box to the right of the “Mesh Resolution” drop-down list.
 
 \subsubsection{Time Zone}
+
 Time zone information is not required for this tutorial, so you do not need to make a choice here.  
 Other tutorials that need information about sun angles (diurnal winds and stability calculations) require that a valid time zone be specified.
 
 \subsection{Diurnal Input and Stability Input}
+
 Since no diurnal wind or non-neutral stability will be simulated in this tutorial, no selections need to be made under the “Diurnal Input” or “Stability Input” headings in the navigation tree.  
 An explanation of these types of simulations is given in WindNinja Tutorial 2: Diurnal Wind and Non-neutral Stability.  
 For this simulation, a   symbol should be next to “Diurnal Input” and “Stability Input” in the navigation tree indicating no selection has been made.
 
 \subsection{Wind Input}
+
 A basic WindNinja simulation will be done, which means that we will initialize the simulation using a domain averaged wind speed and direction.  
 Other initialization methods are discussed in later tutorials.
 
 \textbf{\color{red} Under \say{Wind Input} in the navigation tree, left-click on \say{Domain Average Wind}.}
 
 \subsubsection{Input Wind Height}
+
 In WindNinja, users must specify the height of the input domain averaged wind speed and direction (domain averaged wind speed and direction are discussed below in section 3.3.2).  
 For this height, the meteorological standard is used \textit{where the wind height specified is the height above the top of the vegetation.}  So if the area has 100 foot tall trees, the \say{20-foot wind} is actually 120 feet above the ground surface (20 feet above the tops of the trees).  
 In this example, the user would choose \say{20 ft} for the WindNinja input wind height.  
@@ -320,6 +332,7 @@ Most other countries such as Canada, Australia, etc. use 10 meters as the standa
 Note that a “custom” height can also be entered manually.
 
 \subsubsection{Entering the Input Wind Speed and Direction}
+
 Terrain causes changes in wind speed as air flows over it.  Directional changes also occur due to channeling of the flow.  
 For a  domain average initialized run, WindNinja requires you to enter a single wind speed and direction to characterize the wind field for the particular wind scenario you are trying to simulate.  
 This input wind speed and direction can be thought of as roughly an average surface wind over the simulation domain at the input height.  
@@ -345,6 +358,7 @@ These are all related to diurnal and non-neutral stability wind simulations, whi
 They can be ignored for now.
 
 \section{Output}
+
 WindNinja writes many different kinds of output files for use in a GIS, Google Earth, fire modeling programs, and engineering programs.  
 The following sections describe how to identify and work with these output files.  \textit{Note that output files are written to the folder where your elevation file is located.} 
 The files are automatically named based on your input parameters.  Here we will describe the file naming convention used by WindNinja for a domain average initialized run.  
@@ -413,6 +427,7 @@ The intent of this feature is to let you automatically clip off border areas tha
 Typically this boundary influence might extend 5-10\% in from the border of the domain, although users normally don't use this feature and commonly just leave the default value of 0\%.
 
 \subsection{Google Earth}
+
 Likely, the most convenient way to view winds from WindNinja is to use Google Earth.
 
 \textbf{\color{red} To write Google Earth files using WindNinja, select \say{Google Earth} in the navigation tree.  
@@ -443,6 +458,7 @@ The wind layer can be turned on and off using the check box in the “Places” 
 \end{figure}
 
 \subsection{Fire Behavior}
+
 WindNinja writes wind files that can be used in FARSITE and FlamMap for fire behavior simulations.  
 Spatially varying winds like those produced by WindNinja are often termed gridded winds in these programs.
 
@@ -472,6 +488,7 @@ A good rule of thumb is to keep the resolution greater than about 100 meters.
 You can also select if you want to create a FARSITE atmosphere file (*.atm) here.
 
 \subsection{Shape Files}
+
 Shapefiles for viewing simulated wind in a GIS are created by WindNinja.  
 Four files (*.shp, *.shx, *.dbf, *.prj) are made for viewing in ArcMap, ArcView, or Quantum GIS.  
 These files are always in the same projection as the elevation file and created in the same directory.  
@@ -489,6 +506,7 @@ A good rule of thumb is to keep the resolution greater than about 100 meters.
 \textbf{\color{red} Select the desired output resolution.}
 
 \subsection{Geospatial PDF Files}
+
 Geospatial PDF files are geospatially referenced PDF files. 
 They can be viewed in regular PDF viewers as well as in GIS programs and the Avenza PDF Maps mobile application. 
 
@@ -509,6 +527,7 @@ A good rule of thumb is to keep the resolution greater than about 100 meters.
 \textbf{\color{red} Select the desired output resolution.}
 
 \subsection{VTK Files}
+
 VTK output files can be used in scientific and engineering programs to view the full 3-d output wind fields.  
 These programs are fairly complex, and will likely not be used very often by fire analysts and managers.  
 One program to view these files is the free, open-source program \href{http://www.paraview.org/}{ParaView} by \href{http://www.kitware.com/}{Kitware, Inc.}  
@@ -521,6 +540,7 @@ We will not produce these files for this tutorial.
 Note that VTK files are not available for the momentum solver.
 
 \section{Solve}
+
 Now you've entered all the required inputs and are ready to run the simulation(s).  
 WindNinja has the ability to use multiple processors/cores if your machine has them.  
 This can dramatically reduce the simulation time.
