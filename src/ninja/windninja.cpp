@@ -269,14 +269,14 @@ WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
-    (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours)
+    (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int hours)
 {
     if(!tools)
     {
         return NINJA_E_NULL_PTR;
     }
 
-    return reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, hours);
+    return reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, timeZone, hours);
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData

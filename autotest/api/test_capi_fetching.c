@@ -131,8 +131,9 @@ int main()
      * NOMADS-RAP-NORTH-AMERICA-32-KM
     */
     const char * demFileForecast = demFileBBox; // input DEM file
+    const char* osTimeZone_forecast = "UTC";
     int numForecastHours = 1;
-    err = NinjaFetchWeatherData(ninjaTools, wx_model_type, demFileForecast, numForecastHours);//, papszOptions);
+    err = NinjaFetchWeatherData(ninjaTools, wx_model_type, demFileForecast, osTimeZone_forecast, numForecastHours);//, papszOptions);
     if(err != NINJA_SUCCESS)
     {
         printf("NinjaFetchWeatherData: err = %d\n", err);

@@ -276,7 +276,7 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     return NINJA_SUCCESS;
 }
 
-int ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, int hours)
+int ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int hours)
 {
     try
     {
@@ -287,7 +287,7 @@ int ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile
             throw std::runtime_error(std::string("Weather model not found: ") + modelName);
         }
 
-        std::string forecastFileName = model->fetchForecast(demFile, hours);
+        std::string forecastFileName = model->fetchForecast(demFile, hours, timeZone);
         if(forecastFileName == "exception")
         {
             throw std::runtime_error("ninjaTools::fetchWeatherModelData() returned an invalid forecastFileName.");
@@ -355,7 +355,7 @@ int ninjaTools::fetchArchiveWeatherModelData(const char* modelName, const char* 
                                    boost::lexical_cast<std::string>(startUTC.time_of_day().hours()),
                                    boost::lexical_cast<std::string>(endUTC.time_of_day().hours()));
 
-        std::string forecastFileName = forecastModel->fetchForecast(demFile, hours);
+        std::string forecastFileName = forecastModel->fetchForecast(demFile, hours, timeZone);
         if(forecastFileName == "exception")
         {
             throw std::runtime_error("ninjaTools::fetchArchiveWeatherModelData() returned an invalid forecastFileName.");

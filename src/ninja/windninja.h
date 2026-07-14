@@ -106,10 +106,10 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaToolsH * NinjaMakeTools();
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
-        (NinjaToolsH* tools, const char* modelName, const char* demFile, int hours);
+        (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int hours);
 
     WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
-        (NinjaToolsH* tools, const char* modelName, const char* demFile, const char * timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
+        (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
 
     WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers(NinjaToolsH* tools, int* count);
 

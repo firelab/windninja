@@ -211,6 +211,7 @@ void WeatherModelInput::weatherModelDownloadButtonClicked()
             ninjaTools,
             ui->weatherModelComboBox->currentText(),
             ui->elevationInputFileLineEdit->property("fullpath").toString(),
+            ui->timeZoneComboBox->currentText(),
             hours);
     }
 
@@ -225,15 +226,18 @@ int WeatherModelInput::fetchForecastWeather(
     NinjaToolsH* ninjaTools,
     const QString& modelIdentifierStr,
     const QString& demFileStr,
+    const QString& timeZoneStr,
     int hours)
 {
     QByteArray modelIdentifierTemp = modelIdentifierStr.toUtf8();
     QByteArray demFileTemp = demFileStr.toUtf8();
+    QByteArray timeZoneTemp = timeZoneStr.toUtf8();
 
     const char* modelIdentifier = modelIdentifierTemp.constData();
     const char* demFile = demFileTemp.constData();
+    const char* timeZone = timeZoneTemp.constData();
 
-    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, hours);
+    NinjaErr ninjaErr = NinjaFetchWeatherData(ninjaTools, modelIdentifier, demFile, timeZone, hours);
     if(ninjaErr != NINJA_SUCCESS)
     {
         qDebug() << "NinjaFetchWeatherData: ninjaErr =" << ninjaErr;

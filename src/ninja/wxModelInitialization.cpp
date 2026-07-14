@@ -163,12 +163,14 @@ std::string wxModelInitialization::getPath()
  * @return a base file name, or an empty string if a filename cannot be
  * generated
  */
-std::string wxModelInitialization::generateForecastName()
+std::string wxModelInitialization::generateForecastName(std::string timeZoneString)
 {
-    if( wxModelFileName.empty() )
+    if(wxModelFileName.empty())
+    {
         return wxModelFileName;
+    }
     std::vector<boost::local_time::local_date_time>timeList;
-    timeList = getTimeList();
+    timeList = getTimeList(timeZoneString);
     std::string filename;
     filename =  bpt::to_iso_string(timeList[0].utc_time());
     //remove trailing seconds
@@ -368,8 +370,7 @@ double wxModelInitialization::GetWxModelBuffer(double delta)
  *          return string
  *
  */
-std::string wxModelInitialization::fetchForecast( std::string demFile,
-                          int nHours )
+std::string wxModelInitialization::fetchForecast(std::string demFile, int nHours, std::string timeZoneString)
 {
     /*
      * Get the bounds of the dem
@@ -500,7 +501,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
      */
     wxModelFileName = tempFileName;
     try{
-        checkForValidData();    //throws a badForecastFile on fail
+        checkForValidData(timeZoneString);    //throws a badForecastFile on fail
     }catch (badForecastFile& e) {   //catch a badForecastFile
         if( !bSaveForecast )
         {
@@ -520,10 +521,10 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     VSIMkdir( newPath.c_str(), 0777 );
 
     wxModelFileName = tempFileName;
-    std::string outputPath = newPath + std::string(CPLGetBasename(generateForecastName().c_str())) + "/";
+    std::string outputPath = newPath + std::string(CPLGetBasename(generateForecastName(timeZoneString).c_str())) + "/";
     VSIMkdir( outputPath.c_str(), 0777 );
 
-    std::string newFileName( outputPath + generateForecastName() );
+    std::string newFileName(outputPath + generateForecastName(timeZoneString));
 
     /*
      * check for file existance? if the file is already there, this fails on
@@ -540,7 +541,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     }
     wxModelFileName = newFileName;
     try{
-        checkForValidData();
+        checkForValidData(timeZoneString);
     }
     catch( badForecastFile &e ) {
         if(!bSaveForecast)

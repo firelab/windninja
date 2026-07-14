@@ -222,7 +222,7 @@ double NomadsWxModel::getGridResolution()
     return resolution;
 }
 
-std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
+std::string NomadsWxModel::fetchForecast(std::string demFile, int nHours, std::string timeZoneString)
 {
     if( !ppszModelData )
     {
@@ -278,7 +278,7 @@ std::string NomadsWxModel::fetchForecast( std::string demFile, int nHours )
     }
     wxModelFileName = pszTmpFile;
     std::vector<blt::local_date_time> oTimes;
-    oTimes = wxModelInitialization::getTimeList();
+    oTimes = wxModelInitialization::getTimeList(timeZoneString);
     if( oTimes.size() < 1 )
     {
         throw badForecastFile("Could not get times from downloaded weather forecast file. Failed to download weather forecast.");
@@ -969,8 +969,9 @@ noCloudOK:
     GDALDestroyWarpOptions(psWarpOptions);
 }
 
-void NomadsWxModel::checkForValidData()
+void NomadsWxModel::checkForValidData(std::string timeZoneString)
 {
+    (void)timeZoneString;
     return;
 }
 

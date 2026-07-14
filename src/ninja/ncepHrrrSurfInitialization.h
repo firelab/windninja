@@ -55,7 +55,7 @@ class ncepHrrrSurfInitialization : public wxModelInitialization
     virtual int getStartHour();
     virtual int getEndHour();
 
-    virtual void checkForValidData();
+    virtual void checkForValidData(std::string timeZoneString);
     virtual double Get_Wind_Height();
 
  protected:

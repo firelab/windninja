@@ -103,6 +103,7 @@ private:
         NinjaToolsH* ninjaTools,
         const QString& modelIdentifierStr,
         const QString& demFileStr,
+        const QString& timeZoneStr,
         int hours);
 
     int fetchPastcastWeather(

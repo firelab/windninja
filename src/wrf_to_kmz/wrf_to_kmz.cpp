@@ -190,8 +190,10 @@ std::vector<std::string> getVariableList()
 * @param wxModelFileName wrf netcdf weather model filename.
 * Comment From WindNinja code: May not be functional yet for this class...
 */
-void checkForValidData( std::string wxModelFileName )
+void checkForValidData(std::string wxModelFileName, std::string timeZoneString="")
 {
+    (void)timeZoneString;
+
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
     if(srcDS == NULL)
