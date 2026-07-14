@@ -25,6 +25,9 @@ sudo apt install -y \
     libproj-dev \
     libpoppler-dev
 
+# Install hwloc
+sudo apt install -y libhwloc-dev
+
 # Use OpenFOAM 9; OpenFOAM 8 not available for Ubuntu 22.04
 # add the dl.openfoam.org repo and install OpenFOAM 9
 sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
