@@ -365,18 +365,23 @@ int WriteOutputFiles(std::string input_foam_U_file, std::string input_foam_k_fil
 	ninjaKmlFiles.setKmzFile(output_file_base + ".kmz");
 
 	ninjaKmlFiles.setLegendFile(output_file_base + ".bmp");
-	//ninjaKmlFiles.setDateTimeLegendFile("out_kml_time.bmp", "ninjatime.bmp");
+	//ninjaKmlFiles.setDateTimeLegendFile(output_file_base + "_date_time.bmp", "ninjatime");
 	ninjaKmlFiles.setSpeedGrid(foamSpd, velocityUnits::metersPerSecond);
 	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
 	ninjaKmlFiles.setDirGrid(foamDir);
 
+    ninjaKmlFiles.setSpeedScaling(KmlVector::equal_interval);
+    ninjaKmlFiles.setColorScheme("default");
+    ninjaKmlFiles.setVectorScaling(false);
     ninjaKmlFiles.setLineWidth(1.0);
 	//ninjaKmlFiles.setTime("ninjatime");
 
-    if(ninjaKmlFiles.writeKml(KmlVector::equal_interval,"default",false))
+    if(ninjaKmlFiles.writeKml())
 	{
 		if(ninjaKmlFiles.makeKmz())
+		{
 			ninjaKmlFiles.removeKmlFile();
+		}
 	}
 	
 	/*-------------------------------------------------------------------*/
