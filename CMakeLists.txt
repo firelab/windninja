@@ -119,6 +119,16 @@ else()
     find_package(NetCDF)
 endif(MSVC)
 
+# Find hwloc
+find_path(HWLOC_INCLUDE_DIR hwloc.h)
+find_library(HWLOC_LIBRARY hwloc)
+if(NOT HWLOC_INCLUDE_DIR)
+    message(FATAL_ERROR "Could not find hwloc.h")
+endif()
+if(NOT HWLOC_LIBRARY)
+    message(FATAL_ERROR "Could not find the hwloc library")
+endif()
+
 # Environment Variables for NSIS installer
 option(FIRELAB_PACKAGE "CMake options for installer environment variables" OFF)
 mark_as_advanced(FIRELAB_PACKAGE)

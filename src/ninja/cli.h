@@ -49,6 +49,8 @@ namespace po = boost::program_options;
 #include <iostream>
 #include <iterator>
 
+#include <hwloc.h>
+
 //#include <QDateTime>
 
 int windNinjaCLI(int argc, char* argv[]);
@@ -73,5 +75,7 @@ inline T option_val (const po::variables_map& vm, const char* key) {
 }
 
 //bool checkArgs(string arg1, string arg2, string arg3);
+
+int countNumCores();
 
 #endif /* CLI_H */

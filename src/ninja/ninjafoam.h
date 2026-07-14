@@ -41,6 +41,8 @@
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
 
+#include <hwloc.h>
+
 #define PIPE_BUFFER_SIZE 4096
 
 #define NINJA_FOAM_OGR_VRT "<OGRVRTDataSource>" \
@@ -76,6 +78,8 @@ public:
     virtual bool simulate_wind();
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
+    int countNumCores();
+    virtual void set_numberCPUs(int CPUs);
     virtual void set_meshResolution(double resolution, lengthUnits::eLengthUnits units);
     virtual double get_meshResolution();
     static int GenerateFoamDirectory(std::string demName);

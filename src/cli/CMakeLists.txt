@@ -27,7 +27,8 @@ include_directories(${PROJECT_SOURCE_DIR}/src
 set(LINK_LIBS ${Boost_LIBRARIES}
               ${GDAL_LIBRARY}
               ${NETCDF_LIBRARIES_C}
-              ${CURL_LIBRARIES})
+              ${CURL_LIBRARIES}
+              ${HWLOC_LIBRARY})
 
 if(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})

@@ -72,6 +72,8 @@
 #include <vector>
 #include <string>
 
+#include <hwloc.h>
+
 struct OutputPDFSize {
     double PDFHeight;
     double PDFWidth;
@@ -138,6 +140,11 @@ private:
     QFutureWatcher<int> *futureWatcher;
 
     QDir outputDir;
+
+    int nThreads;
+    int nCores;
+    int countNumCores();
+    int nProcessors = -1;  // settings value
 
     int startSolve(int numProcessors);
     void finishedSolve();
