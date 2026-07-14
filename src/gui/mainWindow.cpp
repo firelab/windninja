@@ -108,22 +108,30 @@ MainWindow::MainWindow(QWidget *parent)
     {
         if(ui->momentumSolverCheckBox->isChecked())
         {
-            nProcessors = nCores;
+            ui->numberOfProcessorsSpinBox->setValue(nCores);
+            ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
+            ui->numberOfProcessorsSpinBox->setMaximum(nCores);
         }
         else
         {
-            nProcessors = nThreads;
+            ui->numberOfProcessorsSpinBox->setValue(nThreads);
+            ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
+            ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
         }
     }
-
-    ui->numberOfProcessorsSpinBox->setValue(nProcessors);
-
-    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
-    ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
-    if(ui->momentumSolverCheckBox->isChecked())
+    else
     {
-        ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
-        ui->numberOfProcessorsSpinBox->setMaximum(nCores);
+        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
+        if(ui->momentumSolverCheckBox->isChecked())
+        {
+            ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
+            ui->numberOfProcessorsSpinBox->setMaximum(nCores);
+        }
+        else
+        {
+            ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
+            ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
+        }
     }
 
     QString version(NINJA_VERSION_STRING);
