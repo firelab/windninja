@@ -153,7 +153,7 @@ int ncepNdfdInitialization::getEndHour()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void ncepNdfdInitialization::checkForValidData()
+void ncepNdfdInitialization::checkForValidData(std::string timeZoneString)
 {
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
@@ -163,19 +163,26 @@ void ncepNdfdInitialization::checkForValidData()
     }
     GDALClose((GDALDatasetH)srcDS);
 
-    //just make up a "dummy" timezone for use here
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if(timeZonePtr == NULL)
+    {
+        ostringstream os;
+        os << "The time zone string: " << timeZoneString.c_str()
+           << " does not match any in "
+           << "the time zone database file: date_time_zonespec.csv.";
+        throw std::runtime_error(os.str());
+    }
 
     //get time list
-    std::vector<boost::local_time::local_date_time> timeList( getTimeList(zone) );
-    //std::vector<boost::local_time::local_date_time> timeListMax( getTempTimeList(max, zone) );
-    //std::vector<boost::local_time::local_date_time> timeListMin( getTempTimeList(min, zone) );
-
+    std::vector<boost::local_time::local_date_time> timeList(getTimeList(timeZonePtr));
+    //std::vector<boost::local_time::local_date_time> timeListMax(getTempTimeList(max,timeZonePtr));
+    //std::vector<boost::local_time::local_date_time> timeListMin(getTempTimeList(min,timeZonePtr));
 
     boost::posix_time::ptime pt_low(boost::gregorian::date(1900,boost::gregorian::Jan,1), boost::posix_time::hours(12));
     boost::posix_time::ptime pt_high(boost::gregorian::date(2100,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::local_time::local_date_time low_time(pt_low, zone);
-    boost::local_time::local_date_time high_time(pt_high, zone);
+    boost::local_time::local_date_time low_time(pt_low, timeZonePtr);
+    boost::local_time::local_date_time high_time(pt_high, timeZonePtr);
 
     //check times
     for(unsigned int i = 0; i < timeList.size(); i++)

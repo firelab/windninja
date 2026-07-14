@@ -212,8 +212,10 @@ temperatureUnits::eTempUnits wrfSurfInitialization::processTemperatureUnits(std:
 * Checks the downloaded data to see if it is all valid.
 * May not be functional yet for this class...
 */
-void wrfSurfInitialization::checkForValidData()
+void wrfSurfInitialization::checkForValidData(std::string timeZoneString)
 {
+    (void)timeZoneString;
+
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
     if(srcDS == NULL)

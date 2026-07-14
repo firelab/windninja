@@ -97,9 +97,9 @@ std::vector<std::string> getVariableList()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void checkForValidData( std::string wxModelFileName )
+void checkForValidData(std::string wxModelFileName, std::string timeZoneString="")
 {
-
+    (void)timeZoneString;
 }
 
 
@@ -157,7 +157,6 @@ GDALRasterBand* get10UBand (GDALDataset *srcDS) {
 std::vector<blt::local_date_time>
 getTimeList( const std::string &timeZoneString, const std::string &wxModelFileName )
 {
-
     const char *pszVariable = NULL;
 
     boost::local_time::time_zone_ptr timeZonePtr;
@@ -848,7 +847,7 @@ int main( int argc, char* argv[] )
         NinjaFinalize();
         throw badForecastFile("input input_hrrr_filename is not a valid hrrr file!!!");
     }
-    checkForValidData( input_hrrr_filename );
+    checkForValidData(input_hrrr_filename);
 
 
     std::string timeZoneString = getTimeZoneString( cenLat, cenLon );

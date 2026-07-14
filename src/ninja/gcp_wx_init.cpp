@@ -157,8 +157,10 @@ GCPWxModel::getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr)
     return aoCachedTimes;
 }
 
-std::string GCPWxModel::fetchForecast(std::string demFile, int nhours)
+std::string GCPWxModel::fetchForecast(std::string demFile, int nhours, std::string timeZoneString)
 {
+    (void)timeZoneString;
+
     if(CPLGetConfigOption("GS_SECRET_ACCESS_KEY", NULL) == NULL || CPLGetConfigOption("GS_ACCESS_KEY_ID", NULL) == NULL)
     {
         if(CPLGetConfigOption("GS_OAUTH2_PRIVATE_KEY_FILE", NULL) == NULL || CPLGetConfigOption("GS_OAUTH2_CLIENT_EMAIL", NULL) == NULL)
@@ -832,8 +834,9 @@ char* GCPWxModel::FindForecast(const char* pszFilePath, time_t nTime)
     return NULL;
 }
 
-void GCPWxModel::checkForValidData()
+void GCPWxModel::checkForValidData(std::string timeZoneString)
 {
+    (void)timeZoneString;
     return;
 }
 

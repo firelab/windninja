@@ -265,7 +265,7 @@ void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string t
 
     try
     {
-        model->checkForValidData();
+        model->checkForValidData(timeZone);
     }
     catch(armyException &e)
     {

@@ -135,9 +135,9 @@ int ncepHrrrSurfInitialization::getEndHour()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void ncepHrrrSurfInitialization::checkForValidData()
+void ncepHrrrSurfInitialization::checkForValidData(std::string timeZoneString)
 {
-
+    (void)timeZoneString;
 }
 
 /**

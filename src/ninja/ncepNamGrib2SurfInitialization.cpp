@@ -136,9 +136,9 @@ int ncepNamGrib2SurfInitialization::getEndHour()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void ncepNamGrib2SurfInitialization::checkForValidData()
+void ncepNamGrib2SurfInitialization::checkForValidData(std::string timeZoneString)
 {
-
+    (void)timeZoneString;
 }
 
 /**

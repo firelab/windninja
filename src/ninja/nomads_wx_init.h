@@ -43,7 +43,7 @@ public:
     NomadsWxModel( const char *pszModelKey );
     virtual ~NomadsWxModel();
 
-    virtual std::string fetchForecast( std::string demFile, int nHours );
+    virtual std::string fetchForecast(std::string demFile, int nHours, std::string timeZoneString);
 
     virtual std::vector<blt::local_date_time>
         getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
@@ -57,7 +57,7 @@ public:
     virtual double getGridResolution();
     virtual int getStartHour();
     virtual int getEndHour();
-    virtual void checkForValidData();
+    virtual void checkForValidData(std::string timeZoneString);
     virtual double Get_Wind_Height() { return 10; }
     virtual void setSurfaceGrids( WindNinjaInputs &input,
                                   AsciiGrid<double> &airGrid,

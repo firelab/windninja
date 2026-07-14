@@ -108,8 +108,8 @@ class wxModelInitialization : public initialize
                            wn_3dScalarField& w0, AsciiGrid<double>& cloud );
 
     //virtual time list functions
-    virtual std::vector<blt::local_date_time> getTimeList(std::string timeZoneString = "Africa/Timbuktu");    //Africa/Timbuktu is GMT with no daylight savings
-    virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, std::string timeZoneString = "Africa/Timbuktu");    //Africa/Timbuktu is GMT with no daylight savings
+    virtual std::vector<blt::local_date_time> getTimeList(std::string timeZoneString);
+    virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, std::string timeZoneString);
     virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr);
     virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
 
@@ -132,7 +132,7 @@ class wxModelInitialization : public initialize
     virtual std::string getPath();
     virtual int getStartHour() = 0;
     virtual int getEndHour() = 0;
-    virtual void checkForValidData() = 0;
+    virtual void checkForValidData(std::string timeZoneString) = 0;
     virtual double Get_Wind_Height() = 0;
 
     int ComputeWxModelBuffer(GDALDataset *poDS, double buffer[4]);
@@ -140,8 +140,8 @@ class wxModelInitialization : public initialize
 
     std::string generateUrl( double north, double west, double east,
                              double south, int hours);
-    virtual std::string fetchForecast( std::string demFile, int nHours );
-    std::string generateForecastName();
+    virtual std::string fetchForecast(std::string demFile, int nHours, std::string timeZoneString);
+    std::string generateForecastName(std::string timeZoneString);
 
     void setModelFileName( std::string filename ) {wxModelFileName = filename;}
 

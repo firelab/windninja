@@ -1071,7 +1071,7 @@ int windNinjaCLI(int argc, char* argv[])
                   if (model->getForecastIdentifier() != "PASTCAST-GCP-HRRR-CONUS-3-KM")
                   {
                     std::cout << "Downloading forecast data..." << std::endl;
-                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>());
+                    forecastFileName = model->fetchForecast(*elevation_file, vm["forecast_duration"].as<int>(), osTimeZone);
                     std::cout << "Download complete." << std::endl;
                   }
                   else {
@@ -1175,7 +1175,7 @@ int windNinjaCLI(int argc, char* argv[])
                                                );
 
                     std::cout << "Downloading forecast data..." << std::endl;
-                    forecastFileName = model->fetchForecast(*elevation_file, 1);
+                    forecastFileName = model->fetchForecast(*elevation_file, 1, osTimeZone);
                     std::cout << "Download complete." << std::endl;
                   }
 
