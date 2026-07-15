@@ -2962,7 +2962,7 @@ void ninja::writeOutputFiles()
     // ensure grids cover original DEM extents, for FLAMMAP, and for all simulation outputs
     // if output clipping was set by the user, don't buffer to overlap the DEM
     AsciiGrid<double> demGrid;
-    if(!input.outputBufferClipping > 0.0)
+    if(input.outputBufferClipping <= 0.0)
     {
         GDALDatasetH hDS;
         hDS = GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
@@ -3020,7 +3020,7 @@ void ninja::writeOutputFiles()
                     angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
                     velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                    if(!input.outputBufferClipping > 0.0)
+                    if(input.outputBufferClipping <= 0.0)
                     {
                         angTempGrid->BufferToOverlapGrid(demGrid);
                         velTempGrid->BufferToOverlapGrid(demGrid);
@@ -3035,7 +3035,7 @@ void ninja::writeOutputFiles()
 
                         ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                        if(!input.outputBufferClipping > 0.0)
+                        if(input.outputBufferClipping <= 0.0)
                         {
                             ustarTempGrid->BufferToOverlapGrid(demGrid);
                         }
@@ -3056,7 +3056,7 @@ void ninja::writeOutputFiles()
 
                         dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                        if(!input.outputBufferClipping > 0.0)
+                        if(input.outputBufferClipping <= 0.0)
                         {
                             dustTempGrid->BufferToOverlapGrid(demGrid);
                         }
@@ -3104,7 +3104,7 @@ void ninja::writeOutputFiles()
                 angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
                 velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
-                if(!input.outputBufferClipping > 0.0)
+                if(input.outputBufferClipping <= 0.0)
                 {
                     angTempGrid->BufferToOverlapGrid(demGrid);
                     velTempGrid->BufferToOverlapGrid(demGrid);
@@ -3125,7 +3125,7 @@ void ninja::writeOutputFiles()
 
                     ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
-                    if(!input.outputBufferClipping > 0.0)
+                    if(input.outputBufferClipping <= 0.0)
                     {
                         ustarTempGrid->BufferToOverlapGrid(demGrid);
                     }
@@ -3149,7 +3149,7 @@ void ninja::writeOutputFiles()
 
                     dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
-                    if(!input.outputBufferClipping > 0.0)
+                    if(input.outputBufferClipping <= 0.0)
                     {
                         dustTempGrid->BufferToOverlapGrid(demGrid);
                     }
@@ -3219,7 +3219,7 @@ void ninja::writeOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
 
-            if(!input.outputBufferClipping > 0.0)
+            if(input.outputBufferClipping <= 0.0)
             {
                 angTempGrid->BufferToOverlapGrid(demGrid);
                 velTempGrid->BufferToOverlapGrid(demGrid);
@@ -3274,7 +3274,7 @@ void ninja::writeOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-            if(!input.outputBufferClipping > 0.0)
+            if(input.outputBufferClipping <= 0.0)
             {
                 angTempGrid->BufferToOverlapGrid(demGrid);
                 velTempGrid->BufferToOverlapGrid(demGrid);
@@ -3286,7 +3286,7 @@ void ninja::writeOutputFiles()
                             //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
                             colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                            if(!input.outputBufferClipping > 0.0)
+                            if(input.outputBufferClipping <= 0.0)
                             {
                                 //turbTempGrid->BufferToOverlapGrid(demGrid);
                                 colMaxTempGrid->BufferToOverlapGrid(demGrid);
@@ -3305,7 +3305,7 @@ void ninja::writeOutputFiles()
 
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                if(!input.outputBufferClipping > 0.0)
+                if(input.outputBufferClipping <= 0.0)
                 {
                     ustarTempGrid->BufferToOverlapGrid(demGrid);
                 }
@@ -3328,7 +3328,7 @@ void ninja::writeOutputFiles()
 
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
-                if(!input.outputBufferClipping > 0.0)
+                if(input.outputBufferClipping <= 0.0)
                 {
                     dustTempGrid->BufferToOverlapGrid(demGrid);
                 }
@@ -3422,7 +3422,7 @@ void ninja::writeOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
-            if(!input.outputBufferClipping > 0.0)
+            if(input.outputBufferClipping <= 0.0)
             {
                 angTempGrid->BufferToOverlapGrid(demGrid);
                 velTempGrid->BufferToOverlapGrid(demGrid);
@@ -3469,7 +3469,7 @@ void ninja::writeOutputFiles()
                 angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
                 velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
 
-                if(!input.outputBufferClipping > 0.0)
+                if(input.outputBufferClipping <= 0.0)
                 {
                     angTempGrid->BufferToOverlapGrid(demGrid);
                     velTempGrid->BufferToOverlapGrid(demGrid);
