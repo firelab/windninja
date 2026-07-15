@@ -2796,7 +2796,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
     // ensure grids cover original DEM extents, for FLAMMAP, and for all simulation outputs
     // if output clipping was set by the user, don't buffer to overlap the DEM
     AsciiGrid<double> demGrid;
-    if(!ninjas[0]->input.outputBufferClipping > 0.0)
+    if(ninjas[0]->input.outputBufferClipping <= 0.0)
     {
         GDALDatasetH hDS;
         hDS = GDALOpen(ninjas[0]->input.dem.fileName.c_str(), GA_ReadOnly);
@@ -2814,7 +2814,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
         for(int i = 0; i < ninjas.size(); i++)
         {
             resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-            if(!ninjas[0]->input.outputBufferClipping > 0.0)
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
             {
                 resampledVelGrids[i]->BufferToOverlapGrid(demGrid);
             }
@@ -2841,7 +2841,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
             AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
 
-            if(!ninjas[0]->input.outputBufferClipping > 0.0)
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
             {
                 angTempGrid->BufferToOverlapGrid(demGrid);
             }
@@ -2854,7 +2854,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
                 //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
                 colMaxTempGrid = new AsciiGrid<double> (ninjas[i]->colMaxGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
 
-                if(!ninjas[0]->input.outputBufferClipping > 0.0)
+                if(ninjas[0]->input.outputBufferClipping <= 0.0)
                 {
                     //turbTempGrid->BufferToOverlapGrid(demGrid);
                     colMaxTempGrid->BufferToOverlapGrid(demGrid);
@@ -2869,7 +2869,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
             {
                 ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                if(!ninjas[0]->input.outputBufferClipping > 0.0)
+                if(ninjas[0]->input.outputBufferClipping <= 0.0)
                 {
                     ustarTempGrid->BufferToOverlapGrid(demGrid);
                 }
@@ -2881,7 +2881,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
             {
                 dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
-                if(!ninjas[0]->input.outputBufferClipping > 0.0)
+                if(ninjas[0]->input.outputBufferClipping <= 0.0)
                 {
                     dustTempGrid->BufferToOverlapGrid(demGrid);
                 }
@@ -2956,7 +2956,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
         for(int i = 0; i < ninjas.size(); i++)
         {
             resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
-            if(!ninjas[0]->input.outputBufferClipping > 0.0)
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
             {
                 resampledVelGrids[i]->BufferToOverlapGrid(demGrid);
             }
@@ -2983,7 +2983,7 @@ void ninjaArmy::writeConsistentColorScaleOutputs()
             AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
             AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
 
-            if(!ninjas[0]->input.outputBufferClipping > 0.0)
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
             {
                 angTempGrid->BufferToOverlapGrid(demGrid);
             }
