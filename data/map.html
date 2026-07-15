@@ -293,6 +293,7 @@
 
         let drawDEMCheck = false;
         let centerControlAdded = false;
+        let clearControlAdded = false;
 
         // Script functions
         function sendBoundingBox(layer) {
@@ -309,7 +310,7 @@
             }
         }
 
-        function drawBoundingBox(north, south, east, west, send) {
+        function drawBoundingBox(north, south, east, west) {
             clearBoundingBoxLayer();
             const bounds = [[south, west], [north, east]];
             const rectangle = L.rectangle(bounds).addTo(boundingBoxLayer);
@@ -319,6 +320,8 @@
                     sendBoundingBox(rectangle);
                     map.fitBounds(rectangle.getBounds()); 
             });
+            updateCenterControl();
+            updateClearControl();
         }
 
         function drawDEM(DEMCorners) {
@@ -342,7 +345,7 @@
                 map.fitBounds(rectangle.getBounds());
             }, 10);
 
-            showCenterControl();
+            updateCenterControl();
             updateOverlayTree();
         }
 
@@ -367,19 +370,25 @@
                 map.fitBounds(layer.getBounds());
             });
             map.fitBounds(layer.getBounds());
-            showCenterControl();
+            updateClearControl();
+            updateCenterControl();
         });
 
-        function showCenterControl() {
-            if (!centerControlAdded) {
-                centerControl.addTo(map);
-                centerControlAdded = true;
-            }
+        function hasCenterableItems() {
+            return (
+                boundingBoxLayer.getLayers().length > 0 ||
+                demLayer.getLayers().length > 0 ||
+                (lastActiveLayer && map.hasLayer(lastActiveLayer))
+            );
         }
 
-        function hideCenterControl() 
-        {
-            if (centerControlAdded) {
+        function updateCenterControl() {
+            const shouldShow = hasCenterableItems();
+
+            if (shouldShow && !centerControlAdded) {
+                centerControl.addTo(map);
+                centerControlAdded = true;
+            } else if (!shouldShow && centerControlAdded) {
                 map.removeControl(centerControl);
                 centerControlAdded = false;
             }
@@ -404,6 +413,29 @@
 
         const clearControl = L.control({ position: 'topright' });
 
+        function hasClearableItems() {
+            return (
+                boundingBoxLayer.getLayers().length > 0 ||
+                demLayer.getLayers().length > 0 ||
+                windninjaOutputTree.children.length > 1 ||
+                initializationOutputTree.children.length > 1 ||
+                stationOutputTree.children.length > 1 ||
+                unknownOutputTree.children.length > 1
+            );
+        }
+
+        function updateClearControl() {
+            const shouldShow = hasClearableItems();
+
+            if (shouldShow && !clearControlAdded) {
+                clearControl.addTo(map);
+                clearControlAdded = true;
+            } else if (!shouldShow && clearControlAdded) {
+                map.removeControl(clearControl);
+                clearControlAdded = false;
+            }
+        }
+
         clearControl.onAdd = function () {
             const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 
@@ -416,11 +448,13 @@
                 L.DomEvent.stopPropagation(e);
                 L.DomEvent.preventDefault(e);
 
+                clearBoundingBoxLayer();
                 clearWindNinjaOutputTree();
                 clearInitializationOutputTree();
                 clearStationOutputTree();
                 clearUnknownOutputTree();
                 clearTimeSeriesContainer();
+
 
                 activeWindNinjaLayer = null;
                 activeInitializationLayer = null;
@@ -430,17 +464,16 @@
 
             return container;
         };
+
         function centerMapOnActiveLayer() {
             let bounds = null;
 
             if (boundingBoxLayer.getLayers().length > 0) {
                 bounds = boundingBoxLayer.getLayers()[0].getBounds();
             }
-
-            if (lastActiveLayer && lastActiveLayer.getBounds) {
+            else if (lastActiveLayer && map.hasLayer(lastActiveLayer)) {
                 bounds = lastActiveLayer.getBounds();
             }
-
             else if (demLayer.getLayers().length > 0) {
                 bounds = demLayer.getLayers()[0].getBounds();
             }
@@ -711,7 +744,7 @@
             windninjaTimeSeriesEnabled = true;
             
             finishFileLoad();
-            showCenterControl();
+            updateCenterControl();
         }
 
         function parseOGRStyle(styleString) {
@@ -817,7 +850,8 @@
 
             lastActiveLayer = kmlLegendLayer;
 
-            showCenterControl();
+            updateCenterControl();
+            updateClearControl();
 
             return true;
         }
@@ -1003,7 +1037,8 @@
             initializationTimeSeriesEnabled = true;
 
             finishFileLoad();
-            showCenterControl();
+            updateCenterControl();
+            updateClearControl();
         }
 
         function showWindNinjaLegend(blob) {
@@ -1060,6 +1095,8 @@
             }];
 
             updateOverlayTree();
+            updateCenterControl();
+            updateClearControl();
         }
 
         function clearInitializationOutputTree() 
@@ -1078,6 +1115,8 @@
             }];
 
             updateOverlayTree();
+            updateCenterControl();
+            updateClearControl();
         }
 
         function clearStationOutputTree() 
@@ -1095,6 +1134,8 @@
             }];
 
             updateOverlayTree();
+            updateCenterControl();
+            updateClearControl();
         }
 
         function clearUnknownOutputTree() 
@@ -1112,6 +1153,8 @@
             }];
 
             updateOverlayTree();
+            updateCenterControl();
+            updateClearControl();
         }
 
         function clearBoundingBoxLayer() 
@@ -1120,6 +1163,9 @@
                 if (layer.editing) layer.editing.disable();
             });
             boundingBoxLayer.clearLayers();
+
+            updateCenterControl();
+            updateClearControl();
         }
 
         function clearDEMLayer() {
@@ -1358,7 +1404,6 @@
         map.addLayer(demLayer);
 
         layerControl.addTo(map);
-        clearControl.addTo(map);
         L.control.scale().addTo(map);
 
     </script>
