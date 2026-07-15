@@ -2959,6 +2959,21 @@ void ninja::writeOutputFiles()
 {
     set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
 
+    // ensure grids cover original DEM extents, for FLAMMAP, and for all simulation outputs
+    // if output clipping was set by the user, don't buffer to overlap the DEM
+    AsciiGrid<double> demGrid;
+    if(!input.outputBufferClipping > 0.0)
+    {
+        GDALDatasetH hDS;
+        hDS = GDALOpen(input.dem.fileName.c_str(), GA_ReadOnly);
+        if(hDS == NULL)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Problem reading DEM during output file writing.");
+        }
+        GDAL2AsciiGrid((GDALDataset*)hDS, 1, demGrid);
+        GDALClose(hDS);
+    }
+
     //Write volume data to VTK format (always in m/s?)
     if(input.volVTKOutFlag)
     {
@@ -3005,20 +3020,8 @@ void ninja::writeOutputFiles()
                     angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.angResolution, AsciiGrid<double>::order0));
                     velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
 
-                    // if output clipping was set by the user, don't buffer to overlap the DEM
-                    // but only if writing atm file for farsite grids
-                    if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
+                    if(!input.outputBufferClipping > 0.0)
                     {
-                        //ensure grids cover original DEM extents for FARSITE
-                        AsciiGrid<double> demGrid;
-                        GDALDatasetH hDS;
-                        hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-                        if( hDS == NULL )
-                        {
-                            input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                                    "Problem reading DEM during output writing." );
-                        }
-                        GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
                         angTempGrid->BufferToOverlapGrid(demGrid);
                         velTempGrid->BufferToOverlapGrid(demGrid);
                     }
@@ -3031,6 +3034,11 @@ void ninja::writeOutputFiles()
                         ustarTempGrid=NULL;
 
                         ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+                        if(!input.outputBufferClipping > 0.0)
+                        {
+                            ustarTempGrid->BufferToOverlapGrid(demGrid);
+                        }
 
                         ustarTempGrid->write_Grid(input.ustarFile.c_str(), 2);
 
@@ -3047,6 +3055,11 @@ void ninja::writeOutputFiles()
                         dustTempGrid=NULL;
 
                         dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.velResolution, AsciiGrid<double>::order0));
+
+                        if(!input.outputBufferClipping > 0.0)
+                        {
+                            dustTempGrid->BufferToOverlapGrid(demGrid);
+                        }
 
                         dustTempGrid->write_Grid(input.dustFile.c_str(), 2);
 
@@ -3091,20 +3104,8 @@ void ninja::writeOutputFiles()
                 angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
                 velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
-                // if output clipping was set by the user, don't buffer to overlap the DEM
-                // but only if writing atm file for farsite grids
-                if(!input.outputBufferClipping > 0.0 && input.atmOutFlag == true)
+                if(!input.outputBufferClipping > 0.0)
                 {
-                    //ensure grids cover original DEM extents for FARSITE
-                    AsciiGrid<double> demGrid;
-                    GDALDatasetH hDS;
-                    hDS = GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
-                    if( hDS == NULL )
-                    {
-                        input.Com->ninjaCom(ninjaComClass::ninjaNone,
-                        "Problem reading DEM during output writing." );
-                    }
-                    GDAL2AsciiGrid( (GDALDataset *)hDS, 1, demGrid );
                     angTempGrid->BufferToOverlapGrid(demGrid);
                     velTempGrid->BufferToOverlapGrid(demGrid);
                 }
@@ -3124,6 +3125,11 @@ void ninja::writeOutputFiles()
 
                     ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
 
+                    if(!input.outputBufferClipping > 0.0)
+                    {
+                        ustarTempGrid->BufferToOverlapGrid(demGrid);
+                    }
+
                     std::string ustarGeoTiffFile = input.geoTiffFile;
                     ustarGeoTiffFile.insert(ustarGeoTiffFile.find(".tif"), "_ustar");
                     ustarTempGrid->exportToTiff(ustarGeoTiffFile, "ustar", "m/s");
@@ -3142,6 +3148,11 @@ void ninja::writeOutputFiles()
                     dustTempGrid=NULL;
 
                     dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.geoTiffResolution, AsciiGrid<double>::order0));
+
+                    if(!input.outputBufferClipping > 0.0)
+                    {
+                        dustTempGrid->BufferToOverlapGrid(demGrid);
+                    }
 
                     std::string dustGeoTiffFile = input.geoTiffFile;
                     dustGeoTiffFile.insert(dustGeoTiffFile.find(".tif"), "_dust");
@@ -3208,6 +3219,12 @@ void ninja::writeOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.shpResolution, AsciiGrid<double>::order0));
 
+            if(!input.outputBufferClipping > 0.0)
+            {
+                angTempGrid->BufferToOverlapGrid(demGrid);
+                velTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
             ninjaShapeFiles.setDirGrid(*angTempGrid);
             ninjaShapeFiles.setSpeedGrid(*velTempGrid);
             ninjaShapeFiles.setDataBaseName(input.dbfFile);
@@ -3257,18 +3274,25 @@ void ninja::writeOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
 
+            if(!input.outputBufferClipping > 0.0)
+            {
+                angTempGrid->BufferToOverlapGrid(demGrid);
+                velTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
 #ifdef NINJAFOAM
                         if(input.writeTurbulence)
                         {
-                            //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution,
-                            //            AsciiGrid<double>::order0));
-                            //
+                            //turbTempGrid = new AsciiGrid<double> (TurbulenceGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+                            if(!input.outputBufferClipping > 0.0)
+                            {
+                                //turbTempGrid->BufferToOverlapGrid(demGrid);
+                                colMaxTempGrid->BufferToOverlapGrid(demGrid);
+                            }
+
                             //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, input.outputSpeedUnits);
-
-
-                            colMaxTempGrid = new AsciiGrid<double> (colMaxGrid.resample_Grid(input.kmzResolution,
-                                        AsciiGrid<double>::order0));
-
                             ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, input.outputSpeedUnits,  input.colMax_colHeightAGL, input.colMax_colHeightAGL_units);
                         }
 #endif //NINJAFOAM
@@ -3280,6 +3304,11 @@ void ninja::writeOutputFiles()
                 ustarTempGrid=NULL;
 
                 ustarTempGrid = new AsciiGrid<double> (UstarGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+                if(!input.outputBufferClipping > 0.0)
+                {
+                    ustarTempGrid->BufferToOverlapGrid(demGrid);
+                }
 
                 ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
 
@@ -3298,6 +3327,11 @@ void ninja::writeOutputFiles()
                 dustTempGrid=NULL;
 
                 dustTempGrid = new AsciiGrid<double> (DustGrid.resample_Grid(input.kmzResolution, AsciiGrid<double>::order0));
+
+                if(!input.outputBufferClipping > 0.0)
+                {
+                    dustTempGrid->BufferToOverlapGrid(demGrid);
+                }
 
                 ninjaKmlFiles.setDustGrid(*dustTempGrid);
 
@@ -3388,6 +3422,12 @@ void ninja::writeOutputFiles()
             angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
             velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.pdfResolution, AsciiGrid<double>::order0));
 
+            if(!input.outputBufferClipping > 0.0)
+            {
+                angTempGrid->BufferToOverlapGrid(demGrid);
+                velTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
             output.setDirGrid(*angTempGrid);
             output.setSpeedGrid(*velTempGrid, input.outputSpeedUnits);
             output.setDEMfile(input.pdfDEMFileName);
@@ -3428,6 +3468,12 @@ void ninja::writeOutputFiles()
 
                 angTempGrid = new AsciiGrid<double> (AngleGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
                 velTempGrid = new AsciiGrid<double> (VelocityGrid.resample_Grid(input.fgbzResolution, AsciiGrid<double>::order0));
+
+                if(!input.outputBufferClipping > 0.0)
+                {
+                    angTempGrid->BufferToOverlapGrid(demGrid);
+                    velTempGrid->BufferToOverlapGrid(demGrid);
+                }
 
                 output.setAngleFromNorth(input.dem.getAngleFromNorth());
                 output.setDirGrid(*angTempGrid);
