@@ -278,10 +278,10 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
     double maxX, maxY, minX, minY;
 
     //max/min of DEM in degrees
-    maxX = MAX(corners[0], corners[2]);
-    maxY = MAX(corners[1], corners[7]);
-    minX = MIN(corners[4], corners[6]);
-    minY = MIN(corners[3], corners[5]);
+    maxX = std::max(corners[0], corners[2]);
+    maxY = std::max(corners[1], corners[7]);
+    minX = std::min(corners[4], corners[6]);
+    minY = std::min(corners[3], corners[5]);
 
 #ifdef MOBILE_APP
     CPLDebug("MOBILE_APP", "grid resolution = %f", this->getGridResolution());
