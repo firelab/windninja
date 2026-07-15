@@ -34,6 +34,7 @@
 #include "omp.h"
 #endif
 
+#include "ninja.h"
 #ifdef NINJAFOAM
 #include "ninjafoam.h"
 #endif
@@ -377,7 +378,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-
 #endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------

@@ -3964,7 +3964,7 @@ void ninja::set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits
     input.colMax_colHeightAGL = colMaxSampleHeightAGL;
     input.colMax_colHeightAGL_units = units;
 }
-#endif
+#endif // NINJAFOAM
 
 void ninja::set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units)
 {
