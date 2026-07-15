@@ -1170,7 +1170,7 @@ bool OutputWriter::_writePDF (std::string outputfn)
     topMargin = bottomMargin;
     double dfImageYBound = 0.0;
     /* Make the same as the default margin */
-    dfImageYBound = MIN( BOTTOM_MARGIN, bottomMargin / 72.0 );
+    dfImageYBound = std::min( BOTTOM_MARGIN, bottomMargin / 72.0 );
     int nLogoTargetYSize = dpi * dfImageYBound;
     double dfLogoRatio = (double)nLogoTargetYSize / (double)nNinjaLogoYSize;
     double dfLogoWidth = dfLogoRatio * (double)nNinjaLogoXSize / (double)dpi;
