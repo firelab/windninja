@@ -141,6 +141,7 @@ int countNumCores()
 {
     int coresCount;
 
+    #ifdef NINJAFOAM
     hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
@@ -148,6 +149,11 @@ int countNumCores()
     coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 
     hwloc_topology_destroy(topology);
+    #else // NINJAFOAM
+    #ifdef _OPENMP
+    coresCount = omp_get_num_procs();
+    #endif // _OPENMP
+    #endif // NINJAFOAM
 
     return coresCount;
 }
@@ -647,7 +653,7 @@ int windNinjaCLI(int argc, char* argv[])
         if(vm["num_threads"].as<int>() > nMaxThreads)
         {
             ostringstream os;
-            os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumThreads '" << nMaxThreads << "' when option 'momentum_flag' is set to 'false'.";
+            os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumThreads '" << nMaxThreads << ".";
             throw std::range_error(os.str());
         }
         #endif // NINJAFOAM

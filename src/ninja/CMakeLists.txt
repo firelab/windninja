@@ -27,8 +27,12 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
                    ${CURL_INCLUDE_DIRS}
                    ${Boost_INCLUDE_DIRS}
-                   ${HWLOC_INCLUDE_DIR}
                    ${PROJECT_SOURCE_DIR}/src)
+
+if(NINJAFOAM)
+    set(NINJA_INCLUDES ${NINJA_INCLUDES}
+                       ${HWLOC_INCLUDE_DIR})
+endif(NINJAFOAM)
 
 set(NINJA_SOURCES air.cpp
                   ascii_grid.cpp
@@ -119,7 +123,7 @@ set(NINJA_SOURCES air.cpp
                   KmlVector.h
                   wxModelInitialization.h)
 if(NINJAFOAM)
-    set(NINJA_SOURCES ${NINJA_SOURCES} 
+    set(NINJA_SOURCES ${NINJA_SOURCES}
                     ninjafoam.cpp
                     foamDomainAverageInitialization.cpp
                     foamWxModelInitialization.cpp
@@ -141,8 +145,12 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${GDAL_LIBRARY} 
               ${CURL_LIBRARIES}
               ${Boost_LIBRARIES}
-              ${SHAPELIB_LIBRARY}
-              ${HWLOC_LIBRARY})
+              ${SHAPELIB_LIBRARY})
+
+if(NINJAFOAM)
+    set(LINK_LIBS ${LINK_LIBS}
+                  ${HWLOC_LIBRARY})
+endif(NINJAFOAM)
 
 
 include_directories(${NINJA_INCLUDES})

@@ -72,7 +72,9 @@
 #include <vector>
 #include <string>
 
+#ifdef NINJAFOAM
 #include <hwloc.h>
+#endif
 
 struct OutputPDFSize {
     double PDFHeight;

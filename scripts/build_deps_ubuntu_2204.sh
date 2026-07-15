@@ -16,6 +16,9 @@ sudo apt install -y libfontconfig1-dev \
                     libtiff-dev \
                     libshp-dev
 
+# Install qt6 dependencies
+sudo apt install -y libgl1-mesa-dev
+
 # Install qt6 libs
 sudo apt install -y qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
 
@@ -25,7 +28,7 @@ sudo apt install -y \
     libproj-dev \
     libpoppler-dev
 
-# Install hwloc
+# Install hwloc, for OpenFOAM
 sudo apt install -y libhwloc-dev
 
 # Use OpenFOAM 9; OpenFOAM 8 not available for Ubuntu 22.04

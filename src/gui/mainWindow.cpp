@@ -343,6 +343,7 @@ int MainWindow::countNumCores()
 {
     int coresCount;
 
+    #ifdef NINJAFOAM
     hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
@@ -350,6 +351,9 @@ int MainWindow::countNumCores()
     coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 
     hwloc_topology_destroy(topology);
+    #else
+    coresCount = QThread::idealThreadCount();
+    #endif
 
     return coresCount;
 }
