@@ -1456,7 +1456,7 @@
                 <property name="title">
                  <string>Time Zone</string>
                 </property>
-                <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0" columnstretch="0">
+                <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0" columnstretch="0">
                  <item row="0" column="0">
                   <layout class="QHBoxLayout" name="timeZoneInputLayout">
                    <item>
@@ -3409,8 +3409,8 @@ Single Step: Writes a KML of weather station data</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>391</width>
-               <height>350</height>
+               <width>730</width>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -4572,8 +4572,8 @@ Single Step: Writes a KML of weather station data</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>321</width>
-               <height>274</height>
+               <width>730</width>
+               <height>484</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_41" stretch="0,1">
@@ -5111,8 +5111,8 @@ Single Step: Writes a KML of weather station data</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>375</width>
-               <height>440</height>
+               <width>730</width>
+               <height>484</height>
               </rect>
              </property>
              <property name="sizePolicy">
@@ -5844,12 +5844,12 @@ Single Step: Writes a KML of weather station data</string>
                  </property>
                  <item>
                   <property name="text">
-                   <string notr="true">Bounding Box</string>
+                   <string>Point Radius</string>
                   </property>
                  </item>
                  <item>
                   <property name="text">
-                   <string>Point Radius</string>
+                   <string notr="true">Bounding Box</string>
                   </property>
                  </item>
                 </widget>
@@ -5922,62 +5922,6 @@ Single Step: Writes a KML of weather station data</string>
                <property name="currentIndex">
                 <number>0</number>
                </property>
-               <widget class="QWidget" name="boundingBoxPage">
-                <layout class="QGridLayout" name="gridLayout_3">
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="boundingBoxNorthLabel">
-                   <property name="text">
-                    <string>North</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="1">
-                  <widget class="QLineEdit" name="boundingBoxNorthLineEdit"/>
-                 </item>
-                 <item row="0" column="2">
-                  <widget class="QLabel" name="boundingBoxSouthLabel">
-                   <property name="text">
-                    <string>South</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="3">
-                  <widget class="QLineEdit" name="boundingBoxSouthLineEdit"/>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="boundingBoxEastLabel">
-                   <property name="text">
-                    <string>East</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="1">
-                  <widget class="QLineEdit" name="boundingBoxEastLineEdit"/>
-                 </item>
-                 <item row="1" column="2">
-                  <widget class="QLabel" name="boundingBoxWestLabel">
-                   <property name="text">
-                    <string>West</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="3">
-                  <widget class="QLineEdit" name="boundingBoxWestLineEdit"/>
-                 </item>
-                </layout>
-               </widget>
                <widget class="QWidget" name="pointRadiusPage">
                 <layout class="QGridLayout" name="gridLayout_4">
                  <property name="leftMargin">
@@ -6033,6 +5977,62 @@ Single Step: Writes a KML of weather station data</string>
                  </item>
                  <item row="1" column="1">
                   <widget class="QLineEdit" name="pointRadiusRadiusLineEdit"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="boundingBoxPage">
+                <layout class="QGridLayout" name="gridLayout_3">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="boundingBoxNorthLabel">
+                   <property name="text">
+                    <string>North</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="boundingBoxNorthLineEdit"/>
+                 </item>
+                 <item row="0" column="2">
+                  <widget class="QLabel" name="boundingBoxSouthLabel">
+                   <property name="text">
+                    <string>South</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="3">
+                  <widget class="QLineEdit" name="boundingBoxSouthLineEdit"/>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="boundingBoxEastLabel">
+                   <property name="text">
+                    <string>East</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="boundingBoxEastLineEdit"/>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QLabel" name="boundingBoxWestLabel">
+                   <property name="text">
+                    <string>West</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="3">
+                  <widget class="QLineEdit" name="boundingBoxWestLineEdit"/>
                  </item>
                 </layout>
                </widget>

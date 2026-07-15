@@ -49,7 +49,7 @@ SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
     ui->timeZoneDetailsTextEdit->setVisible(false);
     ui->ninjafoamCaseGroupBox->setVisible(false);
     ui->vegetationStackedWidget->setCurrentIndex(0);
-    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);  // boundingBoxPage
+    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);  // Point and radius option
 
     ui->elevationFileTypeComboBox->setItemData(0, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
     ui->elevationFileTypeComboBox->setItemData(1, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
