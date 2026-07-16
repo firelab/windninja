@@ -437,8 +437,11 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         // Setup warp options.
         psWarpOptions = GDALCreateWarpOptions();
 
-//        psWarpOptions->nBandCount = nBandCount;
-
+        psWarpOptions->nBandCount = nBandCount;
+        psWarpOptions->panSrcBands =
+            (int*) CPLMalloc( sizeof( int ) * nBandCount );
+        psWarpOptions->panDstBands =
+            (int*) CPLMalloc( sizeof( int ) * nBandCount );
         psWarpOptions->padfDstNoDataReal =
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
         psWarpOptions->padfDstNoDataImag =
@@ -447,6 +450,8 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
             psWarpOptions->padfDstNoDataReal[b] = dfNoData;
             psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+            psWarpOptions->panSrcBands[b] = b + 1;
+            psWarpOptions->panDstBands[b] = b + 1;
         }
 
         psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
