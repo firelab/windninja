@@ -435,65 +435,25 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
 
         // Setup warp options.
-        // Only warp the requested forecast-time band.
         psWarpOptions = GDALCreateWarpOptions();
 
-        if( nBandCount <= 0 )
-        {
-            GDALClose((GDALDatasetH) srcDS);
-            GDALDestroyWarpOptions(psWarpOptions);
-            throw std::runtime_error("Forecast variable has zero raster bands.");
-        }
+        psWarpOptions->nBandCount = nBandCount;
 
-        if( bandNum < 1 || bandNum > nBandCount )
-        {
-            GDALClose((GDALDatasetH) srcDS);
-            GDALDestroyWarpOptions(psWarpOptions);
-            throw std::runtime_error("Requested forecast band is outside raster band range.");
-        }
-
-        if( pbSuccess == false || std::isnan(dfNoData) )
-        {
-            dfNoData = -9999.0;
-        }
-
-        psWarpOptions->nBandCount = 1;
-
-        psWarpOptions->panSrcBands =
-            (int*) CPLMalloc( sizeof( int ) );
-        psWarpOptions->panDstBands =
-            (int*) CPLMalloc( sizeof( int ) );
-
-        psWarpOptions->panSrcBands[0] = bandNum;
-        psWarpOptions->panDstBands[0] = 1;
-
-        psWarpOptions->padfSrcNoDataReal =
-            (double*) CPLMalloc( sizeof( double ) );
-        psWarpOptions->padfSrcNoDataImag =
-            (double*) CPLMalloc( sizeof( double ) );
         psWarpOptions->padfDstNoDataReal =
-            (double*) CPLMalloc( sizeof( double ) );
+            (double*) CPLMalloc( sizeof( double ) * nBandCount );
         psWarpOptions->padfDstNoDataImag =
-            (double*) CPLMalloc( sizeof( double ) );
+            (double*) CPLMalloc( sizeof( double ) * nBandCount );
 
-        psWarpOptions->padfSrcNoDataReal[0] = dfNoData;
-        psWarpOptions->padfSrcNoDataImag[0] = 0.0;
-        psWarpOptions->padfDstNoDataReal[0] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[0] = 0.0;
+        for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
+            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+        }
 
-        psWarpOptions->papszWarpOptions =
-            CSLSetNameValue(
-                psWarpOptions->papszWarpOptions,
-                "INIT_DEST",
-                boost::lexical_cast<std::string>(dfNoData).c_str()
-            );
-
-        psWarpOptions->papszWarpOptions =
-            CSLSetNameValue(
-                psWarpOptions->papszWarpOptions,
-                "SKIP_NOSOURCE",
-                "NO"
-            );
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+        if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+        {
+            psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+        }
 
         // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
         // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
@@ -520,28 +480,28 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
 
         if( varList[i] == "Temperature_height_above_ground" ) {
-            GDAL2AsciiGrid( wrpDS, 1, airGrid );
+            GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
         if( std::isnan( dfNoData ) ) {
         airGrid.set_noDataValue(-9999.0);
         airGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "V-component_of_wind_height_above_ground" ) {
-            GDAL2AsciiGrid( wrpDS, 1, vGrid );
+            GDAL2AsciiGrid( wrpDS, bandNum, vGrid );
         if( std::isnan( dfNoData ) ) {
         vGrid.set_noDataValue(-9999.0);
         vGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "U-component_of_wind_height_above_ground" ) {
-            GDAL2AsciiGrid( wrpDS, 1, uGrid );
+            GDAL2AsciiGrid( wrpDS, bandNum, uGrid );
         if( std::isnan( dfNoData ) ) {
         uGrid.set_noDataValue(-9999.0);
         uGrid.replaceNan( -9999.0 );
         }
     }
         else if( varList[i] == "Total_cloud_cover" ) {
-            GDAL2AsciiGrid( wrpDS, 1, cloudGrid );
+            GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
         if( std::isnan( dfNoData ) ) {
         cloudGrid.set_noDataValue(-9999.0);
         cloudGrid.replaceNan( -9999.0 );
@@ -549,8 +509,8 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
 
         GDALDestroyWarpOptions( psWarpOptions );
-        GDALClose((GDALDatasetH) wrpDS );
         GDALClose((GDALDatasetH) srcDS );
+        GDALClose((GDALDatasetH) wrpDS );
     }
     cloudGrid /= 100.0;
 
