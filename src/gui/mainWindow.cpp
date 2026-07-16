@@ -94,6 +94,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->treeWidget->topLevelItem(2)->child(6)->setData(0, Qt::UserRole, 16);
     ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 17);
 
+    #ifndef NINJAFOAM
+    ui->treeWidget->topLevelItem(0)->child(1)->setDisabled(true);
+    #endif
+
     connectSignals();
 
     ui->treeWidget->blockSignals(true);
@@ -917,7 +921,10 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     }
     else if (item->text(0) == "Conservation of Mass and Momentum")
     {
-        ui->momentumSolverCheckBox->setChecked(!ui->momentumSolverCheckBox->isChecked());
+        if (!item->isDisabled())
+        {
+            ui->momentumSolverCheckBox->setChecked(!ui->momentumSolverCheckBox->isChecked());
+        }
     }
     else if (item->text(0) == "Diurnal Input")
     {
@@ -1631,10 +1638,12 @@ void MainWindow::readSettings()
             surfaceInput->setInputFileDir(dir.absoluteFilePath());
         }
     }
+    #ifdef NINJAFOAM
     if(settings.contains("momentumFlag") && settings.value("momentumFlag").toBool())
     {
         ui->momentumSolverCheckBox->click();
     }
+    #endif
     if(settings.contains("vegChoice"))
     {
         ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
