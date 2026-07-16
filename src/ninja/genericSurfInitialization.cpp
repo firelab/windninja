@@ -437,7 +437,7 @@ void genericSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         // Setup warp options.
         psWarpOptions = GDALCreateWarpOptions();
 
-        psWarpOptions->nBandCount = nBandCount;
+//        psWarpOptions->nBandCount = nBandCount;
 
         psWarpOptions->padfDstNoDataReal =
             (double*) CPLMalloc( sizeof( double ) * nBandCount );
