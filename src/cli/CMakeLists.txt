@@ -51,6 +51,7 @@ if(WIN32)
   target_link_libraries(WindNinja_cli PRIVATE shapelib::shp GDAL::GDAL)
 endif()
 
+message(STATUS "CLI LINK_LIBS=${LINK_LIBS}")
 target_link_libraries(WindNinja_cli PRIVATE ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(WindNinja_cli ninja)
 

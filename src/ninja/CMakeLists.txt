@@ -153,6 +153,7 @@ if(NINJAFOAM)
 endif(NINJAFOAM)
 
 
+message(STATUS "NINJA INCLUDES=${NINJA_INCLUDES}")
 include_directories(${NINJA_INCLUDES})
 
 if(WIN32)
@@ -172,6 +173,7 @@ else()
     endif()
 endif()
 
+message(STATUS "NINJA LINK_LIBS=${LINK_LIBS}")
 target_link_libraries(ninja ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 

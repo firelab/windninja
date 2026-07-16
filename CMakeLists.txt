@@ -119,10 +119,13 @@ else()
     find_package(NetCDF)
 endif(MSVC)
 
+message(STATUS "NINJAFOAM=${NINJAFOAM}")
 if(NINJAFOAM)
     # Find hwloc
     find_path(HWLOC_INCLUDE_DIR hwloc.h)
     find_library(HWLOC_LIBRARY hwloc)
+    message(STATUS "HWLOC_INCLUDE_DIR=${HWLOC_INCLUDE_DIR}")
+    message(STATUS "HWLOC_LIBRARY=${HWLOC_LIBRARY}")
     if(NOT HWLOC_INCLUDE_DIR)
         message(FATAL_ERROR "Could not find hwloc.h")
     endif()
@@ -243,6 +246,7 @@ endif(PHONE_HOME_QUERIES)
 
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
+message(STATUS "NINJAFOAM=${NINJAFOAM}")
 if(NINJAFOAM)
     add_compile_definitions(NINJAFOAM)
     if(WIN32 AND FIRELAB_PACKAGE)
