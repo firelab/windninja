@@ -119,21 +119,6 @@ else()
     find_package(NetCDF)
 endif(MSVC)
 
-message(STATUS "NINJAFOAM=${NINJAFOAM}")
-if(NINJAFOAM)
-    # Find hwloc
-    find_path(HWLOC_INCLUDE_DIR hwloc.h)
-    find_library(HWLOC_LIBRARY hwloc)
-    message(STATUS "HWLOC_INCLUDE_DIR=${HWLOC_INCLUDE_DIR}")
-    message(STATUS "HWLOC_LIBRARY=${HWLOC_LIBRARY}")
-    if(NOT HWLOC_INCLUDE_DIR)
-        message(FATAL_ERROR "Could not find hwloc.h")
-    endif()
-    if(NOT HWLOC_LIBRARY)
-        message(FATAL_ERROR "Could not find the hwloc library, which is required by NINJAFOAM")
-    endif()
-endif(NINJAFOAM)
-
 # Environment Variables for NSIS installer
 option(FIRELAB_PACKAGE "CMake options for installer environment variables" OFF)
 mark_as_advanced(FIRELAB_PACKAGE)
@@ -246,7 +231,22 @@ endif(PHONE_HOME_QUERIES)
 
 # OpenFOAM related options
 option(NINJAFOAM "Enable OpenFOAM solver" ON)
-message(STATUS "NINJAFOAM=${NINJAFOAM}")
+
+if(NINJAFOAM)
+    # Find hwloc
+    find_path(HWLOC_INCLUDE_DIR hwloc.h)
+    find_library(HWLOC_LIBRARY hwloc)
+    if(NOT HWLOC_INCLUDE_DIR)
+        message(FATAL_ERROR "NINJAFOAM requires hwloc. Could not find hwloc.h")
+    endif()
+    if(NOT HWLOC_LIBRARY)
+        message(FATAL_ERROR "NINJAFOAM requires hwloc. Could not find the hwloc library.")
+    endif()
+else(NINJAFOAM)
+    unset(HWLOC_INCLUDE_DIR CACHE)
+    unset(HWLOC_LIBRARY CACHE)
+endif(NINJAFOAM)
+
 if(NINJAFOAM)
     add_compile_definitions(NINJAFOAM)
     if(WIN32 AND FIRELAB_PACKAGE)
