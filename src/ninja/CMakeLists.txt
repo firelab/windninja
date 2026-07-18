@@ -162,6 +162,7 @@ if(WIN32)
     target_compile_definitions(WindNinjadll
         PUBLIC 
             WIN32_LEAN_AND_MEAN
+            NOMINMAX
     )
     target_link_libraries(WindNinjadll PRIVATE ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 else()
@@ -178,7 +179,8 @@ target_link_libraries(ninja ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenM
 if(MSVC)
     target_compile_definitions(ninja
         PUBLIC 
-            WIN32_LEAN_AND_MEAN 
+            WIN32_LEAN_AND_MEAN
+            NOMINMAX 
     )
 endif()
 
