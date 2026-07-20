@@ -510,7 +510,18 @@ install(FILES ${tutorial_files}
         COMPONENT apps)
 
 # Install the ninjafoam data
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam DESTINATION share/windninja)
+if(WIN32)
+	install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam/2.2.0 DESTINATION share/windninja/ninjafoam)
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+	if(EXISTS "/etc/os-release")
+		file(READ "/etc/os-release" OS_RELEASE_CONTENT)
+		if(OS_RELEASE_CONTENT MATCHES "ID=ubuntu" AND OS_RELEASE_CONTENT MATCHES "VERSION_ID=\"?22.04\"?")
+			install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam/9 DESTINATION share/windninja/ninjafoam)
+		endif()
+	endif()
+else()
+	install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ninjafoam/9 DESTINATION share/windninja/ninjafoam)
+endif()
 
 # We need the splash screen for pdf output
 install(FILES ${PROJECT_SOURCE_DIR}/data/wn-splash.png DESTINATION share/windninja)
