@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
     // Set the Splash Screen
     QPixmap pix(":wn-splash.png");
-    QSplashScreen *splash = new QSplashScreen(pix.scaled(600, 160, Qt::KeepAspectRatioByExpanding));
+    QSplashScreen *splash = new QSplashScreen(pix.scaled(1200, 320, Qt::KeepAspectRatioByExpanding));
     
     QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(splash);
     splash->setGraphicsEffect(effect);

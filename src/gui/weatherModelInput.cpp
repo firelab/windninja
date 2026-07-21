@@ -47,6 +47,7 @@ WeatherModelInput::WeatherModelInput(Ui::MainWindow* ui, QObject* parent)
         ui->weatherModelComboBox->addItem(identifiers[i]);
     }
     NinjaFreeAllWeatherModelIdentifiers(identifiers, identifiersSize);
+    ui->weatherModelComboBox->removeItem(0); // Remove NDFD since urls changed
 
     weatherModelComboBoxCurrentIndexChanged(0);
     updateDateTime();

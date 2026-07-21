@@ -179,6 +179,7 @@
 
         const map = new L.Map('map', {
             preferCanvas: true,
+            worldCopyJump: true,
             layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
@@ -302,7 +303,7 @@
                 north: bounds.getNorth(),
                 south: bounds.getSouth(),
                 east: bounds.getEast(),
-                west: bounds.getWest()
+                west:bounds.getWest()
             };
 
             if (window.bridge?.receiveBoundingBox) {
@@ -630,7 +631,7 @@
                     layer.bindPopup(`
                         <strong>${name}</strong><br>
                         Speed: ${props.speed ?? 'n/a'}<br>
-                        Angle: ${props.angle ?? 'n/a'}
+                        Direction: ${props.dir ?? 'n/a'}
                     `);
                 }
             });
@@ -929,7 +930,7 @@
                     layer.bindPopup(`
                         <strong>${name}</strong><br>
                         Speed: ${props.speed ?? 'n/a'}<br>
-                        Angle: ${props.angle ?? 'n/a'}
+                        Direction: ${props.dir ?? 'n/a'}
                     `);
                 }
             });
