@@ -179,6 +179,7 @@
 
         const map = new L.Map('map', {
             preferCanvas: true,
+            worldCopyJump: true,
             layers: [streetBaseLayer],
             center: new L.LatLng(43.62455, -113.2971),
             zoom: 8
@@ -301,8 +302,8 @@
             const bboxData = {
                 north: bounds.getNorth(),
                 south: bounds.getSouth(),
-                east: L.Util.wrapNum(bounds.getEast(), [-180, 180], true),
-                west: L.Util.wrapNum(bounds.getWest(), [-180, 180], true)
+                east: bounds.getEast(),
+                west:bounds.getWest()
             };
 
             if (window.bridge?.receiveBoundingBox) {
