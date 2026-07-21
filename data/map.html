@@ -301,8 +301,8 @@
             const bboxData = {
                 north: bounds.getNorth(),
                 south: bounds.getSouth(),
-                east: bounds.getEast(),
-                west: bounds.getWest()
+                east: L.Util.wrapNum(bounds.getEast(), [-180, 180], true),
+                west: L.Util.wrapNum(bounds.getWest(), [-180, 180], true)
             };
 
             if (window.bridge?.receiveBoundingBox) {
