@@ -72,6 +72,15 @@
             height: 28px;
             text-decoration: none;
         }
+        .leaflet-control-load {
+            display: block;
+            text-align: center;
+            font-size: 24px;
+            line-height: 26px;
+            width: 28px;
+            height: 28px;
+            text-decoration: none;
+        }
         .leaflet-top.leaflet-right {
             z-index: 1000;
         }
@@ -413,6 +422,28 @@
         };
 
         const clearControl = L.control({ position: 'topright' });
+
+        const loadControl = L.control({ position: 'topright' });
+
+        loadControl.onAdd = function () {
+            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+
+            const button = L.DomUtil.create('a', 'leaflet-control-load', container);
+            button.innerHTML = '+';
+            button.title = 'Load output file';
+            button.href = '#';
+
+            L.DomEvent.on(button, 'click', (e) => {
+                L.DomEvent.stopPropagation(e);
+                L.DomEvent.preventDefault(e);
+
+                if (window.bridge?.loadMapLayers) {
+                    window.bridge.loadMapLayers();
+                }
+            });
+
+            return container;
+        };
 
         function hasClearableItems() {
             return (
@@ -1405,6 +1436,7 @@
         map.addLayer(demLayer);
 
         layerControl.addTo(map);
+        loadControl.addTo(map);
         L.control.scale().addTo(map);
 
     </script>

@@ -60,3 +60,8 @@ void MapBridge::mapLayersLoadingFinished()
     qDebug() << "Map has finished loading";
     emit mapLayersLoadingFinishedSignal();
 }
+
+void MapBridge::loadMapLayers()
+{
+    emit loadMapLayersSignal();
+}

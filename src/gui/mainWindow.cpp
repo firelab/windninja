@@ -341,6 +341,7 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
 
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
+    connect(mapBridge, &MapBridge::loadMapLayersSignal, menuBar, &MenuBar::loadMapVisualizationActionTriggered);
 }
 
 int MainWindow::countNumCores()
