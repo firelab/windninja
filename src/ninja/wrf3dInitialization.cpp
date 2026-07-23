@@ -395,9 +395,8 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         int nBandCount = srcDS->GetRasterCount();
         CPLDebug("WX_MODEL_INITIALIZATION", "band count = %d", nBandCount);
         
-        // Grab the first band to get the NO_DATA value for the variable,
-        // assume all bands have the same NO_DATA value
-        GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
+        // get the noDataValue from the current band
+        GDALRasterBand *poBand = srcDS->GetRasterBand(bandNum);
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue(&pbSuccess);
         if(pbSuccess == false)
@@ -407,10 +406,17 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
         // Setup warp options
         psWarpOptions = GDALCreateWarpOptions();
+
+        psWarpOptions->nBandCount = nBandCount;
+        psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+        psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
         psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
         psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
         for(int b = 0; b < nBandCount; b++)
         {
+            psWarpOptions->panSrcBands[b] = b + 1;
+            psWarpOptions->panDstBands[b] = b + 1;
             psWarpOptions->padfDstNoDataReal[b] = dfNoData;
             psWarpOptions->padfDstNoDataImag[b] = dfNoData;
         }

@@ -582,23 +582,33 @@ void NomadsWxModel::setSurfaceGrids( WindNinjaInputs &input,
 
     CPLFree( (void*) pszForecastFile );
     pszForecastFile = NULL;
-    nBandCount = GDALGetRasterCount( hSrcDS );
-    hBand = GDALGetRasterBand( hSrcDS, 1 );
+
+    nBandCount = GDALGetRasterCount(hSrcDS);
+
+    // Grab the first band to get the NO_DATA value for the variable,
+    // assume all bands have the same NO_DATA value
+    hBand = GDALGetRasterBand(hSrcDS, 1);
     dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
     if(bSuccess == FALSE)
     {
         dfNoData = -9999.0;
     }
 
+    // Setup warp options
     psWarpOptions = GDALCreateWarpOptions();
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    for( i = 0; i < nBandCount; i++ )
+
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
+    for(int b = 0; b < nBandCount; b++)
     {
-        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
     }
 
     psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
@@ -1091,8 +1101,11 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
     // wouldn't this here kill the opened file?? Shouldn't it be done later after the file gets closed??
     CPLFree( (void*)pszForecastFile );
 
-    int nBandCount = GDALGetRasterCount( hDS );
-    hBand = GDALGetRasterBand( hDS, 1 );
+    int nBandCount = GDALGetRasterCount(hDS);
+
+    // Grab the first band to get the NO_DATA value for the variable,
+    // assume all bands have the same NO_DATA value
+    hBand = GDALGetRasterBand(hDS, 1);
     int bSuccess;
     double dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
     if(!bSuccess)
@@ -1100,15 +1113,21 @@ void NomadsWxModel::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
         dfNoData = -9999.0;
     }
 
+    // Setup warp options
     psWarpOptions = GDALCreateWarpOptions();
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    for( i = 0; i < nBandCount; i++ )
+
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
+    for(int b = 0; b < nBandCount; b++)
     {
-        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
     }
 
     psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");

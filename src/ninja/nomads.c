@@ -985,32 +985,60 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
             psWO->panDstBands[i] = i+1;
         }
     }
-    for( i = 0; i < psWO->nBandCount; i++ )
-    {
-        GDALRasterBandH band = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
-        int hasNoDataValue;
-        double noDataValue = GDALGetRasterNoDataValue(band, &hasNoDataValue);
 
-        if( hasNoDataValue )
+    if(psWO->padfDstNoDataReal == NULL || psWO->padfDstNoDataImag == NULL)
+    {
+        psWO->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * psWO->nBandCount);
+        if(psWO->padfDstNoDataReal == NULL)
         {
-            // Check if the nodata value is out of range
-            int bClamped = FALSE;
-            int bRounded = FALSE;
+            CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions->padfDstNoDataReal is NULL, returning without warping.");
+            return NULL;
+        }
+        psWO->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * psWO->nBandCount);
+        if(psWO->padfDstNoDataImag == NULL)
+        {
+            CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions->padfDstNoDataImag is NULL, returning without warping.");
+            return NULL;
+        }
+        for(i = 0; i < psWO->nBandCount; i++)
+        {
+            GDALRasterBandH band = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[i]);
+            int hasNoDataValue;
+            double noDataValue = GDALGetRasterNoDataValue(band, &hasNoDataValue);
+            if(hasNoDataValue == FALSE)
+            {
+                noDataValue = -9999.0;
+            }
+
+            psWO->padfDstNoDataReal[i] = noDataValue;
+            psWO->padfDstNoDataImag[i] = noDataValue;
+
+            if(hasNoDataValue)
+            {
+                /*
+                // TODO: Check if the nodata value is out of range, and adjust/clamp
+                // Leaving this clamp adjustment code commented out because:
+                // 1. padfSrcNoDataReal/Imag (note the src NOT dst) containers are unsized here and can cause memory crashes.
+                // 2. Mixed-band datasets (some with NoData, some without) make global initial values unsafe.
+                // it is hard to know that padfSrcNoDataReal/Imag need to be sized ahead of time without running the NoData and clamp stuff twice on each band of the dataset
+                // and even then, how to deal with a situation where some bands have NO_DATA values, and some do not, what to use as a proper initial value
+                // for those bands that do NOT have a NO_DATA value?
+                int bClamped = FALSE;
+                int bRounded = FALSE;
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0)
-             GDALAdjustValueToDataType(GDALGetRasterDataType(band),
-                                       noDataValue, &bClamped, &bRounded );
-#endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0) */
-#endif /* GDAL_COMPUTE_VERSION */
-            /*
-            if( !bClamped )
-            {
-                GDALWarpInitNoDataReal(psWO, -1e10);
-
-                psWO->padfSrcNoDataReal[i] = noDataValue;
-                psWO->padfDstNoDataReal[i] = noDataValue;
+                double adjustedNoDataVal = GDALAdjustValueToDataType(GDALGetRasterDataType(band), noDataValue, &bClamped, &bRounded);
+#endif // GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(2,1,0)
+#endif // GDAL_COMPUTE_VERSION
+                if(bClamped)
+                {
+                    psWO->padfSrcNoDataReal[i] = noDataValue;
+                    psWO->padfSrcNoDataImag[i] = noDataValue;
+                    psWO->padfDstNoDataReal[i] = adjustedNoDataVal;
+                    psWO->padfDstNoDataImag[i] = adjustedNoDataVal;
+                }
+                */
             }
-            */
         }
     }
 
@@ -1020,6 +1048,7 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
         {
             psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
             int hasNoDataValue;
+            GDALRasterBandH band = GDALGetRasterBand(psWO->hSrcDS, psWO->panSrcBands[0]);
             double noDataValue = GDALGetRasterNoDataValue(band, &hasNoDataValue);
             if(hasNoDataValue == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
             {

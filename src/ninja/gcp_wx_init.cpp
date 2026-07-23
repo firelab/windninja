@@ -667,6 +667,9 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
     }
 
     int nBandCount = GDALGetRasterCount(hSrcDS);
+
+    // Grab the first band to get the NO_DATA value for the variable,
+    // assume all bands have the same NO_DATA value
     GDALRasterBandH hBand = GDALGetRasterBand(hSrcDS, 1);
     int bSuccess;
     dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
@@ -677,11 +680,19 @@ void GCPWxModel::setSurfaceGrids(WindNinjaInputs& input,
 
     // Setup warp options
     psWarpOptions = GDALCreateWarpOptions();
+
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
     psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
     psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
-    for (int i = 0; i < nBandCount; ++i) {
-        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+
+    for(int b = 0; b < nBandCount; b++)
+    {
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
     }
 
     psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");

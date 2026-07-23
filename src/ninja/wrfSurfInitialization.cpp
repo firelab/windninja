@@ -814,7 +814,7 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         CPLDebug("WRF", "band count = %d", nBandCount);
 
         // get the noDataValue from the current band
-        GDALRasterBand *poBand = srcDS->GetRasterBand( bandNum );
+        GDALRasterBand *poBand = srcDS->GetRasterBand(bandNum);
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue(&pbSuccess);
         if(pbSuccess == false)
@@ -834,10 +834,17 @@ void wrfSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         // Setup warp options
         psWarpOptions = GDALCreateWarpOptions();
+
+        psWarpOptions->nBandCount = nBandCount;
+        psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+        psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
         psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
         psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
         for(int b = 0; b < nBandCount; b++)
         {
+            psWarpOptions->panSrcBands[b] = b + 1;
+            psWarpOptions->panDstBands[b] = b + 1;
             psWarpOptions->padfDstNoDataReal[b] = dfNoData;
             psWarpOptions->padfDstNoDataImag[b] = dfNoData;
         }
