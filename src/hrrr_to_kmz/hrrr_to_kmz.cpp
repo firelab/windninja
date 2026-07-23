@@ -386,25 +386,21 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
     psWarpOptions = GDALCreateWarpOptions();
 
     psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
 
-    psWarpOptions->panSrcBands =
-        (int *) CPLMalloc(sizeof(int) * nBandCount );
     psWarpOptions->panSrcBands[0] = bandList[0];
     psWarpOptions->panSrcBands[1] = bandList[1];
     psWarpOptions->panSrcBands[2] = bandList[2];
     psWarpOptions->panSrcBands[3] = bandList[3];
 
-    psWarpOptions->panDstBands =
-        (int *) CPLMalloc(sizeof(int) * nBandCount );
     psWarpOptions->panDstBands[0] = 1;
     psWarpOptions->panDstBands[1] = 2;
     psWarpOptions->panDstBands[2] = 3;
     psWarpOptions->panDstBands[3] = 4;
 
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
     for(int b = 0; b < nBandCount; b++)
     {
         psWarpOptions->padfDstNoDataReal[b] = dfNoData;
@@ -618,10 +614,10 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
 
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
     std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
-	ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
+    ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
     ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
-	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
-	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
+    ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
+    ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     // default values for input.wxModelGoogSpeedScaling/input.googSpeedScaling,input.googColor,input.googVectorScale are KmlVector::equal_interval,"default",false respectively
     ninjaKmlFiles.setSpeedScaling(KmlVector::equal_interval);
@@ -633,12 +629,12 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
 
     if(ninjaKmlFiles.writeKml())
-	{
-		if(ninjaKmlFiles.makeKmz())
-		{
-			ninjaKmlFiles.removeKmlFile();
-		}
-	}
+    {
+        if(ninjaKmlFiles.makeKmz())
+        {
+            ninjaKmlFiles.removeKmlFile();
+        }
+    }
 }
 
 void Usage()

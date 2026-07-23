@@ -1504,7 +1504,7 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
     hSrcBand = GDALGetRasterBand(hSrcDS, 1);
     hDstBand = GDALGetRasterBand(hDstDS, 1);
 
-    int nBandCount = GDALGetRasterCount( hDstDS );
+    int nBandCount = GDALGetRasterCount(hDstDS);
 
     double dfNoData = GDALGetRasterNoDataValue(hSrcBand, NULL);
     // TODO: check to see if this is needed, when checking "INIT_DEST"="NO_DATA" methods
@@ -1519,20 +1519,17 @@ bool GDALWarpToUtm(const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDs
     psWarpOptions->hSrcDS = hSrcDS;
     psWarpOptions->hDstDS = hDstDS;
 
-    psWarpOptions->nBandCount = 1;
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
+    psWarpOptions->panSrcBands[0] = 1;
+    psWarpOptions->panDstBands[0] = 1;
+
     psWarpOptions->padfDstNoDataReal[0] = dfNoData;
     psWarpOptions->padfDstNoDataImag[0] = dfNoData;
-
-    psWarpOptions->panSrcBands = 
-        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
-    psWarpOptions->panSrcBands[0] = 1;
-    psWarpOptions->panDstBands = 
-        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
-    psWarpOptions->panDstBands[0] = 1;
 
     // TODO: not sure how this affects surface_fetch products yet. Need to also check if this is needed for the other gdalWarpToUtm() function as well.
     //psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
@@ -1682,7 +1679,7 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
     //    return false;
     //}
 
-    int nBandCount = GDALGetRasterCount( hSrcDS );
+    int nBandCount = GDALGetRasterCount(hSrcDS);
     if( band <= 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "GDALWarpToWKT_GDALAutoCreateWarpedVRT() input band is <= 0.");
@@ -1694,7 +1691,7 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
         return false;
     }
 
-    GDALDatasetH hBand = GDALGetRasterBand( hSrcDS, band );
+    GDALDatasetH hBand = GDALGetRasterBand(hSrcDS, band);
     int bSuccess = false;
     double dfNoData = GDALGetRasterNoDataValue(hBand, &bSuccess);
     if(bSuccess == false)
@@ -1703,30 +1700,25 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
     }
 
     const char *pszSrcWkt;
-    pszSrcWkt = GDALGetProjectionRef( hSrcDS );
+    pszSrcWkt = GDALGetProjectionRef(hSrcDS);
 
     // Setup warp options
     GDALWarpOptions *psWarpOptions;
     psWarpOptions = GDALCreateWarpOptions();
 
     psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
 
-    psWarpOptions->panSrcBands =
-        (int *) CPLMalloc(sizeof(int) * nBandCount );
     psWarpOptions->panSrcBands[0] = band;
-
-    psWarpOptions->panDstBands =
-        (int *) CPLMalloc(sizeof(int) * nBandCount );
     psWarpOptions->panDstBands[0] = 1;
 
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    for( int i = 0; i < nBandCount; i++ )
+    for(int b = 0; b < nBandCount; b++)
     {
-        psWarpOptions->padfDstNoDataReal[i] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[i] = dfNoData;
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
     }
 
     psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");

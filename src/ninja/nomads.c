@@ -946,16 +946,18 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
     CPLDebug("NOMADS", "Using internal AutoCreateWarpedVRT");
     VALIDATE_POINTER1( hSrcDS, "GDALAutoCreateWarpedVRT", NULL );
 
-    if(psOptionsIn == NULL) {
+    if(psOptionsIn == NULL)
+    {
         CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions is NULL, running regular GDALAutoCreateWarpedVRT()");
-        return GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, eResampleAlg,
-                    dfMaxError, psOptionsIn);
+        return GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, eResampleAlg, dfMaxError, psOptionsIn);
     }
 
-    if( psOptionsIn != NULL ) {
-        psWO = GDALCloneWarpOptions( psOptionsIn );
+    if(psOptionsIn != NULL)
+    {
+        psWO = GDALCloneWarpOptions(psOptionsIn);
     }
-    else {
+    else
+    {
         psWO = GDALCreateWarpOptions();
     }
 
@@ -968,19 +970,23 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
     ** for band mapping, while the original doesn't.  We also use older
     ** semantics here, as some functions were introduced around 2.3.x.
     */
-    if(psWO->nBandCount == 0 || psWO->panSrcBands == NULL || psWO->panDstBands == NULL) {
+    if(psWO->nBandCount == 0 || psWO->panSrcBands == NULL || psWO->panDstBands == NULL)
+    {
         psWO->nBandCount = GDALGetRasterCount(hSrcDS);
-        psWO->panSrcBands = CPLMalloc(psWO->nBandCount * sizeof(int));
-        if (psWO->panSrcBands == NULL) {
+        psWO->panSrcBands = (int*)CPLMalloc(sizeof(int) * psWO->nBandCount);
+        if(psWO->panSrcBands == NULL)
+        {
             CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions->panSrcBands is NULL, returning without warping.");
             return NULL;
         }
-        psWO->panDstBands = CPLMalloc(psWO->nBandCount * sizeof(int));
-        if (psWO->panDstBands == NULL) {
+        psWO->panDstBands = (int*)CPLMalloc(sizeof(int)* psWO->nBandCount);
+        if(psWO->panDstBands == NULL)
+        {
             CPLDebug("NOMADS", "NomadsAutoCreateWarpedVRT(), input GDALWarpOptions->panDstBands is NULL, returning without warping.");
             return NULL;
         }
-        for( i = 0; i < GDALGetRasterCount( hSrcDS ); i++ ){
+        for(i = 0; i < psWO->nBandCount; i++)
+        {
             psWO->panSrcBands[i] = i+1;
             psWO->panDstBands[i] = i+1;
         }
@@ -1042,9 +1048,9 @@ GDALDatasetH NomadsAutoCreateWarpedVRT(GDALDatasetH hSrcDS,
         }
     }
 
-    if( psWO->padfDstNoDataReal != NULL )
+    if(psWO->padfDstNoDataReal != NULL)
     {
-        if (CSLFetchNameValue( psWO->papszWarpOptions, "INIT_DEST" ) == NULL)
+        if(CSLFetchNameValue(psWO->papszWarpOptions, "INIT_DEST") == NULL)
         {
             psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
             int hasNoDataValue;

@@ -832,7 +832,7 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         int nBandCount = srcDS->GetRasterCount();
 
         // get the noDataValue from the current band
-        GDALRasterBand *poBand = srcDS->GetRasterBand( bandNum );
+        GDALRasterBand *poBand = srcDS->GetRasterBand(bandNum);
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue(&pbSuccess);
         if(pbSuccess == false)
@@ -1055,9 +1055,9 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setLegendFile( CPLFormFilename(outputPath.c_str(), rootname.c_str(), "bmp") );
     std::string dateTimewxModelLegFileTemp = CPLFormFilename(outputPath.c_str(), (rootname+"_date_time").c_str(), "bmp");
     ninjaKmlFiles.setDateTimeLegendFile(dateTimewxModelLegFileTemp, forecastTime);
-	ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
-	ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
-	ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
+    ninjaKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, outputSpeedUnits);
+    ninjaKmlFiles.setAngleFromNorth(angleFromNorth);
+    ninjaKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
 
     // default values for input.wxModelGoogSpeedScaling/input.googSpeedScaling,input.googColor,input.googVectorScale are KmlVector::equal_interval,"default",false respectively
     ninjaKmlFiles.setSpeedScaling(KmlVector::equal_interval);
@@ -1068,12 +1068,12 @@ void writeWxModelGrids( const std::string &outputPath, const boost::local_time::
     ninjaKmlFiles.setWxModel(forecastIdentifier, forecastTime);
 
     if(ninjaKmlFiles.writeKml())
-	{
-		if(ninjaKmlFiles.makeKmz())
-		{
-			ninjaKmlFiles.removeKmlFile();
-		}
-	}
+    {
+        if(ninjaKmlFiles.makeKmz())
+        {
+            ninjaKmlFiles.removeKmlFile();
+        }
+    }
 }
 
 void Usage()

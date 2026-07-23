@@ -498,9 +498,8 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
         int nBandCount = srcDS->GetRasterCount();
 
-        // Grab the first band to get the NO_DATA value for the variable,
-        // assume all bands have the same NO_DATA value
-        GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
+        // get the noDataValue from the current band
+        GDALRasterBand *poBand = srcDS->GetRasterBand(bandNum);
         int pbSuccess;
         double dfNoData = poBand->GetNoDataValue(&pbSuccess);
         if(pbSuccess == false)
@@ -512,20 +511,17 @@ void ncepGfsSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         psWarpOptions = GDALCreateWarpOptions();
 
         psWarpOptions->nBandCount = nBandCount;
-        psWarpOptions->panSrcBands = 
-            (int*) CPLMalloc( sizeof( int ) * nBandCount );
-        psWarpOptions->panDstBands = 
-            (int*) CPLMalloc( sizeof( int ) * nBandCount );
-        psWarpOptions->padfDstNoDataReal =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
-        psWarpOptions->padfDstNoDataImag =
-            (double*) CPLMalloc( sizeof( double ) * nBandCount );
+        psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+        psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+        psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+        psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
 
-        for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+        for(int b = 0; b < nBandCount; b++)
+        {
             psWarpOptions->panSrcBands[b] = b + 1;
             psWarpOptions->panDstBands[b] = b + 1;
+            psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+            psWarpOptions->padfDstNoDataImag[b] = dfNoData;
         }
 
         psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");

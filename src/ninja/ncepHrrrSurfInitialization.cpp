@@ -329,33 +329,26 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     psWarpOptions = GDALCreateWarpOptions();
 
     psWarpOptions->nBandCount = nBandCount;
-    psWarpOptions->panSrcBands =
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->panDstBands =
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    for(int b = 0; b < nBandCount; b++)
-    {
-        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-    }
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
 
-    psWarpOptions->panSrcBands =
-        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
     psWarpOptions->panSrcBands[0] = bandList[0];
     psWarpOptions->panSrcBands[1] = bandList[1];
     psWarpOptions->panSrcBands[2] = bandList[2];
     psWarpOptions->panSrcBands[3] = bandList[3];
 
-    psWarpOptions->panDstBands =
-        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
     psWarpOptions->panDstBands[0] = 1;
     psWarpOptions->panDstBands[1] = 2;
     psWarpOptions->panDstBands[2] = 3;
     psWarpOptions->panDstBands[3] = 4;
+
+    for(int b = 0; b < nBandCount; b++)
+    {
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+    }
 
     psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
     if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
