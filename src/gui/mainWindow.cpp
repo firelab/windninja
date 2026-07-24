@@ -538,7 +538,6 @@ void MainWindow::solveButtonClicked()
 
     ninjaErr = NINJA_SUCCESS;
 
-    int numNinjas = 0;
     ninjaArmy = nullptr;
     char **papszOptions = nullptr;
     const char *initializationMethod = nullptr;
@@ -1436,9 +1435,26 @@ void MainWindow::finishedSolve()
     // ninjaCom handles most of the progress dialog, cli, and console window messaging now
     if( result == 1 ) // simulation properly finished
     {
-        progressDialog->setValue(maxProgress - 1);
         progressDialog->setLabelText("Rendering map layers...");
         progressDialog->setCancelButtonText("Cancel");
+        progressDialog->setRange(0, 0);
+
+        qDebug() << "Finished with simulations";
+        writeToConsole("Finished with simulations", Qt::darkGreen);
+
+        if(numNinjas >= 5)
+        {
+            QMessageBox::information(
+                this,
+                "Loading Map Layers",
+                "The simulation has completed successfully.\n\n"
+                "To maintain performance, only the first 5 simulations will be "
+                "loaded onto the map automatically.\n\n"
+                "Click OK to begin loading the map layers."
+            );
+
+            numNinjas = 5;
+        }
 
         qDebug() << "Finished with simulations";
         writeToConsole("Finished with simulations", Qt::darkGreen);
@@ -1593,8 +1609,9 @@ void MainWindow::plotOutputs()
 
 void MainWindow::finishedLoadingMap()
 {
+    progressDialog->setRange(0, maxProgress);
     progressDialog->setValue(maxProgress);
-    progressDialog->setLabelText("Simulation Finished.");
+    progressDialog->setLabelText("Rendering Complete.");
     progressDialog->setCancelButtonText("Close");
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);

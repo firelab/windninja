@@ -147,6 +147,7 @@ private:
     int nCores;
     int countNumCores();
     int nProcessors = -1;  // settings value
+    int numNinjas;
 
     int startSolve(int numProcessors);
     void finishedSolve();
