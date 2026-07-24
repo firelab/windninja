@@ -341,6 +341,7 @@ void MainWindow::connectSignals()
     connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
 
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
+    connect(mapBridge, &MapBridge::loadMapLayersSignal, menuBar, &MenuBar::loadMapVisualizationActionTriggered);
 }
 
 int MainWindow::countNumCores()
@@ -537,7 +538,6 @@ void MainWindow::solveButtonClicked()
 
     ninjaErr = NINJA_SUCCESS;
 
-    int numNinjas = 0;
     ninjaArmy = nullptr;
     char **papszOptions = nullptr;
     const char *initializationMethod = nullptr;
@@ -1435,9 +1435,23 @@ void MainWindow::finishedSolve()
     // ninjaCom handles most of the progress dialog, cli, and console window messaging now
     if( result == 1 ) // simulation properly finished
     {
-        progressDialog->setValue(maxProgress - 1);
         progressDialog->setLabelText("Rendering map layers...");
         progressDialog->setCancelButtonText("Cancel");
+        progressDialog->setRange(0, 0);
+
+        if(numNinjas >= 5)
+        {
+            QMessageBox::information(
+                this,
+                "Loading Map Layers",
+                "The simulation has completed successfully.\n\n"
+                "To maintain performance, only the first 5 simulations will be "
+                "loaded onto the map automatically.\n\n"
+                "Click OK to begin loading the map layers."
+            );
+
+            numNinjas = 5;
+        }
 
         qDebug() << "Finished with simulations";
         writeToConsole("Finished with simulations", Qt::darkGreen);
@@ -1514,28 +1528,10 @@ void MainWindow::plotOutputs()
             printf("NinjaGetMapVisualizationFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-        std::vector<std::string> fgbzFilenamesStr;
-        std::vector<std::string> stationKmlFilenamesStr;
-        std::vector<std::string> wxModelFgbzFilenamesStr;
-
-        fgbzFilenamesStr.reserve(numRuns);
-        stationKmlFilenamesStr.reserve(numRuns);
-        wxModelFgbzFilenamesStr.reserve(numRuns);
-        for(int i = 0; i < numRuns; i++)
-        {
-            fgbzFilenamesStr.emplace_back(fgbzFilenames[i]);
-            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
-            wxModelFgbzFilenamesStr.emplace_back(weatherModelFgbzFilenames[i]);
-        }
-
-        outputFgbzFilenames.push_back(std::move( fgbzFilenamesStr ));
-        outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
-        outputWxModelFgbzFilenames.push_back(std::move( wxModelFgbzFilenamesStr ));
-
-        for(int i = 0; i < numRuns; i++)
+        for(int i = 0; i < numNinjas; i++)
         {
             // plot the output fgbz of the run
-            QString outFileStr = QString::fromStdString(fgbzFilenames[i]);
+            QString outFileStr = QString::fromStdString(fgbzFilenames[(numRuns - 1) - i]);
             qDebug() << "fgbz outFile =" << outFileStr;
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
@@ -1554,7 +1550,7 @@ void MainWindow::plotOutputs()
             // then plot the station kmls of the run
             if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-                QString outFileStr = QString::fromStdString(stationKmlFilenames[i]);
+                QString outFileStr = QString::fromStdString(stationKmlFilenames[(numRuns - 1) - i]);
                 qDebug() << "station kml outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
@@ -1569,7 +1565,7 @@ void MainWindow::plotOutputs()
             // then plot the weather model fgbz of the run
             if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
-                QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[i]);
+                QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[(numRuns - 1) - i]);
                 qDebug() << "wx model fgbz outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
@@ -1592,8 +1588,9 @@ void MainWindow::plotOutputs()
 
 void MainWindow::finishedLoadingMap()
 {
+    progressDialog->setRange(0, maxProgress);
     progressDialog->setValue(maxProgress);
-    progressDialog->setLabelText("Simulation Finished.");
+    progressDialog->setLabelText("Rendering Complete.");
     progressDialog->setCancelButtonText("Close");
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);

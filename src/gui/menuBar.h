@@ -55,6 +55,7 @@ public:
 
 public slots:
     void mapVisualizationLoadFinished();
+    void loadMapVisualizationActionTriggered();
 
 signals:
     void writeToConsoleSignal(QString message, QColor color=Qt::black);
@@ -90,7 +91,6 @@ private slots:
     void supportEmailActionTriggered();
     void submitBugReportActionTriggered();
     void enableConsoleOutputActionToggled(bool toggled);
-    void loadMapVisualizationActionTriggered();
 
 private:
     Ui::MainWindow* ui;
