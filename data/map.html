@@ -447,7 +447,6 @@
         function hasClearableItems() {
             return (
                 boundingBoxLayer.getLayers().length > 0 ||
-                demLayer.getLayers().length > 0 ||
                 windninjaOutputTree.children.length > 1 ||
                 initializationOutputTree.children.length > 1 ||
                 stationOutputTree.children.length > 1 ||
@@ -485,7 +484,6 @@
                 clearStationOutputTree();
                 clearUnknownOutputTree();
                 clearTimeSeriesContainer();
-
 
                 activeWindNinjaLayer = null;
                 activeInitializationLayer = null;
