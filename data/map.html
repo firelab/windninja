@@ -755,6 +755,22 @@
                 }
             });
 
+            const existingIndex = windninjaOutputTree.children.findIndex(
+                item => item.label === layerName
+            );
+
+            if (existingIndex !== -1) {
+                const existingLayer = windninjaOutputTree.children[existingIndex].layer;
+
+                map.removeLayer(existingLayer);
+
+                if (activeWindNinjaLayer === existingLayer) {
+                    activeWindNinjaLayer = null;
+                }
+
+                windninjaOutputTree.children.splice(existingIndex, 1);
+            }
+
             windninjaOutputTree.children.push({ label: layerName, layer: fgbLegendLayer, radioGroup: 'windninjaOutput'});
 
             windninjaOutputTree.children.sort((a, b) => {
@@ -844,6 +860,17 @@
                     layerName += '.kml';
                 }
 
+                const existingIndex = stationOutputTree.children.findIndex(
+                    item => item.label === layerName
+                );
+
+                if (existingIndex !== -1) {
+                    const existingLayer = stationOutputTree.children[existingIndex].layer;
+
+                    map.removeLayer(existingLayer);
+                    stationOutputTree.children.splice(existingIndex, 1);
+                }
+
                 stationOutputTree.children.push({
                     label: layerName,
                     layer: kmlLegendLayer,
@@ -859,6 +886,17 @@
             } else {
                 if (!layerName.toLowerCase().endsWith('.kml')) {
                     layerName += '.kml';
+                }
+
+                const existingIndex = unknownOutputTree.children.findIndex(
+                    item => item.label === layerName
+                );
+
+                if (existingIndex !== -1) {
+                    const existingLayer = unknownOutputTree.children[existingIndex].layer;
+
+                    map.removeLayer(existingLayer);
+                    unknownOutputTree.children.splice(existingIndex, 1);
                 }
 
                 unknownOutputTree.children.push({
@@ -1048,6 +1086,22 @@
                     showInitializationTimeSeriesImg = null;
                 }
             });
+
+            const existingIndex = initializationOutputTree.children.findIndex(
+                item => item.label === layerName
+            );
+
+            if (existingIndex !== -1) {
+                const existingLayer = initializationOutputTree.children[existingIndex].layer;
+
+                map.removeLayer(existingLayer);
+
+                if (activeInitializationLayer === existingLayer) {
+                    activeInitializationLayer = null;
+                }
+
+                initializationOutputTree.children.splice(existingIndex, 1);
+            }
 
             initializationOutputTree.children.push({ label: layerName, layer: fgbLegendLayer, radioGroup: 'initializationOutput'});
 
