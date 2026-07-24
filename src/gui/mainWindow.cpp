@@ -1535,10 +1535,10 @@ void MainWindow::plotOutputs()
         std::vector<std::string> stationKmlFilenamesStr;
         std::vector<std::string> wxModelFgbzFilenamesStr;
 
-        fgbzFilenamesStr.reserve(numRuns);
-        stationKmlFilenamesStr.reserve(numRuns);
-        wxModelFgbzFilenamesStr.reserve(numRuns);
-        for(int i = 0; i < numRuns; i++)
+        fgbzFilenamesStr.reserve(numNinjas);
+        stationKmlFilenamesStr.reserve(numNinjas);
+        wxModelFgbzFilenamesStr.reserve(numNinjas);
+        for(int i = 0; i < numNinjas; i++)
         {
             fgbzFilenamesStr.emplace_back(fgbzFilenames[i]);
             stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
@@ -1549,7 +1549,7 @@ void MainWindow::plotOutputs()
         outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
         outputWxModelFgbzFilenames.push_back(std::move( wxModelFgbzFilenamesStr ));
 
-        for(int i = 0; i < numRuns; i++)
+        for(int i = 0; i < numNinjas; i++)
         {
             // plot the output fgbz of the run
             QString outFileStr = QString::fromStdString(fgbzFilenames[i]);
