@@ -153,10 +153,6 @@ private:
     void finishedSolve();
     void plotOutputs();
 
-    std::vector<std::vector<std::string>> outputFgbzFilenames;
-    std::vector<std::vector<std::string>> outputStationKmlFilenames;
-    std::vector<std::vector<std::string>> outputWxModelFgbzFilenames;
-
     void connectSignals();
     bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
     bool setOutputFlags(NinjaArmyH* ninjaArmy,

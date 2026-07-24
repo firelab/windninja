@@ -1439,9 +1439,6 @@ void MainWindow::finishedSolve()
         progressDialog->setCancelButtonText("Cancel");
         progressDialog->setRange(0, 0);
 
-        qDebug() << "Finished with simulations";
-        writeToConsole("Finished with simulations", Qt::darkGreen);
-
         if(numNinjas >= 5)
         {
             QMessageBox::information(
@@ -1531,28 +1528,10 @@ void MainWindow::plotOutputs()
             printf("NinjaGetMapVisualizationFilenames: ninjaErr = %d\n", ninjaErr);
         }
 
-        std::vector<std::string> fgbzFilenamesStr;
-        std::vector<std::string> stationKmlFilenamesStr;
-        std::vector<std::string> wxModelFgbzFilenamesStr;
-
-        fgbzFilenamesStr.reserve(numNinjas);
-        stationKmlFilenamesStr.reserve(numNinjas);
-        wxModelFgbzFilenamesStr.reserve(numNinjas);
-        for(int i = 0; i < numNinjas; i++)
-        {
-            fgbzFilenamesStr.emplace_back(fgbzFilenames[i]);
-            stationKmlFilenamesStr.emplace_back(stationKmlFilenames[i]);
-            wxModelFgbzFilenamesStr.emplace_back(weatherModelFgbzFilenames[i]);
-        }
-
-        outputFgbzFilenames.push_back(std::move( fgbzFilenamesStr ));
-        outputStationKmlFilenames.push_back(std::move( stationKmlFilenamesStr ));
-        outputWxModelFgbzFilenames.push_back(std::move( wxModelFgbzFilenamesStr ));
-
         for(int i = 0; i < numNinjas; i++)
         {
             // plot the output fgbz of the run
-            QString outFileStr = QString::fromStdString(fgbzFilenames[i]);
+            QString outFileStr = QString::fromStdString(fgbzFilenames[(numRuns - 1) - i]);
             qDebug() << "fgbz outFile =" << outFileStr;
 
             webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
@@ -1571,7 +1550,7 @@ void MainWindow::plotOutputs()
             // then plot the station kmls of the run
             if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
             {
-                QString outFileStr = QString::fromStdString(stationKmlFilenames[i]);
+                QString outFileStr = QString::fromStdString(stationKmlFilenames[(numRuns - 1) - i]);
                 qDebug() << "station kml outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
@@ -1586,7 +1565,7 @@ void MainWindow::plotOutputs()
             // then plot the weather model fgbz of the run
             if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
             {
-                QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[i]);
+                QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[(numRuns - 1) - i]);
                 qDebug() << "wx model fgbz outFile =" << outFileStr;
 
                 QString filePath = QUrl::fromLocalFile(outFileStr).toString();
