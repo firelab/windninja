@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
     GDALDataset *poDS;
 
     std::string GDALDriverName, GDALDriverLongName;
-    char *pszPrj;
+    const char *pszPrj;
 
     // open GDALDataset, check
     poDS = (GDALDataset*)GDALOpen(input_dem_file.c_str(), GA_ReadOnly);
@@ -579,13 +579,13 @@ int main(int argc, char *argv[])
         throw std::runtime_error("\nNo projection available in input_dem_file \""+input_dem_file+"\"");
     } else
     {
-        pszPrj = (char*)poDS->GetProjectionRef();
+        pszPrj = poDS->GetProjectionRef();
         
         // ESRI and OGC WKT are not always identical. Convert the projection string to ESRI WKT to ensure proper opening of 
         // our output products in ESRI systems. ESRI WKT should be handled by most other GIS systems as well.
         OGRSpatialReference spatial_ref;
         char* pszPrjEsri;
-        spatial_ref.importFromWkt(&pszPrj);
+        spatial_ref.importFromWkt(pszPrj);
         spatial_ref.morphToESRI();
         spatial_ref.exportToWkt(&pszPrjEsri);
 

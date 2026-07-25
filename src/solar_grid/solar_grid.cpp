@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
     OGRCoordinateTransformation *poCT;
     const char* pszWKT = VSIStrdup(elev.prjString.c_str());
     const char* startOfMem = pszWKT;
-    oSrcSRS.importFromWkt((char**)&pszWKT);
+    oSrcSRS.importFromWkt(pszWKT);
     oDstSRS.importFromEPSG(4326);
     VSIFree((void*)startOfMem);
 

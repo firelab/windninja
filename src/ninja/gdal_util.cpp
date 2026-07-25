@@ -301,7 +301,7 @@ bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat )
     }
 	pszPrj = (char*)poDS->GetProjectionRef();
 
-    oSourceSRS.importFromWkt( &pszPrj );
+    oSourceSRS.importFromWkt( pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
@@ -397,8 +397,8 @@ bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszDstWkt )
 
     OGRSpatialReference oSourceSRS, oTargetSRS;
 
-    oSourceSRS.importFromWkt( &pszSrcWkt );
-    oTargetSRS.importFromWkt( (char**)&pszDstWkt );
+    oSourceSRS.importFromWkt( pszSrcWkt );
+    oTargetSRS.importFromWkt( pszDstWkt );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
@@ -661,7 +661,7 @@ bool GDALTestSRS( GDALDataset *poDS )
     }
     pszPrj = (char*) poDS->GetProjectionRef();
 
-    oSourceSRS.importFromWkt( &pszPrj );
+    oSourceSRS.importFromWkt( pszPrj );
     oTargetSRS.SetWellKnownGeogCS( "WGS84" );
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
@@ -851,8 +851,8 @@ bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const c
 
     OGRSpatialReference oSourceSRS, oTargetSRS;
 
-    oSourceSRS.importFromWkt( &pszSrcWkt );
-    oTargetSRS.importFromWkt( (char**)&pszDstWkt );
+    oSourceSRS.importFromWkt( pszSrcWkt );
+    oTargetSRS.importFromWkt( pszDstWkt );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
@@ -901,7 +901,7 @@ bool GDALPointFromLatLon(double &x, double &y, GDALDataset *poSrcDS, const char 
 	pszPrj = (char*)poSrcDS->GetProjectionRef();
 
     oSourceSRS.SetWellKnownGeogCS( datum );
-    oTargetSRS.importFromWkt( &pszPrj );
+    oTargetSRS.importFromWkt( pszPrj );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)
@@ -948,7 +948,7 @@ bool GDALPointToLatLon(double &x, double &y, GDALDataset *poSrcDS, const char *d
     }
 	pszPrj = (char*)poSrcDS->GetProjectionRef();
 
-    oSourceSRS.importFromWkt( &pszPrj );
+    oSourceSRS.importFromWkt( pszPrj );
     oTargetSRS.SetWellKnownGeogCS( datum );
 
 #ifdef GDAL_COMPUTE_VERSION
@@ -1230,7 +1230,7 @@ std::string FetchTimeZone( double dfX, double dfY, const char *pszWkt )
         OGRCoordinateTransformation *poCT;
 
         oSourceSRS.SetWellKnownGeogCS( "WGS84" );
-        oTargetSRS.importFromWkt( (char**)&pszWkt );
+        oTargetSRS.importFromWkt( pszWkt );
 
 #ifdef GDAL_COMPUTE_VERSION
 #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,0,0)

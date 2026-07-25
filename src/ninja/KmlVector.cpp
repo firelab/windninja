@@ -292,10 +292,7 @@ bool KmlVector::setOGR()
     int rc = OGRERR_NONE;
     if(spd.prjString != "")
     {
-        char *p = strdup(spd.prjString.c_str());
-        char *q = p;
-        rc = oSourceSRS.importFromWkt(&p);
-        free((void*)q);
+        rc = oSourceSRS.importFromWkt(spd.prjString.c_str());
         if(rc != OGRERR_NONE)
         {
             throw std::logic_error("cannot create SRS from spd grid, kmz creation failed");

@@ -77,7 +77,7 @@ void ninja::readInputFile()
         //our output products in ESRI systems. ESRI WKT should be handled by most other GIS systems as well.
         OGRSpatialReference spatial_ref;
         char* pszPrjEsri;
-        spatial_ref.importFromWkt(&pszPrj);
+        spatial_ref.importFromWkt(pszPrj);
         spatial_ref.morphToESRI();
         spatial_ref.exportToWkt(&pszPrjEsri);
 
