@@ -2354,7 +2354,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     char *pszSRS_WKT = NULL;
 
     const char* prj2 = (const char*)prjString.c_str();
-    oSRS.importFromWkt((char **)&prj2);
+    oSRS.importFromWkt(prj2);
     oSRS.exportToWkt(&pszSRS_WKT);
 
     char *pszDST_WKT = NULL;
@@ -2468,7 +2468,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     char *raw_pszSRS_WKT = NULL;
 
     const char* raw_prj2 = (const char*)prjString.c_str();
-    raw_oSRS.importFromWkt((char **)&raw_prj2);
+    raw_oSRS.importFromWkt(raw_prj2);
     raw_oSRS.exportToWkt(&raw_pszSRS_WKT);
 
     char *raw_pszDST_WKT = NULL;

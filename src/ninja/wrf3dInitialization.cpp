@@ -321,8 +321,7 @@ void wrf3dInitialization::set3dGrids( WindNinjaInputs &input, Mesh const& mesh )
 
         OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
-        char* prj2 = (char*)projString.c_str();
-        oSRS.importFromWkt(&prj2);
+        oSRS.importFromWkt(projString.c_str());
         oSRS.exportToWkt(&srcWKT);
         
         //printf("%s\n", dstWkt.c_str());

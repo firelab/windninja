@@ -1150,7 +1150,7 @@ bool SurfaceInput::loadDemMetadata(const QString demFilePath)
         const char *pszProjRef;
         OGRSpatialReference oSRS;
         pszProjRef = GDALProjRef.c_str();
-        oSRS.importFromWkt((char**)&pszProjRef);
+        oSRS.importFromWkt(pszProjRef);
         if(GDALProjRef == "")
         {
             qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";

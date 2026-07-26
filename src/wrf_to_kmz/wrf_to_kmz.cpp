@@ -784,8 +784,8 @@ void setSurfaceGrids( const std::string &wxModelFileName, const int &timeBandIdx
         // and geotransformations
         OGRSpatialReference oSRS, *poLatLong;
         char *srcWKT = NULL;
-        char* prj2 = (char*)projString.c_str();
-        oSRS.importFromWkt(&prj2);
+        char* prj2 = projString.c_str();
+        oSRS.importFromWkt(prj2);
         oSRS.exportToWkt(&srcWKT);
 
         poLatLong = oSRS.CloneGeogCS();
