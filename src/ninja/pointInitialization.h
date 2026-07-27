@@ -199,13 +199,13 @@ class pointInitialization : public initialize
         static double getStationHeight(std::string name);
         static bool fetchStationData(std::string URL, std::string timeZone, bool latest);
 
-        static CPLJSONArray fillEmptyData(CPLJSONArray data_array, CPLJSONArray valid_array);
         static std::vector<std::string> unifyCloudData(const CPLJSONArray& dvCloud, const CPLJSONArray& dwCloud,
                                                        const CPLJSONArray& dxCloud, int backupcount);
+
         static std::vector<double> computeSolarToCloud(const CPLJSONArray& solarRadiation, const std::string& timeZone,
                                                        double lat, double lon, const CPLJSONArray& datetime);
-        static std::vector<std::string> InterpretCloudData(const CPLJSONArray& cloudData);
 
+        static std::vector<std::string> interpretCloudData(const CPLJSONArray& cloudData);
 
         static std::string dtoken;
         static const std::string backup_token;

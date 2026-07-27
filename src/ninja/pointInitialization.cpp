@@ -2013,44 +2013,44 @@ std::vector<std::string> pointInitialization::interpretCloudData(const CPLJSONAr
     const std::string mesoclr = "1";
     const std::string mesonull = "0";
 
-    std::vector<std::string> lowclouddat;
+    std::vector<std::string> lowCloudData;
 
     for(int i = 0; i < cloudData.Size(); i++)
     {
         std::string value = cloudData[i].ToString();
-        std::string mesoID;
+        std::string key;
         if(!value.empty())
         {
-            mesoID = value.substr(value.size() - 1, 1);
+            key = value.substr(value.size() - 1, 1);
         }
         else
         {
-            mesoID = mesonull;
+            key = mesonull;
         }
 
-        if(mesoID == mesofew)
+        if(key == mesofew)
         {
-            lowclouddat.push_back(few);
+            lowCloudData.push_back(few);
         }
-        else if(mesoID == mesosct)
+        else if(key == mesosct)
         {
-            lowclouddat.push_back(sct);
+            lowCloudData.push_back(sct);
         }
-        else if(mesoID == mesobkn)
+        else if(key == mesobkn)
         {
-            lowclouddat.push_back(bkn);
+            lowCloudData.push_back(bkn);
         }
-        else if(mesoID == mesoovc)
+        else if(key == mesoovc)
         {
-            lowclouddat.push_back(ovc);
+            lowCloudData.push_back(ovc);
         }
-        else if(mesoID == mesoclr || mesoID == mesonull)
+        else if(key == mesoclr || key == mesonull)
         {
-            lowclouddat.push_back(clr);
+            lowCloudData.push_back(clr);
         }
     }
 
-    return lowclouddat;
+    return lowCloudData;
 }
 /**
  * @brief pointInitialization::CompareClouds
@@ -2276,15 +2276,16 @@ vector<double> pointInitialization::computeSolarToCloud(const CPLJSONArray& sola
 
         // The angleFromNorth has not been calculated yet as the dem has not been read
         // Since solar is assuming flat terrain, angleFromNorth can be ignored
-        // Provide a "dummy" 0.0 value for angleFromNorth (NOT RECOMMENDED FOR OTHER CASES)
+        // Provide a "dummy" 0.0 value for angleFromNorth
+        // NOT RECOMMENDED FOR OTHER USE CASES, THIS IS AN EXTREMELY ONE OFF CASE
         solar_opt = sol.compute_solar(startLocal, lat, lon, zero, zero, zero);
 
-        double solarIntensity=sol.get_solarIntensity();
+        double solarIntensity = sol.get_solarIntensity();
         double solFrac;
 
         double solrad = solarRadiation[i].ToDouble();
 
-        solFrac=solrad/solarIntensity;
+        solFrac = solrad/solarIntensity;
         if(solFrac <= zero)
         {
             solFrac = one;
@@ -2842,8 +2843,8 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
  */
 double pointInitialization::getStationHeight(std::string name)
 {
-    double permaRaws = 6.0959; // Meters (20 ft above ground for standard raws station)
-    double incidentRaws = 1.8288; // Meters (6 feet above ground for IRAWS station)
+    double permaRaws = 6.0959; // meters (20 ft above ground for standard raws station)
+    double incidentRaws = 1.8288; // meters (6 feet above ground for IRAWS station)
     std::string iraws = "IRAWS";
 
     if(name.find(iraws) != std::string::npos)
@@ -2873,16 +2874,18 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
 {
     CPLDebug("STATION_FETCH", "Request URL: %s", URL.c_str());
     CPLHTTPResult* poResult = CPLHTTPFetch(URL.c_str(), nullptr);
-    if (!poResult || !poResult->pabyData)
+    if(!poResult || !poResult->pabyData)
     {
-     throw std::runtime_error("Failed to fetch station data.");
+        CPLDebug("STATION_FETCH", "Failed to fetch station data.");
+        throw std::runtime_error("Failed to fetch station data.");
     }
 
     CPLJSONDocument doc;
-    if (!doc.LoadMemory(reinterpret_cast<const char*>(poResult->pabyData)))
+    if(!doc.LoadMemory(reinterpret_cast<const char*>(poResult->pabyData)))
     {
-     CPLHTTPDestroyResult(poResult);
-     throw std::runtime_error("Failed to parse JSON response.");
+        CPLHTTPDestroyResult(poResult);
+        CPLDebug("STATION_FETCH", "Failed to parse JSON response.");
+        throw std::runtime_error("Failed to parse JSON response.");
     }
 
     CPLJSONObject root = doc.GetRoot();
@@ -2891,7 +2894,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     CPLHTTPDestroyResult(poResult);
 
     std::string csvName; // Prefix from specifying an output directory
-    if (rawStationFilename.substr(rawStationFilename.size() - 4, 4) == ".csv") // User specified path is a .csv
+    if(rawStationFilename.substr(rawStationFilename.size() - 4, 4) == ".csv") // User specified path is a .csv
     {
         rawStationFilename.erase(rawStationFilename.size() - 4, 4);
         csvName = rawStationFilename;
@@ -2899,7 +2902,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
     }
     else
     {
-        csvName=rawStationFilename;
+        csvName = rawStationFilename;
         CPLDebug("STATION_FETCH", "Path is Good...");
     }
 
@@ -2931,11 +2934,11 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         int mesonetNetworkID = properties.GetInteger("mnet_id");
         std::string stationID = properties.GetString("stid");
         std::string outputFilename;
+
         stringstream timeStream;
         bpt::time_facet *facet = new bpt::time_facet("%Y-%m-%d_%H%M");
         timeStream.imbue(locale(timeStream.getloc(),facet));
         std::string timeComponent;
-            
         if(latest)
         {
             timeStream << bpt::second_clock::local_time();
@@ -2957,7 +2960,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
 
         // Generate the filename
         const std::string nameComponent = stationID + "-" + timeComponent + "-" + std::to_string(i);
-        if (csvName != "blank")
+        if(csvName.compare("blank"))
         {
             outputFilename = CPLFormFilename(csvName.c_str(), nameComponent.c_str(), ".csv");
         }
@@ -2971,10 +2974,9 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             // Get Data (Aiport stations case (ASOS/METAR))
             // Get Wind, Dir, and Temp. Extrapolate cloud cover based on 3 layers reported by the stations
             CPLJSONArray airportWindData = properties.GetArray("wind_speed");
-            if (airportWindData.Size() == 0)
+            if(airportWindData.Size() == 0)
             {
-                CPLDebug("STATION_FETCH",
-                         "No wind data found for station.");
+                CPLDebug("STATION_FETCH", "No wind data found for station.");
                 writeStation = false;
             }
 
@@ -2983,14 +2985,13 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             CPLJSONArray airportDirData = properties.GetArray("wind_direction");
 
             CPLJSONArray airportTempData = properties.GetArray("air_temp");
-            if (airportTempData.Size() == 0)
+            if(airportTempData.Size() == 0)
             {
-                CPLDebug("STATION_FETCH",
-                         "No temperature data found for station.");
+                CPLDebug("STATION_FETCH", "No temperature data found for station.");
                 writeStation = false;
             }
 
-            // Get Cloud Cover data. Layers 2 and 3 may be empty
+            // Get Cloud Cover data. Layers 2 and 3 may be empty.
             // The Synoptic API does not report higher codes if lowers codes are empty
             CPLJSONArray airportLowCloudData = properties.GetArray("cloud_layer_1_code");
             CPLJSONArray airportMediumCloudData = properties.GetArray("cloud_layer_2_code");
@@ -3014,7 +3015,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 CPLDebug("STATION_FETCH", "Writing station: %s to file %s", stationID.c_str(), outputFilename.c_str());
 
                 // May be changed to better reflect station height
-                std::string airportHeight = "10"; // Meters
+                std::string airportHeight = "10"; // meters
 
                 outFile.open(outputFilename.c_str());
                 outFile << header << std::endl;
@@ -3040,7 +3041,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 }
                 else
                 {
-                    for(int j = 0; j < airportWindData.Size(); i++)
+                    for(int j = 0; j < airportWindData.Size(); j++)
                     {
                         outFile << airportID << ",GEOGCS,"
                                 << "WGS84,"
@@ -3074,7 +3075,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             // Get Data (RAWS Stations)
             // Get Wind, Dir, and Temp. Extrapolate cloud cover from solar radiation
             CPLJSONArray rawsWindData = properties.GetArray("wind_speed");
-            if (rawsWindData.Size() == 0)
+            if(rawsWindData.Size() == 0)
             {
                 CPLDebug("STATION_FETCH", "No wind data found for station.");
                 writeStation = false;
@@ -3085,7 +3086,7 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
             CPLJSONArray rawsDirData = properties.GetArray("wind_direction");
 
             CPLJSONArray rawsTempData = properties.GetArray("air_temp");
-            if (rawsTempData.Size() == 0)
+            if(rawsTempData.Size() == 0)
             {
                 CPLDebug("STATION_FETCH", "No temperature data found for station.");
                 writeStation = false;
@@ -3124,13 +3125,11 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 if (latest)
                 {
                     const int j = 0;
-
                     outFile << rawsID << ",GEOGCS,"
                             << "WGS84,"
                             << rawsLatitude << ","
                             << rawsLongitude << ","
-                            << rawsHeight << ","
-                            << "meters,"
+                            << rawsHeight << "," << "meters,"
                             << rawsWindData[j].ToDouble() << ",mps,"
                             << rawsDirData[j].ToDouble() << "," // if empty, return 0
                             << rawsTempData[j].ToDouble() << ",C,"
@@ -3141,14 +3140,13 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
                 }
                 else
                 {
-                    for(int j = 0; j < rawsWindData.Size(); i++)
+                    for(int j = 0; j < rawsWindData.Size(); j++)
                     {
                         outFile << rawsID << ",GEOGCS,"
                                 << "WGS84,"
                                 << rawsLatitude << ","
                                 << rawsLongitude << ","
-                                << rawsHeight << ","
-                                << "meters,"
+                                << rawsHeight << "," << "meters,"
                                 << rawsWindData[j].ToDouble() << ",mps,"
                                 << rawsDirData[j].ToDouble() << "," // if empty, return 0
                                 << rawsTempData[j].ToDouble() << ",C,"
