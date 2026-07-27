@@ -1996,74 +1996,54 @@ vector<std::string> pointInitialization::Split(char* str,const char* delim)
  *
  *
  * */
-
-vector<std::string> pointInitialization::InterpretCloudData(const double *dbCloud, int counter)
+std::vector<std::string> pointInitialization::InterpretCloudData(const CPLJSONArray& cloudData)
 {
-    //converts NWS/FAA cloud information to %cloud cover for a single station
-    std::string sa;
-    std::string sb;
-    std::ostringstream ss;
-    std::ostringstream st;
+    const std::string few      = "25";
+    const std::string sct      = "50";
+    const std::string bkn      = "75";
+    const std::string ovc      = "100";
+    const std::string clr      = "0";
 
-    for(int i=0; i<counter; i++)
+    const std::string mesofew  = "6";
+    const std::string mesosct  = "2";
+    const std::string mesobkn  = "3";
+    const std::string mesoovc  = "4";
+    const std::string mesoclr  = "1";
+    const std::string mesonull = "0";
+
+    std::vector<std::string> lowclouddat;
+
+    for (int i = 0; i < cloudData.Size(); ++i)
     {
-        ss<<dbCloud[i]<<",";
-        sa=(ss.str());
-    }
+        std::string value = cloudData[i].ToString();
 
-    const char* delim(",");
-    char *cloudstr = &sa[0u];
-    vector<std::string> cloudcata;
-    cloudcata = Split(cloudstr, delim);
+        std::string code;
+        if (!value.empty())
+        {
+            code = value.substr(value.size() - 1, 1);
+        }
+        else
+        {
+            code = mesonull;
+        }
 
-    vector<std::string> cloudcatb;
-
-    for(int i=0;i<counter;i++)
-    {
-        st<<cloudcata[i][cloudcata[i].size()-1]<<",";
-        sb=(st.str());
-    }
-
-    char *cloudstrb = &sb[0u];
-    cloudcatb = Split(cloudstrb, delim);
-
-    std::string few = "25";
-    std::string sct = "50";
-    std::string bkn = "75";
-    std::string ovc = "100";
-    std::string clr = "0";
-    std::string mesofew = "6";
-    std::string mesosct = "2";
-    std::string mesobkn = "3";
-    std::string mesoovc = "4";
-    std::string mesoclr = "1";
-    std::string mesonull = "0";
-
-    vector<std::string> lowclouddat;
-
-    for(int i=0; i<counter; i++)
-    {
-        if (cloudcatb[i]==mesofew)
+        if (code == mesofew)
         {
             lowclouddat.push_back(few);
         }
-        if (cloudcatb[i]==mesosct)
+        else if (code == mesosct)
         {
             lowclouddat.push_back(sct);
         }
-        if (cloudcatb[i]==mesobkn)
+        else if (code == mesobkn)
         {
             lowclouddat.push_back(bkn);
         }
-        if (cloudcatb[i]==mesoovc)
+        else if (code == mesoovc)
         {
             lowclouddat.push_back(ovc);
         }
-        if (cloudcatb[i]==mesoclr)
-        {
-            lowclouddat.push_back(clr);
-        }
-        if (cloudcatb[i]==mesonull)
+        else if (code == mesoclr || code == mesonull)
         {
             lowclouddat.push_back(clr);
         }
@@ -2159,7 +2139,7 @@ vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, v
     return totalCloudcat;
 }
 /**
- * @brief pointInitialization::UnifyClouds
+ * @brief pointInitialization::unifyCloudData
  * ASOS stations provide clouds in the form of octas. This helps clean up these octas
  * into percentages.
  * @param dvCloud
@@ -2171,76 +2151,97 @@ vector<std::string> pointInitialization::CompareClouds(vector<std::string>low, v
  * @param backupcount
  * @return
  */
-vector<std::string> pointInitialization::UnifyClouds(const double *dvCloud, const double *dwCloud,
-                                        const double *dxCloud, int count1, int count2, int count3, int backupcount)
+std::vector<std::string> pointInitialization::unifyCloudData(const CPLJSONArray& dvCloud,
+                                                          const CPLJSONArray& dwCloud,
+                                                          const CPLJSONArray& dxCloud,
+                                                          int backupcount)
 {
-    vector<std::string> work;
-    work.push_back("wip");
-    vector<std::string> daCloud;
-    vector<std::string> dcCloud;
-    vector<std::string> deCloud;
-    vector<std::string> sCloudData;
+    std::vector<std::string> daCloud;
+    std::vector<std::string> dcCloud;
+    std::vector<std::string> deCloud;
+    std::vector<std::string> sCloudData;
 
-    if(count1 == 0)
+    int count1 = dvCloud.Size();
+    int count2 = dwCloud.Size();
+    int count3 = dxCloud.Size();
+
+    if (count1 == 0)
     {
-       CPLDebug("STATION_FETCH", "no cloud data exists, using air temp count to zero out data");
-       count1 = backupcount;
-       if(backupcount == 0)
-       {
-           CPLDebug("STATION_FETCH", "this station is terrible, don't use it, writing data as -9999");
-           sCloudData.push_back("-9999");
-       }
+        CPLDebug("STATION_FETCH",
+                 "No cloud data exists, using air temp count to zero out data");
+
+        count1 = backupcount;
+
+        if (backupcount == 0)
+        {
+            CPLDebug("STATION_FETCH",
+                     "Station has no cloud or temperature data");
+
+            sCloudData.push_back("-9999");
+            return sCloudData;
+        }
     }
-    if(count2 == 0)
+
+    if (count2 == 0)
     {
         count2 = count1;
     }
-    if(count3 == 0)
+
+    if (count3 == 0)
     {
         count3 = count1;
     }
 
-    if(dvCloud == 0)
+
+    if (dvCloud.Size() == 0)
     {
-        for(int ska=0; ska<count1; ska++)
+        for (int i = 0; i < count1; i++)
         {
             daCloud.push_back("0");
         }
     }
     else
     {
-        daCloud = InterpretCloudData(dvCloud, count1);
+        daCloud = InterpretCloudData(dvCloud);
     }
-    if(dwCloud == 0)
+
+
+    if (dwCloud.Size() == 0)
     {
-        for(int ska=0; ska<count2; ska++)
+        for (int i = 0; i < count2; i++)
         {
             dcCloud.push_back("0");
         }
     }
     else
     {
-        dcCloud = InterpretCloudData(dwCloud, count2);
+        dcCloud = InterpretCloudData(dwCloud);
     }
-    if(dxCloud == 0)
+
+
+    if (dxCloud.Size() == 0)
     {
-        for(int ska=0; ska<count3; ska++)
+        for (int i = 0; i < count3; i++)
         {
             deCloud.push_back("0");
         }
     }
     else
     {
-        deCloud = InterpretCloudData(dxCloud, count3);
+        deCloud = InterpretCloudData(dxCloud);
     }
 
-    sCloudData = CompareClouds(daCloud, dcCloud, deCloud, count1, count2, count3);
 
-    return sCloudData;
+    return CompareClouds(daCloud,
+                         dcCloud,
+                         deCloud,
+                         count1,
+                         count2,
+                         count3);
 }
 
 /**
- * @brief pointInitialization::Irradiate
+ * @brief pointInitialization::computeSolarToCloud
  * Converts solar radiation data to cloud cover based on time, and user location
  *  using solar.getSolarIntensity
  * from solar.cpp
@@ -2254,13 +2255,14 @@ vector<std::string> pointInitialization::UnifyClouds(const double *dvCloud, cons
  * @param times
  * @return
  */
-vector<double> pointInitialization::Irradiate(vector<string> solar_radiation, string timeZone, double lat, double lon, char **times)
+vector<double> pointInitialization::computeSolarToCloud(const CPLJSONArray& solar_radiation, const std::string& timeZone,
+                                              double lat, double lon, const CPLJSONArray& datetime)
 {
     vector<double> outCloud;
 
-    for (int j=0;j<solar_radiation.size();j++)
+    for (int j=0;j < solar_radiation.Size();j++)
     {
-        char *trunk=times[j];
+        std::string trunk = datetime[j].ToString();
         Solar sol;
         bool solar_opt;
 
@@ -2288,7 +2290,7 @@ vector<double> pointInitialization::Irradiate(vector<string> solar_radiation, st
         double solar_intensity=sol.get_solarIntensity();
         double solFrac;
 
-        double solrad = atof(solar_radiation[j].c_str());
+        double solrad = solar_radiation[j].ToDouble();
 
         solFrac=solrad/solar_intensity;
         if (solFrac<=zero)
@@ -2835,7 +2837,7 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
     outFile.close();
 }
 /**
- * @brief pointInitialization::parseStationHeight
+ * @brief pointInitialization::getStationHeight
  * @param name_list
  * uses the name of a station to aid in determining the height of the wind sensor
  * IRAWS stations are at 6ft AGL
@@ -2845,7 +2847,7 @@ void pointInitialization::writeStationLocationFile(string stationPath, std::stri
  *
  * @return
  */
-double pointInitialization::parseStationHeight(const char* name_list)
+double pointInitialization::getStationHeight(const char* name_list)
 {
     double perma_raws = 6.0959; //meters (20 ft above ground for standard raws station)
     double incident_raws = 1.8288; //meters (6 feet above ground for IRAWS station)
@@ -2867,86 +2869,32 @@ double pointInitialization::parseStationHeight(const char* name_list)
 }
 
 
-
 /**
- * @brief pointInitialization::outputToVec
- * Sanity check on all incoming API data
- * if the index is -1, means GDAL could not find the variable and we can't use it
- * if the array is NULL, its probably that the data is empty for the request and we need to clean it up
- * Otherwise
- * get the data out of const double* and into a cleaner vector format
- * @param dataArray
- * @param data_idx
- * @param dataCount
- * @param data_name
- * @return
- */
-
-std::vector<std::string> pointInitialization::outputToVec(const double *dataArray,int data_idx, int dataCount, string data_name)
-{
-    if(data_idx==-1)//Index is invalid, probably the station is missing the sensor we need
-    {
-        std::vector<std::string> invalid_idx;
-        invalid_idx.push_back("NULL_IDX");
-        return invalid_idx;
-    }
-    if(data_idx!=-1 && dataArray==NULL)//The sensor "might" be there but has no data that we can use
-    {
-        std::vector<std::string>invalid_array;
-        invalid_array.push_back("NULL_ARRAY");
-        return invalid_array;
-    }
-    else
-    {
-        std::vector<std::string> data_vec;
-        for(int i=0;i<dataCount;i++)
-        {
-            std::ostringstream data_ss;
-            data_ss<<dataArray[i];
-
-            data_vec.push_back(data_ss.str());
-
-        }
-        return data_vec;
-    }
-}
-
-/**
- * @brief pointInitialization::fixEmptySensor
- * Cleans up a NULL from outputToVec if its wind direction
- * or solar radiation only
+ * @brief pointInitialization::fillEmptyData
+ * Fills missing wind direction or solar radiation values with zeros.
  *
  * We don't do this for wind speed or air temperature
  * as they are more important and can't be handled as easily
- * @param data_vec
- * @param data_name
- * @param valid_vec
+ * @param data_array
+ * @param valid_array
  * @return
  */
-std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string> data_vec, string data_name, std::vector<string> valid_vec)
+CPLJSONArray pointInitialization::fillEmptyData(CPLJSONArray data_array, CPLJSONArray valid_array)
 {
-    std::vector<std::string> corrected_data;
-    std::string filler="0";//Fill in the blanks with zeros
-    if(data_vec[0]=="NULL_IDX") //Means that we couldn't find the sensor variable
+    CPLJSONArray corrected_data;
+
+    // Missing sensor or empty array
+    if (data_array.Size() == 0)
     {
-        for(int i=0;i<valid_vec.size();i++)
+        for (int i = 0; i < valid_array.Size(); i++)
         {
-            corrected_data.push_back(filler);
+            corrected_data.Add(0);
         }
+
         return corrected_data;
     }
-    if(data_vec[0]=="NULL_ARRAY")//Means that we found the var, and it was empty/failed qc/not there
-    {
-        for(int i=0;i<valid_vec.size();i++)
-        {
-            corrected_data.push_back(filler);
-        }
-        return corrected_data;
-    }
-    else
-    {
-        return data_vec;
-    }
+
+    return data_array;
 }
 
 /**
@@ -2961,35 +2909,32 @@ std::vector<std::string> pointInitialization::fixEmptySensor(std::vector<string>
  * @param timeZone
  * @param latest
  */
-
 bool pointInitialization::fetchStationData(string URL, string timeZone, bool latest)
 {
-    GDALDatasetH hDS;
-    OGRLayerH hLayer;
-    OGRFeatureH hFeature;
-    CPLDebug("STATION_FETCH", "Downloading Data from MesoWest....");
-    hDS = GDALOpenEx( URL.c_str(), GDAL_OF_VECTOR, NULL, NULL, NULL ); //open the mesowest url
-
-    if (hDS==NULL) //This is mainly caused by a bad URL, the user enters something wrong
+    CPLDebug("STATION_FETCH", "Request URL: %s", URL.c_str());
+    CPLHTTPResult* poResult = CPLHTTPFetch(URL.c_str(), nullptr);
+    if (!poResult || !poResult->pabyData)
     {
-        CPLDebug("STATION_FETCH", "URL: %s", URL.c_str());
-        error_msg="Could not open the station file for reading.\nPossibly no stations exist for the given parameters.";
-        throw std::runtime_error(error_msg);
+     throw std::runtime_error("Failed to fetch station data.");
     }
-    //get the data
 
-    hLayer=GDALDatasetGetLayer(hDS,0);
-    OGR_L_ResetReading(hLayer);
+    CPLJSONDocument doc;
+    if (!doc.LoadMemory(reinterpret_cast<const char*>(poResult->pabyData)))
+    {
+     CPLHTTPDestroyResult(poResult);
+     throw std::runtime_error("Failed to parse JSON response.");
+    }
 
-    int fCount=OGR_L_GetFeatureCount(hLayer,1); // this is the number of weather stations
-    CPLDebug("STATION_FETCH","Found %i Stations...",fCount);
-    std::string csvName; //This is a prefix that generally comes from specifying an out directory or something
+    CPLJSONObject root = doc.GetRoot();
+    CPLJSONArray features = root.GetArray("features");
+    int fCount = features.Size();
+    CPLHTTPDestroyResult(poResult);
 
-    vector<int> mnetid; //Vector storing the mesonet codes for each station (options are 1 or 2)
-    if (rawStationFilename.substr(rawStationFilename.size()-4,4)==".csv")//This is just incase the user specifies a path with a .csv for some reason
+    std::string csvName; // Prefix from specifying an output directory
+    if (rawStationFilename.substr(rawStationFilename.size()-4,4)==".csv") // User specified path is a .csv
     {
         rawStationFilename.erase(rawStationFilename.size()-4,4);
-        csvName=rawStationFilename;
+        csvName = rawStationFilename;
         CPLDebug("STATION_FETCH", ".csv exists in stationFilename, Removing...");
     }
     else
@@ -2998,308 +2943,293 @@ bool pointInitialization::fetchStationData(string URL, string timeZone, bool lat
         CPLDebug("STATION_FETCH", "Path is Good...");
     }
 
-    std::vector<std::string> stationCSVNames; //A vector that stores the ccsv names to get pushed into another vector
-    std::string header="\"Station_Name\",\"Coord_Sys(PROJCS,GEOGCS)\",\"Datum(WGS84,NAD83,NAD27)\",\"Lat/YCoord\",\"Lon/XCoord\",\"Height\",\"Height_Units(meters,feet)\",\"Speed\",\"Speed_Units(mph,kph,mps,kts)\",\"Direction(degrees)\",\"Temperature\",\"Temperature_Units(F,C)\",\"Cloud_Cover(%)\",\"Radius_of_Influence\",\"Radius_of_Influence_Units(miles,feet,meters,km)\",\"date_time\"";
-    std::vector<bool> stationChecks; //stores any stations that fail to produce good data
+    std::vector<std::string> stationCSVNames; // Stores station csv names that produce valid data
+    std::vector<bool> stationChecks; // Stores stations that produce invalid data
+    const std::string header =
+        "\"Station_Name\","
+        "\"Coord_Sys(PROJCS,GEOGCS)\","
+        "\"Datum(WGS84,NAD83,NAD27)\","
+        "\"Lat/YCoord\","
+        "\"Lon/XCoord\","
+        "\"Height\","
+        "\"Height_Units(meters,feet)\","
+        "\"Speed\","
+        "\"Speed_Units(mph,kph,mps,kts)\","
+        "\"Direction(degrees)\","
+        "\"Temperature\","
+        "\"Temperature_Units(F,C)\","
+        "\"Cloud_Cover(%)\","
+        "\"Radius_of_Influence\","
+        "\"Radius_of_Influence_Units(miles,feet,meters,km)\","
+        "\"date_time\"";
 
-    for(int ex=0;ex<fCount;ex++) //loop over all the stations based on how many we find
+    for(int ex = 0; ex < fCount; ex++) // Loop over JSON features (number of stations found)
     {
-        ofstream outFile;//writing to csv
-        int id_idx0=0; //index for getting the mesonet id
-        int id_idx1=0; ;//index for getting the stationID/name for file writing purposes
+        CPLJSONObject properties = features[ex].GetObj("properties");
+        ofstream outFile;
+        bool write_this_station = true;
+        int mnetStationID = properties.GetInteger("mnet_id");
+        std::string writeID = properties.GetString("stid");
 
-        const char* writeID; //C array for storing station IDs
-        bool write_this_station = true; //Assume the data is good until proven otherwise
+        stringstream timeStream,timeStream2; //Timestream2 is only needed for timeseries when we have a start and stop time
+        std::string tName;
+        stringstream idStream;
+        stringstream ss;
+        bpt::time_facet *facet = new bpt::time_facet("%Y-%m-%d_%H%M");
+        timeStream.imbue(locale(timeStream.getloc(),facet));
+        std::string timeComponent;
 
-        hFeature = OGR_L_GetNextFeature(hLayer);  // Cycle through the features, note the OGR_L_ResetReading() call above
-        if ( hFeature == NULL )  // check for if input is read, but the feature read function is breaking
-        {
-            CPLDebug("STATION_FETCH","Data fetched successfully, but hFeature returned NULL for station: %d. Skipping this station",ex);
-            write_this_station=false;
-            stationChecks.push_back(write_this_station);
-            mnetid.push_back(0);  // default bad value of 0, avoids mismatched vector sizes and calls on broken stations. regular value is 1 or 2
-        } else  // and skip all the rest of the reading and writing process for this station if it is broken
-        {
+        ss << ex; //Get the index for more specificity on the file name
+        idStream << writeID;
             
-            //Get the type of wxStation and its ID so that we can sort them
-            //by unique variables and so that we can create a file
-            id_idx0=OGR_F_GetFieldIndex(hFeature,"mnet_id");
-            mnetid.push_back(OGR_F_GetFieldAsInteger(hFeature,id_idx0));
-            
-            id_idx1=OGR_F_GetFieldIndex(hFeature,"STID");
-            writeID=(OGR_F_GetFieldAsString(hFeature,id_idx1));
-            
-            stringstream timeStream,timeStream2; //Timestream2 is only needed for timeseries when we have a start and stop time
-            std::string tName;
-            stringstream idStream;
-            stringstream ss;
-            bpt::time_facet *facet = new bpt::time_facet("%Y-%m-%d_%H%M");
-            timeStream.imbue(locale(timeStream.getloc(),facet));
-            std::string timeComponent;
-            
-            ss<<ex; //Get the index for more specificity on the file name
-            idStream<<writeID;
-            
-            if (latest==true)
+            if (latest)
             {
                 bpt::ptime writeTime = bpt::second_clock::local_time();
-                timeStream<<writeTime;
+                timeStream << writeTime;
                 timeComponent = timeStream.str();
             }
-            if (latest==false) //If it is a time series we name the file with both the start and stop time
+            else //If it is a time series we name the file with both the start and stop time
             {
                 timeStream2.imbue(locale(timeStream2.getloc(),facet));
                 
-                timeStream<<start_and_stop_times[0].local_time(); //Name files with Local Times
-                timeStream2<<start_and_stop_times[1].local_time();
-                timeComponent = timeStream.str()+"-"+timeStream2.str(); //because its local time, add the time zone
+                timeStream << start_and_stop_times[0].local_time(); //Name files with Local Times
+                timeStream2 << start_and_stop_times[1].local_time();
+                timeComponent = timeStream.str() + "-" + timeStream2.str(); //because its local time, add the time zone
             }
+
             //Generate the filename
-            if(csvName!="blank")
+            if(csvName != "blank")
             {
                 std::string nameComponent = idStream.str() + "-" + timeComponent + "-" + ss.str();
-                tName = std::string(CPLFormFilename(csvName.c_str(),nameComponent.c_str(),".csv"));
-//              tName = csvName+idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
+                tName = std::string(CPLFormFilename(csvName.c_str(), nameComponent.c_str(), ".csv"));
             }
             else
             {
-//              tName=idStream.str() + "-" + timeComponent + "-" + ss.str() + ".csv";
                 std::string nameComponent = idStream.str() + "-" + timeComponent + "-" + ss.str();
-                tName = std::string(CPLFormFilename(NULL,nameComponent.c_str(),".csv"));
+                tName = std::string(CPLFormFilename(NULL, nameComponent.c_str(), ".csv"));
             }
             
-            if(mnetid[ex]==1)
+            if(mnetStationID == 1)
             {
-                //first get the datasets
-                //For Aiport stations (ASOS/METAR)
-                //we get wind speed, dir, temp
-                //and then extrapolate cloud cover based on 3 layers reported by the stations
-                int wind_count=0;
-                int wind_idx = OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                const double* wind_data = (OGR_F_GetFieldAsDoubleList(hFeature,wind_idx,&wind_count));
-                std::vector<std::string> airport_wind = outputToVec(wind_data,wind_idx,wind_count,"wind_speed");
-                if(airport_wind[0]=="NULL_IDX") //We absolutely NEED wind speed info, if its not there, don't write the station
+                // Get Data (Aiport stations case (ASOS/METAR))
+                // Get Wind, Dir, and Temp. Extrapolate cloud cover based on 3 layers reported by the stations
+                CPLJSONArray airportWindData = properties.GetArray("wind_speed");
+                if (airportWindData.Size() == 0)
                 {
-                    CPLDebug("STATION_FETCH","No wind data (null idx) found for station, throwing!");
-                    write_this_station=false;
-                }
-                if(airport_wind[0]=="NULL_ARRAY")
-                {
-                    CPLDebug("STATION_FETCH","No wind data (null array) found for station, throwing!");
-                    write_this_station=false;
+                    CPLDebug("STATION_FETCH",
+                             "No wind data found for station.");
+                    write_this_station = false;
                 }
                 
-                int dir_count=0;
-                int dir_idx = OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                const double* dir_data = (OGR_F_GetFieldAsDoubleList(hFeature,dir_idx,&dir_count));
-                std::vector<std::string> airport_dir = outputToVec(dir_data,dir_idx,dir_count,"wind_direction");
-                airport_dir = fixEmptySensor(airport_dir,"wind_direction",airport_wind);
-                //Wind direction is often omitted by the API if the wind speed = 0 (its calm outside)
-                //we population the direction string with 0s so that it is consistent
-                
-                int temp_count=0;
-                int temp_idx = OGR_F_GetFieldIndex(hFeature,"air_temp");
-                const double* temp_data = (OGR_F_GetFieldAsDoubleList(hFeature,temp_idx,&temp_count));
-                std::vector<std::string> airport_temp = outputToVec(temp_data,temp_idx,temp_count,"air_temp");
-                if(airport_temp[0]=="NULL_IDX") //we absolutely NEED temperature data, don't write if we dont get it
+                CPLJSONArray airportDirData = properties.GetArray("wind_direction");
+                // Wind direction is often omitted by the Synoptic API if the wind speed = 0
+                // Populate the direction string with 0s so that it is consistent
+                airportDirData = fillEmptyData(airportDirData, airportWindData);
+
+                CPLJSONArray airportTempData = properties.GetArray("air_temp");
+                if (airportTempData.Size() == 0)
                 {
-                    CPLDebug("STATION_FETCH","No temp data (null idx) found for station, throwing!");
-                    write_this_station=false;
-                }
-                if(airport_temp[0]=="NULL_ARRAY")
-                {
-                    CPLDebug("STATION_FETCH","No temp data (null array) found for station, throwing!");
-                    write_this_station=false;
+                    CPLDebug("STATION_FETCH",
+                             "No temperature data found for station.");
+                    write_this_station = false;
                 }
                 
-                int cloud_count_low=0;
-                int cloud_count_med=0;
-                int cloud_count_high=0;
-                //We need some cloud cover data, layer 2 and layer 3 may throw errors but thats okay
-                //errors originate from the API not reporting higher codes if the lower code is empty
-                int cloud_idx_low=OGR_F_GetFieldIndex(hFeature,"cloud_layer_1_code");
-                const double* low_cloud_data=OGR_F_GetFieldAsDoubleList(hFeature,
-                                                                        cloud_idx_low,&cloud_count_low);
+                // Get Cloud Cover data. Layer 2 and 3 may throw errors
+                // Errors originate from the Synoptic API not reporting higher codes if lowers codes are empty
+                CPLJSONArray airportLowCloudData = properties.GetArray("cloud_layer_1_code");
+                CPLJSONArray airportMediumCloudData = properties.GetArray("cloud_layer_2_code");
+                CPLJSONArray airportHighCloudData = properties.GetArray("cloud_layer_3_code");
+                vector<std::string> airportCloudDataUnified = unifyCloudData(airportLowCloudData,
+                                                                             airportMediumCloudData,
+                                                                             airportHighCloudData,
+                                                                             airportTempData.Size());
                 
-                CPLPushErrorHandler(&CPLQuietErrorHandler); //Ignore any errors from these two cloud layers
-                int cloud_idx_med=OGR_F_GetFieldIndex(hFeature,"cloud_layer_2_code");
-                const double* med_cloud_data=OGR_F_GetFieldAsDoubleList(hFeature,
-                                                                        cloud_idx_med,&cloud_count_med);
+                // Get station metadata (lat, lon, station ID)
+                double airportLatitude = std::stod(properties.GetString("latitude"));
+                double airportLongitude = std::stod(properties.GetString("longitude"));
+                std::string airportStid = properties.GetString("stid");
                 
-                int cloud_idx_high=OGR_F_GetFieldIndex(hFeature,"cloud_layer_3_code");
-                const double* high_cloud_data=OGR_F_GetFieldAsDoubleList(hFeature,
-                                                                         cloud_idx_high,&cloud_count_high);
-                CPLPopErrorHandler(); //Go back to showing errors
-                
-                vector<std::string>cloudkappa;
-                cloudkappa=UnifyClouds(low_cloud_data,
-                                       med_cloud_data,
-                                       high_cloud_data,
-                                       cloud_count_low,
-                                       cloud_count_med,
-                                       cloud_count_high,
-                                       temp_count);
-                
-                //Now get the station metadata (lat lon etc)
-                int lat_idx=OGR_F_GetFieldIndex(hFeature,"latitude");
-                double airport_latitude=(OGR_F_GetFieldAsDouble(hFeature,lat_idx));
-                
-                int lon_idx=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                double airport_longitude=(OGR_F_GetFieldAsDouble(hFeature,lon_idx));
-                
-                int stid_idx=OGR_F_GetFieldIndex(hFeature,"STID");
-                const char* airport_stid=(OGR_F_GetFieldAsString(hFeature,stid_idx));
-                
-                //get the datetimes
-                int dt_idx=OGR_F_GetFieldIndex(hFeature,"date_times");
-                char** airport_datetime=(OGR_F_GetFieldAsStringList(hFeature,dt_idx));
-                
-                if(write_this_station==true)
+                // Get station datetime
+                CPLJSONArray airportDatetime = properties.GetArray("date_times");
+
+                // Write Station File
+                if(write_this_station)
                 {
-                    CPLDebug("STATION_FETCH","Writing station: %s to file %s",writeID,tName.c_str());
-                    std::string airport_height="10"; //This may get changed later
+                    CPLDebug("STATION_FETCH", "Writing station: %s to file %s", writeID.c_str(), tName.c_str());
+
+                    std::string airport_height = "10";
+
                     outFile.open(tName.c_str());
-                    outFile<<header<<endl;
+                    outFile << header << std::endl;
+
                     stationCSVNames.push_back(tName);
                     storeFileNames(stationCSVNames);
-                    if(latest==true)
-                    {
-                        int write_idx=0;
-                         outFile<<airport_stid<<",GEOGCS,"<<"WGS84,"<<airport_latitude<<","<<airport_longitude<<","<<airport_height<<","<<"meters,"<<airport_wind[write_idx]<<",mps,"<<airport_dir[write_idx]<<","<<airport_temp[write_idx]<<",C,"<<cloudkappa[write_idx]<<","<<"-1,"<<"km"<<endl;
 
+                    if(latest)
+                    {
+                        int i = 0;
+                        outFile << airportStid << ",GEOGCS,"
+                                << "WGS84,"
+                                << airportLatitude << ","
+                                << airportLongitude << ","
+                                << airport_height << ","
+                                << "meters,"
+                                << airportWindData[i].ToDouble() << ",mps,"
+                                << airportDirData[i].ToDouble() << ","
+                                << airportTempData[i].ToDouble() << ",C,"
+                                << airportCloudDataUnified[i] << ","
+                                << "-1,"
+                                << "km"
+                                << std::endl;
                     }
                     else
                     {
-                        for(int write_idx=0;write_idx<wind_count;write_idx++)
+                        for(int i = 0; i < airportWindData.Size(); i++)
                         {
-                             outFile<<airport_stid<<",GEOGCS,"<<"WGS84,"<<airport_latitude<<","<<airport_longitude<<","<<airport_height<<","<<"meters,"<<airport_wind[write_idx]<<",mps,"<<airport_dir[write_idx]<<","<<airport_temp[write_idx]<<",C,"<<cloudkappa[write_idx]<<","<<"-1,"<<"km,"<<airport_datetime[write_idx]<<endl;
-                        }
+                            outFile << airportStid << ",GEOGCS,"
+                                    << "WGS84,"
+                                    << airportLatitude << ","
+                                    << airportLongitude << ","
+                                    << airport_height << ","
+                                    << "meters,"
+                                    << airportWindData[i].ToDouble() << ",mps,"
+                                    << airportDirData[i].ToDouble() << ","
+                                    << airportTempData[i].ToDouble() << ",C,"
+                                    << airportCloudDataUnified[i] << ","
+                                    << "-1,"
+                                    << "km,"
+                                    << airportDatetime[i].ToString()
+                                    << std::endl;                        }
                     }
                 }
-                if(write_this_station==false)
+                else
                 {
-                    CPLDebug("STATION_FETCH","%s failed to return valid data...", writeID);
+                    CPLDebug("STATION_FETCH","%s failed to return valid data...", writeID.c_str());
                     stationChecks.push_back(write_this_station);
-                    if(fCount==1)
+                    if(fCount == 1)
                     {
-                        error_msg="ERROR: Station: Data check failed on all stations, '"+idStream.str()+"' is missing required data/sensors!";
-                        //throw std::runtime_error(error_msg);
+                        error_msg="ERROR: Station: Data check failed on all stations, '" + idStream.str() + "' is missing required data/sensors!";
                         return false;
                     }
                 }
 
             }
-            if(mnetid[ex]==2)
+            if(mnetStationID == 2)
             {
-                //First get all the big sets of data
-                //For RAWS Stations we get wind speed, wind direction, air temp
-                //and get cloud cover based on solar radiation
-                int wind_count=0;
-                int wind_idx = OGR_F_GetFieldIndex(hFeature,"wind_speed");
-                const double* wind_data = (OGR_F_GetFieldAsDoubleList(hFeature,wind_idx,&wind_count));
-                std::vector<std::string> raws_wind = outputToVec(wind_data,wind_idx,wind_count,"wind_speed");
-                if(raws_wind[0]=="NULL_IDX")
+                // Get Data (RAWS Stations)
+                // Get Wind, Dir, and Temp. Extrapolate cloud cover from solar radiation
+                CPLJSONArray rawsWindData = properties.GetArray("wind_speed");
+                if (rawsWindData.Size() == 0)
                 {
-                    CPLDebug("STATION_FETCH","No wind data (null idx) found for station, throwing!");
-                    write_this_station=false;
+                    CPLDebug("STATION_FETCH",
+                             "No wind data found for station.");
+                    write_this_station = false;
                 }
-                if(raws_wind[0]=="NULL_ARRAY")
+
+                CPLJSONArray rawsDirData = properties.GetArray("wind_direction");
+                // Wind direction is often omitted by the Synoptic API if the wind speed = 0
+                // Populate the direction string with 0s so that it is consistent
+                rawsDirData = fillEmptyData(rawsDirData, rawsWindData);
+                
+                CPLJSONArray rawsTempData = properties.GetArray("air_temp");
+                if (rawsTempData.Size() == 0)
                 {
-                    CPLDebug("STATION_FETCH","No wind data (null array) found for station, throwing!");
-                    write_this_station=false;
+                    CPLDebug("STATION_FETCH",
+                             "No temperature data found for station.");
+                    write_this_station = false;
                 }
+
+                CPLJSONArray rawsSolarData = properties.GetArray("solar_radiation");
+                // Solar Radiation is often omitted by the Synoptic API if the wind speed = 0
+                // Populate the solar string with 0s so that it is consistent
+                rawsSolarData = fillEmptyData(rawsSolarData, rawsWindData);
                 
-                int dir_count=0;
-                int dir_idx = OGR_F_GetFieldIndex(hFeature,"wind_direction");
-                const double* dir_data = (OGR_F_GetFieldAsDoubleList(hFeature,dir_idx,&dir_count));
-                std::vector<std::string> raws_dir = outputToVec(dir_data,dir_idx,dir_count,"wind_direction");
-                raws_dir = fixEmptySensor(raws_dir,"wind_direction",raws_wind);
+                // Get station metadata (lat, lon, station ID)
+                double rawsLatitude = std::stod(properties.GetString("latitude"));
+                double rawsLongitude = std::stod(properties.GetString("longitude"));
+                std::string rawsStid = properties.GetString("stid");
                 
-                int temp_count=0;
-                int temp_idx = OGR_F_GetFieldIndex(hFeature,"air_temp");
-                const double* temp_data = (OGR_F_GetFieldAsDoubleList(hFeature,temp_idx,&temp_count));
-                std::vector<std::string> raws_temp = outputToVec(temp_data,temp_idx,temp_count,"air_temp");
-                if(raws_temp[0]=="NULL_IDX")
+                // Get station datetime
+                CPLJSONArray rawsDateTime = properties.GetArray("date_times");
+
+                // Get Cloud Cover from Solar Radiation
+                std::vector<double> rawsCloudData = computeSolarToCloud(rawsSolarData,
+                                                                        timeZone, rawsLatitude,
+                                                                        rawsLongitude, rawsDateTime);
+
+                // Get station height via station name
+                std::string rawsName = properties.GetString("name");
+                double rawsHeight = getStationHeight(rawsName.c_str());
+                
+                // Write Station File
+                if(write_this_station)
                 {
-                    CPLDebug("STATION_FETCH","No temp data (null idx) found for station, throwing!");
-                    write_this_station=false;
-                }
-                if(raws_temp[0]=="NULL_ARRAY")
-                {
-                    CPLDebug("STATION_FETCH","No temp data (null array) found for station, throwing!");
-                    write_this_station=false;
-                }
-                
-                int solar_count=0;
-                int solar_idx = (OGR_F_GetFieldIndex(hFeature,"solar_radiation"));
-                const double* solar_data = OGR_F_GetFieldAsDoubleList(hFeature,solar_idx,&solar_count);
-                std::vector<std::string> raws_solar = outputToVec(solar_data,solar_idx,solar_count,"solar_radiation");
-                raws_solar = fixEmptySensor(raws_solar,"solar_radiation",raws_wind);
-                
-                //Now get the station metadata (lat lon etc)
-                int lat_idx=OGR_F_GetFieldIndex(hFeature,"latitude");
-                double raws_latitude=(OGR_F_GetFieldAsDouble(hFeature,lat_idx));
-                
-                int lon_idx=OGR_F_GetFieldIndex(hFeature,"LONGITUDE");
-                double raws_longitude=(OGR_F_GetFieldAsDouble(hFeature,lon_idx));
-                
-                int stid_idx=OGR_F_GetFieldIndex(hFeature,"STID");
-                const char* raws_stid=(OGR_F_GetFieldAsString(hFeature,stid_idx));
-                
-                //get the datetimes
-                int dt_idx=OGR_F_GetFieldIndex(hFeature,"date_times");
-                char** raws_datetime=(OGR_F_GetFieldAsStringList(hFeature,dt_idx));
-                
-                std::vector<double> raws_cloud = Irradiate(raws_solar,
-                                                           timeZone,raws_latitude,
-                                                           raws_longitude,raws_datetime);
-                
-                int name_idx = OGR_F_GetFieldIndex(hFeature,"name");
-                const char* raws_name =(OGR_F_GetFieldAsString(hFeature,name_idx));
-                double raws_height = parseStationHeight(raws_name);
-                
-                if(write_this_station==true)
-                {
-                    CPLDebug("STATION_FETCH","Writing station: %s to file %s",writeID,tName.c_str());
-//                  std::string raws_height="10"; //This may get changed later
+                    CPLDebug("STATION_FETCH",
+                             "Writing station: %s to file %s",
+                             writeID.c_str(),
+                             tName.c_str());
+
                     outFile.open(tName.c_str());
-                    outFile<<header<<endl;
+                    outFile << header << std::endl;
+
                     stationCSVNames.push_back(tName);
                     storeFileNames(stationCSVNames);
-                    if(latest==true)
+
+                    if (latest)
                     {
-                        int write_idx=0;
-                         outFile<<raws_stid<<",GEOGCS,"<<"WGS84,"<<raws_latitude<<","<<raws_longitude<<","<<raws_height<<","<<"meters,"<<raws_wind[write_idx]<<",mps,"<<raws_dir[write_idx]<<","<<raws_temp[write_idx]<<",C,"<<raws_cloud[write_idx]<<","<<"-1,"<<"km"<<endl;
+                        const int write_idx = 0;
+
+                        outFile << rawsStid << ",GEOGCS,"
+                        << "WGS84,"
+                        << rawsLatitude << ","
+                        << rawsLongitude << ","
+                        << rawsHeight << ","
+                        << "meters,"
+                        << rawsWindData[write_idx].ToDouble() << ",mps,"
+                        << rawsDirData[write_idx].ToDouble() << ","
+                        << rawsTempData[write_idx].ToDouble() << ",C,"
+                        << rawsCloudData[write_idx] << ","
+                        << "-1,"
+                        << "km"
+                        << std::endl;
                     }
                     else
                     {
-                        for(int write_idx=0;write_idx<wind_count;write_idx++)
+                        for (int write_idx = 0; write_idx < rawsWindData.Size(); ++write_idx)
                         {
-                             outFile<<raws_stid<<",GEOGCS,"<<"WGS84,"<<raws_latitude<<","<<raws_longitude<<","<<raws_height<<","<<"meters,"<<raws_wind[write_idx]<<",mps,"<<raws_dir[write_idx]<<","<<raws_temp[write_idx]<<",C,"<<raws_cloud[write_idx]<<","<<"-1,"<<"km,"<<raws_datetime[write_idx]<<endl;
+                            outFile << rawsStid << ",GEOGCS,"
+                            << "WGS84,"
+                            << rawsLatitude << ","
+                            << rawsLongitude << ","
+                            << rawsHeight << ","
+                            << "meters,"
+                            << rawsWindData[write_idx].ToDouble() << ",mps,"
+                            << rawsDirData[write_idx].ToDouble() << ","
+                            << rawsTempData[write_idx].ToDouble() << ",C,"
+                            << rawsCloudData[write_idx] << ","
+                            << "-1,"
+                            << "km,"
+                            << rawsDateTime[write_idx].ToString()
+                            << std::endl;
                         }
                     }
                 }
-                if(write_this_station==false)
+                else
                 {
-                    CPLDebug("STATION_FETCH","%s failed to return valid data...", writeID);
+                    CPLDebug("STATION_FETCH","%s failed to return valid data...", writeID.c_str());
                     stationChecks.push_back(write_this_station);
-                    if(fCount==1)
+                    if(fCount == 1)
                     {
-                        error_msg="ERROR: Station: Data check failed on all stations, '"+idStream.str()+"' is missing required data/sensors!";
-                        //throw std::runtime_error(error_msg);
+                        error_msg="ERROR: Station: Data check failed on all stations, '" + idStream.str() + "' is missing required data/sensors!";
                         return false;
                     }
                 }
             }
         }
-        OGR_F_Destroy(hFeature);
-    }
-    GDALClose(hDS);
-    if(stationChecks.size()>=fCount)
+    if(stationChecks.size() >= fCount)
     {
         CPLDebug("STATION_FETCH","DATA CHECK FAILED ON ALL STATIONS...");
         error_msg="ERROR: Data check failed on all stations, likely stations are missing sensors.";
-        //throw std::runtime_error(error_msg);
         return false;
     }
     else
