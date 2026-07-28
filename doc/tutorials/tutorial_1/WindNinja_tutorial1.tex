@@ -100,9 +100,14 @@ OpenFOAM is free, open-source software for computational fluid dynamics (CFD) fr
 The major differences, from a user's perspective, between the two solvers are listed below:
 \begin{itemize}
 \item The conservation of mass solver runs much faster than the conservation of mass and momentum solver (less than a minute for conservation of mass compared to about 10-30 min for conservation of mass and momentum).
-\item The conservation of mass solver's approximation of the momentum equation is simpler and, at times, less accurate than that of the conservation of mass and momentum solver. This is mainly why the conservation of mass solver runs so much faster than the conservation of mass and momentum.  The conservation of mass simulations are normally less accurate during stronger winds on the lee sides of ridges and mountains where recirculation eddies can occur.
+\item The conservation of mass solver's approximation of the momentum equation is simpler and, at times, less accurate than that of the conservation of mass and momentum solver. 
+This is mainly why the conservation of mass solver runs so much faster than the conservation of mass and momentum.  
+The conservation of mass simulations are normally less accurate during stronger winds on the lee sides of ridges and mountains where recirculation eddies can occur.
 \item The conservation of mass solver incorporates some non-neutral atmospheric stability effects, while the conservation of mass and momentum is only valid under near-neutral stability.
-\item WindNinja has a feature that allows users to enter measured wind information at several locations to drive the flow.  WindNinja will produce a wind field that matches the winds as these locations.  This feature is not currently available for the conservation of mass and momentum solver.\end{itemize}
+\item WindNinja has a feature that allows users to enter measured wind information at several locations to drive the flow.  
+WindNinja will produce a wind field that matches the winds as these locations.  
+This feature is not currently available for the conservation of mass and momentum solver.
+\end{itemize}
 
 \section{Getting Started}
 
@@ -112,7 +117,7 @@ Step through the simple installation process to install WindNinja.
 \textbf{\color{red}Once installed, you can start WindNinja by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ WindNinja \vn\ }
 
 The main WindNinja window will open.  
-In addition to the usual toolbar features at the top (File, Options, Tools, Help), the window consists of a navigation tree area, an input panel area, and a console output area as shown in the figure below.
+In addition to the usual toolbar features at the top (File, Options, Tools, Help), the window consists of a navigation tree area, an input panel area, a console output area, and a interactive map area as shown in the figure below.
 
 \begin{figure}[H]
 	\centering
@@ -136,6 +141,9 @@ When you select a different part of the navigation tree, the input panel will ch
 The console output provides you with feedback from WindNinja.
 It's a good idea to watch this output during your setup and run, especially if there are problems with the run.
 Bad problems are usually shown in red text.
+
+The interactive map is used to specify the region for surface data downloads as well as view WindNinja outputs. 
+Displaying WindNinja outputs allows you to view and analyze the results without needing a secondary application. 
 
 \section{Solver}
 The solver is the number-crunching part of WindNinja. 
@@ -413,6 +421,8 @@ south\_canyon\_270\_35\_200m\_surf.vtk & Paraview/VTK surface file              
 \hline
 south\_canyon\_270\_35\_200m.vtk       & Paraview/ VTK volume data file                           \\
 \hline
+south\_canyon\_270\_35\_200m.fgbz      & WindNinja Map visualization zip file                     \\
+\hline
 \end{tabular}
 \end{center}
 
@@ -426,7 +436,7 @@ There is a feature in WindNinja that allows users to “clip” off a border are
 The intent of this feature is to let you automatically clip off border areas that might be less accurate because of their close proximity to the boundary of the domain.  
 Typically this boundary influence might extend 5-10\% in from the border of the domain, although users normally don't use this feature and commonly just leave the default value of 0\%.
 
-\subsection{Google Earth}
+\subsection{Google Earth}\label{Google Earth}
 
 Likely, the most convenient way to view winds from WindNinja is to use Google Earth.
 
@@ -538,6 +548,14 @@ The two VTK files produced by WindNinja are the full 3-d volume data and a groun
 We will not produce these files for this tutorial.
 
 Note that VTK files are not available for the momentum solver.
+
+\subsection{Map Visualization Files}
+
+As of 4.0.0, Map Visualization output files are used to display output wind vectors on the interactive map.  
+These are created specially for WindNinja and do not have another known program to display them.
+
+The output setting is always on for a given simulation, since once a simulation is finished, they are automatically loaded to the map. 
+For adjusting output settings, Map Visualization files have the same customization as Google Earth files (see section \ref{Google Earth}).
 
 \section{Solve}
 
