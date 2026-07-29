@@ -1,6 +1,7 @@
 {
   "name": "windninja-deps",
   "version": "1.0.0",
+  "builtin-baseline": "9942fb5f996ea431c5ed8fb8d2a53f31d08df62e",
   "dependencies": [
     {
       "name": "boost-date-time"
@@ -13,7 +14,11 @@
     },
     {
       "name": "gdal",
-      "features": ["poppler", "netcdf", "openssl"]
+      "features": [
+        "poppler",
+        "netcdf",
+        "openssl"
+      ]
     },
     {
       "name": "shapelib"
