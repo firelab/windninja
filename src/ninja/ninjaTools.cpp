@@ -140,7 +140,7 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
 
         if(result == SURF_FETCH_E_IO_ERR)
         {
-            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\Failure opening a dataset.");
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to download elevation data.\nFailure opening a dataset.");
         }
         else if(result == SURF_FETCH_E_BOUNDS_ERR)
         {
@@ -460,12 +460,10 @@ int ninjaTools::fetchStationFromBBox( const int* yearList, const int * monthList
         }
 
         // Custom API_KEY STUFF
-        const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
+        std::string api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
         if(api_key_conf_opt != "FALSE")
         {
-            std::ostringstream api_stream;
-            api_stream << api_key_conf_opt;
-            pointInitialization::setCustomAPIKey(api_stream.str());
+            pointInitialization::setCustomAPIKey(api_key_conf_opt);
         }
         // End Custom API_KEY STUFF
 
@@ -529,12 +527,10 @@ int ninjaTools::fetchStationByName( const int* yearList, const int * monthList, 
         }
 
         // Custom API_KEY STUFF
-        const char *api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
+        std::string api_key_conf_opt = CPLGetConfigOption("CUSTOM_API_KEY", "FALSE");
         if(api_key_conf_opt != "FALSE")
         {
-            std::ostringstream api_stream;
-            api_stream << api_key_conf_opt;
-            pointInitialization::setCustomAPIKey(api_stream.str());
+            pointInitialization::setCustomAPIKey(api_key_conf_opt);
         }
         // End Custom API_KEY STUFF
 
