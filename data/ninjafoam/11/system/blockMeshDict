@@ -1,0 +1,103 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  8
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+
+    root        "";
+    case        "";
+    instance    "";
+    local       "";
+
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+vertices
+(
+    ($xmin$  $ymin$  $zmin$)
+    ($xmax$  $ymin$  $zmin$)
+    ($xmax$  $ymax$  $zmin$)
+    ($xmin$  $ymax$  $zmin$)
+    ($xmin$  $ymin$  $zmax$)
+    ($xmax$  $ymin$  $zmax$)
+    ($xmax$  $ymax$  $zmax$)
+    ($xmin$  $ymax$  $zmax$)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($Nx1$ $Ny1$ $Nz1$) simpleGrading (1.0 1.0 $Ratio$)
+);
+
+edges
+(
+);
+
+boundary
+(
+    north_face
+    {
+        type patch;
+		faces
+        (
+			(3 7 6 2)
+		);
+    }
+    west_face
+    {
+        type patch;
+		faces
+        (
+			(0 4 7 3)
+		);
+    }
+    east_face
+    {
+        type patch;
+		faces
+        (
+			(2 6 5 1)
+		);
+    }
+    south_face
+    {
+        type patch;
+		faces
+        (
+			(1 5 4 0)
+		);
+    }
+    minZ
+    {
+        type wall;
+		faces
+        (
+			(0 3 2 1)
+		);
+    }
+    maxZ
+    {
+        type patch;
+		faces
+        (
+			(4 5 6 7)
+		);
+    }
+);
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //
