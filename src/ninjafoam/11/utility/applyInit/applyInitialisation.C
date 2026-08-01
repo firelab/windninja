@@ -30,11 +30,14 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvCFD.H"
-#include "singlePhaseTransportModel.H"
-#include "RASModel.H"
+#include "argList.H"
+#include "Time.H"
+#include "fvMesh.H"
+#include "volFields.H"
 #include "wallDist.H"
-#include "scalar.H"
+
+using namespace Foam;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -97,8 +100,8 @@ int main(int argc, char *argv[])
 
     // get the locations for the calculation
     // use comments to choose method/locations
-    volScalarField y = wallDist(mesh).y();          //distance to nearest wall
-	//volScalarField y(mesh.C().component(2));      //z-component of cell center
+    const volScalarField& y = wallDist::New(mesh).y();  //distance to nearest wall
+    //volScalarField y(mesh.C().component(2));          //z-component of cell center
 
 
     // get the constants from the dictionary, the log profile inlet values

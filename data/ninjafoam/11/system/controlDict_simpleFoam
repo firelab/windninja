@@ -15,7 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     simpleFoam; //simpleFoam, turbFoam, vmsFoam, etc;
+application     foamRun;
+
+solver          incompressibleFluid;
 
 startFrom       latestTime;
 

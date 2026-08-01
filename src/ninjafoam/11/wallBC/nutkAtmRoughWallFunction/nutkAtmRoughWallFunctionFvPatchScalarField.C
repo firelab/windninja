@@ -87,7 +87,7 @@ tmp<scalarField> nutkAtmRoughWallFunctionFvPatchScalarField::nut() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-nutkAtmRoughWallFunctionFvPatchScalarField::
+/*nutkAtmRoughWallFunctionFvPatchScalarField::
 nutkAtmRoughWallFunctionFvPatchScalarField
 (
     const fvPatch& p,
@@ -95,8 +95,8 @@ nutkAtmRoughWallFunctionFvPatchScalarField
 )
 :
     nutkWallFunctionFvPatchScalarField(p, iF),
-    z0_(p.size(), 0.0)
-{}
+    z0_(0)
+{}*/
 
 
 nutkAtmRoughWallFunctionFvPatchScalarField::
@@ -151,12 +151,12 @@ nutkAtmRoughWallFunctionFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void nutkAtmRoughWallFunctionFvPatchScalarField::autoMap
+void nutkAtmRoughWallFunctionFvPatchScalarField::map
 (
     const fvPatchFieldMapper& m
 )
 {
-    nutkWallFunctionFvPatchScalarField::autoMap(m);
+    nutkWallFunctionFvPatchScalarField::map(*this,m);
     m(z0_, z0_);
 }
 

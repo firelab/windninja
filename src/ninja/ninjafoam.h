@@ -196,6 +196,11 @@ private:
                          const double dem_xllCorner, const double dem_yllCorner, 
                          const int ncols, const int nrows, const int nlayers, 
                          wn_3dScalarField& k);
+    void readInProbeData_foam10(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z,
+                                const double dem_xllCorner, const double dem_yllCorner,
+                                const int ncols, const int nrows, const int nlayers,
+                                wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w,
+                                wn_3dScalarField& k);
     void fillEmptyProbeVals(const wn_3dArray& z, 
                             const int ncols, const int nrows, const int nlayers, 
                             wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
@@ -231,7 +236,9 @@ private:
 #ifdef NINJA_BUILD_TESTING
 public:
 #endif
+    std::string sanitizeOutputLine(const std::string& line);
     int SanitizeOutput();
+    int SanitizeOutput_foam10();
     int SampleCloudGrid();
     int SampleCloud();
 #ifdef NINJA_BUILD_TESTING
