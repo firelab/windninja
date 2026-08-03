@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 # Install necessary dependencies
 sudo apt install -y libfontconfig1-dev \
                     libcurl4-gnutls-dev \
