@@ -558,6 +558,21 @@
         let activeWindNinjaLegendCard = null;
         let activeInitializationLegendCard = null;
 
+        function extractDateTime(filename)
+        {
+            const match = filename.match(/(\d{2})-(\d{2})-(\d{4})_(\d{4})/);
+
+            if (!match)
+                return 0;
+
+            const [, month, day, year, hhmm] = match;
+
+            const hour = parseInt(hhmm.substring(0, 2), 10);
+            const minute = parseInt(hhmm.substring(2, 4), 10);
+
+            return new Date(year, month - 1, day, hour, minute).getTime();
+        }
+
         async function loadSimulation(data, fileName) {
             pendingFiles++;
 
@@ -773,7 +788,10 @@
             windninjaOutputTree.children.sort((a, b) => {
                 if (a.label === 'No Output') return 1;
                 if (b.label === 'No Output') return -1;
-                return a.label.localeCompare(b.label);
+                
+                const diff = extractDateTime(a.label) - extractDateTime(b.label);
+
+                return diff !== 0 ? diff : a.label.localeCompare(b.label);
             });
 
             updateOverlayTree();
