@@ -1,30 +1,20 @@
 #!/bin/bash
 
 # Install necessary dependencies
-sudo apt install -y libfontconfig1-dev \
-                    libcurl4-gnutls-dev \
-                    libnetcdf-dev \
+sudo apt install -y pkg-config \
                     libboost-program-options-dev \
                     libboost-date-time-dev \
-                    libgeos-dev \
                     libboost-test-dev \
-                    libsqlite3-dev \
-                    sqlite3 \
-                    libopenjp2-7-dev \
-                    libtiff-dev \
                     libshp-dev
 
-# Install qt6 dependencies
-sudo apt install -y libgl1-mesa-dev
-
 # Install qt6 libs
-sudo apt install -y qt6-base-dev qt6-base-dev-tools qt6-webengine-dev qt6-webengine-dev-tools libqt6webenginecore6-bin
+# which also installs libgl-dev, libglx-dev, libopengl-dev instead of libgl1-mesa-dev
+sudo apt install -y qt6-base-dev qt6-webengine-dev
 
-# Install Poppler, Proj, GDAL
-sudo apt install -y \
-    libgdal-dev \
-    libproj-dev \
-    libpoppler-dev
+# Install GDAL
+# which also installs libnetcdf-dev, libproj-dev, libpoppler-dev,
+# libgeos-dev, libsqlite3-dev, libtiff-dev, libopenjp2-7-dev, libcurl4-gnutls-dev
+sudo apt install -y libgdal-dev
 
 # Install hwloc, for OpenFOAM
 sudo apt install -y libhwloc-dev
