@@ -37,14 +37,6 @@ solvers
         mergeLevels             1;
     };
 
-    pcorr
-    {
-        solver          GAMG;
-        tolerance       1e-06;
-        relTol          0;
-        smoother        GaussSeidel;
-    };
-
     U
     {
         solver          smoothSolver;
@@ -129,9 +121,6 @@ potentialFlow
     pRefCell                 0;
     pRefValue                0.0;
 }
-
-PIMPLE
-{}
 
 SIMPLE
 {
