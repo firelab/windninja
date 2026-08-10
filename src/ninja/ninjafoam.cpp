@@ -1637,7 +1637,7 @@ void NinjaFoam::RefineSurfaceLayer()
     const char *pszInput;
     const char *pszOutput;
     
-    //write topoSetDict
+    //write/edit topoSetDict
     pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
     pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
 
@@ -1656,13 +1656,15 @@ void NinjaFoam::RefineSurfaceLayer()
     /*  refine in all 3 directions                  */
     /*----------------------------------------------*/
     
-    //write refineMeshDict for 3-D
-    pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict_xyz", "");
-    pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
-    CopyFile(pszInput, pszOutput);
-    
-    pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
-    pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
+    //write/edit refineMeshDict
+    if( foamVersion == "2.2.0" )
+    {
+        pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict_xyz", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
+        CopyFile(pszInput, pszOutput);
+    }
+    //pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
+    //pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
 
