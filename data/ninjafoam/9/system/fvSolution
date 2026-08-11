@@ -15,13 +15,6 @@ FoamFile
 
 solvers
 {
-    T
-    {
-        solver                  PBiCG;
-        preconditioner          DILU;
-        tolerance               1e-06;
-        relTol                  0;
-    }
     p
     {
         solver                  GAMG
@@ -54,7 +47,6 @@ solvers
         relTol          0.001;
     };
 
-
     epsilon
     {
         solver          smoothSolver;
@@ -64,54 +56,28 @@ solvers
         relTol          0.001;
     };
 
-    omega
-    {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        nSweeps         2;
-        tolerance       1.0;
-        relTol          1.0;
-    };
-
-    nuTilda
-    {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        nSweeps         2;
-        tolerance       1.0;
-        relTol          1.0;
-    };
-
     cellDisplacement
-    {   
+    {
         solver          GAMG;
-        tolerance       1e-08;
-        relTol          0;  
-        smoother        GaussSeidel;
-        cacheAgglomeration true;
-        nCellsInCoarsestLevel 10; 
-        agglomerator    faceAreaPair;
-        mergeLevels     1;  
-    }
-    cellDisplacementFinal
-    {   
-        solver          GAMG;
-        tolerance       1e-08;
-        relTol          0;  
-        smoother        GaussSeidel;
-        cacheAgglomeration true;
-        nCellsInCoarsestLevel 10; 
-        agglomerator    faceAreaPair;
-        mergeLevels     1;  
-    }
-
-    "(cellMotionU|cellMotionUz)"
-    {   
-        $p;
         tolerance       1e-08;
         relTol          0;
+        smoother        GaussSeidel;
+        cacheAgglomeration true;
+        nCellsInCoarsestLevel 10;
+        agglomerator    faceAreaPair;
+        mergeLevels     1;
     }
-
+    cellDisplacementFinal
+    {
+        solver          GAMG;
+        tolerance       1e-08;
+        relTol          0;
+        smoother        GaussSeidel;
+        cacheAgglomeration true;
+        nCellsInCoarsestLevel 10;
+        agglomerator    faceAreaPair;
+        mergeLevels     1;
+    }
 }
 
 potentialFlow
@@ -128,33 +94,28 @@ SIMPLE
 {
     nNonOrthogonalCorrectors 0;
     pRefCell                 0;
-    pRefValue                0.0; // New variable
+    pRefValue                0.0;
 
     residualControl
     {
-        p               0.00001;
-        U               0.00001;
-        k               0.00001;
-        epsilon         0.00001;
-        omega           1.0;
-        nuTilda         1.0;
+        p           0.00001;
+        U           0.00001;
+        k           0.00001;
+        epsilon     0.00001;
     }
-
 }
 
 relaxationFactors
 {
     fields
     {
-    p               0.5;
+        p           0.5;
     }
     equations
     {
-    U               0.5;
-    k               0.6;
-    epsilon         0.6;
-    omega           1.0;
-    nuTilda         1.0;
+        U           0.5;
+        k           0.6;
+        epsilon     0.6;
     }
 }
 
