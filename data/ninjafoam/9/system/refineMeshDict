@@ -21,32 +21,49 @@ set refineCells;
 //   x,y,z axis. Specify in globalCoeffs section below.
 // - patchLocal : coordinate system different for every cell. Specify in
 //   patchLocalCoeffs section below.
+// - fieldBased : uses the list of field names from the directions list for
+//   selecting the directions to cut. Meant to be used with geometricCut, but
+//   can also be used with useHexTopology.
 coordinateSystem global;
 //coordinateSystem patchLocal;
+//coordinateSystem fieldBased;
 
-
-// .. and its coefficients. x,y in this case. (normal direction is calculated
-// as tan1^tan2)
+// .. and its coefficients. x,y in this case. (normal (e3) direction is
+// calculated as e1^e2)
+// in this case, (as was done in old openfoam 2.2.0), the normal direction (e3) is defined as +X
+// to use a normal direction of +Z as is standard in openfoam, use "e1 (1 0 0)" and "e2 (0 1 0)"
+// our old openfoam code still seemed to work despite +X as the normal instead of +Z,
+// because directions was set to use all 3 directions anyways, but also because useHexTopology was set to true,
+// which overrided and ignore the coordinate system
 globalCoeffs
 {
-    tan1 (0 1 0);
-    tan2 (0 0 1);
+    e1 (0 1 0);
+    e2 (0 0 1);
 }
 
 patchLocalCoeffs
 {
-    patch minZ; //Normal direction is facenormal of zero'th face of patch
-    tan1 (0 1 0);
-    tan2 (0 0 1);
+    patch minZ;  // Normal direction is facenormal of zero'th face of patch
+    e1 (0 1 0);
+    e2 (0 0 1);
 }
 
-// List of directions to refine
+// List of directions to refine, if global or patchLocal
 directions
 (
-    tan1
-    tan2
-    normal
+    e1
+    e2
+    e3
 );
+
+// List of directions to refine, if "fieldBased". Keep in mind that these
+// fields must be of type "vectorField", not "volVectorField".
+//directions
+//(
+//    radialDirectionFieldName
+//    angularDirectionFieldName
+//    heightDirectionFieldName
+//);
 
 // Whether to use hex topology. This will
 // - if patchLocal: all cells on selected patch should be hex
