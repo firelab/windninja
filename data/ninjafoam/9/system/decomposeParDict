@@ -15,101 +15,14 @@ FoamFile
 
 numberOfSubdomains    $nProc$;
 
-method           simple; //scotch;//hierarchical;//simple;//metis;//manual;//multiLevel;//structured;
+method           simple;
 
 simpleCoeffs
 {
-    // Number of processor blocks in each coordinate direction
     n                   ($nProc$ 1 1);
-
-    // Coefficient of the slight rotation of the mesh to bias the decomposition
-    // to be deterministic in the case that the initial block mesh is coordinate
-    // aligned
     delta               0.001;
 }
 
-hierarchicalCoeffs
-{
-    // Number of processor blocks in each coordinate direction
-    n               ($nProc$ 1 1);
-
-    // Coordinate order of the hierarchical decomposition
-    order           xyz;
-
-    // Coefficient of the slight rotation of the mesh to bias the decomposition
-    // to be deterministic in the case that the initial block mesh is coordinate
-    // aligned
-    delta           0.001;
-}
-
-scotchCoeffs
-{
-    // need to specify 1 weight value, per numberOfSubdomains
-    processorWeights
-    (
-        1 1 1 1 1 1
-    );
-    //writeGraph  true;
-    //strategy "b";
-}
-
-metisCoeffs
-{
-    // need to specify 1 weight value, per numberOfSubdomains
-    processorWeights
-    (
-        1 1 1 1 1 1
-    );
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-structuredCoeffs
-{
-    // Patches to do 2D decomposition on. Structured mesh only; cells have
-    // to be in 'columns' on top of patches.
-    patches     (movingWall);
-
-    // Method to use on the 2D subset
-    method      scotch;
-}
-
-// does 2D decomposition of structured mesh
-multiLevelCoeffs
-{
-    // Decomposition methods to apply in turn. This is like hierarchical but
-    // fully general - every method can be used at every level.
-
-    level0
-    {
-        numberOfSubdomains  $nProc$;  // probably need to divide this by 2
-        // method simple;
-        // simpleCoeffs
-        // {
-        //     n           ($nProc$ 1 1);
-        //     delta       0.001;
-        // }
-        method scotch;
-    }
-    level1
-    {
-        numberOfSubdomains  $nProc$;  // probably need to divide this by 2
-        method scotch;
-    }
-}
-
-// Is the case distributed? Note: command-line argument -roots takes
-// precedence
 distributed     no;
-
-// Per slave (so nProcs-1 entries) the directory above the case.
-roots
-(
-    //"/tmp"
-    //"/tmp"
-);
 
 // ************************************************************************* //
