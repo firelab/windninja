@@ -30,22 +30,17 @@ coordinateSystem global;
 
 // .. and its coefficients. x,y in this case. (normal (e3) direction is
 // calculated as e1^e2)
-// in this case, (as was done in old openfoam 2.2.0), the normal direction (e3) is defined as +X
-// to use a normal direction of +Z as is standard in openfoam, use "e1 (1 0 0)" and "e2 (0 1 0)"
-// our old openfoam code still seemed to work despite +X as the normal instead of +Z,
-// because directions was set to use all 3 directions anyways, but also because useHexTopology was set to true,
-// which overrided and ignore the coordinate system
 globalCoeffs
 {
-    e1 (0 1 0);
-    e2 (0 0 1);
+    e1 (1 0 0);
+    e2 (0 1 0);
 }
 
 patchLocalCoeffs
 {
     patch minZ;  // Normal direction is facenormal of zero'th face of patch
-    e1 (0 1 0);
-    e2 (0 0 1);
+    e1 (1 0 0);
+    e2 (0 1 0);
 }
 
 // List of directions to refine, if global or patchLocal
