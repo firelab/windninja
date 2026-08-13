@@ -2878,16 +2878,6 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     
     // Write file contents
     fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "// choice of variables\n");
-    fprintf(fout, "fields  (%s %s);\n", "U", "k");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "// Sampling and I/O settings\n");
-    fprintf(fout, "interpolationScheme cellPoint;\n");
-    fprintf(fout, "setFormat  raw;\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
     fprintf(fout, "type            sets;\n");
     if ( foamVersion != "2.2.0" ) {
         fprintf(fout, "libs            (\"libsampling.so\");\n");
@@ -2895,13 +2885,16 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "\n");
     fprintf(fout, "writeControl    writeTime;\n");
     fprintf(fout, "\n");
+    fprintf(fout, "setFormat  raw;\n");
+    fprintf(fout, "interpolationScheme cellPoint;\n");
     fprintf(fout, "\n");
+    fprintf(fout, "fields  (%s %s);\n", "U", "k");
     fprintf(fout, "\n");
+
     fprintf(fout, "// list of probe points for windninja mass solver case\n");
     fprintf(fout, "// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
     fprintf(fout, "points\n");
     fprintf(fout, "(\n");
-    
     for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
     {
         for(int rowIdx=0; rowIdx<nrows; rowIdx++)
@@ -2913,10 +2906,9 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
             }
         }
     }
-    
     fprintf(fout, ");\n");
     fprintf(fout, "\n");
-    fprintf(fout, "\n");
+
     fprintf(fout, "sets\n");
     fprintf(fout, "(\n");
     fprintf(fout, "    points\n");
@@ -2931,13 +2923,11 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "        points  $points;\n");
     fprintf(fout, "    }\n");
     fprintf(fout, ");\n");
-    fprintf(fout, "\n");
+
     fprintf(fout, "\n");
     fprintf(fout, "// ************************************************************************* //\n");
-    
-    
+
     fclose(fout);
-    
 }
 
 void NinjaFoam::runProbeSample()
