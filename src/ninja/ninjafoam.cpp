@@ -2891,24 +2891,6 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     fprintf(fout, "fields  (%s %s);\n", "U", "k");
     fprintf(fout, "\n");
 
-    fprintf(fout, "// list of probe points for windninja mass solver case\n");
-    fprintf(fout, "// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
-    fprintf(fout, "points\n");
-    fprintf(fout, "(\n");
-    for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
-    {
-        for(int rowIdx=0; rowIdx<nrows; rowIdx++)
-        {
-            for(int colIdx=0; colIdx<ncols; colIdx++)
-            {
-                int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
-                fprintf( fout, "    (%0.20lf %0.20lf %0.20lf)\n",  x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx)  );
-            }
-        }
-    }
-    fprintf(fout, ");\n");
-    fprintf(fout, "\n");
-
     fprintf(fout, "sets\n");
     fprintf(fout, "(\n");
     fprintf(fout, "    points\n");
@@ -2920,7 +2902,22 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     }
     fprintf(fout, "        axis    xyz;\n");
     fprintf(fout, "        ordered no;\n");
-    fprintf(fout, "        points  $points;\n");
+    fprintf(fout, "        points\n");
+    fprintf(fout, "        (\n");
+    fprintf(fout, "            // list of probe points for windninja mass solver case\n");
+    fprintf(fout, "            // nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
+    for(int layerIdx = 0; layerIdx < nlayers; layerIdx++)
+    {
+        for(int rowIdx = 0; rowIdx < nrows; rowIdx++)
+        {
+            for(int colIdx = 0; colIdx < ncols; colIdx++)
+            {
+                int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
+                fprintf(fout, "            (%0.20lf %0.20lf %0.20lf)\n", x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx));
+            }
+        }
+    }
+    fprintf(fout, "        );\n");
     fprintf(fout, "    }\n");
     fprintf(fout, ");\n");
 
