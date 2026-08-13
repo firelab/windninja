@@ -1907,9 +1907,9 @@ void NinjaFoam::ApplyInit()
 {
     if( foamVersion == "11" )
     {
-        VSILFILE *try_fout = VSIFOpenL(CPLFormFilename(pszFoamPath,"log.dynamicMeshDictCopy",""),"w");
-        const char* try_papszArgv[] = { "mv", CPLSPrintf("%s/constant/dynamicMeshDict",pszFoamPath), CPLSPrintf("%s/constant/dynamicMeshDict__moveDynamicMesh",pszFoamPath), NULL };
-        int nRet = CPLSpawn(try_papszArgv, NULL, try_fout, TRUE);
+        const char *pszInput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict", "");
+        const char *pszOutput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict__moveDynamicMesh", "");
+        int nRet = VSIRename(pszInput, pszOutput);
         if(nRet != 0)
         {
             throw std::runtime_error("Error during applyInit mv of /constant/dynamicMeshDict to /constant/dynamicMeshDict__moveDynamicMesh.");
