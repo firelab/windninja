@@ -2834,78 +2834,53 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     CPLDebug("NINJAFOAM", "writing probes sample file");
     
     const char *probes_filename;
-    if ( foamVersion == "2.2.0" ) {
-        probes_filename = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
-    } else {
-        probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
-    }
-    
-    FILE *fout;
-    
-    fout = fopen(probes_filename, "w");
-    if( fout == NULL )
-        throw std::runtime_error("probes_filename cannot be opened for writing.");
-    
-    // Write header stuff
-    if ( foamVersion == "2.2.0" )
+    if(foamVersion == "2.2.0")
     {
-        fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
-        fprintf(fout, "| =========                 |                                                 |\n");
-        fprintf(fout, "| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |\n");
-        fprintf(fout, "|  \\\\    /   O peration     | Version:  2.2.0                                 |\n");
-        fprintf(fout, "|   \\\\  /    A nd           | Web:      www.OpenFOAM.org                      |\n");
-        fprintf(fout, "|    \\\\/     M anipulation  |                                                 |\n");
-        fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
-        fprintf(fout, "FoamFile\n");
-        fprintf(fout, "{\n");
-        fprintf(fout, "    version     2.0;\n");
-        fprintf(fout, "    format      ascii;\n");
-        fprintf(fout, "    class       dictionary;\n");
-        fprintf(fout, "    object      sampleDict;\n");
-        fprintf(fout, "}\n");
-        fprintf(fout, "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n");
+        probes_filename = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
     }
     else
     {
-        fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
-        fprintf(fout, "  =========                 |\n");
-        fprintf(fout, "  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox\n");
-        fprintf(fout, "   \\\\    /   O peration     | Website:  https://openfoam.org\n");
-        fprintf(fout, "    \\\\  /    A nd           | Version:  %s\n", foamVersion.c_str());
-        fprintf(fout, "     \\\\/     M anipulation  |\n");
-        fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
+        probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
     }
-    
-    // Write file contents
-    fprintf(fout, "\n");
-    fprintf(fout, "type            sets;\n");
-    if ( foamVersion != "2.2.0" ) {
-        fprintf(fout, "libs            (\"libsampling.so\");\n");
-    }
-    fprintf(fout, "\n");
-    fprintf(fout, "writeControl    writeTime;\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "setFormat  raw;\n");
-    fprintf(fout, "interpolationScheme cellPoint;\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "fields  (%s %s);\n", "U", "k");
-    fprintf(fout, "\n");
 
-    fprintf(fout, "sets\n");
-    fprintf(fout, "(\n");
-    fprintf(fout, "    points\n");
-    fprintf(fout, "    {\n");
-    if ( foamVersion == "2.2.0" ) {
-        fprintf(fout, "        type    cloud;\n");
-    } else {
-        fprintf(fout, "        type    points;\n");
+    VSILFILE *fin = VSIFOpenL(probes_filename, "r");
+    if(fin == NULL)
+    {
+        throw std::runtime_error("probes_filename cannot be opened for reading.");
     }
-    fprintf(fout, "        axis    xyz;\n");
-    fprintf(fout, "        ordered no;\n");
-    fprintf(fout, "        points\n");
-    fprintf(fout, "        (\n");
-    fprintf(fout, "            // list of probe points for windninja mass solver case\n");
-    fprintf(fout, "            // nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
+
+    char *data;
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+    VSIRewindL(fin);
+
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    std::string s(data);
+    CPLFree(data);
+    VSIFCloseL(fin);
+
+    std::string key = "$points$";
+    size_t keyPos = s.find(key);
+    if(keyPos == std::string::npos)
+    {
+        throw std::runtime_error("key '$points$' not found inside probes_filename.");
+    }
+    std::string partBefore = s.substr(0, keyPos);
+    std::string partAfter  = s.substr(keyPos + key.length() + 1);  // +1 to cut off the extra "\n" char
+
+    VSILFILE *fout = VSIFOpenL(probes_filename, "w");
+    if(fout == NULL)
+    {
+        throw std::runtime_error("probes_filename cannot be opened for writing.");
+    }
+
+    VSIFWriteL(partBefore.c_str(), partBefore.length(), 1, fout);
+
+    VSIFPrintfL(fout, "// list of probe points for windninja mass solver case\n");
+    VSIFPrintfL(fout, "            // nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
     for(int layerIdx = 0; layerIdx < nlayers; layerIdx++)
     {
         for(int rowIdx = 0; rowIdx < nrows; rowIdx++)
@@ -2913,18 +2888,14 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
             for(int colIdx = 0; colIdx < ncols; colIdx++)
             {
                 int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
-                fprintf(fout, "            (%0.20lf %0.20lf %0.20lf)\n", x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx));
+                VSIFPrintfL(fout, "            (%0.20lf %0.20lf %0.20lf)\n", x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx));
             }
         }
     }
-    fprintf(fout, "        );\n");
-    fprintf(fout, "    }\n");
-    fprintf(fout, ");\n");
 
-    fprintf(fout, "\n");
-    fprintf(fout, "// ************************************************************************* //\n");
+    VSIFWriteL(partAfter.c_str(), partAfter.length(), 1, fout);
 
-    fclose(fout);
+    VSIFCloseL(fout);
 }
 
 void NinjaFoam::runProbeSample()
