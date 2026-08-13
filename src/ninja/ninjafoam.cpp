@@ -2847,8 +2847,8 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
         throw std::runtime_error("probes_filename cannot be opened for writing.");
     
     // Write header stuff
-    if ( foamVersion == "2.2.0" ) {
-        
+    if ( foamVersion == "2.2.0" )
+    {
         fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
         fprintf(fout, "| =========                 |                                                 |\n");
         fprintf(fout, "| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |\n");
@@ -2864,32 +2864,16 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
         fprintf(fout, "    object      sampleDict;\n");
         fprintf(fout, "}\n");
         fprintf(fout, "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n");
-        fprintf(fout, "// run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
-        fprintf(fout, "//  sample -latestTime\n");
-        
-    } else {
-        
+    }
+    else
+    {
         fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
         fprintf(fout, "  =========                 |\n");
         fprintf(fout, "  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox\n");
         fprintf(fout, "   \\\\    /   O peration     | Website:  https://openfoam.org\n");
-        fprintf(fout, "    \\\\  /    A nd           | Version:  8\n");
+        fprintf(fout, "    \\\\  /    A nd           | Version:  %s\n", foamVersion.c_str());
         fprintf(fout, "     \\\\/     M anipulation  |\n");
-        fprintf(fout, "-------------------------------------------------------------------------------\n");
-        fprintf(fout, "Description\n");
-        fprintf(fout, "    Writes out values of fields interpolated to a specified list of points.\n");
-        fprintf(fout, "    \n");
-        fprintf(fout, "    Found this in /opt/openfoam8/etc/caseDicts/postProcessing/probes/\n");
-        fprintf(fout, "    I was originally going to try to use probes and probes.cfg, of type \"probe\", but that wouldn't do interpolation, \n");
-        fprintf(fout, "    so this file came from combining the internalProbes and internalProbes.cfg files, which are of type \"sets\", \n");
-        fprintf(fout, "    which does the interpolation to the desired points\n");
-        fprintf(fout, "    Looks like the base code for this \"points\" set of type \"sets\" is within /opt/openfoam8/src/sampling/sampledSet/points/\n");
-        fprintf(fout, "    \n");
-        fprintf(fout, "    run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
-        fprintf(fout, "    simpleFoam -postProcess -func probes -latestTime\n");
-        fprintf(fout, "    \n");
         fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
-        
     }
     
     // Write file contents
