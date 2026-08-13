@@ -11,22 +11,11 @@ libs            ("libsampling.so");
 
 writeControl    writeTime;
 
-surfaceFormat   raw;//vtk;//raw;
-interpolationScheme $interpolationScheme$;//cellPoint;//cell;
-
-// optionally define extra controls for the output formats
-formatOptions
-{
-    ensight
-    {
-        format  ascii;
-    }
-}
-
+surfaceFormat   raw;  //vtk;//raw;
+interpolationScheme $interpolationScheme$;  //cellPoint;//cell;
 
 fields
 (
-   // p
     U
     k
 );
@@ -35,13 +24,11 @@ surfaces
 (
     triSurfaceSampling
     {
-        // Sampling on triSurface
         type        triSurfaceMesh;
         surface     $stlFileName$;
-        source      cells;  // see /opt/openfoam8/src/sampling/sampledSurface/sampledTriSurfaceMesh/sampledTriSurfaceMesh.H for more options
+        source      cells;
         interpolate yes;
     }
 );
-
 
 // ************************************************************************* //

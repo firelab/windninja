@@ -13,7 +13,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     moveDynamicMesh; //simpleFoam, turbFoam, vmsFoam, etc;
+application     moveDynamicMesh;
 
 startFrom       startTime;
 
@@ -31,7 +31,7 @@ writeInterval   50;
 
 purgeWrite      0;
 
-writeFormat     binary;
+writeFormat     ascii;
 
 writePrecision  10;
 

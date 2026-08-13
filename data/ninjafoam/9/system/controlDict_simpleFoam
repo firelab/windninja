@@ -13,7 +13,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     simpleFoam; //simpleFoam, turbFoam, vmsFoam, etc;
+application     simpleFoam;
 
 startFrom       latestTime;
 
@@ -50,9 +50,9 @@ libs
 
 functions
 {
-    // to look at residuals as the simulation runs, or afterwards, run
+    // to monitor residuals live or post-simulation,run:
     //  foamMonitor -l postProcessing/residuals/52/residuals.dat
-    // see https://cfd.direct/openfoam/user-guide/v9-graphs-monitoring/#x33-2590006.3
+    // see https://doc.cfd.direct/openfoam/user-guide-v9/graphs-monitoring section 6.3.4 "Live monitoring of data"
     #includeFunc  residuals
 }
 
