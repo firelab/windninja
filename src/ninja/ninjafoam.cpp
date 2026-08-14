@@ -2833,20 +2833,20 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
 {
     CPLDebug("NINJAFOAM", "writing probes sample file");
     
-    const char *probes_filename;
+    std::string probes_file;
     if(foamVersion == "2.2.0")
     {
-        probes_filename = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
+        probes_file = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
     }
     else
     {
-        probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
+        probes_file = CPLFormFilename(pszFoamPath, "system/probes", "");
     }
 
-    VSILFILE *fin = VSIFOpenL(probes_filename, "r");
+    VSILFILE *fin = VSIFOpenL(probes_file.c_str(), "r");
     if(fin == NULL)
     {
-        throw std::runtime_error("probes_filename cannot be opened for reading.");
+        throw std::runtime_error("probes_file cannot be opened for reading.");
     }
 
     char *data;
@@ -2866,21 +2866,35 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
     size_t keyPos = s.find(key);
     if(keyPos == std::string::npos)
     {
-        throw std::runtime_error("key '$points$' not found inside probes_filename.");
+        throw std::runtime_error("key '$points$' not found inside probes_file.");
     }
     std::string partBefore = s.substr(0, keyPos);
-    std::string partAfter  = s.substr(keyPos + key.length() + 1);  // +1 to cut off the extra "\n" char
+    std::string partAfter  = s.substr(keyPos + key.length());
 
-    VSILFILE *fout = VSIFOpenL(probes_filename, "w");
+    std::string indentStr = "";
+    size_t lastLinePos = partBefore.rfind("\n");
+    if(lastLinePos != std::string::npos)
+    {
+        indentStr = partBefore.substr(lastLinePos+1);
+        partBefore = partBefore.substr(0, lastLinePos+1);
+    }
+
+    size_t nextLinePos = partAfter.find("\n");
+    if(nextLinePos != std::string::npos)
+    {
+        partAfter = partAfter.substr(nextLinePos+1);
+    }
+
+    VSILFILE *fout = VSIFOpenL(probes_file.c_str(), "w");
     if(fout == NULL)
     {
-        throw std::runtime_error("probes_filename cannot be opened for writing.");
+        throw std::runtime_error("probes_file cannot be opened for writing.");
     }
 
     VSIFWriteL(partBefore.c_str(), partBefore.length(), 1, fout);
 
-    VSIFPrintfL(fout, "// list of probe points for windninja mass solver case\n");
-    VSIFPrintfL(fout, "            // nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
+    VSIFPrintfL(fout, "%s// list of probe points for windninja mass solver case\n", indentStr.c_str());
+    VSIFPrintfL(fout, "%s// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", indentStr.c_str(), nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
     for(int layerIdx = 0; layerIdx < nlayers; layerIdx++)
     {
         for(int rowIdx = 0; rowIdx < nrows; rowIdx++)
@@ -2888,7 +2902,7 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
             for(int colIdx = 0; colIdx < ncols; colIdx++)
             {
                 int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
-                VSIFPrintfL(fout, "            (%0.20lf %0.20lf %0.20lf)\n", x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx));
+                VSIFPrintfL(fout, "%s(%0.20lf %0.20lf %0.20lf)\n", indentStr.c_str(), x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx));
             }
         }
     }
