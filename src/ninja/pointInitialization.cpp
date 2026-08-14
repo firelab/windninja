@@ -777,13 +777,14 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
             if( dfTempValue > 90.0 || dfTempValue < -90.0 )
             {
-                OGRFeature::DestroyFeature(poFeature);
-                GDALClose(hDS);
-
                 oErrorString = "Bad latitude in weather station csv file";
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
                 error_msg = oErrorString;
+
+                OGRFeature::DestroyFeature(poFeature);
+                GDALClose(hDS);
+
                 throw std::runtime_error(oErrorString);
             }
 
@@ -792,27 +793,29 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
             if( dfTempValue < -180.0 || dfTempValue > 360.0 )
             {
-                OGRFeature::DestroyFeature(poFeature);
-                GDALClose(hDS);
-
                 oErrorString = "Bad longitude in weather station csv file";
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
                 error_msg = oErrorString;
+
+                OGRFeature::DestroyFeature(poFeature);
+                GDALClose(hDS);
+
                 throw std::runtime_error(oErrorString);
             }
 
             const char *pszDatum = poFeature->GetFieldAsString( 2 );
             if( !EQUAL( pszDatum, "WGS84" ) && !EQUAL( pszDatum, "NAD83" ) && !EQUAL( pszDatum, "NAD27" ) )
             {
-                OGRFeature::DestroyFeature(poFeature);
-                GDALClose(hDS);
-
                 oErrorString = "Invalid datum: ";
                 oErrorString += poFeature->GetFieldAsString( 2 );
                 oErrorString += " at station: ";
                 oErrorString += oStationName;
                 error_msg = oErrorString;
+
+                OGRFeature::DestroyFeature(poFeature);
+                GDALClose(hDS);
+
                 throw std::runtime_error(oErrorString);
             }
 
@@ -833,6 +836,7 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
                 oWarnString += " for PROJCS at station: ";
                 oWarnString += oStationName;
                 oWarnString += " and using datum WGS84";
+
                 CPLError(CE_Warning, CPLE_AppDefined, oWarnString.c_str());
             }
 
@@ -843,14 +847,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid coordinate system: ";
             oErrorString += poFeature->GetFieldAsString( 1 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -860,14 +865,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue <= 0.0 )
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid height: ";
             oErrorString += poFeature->GetFieldAsString( 5 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
         if( EQUAL( pszKey, "meters" ) )
@@ -882,14 +888,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid units for height: ";
             oErrorString += poFeature->GetFieldAsString( 6 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -899,14 +906,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue < 0.0 )
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid value for speed: ";
             oErrorString += poFeature->GetFieldAsString( 7 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -932,14 +940,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid units for speed: ";
             oErrorString += poFeature->GetFieldAsString( 8 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -948,14 +957,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue > 360.0 || dfTempValue < 0.0 )
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid value for direction: ";
             oErrorString += poFeature->GetFieldAsString( 9 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -982,14 +992,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid units for temperature: ";
             oErrorString += poFeature->GetFieldAsString( 11 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -998,14 +1009,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
 
         if( dfTempValue > 100.0 || dfTempValue < 0.0 )
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid value for cloud cover: ";
             oErrorString += poFeature->GetFieldAsString( 12 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -1038,14 +1050,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         }
         else
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid units for influence radius: ";
             oErrorString += poFeature->GetFieldAsString( 14 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
@@ -1065,14 +1078,15 @@ vector<pointInitialization::preInterpolate> pointInitialization::readDiskLine(st
         bpt::ptime noTime;
         if(datetime != "" && oStation.datetime==noTime)
         {
-            OGRFeature::DestroyFeature(poFeature);
-            GDALClose(hDS);
-
             oErrorString = "Invalid datetime format: ";
             oErrorString += poFeature->GetFieldAsString( 15 );
             oErrorString += " at station: ";
             oErrorString += oStationName;
             error_msg = oErrorString;
+
+            OGRFeature::DestroyFeature(poFeature);
+            GDALClose(hDS);
+
             throw std::runtime_error(oErrorString);
         }
 
