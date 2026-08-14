@@ -413,20 +413,27 @@ void MenuBar::loadMapVisualizationActionTriggered()
     {
         return;
     }
+    else if (files.size() >= 5)
+    {
+        QMessageBox::StandardButton result = QMessageBox::warning(
+            ui->centralwidget,
+            "Memory Usage Warning",
+            QString(
+                "Loading many simulations or large simulation files can use a "
+                "significant amount of system memory.\n\n"
+                "If available system memory is exhausted, WindNinja may become unresponsive "
+                "or crash.\n\n"
+                "If you encounter performance issues, try loading fewer simulations "
+                "or outputs with lower resolutions"
+            ),
+            QMessageBox::Cancel | QMessageBox::Ok
+        );
 
-    QMessageBox::warning(
-        ui->centralwidget,
-        "Memory Usage Warning",
-        QString(
-            "Loading many simulations or large simulation files can use a "
-            "significant amount of system memory.\n\n"
-            "If available system memory is exhausted, WindNinja may become unresponsive "
-            "or crash.\n\n"
-            "If you encounter performance issues, try loading fewer simulations "
-            "or lower-resolution outputs."
-        ),
-        QMessageBox::Ok
-    );
+        if (result == QMessageBox::Cancel)
+        {
+            return;
+        }
+    }
 
     progress = new QProgressDialog("Loading map visualization files...", QString(), 0, 0, ui->centralwidget);
     progress->setWindowModality(Qt::ApplicationModal);

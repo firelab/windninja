@@ -1445,8 +1445,8 @@ void MainWindow::finishedSolve()
                 this,
                 "Loading Map Layers",
                 "The simulation has completed successfully.\n\n"
-                "To maintain performance, only the first 5 simulations will be "
-                "loaded onto the map automatically.\n\n"
+                "Only the last five simulations will be loaded onto the map to maintain performance. "
+                "You can load additional simulations by clicking the + button on the map.\n\n"
                 "Click OK to begin loading the map layers."
             );
 
