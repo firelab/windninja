@@ -606,10 +606,21 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             }
             else if(!startDateTimeStr.isEmpty() && !stopDateTimeStr.isEmpty())  // Some type of time series
             {
-                //qDebug() << "[GUI-Point] File can be used for Time Series, suggesting time series parameters...";
-                CPLDebug("STATION_FETCH", "File can be used for Times Series, suggesting time series parameters...");
+                QDateTime startUtcDateTime = QDateTime::fromString(startDateTimeStr, "yyyy-MM-dd'T'HH:mm:ss'Z'");
+                QDateTime stopUtcDateTime = QDateTime::fromString(stopDateTimeStr, "yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+                if (!startUtcDateTime.isValid() || !stopUtcDateTime.isValid())
+                {
+                    emit writeToConsoleSignal("Station has invalid datetime data");
+                    state.isStationDataValid = false;
+                    emit updateState();
+                    return;
+                }
+
+                CPLDebug("STATION_FETCH", "File can be used for Time Series, suggesting time series parameters...");
                 CPLDebug("STATION_FETCH", "Suggesting Potentially Reasonable Time Series Parameters...");
-                readStationTime(startDateTimeStr, stopDateTimeStr);
+
+                readStationTime(startUtcDateTime, stopUtcDateTime);
                 stationFileTypes.push_back(1);
             }
         }
@@ -673,15 +684,12 @@ void PointInitializationInput::pointInitializationSelectAllButtonClicked()
     selectionModel->select(selection, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
 }
 
-void PointInitializationInput::readStationTime(QString startDateTimeStr, QString stopDateTimeStr)
+void PointInitializationInput::readStationTime(QDateTime startUtcDateTime, QDateTime stopUtcDateTime)
 {
     QTimeZone timeZone(ui->timeZoneComboBox->currentText().toUtf8());
 
-    QDateTime startUtcDateTime = QDateTime::fromString(startDateTimeStr, Qt::ISODate);
-    QDateTime stopUtcDateTime  = QDateTime::fromString( stopDateTimeStr, Qt::ISODate);
-
     QDateTime startLocalDateTime = startUtcDateTime.toTimeZone(timeZone);
-    QDateTime stopLocalDateTime  =  stopUtcDateTime.toTimeZone(timeZone);
+    QDateTime stopLocalDateTime =  stopUtcDateTime.toTimeZone(timeZone);
 
     if(minStationLocalDateTime.isNull() || startLocalDateTime < minStationLocalDateTime)
     {

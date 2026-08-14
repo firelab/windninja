@@ -116,7 +116,7 @@ private:
                            QString outputPath);
     void fetchStationDataFinished();
     bool readTimeSeries(QModelIndex row);
-    void readStationTime(QString startDateTimeStr, QString stopDateTimeStr);
+    void readStationTime(QDateTime startUtcDateTime, QDateTime stopUtcDateTime);
     void updateTimeSteps();
 };
 
