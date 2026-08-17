@@ -551,11 +551,11 @@ Note that VTK files are not available for the momentum solver.
 
 \subsection{Map Visualization Files}
 
-As of 4.0.0, Map Visualization output files are used to display output wind vectors on the interactive map.  
+As of version 4.0.0, Map Visualization output files are used to display WindNinja simulation output on the interactive map.  
 These are created specially for WindNinja and do not have another known program to display them.
 
-The output setting is always on for a given simulation, since once a simulation is finished, they are automatically loaded to the map. 
-For adjusting output settings, Map Visualization files have the same customization as Google Earth files (see section \ref{Google Earth}).
+This output is always on for any simulation, since once the simulation is finished, the outputs are automatically rendered on the map. 
+For adjusting the outputs, Map Visualization files have the same customization options as Google Earth files (see section \ref{Google Earth}).
 
 \section{Solve}
 
@@ -576,6 +576,7 @@ Finally, left-click the \say{Solve} button to start the simulation(s).}
 
 A progress window will open that displays how far along the simulation is. Simulation time varies and may take a few minutes.   
 When the simulation is done, the outputs will be automatically loaded onto the interactive map.
+The progress dialog will notify you that rendering is completed. 
 
 \textbf{\color{red} Click \say{Close} in the progress window.}
 
@@ -585,16 +586,51 @@ When the simulation is done, the outputs will be automatically loaded onto the i
 	\includegraphics[scale=0.50]{basics8.png}
 \end{figure}
 
+If the simulation contains 5 or more Map Visualization output files, you are notified that only the last 5 simulations will be loaded. 
+This ensures fast render times and minimal preformance issues. 
+
+\begin{figure}[H]
+	\label{}
+	\centering
+	\includegraphics[scale=0.50]{basics9.png}
+\end{figure}
+
 The simulations are complete!  
 The output files can be found in the folder where your elevation file is.  
 For your convenience, a button on the solve input panel called \say{Open Output Files Path} can be clicked to open your file browser in the folder where the output files were written.
+Additionally, outputs can be viewed on the interactive map. 
 
 \textbf{\color{red} Left-click the \say{Open Output Files Path} button to see the output files that were written.}
 
 \begin{figure}[H]
 	\label{}
 	\centering
-	\includegraphics[scale=0.40]{basics9.png}
+	\includegraphics[scale=0.40]{basics10.png}
+\end{figure}
+
+\section{Viewing WindNinja Outputs}
+There are a few features available using the interactive map. 
+
+\begin{enumerate}
+\item Center button to recenter the map on the outputs.
+\item A layer button to select different simulation files, base map layers, and overlays. 
+\item A add layer button to add more outputs not rendered after simulation, or that were created from a prior simulation. 
+\item A clear button to remove all simulation outputs currently loaded. 
+\end{enumerate}
+
+\begin{figure}[H]
+	\label{}
+	\centering
+	\includegraphics[scale=0.40]{basics11.png}
+\end{figure}
+
+When adding additional layers to the map, you can select as many as you want. 
+However, a warning will pop up for 5 or more outputs, notifying that loading many simulation files can cause preformance issues. 
+
+\begin{figure}[H]
+	\label{}
+	\centering
+	\includegraphics[scale=0.50]{basics12.png}
 \end{figure}
 
 This concludes \textbf{WindNinja Tutorial 1: The Basics}.  
