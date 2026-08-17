@@ -2,15 +2,13 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  8
+    \\  /    A nd           | Version:  9
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
     format      ascii;
     class       pointVectorField;
-    location    "0";
     object      pointMotionU;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -33,6 +31,7 @@ boundaryField
         value           uniform (0 0 0);
 
         // Clip displacement to surface by max deltaT*velocity.
+        // speed cap to step the mesh down incrementally over the mesh movement timesteps
         velocity            ($vx$ $vy$ $vz$);
 
         geometry
@@ -43,45 +42,18 @@ boundaryField
             }
         };
 
-        // Find projection with surface:
-        //     fixedNormal : intersections along prespecified direction
-        //     pointNormal : intersections along current pointNormal of patch
-        //     nearest     : nearest point on surface
-        // Other
+        // force points to look straight down (Z) to find intersection points,
+        // preventing cells from snapping sideways on steep slopes
         projectMode fixedNormal;
-
-        // if fixedNormal : normal
         projectDirection (0 0 1);
 
-        //- -1 or component to knock out before doing projection
+        // use -1 for full 3D cases, values of 0, 1, and 2 specifies
+        // an axis to lock out for a 2D axis-symmetric wedge case
         wedgePlane      -1;
-
-        //- Points that should remain fixed
-        // frozenPointsZone fixedPointsZone;
     }
 
-//    minZ
-//    {
-//        type            surfaceSlipDisplacement;
-//        geometry
-//        {
-//            hellskull.stl
-//            {
-//                type triSurfaceMesh;
-//            }
-//        };
-//
-//        followMode fixedNormal;
-//
-//        projectDirection (0 0 1);
-//
-//        //- -1 or component to knock out before doing projection
-//        wedgePlane      -1;
-//
-//        //- Points that should remain fixed
-//        // frozenPointsZone fixedPointsZone;
-//    }
-
+    // type fixedNormalSlip with the current orientation instead of uniformFixedValue
+    // allows points to slide up/down vertically, while keeping them locked tightly to the domain boundaries
     east_face
     {
         type            fixedNormalSlip;
@@ -106,6 +78,5 @@ boundaryField
         n               (0 1 0);
     }
 }
-
 
 // ************************************************************************* //

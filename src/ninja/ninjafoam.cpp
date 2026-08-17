@@ -626,38 +626,38 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         if(gammavalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericTypeVal.tmp");
-            } else if ( foamVersion == "9" ) {
+            } else if ( foamVersion == "11" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", "genericTypeVal.tmp");
+            } else {  // if ( foamVersion == "9" )
                 pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericTypeVal.tmp");
-            } else {
-                pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericTypeVal.tmp");
             }
         }
         else if(inletoutletvalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType.tmp");
-            } else if ( foamVersion == "9" ) {
+            } else if ( foamVersion == "11" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", "genericType.tmp");
+            } else {  // if ( foamVersion == "9" )
                 pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericType.tmp");
-            } else {
-                pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType.tmp");
             }
         }
         else{
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType-kep.tmp");
-            } else if ( foamVersion == "9" ) {
+            } else if ( foamVersion == "11" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", "genericType-kep.tmp");
+            } else {  // if ( foamVersion == "9" )
                 pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", "genericType-kep.tmp");
-            } else {
-                pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", "genericType-kep.tmp");
             }
         }
     }
     else{
         if ( foamVersion == "2.2.0" ) {
             pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", template_.c_str());
-        } else if ( foamVersion == "9" ) {
+        } else if ( foamVersion == "11" ) {
+            pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", template_.c_str());
+        } else {  // if ( foamVersion == "9" )
             pszPathToFile = CPLSPrintf("ninjafoam/9/0/%s", template_.c_str());
-        } else {
-            pszPathToFile = CPLSPrintf("ninjafoam/8/0/%s", template_.c_str());
         }
     }
 
@@ -848,10 +848,10 @@ void NinjaFoam::WriteFoamFiles()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
-    } else if ( foamVersion == "9" ) {
+    } else if ( foamVersion == "11" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
+    } else {  // if ( foamVersion == "9" )
         pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
-    } else {
-        pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
     //papszFileList = VSIReadDirRecursive( pszArchive );
     papszFileList = NinjaVSIReadDirRecursive( pszArchive );
@@ -878,10 +878,10 @@ void NinjaFoam::WriteFoamFiles()
             pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
             if ( foamVersion == "2.2.0" ) {
                 pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
-            } else if ( foamVersion == "9" ) {
+            } else if ( foamVersion == "11" ) {
+                pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
+            } else {  // if ( foamVersion == "9" )
                 pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
-            } else {
-                pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
             }
             
             pszInput = CPLFormFilename(pszArchive, osFullPath.c_str(), "");
@@ -1208,16 +1208,16 @@ void NinjaFoam::writeBlockMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
-    } else if ( foamVersion == "9" ) {
+    } else if ( foamVersion == "11" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
+    } else {  // if ( foamVersion == "9" )
         pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
-    } else {
-        pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
 
-    if( foamVersion == "9" ) {
+    if( foamVersion == "9" || foamVersion == "11" ) {
         pszInput = CPLFormFilename(pszArchive, "system/blockMeshDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/blockMeshDict", "");
-    } else {
+    } else {  // if ( foamVersion == "2.2.0" )
         pszInput = CPLFormFilename(pszArchive, "constant/polyMesh/blockMeshDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "constant/polyMesh/blockMeshDict", "");
     }
@@ -1299,10 +1299,10 @@ void NinjaFoam::writeMoveDynamicMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
-    } else if ( foamVersion == "9" ) {
+    } else if ( foamVersion == "11" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
+    } else {  // if ( foamVersion == "9" )
         pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
-    } else {
-        pszArchive = CPLSPrintf("%s/ninjafoam/8", pszPath);
     }
 
     pszInput = CPLFormFilename(pszArchive, "0/pointDisplacement", "");
@@ -1478,8 +1478,26 @@ void NinjaFoam::MoveDynamicMesh()
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
 
             sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+        else if ( foamVersion == "11" )
+        {
+            const char *const papszArgv[] = { "mpiexec",
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",
+                                      "foamRun",
+                                      "-solver",
+                                      "movingMesh",
+                                      "-case",
+                                      pszFoamPath,
+                                      "-parallel",
+                                      NULL };
 
-        } else
+            input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
+
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+        else  // if ( foamVersion == "9" )
         {
             const char *const papszArgv[] = { "mpiexec",
                                       "-np",
@@ -1494,7 +1512,6 @@ void NinjaFoam::MoveDynamicMesh()
             input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running moveDynamicMesh...");
 
             sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
-
         }
 #endif
 
@@ -1536,17 +1553,33 @@ void NinjaFoam::MoveDynamicMesh()
     }
 
     else{ // single processor
+
         //re-write controlDict for moveDynamicMesh
         pszInput = CPLFormFilename(pszFoamPath, "system/controlDict_moveDynamicMesh", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/controlDict", "");
         CopyFile(pszInput, pszOutput);
 
-        const char *const papszArgv[] = { "moveDynamicMesh",
-                                          "-case",
-                                          pszFoamPath,
-                                          NULL };
-        
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPLSpawnedProcess *sp;
+
+        if( foamVersion == "11" )
+        {
+            const char *const papszArgv[] = { "foamRun",
+                                              "-solver",
+                                              "movingMesh",
+                                              "-case",
+                                              pszFoamPath,
+                                              NULL };
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+        else  // if( foamVersion == "2.2.0" || foamVersion == "9" )
+        {
+            const char *const papszArgv[] = { "moveDynamicMesh",
+                                              "-case",
+                                              pszFoamPath,
+                                              NULL };
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         char data[PIPE_BUFFER_SIZE + 1];
@@ -1604,7 +1637,7 @@ void NinjaFoam::RefineSurfaceLayer()
     const char *pszInput;
     const char *pszOutput;
     
-    //write topoSetDict
+    //write/edit topoSetDict
     pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
     pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
 
@@ -1623,13 +1656,15 @@ void NinjaFoam::RefineSurfaceLayer()
     /*  refine in all 3 directions                  */
     /*----------------------------------------------*/
     
-    //write refineMeshDict for 3-D
-    pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict_xyz", "");
-    pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
-    CopyFile(pszInput, pszOutput);
-    
-    pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
-    pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
+    //write/edit refineMeshDict
+    if( foamVersion == "2.2.0" )
+    {
+        pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict_xyz", "");
+        pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
+        CopyFile(pszInput, pszOutput);
+    }
+    //pszInput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
+    //pszOutput = CPLFormFilename(pszFoamPath, "system/refineMeshDict", "");
     
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "(refineMesh) 10%% complete...");
 
@@ -1718,7 +1753,7 @@ void NinjaFoam::TopoSet()
 {
     int nRet = -1;
     
-    if( foamVersion == "9" )
+    if( foamVersion == "9" || foamVersion == "11" )
     {
         const char *const papszArgv[] = { "topoSet",
                                         "-case",
@@ -1733,7 +1768,8 @@ void NinjaFoam::TopoSet()
             throw std::runtime_error("Error during topoSet().");
 
         VSIFCloseL(fout);
-    } else
+    }
+    else  // if( foamVersion == "2.2.0" )
     {
         const char *const papszArgv[] = { "topoSet",
                                         "-case",
@@ -1757,7 +1793,7 @@ void NinjaFoam::RefineMesh()
 {
     int nRet = -1;
     
-    if ( foamVersion == "9" )
+    if( foamVersion == "9" || foamVersion == "11" )
     {
         const char *const papszArgv[] = { "refineMesh",
                                         "-case",
@@ -1771,7 +1807,8 @@ void NinjaFoam::RefineMesh()
             throw std::runtime_error("Error during refineMesh().");
 
         VSIFCloseL(fout);
-    } else
+    }
+    else  // if( foamVersion == "2.2.0" )
     {
         const char *const papszArgv[] = { "refineMesh",
                                         "-case",
@@ -1868,6 +1905,17 @@ void NinjaFoam::RenumberMesh()
 
 void NinjaFoam::ApplyInit()
 {
+    if( foamVersion == "11" )
+    {
+        const char *pszInput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict", "");
+        const char *pszOutput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict__moveDynamicMesh", "");
+        int nRet = VSIRename(pszInput, pszOutput);
+        if(nRet != 0)
+        {
+            throw std::runtime_error("Error during applyInit mv of /constant/dynamicMeshDict to /constant/dynamicMeshDict__moveDynamicMesh.");
+        }
+    }
+
     int nRet = -1;
 
     const char *const papszArgv[] = { "applyInit", 
@@ -1921,7 +1969,23 @@ bool NinjaFoam::SimpleFoam()
                                       "-parallel",
                                        NULL };
             sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
-        } else
+        }
+        else if ( foamVersion == "11" )
+        {
+            const char *const papszArgv[] = { "mpiexec",
+                                      "-np",
+                                      CPLSPrintf("%d", input.numberCPUs),
+                                      "--allow-run-as-root",
+                                      "foamRun",
+                                      "-solver",
+                                      "incompressibleFluid",
+                                      "-case",
+                                      pszFoamPath,
+                                      "-parallel",
+                                       NULL };
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+        else  // if( foamVersion == "9" )
         {
             const char *const papszArgv[] = { "mpiexec",
                                       "-np",
@@ -1967,12 +2031,30 @@ bool NinjaFoam::SimpleFoam()
         }
     }
     else{
-        const char *const papszArgv[] = { "simpleFoam",
-                                       "-case",
-                                       pszFoamPath,
-                                       NULL };
 
-        CPLSpawnedProcess *sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        CPLSpawnedProcess *sp;
+
+        if( foamVersion == "11" )
+        {
+            const char *const papszArgv[] = { "foamRun",
+                                           "-solver",
+                                           "incompressibleFluid",
+                                           "-case",
+                                           pszFoamPath,
+                                           NULL };
+
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+        else  // if( foamVersion == "2.2.0" || foamVersion == "9" )
+        {
+            const char *const papszArgv[] = { "simpleFoam",
+                                           "-case",
+                                           pszFoamPath,
+                                           NULL };
+
+            sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
+        }
+
         CPL_FILE_HANDLE out_child = CPLSpawnAsyncGetInputFileHandle(sp);
 
         while(CPLPipeRead(out_child, &data, sizeof(data)-1)){
@@ -2019,35 +2101,81 @@ void NinjaFoam::Sample()
     
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.sample", ""), "w");
     
-    if ( foamVersion == "2.2.0" ) {
-        
-        const char *const papszArgv[] = { "sample", 
+    if( foamVersion == "2.2.0" )
+    {
+        const char *const papszArgv[] = { "sample",
                                           "-case",
                                           pszFoamPath,
-                                          "-latestTime", 
+                                          "-latestTime",
                                           NULL };
-        
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-        
-    } else {
-        
-        const char *const papszArgv[] = { "simpleFoam", 
+    }
+    else if( foamVersion == "11" )
+    {
+        const char *const papszArgv[] = { "foamPostProcess",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-func",
+                                          "surfaces",
+                                          "-latestTime",
+                                          NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else  // if( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "simpleFoam",
                                           "-case",
                                           pszFoamPath,
                                           "-postProcess",
                                           "-func",
                                           "surfaces",
-                                          "-latestTime", 
+                                          "-latestTime",
                                           NULL };
-        
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-        
     }
 
     if(nRet != 0)
         throw std::runtime_error("Error during sample().");
 
     VSIFCloseL(fout);
+}
+
+std::string NinjaFoam::sanitizeOutputLine(const std::string& line)
+{
+    std::string cleanedLine;
+
+    bool previousCharWasWhitespace = false;
+    bool wroteCharValue = false;
+
+    for(size_t charIdx = 0; charIdx < line.length(); charIdx++)
+    {
+        char current_char = line[charIdx];
+
+        if(current_char == '#')
+        {
+            // skip comment chars
+            continue;
+        }
+
+        //if(std::isspace(static_cast<unsigned char>(current_char)))
+        if(current_char == ' ' || current_char == '\t' || current_char == '\n')
+        {
+            previousCharWasWhitespace = true;
+            continue;
+        }
+
+        if(previousCharWasWhitespace && wroteCharValue)
+        {
+            cleanedLine += ",";
+        }
+
+        cleanedLine += current_char;
+
+        wroteCharValue = true;
+        previousCharWasWhitespace = false;
+    }
+
+    return cleanedLine;
 }
 
 /*
@@ -2090,15 +2218,16 @@ int NinjaFoam::SanitizeOutput()
     char **papszOutputSurfacePath;
     papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
 
-    for(int i = 0; i < CSLCount( papszOutputSurfacePath ); i++){
-        if(std::string(papszOutputSurfacePath[i]) != "." &&
-           std::string(papszOutputSurfacePath[i]) != "..") {
-            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw", 
-                        pszFoamPath, 
-                        papszOutputSurfacePath[i]), "r");
-            fin2 = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw", 
-                        pszFoamPath, 
-                        papszOutputSurfacePath[i]), "r");
+    for(int i = 0; i < CSLCount(papszOutputSurfacePath); i++)
+    {
+        if(std::string(papszOutputSurfacePath[i]) != "." && std::string(papszOutputSurfacePath[i]) != "..")
+        {
+            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/U_triSurfaceSampling.raw",
+                           pszFoamPath,
+                           papszOutputSurfacePath[i]), "r");
+            fin2 = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/k_triSurfaceSampling.raw",
+                            pszFoamPath,
+                            papszOutputSurfacePath[i]), "r");
             break;
         }
     }
@@ -2183,6 +2312,108 @@ int NinjaFoam::SanitizeOutput()
     CSLDestroy( papszOutputSurfacePath );
     VSIFClose( fin );
     VSIFClose( fin2 );
+    VSIFCloseL( fout );
+
+    return NINJA_SUCCESS;
+}
+
+int NinjaFoam::SanitizeOutput_foam10()
+{
+    /*
+    ** Note that fin is a normal FILE used with VSI*, not VSI*L.  This is for
+    ** the VSIFGets functions.
+    */
+    FILE *fin;
+    VSILFILE *fout, *fvrt;
+    char buf[512];
+    int rc;
+    const char *pszVrtFile;
+    const char *pszVrt;
+    const char *pszMem;
+    std::string s;
+
+    /*-------------------------------------------------------------------*/
+    /* sanitize the u, v, and k output                                       */
+    /*-------------------------------------------------------------------*/
+    pszMem = CPLSPrintf("%s/output.raw", pszFoamPath);
+    /* This is a member, hold on to it so we can read it later */
+    pszVrtMem = CPLStrdup(CPLSPrintf("%s/output.vrt", pszFoamPath));
+
+    char **papszOutputSurfacePath;
+    papszOutputSurfacePath = VSIReadDir(CPLSPrintf("%s/postProcessing/surfaces/", pszFoamPath));
+
+    for(int i = 0; i < CSLCount(papszOutputSurfacePath); i++)
+    {
+        if(std::string(papszOutputSurfacePath[i]) != "." && std::string(papszOutputSurfacePath[i]) != "..")
+        {
+            fin = VSIFOpen(CPLSPrintf("%s/postProcessing/surfaces/%s/triSurfaceSampling.xy",
+                           pszFoamPath,
+                           papszOutputSurfacePath[i]), "r");
+            break;
+        }
+    }
+
+    fout = VSIFOpenL( pszMem, "w" );
+    fvrt = VSIFOpenL( pszVrtMem, "w" );
+    if( !fin )
+    {
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output file for " \
+                                                "reading." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fout )
+    {
+        VSIFClose( fin );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open output.raw file for " \
+                                                "writing." );
+        return NINJA_E_FILE_IO;
+    }
+    if( !fvrt )
+    {
+        VSIFClose( fin );
+        VSIFCloseL( fout );
+        CPLError( CE_Failure, CPLE_AppDefined, "Failed to open vrt file for " \
+                                                "writing." );
+        return NINJA_E_FILE_IO;
+    }
+    pszVrtFile = CPLSPrintf( "CSV:%s", pszMem );
+
+    pszVrt = CPLSPrintf( NINJA_FOAM_OGR_VRT, "output", pszVrtFile, "output" );
+
+    VSIFWriteL( pszVrt, strlen( pszVrt ), 1, fvrt );
+    VSIFCloseL( fvrt );
+    buf[0] = '\0';
+    /*
+    ** eat the first line
+    */
+    //VSIFGets( buf, 512, fin );  // only 1 line this time, and it is the header, no need to eat the first line this time, just extra work to fix the header
+    /*
+    ** fix the header
+    */
+    VSIFGets( buf, 512, fin );
+    buf[ strcspn( buf, "\n" ) ] = '\0';
+
+    s = buf;
+    s = sanitizeOutputLine(s);
+    ReplaceKeys( s, "point_x", "x", 1 );
+    ReplaceKeys( s, "point_y", "y", 1 );
+    ReplaceKeys( s, "point_z", "z", 1 );
+    s = s + "\n";
+
+    VSIFWriteL( s.c_str(), s.size(), 1, fout );
+    /*
+    ** sanitize the data.
+    */
+    while( VSIFGets( buf, 512, fin ) != NULL )
+    {
+        buf[ strcspn( buf, "\n" ) ] = '\0';
+        s = buf;
+        s = sanitizeOutputLine(s);
+        s = s + "\n";
+        VSIFWriteL( s.c_str(), s.size(), 1, fout );
+    }
+
+    VSIFClose( fin );
     VSIFCloseL( fout );
 
     return NINJA_SUCCESS;
@@ -2468,7 +2699,14 @@ bool NinjaFoam::SampleRawOutput()
 
     AsciiGrid<double> foamU, foamV;
     int rc;
-    rc = SanitizeOutput();
+    if( foamVersion == "11" )
+    {
+        SanitizeOutput_foam10();
+    }
+    else  // if( foamVersion == "2.2.0" || foamVersion == "9" )
+    {
+        rc = SanitizeOutput();
+    }
 
     rc = SampleCloudGrid();
     //rc = SampleCloud();
@@ -2564,28 +2802,29 @@ bool NinjaFoam::SampleRawOutput()
 
 void NinjaFoam::generateMassMesh()
 {
-    
     massMesh.buildStandardMesh(input);
-    
-    
+
     writeProbeSampleFile( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers );
-    
+
     runProbeSample();
-    
-    
+
     massMesh_u.allocate(&massMesh);
     massMesh_v.allocate(&massMesh);
     massMesh_w.allocate(&massMesh);
-    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w );
-    
-    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w );
-    
-    
     massMesh_k.allocate(&massMesh);
-    readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_k );
-    
+
+    if( foamVersion == "11" )
+    {
+        readInProbeData_foam10( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w, massMesh_k );
+    }
+    else  // if( foamVersion == "2.2.0" || foamVersion == "9" )
+    {
+        readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w );
+        readInProbeData( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_k );
+    }
+
+    fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w );
     fillEmptyProbeVals( massMesh.ZORD, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_k );
-    
 }
 
 void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
@@ -2594,127 +2833,83 @@ void NinjaFoam::writeProbeSampleFile( const wn_3dArray& x, const wn_3dArray& y, 
 {
     CPLDebug("NINJAFOAM", "writing probes sample file");
     
-    const char *probes_filename;
-    if ( foamVersion == "2.2.0" ) {
-        probes_filename = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
-    } else {
-        probes_filename = CPLFormFilename(pszFoamPath, "system/probes", "");
-    }
-    
-    FILE *fout;
-    
-    fout = fopen(probes_filename, "w");
-    if( fout == NULL )
-        throw std::runtime_error("probes_filename cannot be opened for writing.");
-    
-    // Write header stuff
-    if ( foamVersion == "2.2.0" ) {
-        
-        fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
-        fprintf(fout, "| =========                 |                                                 |\n");
-        fprintf(fout, "| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |\n");
-        fprintf(fout, "|  \\\\    /   O peration     | Version:  2.2.0                                 |\n");
-        fprintf(fout, "|   \\\\  /    A nd           | Web:      www.OpenFOAM.org                      |\n");
-        fprintf(fout, "|    \\\\/     M anipulation  |                                                 |\n");
-        fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
-        fprintf(fout, "FoamFile\n");
-        fprintf(fout, "{\n");
-        fprintf(fout, "    version     2.0;\n");
-        fprintf(fout, "    format      ascii;\n");
-        fprintf(fout, "    class       dictionary;\n");
-        fprintf(fout, "    object      sampleDict;\n");
-        fprintf(fout, "}\n");
-        fprintf(fout, "// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\n");
-        fprintf(fout, "// run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
-        fprintf(fout, "//  sample -latestTime\n");
-        
-    } else {
-        
-        fprintf(fout, "/*--------------------------------*- C++ -*----------------------------------*\\\n");
-        fprintf(fout, "  =========                 |\n");
-        fprintf(fout, "  \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox\n");
-        fprintf(fout, "   \\\\    /   O peration     | Website:  https://openfoam.org\n");
-        fprintf(fout, "    \\\\  /    A nd           | Version:  8\n");
-        fprintf(fout, "     \\\\/     M anipulation  |\n");
-        fprintf(fout, "-------------------------------------------------------------------------------\n");
-        fprintf(fout, "Description\n");
-        fprintf(fout, "    Writes out values of fields interpolated to a specified list of points.\n");
-        fprintf(fout, "    \n");
-        fprintf(fout, "    Found this in /opt/openfoam8/etc/caseDicts/postProcessing/probes/\n");
-        fprintf(fout, "    I was originally going to try to use probes and probes.cfg, of type \"probe\", but that wouldn't do interpolation, \n");
-        fprintf(fout, "    so this file came from combining the internalProbes and internalProbes.cfg files, which are of type \"sets\", \n");
-        fprintf(fout, "    which does the interpolation to the desired points\n");
-        fprintf(fout, "    Looks like the base code for this \"points\" set of type \"sets\" is within /opt/openfoam8/src/sampling/sampledSet/points/\n");
-        fprintf(fout, "    \n");
-        fprintf(fout, "    run this sample file for the latest time on a case that was run using the simpleFoam solver with the following command:\n");
-        fprintf(fout, "    simpleFoam -postProcess -func probes -latestTime\n");
-        fprintf(fout, "    \n");
-        fprintf(fout, "\\*---------------------------------------------------------------------------*/\n");
-        
-    }
-    
-    // Write file contents
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "// choice of variables\n");
-    fprintf(fout, "fields  (%s %s);\n", "U", "k");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "// Sampling and I/O settings\n");
-    fprintf(fout, "interpolationScheme cellPoint;\n");
-    fprintf(fout, "setFormat  raw;\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "type            sets;\n");
-    if ( foamVersion != "2.2.0" ) {
-        fprintf(fout, "libs            (\"libsampling.so\");\n");
-    }
-    fprintf(fout, "\n");
-    fprintf(fout, "writeControl    writeTime;\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "// list of probe points for windninja mass solver case\n");
-    fprintf(fout, "// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
-    fprintf(fout, "points\n");
-    fprintf(fout, "(\n");
-    
-    for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+    std::string probes_file;
+    if(foamVersion == "2.2.0")
     {
-        for(int rowIdx=0; rowIdx<nrows; rowIdx++)
+        probes_file = CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "");
+    }
+    else
+    {
+        probes_file = CPLFormFilename(pszFoamPath, "system/probes", "");
+    }
+
+    VSILFILE *fin = VSIFOpenL(probes_file.c_str(), "r");
+    if(fin == NULL)
+    {
+        throw std::runtime_error("probes_file cannot be opened for reading.");
+    }
+
+    char *data;
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+    VSIRewindL(fin);
+
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+    std::string s(data);
+    CPLFree(data);
+    VSIFCloseL(fin);
+
+    std::string key = "$points$";
+    size_t keyPos = s.find(key);
+    if(keyPos == std::string::npos)
+    {
+        throw std::runtime_error("key '$points$' not found inside probes_file.");
+    }
+    std::string partBefore = s.substr(0, keyPos);
+    std::string partAfter  = s.substr(keyPos + key.length());
+
+    std::string indentStr = "";
+    size_t lastLinePos = partBefore.rfind("\n");
+    if(lastLinePos != std::string::npos)
+    {
+        indentStr = partBefore.substr(lastLinePos+1);
+        partBefore = partBefore.substr(0, lastLinePos+1);
+    }
+
+    size_t nextLinePos = partAfter.find("\n");
+    if(nextLinePos != std::string::npos)
+    {
+        partAfter = partAfter.substr(nextLinePos+1);
+    }
+
+    VSILFILE *fout = VSIFOpenL(probes_file.c_str(), "w");
+    if(fout == NULL)
+    {
+        throw std::runtime_error("probes_file cannot be opened for writing.");
+    }
+
+    VSIFWriteL(partBefore.c_str(), partBefore.length(), 1, fout);
+
+    VSIFPrintfL(fout, "%s// list of probe points for windninja mass solver case\n", indentStr.c_str());
+    VSIFPrintfL(fout, "%s// nrows = %i, ncols = %i, nlayers = %i, xllCorner = %0.20f, yllCorner = %0.20f\n", indentStr.c_str(), nrows, ncols, nlayers, dem_xllCorner, dem_yllCorner);
+    for(int layerIdx = 0; layerIdx < nlayers; layerIdx++)
+    {
+        for(int rowIdx = 0; rowIdx < nrows; rowIdx++)
         {
-            for(int colIdx=0; colIdx<ncols; colIdx++)
+            for(int colIdx = 0; colIdx < ncols; colIdx++)
             {
                 int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
-                fprintf( fout, "    (%0.20lf %0.20lf %0.20lf)\n",  x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx)  );
+                VSIFPrintfL(fout, "%s(%0.20lf %0.20lf %0.20lf)\n", indentStr.c_str(), x(ptIdx)+dem_xllCorner, y(ptIdx)+dem_yllCorner, z(ptIdx));
             }
         }
     }
-    
-    fprintf(fout, ");\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "sets\n");
-    fprintf(fout, "(\n");
-    fprintf(fout, "    points\n");
-    fprintf(fout, "    {\n");
-    if ( foamVersion == "2.2.0" ) {
-        fprintf(fout, "        type    cloud;\n");
-    } else {
-        fprintf(fout, "        type    points;\n");
-    }
-    fprintf(fout, "        axis    xyz;\n");
-    fprintf(fout, "        ordered no;\n");
-    fprintf(fout, "        points  $points;\n");
-    fprintf(fout, "    }\n");
-    fprintf(fout, ");\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "\n");
-    fprintf(fout, "// ************************************************************************* //\n");
-    
-    
-    fclose(fout);
-    
+
+    VSIFWriteL(partAfter.c_str(), partAfter.length(), 1, fout);
+
+    VSIFCloseL(fout);
 }
 
 void NinjaFoam::runProbeSample()
@@ -2737,8 +2932,8 @@ void NinjaFoam::runProbeSample()
         CPLSPrintf("timePrecision   %d", oldPrecisionVal),
         CPLSPrintf("timePrecision   %d", newPrecisionVal));
     
-    if ( foamVersion == "2.2.0" ) {
-        
+    if( foamVersion == "2.2.0" )
+    {
         // additional step to swap back and forth between sampleDicts
         const char *pszInput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
         const char *pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict_surfaces", "");
@@ -2747,10 +2942,10 @@ void NinjaFoam::runProbeSample()
         pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
         CopyFile(pszInput2, pszOutput2);
         
-        const char *const papszArgv[] = { "sample", 
+        const char *const papszArgv[] = { "sample",
                                           "-case",
                                           pszFoamPath,
-                                          "-latestTime", 
+                                          "-latestTime",
                                           NULL };
         
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
@@ -2759,22 +2954,33 @@ void NinjaFoam::runProbeSample()
         pszInput2 = CPLFormFilename(pszFoamPath, "system/sampleDict_surfaces", "");
         pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
         CopyFile(pszInput2, pszOutput2);
+    }
+    else if( foamVersion == "11" )
+    {
+        const char *const papszArgv[] = { "foamPostProcess",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-func",
+                                          "probes",
+                                          "-latestTime",
+                                          NULL };
         
-    } else {
-        
-        const char *const papszArgv[] = { "simpleFoam", 
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else  // if( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "simpleFoam",
                                           "-case",
                                           pszFoamPath,
                                           "-postProcess",
                                           "-func",
                                           "probes",
-                                          "-latestTime", 
+                                          "-latestTime",
                                           NULL };
         
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-        
     }
-    
+
     if(nRet != 0)
         throw std::runtime_error("Error during probeSample().");
     
@@ -2807,15 +3013,13 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     
     const char *probeSampleData_filename;
     const char *timeDir;
-    for(int i = 0; i < CSLCount( papszOutputProbeDataPath ); i++){
-        if(std::string(papszOutputProbeDataPath[i]) != "." &&
-           std::string(papszOutputProbeDataPath[i]) != "..") {
+    for(int i = 0; i < CSLCount(papszOutputProbeDataPath); i++)
+    {
+        if(std::string(papszOutputProbeDataPath[i]) != "." && std::string(papszOutputProbeDataPath[i]) != "..")
+        {
             timeDir = papszOutputProbeDataPath[i];
             probeSampleData_filename = CPLSPrintf("%s/postProcessing/%s/%s/points_U.xy", pszFoamPath, probesPostProcessDirname, timeDir);
             break;
-        }
-        else{
-            continue;
         }
     }
     
@@ -2872,48 +3076,19 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     
                 } else
                 {
-                    
                     std::string currentLine = probeSampleData_allLines.substr(startLinePos,endLinePos-startLinePos);
-                    
-                    // now that the current line is found, it is time to process the given line into data values
-                    int valStartSpot = 0;  // no white spaces or anything before the first value, which is x
-                    int valEndSpot = currentLine.find(" ",valStartSpot);  // man, I got lucky, turns out it was a space followed by a tab between each data value. If it were not always this consistently, would have needed to adjust this part and it would be a great pain
-                    std::string current_x_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find(" ",valStartSpot);
-                    std::string current_y_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find(" ",valStartSpot);
-                    std::string current_z_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find(" ",valStartSpot);
-                    std::string current_ux_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find(" ",valStartSpot);
-                    std::string current_uy_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find("\n",valStartSpot);  // goes to the end of the line, no whitespace after the value, still want to drop the \n part though
-                    std::string current_uz_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot-1); // -1 to drop the \n part
+
+                    currentLine = sanitizeOutputLine(currentLine);
+                    char **papszTokens = CSLTokenizeString2(currentLine.c_str(), ",", 0);
+
+                    std::string current_x_pt_str = std::string(papszTokens[0]);
+                    std::string current_y_pt_str = std::string(papszTokens[1]);
+                    std::string current_z_pt_str = std::string(papszTokens[2]);
+                    std::string current_ux_pt_str = std::string(papszTokens[3]);
+                    std::string current_uy_pt_str = std::string(papszTokens[4]);
+                    std::string current_uz_pt_str = std::string(papszTokens[5]);
+
+                    CSLDestroy(papszTokens);
                     
                     double current_x_pt = atof(current_x_pt_str.c_str());
                     double current_y_pt = atof(current_y_pt_str.c_str());
@@ -2977,15 +3152,13 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     
     const char *probeSampleData_filename;
     const char *timeDir;
-    for(int i = 0; i < CSLCount( papszOutputProbeDataPath ); i++){
-        if(std::string(papszOutputProbeDataPath[i]) != "." &&
-           std::string(papszOutputProbeDataPath[i]) != "..") {
+    for(int i = 0; i < CSLCount(papszOutputProbeDataPath); i++)
+    {
+        if(std::string(papszOutputProbeDataPath[i]) != "." && std::string(papszOutputProbeDataPath[i]) != "..")
+        {
             timeDir = papszOutputProbeDataPath[i];
             probeSampleData_filename = CPLSPrintf("%s/postProcessing/%s/%s/points_k.xy", pszFoamPath, probesPostProcessDirname, timeDir);
             break;
-        }
-        else{
-            continue;
         }
     }
     
@@ -3038,34 +3211,17 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
                     
                 } else
                 {
-                    
                     std::string currentLine = probeSampleData_allLines.substr(startLinePos,endLinePos-startLinePos);
-                    
-                    // now that the current line is found, it is time to process the given line into data values
-                    int valStartSpot = 0;  // no white spaces or anything before the first value, which is x
-                    int valEndSpot = currentLine.find(" ",valStartSpot);  // man, I got lucky, turns out it was a space followed by a tab between each data value. If it were not always this consistently, would have needed to adjust this part and it would be a great pain
-                    std::string current_x_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find(" ",valStartSpot);
-                    std::string current_y_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find(" ",valStartSpot);
-                    std::string current_z_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot);
-                    valStartSpot = valEndSpot + 1;  // increment to check the next spot
-                    // seems to have an additional unknown number of spaces between data points
-                    while ( currentLine.substr(valStartSpot,1) == " " || currentLine.substr(valStartSpot,1) == "\t" ) {
-                        valStartSpot = valStartSpot + 1;
-                    }
-                    valEndSpot = currentLine.find("\n",valStartSpot);  // goes to the end of the line, no whitespace after the value, still want to drop the \n part though
-                    std::string current_k_pt_str = currentLine.substr(valStartSpot,valEndSpot-valStartSpot-1); // -1 to drop the \n part
+
+                    currentLine = sanitizeOutputLine(currentLine);
+                    char **papszTokens = CSLTokenizeString2(currentLine.c_str(), ",", 0);
+
+                    std::string current_x_pt_str = std::string(papszTokens[0]);
+                    std::string current_y_pt_str = std::string(papszTokens[1]);
+                    std::string current_z_pt_str = std::string(papszTokens[2]);
+                    std::string current_k_pt_str = std::string(papszTokens[3]);
+
+                    CSLDestroy(papszTokens);
                     
                     double current_x_pt = atof(current_x_pt_str.c_str());
                     double current_y_pt = atof(current_y_pt_str.c_str());
@@ -3108,6 +3264,159 @@ void NinjaFoam::readInProbeData( const wn_3dArray& x, const wn_3dArray& y, const
     
 }
 
+void NinjaFoam::readInProbeData_foam10(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z,
+                                       const double dem_xllCorner, const double dem_yllCorner,
+                                       const int ncols, const int nrows, const int nlayers,
+                                       wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w,
+                                       wn_3dScalarField& k)
+{
+    CPLDebug("NINJAFOAM", "reading in probes sample data");
+
+    const char *probesPostProcessDirname = "probes";
+
+    // method from surfaces sampling, to find the time directory for the surfaces file
+    char **papszOutputProbeDataPath;
+    papszOutputProbeDataPath = VSIReadDir(CPLSPrintf("%s/postProcessing/%s/", pszFoamPath, probesPostProcessDirname));
+
+    const char *probeSampleData_filename;
+    const char *timeDir;
+    for(int i = 0; i < CSLCount(papszOutputProbeDataPath); i++)
+    {
+        if(std::string(papszOutputProbeDataPath[i]) != "." && std::string(papszOutputProbeDataPath[i]) != "..")
+        {
+            timeDir = papszOutputProbeDataPath[i];
+            probeSampleData_filename = CPLSPrintf("%s/postProcessing/%s/%s/points.xy", pszFoamPath, probesPostProcessDirname, timeDir);
+            break;
+        }
+    }
+
+
+    // read the full data file into a string separated by "\n" chars for each line
+    VSILFILE *fin;
+    fin = VSIFOpenL( probeSampleData_filename, "r" );
+
+    char *data;
+
+    vsi_l_offset offset;
+    VSIFSeekL(fin, 0, SEEK_END);
+    offset = VSIFTellL(fin);
+
+    VSIRewindL(fin);
+    data = (char*)CPLMalloc(offset * sizeof(char) + 1);
+    VSIFReadL(data, offset, 1, fin);
+    data[offset] = '\0';
+
+    std::string probeSampleData_allLines(data);
+
+    CPLFree(data);
+    VSIFCloseL( fin );
+
+
+    // now go through the data string line by line from where the probe data starts,
+    // comparing the probe data points with the mesh points to detect whether any data points were silently dropped for being outside the mesh
+    // filling any dropped probe data with NoData vals to be filled at later steps
+    double noDataVal = -9999;
+    int startLinePos = 0;  // data starts right at the first character of the file, so no need to set it by finding a specific spot/character in the file
+    int endLinePos;
+    // need to have it eat the first line, which is just header information, need to skip the first line
+    endLinePos = probeSampleData_allLines.find("\n",startLinePos+1);
+    startLinePos = endLinePos+1;
+    for(int layerIdx=0; layerIdx<nlayers; layerIdx++)
+    {
+        for(int rowIdx=0; rowIdx<nrows; rowIdx++)
+        {
+            for(int colIdx=0; colIdx<ncols; colIdx++)
+            {
+                int ptIdx = layerIdx*nrows*ncols + rowIdx*ncols + colIdx;
+
+                endLinePos = probeSampleData_allLines.find("\n",startLinePos+1);
+
+                //// .find() returns -1 when it can't find a value, and YES it lets it try for values past the length of the string with this as the return value. So this happens when EOF
+                if ( endLinePos == -1 )
+                {
+                    // EOF, so it's a data point that was quietly dropped during the sample process
+
+                    double current_ux_pt = noDataVal;
+                    double current_uy_pt = noDataVal;
+                    double current_uz_pt = noDataVal;
+                    double current_k_pt = noDataVal;
+
+                    u(ptIdx) = current_ux_pt;
+                    v(ptIdx) = current_uy_pt;
+                    w(ptIdx) = current_uz_pt;
+                    k(ptIdx) = current_k_pt;
+
+                } else
+                {
+                    std::string currentLine = probeSampleData_allLines.substr(startLinePos,endLinePos-startLinePos);
+
+                    while(currentLine == "\n")
+                    {
+                        startLinePos = endLinePos+1;
+                        endLinePos = probeSampleData_allLines.find("\n",startLinePos+1);
+                        currentLine = probeSampleData_allLines.substr(startLinePos,endLinePos-startLinePos);
+                    }
+
+                    currentLine = sanitizeOutputLine(currentLine);
+                    char **papszTokens = CSLTokenizeString2(currentLine.c_str(), ",", 0);
+
+                    std::string current_x_pt_str = std::string(papszTokens[0]);
+                    std::string current_y_pt_str = std::string(papszTokens[1]);
+                    std::string current_z_pt_str = std::string(papszTokens[2]);
+                    std::string current_ux_pt_str = std::string(papszTokens[3]);
+                    std::string current_uy_pt_str = std::string(papszTokens[4]);
+                    std::string current_uz_pt_str = std::string(papszTokens[5]);
+                    std::string current_k_pt_str = std::string(papszTokens[6]);
+
+                    CSLDestroy(papszTokens);
+
+                    double current_x_pt = atof(current_x_pt_str.c_str());
+                    double current_y_pt = atof(current_y_pt_str.c_str());
+                    double current_z_pt = atof(current_z_pt_str.c_str());
+                    double current_ux_pt = atof(current_ux_pt_str.c_str());
+                    double current_uy_pt = atof(current_uy_pt_str.c_str());
+                    double current_uz_pt = atof(current_uz_pt_str.c_str());
+                    double current_k_pt = atof(current_k_pt_str.c_str());
+
+
+                    // now to compare the found data points with the current mesh points,
+                    // if they match then can store the datapoint and increment to go to the next line of probe sample data,
+                    // otherwise OpenFOAM silently dropped the datapoint and NoDataVal needs stored instead, wait to go to the next line of probe sample data
+                    // need to add back in xllCorner, yllCorner to make the points consistent between the mesh points and the probe sample points
+                    double current_mesh_x_pt = x(ptIdx) + dem_xllCorner;
+                    double current_mesh_y_pt = y(ptIdx) + dem_yllCorner;
+                    double current_mesh_z_pt = z(ptIdx);
+                    double tol = 0.0001;
+                    if ( fabs(current_x_pt-current_mesh_x_pt) < tol && fabs(current_y_pt-current_mesh_y_pt) < tol && fabs(current_z_pt-current_mesh_z_pt) < tol )
+                    {
+                        // points match, it's a good data point in the right spot
+                        u(ptIdx) = current_ux_pt;
+                        v(ptIdx) = current_uy_pt;
+                        w(ptIdx) = current_uz_pt;
+                        k(ptIdx) = current_k_pt;
+
+                        startLinePos = endLinePos+1;  // found that the data of this line matched, so can finally move on to the next line
+
+                    } else
+                    {
+                        // it's a data point that was quietly dropped during the sample process
+                        double current_ux_pt = noDataVal;
+                        double current_uy_pt = noDataVal;
+                        double current_uz_pt = noDataVal;
+                        double current_k_pt = noDataVal;
+                        u(ptIdx) = current_ux_pt;
+                        v(ptIdx) = current_uy_pt;
+                        w(ptIdx) = current_uz_pt;
+                        k(ptIdx) = current_k_pt;
+                    }
+
+                }  // if ( endLinePos == -1 )  aka EOF check
+
+            }  // for colIdx 0 to ncols
+        }  // for rowIdx 0 to nrows
+    }  // for layerIdx 0 to nlayers
+
+}
 
 void NinjaFoam::fillEmptyProbeVals(const wn_3dArray& z, 
                                    const int ncols, const int nrows, const int nlayers, 
@@ -3999,10 +4308,10 @@ void NinjaFoam::UpdateExistingCase()
     //many files are overwritten by writeFoamFiles(), most with the same values replaced back in
     //make a tmp copy of those files overwritten by writeFoamFiles(), but where the values are not replaced back in
     std::string tmpPath = CPLGetPath(input.dem.fileName.c_str());
-    if( foamVersion == "9" ) {
+    if( foamVersion == "9" || foamVersion == "11" ) {
         CopyFile(CPLFormFilename(pszFoamPath,     "system/blockMeshDict", ""),
                  CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
-    } else {
+    } else {  // if( foamVersion == "2.2.0" )
         CopyFile(CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""),
                  CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
     }
@@ -4013,10 +4322,10 @@ void NinjaFoam::UpdateExistingCase()
     WriteFoamFiles();
 
     //put the tmp copy files back, delete the leftover tmp files from the tmp location
-    if( foamVersion == "9" ) {
+    if( foamVersion == "9" || foamVersion == "11" ) {
         CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
                  CPLFormFilename(pszFoamPath,     "system/blockMeshDict", ""));
-    } else {
+    } else {  // if( foamVersion == "2.2.0" )
         CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
                  CPLFormFilename(pszFoamPath,     "constant/polyMesh/blockMeshDict", ""));
     }
