@@ -7,13 +7,10 @@ sudo apt install -y pkg-config \
                     libboost-test-dev \
                     libshp-dev
 
-# Install qt6 libs
-# which also installs libgl-dev, libglx-dev, libopengl-dev instead of libgl1-mesa-dev
+# Install qt6 
 sudo apt install -y qt6-base-dev qt6-webengine-dev
 
 # Install GDAL
-# which also installs libnetcdf-dev, libproj-dev, libpoppler-dev,
-# libgeos-dev, libsqlite3-dev, libtiff-dev, libopenjp2-7-dev, libcurl4-gnutls-dev
 sudo apt install -y libgdal-dev
 
 # Install hwloc, for OpenFOAM
