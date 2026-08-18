@@ -176,7 +176,7 @@ Foam::logProfileTurbulentKineticEnergyInletFvPatchScalarField::
 logProfileTurbulentKineticEnergyInletFvPatchScalarField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF
+    const DimensionedField<scalar, fvMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(p, iF),
@@ -194,7 +194,7 @@ Foam::logProfileTurbulentKineticEnergyInletFvPatchScalarField::
 logProfileTurbulentKineticEnergyInletFvPatchScalarField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
+    const DimensionedField<scalar, fvMesh>& iF,
     const dictionary& dict
 )
 :
@@ -219,7 +219,7 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField
 (
     const logProfileTurbulentKineticEnergyInletFvPatchScalarField& ptf,
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
+    const DimensionedField<scalar, fvMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
@@ -258,7 +258,7 @@ Foam::logProfileTurbulentKineticEnergyInletFvPatchScalarField::
 logProfileTurbulentKineticEnergyInletFvPatchScalarField
 (
     const logProfileTurbulentKineticEnergyInletFvPatchScalarField& ptf,
-    const DimensionedField<scalar, volMesh>& iF
+    const DimensionedField<scalar, fvMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(ptf, iF),

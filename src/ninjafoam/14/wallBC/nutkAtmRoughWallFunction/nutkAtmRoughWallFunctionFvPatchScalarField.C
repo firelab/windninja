@@ -49,7 +49,7 @@ tmp<scalarField> nutkAtmRoughWallFunctionFvPatchScalarField::nut() const
                 internalField().group()
             )
         );
-    const scalarField& y = turbModel.y()[patchi];
+    const scalarField& y = turbModel.yb()[patchi];
     const tmp<volScalarField> tk = turbModel.k();
     const volScalarField& k = tk();
     const tmp<scalarField> tnuw = turbModel.nu(patchi);
@@ -91,7 +91,7 @@ tmp<scalarField> nutkAtmRoughWallFunctionFvPatchScalarField::nut() const
 nutkAtmRoughWallFunctionFvPatchScalarField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF
+    const DimensionedField<scalar, fvMesh>& iF
 )
 :
     nutkWallFunctionFvPatchScalarField(p, iF),
@@ -104,7 +104,7 @@ nutkAtmRoughWallFunctionFvPatchScalarField
 (
     const nutkAtmRoughWallFunctionFvPatchScalarField& ptf,
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
+    const DimensionedField<scalar, fvMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
@@ -117,7 +117,7 @@ nutkAtmRoughWallFunctionFvPatchScalarField::
 nutkAtmRoughWallFunctionFvPatchScalarField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
+    const DimensionedField<scalar, fvMesh>& iF,
     const dictionary& dict
 )
 :
@@ -141,7 +141,7 @@ nutkAtmRoughWallFunctionFvPatchScalarField::
 nutkAtmRoughWallFunctionFvPatchScalarField
 (
     const nutkAtmRoughWallFunctionFvPatchScalarField& rwfpsf,
-    const DimensionedField<scalar, volMesh>& iF
+    const DimensionedField<scalar, fvMesh>& iF
 )
 :
     nutkWallFunctionFvPatchScalarField(rwfpsf, iF),

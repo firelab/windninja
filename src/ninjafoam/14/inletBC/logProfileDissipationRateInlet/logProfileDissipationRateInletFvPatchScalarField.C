@@ -177,7 +177,7 @@ Foam::logProfileDissipationRateInletFvPatchScalarField::
 logProfileDissipationRateInletFvPatchScalarField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF
+    const DimensionedField<scalar, fvMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(p, iF),
@@ -195,7 +195,7 @@ Foam::logProfileDissipationRateInletFvPatchScalarField::
 logProfileDissipationRateInletFvPatchScalarField
 (
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
+    const DimensionedField<scalar, fvMesh>& iF,
     const dictionary& dict
 )
 :
@@ -220,7 +220,7 @@ logProfileDissipationRateInletFvPatchScalarField
 (
     const logProfileDissipationRateInletFvPatchScalarField& ptf,
     const fvPatch& p,
-    const DimensionedField<scalar, volMesh>& iF,
+    const DimensionedField<scalar, fvMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
@@ -259,7 +259,7 @@ Foam::logProfileDissipationRateInletFvPatchScalarField::
 logProfileDissipationRateInletFvPatchScalarField
 (
     const logProfileDissipationRateInletFvPatchScalarField& ptf,
-    const DimensionedField<scalar, volMesh>& iF
+    const DimensionedField<scalar, fvMesh>& iF
 )
 :
     fixedValueFvPatchScalarField(ptf, iF),

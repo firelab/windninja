@@ -16,36 +16,35 @@ FoamFile
 // Cells to refine; name of cell set
 set refineCells;
 
-// Type of coordinate system:
-// - global : coordinate system same for every cell. Usually aligned with
-//   x,y,z axis. Specify in globalCoeffs section below.
-// - patchLocal : coordinate system different for every cell. Specify in
-//   patchLocalCoeffs section below.
-coordinateSystem global;
-//coordinateSystem patchLocal;
-
-// .. and its coefficients. x,y in this case. (normal (e3) direction is
-// calculated as e1^e2)
-globalCoeffs
+coordinates
 {
+    // Type of coordinate system:
+    // - global : coordinate system same for every cell. Usually aligned with
+    //   x,y,z axis. Specify in globalCoeffs section below.
+    // - patchLocal : coordinate system different for every cell. Specify in
+    //   patchLocalCoeffs section below.
+    type global;
+    //type patchLocal;
+
+    // .. and its coefficients. x,y in this case. (normal (e3) direction is
+    // calculated as e1^e2)
     e1 (1 0 0);
     e2 (0 1 0);
-}
 
-patchLocalCoeffs
-{
-    patch minZ;  // Normal direction is facenormal of zero'th face of patch
-    e1 (1 0 0);
-    e2 (0 1 0);
-}
+    // .. or for patchLocal
+    //patch minZ;  // Normal direction is facenormal of face 0 of patch
+    //e1 (0 1 0);
+    //e2 (0 0 1);
 
-// List of directions to refine, if global or patchLocal
-directions
-(
-    e1
-    e2
-    e3
-);
+
+    // List of directions to refine, if global or patchLocal
+    directions
+    (
+        e1
+        e2
+        e3
+    );
+}
 
 // Whether to use hex topology. This will
 // - if patchLocal: all cells on selected patch should be hex

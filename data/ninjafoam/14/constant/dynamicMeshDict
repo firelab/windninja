@@ -15,11 +15,10 @@ FoamFile
 
 mover
 {
-    type            motionSolver;
+    type            displacementSBRStress;
 
-    libs            ("libfvMeshMovers.so" "libfvMotionSolvers.so");
-
-    motionSolver    displacementSBRStress;
+    //libs            ("libfvMeshMovers.so" "libfvMotionSolvers.so");
+    libs            ("libfvMotionSolvers.so");
 
     diffusivity  quadratic inverseDistance 1(minZ);
 }

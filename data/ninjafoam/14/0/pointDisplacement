@@ -36,9 +36,10 @@ boundaryField
 
         geometry
         {
-            $stlName$.stl
+            terrain
             {
                 type triSurfaceMesh;
+                file "$stlName$.stl";
             }
         };
 

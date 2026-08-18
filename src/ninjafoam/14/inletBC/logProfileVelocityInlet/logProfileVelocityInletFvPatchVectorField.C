@@ -179,7 +179,7 @@ Foam::logProfileVelocityInletFvPatchVectorField::
 logProfileVelocityInletFvPatchVectorField
 (
     const fvPatch& p,
-    const DimensionedField<vector, volMesh>& iF
+    const DimensionedField<vector, fvMesh>& iF
 )
 :
     fixedValueFvPatchVectorField(p, iF),
@@ -197,7 +197,7 @@ Foam::logProfileVelocityInletFvPatchVectorField::
 logProfileVelocityInletFvPatchVectorField
 (
     const fvPatch& p,
-    const DimensionedField<vector, volMesh>& iF,
+    const DimensionedField<vector, fvMesh>& iF,
     const dictionary& dict
 )
 :
@@ -222,7 +222,7 @@ logProfileVelocityInletFvPatchVectorField
 (
     const logProfileVelocityInletFvPatchVectorField& ptf,
     const fvPatch& p,
-    const DimensionedField<vector, volMesh>& iF,
+    const DimensionedField<vector, fvMesh>& iF,
     const fvPatchFieldMapper& mapper
 )
 :
@@ -261,7 +261,7 @@ Foam::logProfileVelocityInletFvPatchVectorField::
 logProfileVelocityInletFvPatchVectorField
 (
     const logProfileVelocityInletFvPatchVectorField& ptf,
-    const DimensionedField<vector, volMesh>& iF
+    const DimensionedField<vector, fvMesh>& iF
 )
 :
     fixedValueFvPatchVectorField(ptf, iF),

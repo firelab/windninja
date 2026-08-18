@@ -626,6 +626,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         if(gammavalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericTypeVal.tmp");
+            } else if ( foamVersion == "14" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/14/0/%s", "genericTypeVal.tmp");
             } else if ( foamVersion == "11" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", "genericTypeVal.tmp");
             } else {  // if ( foamVersion == "9" )
@@ -635,6 +637,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         else if(inletoutletvalue != ""){
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType.tmp");
+            } else if ( foamVersion == "14" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/14/0/%s", "genericType.tmp");
             } else if ( foamVersion == "11" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", "genericType.tmp");
             } else {  // if ( foamVersion == "9" )
@@ -644,6 +648,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
         else{
             if ( foamVersion == "2.2.0" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", "genericType-kep.tmp");
+            } else if ( foamVersion == "14" ) {
+                pszPathToFile = CPLSPrintf("ninjafoam/14/0/%s", "genericType-kep.tmp");
             } else if ( foamVersion == "11" ) {
                 pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", "genericType-kep.tmp");
             } else {  // if ( foamVersion == "9" )
@@ -654,6 +660,8 @@ void NinjaFoam::AddBcBlock(std::string &dataString)
     else{
         if ( foamVersion == "2.2.0" ) {
             pszPathToFile = CPLSPrintf("ninjafoam/2.2.0/0/%s", template_.c_str());
+        } else if ( foamVersion == "14" ) {
+            pszPathToFile = CPLSPrintf("ninjafoam/14/0/%s", template_.c_str());
         } else if ( foamVersion == "11" ) {
             pszPathToFile = CPLSPrintf("ninjafoam/11/0/%s", template_.c_str());
         } else {  // if ( foamVersion == "9" )
@@ -848,6 +856,8 @@ void NinjaFoam::WriteFoamFiles()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "14" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/14", pszPath);
     } else if ( foamVersion == "11" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
     } else {  // if ( foamVersion == "9" )
@@ -878,6 +888,8 @@ void NinjaFoam::WriteFoamFiles()
             pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
             if ( foamVersion == "2.2.0" ) {
                 pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+            } else if ( foamVersion == "14" ) {
+                pszArchive = CPLSPrintf("%s/ninjafoam/14", pszPath);
             } else if ( foamVersion == "11" ) {
                 pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
             } else {  // if ( foamVersion == "9" )
@@ -1208,13 +1220,15 @@ void NinjaFoam::writeBlockMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "14" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/14", pszPath);
     } else if ( foamVersion == "11" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
     } else {  // if ( foamVersion == "9" )
         pszArchive = CPLSPrintf("%s/ninjafoam/9", pszPath);
     }
 
-    if( foamVersion == "9" || foamVersion == "11" ) {
+    if( foamVersion == "9" || foamVersion == "11" || foamVersion == "14" ) {
         pszInput = CPLFormFilename(pszArchive, "system/blockMeshDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/blockMeshDict", "");
     } else {  // if ( foamVersion == "2.2.0" )
@@ -1299,6 +1313,8 @@ void NinjaFoam::writeMoveDynamicMesh()
     pszPath = CPLGetConfigOption( "WINDNINJA_DATA", NULL );
     if ( foamVersion == "2.2.0" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/2.2.0", pszPath);
+    } else if ( foamVersion == "14" ) {
+        pszArchive = CPLSPrintf("%s/ninjafoam/14", pszPath);
     } else if ( foamVersion == "11" ) {
         pszArchive = CPLSPrintf("%s/ninjafoam/11", pszPath);
     } else {  // if ( foamVersion == "9" )
@@ -1479,7 +1495,7 @@ void NinjaFoam::MoveDynamicMesh()
 
             sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         }
-        else if ( foamVersion == "11" )
+        else if ( foamVersion == "11" || foamVersion == "14" )
         {
             const char *const papszArgv[] = { "mpiexec",
                                       "-np",
@@ -1561,7 +1577,7 @@ void NinjaFoam::MoveDynamicMesh()
 
         CPLSpawnedProcess *sp;
 
-        if( foamVersion == "11" )
+        if( foamVersion == "11" || foamVersion == "14" )
         {
             const char *const papszArgv[] = { "foamRun",
                                               "-solver",
@@ -1753,7 +1769,7 @@ void NinjaFoam::TopoSet()
 {
     int nRet = -1;
     
-    if( foamVersion == "9" || foamVersion == "11" )
+    if( foamVersion == "9" || foamVersion == "11" || foamVersion == "14" )
     {
         const char *const papszArgv[] = { "topoSet",
                                         "-case",
@@ -1792,21 +1808,24 @@ void NinjaFoam::TopoSet()
 void NinjaFoam::RefineMesh()
 {
     int nRet = -1;
-    
-    if( foamVersion == "9" || foamVersion == "11" )
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
+
+    if( foamVersion == "14" )
+    {
+        const char *const papszArgv[] = { "refineMesh",
+                                        "-noOverwrite",
+                                        "-case",
+                                        pszFoamPath,
+                                        NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else if( foamVersion == "9" || foamVersion == "11" )
     {
         const char *const papszArgv[] = { "refineMesh",
                                         "-case",
                                         pszFoamPath,
                                         NULL };
-
-        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
-        
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-        if(nRet != 0)
-            throw std::runtime_error("Error during refineMesh().");
-
-        VSIFCloseL(fout);
     }
     else  // if( foamVersion == "2.2.0" )
     {
@@ -1816,15 +1835,15 @@ void NinjaFoam::RefineMesh()
                                         "-dict",
                                         "system/refineMeshDict", 
                                         NULL };
-
-        VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.refineMesh", ""), "w");
-        
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
-        if(nRet != 0)
-            throw std::runtime_error("Error during refineMesh().");
-
-        VSIFCloseL(fout);
     }
+
+    if(nRet != 0)
+    {
+        throw std::runtime_error("Error during refineMesh().");
+    }
+
+    VSIFCloseL(fout);
 }
 
 void NinjaFoam::BlockMesh()
@@ -1905,7 +1924,7 @@ void NinjaFoam::RenumberMesh()
 
 void NinjaFoam::ApplyInit()
 {
-    if( foamVersion == "11" )
+    if( foamVersion == "11" || foamVersion == "14" )
     {
         const char *pszInput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict", "");
         const char *pszOutput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict__moveDynamicMesh", "");
@@ -1970,7 +1989,7 @@ bool NinjaFoam::SimpleFoam()
                                        NULL };
             sp = CPLSpawnAsync(NULL, papszArgv, FALSE, TRUE, TRUE, NULL);
         }
-        else if ( foamVersion == "11" )
+        else if ( foamVersion == "11" || foamVersion == "14" )
         {
             const char *const papszArgv[] = { "mpiexec",
                                       "-np",
@@ -2034,7 +2053,7 @@ bool NinjaFoam::SimpleFoam()
 
         CPLSpawnedProcess *sp;
 
-        if( foamVersion == "11" )
+        if( foamVersion == "11" || foamVersion == "14" )
         {
             const char *const papszArgv[] = { "foamRun",
                                            "-solver",
@@ -2110,7 +2129,7 @@ void NinjaFoam::Sample()
                                           NULL };
         nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
     }
-    else if( foamVersion == "11" )
+    else if( foamVersion == "11" || foamVersion == "14" )
     {
         const char *const papszArgv[] = { "foamPostProcess",
                                           "-case",
@@ -2699,7 +2718,7 @@ bool NinjaFoam::SampleRawOutput()
 
     AsciiGrid<double> foamU, foamV;
     int rc;
-    if( foamVersion == "11" )
+    if( foamVersion == "11" || foamVersion == "14" )
     {
         SanitizeOutput_foam10();
     }
@@ -2813,7 +2832,7 @@ void NinjaFoam::generateMassMesh()
     massMesh_w.allocate(&massMesh);
     massMesh_k.allocate(&massMesh);
 
-    if( foamVersion == "11" )
+    if( foamVersion == "11" || foamVersion == "14" )
     {
         readInProbeData_foam10( massMesh.XORD, massMesh.YORD, massMesh.ZORD, input.dem.xllCorner, input.dem.yllCorner, input.dem.get_nCols(), input.dem.get_nRows(), massMesh.nlayers, massMesh_u, massMesh_v, massMesh_w, massMesh_k );
     }
@@ -2955,7 +2974,7 @@ void NinjaFoam::runProbeSample()
         pszOutput2 = CPLFormFilename(pszFoamPath, "system/sampleDict", "");
         CopyFile(pszInput2, pszOutput2);
     }
-    else if( foamVersion == "11" )
+    else if( foamVersion == "11" || foamVersion == "14" )
     {
         const char *const papszArgv[] = { "foamPostProcess",
                                           "-case",
@@ -4308,7 +4327,7 @@ void NinjaFoam::UpdateExistingCase()
     //many files are overwritten by writeFoamFiles(), most with the same values replaced back in
     //make a tmp copy of those files overwritten by writeFoamFiles(), but where the values are not replaced back in
     std::string tmpPath = CPLGetPath(input.dem.fileName.c_str());
-    if( foamVersion == "9" || foamVersion == "11" ) {
+    if( foamVersion == "9" || foamVersion == "11" || foamVersion == "14" ) {
         CopyFile(CPLFormFilename(pszFoamPath,     "system/blockMeshDict", ""),
                  CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""));
     } else {  // if( foamVersion == "2.2.0" )
@@ -4322,7 +4341,7 @@ void NinjaFoam::UpdateExistingCase()
     WriteFoamFiles();
 
     //put the tmp copy files back, delete the leftover tmp files from the tmp location
-    if( foamVersion == "9" || foamVersion == "11" ) {
+    if( foamVersion == "9" || foamVersion == "11" || foamVersion == "14" ) {
         CopyFile(CPLFormFilename(tmpPath.c_str(), "blockMeshDict", ""),
                  CPLFormFilename(pszFoamPath,     "system/blockMeshDict", ""));
     } else {  // if( foamVersion == "2.2.0" )

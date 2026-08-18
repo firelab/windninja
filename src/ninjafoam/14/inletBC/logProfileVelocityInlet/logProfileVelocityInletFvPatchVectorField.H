@@ -105,14 +105,14 @@ public:
         logProfileVelocityInletFvPatchVectorField
         (
             const fvPatch&,
-            const DimensionedField<vector, volMesh>&
+            const DimensionedField<vector, fvMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
         logProfileVelocityInletFvPatchVectorField
         (
             const fvPatch&,
-            const DimensionedField<vector, volMesh>&,
+            const DimensionedField<vector, fvMesh>&,
             const dictionary&
         );
 
@@ -122,7 +122,7 @@ public:
         (
             const logProfileVelocityInletFvPatchVectorField&,
             const fvPatch&,
-            const DimensionedField<vector, volMesh>&,
+            const DimensionedField<vector, fvMesh>&,
             const fvPatchFieldMapper&
         );
 
@@ -145,13 +145,13 @@ public:
         logProfileVelocityInletFvPatchVectorField
         (
             const logProfileVelocityInletFvPatchVectorField&,
-            const DimensionedField<vector, volMesh>&
+            const DimensionedField<vector, fvMesh>&
         );
 
         //- Construct and return a clone setting internal field reference
         virtual tmp<fvPatchVectorField> clone
         (
-            const DimensionedField<vector, volMesh>& iF
+            const DimensionedField<vector, fvMesh>& iF
         ) const
         {
             return tmp<fvPatchVectorField>
