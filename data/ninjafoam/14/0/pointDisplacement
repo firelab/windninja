@@ -1,0 +1,82 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  11
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       pointVectorField;
+    object      pointMotionU;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    maxZ
+    {
+        type            fixedValue;
+        value           uniform (0 0 0);
+    }
+
+    minZ
+    {
+        type            surfaceDisplacement;
+        value           uniform (0 0 0);
+
+        // Clip displacement to surface by max deltaT*velocity.
+        // speed cap to step the mesh down incrementally over the mesh movement timesteps
+        velocity            ($vx$ $vy$ $vz$);
+
+        geometry
+        {
+            $stlName$.stl
+            {
+                type triSurfaceMesh;
+            }
+        };
+
+        // force points to look straight down (Z) to find intersection points,
+        // preventing cells from snapping sideways on steep slopes
+        projectMode fixedNormal;
+        projectDirection (0 0 1);
+
+        // use -1 for full 3D cases, values of 0, 1, and 2 specifies
+        // an axis to lock out for a 2D axis-symmetric wedge case
+        wedgePlane      -1;
+    }
+
+    // type fixedNormalSlip with the current orientation instead of uniformFixedValue
+    // allows points to slide up/down vertically, while keeping them locked tightly to the domain boundaries
+    east_face
+    {
+        type            fixedNormalSlip;
+        n               (1 0 0);
+    }
+
+    west_face
+    {
+        type            fixedNormalSlip;
+        n               (1 0 0);
+    }
+
+    south_face
+    {
+        type            fixedNormalSlip;
+        n               (0 1 0);
+    }
+
+    north_face
+    {
+        type            fixedNormalSlip;
+        n               (0 1 0);
+    }
+}
+
+// ************************************************************************* //
