@@ -80,10 +80,11 @@ If you aren't a GIS person, don't worry!  WindNinja can be run by a person with 
 Also, simulations using WindNinja are fairly convenient since a simulation usually takes only a few seconds of run time.
 
 Outputs from WindNinja can be used for viewing wind flow on maps and for incorporation into fire simulation models.  
-For viewing wind flow, several options are available to the user.  
+The quickest and easiest way to visualize simulation outputs is in WindNinja's interactive map (using the map visualization output *.fgbz file). 
+Outside of the application, there are a variety of ways to view outputs as well.
 Probably the most convenient is to use the free version of Google Earth (using the wind output *.kmz file).  
 Other programs that can be used to view wind flow are GIS programs such as ArcView and ArcGIS (using the output *.shp shapefile), or FlamMap (using the output *.asc grid files).  
-WindNinja winds can be used in the fire spread programs FARSITE and FlamMap (using the output *.asc grid files and *.atm atmosphere files) and have been shown to increase fire spread simulation accuracy (see the publications \href{https://research.fs.usda.gov/firelab/products/dataandtools/windninja}{here}).
+WindNinja winds can be used in the fire spread programs like FlamMap (using the output *.asc grid files and *.atm atmosphere files) and have been shown to increase fire spread simulation accuracy (see the publications \href{https://research.fs.usda.gov/firelab/products/dataandtools/windninja}{here}).
 
 Some users may recall a similar model called WindWizard. 
 WindWizard provided a similar user experience but included more sophisticated physics. 
@@ -182,7 +183,7 @@ They are:
 
 \begin{itemize}
 \item[]ASCII Raster (*.asc)
-\item[]FARSITE landscape file (*.tif or *.lcp)
+\item[]FlamMap landscape file (*.tif or *.lcp)
 \item[]GeoTiff (*.tif)
 \item[]ERDAS IMAGINE (*.img)
 \end{itemize}
@@ -197,12 +198,10 @@ They can be found by at \texttt{Start > Programs > WindNinja-\vn > Example Files
 In the file browser that opens, you will see the elevation files called \texttt{missoula\_valley.tif}, and \texttt{example\_lcp.lcp} Either of these can be used.
 
 Although all of the elevation file formats mentioned above work in WindNinja, there are some slight differences that deserve explanation.  
-The ASCII Raster (*.asc) file type is the most common one used in wildland fire, since it is used in the popular fire behavior programs.  
-So if you will need the elevation file for fire behavior programs in addition to WindNinja, this would probably be the preferred format.  
 There are two slight disadvantages of this file format: it is a much larger file than the others (ascii and uncompressed), and it's projection/datum information is specified in a separate file (*.prj) that must be in the same folder.  Both the GeoTiff (*.tif) and ERDAS IMAGINE (*.img) file formats are compressed formats that take much less disk space and download time than the ASCII Raster file format.  
 Also, they contain their projection/datum information in the file rather than a separate file.  
-If you are only using WindNinja, and not a fire behavior program like FARSITE or FlamMap, either of these would be a good format.  
-Last, if you already have a FARSITE landscape file (*.tif or *.lcp) because you are doing fire behavior calculations, you should use it because WindNinja will use the canopy and fuels information to infer gridded surface roughness values (surface drag due to vegetation) and heat flux parameters (for a diurnal flow or non-neutral stability simulation).  
+If you are only using WindNinja, and not a fire behavior program like FlamMap, either of these would be a good format.  
+Last, if you already have a FlamMap landscape file (*.tif or *.lcp) because you are doing fire behavior calculations, you should use it because WindNinja will use the canopy and fuels information to infer gridded surface roughness values (surface drag due to vegetation) and heat flux parameters (for a diurnal flow or non-neutral stability simulation).  
 For the other file formats, you must enter a single, spatially constant vegetation value (described later).
 
 To be able to do a wind simulation, WindNinja has certain requirements that elevation files must meet:
@@ -269,13 +268,13 @@ This can reduce the total simulation time by up to 40\%.
 \subsubsection{Setting the Dominant Vegetation Type}
 
 WindNinja approximates the drag effect that vegetation has on wind flow in a very simple way.  
-This requires basic information about the vegetation in the modeling area.  If you used a FARSITE landscape file (*.lcp) for the elevation file, then WindNinja will use the canopy and fuels information in the landscape file to infer the vegetation drag information.  
+This requires basic information about the vegetation in the modeling area.  If you used a FlamMap landscape file (*.lcp) for the elevation file, then WindNinja will use the canopy and fuels information in the landscape file to infer the vegetation drag information.  
 No vegetation input is required by you.  But, if you are using another elevation file type (*.asc, *.tif, or *.img), then you have to choose the dominant vegetation type for your area.  
 This choice of vegetation type is assumed to prevail over the whole domain.  The choices for vegetation type are:  grass, brush, and trees.  
 For areas with mixed vegetation types, users should choose the dominant one (meaning the vegetation type that covers most of the domain).
 
 \textbf{\color{red} With “Surface Input” still selected in the navigation tree, select the dominant vegetation type in the input panel using the “Vegetation” drop down list.  
-If your elevation file was a FARSITE landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  
+If your elevation file was a FlamMap landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  
 In this case, you do not need to select a vegetation type.}
 
 \subsubsection{Choosing the Mesh Resolution}
@@ -331,7 +330,7 @@ In WindNinja, users must specify the height of the input domain averaged wind sp
 For this height, the meteorological standard is used \textit{where the wind height specified is the height above the top of the vegetation.}  So if the area has 100 foot tall trees, the \say{20-foot wind} is actually 120 feet above the ground surface (20 feet above the tops of the trees).  
 In this example, the user would choose \say{20 ft} for the WindNinja input wind height.  
 In the US, the standard height for meteorological measurements in the context of wildland fires is usually 20 feet above the vegetation.  
-Most RAWS stations measure this 20 foot wind and fire weather forecasts generally specify the 20 foot wind.  FARSITE and FlamMap also use the 20 foot wind.  
+Most RAWS stations measure this 20 foot wind and fire weather forecasts generally specify the 20 foot wind. FlamMap also uses the 20 foot wind.  
 One exception in the US to this is METAR weather stations which measure the wind at 10 meters.  
 Most other countries such as Canada, Australia, etc. use 10 meters as the standard wind measurement height.
 
@@ -403,19 +402,19 @@ south\_canyon\_270\_35\_200m.prj       & Shape files projection file            
 \hline
 south\_canyon\_270\_35\_200m.kmz       & Google Earth File                                        \\ 
 \hline
-south\_canyon\_270\_35\_200m\_vel.asc  & FARSITE/FlamMap grid for wind speed                      \\ 
+south\_canyon\_270\_35\_200m\_vel.asc  & FlamMap grid for wind speed                      \\ 
 \hline
-south\_canyon\_270\_35\_200m\_vel.prj  & FARSITE/FlamMap wind speed projection file               \\ 
+south\_canyon\_270\_35\_200m\_vel.prj  & FlamMap wind speed projection file               \\ 
 \hline
-south\_canyon\_270\_35\_200m\_ang.asc  & FARSITE/ FlamMap grid for wind direction                 \\ 
+south\_canyon\_270\_35\_200m\_ang.asc  & FlamMap grid for wind direction                 \\ 
 \hline
-south\_canyon\_270\_35\_200m\_ang.prj  & FARSITE/FlamMap wind direction projection file           \\ 
+south\_canyon\_270\_35\_200m\_ang.prj  & FlamMap wind direction projection file           \\ 
 \hline
-south\_canyon\_270\_35\_200m\_cld.asc  & FARSITE/ FlamMap grid for cloud cover                    \\ 
+south\_canyon\_270\_35\_200m\_cld.asc  & FlamMap grid for cloud cover                    \\ 
 \hline
-south\_canyon\_270\_35\_200m\_cld.prj  & FARSITE/FlamMap cloud cover projection file              \\ 
+south\_canyon\_270\_35\_200m\_cld.prj  & FlamMap cloud cover projection file              \\ 
 \hline
-south\_canyon\_270\_35\_200m.atm       & FARSITE atmosphere file                                  \\ 
+south\_canyon\_270\_35\_200m.atm       & FlamMap atmosphere file                                  \\ 
 \hline
 south\_canyon\_270\_35\_200m\_surf.vtk & Paraview/VTK surface file                                \\ 
 \hline
@@ -469,23 +468,23 @@ The wind layer can be turned on and off using the check box in the “Places” 
 
 \subsection{Fire Behavior}
 
-WindNinja writes wind files that can be used in FARSITE and FlamMap for fire behavior simulations.  
+WindNinja writes wind files that can be used in FlamMap for fire behavior simulations.  
 Spatially varying winds like those produced by WindNinja are often termed gridded winds in these programs.
 
-The WindNinja files for use in FARSITE and FlamMap are ASCII Raster format, the same format as the other files used for elevation, fuels, etc. in these programs.  
+The WindNinja files for use in FlamMap are ASCII Raster format, the same format as the other files used for elevation, fuels, etc. in these programs.  
 There are three gridded files created by WindNinja:  a wind speed file (*\_vel.asc), a wind direction file (*\_ang.asc), and a cloud cover file (*\_cld.asc).  
-Each file also has a corresponding projection file (*.prj).  Cloud cover is not simulated in WindNinja, but is a required file for running FARSITE using gridded winds.  
-As a convenience, WindNinja provides a cloud cover file with 0\% cloud cover to facilitate gridded wind simulations in FARSITE if cloud cover information is not available.  
-You could change this for your FARSITE simulation by opening the cloud cover file in a text editor and changing the zero to another value.
+Each file also has a corresponding projection file (*.prj).  Cloud cover is not simulated in WindNinja, but is a required file for running FlamMap using gridded winds.  
+As a convenience, WindNinja provides a cloud cover file with 0\% cloud cover to facilitate gridded wind simulations in FlamMap if cloud cover information is not available.  
+You could change this for your FlamMap simulation by opening the cloud cover file in a text editor and changing the zero to another value.
 
 It is simple to run FlamMap using gridded winds.  Just select the \say{Wind Vectors} radio button where you normally enter wind information in FlamMap.  
 Then choose the \say{Direction} file and the \say{Speed} file.  These correspond to the WindNinja \say{*\_ang.asc} and \say{*\_vel.asc} files, respectively.
 
-To use gridded winds in FARSITE, you must use an \say{atmosphere file} (*.atm).  WindNinja can make this file for you.  
-The atmosphere file specifies wind file names to be used over time in the FARSITE simulation, since a FARSITE simulation steps through time.  
+To use gridded winds in FlamMap, you must use an \say{atmosphere file} (*.atm).  WindNinja can make this file for you.  
+The atmosphere file specifies wind file names to be used over time in the FlamMap simulation, since a FlamMap simulation steps through time.  
 In this way, different wind files can be used at different times during the fire simulation.  
-The atmosphere file—a text file specifying month, day, hour, wind speed filename, wind direction filename, and cloud cover filename—must be precisely formatted to function in FARSITE and in the same folder as the wind speed, wind direction, and cloud cover files.  
-You can find more information about using gridded wind in the FARSITE Help by searching for “Gridded Weather File”.
+The atmosphere file—a text file specifying month, day, hour, wind speed filename, wind direction filename, and cloud cover filename—must be precisely formatted to function in FlamMap and in the same folder as the wind speed, wind direction, and cloud cover files.  
+You can find more information about using gridded wind in the FlamMap Help by searching for “Gridded Weather File”.
 
 \textbf{\color{red} To make fire behavior output files, left-click on “Fire Behavior” in the navigation tree.  
 Then check the “Create Fire Behavior Files” check box.}
@@ -495,7 +494,7 @@ By default, the WindNinja mesh resolution is used, with the actual value display
 You can uncheck the \say{Use Mesh Resolution} check box to specify your own resolution.  Be careful to not specify too fine of a resolution.  
 A good rule of thumb is to keep the resolution greater than about 100 meters.
 
-You can also select if you want to create a FARSITE atmosphere file (*.atm) here.
+You can also select if you want to create a FlamMap atmosphere file (*.atm) here.
 
 \subsection{Shape Files}
 
