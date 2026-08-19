@@ -94,8 +94,6 @@ This is all done automatically by WindNinja, so this process is transparent to t
 \section{Getting Started}
 \textbf{\color{red}Windows: Start WindNinja on by going to Start $\Rightarrow$ Programs $\Rightarrow$ WindNinja \vn\ $\Rightarrow$ WindNinja \vn\  }
 
-\textbf{\color{red}Linux: Start WindNinja by running the command 'WindNinja' in the terminal }
-
 \section{Input}
 \subsection{Surface Input}
 
@@ -178,8 +176,7 @@ The folder name containing the downloaded weather stations follows a specific fo
 	\includegraphics[scale=0.45]{point2}
 \end{figure}
 
-\textbf{\color{red}NOTE: WindNinja no longer includes a timezone code as part of the file naming convention.}
-\textbf{\color{red}This file would now be named WXSTATIONS-2018-06-21-1339-2018-06-22-1339-missoula\_valley.}
+\textbf{\color{red}NOTE: This file would now be named WXSTATIONS-2018-06-21-1339-2018-06-22-1339-missoula\_valley.}
 
 All of the weather station files are stored in this folder. Each file inside the folder is a unique weather station, and naming follows a similar naming format. For example:
 
@@ -199,9 +196,8 @@ All of the weather station files are stored in this folder. Each file inside the
 	\includegraphics[scale=0.30]{point4}
 \end{figure}
 
-Note that there are two different types of weather station file formats that are valid for point initialization runs, however they are incompatible with each other.
-
 \subsubsection{Types of Weather Stations}
+There are two different types of weather station file formats that are valid for point initialization runs, however they are incompatible with each other.
 
 \begin{enumerate}
 \item\underline{Time series}: Each file is a unique weather station and these files have multiple observations per station. 
@@ -234,13 +230,11 @@ WindNinja does a separate simulation for each time step and writes separate outp
 
 \textbf{\color{red} Choose the types of output files you would like by left-clicking the type in the navigation tree and filling out the corresponding input panel.}
 
-If you enable the Fire Behavior output files, note that the percent cloud cover file that is produced during a point initialized run is a gridded file that uses inverse distance squared weighted interpolation to fill the grid based on the input values at the weather stations.
-
 \section{Solve}
 
 \textbf{\color{red}Left-click on “Solve” in the navigation tree.  Set the number of processors you would like using the “Number of Processors” spin box.  Finally, left-click the “Solve” button to start the simulation.}
 
-The typical simulation time for an average dual core computer in 2011 should be around 10-60 seconds depending on the computer, domain size, simulation resolution, number of steps, etc.
+The typical simulation time for an average dual core computer in 2026 should be around 10-45 seconds depending on the computer, domain size, simulation resolution, number of steps, etc.
 
 \textbf{\color{red} When the simulation is finished, close the progress window.}
 
@@ -370,7 +364,7 @@ If this is left blank, only one observation may be stored in the file, and it ma
 
 \section{Using a Custom API token}
 
-If you want to download more data than WindNinja allows (1 year and stations within a 100 mile buffer from your DEM), you will need to specify your own \textbf{token} for the Mesonet API (this is related to the code WindNinja uses to download weather data from Synoptic). 
+If you want to download more data than WindNinja allows (1 year and stations within a 100 mile buffer from your DEM), you will need to specify your own \textbf{token} for the Synoptic API. 
 To do this, follow the instructions on \url{https://synopticlabs.org/api/mesonet/} to get an API key and \textbf{token}.
 
 Once you have a \textbf{token}, you can specify in WindNinja via the configuration option \textbf{CUSTOM\_API\_KEY}.
@@ -388,6 +382,6 @@ Click OK, to finalize.
 This concludes \textbf{WindNinja Tutorial 3: Point Initialization}
 
 \section*{Acknowledgements}
-The incorporation of weather station downloads in WindNinja was made possible in part due to the data made available by \href{https://synopticlabs.org/api/mesonet/}{Synoptic} though the Mesonet API.
+The incorporation of weather station downloads in WindNinja was made possible in part due to the data made available by \href{https://synopticlabs.org/api/mesonet/}{Synoptic} through the Mesonet API.
 
 \end{document}
