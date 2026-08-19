@@ -80,8 +80,8 @@ The hope is that this will provide more accurate wind forecasts that are relevan
 \section*{How does the weather model initialization work?}
 
 The first step in the process is to download the latest forecast (which is automated in WindNinja and described in detail later).  
-Currently, WindNinja only uses near surface information from the weather forecast model, but the ability to use information at all vertical levels will be added shortly.  
-The download includes 10 meter wind speed and direction, cloud cover, and 2 meter temperature at the coarse weather model resolution for every output time step.  
+Currently, WindNinja only uses near surface information from the weather forecast model. 
+WindNinja has the ability to use information at all vertical levels but this is not enabled by default due to the associated increase in computation speed and the limited impact on accuracy during initial evaluations.The download includes 10 meter wind speed and direction, cloud cover, and 2 meter temperature at the coarse weather model resolution for every output time step.  
 By default, WindNinja does an individual WindNinja simulation for every output time step of the forecast.  
 As of version 3.6.0, however, users can select specific time steps from the forecast to simulate. 
 This can save substantial computational time if you have a forecast with many time steps in it, particualry if you are using the conservation of mass and momentum solver. 
@@ -107,7 +107,7 @@ In the file browser that opens, you will see the elevation file called “missou
 Either of these can be used.
 
 \textbf{\color{red} Select the dominant vegetation type using the “Vegetation” drop down list.  
-If your elevation file was a FARSITE landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  
+If your elevation file was a FlamMap landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  
 In this case, you do not need to select a vegetation type.}
 
 \textbf{\color{red} Select your desired mesh resolution and time zone.}
@@ -146,6 +146,8 @@ The table below and following paragraphs give some information about each model.
 \begin{longtable}[1]{|p{4.0cm}|p{2.0cm}|p{2.2cm}|p{2.0cm}|p{2.2cm}|p{3.4cm}|p{3.6cm}|}
 %\fontsize{8}{12}\selectfont 
 %\begin{tabular}{|p{6.6cm}|p{1.3cm}|p{3.3cm}|p{2cm}|p{1.7cm}|p{2.8cm}|p{2.8cm}|}
+\hline
+UCAR-NDFD-CONUS-2.5-KM & UCAR & National Digitial Forecast Database (NDFD) & contiguous US (CONUS) & 2.5 km & 6 hourly to 168 hrs & 2 per day at 12 and 18 UTC\\
 \hline
 \rowcolor{lightgray} Name in WindNinja & Server & Forecast model & Domain & Horizontal resolution & Forecast duration and temporal resolution & Update frequency\\
 \hline
@@ -193,14 +195,17 @@ NOMADS-HRRR-ALASKA-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & Alaska
 \hline
 NOMADS-HRRR-CONUS-SUBHOURLY-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & contiguous US (CONUS) & 3 km & every 15 min to 18 hrs & updated every 1 hour\\
 \hline
+NOMADS-HRRR-CONUS-EXT-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & contiguous US (CONUS) extended & 3 km & 1 hourly to 58 hrs & updated every 1 hour\\
+\hline
 NOMADS-HRRR-ALASKA-SUBHOURLY-3-KM & NOMADS & High Resolution Rapid Refresh (HRRR) & Alaska & 3 km & every 15 min to 18 hrs & updated every 1 hour\\
 \hline
 NOMADS-RAP-CONUS-13-KM & NOMADS & Rapid Refresh (RAP) & contiguous US (CONUS) & 13 km & 1 hourly to 18 hrs & updated every 1 hour\\
 \hline
+NOMADS-RAP-CONUS-EXT-13-KM & NOMADS & Rapid Refresh (RAP) & contiguous US (CONUS) extended & 13 km & 1 hourly to 51 hrs & updated every 1 hour\\
+\hline
 NOMADS-RAP-NORTH-AMERICA-32-KM & NOMADS & Rapid Refresh (RAP) & North America & 32 km & 1 hourly to 18 hrs & updated every 1 hour\\
 \hline
 NOMADS-NBM-CONUS-2.5-KM & NOMADS & National Blend of Models (NBM) & North America & 2.5 km & 1 hourly to 36 hrs & updated every 1 hour\\
-\hline
 \hline
 PASTCAST-GCP-HRRR-CONUS-3-KM & Google Cloud Platform & High Resolution Rapid Refresh (HRRR) & North America & 3 km & 1 hourly to 36 hrs & updated every 1 hour\\
 \hline
@@ -316,8 +321,6 @@ At the top level, there is a folder for each type of forecast model for your ele
 	\includegraphics[scale=1.0]{fil_diag}
 \end{figure}
 
-Note: This is a \textbf{folder}, even though it has the “.tif” at the end.
-
 Under this folder, there is a folder for each time you've downloaded a forecast for this model and elevation file (for example, if you downloaded a forecast yesterday and then downloaded a forecast today, 2 folders would be shown, one with yesterday's date/time and one with today's date/time).  
 The date/time used for the folder name is the date and time of the first time “step” in the forecast.  
 WindNinja calls this the “first forecast time” and it is used to identify when the forecast model was run by the weather model provider.  
@@ -374,10 +377,10 @@ UCAR-NAM-CONUS-12-KM-04-11-2011\_1500.kmz  $\Leftarrow$  “raw” forecast file
 \textbf{\color{red} In the navigation tree, left-click on “Output” and select the “Output Height”, “Output Speed Units”, and“Clip output by:” values you want.  
 Also, check the “Write Raw Weather Model Output” checkbox.}
 
-Another feature in WindNinja is the ability to write out a FARSITE atmosphere file (*.atm).  
-This might be useful if you are planning on using your WindNinja simulation in a FARSITE fire spread simulation.  
-The atmosphere file is used in FARSITE to define which WindNinja files should be used during the fire simulation.  
-Since FARSITE uses WindNinja's fire behavior files (*.asc), this atmosphere option is only available if you are writing fire behavior files.  
+Another feature in WindNinja is the ability to write out a FlamMap atmosphere file (*.atm).  
+This might be useful if you are planning on using your WindNinja simulation in a FlamMap fire spread simulation.  
+The atmosphere file is used in FlamMap to define which WindNinja files should be used during the fire simulation.  
+Since FlamMap uses WindNinja's fire behavior files (*.asc), this atmosphere option is only available if you are writing fire behavior files.  
 This option can be enabled in WindNinja on the Output$\Rightarrow$Fire Behavior input panel.
 
 \textbf{\color{red}Choose the types of output files you would like by left-clicking the type in the navigation tree and filling out the corresponding input panel.}
