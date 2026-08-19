@@ -85,9 +85,8 @@ Some examples of the complexities of reality are:  1) in certain stable flow con
 WindNinja has a simple model to include some of the simple aspects of non-neutral stability flows.  
 It can be easily turned on and requires few additional inputs from the user.  
 The current model calculates the surface heat flux to approximate the atmospheric stability.  
-Future models will likely use additional information to get a better picture of the state of the atmosphere (mesoscale weather models, etc.).  
-For this reason, the non-neutral stability model is considered in a beta test phase at this point.  
-The current model will approximately simulate non-neutral flows, but not the complex situations mentioned above.
+The model uses the calculated surface heat flux and temperature profile information, if available, to approximate the atmospheric stability.
+The model will approximately simulate non-neutral flows, but not the complex situations mentioned above.
 
 \section{Getting Started}
 
@@ -103,7 +102,7 @@ In the window that opens, navigate to and select your elevation file.
 Optionally, you could left-click on the \say{Download File} button to download a file from a USGS server as described in \href{https://weather.firelab.org/windninja/tutorials/fetch_dem_instructions.pdf}{download\_elevation\_file.pdf}.}
 
 \textbf{\color{red}Select the dominant vegetation type using the \say{Vegetation} drop down list.  
-If your elevation file was a FARSITE landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  
+If your elevation file was a FlamMap landscape file, this drop-down box will be grayed out, since the vegetation information is obtained from the landscape file.  
 In this case, you do not need to select a vegetation type.}
 
 \textbf{\color{red}Select your desired mesh resolution using the \say{Mesh Resolution} drop-down list.}
@@ -149,7 +148,7 @@ In the input panel below, check the \say{Domain Average Wind} check box to activ
 
 \textbf{\color{red} In the input panel, select your input wind height using the \say{Input Wind Height} drop down list.}
 
-\subsubsection{2.4.1. Entering Speed, Direction, and Additional Diurnal Inputs}
+\subsubsection{Entering Speed, Direction, and Additional Diurnal Inputs}
 
 Because \say{Use Diurnal Wind} and \say{Use Stability} were checked earlier, additional input fields near speed and direction that are normally grayed out are now editable as shown below.
 
