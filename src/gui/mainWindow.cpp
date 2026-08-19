@@ -950,6 +950,13 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     {
         ui->elevationInputFileOpenButton->click();
     }
+    else if (item->text(0) == "Map Visualization Files")
+    {
+        if(ui->mapVisualizationCheckBox->isEnabled())
+        {
+            ui->mapVisualizationCheckBox->setChecked(!ui->mapVisualizationCheckBox->isChecked());
+        }
+    }
     else if (item->text(0) == "Google Earth")
     {
         ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
@@ -973,13 +980,6 @@ void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
     else if (item->text(0) == "VTK Files")
     {
         ui->VTKFilesCheckBox->setChecked(!ui->VTKFilesCheckBox->isChecked());
-    }
-    else if (item->text(0) == "Map Visualization Files")
-    {
-        if(ui->mapVisualizationCheckBox->isEnabled())
-        {
-            ui->mapVisualizationCheckBox->setChecked(!ui->mapVisualizationCheckBox->isChecked());
-        }
     }
 }
 
