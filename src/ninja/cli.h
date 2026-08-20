@@ -50,8 +50,10 @@ namespace po = boost::program_options;
 #include <iterator>
 
 #ifdef NINJAFOAM
+#ifndef WIN32
 #include <hwloc.h>
-#endif
+#endif // WIN32
+#endif // NINJAFOAM
 
 //#include <QDateTime>
 

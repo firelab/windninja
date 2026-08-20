@@ -30,8 +30,10 @@ set(LINK_LIBS ${Boost_LIBRARIES}
               ${CURL_LIBRARIES})
 
 if(NINJAFOAM)
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${HWLOC_LIBRARY})
+    if(NOT WIN32)
+        set(LINK_LIBS ${LINK_LIBS}
+                      ${HWLOC_LIBRARY})
+    endif()
 endif(NINJAFOAM)
 
 if(WIN32 OR APPLE)

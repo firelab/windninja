@@ -30,8 +30,10 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${PROJECT_SOURCE_DIR}/src)
 
 if(NINJAFOAM)
-    set(NINJA_INCLUDES ${NINJA_INCLUDES}
-                       ${HWLOC_INCLUDE_DIR})
+    if(NOT WIN32)
+        set(NINJA_INCLUDES ${NINJA_INCLUDES}
+                           ${HWLOC_INCLUDE_DIR})
+    endif()
 endif(NINJAFOAM)
 
 set(NINJA_SOURCES air.cpp
@@ -148,8 +150,10 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${SHAPELIB_LIBRARY})
 
 if(NINJAFOAM)
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${HWLOC_LIBRARY})
+    if(NOT WIN32)
+        set(LINK_LIBS ${LINK_LIBS}
+                      ${HWLOC_LIBRARY})
+    endif()
 endif(NINJAFOAM)
 
 

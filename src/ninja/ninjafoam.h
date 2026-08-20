@@ -41,7 +41,9 @@
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
 
+#ifndef WIN32
 #include <hwloc.h>
+#endif
 
 #define PIPE_BUFFER_SIZE 4096
 

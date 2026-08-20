@@ -349,16 +349,18 @@ int MainWindow::countNumCores()
     int coresCount;
 
     #ifdef NINJAFOAM
+    #ifndef WIN32
     hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
-
     coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
-
     hwloc_topology_destroy(topology);
-    #else
+    #else // WIN32
     coresCount = QThread::idealThreadCount();
-    #endif
+    #endif // WIN32
+    #else // NINJAFOAM
+    coresCount = QThread::idealThreadCount();
+    #endif // NINJAFOAM
 
     return coresCount;
 }

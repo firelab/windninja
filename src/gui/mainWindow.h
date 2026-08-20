@@ -73,8 +73,10 @@
 #include <string>
 
 #ifdef NINJAFOAM
+#ifndef WIN32
 #include <hwloc.h>
-#endif
+#endif // WIN32
+#endif // NINJAFOAM
 
 struct OutputPDFSize {
     double PDFHeight;

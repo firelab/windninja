@@ -22,9 +22,6 @@
     },
     {
       "name": "shapelib"
-    },
-    {
-      "name": "hwloc"
     }
   ]
 }

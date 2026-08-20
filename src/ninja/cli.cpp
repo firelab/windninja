@@ -142,13 +142,17 @@ int countNumCores()
     int coresCount;
 
     #ifdef NINJAFOAM
+    #ifndef WIN32
     hwloc_topology_t topology;
     hwloc_topology_init(&topology);
     hwloc_topology_load(topology);
-
     coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
-
     hwloc_topology_destroy(topology);
+    #else // WIN32
+    #ifdef _OPENMP
+    coresCount = omp_get_num_procs();
+    #endif // _OPENMP
+    #endif // WIN32
     #else // NINJAFOAM
     #ifdef _OPENMP
     coresCount = omp_get_num_procs();
@@ -631,7 +635,11 @@ int windNinjaCLI(int argc, char* argv[])
             if(vm["num_threads"].as<int>() > nMaxCores)
             {
                 ostringstream os;
+                #ifndef WIN32
                 os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumCores '" << nMaxCores << "' when option 'momentum_flag' is set to 'true'.";
+                #else // WIN32
+                os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumThreads '" << nMaxCores << "' when option 'momentum_flag' is set to 'true'.";
+                #endif // WIN32
                 throw std::range_error(os.str());
             }
         }
@@ -656,8 +664,8 @@ int windNinjaCLI(int argc, char* argv[])
             os << "Option 'num_threads' '" << vm["num_threads"].as<int>() << "' is greater than maxNumThreads '" << nMaxThreads << ".";
             throw std::range_error(os.str());
         }
-        #endif // NINJAFOAM
         #endif // _OPENMP
+        #endif // NINJAFOAM
 
         const std::string* elevation_file = get_checked_elevation_file(vm); // might either be NULL or set dynamically
         std::string output_path = vm.count("output_path") ? vm["output_path"].as<std::string>() : "";
