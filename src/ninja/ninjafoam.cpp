@@ -4318,6 +4318,9 @@ void NinjaFoam::UpdateExistingCase()
     CopyFile(CPLFormFilename(pszFoamPath,     "system/topoSetDict", ""),
              CPLFormFilename(tmpPath.c_str(), "topoSetDict", ""));
 
+    // it is tempting to also preserve the "/system/probes" file (/system/sampleDict_probes for foamVersion "2.2.0") across meshes, if it exists.
+    // But probably safest to just let WriteFoamFiles() overwrite it, and start over with a fresh "/system/probes" file each run.
+
     //write the new dict files
     WriteFoamFiles();
 
@@ -4405,11 +4408,6 @@ void NinjaFoam::UpdateExistingCase()
     papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "output.raw", "") );
     papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "output.vrt", "") );
     papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "log.probeSample", "") );
-    if ( foamVersion == "2.2.0" ) {
-        papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "system/sampleDict_probes", "") );
-    } else {
-        papszFileList = CSLAddString( papszFileList, CPLFormFilename(pszFoamPath, "system/probes", "") );
-    }
     for(int i = 0; i < CSLCount( papszFileList ); i++)
     {
         VSIUnlink(papszFileList[i]);
