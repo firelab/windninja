@@ -1366,7 +1366,7 @@
                 if (activeInitializationLayer) activeInitializationLayer.fire('add');
             }
 
-            if (e.layer === windninjaOutputTree.children[0]?.layer) {
+            if (e.layer === windninjaOutputTree.children[windninjaOutputTree.children.length-1]?.layer) {
                 if (activeWindNinjaTimeSeriesImg) {
                     activeWindNinjaTimeSeriesImg.remove();
                     activeWindNinjaTimeSeriesImg = null;
@@ -1374,7 +1374,7 @@
                 activeWindNinjaLayer = null;
                 updateOverlayTree();
             }
-            if (e.layer === initializationOutputTree.children[0]?.layer) {
+            if (e.layer === initializationOutputTree.children[windninjaOutputTree.children.length-1]?.layer) {
                 if (activeInitializationTimeSeriesImg) {
                     activeInitializationTimeSeriesImg.remove();
                     activeInitializationTimeSeriesImg = null;
