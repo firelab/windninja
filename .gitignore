@@ -46,6 +46,22 @@ doxy.tag
 *.user
 *.user*
 
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.toc
+*.out
+*.bbl
+*.blg
+*.lof
+*.lot
+*.nav
+*.snm
+*.vrb
+
 # OpenFOAM
 *.dep
 
