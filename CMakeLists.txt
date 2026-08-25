@@ -428,88 +428,89 @@ endif(VERBOSE_CMAKE)
 
 # Install DEM and configuration files
 set(etc_files
-    missoula_valley.tif
-    example_lcp.tif
-    cli_domainAverage.cfg
-    cli_domainAverage_diurnal.cfg
-    cli_pointInitialization_diurnal.cfg
-    cli_wxModelInitialization_diurnal.cfg
-    cli_momentumSolver_diurnal.cfg)
-list(TRANSFORM etc_files PREPEND ${PROJECT_SOURCE_DIR}/data/)
+	${PROJECT_SOURCE_DIR}/data/missoula_valley.tif
+	${PROJECT_SOURCE_DIR}/data/example_lcp.tif
+	${PROJECT_SOURCE_DIR}/data/cli_domainAverage.cfg
+	${PROJECT_SOURCE_DIR}/data/cli_domainAverage_diurnal.cfg
+	${PROJECT_SOURCE_DIR}/data/cli_pointInitialization_diurnal.cfg
+	${PROJECT_SOURCE_DIR}/data/cli_wxModelInitialization_diurnal.cfg
+	${PROJECT_SOURCE_DIR}/data/cli_momentumSolver_diurnal.cfg
+)
 install(FILES ${etc_files}
-        DESTINATION etc/windninja/example-files
-        COMPONENT apps)
+	DESTINATION etc/windninja/example-files
+		COMPONENT apps)
+
 
 # Install wxstation current files (add weather station files to example files)
 set(wx_station_current_files
-    missoula_valley_stations_4.csv
-    KMSO-2018-06-25_1237-0.csv
-    PNTM8-2018-06-25_1237-2.csv
-    TR266-2018-06-25_1237-3.csv
-    TS934-2018-06-25_1237-1.csv)
-list(TRANSFORM wx_station_current_files
-     PREPEND ${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/)
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/missoula_valley_stations_4.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/KMSO-2018-06-25_1237-0.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/PNTM8-2018-06-25_1237-2.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/TR266-2018-06-25_1237-3.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-2018-06-25-1237-missoula_valley/TS934-2018-06-25_1237-1.csv
+)
 install(FILES ${wx_station_current_files}
-        DESTINATION etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley
-        COMPONENT apps)
+	DESTINATION etc/windninja/example-files/WXSTATIONS-2018-06-25-1237-missoula_valley
+		COMPONENT apps)
+
 
 # Install wxstation files (add weather station time series files)
 set(wx_station_ts_files
-    missoula_valley_stations_4.csv
-    KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
-    PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
-    TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
-    TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv)
-list(TRANSFORM wx_station_ts_files
-     PREPEND ${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/)
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/missoula_valley_stations_4.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/KMSO-MDT-2018-06-20_2128-2018-06-21_2128-0.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/PNTM8-MDT-2018-06-20_2128-2018-06-21_2128-2.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TR266-MDT-2018-06-20_2128-2018-06-21_2128-3.csv
+	${PROJECT_SOURCE_DIR}/data/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley/TS934-MDT-2018-06-20_2128-2018-06-21_2128-1.csv
+)
 install(FILES ${wx_station_ts_files}
-        DESTINATION etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley
-        COMPONENT apps)
+	DESTINATION etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley
+		COMPONENT apps)
 
-# Install all share files 
+
+# Install all share files
 set(share_files
-    date_time_zonespec.csv
-    config_options.csv
-    tz_world.zip
-    landfire.zip
-    map.html
-    qt_certs_bundle.pem
-    thredds.csv
-    surface_data.zip
-    srtm_region.geojson
-    us_srtm_region.dbf
-    us_srtm_region.prj
-    us_srtm_region.shp
-    us_srtm_region.shx)
-list(TRANSFORM share_files PREPEND ${PROJECT_SOURCE_DIR}/data/)
+	${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv
+	${PROJECT_SOURCE_DIR}/data/config_options.csv
+	${PROJECT_SOURCE_DIR}/data/tz_world.zip
+	${PROJECT_SOURCE_DIR}/data/landfire.zip
+	${PROJECT_SOURCE_DIR}/data/map.html
+	${PROJECT_SOURCE_DIR}/data/qt_certs_bundle.pem
+	${PROJECT_SOURCE_DIR}/data/thredds.csv
+	${PROJECT_SOURCE_DIR}/data/surface_data.zip
+	${PROJECT_SOURCE_DIR}/data/srtm_region.geojson
+	${PROJECT_SOURCE_DIR}/data/us_srtm_region.dbf
+	${PROJECT_SOURCE_DIR}/data/us_srtm_region.prj
+	${PROJECT_SOURCE_DIR}/data/us_srtm_region.shp
+	${PROJECT_SOURCE_DIR}/data/us_srtm_region.shx
+)
 install(FILES ${share_files}
-        DESTINATION share/windninja
-        COMPONENT apps)
+	DESTINATION share/windninja
+		COMPONENT apps)
 
 # Install Leaflet data
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/leaflet DESTINATION share/windninja)
 
 # Install all documentation files
 set(doc_files
-    CLI_instructions.pdf
-    displaying_wind_vectors_in_ArcGIS_Pro.pdf
-    download_elevation_file.pdf
-    fetch_dem_instructions.pdf)
-list(TRANSFORM doc_files PREPEND ${PROJECT_SOURCE_DIR}/doc/)
+	${PROJECT_SOURCE_DIR}/doc/tutorials/CLI_instructions/CLI_instructions.pdf
+	${PROJECT_SOURCE_DIR}/doc/tutorials/displaying_wind_vectors_in_ArcGIS_Pro/displaying_wind_vectors_in_ArcGIS_Pro.pdf
+	${PROJECT_SOURCE_DIR}/doc/tutorials/download_elevation_file/download_elevation_file.pdf
+	${PROJECT_SOURCE_DIR}/doc/tutorials/fetch_dem_instructions/fetch_dem_instructions.pdf
+)
 install(FILES ${doc_files}
-        DESTINATION share/windninja/doc
-        COMPONENT apps)
+	DESTINATION share/windninja/doc
+	COMPONENT apps)
 
 # Install all tutorial files
 set(tutorial_files
-    WindNinja_tutorial1.pdf
-    WindNinja_tutorial2.pdf
-    WindNinja_tutorial3.pdf
-    WindNinja_tutorial4.pdf)
-list(TRANSFORM tutorial_files PREPEND ${PROJECT_SOURCE_DIR}/doc/tutorials/)
+	${PROJECT_SOURCE_DIR}/doc/tutorials/tutorial_1/WindNinja_tutorial1.pdf
+	${PROJECT_SOURCE_DIR}/doc/tutorials/tutorial_2/WindNinja_tutorial2.pdf
+	${PROJECT_SOURCE_DIR}/doc/tutorials/tutorial_3/WindNinja_tutorial3.pdf
+	${PROJECT_SOURCE_DIR}/doc/tutorials/tutorial_4/WindNinja_tutorial4.pdf
+)
 install(FILES ${tutorial_files}
-        DESTINATION share/windninja/doc/tutorials
-        COMPONENT apps)
+	DESTINATION share/windninja/doc/tutorials
+	COMPONENT apps)
 
 # Install the ninjafoam data
 if(WIN32)
