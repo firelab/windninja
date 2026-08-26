@@ -413,7 +413,7 @@ void MenuBar::loadMapVisualizationActionTriggered()
     {
         return;
     }
-    else if (files.size() >= 5)
+    else if (files.size() > 5)
     {
         QMessageBox::StandardButton result = QMessageBox::warning(
             ui->centralwidget,

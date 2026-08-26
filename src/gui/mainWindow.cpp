@@ -1441,7 +1441,7 @@ void MainWindow::finishedSolve()
         progressDialog->setCancelButtonText("Cancel");
         progressDialog->setRange(0, 0);
 
-        if(numNinjas >= 5)
+        if(numNinjas > 5)
         {
             QMessageBox::information(
                 this,
