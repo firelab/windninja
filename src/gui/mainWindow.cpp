@@ -472,6 +472,7 @@ void MainWindow::momentumSolverCheckBoxToggled()
 void MainWindow::diurnalCheckBoxToggled()
 {
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    ui->tableTempUnits->setEnabled(enabled);
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
         domainAverageInput->timeEdits[row]->setEnabled(enabled);
@@ -486,6 +487,7 @@ void MainWindow::diurnalCheckBoxToggled()
 void MainWindow::stabilityCheckBoxToggled()
 {
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    ui->tableTempUnits->setEnabled(enabled);
     for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
     {
         domainAverageInput->timeEdits[row]->setEnabled(enabled);

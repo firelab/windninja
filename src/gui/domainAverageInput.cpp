@@ -258,6 +258,7 @@ void DomainAverageInput::setupDomainAverageTableWidgets()
     }
 
     bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    ui->tableTempUnits->setEnabled(enabled);
     for(int row = 0; row < rows; row++)
     {
         timeEdits[row]->setEnabled(enabled);
