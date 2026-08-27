@@ -716,10 +716,13 @@ void PointInitializationInput::readStationTime(QDateTime startUtcDateTime, QDate
     ui->weatherStationDataStartDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
     ui->weatherStationDataEndDateTimeEdit->setDisplayFormat("MM/dd/yyyy HH:mm");
 
-    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minStationLocalDateTime, maxStationLocalDateTime);
-    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minStationLocalDateTime, maxStationLocalDateTime);
-    ui->weatherStationDataStartDateTimeEdit->setDateTime(minStationLocalDateTime);
-    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxStationLocalDateTime);
+    QDateTime minDisplayTime(minStationLocalDateTime.date(), minStationLocalDateTime.time());
+    QDateTime maxDisplayTime(maxStationLocalDateTime.date(), maxStationLocalDateTime.time());
+
+    ui->weatherStationDataStartDateTimeEdit->setDateTimeRange(minDisplayTime,maxDisplayTime);
+    ui->weatherStationDataEndDateTimeEdit->setDateTimeRange(minDisplayTime, maxDisplayTime);
+    ui->weatherStationDataStartDateTimeEdit->setDateTime(minDisplayTime);
+    ui->weatherStationDataEndDateTimeEdit->setDateTime(maxDisplayTime);
 
     ui->weatherStationDataStartDateTimeEdit->setEnabled(true);
     ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
