@@ -26,7 +26,7 @@ WindNinja 4.0.0
 
 - Fixed issue where AsciiGrid was improperly detecting NO_DATA values (#576)
 
-- Upgraded momentum solver runs use the RNG kEpsilon over the KEpsiloln model (#525) 
+- Upgraded momentum solver to use the RNG KEpsilon turbulence model over the KEpsilon model (#525) 
 
 - Removed NDFD now that UCAR no longer serves the data (#494)
 
