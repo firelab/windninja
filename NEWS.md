@@ -1,5 +1,34 @@
 Release Notes
 =============
+WindNinja 4.0.0
+---------------
+- Updated the GUI from Qt4 to Qt6 (#638, #639, #637, #639, #640)
+
+- Added leaflet map to GUI (#641, #725)
+
+- Allow DEMs with projections that are not north-up (#544)
+
+- Added select all/select none option in GUI for point initialization (#379) 
+
+- Fixed small bug to our micrometeorological calculations for the thermal parameterizations
+
+- Upgraded to OpenFOAM 11 for Linux builds (#801)
+
+- Fixed bug regarding NO_DATA value with GDAL datasets (#647)
+
+- Updated GUI pop-up to include links to newer versions (#643)
+
+- Added a C API to access WindNinja model (#259, #582, #666, #667)
+
+- Upgrade LANDFIRE to use 2024 data (#672)
+
+- Updated LANDFIRE product codes (#684)
+
+- Fixed issue where AsciiGrid was improperly detecting NO_DATA values (#576)
+
+- Upgraded momentum solver runs use the RNG kEpsilon over the KEpsiloln model (#525) 
+
+- Removed NDFD now that UCAR no longer serves the data (#494)
 
 WindNinja 3.12.2
 ---------------
@@ -67,7 +96,7 @@ WindNinja 3.11.0
 
 - Increased default download time for LCP service (#515)
 
-- Fixed timze zone issue in the GUI related to point initialization runs (#516)
+- Fixed time zone issue in the GUI related to point initialization runs (#516)
 
 - Added additional time zones from Python timezone finder
 
