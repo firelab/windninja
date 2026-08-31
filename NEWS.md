@@ -20,7 +20,7 @@ WindNinja 4.0.0
 
 - Added a C API to access WindNinja model (#259, #582, #666, #667)
 
-- Upgrade LANDFIRE to use 2024 data (#672)
+- Upgraded LANDFIRE to use 2024 data (#672)
 
 - Updated LANDFIRE product codes (#684)
 
