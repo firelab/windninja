@@ -8,28 +8,12 @@ Thank you for your interest in contributing to WindNinja! This document provides
 - C++17 compatible compiler (GCC, Clang, or MSVC)
 - CMake (version 3.10 or higher)
 - GDAL library
-- Qt5 (for GUI components)
+- Qt6 (for GUI components)
 - OpenMP (for parallel processing)
 
 ### Building the Project
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd WindNinja
-   ```
-2. Create a build directory:
-   ```bash
-   mkdir build
-   cd build
-   ```
-3. Configure with CMake:
-   ```bash
-   cmake ..
-   ```
-4. Build:
-   ```bash
-   cmake --build .
-   ```
+Follow the build steps for your environment here:
+https://github.com/firelab/windninja/wiki
 
 ## Development Guidelines
 
@@ -38,6 +22,10 @@ Thank you for your interest in contributing to WindNinja! This document provides
 - Use meaningful variable and function names
 - Add comments for complex logic
 - Ensure all new code compiles without warnings
+
+### Testing
+- Write unit test(s) for new contributions if appropriate
+- Run full test suite in autotest/
 
 ### Commit Messages
 - Write clear, descriptive commit messages
