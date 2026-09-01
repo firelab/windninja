@@ -25,21 +25,21 @@ Directories:
  * src         -> source files
 
 Dependencies (versions are versions we build against for the Windows installer):
- * Boost 1.46:
+ * Boost 1.91.0
     * boost_date_time
     * boost_program_options
     * boost_test
- * NetCDF 4.1.1
- * GDAL 2.2.2
+ * NetCDF 4.9.3
+ * GDAL 3.12.4
     * NetCDF support
-    * PROJ.4 support
+    * PROJ support
     * GEOS support
     * CURL support
- * Qt 4.8.5
-    * QtGui
-    * QtCore
-    * QtNetwork/Phonon
-    * QtWebKit
+ * Qt 6.2.4
+    * Qt WebEngine
+    * Qt Positioning
+    * Qt Serial Port
+    * Qt WebChannel
  * [OpenFOAM 2.2.x](https://github.com/OpenFOAM/OpenFOAM-2.2.x)
 
 See INSTALL for more information (coming soon)
