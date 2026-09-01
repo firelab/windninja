@@ -4,7 +4,7 @@ WindNinja is maintained by the Missoula Fire Sciences Laboratory and designated 
 
 ## Project Leads
 
-The Project Leads provides overall technical leadership for WindNinja and coordinates project development and maintenance.
+The Project Leads provide overall technical leadership for WindNinja and coordinates project development and maintenance.
 
 **Current Project Leads**
 
