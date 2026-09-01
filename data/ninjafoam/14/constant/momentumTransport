@@ -22,9 +22,7 @@ RAS
 
     turbulence      on;
 
-    printCoeffs     on;
-
-    kEpsilonCoeffs
+    kEpsilon
     {
         Cmu          0.09;
         C1           1.44;
@@ -32,9 +30,10 @@ RAS
         C3           0;
         sigmak       1;
         sigmaEps     1.3;
+        #print
     }
 
-    RNGkEpsilonCoeffs
+    RNGkEpsilon
     {
          Cmu         0.085;
          C1          0.92;
@@ -44,6 +43,7 @@ RAS
          sigmaEps    0.7179;
          eta0        4.38;
          beta        0.012;
+         #print
     }
 }
 

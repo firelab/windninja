@@ -17,7 +17,6 @@ mover
 {
     type            displacementSBRStress;
 
-    //libs            ("libfvMeshMovers.so" "libfvMotionSolvers.so");
     libs            ("libfvMotionSolvers.so");
 
     diffusivity  quadratic inverseDistance 1(minZ);

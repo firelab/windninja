@@ -9,7 +9,7 @@ FoamFile
 {
     format      ascii;
     class       pointVectorField;
-    object      pointMotionU;
+    object      pointDisplacement;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -38,7 +38,7 @@ boundaryField
         {
             terrain
             {
-                type triSurfaceMesh;
+                type triSurface;
                 file "$stlName$.stl";
             }
         };

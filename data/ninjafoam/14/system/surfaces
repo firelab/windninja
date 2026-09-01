@@ -24,10 +24,10 @@ surfaces
 (
     triSurfaceSampling
     {
-        type        triSurfaceMesh;
+        type        triSurface;
         surface     $stlFileName$;
         source      cells;
-        interpolate yes;
+        interpolate true;
     }
 );
 

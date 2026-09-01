@@ -16,15 +16,25 @@ FoamFile
 // Cells to refine; name of cell set
 set refineCells;
 
+// Optional switch to apply hexRef8 3D 2x2x2 hex cell refinement
+// in the same manner as and compatible with snappyHexMesh
+// and dynamic refinement/unrefinement.
+// To support further refinement with refineMesh, snappyHexMesh
+// or dynamic refinement/unrefinement the cellLevel and pointLevel files
+// are written.
+hexRef8 false;
+
+// For non-hexRef8 1D, 2D or 3D refinement a coordinate system is required:
+// Type of coordinate system:
+// - global : coordinate system same for every cell. Usually aligned with
+//   x,y,z axis. Specify in globalCoeffs section below.
+// - patchLocal : coordinate system different for every cell. Specify in
+//   patchLocalCoeffs section below.
 coordinates
 {
-    // Type of coordinate system:
-    // - global : coordinate system same for every cell. Usually aligned with
-    //   x,y,z axis. Specify in globalCoeffs section below.
-    // - patchLocal : coordinate system different for every cell. Specify in
-    //   patchLocalCoeffs section below.
     type global;
     //type patchLocal;
+    //type fieldBased;
 
     // .. and its coefficients. x,y in this case. (normal (e3) direction is
     // calculated as e1^e2)
@@ -36,26 +46,21 @@ coordinates
     //e1 (0 1 0);
     //e2 (0 0 1);
 
-
     // List of directions to refine, if global or patchLocal
-    directions
-    (
-        e1
-        e2
-        e3
-    );
+    directions (e1 e2 e3);
 }
 
 // Whether to use hex topology. This will
 // - if patchLocal: all cells on selected patch should be hex
 // - split all hexes in 2x2x2 through the middle of edges.
-useHexTopology  true;
+// Only applies if 3 directions are specified (defaults to false).
+useHexTopology true;
 
 // Cut purely geometric (will cut hexes through vertices) or take topology
-// into account. Incompatible with useHexTopology
-geometricCut    false;
+// into account (defaults to false).
+geometricCut false;
 
-// Write meshes from intermediate steps
-writeMesh       false;
+// Write meshes from intermediate steps (defaults to false).
+writeMesh false;
 
 // ************************************************************************* //
