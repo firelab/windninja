@@ -1905,19 +1905,33 @@ void NinjaFoam::ReconstructPar()
 void NinjaFoam::RenumberMesh()
 {
     int nRet = -1;
-
-    const char *const papszArgv[] = { "renumberMesh", 
-                                      "-case",
-                                      pszFoamPath,
-                                      "-latestTime",
-                                      "-overwrite", 
-                                      NULL };
-
     VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.renumberMesh", ""), "w");
 
-    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    if( foamVersion == "14" )
+    {
+
+        const char *const papszArgv[] = { "renumberMesh",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-latestTime",
+                                          NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else  // if( foamVersion == "2.2.0" || foamVersion == "9" || foamVersion == "11" )
+    {
+        const char *const papszArgv[] = { "renumberMesh",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-latestTime",
+                                          "-overwrite",
+                                          NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+
     if(nRet != 0)
+    {
         throw std::runtime_error("Error during renumberMesh().");
+    }
 
     VSIFCloseL(fout);
 }
