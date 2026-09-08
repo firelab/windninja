@@ -186,6 +186,18 @@
             "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer"
         );
 
+        const firePerimeterLayer = L.esri.featureLayer({
+            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/1"
+        });
+
+        const firmsFireLayer = L.tileLayer.wms('https://firms.modaps.eosdis.nasa.gov/wms/', {
+            layers: 'fires_viirs_24', // Options: 'fires_viirs_24', 'fires_modis_24', 'fires_viirs_7days'
+            format: 'image/png',
+            transparent: true,
+            attribution: 'NASA FIRMS',
+            zIndex: 1000
+        });
+
         const map = new L.Map('map', {
             preferCanvas: true,
             worldCopyJump: true,
@@ -1281,6 +1293,16 @@
             const displayTree = [];
             const overlayChildren = [];
 
+            overlayChildren.push({
+                label: 'Fire Perimeters',
+                layer: firePerimeterLayer
+            });
+            
+            overlayChildren.push({
+                label: 'Firms',
+                layer: firmsFireLayer
+            });
+
             if (boundingBoxLayer.getLayers().length > 0) {
                 overlayChildren.push({
                     label: 'Bounding Box',
@@ -1504,6 +1526,7 @@
         
         map.addLayer(boundingBoxLayer);
         map.addLayer(demLayer);
+        updateOverlayTree();
 
         layerControl.addTo(map);
         loadControl.addTo(map);
