@@ -49,6 +49,7 @@ set(TEST_SOURCES test_main.cpp
                  test_init.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
+                 test_ninjaunits.cpp
                  test_stl.cpp
                  test_rmtree.cpp
                  test_utm.cpp)
@@ -117,6 +118,10 @@ add_test(test_init_gdal
 # buffer_grid Test Suite
 add_test(test_buffer_grid_init
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=buffer_grid/init_and_set)
+
+# ninjaUnits Test Suite
+add_test(test_ninja_units
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=base_units/length_to_base_units)
 
 # gdal_util
 add_test(test_gdal_util_center
