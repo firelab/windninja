@@ -223,6 +223,90 @@
             }
         });
 
+        const viirsHotspotsLayer = L.esri.featureLayer({
+            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Satellite_VIIRS_Thermal_Hotspots_and_Fire_Activity/FeatureServer/0",
+
+            where: "1=1",
+
+            pointToLayer: function (geojson, latlng) {
+                const properties = geojson.properties;
+                const color = getHotspotColor(properties.hours_old);
+
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    color: color,
+                    weight: 1,
+                    fillColor: color,
+                    fillOpacity: 0.7
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                const properties = feature.properties;
+
+                layer.bindPopup(`
+                    <strong>VIIRS Hotspot</strong><br>
+                    <strong>Detection:</strong> ${properties.acq_time || "N/A"}<br>
+                    <strong>Satellite:</strong> ${properties.satellite || "N/A"}<br>
+                    <strong>Confidence:</strong> ${properties.confidence || "N/A"}<br>
+                    <strong>Fire Radiative Power:</strong> ${properties.frp || "N/A"} MW
+                `);
+            }
+        });
+
+        const modisHotspotsLayer = L.esri.featureLayer({
+            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/MODIS_Thermal_v1/FeatureServer/1",
+
+            pointToLayer: function (geojson, latlng) {
+                const properties = geojson.properties;
+                const hoursOld = properties.HOURS_OLD;
+
+                const color = getHotspotColor(hoursOld);
+
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    color: color,
+                    weight: 1,
+                    fillColor: color,
+                    fillOpacity: 0.9
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                const properties = feature.properties;
+
+                layer.bindPopup(`
+                    <strong>MODIS Thermal Hotspot</strong><br>
+                    <strong>Satellite:</strong> ${properties.SATELLITE || "N/A"}<br>
+                    <strong>Acquisition:</strong> ${properties.ACQ_DATE || "N/A"}<br>
+                    <strong>Age:</strong> ${properties.HOURS_OLD || "N/A"} hours<br>
+                    <strong>Confidence:</strong> ${properties.CONFIDENCE || "N/A"}%<br>
+                    <strong>Brightness:</strong> ${properties.BRIGHTNESS || "N/A"} K<br>
+                    <strong>Fire Radiative Power:</strong> ${properties.FRP || "N/A"} MW
+                `);
+            }
+        });
+
+        function getHotspotColor(hoursOld) {
+            if (hoursOld < 1) {
+                return "#8000FF";
+            }
+
+            if (hoursOld < 6) {
+                return "#E60000";
+            }
+
+            if (hoursOld < 12) {
+                return "#FF8C00";
+            }
+
+            if (hoursOld < 24) {
+                return "#FFD700";
+            }
+
+            return "#D2B48C";
+        }
+
         const map = new L.Map('map', {
             preferCanvas: true,
             worldCopyJump: true,
@@ -1326,6 +1410,16 @@
             overlayChildren.push({
                 label: 'Fire Points',
                 layer: firePointsLayer
+            });
+
+            overlayChildren.push({
+                label: 'VIIRS Hotspots',
+                layer: viirsHotspotsLayer
+            });
+
+            overlayChildren.push({
+                label: 'MODIS Hotspots',
+                layer: modisHotspotsLayer
             });
 
             if (boundingBoxLayer.getLayers().length > 0) {
