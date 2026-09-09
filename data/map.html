@@ -187,15 +187,40 @@
         );
 
         const firePerimeterLayer = L.esri.featureLayer({
-            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/USA_Wildfires_v1/FeatureServer/1"
+            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0",
+            style: {
+                color: "#E60000",
+                weight: 2,
+                fillColor: "#FFBEBE",
+                fillOpacity: 0.7
+            }
         });
 
-        const firmsFireLayer = L.tileLayer.wms('https://firms.modaps.eosdis.nasa.gov/wms/', {
-            layers: 'fires_viirs_24', // Options: 'fires_viirs_24', 'fires_modis_24', 'fires_viirs_7days'
-            format: 'image/png',
-            transparent: true,
-            attribution: 'NASA FIRMS',
-            zIndex: 1000
+        const firePointsLayer = L.esri.featureLayer({
+            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0",
+
+            pointToLayer: function (geojson, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    color: "#000000",
+                    weight: 1,
+                    fillColor: "#000000",
+                    fillOpacity: 1
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                const properties = feature.properties;
+
+                layer.bindPopup(`
+                    <strong>${properties.IncidentName || "Unknown Fire"}</strong><br>
+                    <strong>Incident Number:</strong> ${properties.IncidentNumber || "N/A"}<br>
+                    <strong>Location:</strong> ${properties.POOState || "N/A"}<br>
+                    <strong>Start Date:</strong> ${properties.FireDiscoveryDateTime || "N/A"}<br>
+                    <strong>Acres:</strong> ${properties.IncidentSize || "N/A"}<br>
+                    <strong>Status:</strong> ${properties.IncidentManagementOrg || "N/A"}
+                `);
+            }
         });
 
         const map = new L.Map('map', {
@@ -1297,10 +1322,10 @@
                 label: 'Fire Perimeters',
                 layer: firePerimeterLayer
             });
-            
+
             overlayChildren.push({
-                label: 'Firms',
-                layer: firmsFireLayer
+                label: 'Fire Points',
+                layer: firePointsLayer
             });
 
             if (boundingBoxLayer.getLayers().length > 0) {
