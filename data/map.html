@@ -154,7 +154,7 @@
             tileSize: 512,
             maxZoom: 18,
             zoomOffset: -1,
-            id: 'mapbox/streets-v11'
+            id: 'mapbox/streets-v12'
         });
 
         const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
@@ -289,22 +289,22 @@
 
         function getHotspotColor(hoursOld) {
             if (hoursOld < 1) {
-                return "#8000FF";
+                return "#a80000";
             }
 
             if (hoursOld < 6) {
-                return "#E60000";
+                return "#e64000";
             }
 
             if (hoursOld < 12) {
-                return "#FF8C00";
+                return "#ff5500";
             }
 
             if (hoursOld < 24) {
-                return "#FFD700";
+                return "#ffaa00";
             }
 
-            return "#D2B48C";
+            return "#ffff00";
         }
 
         const map = new L.Map('map', {
@@ -415,9 +415,19 @@
             children: []
         };
 
+        const fireOverlayTree = {
+            label: 'Fire Overlays',
+            children: [
+                { label: 'Fire Perimeters', layer: firePerimeterLayer },
+                { label: 'Fire Points', layer: firePointsLayer },
+                { label: 'VIIRS Hotspots', layer: viirsHotspotsLayer },
+                { label: 'MODIS Hotspots', layer: modisHotspotsLayer }
+            ]
+        };
+
         const layerControl = L.control.layers.tree(
             baseTree,
-            [],
+            [fireOverlayTree],
             { collapsed: true }
         ).addTo(map);
 
@@ -1402,26 +1412,6 @@
             const displayTree = [];
             const overlayChildren = [];
 
-            overlayChildren.push({
-                label: 'Fire Perimeters',
-                layer: firePerimeterLayer
-            });
-
-            overlayChildren.push({
-                label: 'Fire Points',
-                layer: firePointsLayer
-            });
-
-            overlayChildren.push({
-                label: 'VIIRS Hotspots',
-                layer: viirsHotspotsLayer
-            });
-
-            overlayChildren.push({
-                label: 'MODIS Hotspots',
-                layer: modisHotspotsLayer
-            });
-
             if (boundingBoxLayer.getLayers().length > 0) {
                 overlayChildren.push({
                     label: 'Bounding Box',
@@ -1464,6 +1454,8 @@
                     layer: initializationTimeSeriesToggle
                 });
             }
+
+            displayTree.push(fireOverlayTree);
 
             if (windninjaOutputTree.children.length > 1)
                 displayTree.push(windninjaOutputTree);
