@@ -182,10 +182,6 @@
             }
         );
 
-        const fsTopoBaseLayer = L.esri.Vector.vectorTileLayer(
-            "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer"
-        );
-
         const firePerimeterLayer = L.esri.featureLayer({
             url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0",
 
@@ -359,6 +355,35 @@
             center: [37.5, -96.5],
             zoom: 4
         });
+
+        map.createPane('fsTopoPane');
+        map.getPane('fsTopoPane').style.zIndex = 400;
+
+        map.createPane('fsHillshadePane');
+        map.getPane('fsHillshadePane').style.zIndex = 450;
+
+        const fsTopoBaseLayer = L.esri.Vector.vectorTileLayer(
+            "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer",
+            {
+                maxZoom: 16,
+                pane: 'fsTopoPane'
+            }
+        );
+
+        const fsHillshadeLayer = L.tileLayer(
+            "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+            {
+                maxZoom: 16,
+                pane: 'fsHillshadePane',
+                opacity: 0.35,
+                attribution: "Esri"
+            }
+        );
+
+        const fsTopoHillshadeLayer = L.layerGroup([
+            fsTopoBaseLayer,
+            fsHillshadeLayer
+        ]);
         
         const boundingBoxLayer = new L.FeatureGroup();
         const demLayer = new L.FeatureGroup();
@@ -423,7 +448,7 @@
                 { label: 'Satellite', layer: satelliteBaseLayer },
                 { label: 'Topographic', layer: topographicBaseLayer },
                 { label: 'USGS Topographic', layer: usgsTopoBaseLayer },
-                { label: 'Forest Service Topographic', layer: fsTopoBaseLayer }
+                { label: 'Forest Service Topographic', layer: fsTopoHillshadeLayer }
             ]
         };
 
