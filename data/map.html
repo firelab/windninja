@@ -177,7 +177,7 @@
         const usgsTopoBaseLayer = L.tileLayer(
             'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
             {
-                maxZoom: 20,
+                maxZoom: 16,
                 attribution: 'USGS The National Map'
             }
         );
@@ -188,6 +188,9 @@
 
         const firePerimeterLayer = L.esri.featureLayer({
             url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0",
+
+            simplifyFactor: 0.5,
+
             style: {
                 color: "#E60000",
                 weight: 2,
@@ -311,8 +314,8 @@
             preferCanvas: true,
             worldCopyJump: true,
             layers: [streetBaseLayer],
-            center: new L.LatLng(43.62455, -113.2971),
-            zoom: 8
+            center: [37.5, -96.5],
+            zoom: 4
         });
         
         const boundingBoxLayer = new L.FeatureGroup();
