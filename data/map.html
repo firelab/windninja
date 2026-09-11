@@ -154,7 +154,7 @@
             tileSize: 512,
             maxZoom: 18,
             zoomOffset: -1,
-            id: 'mapbox/streets-v11'
+            id: 'mapbox/streets-v12'
         });
 
         const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
@@ -177,7 +177,7 @@
         const usgsTopoBaseLayer = L.tileLayer(
             'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
             {
-                maxZoom: 20,
+                maxZoom: 16,
                 attribution: 'USGS The National Map'
             }
         );
@@ -186,12 +186,178 @@
             "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer"
         );
 
+        const firePerimeterLayer = L.esri.featureLayer({
+            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0",
+
+            simplifyFactor: 0.5,
+
+            style: {
+                color: "#E60000",
+                weight: 2,
+                fillColor: "#FFBEBE",
+                fillOpacity: 0.7
+            }
+        });
+
+        const firePointsLayer = L.esri.featureLayer({
+            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/ArcGIS/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0",
+
+            pointToLayer: function (geojson, latlng) {
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    color: "#000000",
+                    weight: 1,
+                    fillColor: "#000000",
+                    fillOpacity: 1
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                const properties = feature.properties;
+
+                const incidentType = {
+                    WF: "Wildfire",
+                    RX: "Prescribed Fire",
+                    CX: "Incident Complex"
+                };
+
+                const type = incidentType[properties.IncidentTypeCategory] || "Incident";
+
+                const discovered = properties.FireDiscoveryDateTime
+                    ? new Date(properties.FireDiscoveryDateTime).toLocaleDateString()
+                    : "N/A";
+
+                const updated = properties.ModifiedOnDateTime_dt
+                    ? new Date(properties.ModifiedOnDateTime_dt).toLocaleDateString()
+                    : "N/A";
+
+                layer.bindPopup(`
+                    <strong>${properties.IncidentName || "Unknown Fire"}</strong><br>
+                    ${type} · ${properties.POOCounty || "N/A"} County, ${properties.POOState || "N/A"}<br>
+                    <br>
+                    <strong>Size:</strong> ${properties.IncidentSize != null ? properties.IncidentSize.toLocaleString() + " acres" : "N/A"}<br>
+                    <strong>Contained:</strong> ${properties.PercentContained != null ? properties.PercentContained + "%" : "N/A"}<br>
+                    <strong>Fire Behavior:</strong> ${properties.FireBehaviorGeneral || "N/A"}<br>
+                    <strong>Discovered:</strong> ${discovered}<br>
+                    <strong>Last Updated:</strong> ${updated}<br>
+                `);
+            }
+        });
+
+        const viirsHotspotsLayer = L.esri.featureLayer({
+            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Satellite_VIIRS_Thermal_Hotspots_and_Fire_Activity/FeatureServer/0",
+
+            pointToLayer: function (geojson, latlng) {
+                const properties = geojson.properties;
+                const color = getHotspotColor(properties.hours_old);
+
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    color: color,
+                    weight: 1,
+                    fillColor: color,
+                    fillOpacity: 0.7
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                const properties = feature.properties;
+
+                const acquisitionDate = properties.acq_date
+                    ? new Date(properties.acq_date).toLocaleString()
+                    : "N/A";
+
+                const detection = properties.daynight === "D"
+                    ? "Day"
+                    : properties.daynight === "N"
+                        ? "Night"
+                        : "N/A";
+
+                layer.bindPopup(`
+                    <strong>VIIRS Thermal Hotspot</strong><br>
+                    <br>
+                    <strong>Satellite:</strong> ${properties.satellite || "N/A"}<br>
+                    <strong>Acquired:</strong> ${acquisitionDate}<br>
+                    <strong>Age:</strong> ${properties.hours_old != null ? properties.hours_old + " hours" : "N/A"}<br>
+                    <strong>Confidence:</strong> ${properties.confidence || "N/A"}<br>
+                    <strong>Fire Radiative Power:</strong> ${properties.frp != null ? properties.frp.toFixed(1) + " MW" : "N/A"}<br>
+                    <strong>Brightness Temperature:</strong> ${properties.bright_ti4 != null ? properties.bright_ti4.toFixed(1) + " K" : "N/A"}<br>
+                    <strong>Detection:</strong> ${detection}
+                `);
+            }
+        });
+
+        const modisHotspotsLayer = L.esri.featureLayer({
+            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/MODIS_Thermal_v1/FeatureServer/1",
+
+            pointToLayer: function (geojson, latlng) {
+                const properties = geojson.properties;
+                const hoursOld = properties.HOURS_OLD;
+
+                const color = getHotspotColor(hoursOld);
+
+                return L.circleMarker(latlng, {
+                    radius: 5,
+                    color: color,
+                    weight: 1,
+                    fillColor: color,
+                    fillOpacity: 0.9
+                });
+            },
+
+            onEachFeature: function (feature, layer) {
+                const properties = feature.properties;
+
+                const acquisitionDate = properties.ACQ_DATE
+                    ? new Date(properties.ACQ_DATE).toLocaleString()
+                    : "N/A";
+
+                const detection = properties.DAYNIGHT === "D"
+                    ? "Day"
+                    : properties.DAYNIGHT === "N"
+                        ? "Night"
+                        : "N/A";
+
+                layer.bindPopup(`
+                    <strong>MODIS Thermal Hotspot</strong><br>
+                    <br>
+                    <strong>Satellite:</strong> ${properties.SATELLITE || "N/A"}<br>
+                    <strong>Acquired:</strong> ${acquisitionDate}<br>
+                    <strong>Age:</strong> ${properties.HOURS_OLD != null ? properties.HOURS_OLD + " hours" : "N/A"}<br>
+                    <strong>Confidence:</strong> ${properties.CONFIDENCE != null ? properties.CONFIDENCE + "%" : "N/A"}<br>
+                    <strong>Fire Radiative Power:</strong> ${properties.FRP != null ? properties.FRP.toFixed(1) + " MW" : "N/A"}<br>
+                    <strong>Brightness:</strong> ${properties.BRIGHTNESS != null ? properties.BRIGHTNESS.toFixed(1) + " K" : "N/A"}<br>
+                    <strong>Detection:</strong> ${detection}
+                `);
+            }
+        });
+
+        function getHotspotColor(hoursOld) {
+            if (hoursOld < 1) {
+                return "#a80000";
+            }
+
+            if (hoursOld < 6) {
+                return "#e64000";
+            }
+
+            if (hoursOld < 12) {
+                return "#ff5500";
+            }
+
+            if (hoursOld < 24) {
+                return "#ffaa00";
+            }
+
+            return "#ffff00";
+        }
+
         const map = new L.Map('map', {
             preferCanvas: true,
             worldCopyJump: true,
             layers: [streetBaseLayer],
-            center: new L.LatLng(43.62455, -113.2971),
-            zoom: 8
+            center: [37.5, -96.5],
+            zoom: 4
         });
         
         const boundingBoxLayer = new L.FeatureGroup();
@@ -294,9 +460,19 @@
             children: []
         };
 
+        const fireOverlayTree = {
+            label: 'Fire Overlays',
+            children: [
+                { label: 'Fire Perimeters', layer: firePerimeterLayer },
+                { label: 'Fire Points', layer: firePointsLayer },
+                { label: 'VIIRS Hotspots', layer: viirsHotspotsLayer },
+                { label: 'MODIS Hotspots', layer: modisHotspotsLayer }
+            ]
+        };
+
         const layerControl = L.control.layers.tree(
             baseTree,
-            [],
+            [fireOverlayTree],
             { collapsed: true }
         ).addTo(map);
 
@@ -1324,6 +1500,8 @@
                 });
             }
 
+            displayTree.push(fireOverlayTree);
+
             if (windninjaOutputTree.children.length > 1)
                 displayTree.push(windninjaOutputTree);
 
@@ -1374,7 +1552,7 @@
                 activeWindNinjaLayer = null;
                 updateOverlayTree();
             }
-            if (e.layer === initializationOutputTree.children[windninjaOutputTree.children.length-1]?.layer) {
+            if (e.layer === initializationOutputTree.children[initializationOutputTree.children.length-1]?.layer) {
                 if (activeInitializationTimeSeriesImg) {
                     activeInitializationTimeSeriesImg.remove();
                     activeInitializationTimeSeriesImg = null;
@@ -1504,6 +1682,7 @@
         
         map.addLayer(boundingBoxLayer);
         map.addLayer(demLayer);
+        updateOverlayTree();
 
         layerControl.addTo(map);
         loadControl.addTo(map);
