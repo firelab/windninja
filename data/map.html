@@ -200,7 +200,7 @@
         });
 
         const firePointsLayer = L.esri.featureLayer({
-            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0",
+            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/ArcGIS/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0",
 
             pointToLayer: function (geojson, latlng) {
                 return L.circleMarker(latlng, {
@@ -215,21 +215,37 @@
             onEachFeature: function (feature, layer) {
                 const properties = feature.properties;
 
+                const incidentType = {
+                    WF: "Wildfire",
+                    RX: "Prescribed Fire",
+                    CX: "Incident Complex"
+                };
+
+                const type = incidentType[properties.IncidentTypeCategory] || "Incident";
+
+                const discovered = properties.FireDiscoveryDateTime
+                    ? new Date(properties.FireDiscoveryDateTime).toLocaleDateString()
+                    : "N/A";
+
+                const updated = properties.ModifiedOnDateTime_dt
+                    ? new Date(properties.ModifiedOnDateTime_dt).toLocaleDateString()
+                    : "N/A";
+
                 layer.bindPopup(`
                     <strong>${properties.IncidentName || "Unknown Fire"}</strong><br>
-                    <strong>Incident Number:</strong> ${properties.IncidentNumber || "N/A"}<br>
-                    <strong>Location:</strong> ${properties.POOState || "N/A"}<br>
-                    <strong>Start Date:</strong> ${properties.FireDiscoveryDateTime || "N/A"}<br>
-                    <strong>Acres:</strong> ${properties.IncidentSize || "N/A"}<br>
-                    <strong>Status:</strong> ${properties.IncidentManagementOrg || "N/A"}
+                    ${type} · ${properties.POOCounty || "N/A"} County, ${properties.POOState || "N/A"}<br>
+                    <br>
+                    <strong>Size:</strong> ${properties.IncidentSize != null ? properties.IncidentSize.toLocaleString() + " acres" : "N/A"}<br>
+                    <strong>Contained:</strong> ${properties.PercentContained != null ? properties.PercentContained + "%" : "N/A"}<br>
+                    <strong>Fire Behavior:</strong> ${properties.FireBehaviorGeneral || "N/A"}<br>
+                    <strong>Discovered:</strong> ${discovered}<br>
+                    <strong>Last Updated:</strong> ${updated}<br>
                 `);
             }
         });
 
         const viirsHotspotsLayer = L.esri.featureLayer({
             url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Satellite_VIIRS_Thermal_Hotspots_and_Fire_Activity/FeatureServer/0",
-
-            where: "1=1",
 
             pointToLayer: function (geojson, latlng) {
                 const properties = geojson.properties;
@@ -247,12 +263,26 @@
             onEachFeature: function (feature, layer) {
                 const properties = feature.properties;
 
+                const acquisitionDate = properties.acq_date
+                    ? new Date(properties.acq_date).toLocaleString()
+                    : "N/A";
+
+                const detection = properties.daynight === "D"
+                    ? "Day"
+                    : properties.daynight === "N"
+                        ? "Night"
+                        : "N/A";
+
                 layer.bindPopup(`
-                    <strong>VIIRS Hotspot</strong><br>
-                    <strong>Detection:</strong> ${properties.acq_time || "N/A"}<br>
+                    <strong>VIIRS Thermal Hotspot</strong><br>
+                    <br>
                     <strong>Satellite:</strong> ${properties.satellite || "N/A"}<br>
+                    <strong>Acquired:</strong> ${acquisitionDate}<br>
+                    <strong>Age:</strong> ${properties.hours_old != null ? properties.hours_old + " hours" : "N/A"}<br>
                     <strong>Confidence:</strong> ${properties.confidence || "N/A"}<br>
-                    <strong>Fire Radiative Power:</strong> ${properties.frp || "N/A"} MW
+                    <strong>Fire Radiative Power:</strong> ${properties.frp != null ? properties.frp.toFixed(1) + " MW" : "N/A"}<br>
+                    <strong>Brightness Temperature:</strong> ${properties.bright_ti4 != null ? properties.bright_ti4.toFixed(1) + " K" : "N/A"}<br>
+                    <strong>Detection:</strong> ${detection}
                 `);
             }
         });
@@ -278,14 +308,26 @@
             onEachFeature: function (feature, layer) {
                 const properties = feature.properties;
 
+                const acquisitionDate = properties.ACQ_DATE
+                    ? new Date(properties.ACQ_DATE).toLocaleString()
+                    : "N/A";
+
+                const detection = properties.DAYNIGHT === "D"
+                    ? "Day"
+                    : properties.DAYNIGHT === "N"
+                        ? "Night"
+                        : "N/A";
+
                 layer.bindPopup(`
                     <strong>MODIS Thermal Hotspot</strong><br>
+                    <br>
                     <strong>Satellite:</strong> ${properties.SATELLITE || "N/A"}<br>
-                    <strong>Acquisition:</strong> ${properties.ACQ_DATE || "N/A"}<br>
-                    <strong>Age:</strong> ${properties.HOURS_OLD || "N/A"} hours<br>
-                    <strong>Confidence:</strong> ${properties.CONFIDENCE || "N/A"}%<br>
-                    <strong>Brightness:</strong> ${properties.BRIGHTNESS || "N/A"} K<br>
-                    <strong>Fire Radiative Power:</strong> ${properties.FRP || "N/A"} MW
+                    <strong>Acquired:</strong> ${acquisitionDate}<br>
+                    <strong>Age:</strong> ${properties.HOURS_OLD != null ? properties.HOURS_OLD + " hours" : "N/A"}<br>
+                    <strong>Confidence:</strong> ${properties.CONFIDENCE != null ? properties.CONFIDENCE + "%" : "N/A"}<br>
+                    <strong>Fire Radiative Power:</strong> ${properties.FRP != null ? properties.FRP.toFixed(1) + " MW" : "N/A"}<br>
+                    <strong>Brightness:</strong> ${properties.BRIGHTNESS != null ? properties.BRIGHTNESS.toFixed(1) + " K" : "N/A"}<br>
+                    <strong>Detection:</strong> ${detection}
                 `);
             }
         });
@@ -1510,7 +1552,7 @@
                 activeWindNinjaLayer = null;
                 updateOverlayTree();
             }
-            if (e.layer === initializationOutputTree.children[windninjaOutputTree.children.length-1]?.layer) {
+            if (e.layer === initializationOutputTree.children[initializationOutputTree.children.length-1]?.layer) {
                 if (activeInitializationTimeSeriesImg) {
                     activeInitializationTimeSeriesImg.remove();
                     activeInitializationTimeSeriesImg = null;
