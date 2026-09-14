@@ -18,35 +18,30 @@
 # Instructions/Documentation
 # https://github.com/firelab/windninja/wiki/Building-the-WindNinja-Docker-Image
 # https://github.com/firelab/windninja/wiki/Running-the-WindNinja-Docker-Image-in-an-HPC-Environment
-    
-# Update environment variables for OpenMPI
-# If running docker / singulairty container on mulitple cores make sure to use these environmental varibale before trying to run Windninja 
-# OPENMPI_VERSION=4.0.4
-# export MPI_DIR=/opt/openmpi-${OPENMPI_VERSION}
-# export MPI_BIN=$MPI_DIR/bin
-# export MPI_LIB=$MPI_DIR/lib
-# export MPI_INC=$MPI_DIR/include
-# export PATH=$MPI_BIN:$PATH
-# export LD_LIBRARY_PATH=$MPI_LIB:$LD_LIBRARY_PATH
 
+# Setup environment
 FROM ubuntu:24.04
-USER root
-ADD . /src/wind/windninja/
+COPY . /src/wind/windninja/
 SHELL [ "/usr/bin/bash", "-c" ]
 ENV DEBIAN_FRONTEND noninteractive
 ENV WM_PROJECT_INST_DIR /opt
 ENV WINDNINJA_DATA=/src/wind/windninja/data
 
-RUN dpkg-reconfigure debconf --frontend=noninteractive && \
-    apt-get update && \
-    apt-get install -y wget gnupg2 cmake git apt-transport-https ca-certificates \
-                       software-properties-common sudo build-essential \
-                       pkg-config g++ libboost-program-options-dev \
-                       libboost-date-time-dev libboost-test-dev python3-pip && \
+# Install dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        wget \
+        gnupg2 \
+        cmake \
+        git \
+        ca-certificates \
+        software-properties-common \
+        build-essential && \
     cd /src && \
-    DEBIAN_FRONTEND=noninteractive /src/wind/windninja/scripts/build_deps_ubuntu_2404.sh && \
-    rm -rf /var/lib/apt/lists
+    /src/wind/windninja/scripts/build_deps_docker.sh && \
+    rm -rf /var/lib/apt/lists/*
 
+# Configure and build WindNinja
 RUN mkdir -p /src/wind/build && \
     cd /src/wind/build && \
     # Building the windninja with different functionalities
@@ -55,7 +50,7 @@ RUN mkdir -p /src/wind/build && \
     -D SUPRESS_WARNINGS=ON \
     # Turns on the Momentum solver. Dependent on OpenFOAM (required).
     -D NINJAFOAM=ON \
-    # Turns off the GUI. Not needed for Docker images using only the CLI.
+    # Turns off the GUI. Not needed for Docker images using only the CLI (optional).
     -D NINJA_GUI=OFF \
     # User can add their specific flag from the cmake here similarly from the above example
     /src/wind/windninja && \
@@ -63,7 +58,7 @@ RUN mkdir -p /src/wind/build && \
     make install && \
     ldconfig
 
-# This segment is responsible for openfoam11
+# Build OpenFOAM 11 libraries and executables
 RUN source /opt/openfoam11/etc/bashrc && \
     mkdir -p $FOAM_RUN/../applications && \
     cp -r /src/wind/windninja/src/ninjafoam/11/* $FOAM_RUN/../applications && \
