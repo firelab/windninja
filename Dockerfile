@@ -39,7 +39,7 @@
 # export FOAM_USER_LIBBIN=/usr/local/lib/
 
 
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 USER root
 ADD . /opt/src/windninja/
 SHELL [ "/usr/bin/bash", "-c" ]
@@ -54,7 +54,7 @@ RUN dpkg-reconfigure debconf --frontend=noninteractive && \
                        pkg-config g++ libboost-program-options-dev \
                        libboost-date-time-dev libboost-test-dev python3-pip && \
     cd /opt/src && \
-    DEBIAN_FRONTEND=noninteractive /opt/src/windninja/scripts/build_deps_docker.sh && \
+    DEBIAN_FRONTEND=noninteractive /opt/src/windninja/scripts/build_deps_ubuntu_2404.sh && \
     rm -rf /var/lib/apt/lists
 
 RUN mkdir -p /opt/src/windninja/build && \
@@ -82,22 +82,22 @@ RUN mkdir -p /opt/src/windninja/build && \
 
 
 # This segment is responsible for openfoam8
-RUN source /opt/openfoam8/etc/bashrc && \
+RUN source /opt/openfoam11/etc/bashrc && \
     mkdir -p $FOAM_RUN/../applications && \
-    cp -r /opt/src/windninja/src/ninjafoam/8/* $FOAM_RUN/../applications && \
+    cp -r /opt/src/windninja/src/ninjafoam/11/* $FOAM_RUN/../applications && \
     cd $FOAM_RUN/../applications/ && \
-    sed -i "s|export WM_PROJECT_INST_DIR=|export WM_PROJECT_INST_DIR=/opt|g" /opt/openfoam8/etc/bashrc && \
-    sed -i "s|export WM_PROJECT_DIR=\$WM_PROJECT_INST_DIR/openfoam8|export WM_PROJECT_DIR=/opt/openfoam8|g" /opt/openfoam8/etc/bashrc && \
-    . /opt/openfoam8/etc/bashrc && \
+    sed -i "s|export WM_PROJECT_INST_DIR=|export WM_PROJECT_INST_DIR=/opt|g" /opt/openfoam11/etc/bashrc && \
+    sed -i "s|export WM_PROJECT_DIR=\$WM_PROJECT_INST_DIR/openfoam11|export WM_PROJECT_DIR=/opt/openfoam11|g" /opt/openfoam11/etc/bashrc && \
+    . /opt/openfoam11/etc/bashrc && \
     wmake libso && \
     cd utility/applyInit && \
     wmake && \
     # copy custom libraries and binaries from $FOAM_USER_LIBBIN and $FOAM_USER_APPBIN to $FOAM_LIBBIN and $FOAM_APPBIN.
     # required for OpenFOAM to work with Singularity, because Singularity drops the home directory where these files are normally located.
-    cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/lib/libWindNinja.so /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/ && \
-    cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/bin/applyInit /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/ && \
-    chmod 644 /opt/openfoam8/platforms/linux64GccDPInt32Opt/lib/libWindNinja.so && \
-    chmod 755 /opt/openfoam8/platforms/linux64GccDPInt32Opt/bin/applyInit
+    cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/lib/libWindNinja.so /opt/openfoam11/platforms/linux64GccDPInt32Opt/lib/ && \
+    cp $FOAM_RUN/../platforms/linux64GccDPInt32Opt/bin/applyInit /opt/openfoam11/platforms/linux64GccDPInt32Opt/bin/ && \
+    chmod 644 /opt/openfoam11/platforms/linux64GccDPInt32Opt/lib/libWindNinja.so && \
+    chmod 755 /opt/openfoam11/platforms/linux64GccDPInt32Opt/bin/applyInit
 
 # To create a Singularity image from this Dockerfile, run the following commands:
 # 1. Build the Docker image
