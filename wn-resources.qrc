@@ -34,5 +34,58 @@
         <file alias="wn-desktop.ico">images/icons/wn-desktop.ico</file>
         <file alias="wn-icon.png">images/icons/wn-icon.png</file>
         <file alias="date_time_zonespec.csv">data/date_time_zonespec.csv</file>
+
+        <file alias="map.html">src/gui/map/html/map.html</file>
+        
+        <!-- Leaflet stylesheets -->
+        <file alias="map/leaflet/leaflet.css">src/gui/map/leaflet/leaflet.css</file>
+        <file alias="map/leaflet/draw/src/leaflet.draw.css">src/gui/map/leaflet/draw/src/leaflet.draw.css</file>
+        <file alias="map/leaflet/controlLayer/L.Control.Layers.Tree.css">src/gui/map/leaflet/controlLayer/L.Control.Layers.Tree.css</file>
+
+        <!-- Leaflet and Draw dependencies -->
+        <file alias="map/leaflet/jszip/jszip.min.js">src/gui/map/leaflet/jszip/jszip.min.js</file>
+        <file alias="map/leaflet/leaflet-src.js">src/gui/map/leaflet/leaflet-src.js</file>
+        <file alias="map/leaflet/kml/L.KML.js">src/gui/map/leaflet/kml/L.KML.js</file>
+        <file alias="map/leaflet/controlLayer/L.Control.Layers.Tree.js">src/gui/map/leaflet/controlLayer/L.Control.Layers.Tree.js</file>
+
+        <!-- Leaflet Draw -->
+        <file alias="map/leaflet/draw/src/Leaflet.draw.js">src/gui/map/leaflet/draw/src/Leaflet.draw.js</file>
+        <file alias="map/leaflet/draw/src/Leaflet.Draw.Event.js">src/gui/map/leaflet/draw/src/Leaflet.Draw.Event.js</file>
+        <file alias="map/leaflet/draw/src/ext/TouchEvents.js">src/gui/map/leaflet/draw/src/ext/TouchEvents.js</file>
+        <file alias="map/leaflet/draw/src/Tooltip.js">src/gui/map/leaflet/draw/src/Tooltip.js</file>
+        <file alias="map/leaflet/draw/src/ext/GeometryUtil.js">src/gui/map/leaflet/draw/src/ext/GeometryUtil.js</file>
+        <file alias="map/leaflet/draw/src/ext/LatLngUtil.js">src/gui/map/leaflet/draw/src/ext/LatLngUtil.js</file>
+        <file alias="map/leaflet/draw/src/ext/LineUtil.Intersect.js">src/gui/map/leaflet/draw/src/ext/LineUtil.Intersect.js</file>
+        <file alias="map/leaflet/draw/src/ext/Polygon.Intersect.js">src/gui/map/leaflet/draw/src/ext/Polygon.Intersect.js</file>
+        <file alias="map/leaflet/draw/src/ext/Polyline.Intersect.js">src/gui/map/leaflet/draw/src/ext/Polyline.Intersect.js</file>
+
+        <file alias="map/leaflet/draw/src/draw/handler/Draw.Feature.js">src/gui/map/leaflet/draw/src/draw/handler/Draw.Feature.js</file>
+        <file alias="map/leaflet/draw/src/draw/handler/Draw.SimpleShape.js">src/gui/map/leaflet/draw/src/draw/handler/Draw.SimpleShape.js</file>
+        <file alias="map/leaflet/draw/src/draw/handler/Draw.Rectangle.js">src/gui/map/leaflet/draw/src/draw/handler/Draw.Rectangle.js</file>
+
+        <file alias="map/leaflet/draw/src/edit/handler/Edit.SimpleShape.js">src/gui/map/leaflet/draw/src/edit/handler/Edit.SimpleShape.js</file>
+        <file alias="map/leaflet/draw/src/edit/handler/Edit.Rectangle.js">src/gui/map/leaflet/draw/src/edit/handler/Edit.Rectangle.js</file>
+
+        <file alias="map/leaflet/draw/src/Control.Draw.js">src/gui/map/leaflet/draw/src/Control.Draw.js</file>
+        <file alias="map/leaflet/draw/src/Toolbar.js">src/gui/map/leaflet/draw/src/Toolbar.js</file>
+        <file alias="map/leaflet/draw/src/draw/DrawToolbar.js">src/gui/map/leaflet/draw/src/draw/DrawToolbar.js</file>
+        <file alias="map/leaflet/draw/src/edit/EditToolbar.js">src/gui/map/leaflet/draw/src/edit/EditToolbar.js</file>
+        <file alias="map/leaflet/draw/src/edit/handler/EditToolbar.Edit.js">src/gui/map/leaflet/draw/src/edit/handler/EditToolbar.Edit.js</file>
+        <file alias="map/leaflet/draw/src/edit/handler/EditToolbar.Delete.js">src/gui/map/leaflet/draw/src/edit/handler/EditToolbar.Delete.js</file>
+
+        <!-- FlatGeoBuf -->
+        <file alias="map/leaflet/flatGeoBuf/flatgeobuf-geojson.min.js">src/gui/map/leaflet/flatGeoBuf/flatgeobuf-geojson.min.js</file>
+
+        <!-- Esri Leaflet -->
+        <file alias="map/leaflet/esri/esri-leaflet.js">src/gui/map/leaflet/esri/esri-leaflet.js</file>
+        <file alias="map/leaflet/esri/esri-leaflet-vector.js">src/gui/map/leaflet/esri/esri-leaflet-vector.js</file>
+
+        <!-- Leaflet images -->
+        <file alias="map/leaflet/images/layers-2x.png">src/gui/map/leaflet/images/layers-2x.png</file>
+        <file alias="map/leaflet/images/layers.png">src/gui/map/leaflet/images/layers.png</file>
+        <file alias="map/leaflet/images/marker-icon-2x.png">src/gui/map/leaflet/images/marker-icon-2x.png</file>
+        <file alias="map/leaflet/images/marker-icon.png">src/gui/map/leaflet/images/marker-icon.png</file>
+        <file alias="map/leaflet/images/marker-shadow.png">src/gui/map/leaflet/images/marker-shadow.png</file>
+
     </qresource>
 </RCC>

@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     webChannel->registerObject(QStringLiteral("bridge"), mapBridge);
     webEngineView->page()->setWebChannel(webChannel);
 
-    QUrl url = QUrl::fromLocalFile(mapPath);
+    QUrl url("qrc:///map.html");
     webEngineView->setUrl(url);
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setContentsMargins(0, 0, 0, 0);
