@@ -23,8 +23,8 @@
 FROM ubuntu:24.04
 COPY . /src/wind/windninja/
 SHELL [ "/usr/bin/bash", "-c" ]
-ENV DEBIAN_FRONTEND noninteractive
-ENV WM_PROJECT_INST_DIR /opt
+ENV DEBIAN_FRONTEND=noninteractive
+ENV WM_PROJECT_INST_DIR=/opt
 ENV WINDNINJA_DATA=/src/wind/windninja/data
 
 # Install dependencies
