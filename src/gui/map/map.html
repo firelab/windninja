@@ -34,341 +34,45 @@
 <head>
     <meta charset="UTF-8">
     <title>Leaflet Map</title>
-    <style>
-        html, body 
-        {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-        #map 
-        {
-            height: 100%;
-            width: 100%;
-            box-sizing: border-box;
-        }
-      .leaflet-div-icon {
-            background: white;
-            border: 2px solid #0077ff;
-            border-radius: 50%;
-            width: 10px !important;
-            height: 10px !important;
-            margin-left: -5px !important;
-            margin-top: -5px !important;
-            box-shadow: 0 0 1px #000;
-        }
-        .leaflet-drag-target {
-            cursor: move !important;
-        }
-        .leaflet-center-button {
-            display: block;
-            text-align: center;
-            font-size: 35px;
-            line-height: 26px;
-            width: 28px;
-            height: 28px;
-            text-decoration: none;
-        }
-        .leaflet-control-load {
-            display: block;
-            text-align: center;
-            font-size: 24px;
-            line-height: 26px;
-            width: 28px;
-            height: 28px;
-            text-decoration: none;
-        }
-        .leaflet-top.leaflet-right {
-            z-index: 1000;
-        }
+    
+    <link rel="stylesheet" href="qrc:///map/css/map.css" />
+    <link rel="stylesheet" href="qrc:///map/leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="qrc:///map/leaflet/draw/src/leaflet.draw.css"/>
+    <link rel="stylesheet" href="qrc:///map/leaflet/controlLayer/L.Control.Layers.Tree.css" />
 
-        .leaflet-bottom.leaflet-right {
-            z-index: 400;
-        }
-        .leaflet-control-clear {
-            display: block;
-            text-align: center;
-            font-size: 14px;
-            font-family: Arial, sans-serif;
-            padding: 0px 10px;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-    </style>
-        <!-- Leaflet stylesheets -->
-
-        <link rel="stylesheet" href="qrc:///map/leaflet/leaflet.css"/>
-
-        <link rel="stylesheet" href="qrc:///map/leaflet/draw/src/leaflet.draw.css"/>
-
-        <link rel="stylesheet" href="qrc:///map/leaflet/controlLayer/L.Control.Layers.Tree.css" />
-
-        <!-- Leaflet and Draw dependencies -->
-
-        <script src="qrc:///map/leaflet/jszip/jszip.min.js"></script>
-
-        <script src="qrc:///map/leaflet/leaflet-src.js"></script>
-
-        <script src="qrc:///map/leaflet/kml/L.KML.js"></script>
-
-        <script src="qrc:///map/leaflet/controlLayer/L.Control.Layers.Tree.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/Leaflet.draw.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/Leaflet.Draw.Event.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/ext/TouchEvents.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/Tooltip.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/ext/GeometryUtil.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/ext/LatLngUtil.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/ext/Polygon.Intersect.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/ext/Polyline.Intersect.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/Control.Draw.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/Toolbar.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/draw/DrawToolbar.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/edit/EditToolbar.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
-
-        <script src="qrc:///map/leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
-
-        <script src="qrc:///map/leaflet/flatGeoBuf/flatgeobuf-geojson.min.js"></script>
-
-        <script src="qrc:///map/leaflet/esri/esri-leaflet.js"></script>
-
-        <script src="qrc:///map/leaflet/esri/esri-leaflet-vector.js"></script>
-
-        <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
-
+    <script src="qrc:///map/leaflet/jszip/jszip.min.js"></script>
+    <script src="qrc:///map/leaflet/leaflet-src.js"></script>
+    <script src="qrc:///map/leaflet/kml/L.KML.js"></script>
+    <script src="qrc:///map/leaflet/controlLayer/L.Control.Layers.Tree.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/Leaflet.draw.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/Leaflet.Draw.Event.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/ext/TouchEvents.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/Tooltip.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/ext/GeometryUtil.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/ext/LatLngUtil.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/ext/LineUtil.Intersect.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/ext/Polygon.Intersect.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/ext/Polyline.Intersect.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/draw/handler/Draw.Feature.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/draw/handler/Draw.SimpleShape.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/draw/handler/Draw.Rectangle.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/edit/handler/Edit.SimpleShape.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/edit/handler/Edit.Rectangle.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/Control.Draw.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/Toolbar.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/draw/DrawToolbar.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/edit/EditToolbar.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/edit/handler/EditToolbar.Edit.js"></script>
+    <script src="qrc:///map/leaflet/draw/src/edit/handler/EditToolbar.Delete.js"></script>
+    <script src="qrc:///map/leaflet/flatGeoBuf/flatgeobuf-geojson.min.js"></script>
+    <script src="qrc:///map/leaflet/esri/esri-leaflet.js"></script>
+    <script src="qrc:///map/leaflet/esri/esri-leaflet-vector.js"></script>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 </head>
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
+    <script src="qrc:///map/js/layerSources.js"></script>
     <script>
-
-        // Script variables
-        const apiKey = "pk.eyJ1IjoiYm5vcmRncmVuIiwiYSI6ImNsZmxuMHowZzAzaTczeG80ZXR3a2ZnNHEifQ.kc7P57DJg8tyDMjjP7czuQ";
-
-        const streetBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
-            tileSize: 512,
-            maxZoom: 18,
-            zoomOffset: -1,
-            id: 'mapbox/streets-v12'
-        });
-
-        const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
-            tileSize: 512,
-            maxZoom: 18,
-            zoomOffset: -1,
-            id: 'mapbox/satellite-v9'
-        });
-
-        const topographicBaseLayer = L.tileLayer(
-            `https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`,
-            {
-                tileSize: 512,
-                maxZoom: 18,
-                zoomOffset: -1,
-                id: 'mapbox/outdoors-v12'
-            }
-        );
-
-        const usgsTopoBaseLayer = L.tileLayer(
-            'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
-            {
-                maxZoom: 16,
-                attribution: 'USGS The National Map'
-            }
-        );
-
-        const firePerimeterLayer = L.esri.featureLayer({
-            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0",
-
-            simplifyFactor: 0.5,
-
-            style: {
-                color: "#E60000",
-                weight: 2,
-                fillColor: "#FFBEBE",
-                fillOpacity: 0.7
-            }
-        });
-
-        const firePointsLayer = L.esri.featureLayer({
-            url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/ArcGIS/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0",
-
-            pointToLayer: function (geojson, latlng) {
-                return L.circleMarker(latlng, {
-                    radius: 5,
-                    color: "#000000",
-                    weight: 1,
-                    fillColor: "#000000",
-                    fillOpacity: 1
-                });
-            },
-
-            onEachFeature: function (feature, layer) {
-                const properties = feature.properties;
-
-                const incidentType = {
-                    WF: "Wildfire",
-                    RX: "Prescribed Fire",
-                    CX: "Incident Complex"
-                };
-
-                const type = incidentType[properties.IncidentTypeCategory] || "Incident";
-
-                const discovered = properties.FireDiscoveryDateTime
-                    ? new Date(properties.FireDiscoveryDateTime).toLocaleDateString()
-                    : "N/A";
-
-                const updated = properties.ModifiedOnDateTime_dt
-                    ? new Date(properties.ModifiedOnDateTime_dt).toLocaleDateString()
-                    : "N/A";
-
-                layer.bindPopup(`
-                    <strong>${properties.IncidentName || "Unknown Fire"}</strong><br>
-                    ${type} · ${properties.POOCounty || "N/A"} County, ${properties.POOState || "N/A"}<br>
-                    <br>
-                    <strong>Size:</strong> ${properties.IncidentSize != null ? properties.IncidentSize.toLocaleString() + " acres" : "N/A"}<br>
-                    <strong>Contained:</strong> ${properties.PercentContained != null ? properties.PercentContained + "%" : "N/A"}<br>
-                    <strong>Fire Behavior:</strong> ${properties.FireBehaviorGeneral || "N/A"}<br>
-                    <strong>Discovered:</strong> ${discovered}<br>
-                    <strong>Last Updated:</strong> ${updated}<br>
-                `);
-            }
-        });
-
-        const viirsHotspotsLayer = L.esri.featureLayer({
-            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/Satellite_VIIRS_Thermal_Hotspots_and_Fire_Activity/FeatureServer/0",
-
-            pointToLayer: function (geojson, latlng) {
-                const properties = geojson.properties;
-                const color = getHotspotColor(properties.hours_old);
-
-                return L.circleMarker(latlng, {
-                    radius: 5,
-                    color: color,
-                    weight: 1,
-                    fillColor: color,
-                    fillOpacity: 0.7
-                });
-            },
-
-            onEachFeature: function (feature, layer) {
-                const properties = feature.properties;
-
-                const acquisitionDate = properties.acq_date
-                    ? new Date(properties.acq_date).toLocaleString()
-                    : "N/A";
-
-                const detection = properties.daynight === "D"
-                    ? "Day"
-                    : properties.daynight === "N"
-                        ? "Night"
-                        : "N/A";
-
-                layer.bindPopup(`
-                    <strong>VIIRS Thermal Hotspot</strong><br>
-                    <br>
-                    <strong>Satellite:</strong> ${properties.satellite || "N/A"}<br>
-                    <strong>Acquired:</strong> ${acquisitionDate}<br>
-                    <strong>Age:</strong> ${properties.hours_old != null ? properties.hours_old + " hours" : "N/A"}<br>
-                    <strong>Confidence:</strong> ${properties.confidence || "N/A"}<br>
-                    <strong>Fire Radiative Power:</strong> ${properties.frp != null ? properties.frp.toFixed(1) + " MW" : "N/A"}<br>
-                    <strong>Brightness Temperature:</strong> ${properties.bright_ti4 != null ? properties.bright_ti4.toFixed(1) + " K" : "N/A"}<br>
-                    <strong>Detection:</strong> ${detection}
-                `);
-            }
-        });
-
-        const modisHotspotsLayer = L.esri.featureLayer({
-            url: "https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/MODIS_Thermal_v1/FeatureServer/1",
-
-            pointToLayer: function (geojson, latlng) {
-                const properties = geojson.properties;
-                const hoursOld = properties.HOURS_OLD;
-
-                const color = getHotspotColor(hoursOld);
-
-                return L.circleMarker(latlng, {
-                    radius: 5,
-                    color: color,
-                    weight: 1,
-                    fillColor: color,
-                    fillOpacity: 0.9
-                });
-            },
-
-            onEachFeature: function (feature, layer) {
-                const properties = feature.properties;
-
-                const acquisitionDate = properties.ACQ_DATE
-                    ? new Date(properties.ACQ_DATE).toLocaleString()
-                    : "N/A";
-
-                const detection = properties.DAYNIGHT === "D"
-                    ? "Day"
-                    : properties.DAYNIGHT === "N"
-                        ? "Night"
-                        : "N/A";
-
-                layer.bindPopup(`
-                    <strong>MODIS Thermal Hotspot</strong><br>
-                    <br>
-                    <strong>Satellite:</strong> ${properties.SATELLITE || "N/A"}<br>
-                    <strong>Acquired:</strong> ${acquisitionDate}<br>
-                    <strong>Age:</strong> ${properties.HOURS_OLD != null ? properties.HOURS_OLD + " hours" : "N/A"}<br>
-                    <strong>Confidence:</strong> ${properties.CONFIDENCE != null ? properties.CONFIDENCE + "%" : "N/A"}<br>
-                    <strong>Fire Radiative Power:</strong> ${properties.FRP != null ? properties.FRP.toFixed(1) + " MW" : "N/A"}<br>
-                    <strong>Brightness:</strong> ${properties.BRIGHTNESS != null ? properties.BRIGHTNESS.toFixed(1) + " K" : "N/A"}<br>
-                    <strong>Detection:</strong> ${detection}
-                `);
-            }
-        });
-
-        function getHotspotColor(hoursOld) {
-            if (hoursOld < 1) {
-                return "#a80000";
-            }
-
-            if (hoursOld < 6) {
-                return "#e64000";
-            }
-
-            if (hoursOld < 12) {
-                return "#ff5500";
-            }
-
-            if (hoursOld < 24) {
-                return "#ffaa00";
-            }
-
-            return "#ffff00";
-        }
 
         const map = new L.Map('map', {
             preferCanvas: true,
@@ -379,7 +83,7 @@
         });
 
         map.createPane('fsTopoPane');
-        map.getPane('fsTopoPane').style.zIndex = 400;
+        map.getPane('fsTopoPane').style.zIndex = 250;
 
         map.createPane('fsHillshadePane');
         map.getPane('fsHillshadePane').style.zIndex = 450;
