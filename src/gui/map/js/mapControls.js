@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* $Id: layerSources.js
+* $Id: mapControls.js
 *
 * Project:  WindNinja
 * Purpose:  Handles map controls (center, clear, load, snapshot)
@@ -27,19 +27,14 @@
 *
 *****************************************************************************/
 
-// Controls State Tracking
 let centerControlAdded = false;
 let clearControlAdded = false;
 
-// Leaflet Control Declarations
 const centerControl = L.control({ position: 'topleft' });
 const clearControl = L.control({ position: 'topright' });
 const loadControl = L.control({ position: 'topright' });
 const snapshotControl = L.control({ position: 'topright' });
 
-/**
- * Checks if there are items worth centering on.
- */
 function hasCenterableItems() {
     return (
         boundingBoxLayer.getLayers().length > 0 ||
@@ -48,9 +43,6 @@ function hasCenterableItems() {
     );
 }
 
-/**
- * Dynamically toggles visibility of the Center Control.
- */
 function updateCenterControl() {
     const shouldShow = hasCenterableItems();
 
@@ -63,9 +55,6 @@ function updateCenterControl() {
     }
 }
 
-/**
- * Checks if there are items worth clearing.
- */
 function hasClearableItems() {
     return (
         boundingBoxLayer.getLayers().length > 0 ||
@@ -76,9 +65,6 @@ function hasClearableItems() {
     );
 }
 
-/**
- * Dynamically toggles visibility of the Clear Control.
- */
 function updateClearControl() {
     const shouldShow = hasClearableItems();
 
@@ -91,9 +77,7 @@ function updateClearControl() {
     }
 }
 
-// --- Control Handlers ---
 
-// Center Button Control
 centerControl.onAdd = function (mapInstance) {
     const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
     const button = L.DomUtil.create('a', 'leaflet-center-button', container);
@@ -138,7 +122,6 @@ clearControl.onAdd = function (mapInstance) {
     return container;
 };
 
-// Load Output File Control
 loadControl.onAdd = function (mapInstance) {
     const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
     const button = L.DomUtil.create('a', 'leaflet-control-load', container);
@@ -158,30 +141,33 @@ loadControl.onAdd = function (mapInstance) {
     return container;
 };
 
-// Save Map Snapshot Control
-snapshotControl.onAdd = function (mapInstance) {
+snapshotControl.onAdd = function (map) {
     const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
     const button = L.DomUtil.create('a', 'leaflet-control-snapshot', container);
     button.innerHTML = '📷';
-    button.title = 'Save Map Snapshot';
+    button.title = 'Capture Map Snapshot';
     button.href = '#';
 
-    L.DomEvent.on(button, 'click', (e) => {
+    L.DomEvent.on(button, 'click', async (e) => {
         L.DomEvent.stopPropagation(e);
         L.DomEvent.preventDefault(e);
 
         if (window.bridge?.captureMapSnapshot) {
-            window.bridge.captureMapSnapshot();
+            const controls = map._container.querySelectorAll('.leaflet-control-container');
+            controls.forEach(ctrl => ctrl.style.display = 'none');
+
+            try {
+                await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
+                await window.bridge.captureMapSnapshot();
+            } finally {
+                controls.forEach(ctrl => ctrl.style.display = '');
+            }
         }
     });
 
     return container;
 };
 
-/**
- * Initializes static UI controls on the map instance.
- * Call this after the map object is created.
- */
 function initMapControls(map) {
     loadControl.addTo(map);
     snapshotControl.addTo(map);
