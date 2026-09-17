@@ -57,11 +57,15 @@ void MapBridge::invalidKMZ(const QString &fileName)
 
 void MapBridge::mapLayersLoadingFinished()
 {
-    qDebug() << "Map has finished loading";
     emit mapLayersLoadingFinishedSignal();
 }
 
 void MapBridge::loadMapLayers()
 {
     emit loadMapLayersSignal();
+}
+
+void MapBridge::captureMapSnapshot()
+{
+    emit captureMapSnapshotSignal();
 }

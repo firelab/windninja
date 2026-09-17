@@ -226,5 +226,3 @@ function getHotspotColor(hoursOld) {
 
     return "#ffff00";
 }
-
-console.log("MAP.JS LOADED");

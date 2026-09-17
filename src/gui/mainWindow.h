@@ -119,6 +119,7 @@ private slots:
     void outputDirectoryOpenButtonClicked();
     void cancelSolve();
     void finishedLoadingMap();
+    void captureMapSnapshot();
 
 private:
     Ui::MainWindow *ui;
