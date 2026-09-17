@@ -72,6 +72,7 @@
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
     <script src="qrc:///map/js/layerSources.js"></script>
+    <script src="qrc:///map/js/mapControls.js"></script>
     <script>
 
         const map = new L.Map('map', {
@@ -114,7 +115,6 @@
         const boundingBoxLayer = new L.FeatureGroup();
         const demLayer = new L.FeatureGroup();
         const rectangleDrawer = new L.Draw.Rectangle(map);
-        const centerControl = L.control({ position: 'topleft' });
 
         const windninjaLegendToggle = L.layerGroup([]);
         const windninjaTimeSeriesToggle = L.layerGroup([]);
@@ -229,8 +229,6 @@
 
 
         let drawDEMCheck = false;
-        let centerControlAdded = false;
-        let clearControlAdded = false;
 
         // Script functions
         function sendBoundingBox(layer) {
@@ -309,117 +307,6 @@
             map.fitBounds(layer.getBounds());
             updateCenterControl();
         });
-
-        function hasCenterableItems() {
-            return (
-                boundingBoxLayer.getLayers().length > 0 ||
-                demLayer.getLayers().length > 0 ||
-                (lastActiveLayer && map.hasLayer(lastActiveLayer))
-            );
-        }
-
-        function updateCenterControl() {
-            const shouldShow = hasCenterableItems();
-
-            if (shouldShow && !centerControlAdded) {
-                centerControl.addTo(map);
-                centerControlAdded = true;
-            } else if (!shouldShow && centerControlAdded) {
-                map.removeControl(centerControl);
-                centerControlAdded = false;
-            }
-        }
-
-        centerControl.onAdd = function(map) {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-center');
-            const button = L.DomUtil.create('a', 'leaflet-center-button', container);
-            button.innerHTML = '⌖';
-            button.title = 'Center on current layer';
-            button.href = '#';
-
-            L.DomEvent.on(button, 'click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                L.DomEvent.preventDefault(e);
-
-                centerMapOnActiveLayer();
-            });
-
-            return container;
-        };
-
-        const clearControl = L.control({ position: 'topright' });
-
-        const loadControl = L.control({ position: 'topright' });
-
-        loadControl.onAdd = function () {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-
-            const button = L.DomUtil.create('a', 'leaflet-control-load', container);
-            button.innerHTML = '+';
-            button.title = 'Load output file';
-            button.href = '#';
-
-            L.DomEvent.on(button, 'click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                L.DomEvent.preventDefault(e);
-
-                if (window.bridge?.loadMapLayers) {
-                    window.bridge.loadMapLayers();
-                }
-            });
-
-            return container;
-        };
-
-        function hasClearableItems() {
-            return (
-                boundingBoxLayer.getLayers().length > 0 ||
-                windninjaOutputTree.children.length > 1 ||
-                initializationOutputTree.children.length > 1 ||
-                stationOutputTree.children.length > 1 ||
-                unknownOutputTree.children.length > 1
-            );
-        }
-
-        function updateClearControl() {
-            const shouldShow = hasClearableItems();
-
-            if (shouldShow && !clearControlAdded) {
-                clearControl.addTo(map);
-                clearControlAdded = true;
-            } else if (!shouldShow && clearControlAdded) {
-                map.removeControl(clearControl);
-                clearControlAdded = false;
-            }
-        }
-
-        clearControl.onAdd = function () {
-            const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-
-            const button = L.DomUtil.create('a', 'leaflet-control-clear', container);
-            button.innerHTML = 'Clear';
-            button.title = 'Clear all layers';
-            button.href = '#';
-
-            L.DomEvent.on(button, 'click', (e) => {
-                L.DomEvent.stopPropagation(e);
-                L.DomEvent.preventDefault(e);
-
-                clearBoundingBoxLayer();
-                clearWindNinjaOutputTree();
-                clearInitializationOutputTree();
-                clearStationOutputTree();
-                clearUnknownOutputTree();
-                clearTimeSeriesContainer();
-
-                activeWindNinjaLayer = null;
-                activeInitializationLayer = null;
-                activeWindNinjaTimeSeriesImg = null;
-                activeInitializationTimeSeriesImg = null;
-            });
-
-            return container;
-        };
 
         function centerMapOnActiveLayer() {
             let bounds = null;
@@ -1436,7 +1323,7 @@
         updateOverlayTree();
 
         layerControl.addTo(map);
-        loadControl.addTo(map);
+        initMapControls(map);
         L.control.scale().addTo(map);
 
     </script>

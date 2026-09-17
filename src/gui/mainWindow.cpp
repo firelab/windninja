@@ -342,6 +342,7 @@ void MainWindow::connectSignals()
 
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
     connect(mapBridge, &MapBridge::loadMapLayersSignal, menuBar, &MenuBar::loadMapVisualizationActionTriggered);
+    connect(mapBridge, &MapBridge::captureMapSnapshotSignal, this, &MainWindow::captureMapSnapshot);
 }
 
 int MainWindow::countNumCores()
@@ -1598,6 +1599,28 @@ void MainWindow::finishedLoadingMap()
     progressDialog->setCancelButtonText("Close");
     disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
     connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
+}
+
+void MainWindow::captureMapSnapshot()
+{
+    QPixmap pixmap = webEngineView->grab();
+    QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/snapshot.png";
+
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Map Snapshot"),
+        defaultPath,
+        tr("PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*)")
+        );
+
+    if (!filePath.isEmpty())
+    {
+        bool success = pixmap.save(filePath);
+        if (!success)
+        {
+            QMessageBox::critical(this, tr("Error"), tr("Failed to save image to disk."));
+        }
+    }
 }
 
 void MainWindow::writeSettings()

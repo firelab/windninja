@@ -76,5 +76,6 @@
         <file alias="/map/css/map.css">src/gui/map/css/map.css</file>
 
         <file alias="/map/js/layerSources.js">src/gui/map/js/layerSources.js</file>
+        <file alias="/map/js/mapControls.js">src/gui/map/js/mapControls.js</file>
     </qresource>
 </RCC>

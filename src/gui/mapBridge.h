@@ -50,12 +50,14 @@ signals:
     void boundingBoxReceived(double north, double south, double east, double west);
     void mapLayersLoadingFinishedSignal();
     void loadMapLayersSignal();
+    void captureMapSnapshotSignal();
 
 public slots:
     void receiveBoundingBox(const QString &jsonCoords);
     void invalidKMZ(const QString &fileName);
     void mapLayersLoadingFinished();
     void loadMapLayers();
+    void captureMapSnapshot();
 };
 
 #endif // BRIDGE_H
