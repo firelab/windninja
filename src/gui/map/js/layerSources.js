@@ -193,10 +193,16 @@ const modisHotspotsLayer = L.esri.featureLayer({
                 ? "Night"
                 : "N/A";
 
+        const satellite = properties.SATELLITE === "A"
+            ? "Aqua"
+            : properties.SATELLITE === "T"
+                ? "Terra"
+                : "N/A";
+
         layer.bindPopup(`
             <strong>MODIS Thermal Hotspot</strong><br>
             <br>
-            <strong>Satellite:</strong> ${properties.SATELLITE || "N/A"}<br>
+            <strong>Satellite:</strong> ${satellite}<br>
             <strong>Acquired:</strong> ${acquisitionDate}<br>
             <strong>Age:</strong> ${properties.HOURS_OLD != null ? properties.HOURS_OLD + " hours" : "N/A"}<br>
             <strong>Confidence:</strong> ${properties.CONFIDENCE != null ? properties.CONFIDENCE + "%" : "N/A"}<br>
