@@ -255,13 +255,15 @@ const synopticStationsLayer = L.geoJSON(null, {
 
         layer.bindPopup(`
             <strong>${properties.name || "Unknown Station"}</strong><br>
-            <strong>ID:</strong> ${properties.id ?? "N/A"}<br>
-            <strong>STID:</strong> ${properties.stid ?? "N/A"}<br>
-            <strong>MNETID:</strong> ${properties.mnet_id ?? "N/A"}<br>
+            <strong>Station ID:</strong> ${properties.stid ?? "N/A"}<br>
+            <strong>Latitude:</strong> ${properties.latitude ?? "N/A"}<br>
+            <strong>Longitude:</strong> ${properties.longitude ?? "N/A"}<br>
+            <strong>Elevation:</strong> ${properties.elevation ?? "N/A"} ft<br>
+            <strong>State:</strong> ${properties.state ?? "N/A"}<br>
+            <strong>Country:</strong> ${properties.country ?? "N/A"}<br>
+            <strong>Status:</strong> ${properties.status ?? "N/A"}<br>
         `);
-
     }
-
 });
 
 function fetchSynopticStations(mapInstance) {

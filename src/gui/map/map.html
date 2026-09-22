@@ -223,6 +223,14 @@
         };
 
 
+        const dataOverlayTree = {
+            label: 'Data Overlays',
+            children: [
+                { label: "Stations", layer: synopticStationsLayer}
+            ]
+        };
+
+
         map.on('overlayadd', e => {
             if (e.layer === synopticStationsLayer) {
                 fetchSynopticStations(map);
@@ -237,7 +245,7 @@
 
         const layerControl = L.control.layers.tree(
             baseTree,
-            [fireOverlayTree],
+            [fireOverlayTree, dataOverlayTree],
             { collapsed: true }
         ).addTo(map);
 
@@ -1153,6 +1161,7 @@
             }
 
             displayTree.push(fireOverlayTree);
+            displayTree.push(dataOverlayTree);
 
             if (windninjaOutputTree.children.length > 1)
                 displayTree.push(windninjaOutputTree);
