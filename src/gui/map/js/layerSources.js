@@ -232,3 +232,165 @@ function getHotspotColor(hoursOld) {
 
     return "#ffff00";
 }
+
+
+const goesWestHotspotsLayer = L.geoJSON(null, {
+
+    pointToLayer: function (feature, latlng) {
+
+        return L.circleMarker(latlng, {
+            radius: 5,
+            color: "#8B0000",
+            weight: 1,
+            fillColor: "#FF4500",
+            fillOpacity: 0.8
+        });
+
+    },
+
+    onEachFeature: function (feature, layer) {
+
+        const properties = feature.properties;
+
+        const datetime = properties.acq_date_time
+                    ? new Date(properties.acq_date_time).toLocaleString()
+                    : "N/A"
+        
+        const frp = properties.total_frp != null
+                    ? properties.total_frp.toFixed(1) + " MW"
+                    : "N/A"
+
+        layer.bindPopup(`
+            <strong>${properties.known_incident_name || "Possible Wildland Fire"}</strong><br>
+            <br>
+            <strong>Type:</strong> ${properties.type_description || "N/A"}<br>
+            <strong>Satellite:</strong> ${properties.satellite || "N/A"}<br>
+            <strong>Acquired:</strong> ${datetime}<br>
+            <strong>FRP:</strong> ${frp}<br>
+            <strong>Confidence:</strong> ${properties.confidence || "N/A"}<br>
+            <strong>County:</strong> ${properties.county || "N/A"}<br>
+            <strong>State:</strong> ${properties.state || "N/A"}<br>
+            <strong>Feature Tracking ID:</strong> ${properties.feature_tracking_id || "N/A"}
+        `);
+
+    }
+
+});
+
+function fetchGoesWest(map) {
+
+    if (!map.hasLayer(goesWestHotspotsLayer)) return;
+
+    const bounds = map.getBounds();
+
+    const bbox =
+        `${bounds.getWest()},${bounds.getSouth()},` +
+        `${bounds.getEast()},${bounds.getNorth()}`;
+
+    const url =
+        "https://fire.data.nesdis.noaa.gov/api/ogc/detections" +
+        "/collections/ngfs_schema.ngfs_features_scene_west_conus/items" +
+        `?bbox=${bbox}&limit=10000`;
+
+
+    fetch(url)
+
+        .then(res => {
+            return res.json();
+        })
+
+        .then(data => {
+            goesWestHotspotsLayer.clearLayers();
+
+            if (data && data.features) {
+                goesWestHotspotsLayer.addData(data);
+            } else {
+                console.error("No features in NGFS response");
+            }
+
+        })
+
+        .catch(err => {
+            console.error("Error fetching NGFS features:", err);
+        });
+
+}
+
+const goesEastHotspotsLayer = L.geoJSON(null, {
+
+    pointToLayer: function (feature, latlng) {
+
+        return L.circleMarker(latlng, {
+            radius: 5,
+            color: "#8B0000",
+            weight: 1,
+            fillColor: "#FF4500",
+            fillOpacity: 0.8
+        });
+
+    },
+
+    onEachFeature: function (feature, layer) {
+
+        const properties = feature.properties;
+
+        const datetime = properties.acq_date_time
+                    ? new Date(properties.acq_date_time).toLocaleString()
+                    : "N/A"
+        
+        const frp = properties.total_frp != null
+                    ? properties.total_frp.toFixed(1) + " MW"
+                    : "N/A"
+
+        layer.bindPopup(`
+            <strong>${properties.known_incident_name || "Possible Wildland Fire"}</strong><br>
+            <br>
+            <strong>Type:</strong> ${properties.type_description || "N/A"}<br>
+            <strong>Satellite:</strong> ${properties.satellite || "N/A"}<br>
+            <strong>Acquired:</strong> ${datetime}<br>
+            <strong>FRP:</strong> ${frp}<br>
+            <strong>Confidence:</strong> ${properties.confidence || "N/A"}<br>
+            <strong>County:</strong> ${properties.county || "N/A"}<br>
+            <strong>State:</strong> ${properties.state || "N/A"}<br>
+            <strong>Feature Tracking ID:</strong> ${properties.feature_tracking_id || "N/A"}
+        `);
+
+    }
+
+});
+
+
+function fetchGoesEast(map) {
+
+    if (!map.hasLayer(goesEastHotspotsLayer)) return;
+
+    const bounds = map.getBounds();
+    const bbox =
+        `${bounds.getWest()},${bounds.getSouth()},` +
+        `${bounds.getEast()},${bounds.getNorth()}`;
+
+    const url =
+        "https://fire.data.nesdis.noaa.gov/api/ogc/detections" +
+        "/collections/ngfs_schema.ngfs_features_scene_east_conus/items" +
+        `?bbox=${bbox}&limit=10000`;
+
+    fetch(url)
+        .then(res => {
+            return res.json();
+        })
+
+        .then(data => {
+            goesEastHotspotsLayer.clearLayers();
+
+            if (data && data.features) {
+                goesEastHotspotsLayer.addData(data);
+            } else {
+                console.error("No features in NGFS response");
+            }
+
+        })
+
+        .catch(err => {
+            console.error( "Error fetching NGFS features:", err);
+        });
+}

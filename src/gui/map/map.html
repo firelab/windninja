@@ -217,9 +217,25 @@
                 { label: 'Fire Perimeters', layer: firePerimeterLayer },
                 { label: 'Fire Points', layer: firePointsLayer },
                 { label: 'VIIRS Hotspots', layer: viirsHotspotsLayer },
-                { label: 'MODIS Hotspots', layer: modisHotspotsLayer }
+                { label: 'MODIS Hotspots', layer: modisHotspotsLayer },
+                { label: 'GOES West Hotspots', layer: goesWestHotspotsLayer },
+                { label: 'GOES East Hotspots', layer: goesEastHotspotsLayer }
             ]
         };
+
+        map.on("overlayadd", function (event) {
+            if (event.layer === goesEastHotspotsLayer) {
+                fetchGoesEast(map);
+            }
+            if (event.layer === goesWestHotspotsLayer) {
+                fetchGoesWest(map);
+            }
+        });
+
+        map.on("moveend", function () {
+            fetchGoesEast(map);
+            fetchGoesWest(map);
+        });
 
         const layerControl = L.control.layers.tree(
             baseTree,
