@@ -59,6 +59,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QWebEngin
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
     connect(ui->weatherStationDataStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataStartDateTimeEditChanged);
     connect(ui->weatherStationDataEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataEndDateTimeEditChanged);
+    connect(ui->downloadFromDEMSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::downloadFromDEMSpinBoxValueChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 }
@@ -194,6 +195,7 @@ void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 {
     ui->pointInitializationTreeView->collapseAll();
     ui->inputsStackedWidget->setCurrentIndex(7);
+    webEngineView->page()->runJavaScript("clearBoundingBoxLayer();");
 }
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
@@ -453,6 +455,7 @@ void PointInitializationInput::fetchStationDataFinished()
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
 {
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(index);
+    webEngineView->page()->runJavaScript("clearBoundingBoxLayer();");
 }
 
 void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged(int index)
@@ -474,7 +477,6 @@ void PointInitializationInput::updateTreeView()
     stationFileSystemModel->setNameFilters({"*.csv", "WXSTATIONS-*"});
     stationFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     stationFileSystemModel->setNameFilterDisables(false);
-
 
     ui->pointInitializationTreeView->setModel(stationFileSystemModel);
     ui->pointInitializationTreeView->setRootIndex(stationFileSystemModel->index(fileInfo.absolutePath()));
@@ -828,6 +830,15 @@ void PointInitializationInput::updateTimeSteps()
         ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
         ui->weatherStationDataEndDateTimeEdit->setToolTip("Enter the simulation stop time");
     }
+}
+
+void PointInitializationInput::downloadFromDEMSpinBoxValueChanged(int value)
+{
+    QString javascript = QString(
+                             "drawBoundingBoxAroundDEM(%1);"
+                             ).arg(value);
+
+    webEngineView->page()->runJavaScript(javascript);
 }
 
 void PointInitializationInput::updateDateTime()

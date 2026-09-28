@@ -77,6 +77,7 @@ private slots:
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
     void weatherStationDataStartDateTimeEditChanged();
     void weatherStationDataEndDateTimeEditChanged();
+    void downloadFromDEMSpinBoxValueChanged(int value);
     void updateDateTime();
 
 private:

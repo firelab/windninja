@@ -221,7 +221,6 @@
             ]
         };
 
-
         const dataOverlayTree = {
             label: 'Data Overlays',
             children: [
@@ -303,6 +302,39 @@
 
             updateCenterControl();
             updateOverlayTree();
+        }
+
+        function drawBoundingBoxAroundDEM(bufferMiles) {
+            clearBoundingBoxLayer();
+
+            const demBounds = demLayer.getBounds();
+
+            const center = demBounds.getCenter();
+
+            const milesPerDegreeLatitude = 69.0;
+            const milesPerDegreeLongitude =
+                69.0 * Math.cos(center.lat * Math.PI / 180.0);
+
+            const latBuffer = bufferMiles / milesPerDegreeLatitude;
+            const lngBuffer = bufferMiles / milesPerDegreeLongitude;
+
+            const bufferedBounds = L.latLngBounds(
+                [
+                    demBounds.getSouth() - latBuffer,
+                    demBounds.getWest() - lngBuffer
+                ],
+                [
+                    demBounds.getNorth() + latBuffer,
+                    demBounds.getEast() + lngBuffer
+                ]
+            );
+
+            const rectangle = L.rectangle(bufferedBounds).addTo(boundingBoxLayer);
+
+            map.fitBounds(rectangle.getBounds());
+
+            updateCenterControl();
+            updateClearControl();
         }
 
         function startRectangleDrawing() {
