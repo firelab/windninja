@@ -9,7 +9,7 @@
 #
 # Input formats:
 # DATE - Simulation date in MM/DD/YYYY format (e.g. 9/20/2026)
-# TIME - Simulation time in HH:00 format and  time zone (e.g. 13:00)
+# TIME - Simulation time in HH:00 format (e.g. 13:00)
 # TIME_ZONE - Time zone (common choices are: America/New_York, America/Chicago,  America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices arelisted in date_time_zonespec.csv)
 # LAT - Latitude in Degrees Decimal Minutes format with a hemisphere (e.g. N37°36.453’)
 # LON - Longitude in Degrees Decimal Minutes format with a hemisphere (e.g. W119°35.490’)
@@ -70,7 +70,7 @@ LON=$(echo "$LON" | awk '{
     printf "%.5f", dd;
 }')
 
-echo "=== WindNinja Simulation Inputs ==="
+echo "=== Computed WindNinja Simulation Inputs ==="
 echo "Date: $MONTH/$DAY/$YEAR | Time: $HOUR:$MINUTE $TIME_ZONE"
 echo "Center Point: LAT=$LAT, LON=$LON"
 
