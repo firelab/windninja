@@ -29,9 +29,10 @@
 
 #include "pointInitializationInput.h"
 
-PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
+PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent)
     : QObject(parent),
-    ui(ui)
+    ui(ui),
+    webEngineView(webEngineView)
 {
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
 
@@ -507,6 +508,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
     maxStationLocalDateTime = QDateTime();
     minStationLocalDateTime = QDateTime();
 
+    QStringList stationIds;
+
     if(selectedRows.count() > 0)
     {
         state.isStationFileSelected = true;
@@ -527,7 +530,12 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         CPLDebug("STATION_FETCH", "STATION NAME: %s", stationFileSystemModel->filePath(selectedRows[i]).toStdString().c_str());
 
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
-        stationFiles.push_back(recentFileSelected);  // note, selected vs valid are two separate things
+        stationFiles.push_back(recentFileSelected); // note, selected vs valid are two separate things
+
+        QString fileName = QFileInfo(recentFileSelected).fileName();
+        QString stationId = fileName.section('-', 0, 0);
+        stationIds.append("'" + stationId + "'");
+
         //qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
         CPLDebug("STATION_FETCH", "Selected file path: %s", recentFileSelected.toStdString().c_str());
 
@@ -639,9 +647,10 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         }
         ui->pointInitializationTreeView->setProperty("timeSeriesFlag", timeSeriesFlag);
     }
-    state.isStationDataValid = true;
 
+    state.isStationDataValid = true;
     state.isStationFileSelectionValid = true;
+
     for(int i = 0; i < stationFileTypes.size(); i++)
     {
         CPLDebug("STATION_FETCH", "stationFileTypes[%i] = %i", i, stationFileTypes[i]);
@@ -653,6 +662,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             break;
         }
     }
+
+    QString javascript =
+        "updateSynopticStations([" +
+        stationIds.join(",") +
+        "]);";
+
+    webEngineView->page()->runJavaScript(javascript);
 
     emit updateState();
 }

@@ -232,18 +232,22 @@ function getHotspotColor(hoursOld) {
 
     return "#ffff00";
 }
-
 const synopticToken = "33e3c8ee12dc499c86de1f2076a9e9d4";
+
+const selectedStationIds = new Set();
 
 const synopticStationsLayer = L.geoJSON(null, {
 
     pointToLayer: function (feature, latlng) {
 
+        const stationId = feature.properties?.stid;
+        const isSelected = selectedStationIds.has(stationId);
+
         return L.circleMarker(latlng, {
             radius: 6,
-            color: "#003366",
+            color: isSelected ? "#ff0000" : "#003366",
             weight: 1.5,
-            fillColor: "#3388ff",
+            fillColor: isSelected ? "#ff0000" : "#3388ff",
             fillOpacity: 0.8
         });
 
@@ -263,8 +267,31 @@ const synopticStationsLayer = L.geoJSON(null, {
             <strong>Country:</strong> ${properties.country ?? "N/A"}<br>
             <strong>Status:</strong> ${properties.status ?? "N/A"}<br>
         `);
+
     }
+
 });
+
+function updateSynopticStations(stationIds) {
+
+    selectedStationIds.clear();
+
+    stationIds.forEach(function (stationId) {
+        selectedStationIds.add(stationId);
+    });
+
+    synopticStationsLayer.eachLayer(function (layer) {
+
+        const stationId = layer.feature?.properties?.stid;
+        const isSelected = selectedStationIds.has(stationId);
+
+        layer.setStyle({
+            color: isSelected ? "#ff0000" : "#003366",
+            fillColor: isSelected ? "#ff0000" : "#3388ff"
+        });
+
+    });
+}
 
 function fetchSynopticStations(mapInstance) {
     if (!mapInstance.hasLayer(synopticStationsLayer)) return;

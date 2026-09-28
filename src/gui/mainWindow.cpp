@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
     menuBar = new MenuBar(ui, webEngineView, this);
     surfaceInput = new SurfaceInput(ui, webEngineView, this);
     domainAverageInput = new DomainAverageInput(ui, this);
-    pointInitializationInput = new PointInitializationInput(ui, this);
+    pointInitializationInput = new PointInitializationInput(ui, webEngineView, this);
     weatherModelInput = new WeatherModelInput(ui, this);
     outputs = new Outputs(ui, this);
 
