@@ -8,8 +8,9 @@
 # And is written for a workflow specific to requests from Smokejumpers.
 #
 # Input formats:
-# DATE - Simulation date in M/D/YYYY format (e.g. 9/20/2026)
-# TIME - Simulation time in HH:00 format and UTC time zone (e.g. 13:00)
+# DATE - Simulation date in MM/DD/YYYY format (e.g. 9/20/2026)
+# TIME - Simulation time in HH:00 format and  time zone (e.g. 13:00)
+# TIME_ZONE - Time zone (common choices are: America/New_York, America/Chicago,  America/Denver, America/Phoenix, America/Los_Angeles, America/Anchorage; use 'auto-detect' to try and find the time zone for the dem.  All choices arelisted in date_time_zonespec.csv)
 # LAT - Latitude in Degrees Decimal Minutes format with a hemisphere (e.g. N37°36.453’)
 # LON - Longitude in Degrees Decimal Minutes format with a hemisphere (e.g. W119°35.490’)
 # RADIUS - Radius of elevation domain to download (distance from center to edge of domain)
@@ -31,15 +32,16 @@ export GS_OAUTH2_PRIVATE_KEY_FILE="yourkeyhere"
 
 # Inputs
 DATE="9/20/2026"
-TIME="1300"
+TIME="1400"
+TIME_ZONE = "auto_detect"
 LAT="N37°36.453’"
 LON="W119°35.490’"
-RADIUS=3
+RADIUS=3.0
 NUM_THREADS=4
 ELEVATION_FILE="filename.tif"
 BUFFER_CLIPPING=15
 OUTPUT_DIR="path/to/output/dir"
-GOOG_OUT_RESOLUTION=80
+GOOG_OUT_RESOLUTION=80.0
 
 
 # Extract datetime
@@ -74,32 +76,33 @@ echo "Center Point: LAT=$LAT, LON=$LON"
 
 # Execute WindNinja CLI
 WindNinja_cli \
-  --num_threads "$NUM_THREADS" \
-  --momentum_flag true \
-  --fetch_elevation "$OUTPUT_DIR/$ELEVATION_FILE" \
-  --elevation_source lcp \
-  --mesh_choice fine \
-  --x_center "$LON" \
-  --y_center "$LAT" \
-  --x_buffer "$RADIUS" \
-  --y_buffer "$RADIUS" \
-  --buffer_units miles \
-  --initialization_method wxModelInitialization \
-  --wx_model_type PASTCAST-GCP-HRRR-CONUS-3-KM \
-  --start_year "$YEAR" \
-  --start_month "$MONTH" \
-  --start_day "$DAY" \
-  --start_hour "$HOUR" \
-  --start_minute "$MINUTE" \
-  --stop_year "$YEAR" \
-  --stop_month "$MONTH" \
-  --stop_day "$DAY" \
-  --stop_hour "$HOUR" \
-  --stop_minute "$MINUTE" \
-  --output_wind_height 20.0 \
-  --output_buffer_clipping "$BUFFER_CLIPPING" \
-  --units_output_wind_height ft \
-  --write_goog_output true \
-  --goog_out_resolution "$GOOG_OUT_RESOLUTION" \
-  --units_goog_out_resolution m \
-  --output_path "$OUTPUT_DIR"
+    --num_threads "$NUM_THREADS" \
+    --momentum_flag true \
+    --fetch_elevation "$OUTPUT_DIR/$ELEVATION_FILE" \
+    --time_zone "$TIME_ZONE" \
+    --elevation_source lcp \
+    --mesh_choice fine \
+    --x_center "$LON" \
+    --y_center "$LAT" \
+    --x_buffer "$RADIUS" \
+    --y_buffer "$RADIUS" \
+    --buffer_units miles \
+    --initialization_method wxModelInitialization \
+    --wx_model_type PASTCAST-GCP-HRRR-CONUS-3-KM \
+    --start_year "$YEAR" \
+    --start_month "$MONTH" \
+    --start_day "$DAY" \
+    --start_hour "$HOUR" \
+    --start_minute "$MINUTE" \
+    --stop_year "$YEAR" \
+    --stop_month "$MONTH" \
+    --stop_day "$DAY" \
+    --stop_hour "$HOUR" \
+    --stop_minute "$MINUTE" \
+    --output_wind_height 20.0 \
+    --units_output_wind_height ft \
+    --output_buffer_clipping "$BUFFER_CLIPPING" \
+    --write_goog_output true \
+    --goog_out_resolution "$GOOG_OUT_RESOLUTION" \
+    --units_goog_out_resolution m \
+    --output_path "$OUTPUT_DIR"
