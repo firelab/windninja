@@ -1,31 +1,34 @@
 #!/bin/bash
+#!/bin/bash
 
 # WindNinja Smokejumper Simulation Script
 #
 # This script runs a WindNinja simulation using:
-#   - Archived HRRR Forecast data (Google Cloud Platform keys needed)
-#   - A dem fetched via a Point and Radius
-# And is written for a workflow specific to requests from Smokejumpers. 
+# - Archived HRRR Forecast data (Google Cloud Platform keys needed)
+# - A dem fetched via a Point and Radius
+# And is written for a workflow specific to requests from Smokejumpers.
 #
 # Input formats:
-#   DATE           - Simulation date in M/D/YYYY format (e.g. 9/20/2026)
-#   TIME           - Simulation time in HH:MM format and UTC time zone (e.g. 13:00)
-#   LAT            - Latitude in Degrees Decimal Minutes format with a hemisphere (e.g. N37°36.453’)
-#   LON            - Longitude in Degrees Decimal Minutes format with a hemisphere (e.g. W119°35.490’)
-#   RADIUS         - Simulation radius in miles
-#   NUM_THREADS    - Number of CPU threads used by WindNinja
-#   OUTPUT_DIR     - Directory where WindNinja output files will be written
-#   ELEVATION_FILE - File name used to save the fetched DEM
+# DATE - Simulation date in M/D/YYYY format (e.g. 9/20/2026)
+# TIME - Simulation time in HH:00 format and UTC time zone (e.g. 13:00)
+# LAT - Latitude in Degrees Decimal Minutes format with a hemisphere (e.g. N37°36.453’)
+# LON - Longitude in Degrees Decimal Minutes format with a hemisphere (e.g. W119°35.490’)
+# RADIUS - Radius of elevation domain to download (distance from center to edge of domain)
+# NUM_THREADS - Number of threads to use during simulation
+# ELEVATION_FILE - File name used to save the fetched DEM
+# BUFFER_CLIPPING - Percent to clip buffer on output files
+# OUTPUT_DIR - Directory where WindNinja output files will be written
+# GOOG_OUTPUT_RESOLUTION - Resolution of Google Earth output file (-1 to use mesh resolution)
 
 # Environment Variables
 export WRITE_TURBULENCE=TRUE
 export TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=specificVals
 
-export GS_OAUTH2_CLIENT_EMAIL=yourkeyhere
-export GS_OAUTH2_PRIVATE_KEY_FILE=yourkeyhere
+export GS_OAUTH2_CLIENT_EMAIL="yourkeyhere"
+export GS_OAUTH2_PRIVATE_KEY_FILE="yourkeyhere"
 
-# export GS_SECRET_ACCESS_KEY=yourkeyhere
-# export GS_ACCESS_KEY_ID=yourkeyhere
+# export GS_SECRET_ACCESS_KEY="yourkeyhere"
+# export GS_ACCESS_KEY_ID="yourkeyhere"
 
 # Inputs
 DATE="9/20/2026"
@@ -34,8 +37,11 @@ LAT="N37°36.453’"
 LON="W119°35.490’"
 RADIUS=3
 NUM_THREADS=4
-OUTPUT_DIR="path/to/output/dir"
 ELEVATION_FILE="filename.tif"
+BUFFER_CLIPPING=15
+OUTPUT_DIR="path/to/output/dir"
+GOOG_OUT_RESOLUTION=80
+
 
 # Extract datetime
 YEAR=$(echo "$DATE" | awk -F'/' '{print $3}')
@@ -92,6 +98,9 @@ WindNinja_cli \
   --stop_hour "$HOUR" \
   --stop_minute "$MINUTE" \
   --output_wind_height 20.0 \
+  --output_buffer_clipping "$BUFFER_CLIPPING" \
   --units_output_wind_height ft \
   --write_goog_output true \
+  --goog_out_resolution "$GOOG_OUT_RESOLUTION" \
+  --units_goog_out_resolution m \
   --output_path "$OUTPUT_DIR"
