@@ -449,3 +449,105 @@ function getHotspotColor(hoursOld) {
 
     return "#ffff00";
 }
+
+const synopticToken = "33e3c8ee12dc499c86de1f2076a9e9d4";
+
+const selectedStationIds = new Set();
+
+const synopticStationsLayer = L.geoJSON(null, {
+
+    pointToLayer: function (feature, latlng) {
+
+        const stationId = feature.properties?.stid;
+        const isSelected = selectedStationIds.has(stationId);
+
+        return L.circleMarker(latlng, {
+            radius: 6,
+            color: isSelected ? "#ff0000" : "#003366",
+            weight: 1.5,
+            fillColor: isSelected ? "#ff0000" : "#3388ff",
+            fillOpacity: 0.8
+        });
+
+    },
+
+    onEachFeature: function (feature, layer) {
+
+        const properties = feature.properties;
+
+        layer.bindPopup(`
+            <strong>${properties.name || "Unknown Station"}</strong><br>
+            <strong>Station ID:</strong> ${properties.stid ?? "N/A"}<br>
+            <strong>Latitude:</strong> ${properties.latitude ?? "N/A"}<br>
+            <strong>Longitude:</strong> ${properties.longitude ?? "N/A"}<br>
+            <strong>Elevation:</strong> ${properties.elevation ?? "N/A"} ft<br>
+            <strong>State:</strong> ${properties.state ?? "N/A"}<br>
+            <strong>Country:</strong> ${properties.country ?? "N/A"}<br>
+            <strong>Status:</strong> ${properties.status ?? "N/A"}<br>
+        `);
+
+    }
+
+});
+
+function updateSynopticStations(stationIds) {
+
+    selectedStationIds.clear();
+
+    stationIds.forEach(function (stationId) {
+        selectedStationIds.add(stationId);
+    });
+
+    synopticStationsLayer.eachLayer(function (layer) {
+
+        const stationId = layer.feature?.properties?.stid;
+        const isSelected = selectedStationIds.has(stationId);
+
+        layer.setStyle({
+            color: isSelected ? "#ff0000" : "#003366",
+            fillColor: isSelected ? "#ff0000" : "#3388ff"
+        });
+
+    });
+}
+
+function fetchSynopticStations(mapInstance) {
+    if (!mapInstance.hasLayer(synopticStationsLayer)) return;
+
+    const bounds = mapInstance.getBounds();
+
+    // BBOX format: west,south,east,north
+    const bbox =
+        `${bounds.getWest()},${bounds.getSouth()},` +
+        `${bounds.getEast()},${bounds.getNorth()}`;
+
+    const url =
+        `https://api.synopticdata.com/v2/stations/latest` +
+        `?token=${synopticToken}` +
+        `&bbox=${bbox}` +
+        '&network=1,2' +
+        `&output=geojson`;
+
+    console.log("Fetching Synoptic stations:", url);
+
+    fetch(url)
+        .then(res => {
+            console.log("Synoptic HTTP status:", res.status, res.statusText);
+            return res.json();
+        })
+        .then(data => {
+            console.log("Synoptic response:", data);
+
+            synopticStationsLayer.clearLayers();
+
+            if (data && data.features) {
+                console.log("Number of features:", data.features.length);
+                synopticStationsLayer.addData(data);
+            } else {
+                console.error("No features in Synoptic response");
+            }
+        })
+        .catch(err => {
+            console.error("Error fetching Synoptic Data stations:", err);
+        });
+}

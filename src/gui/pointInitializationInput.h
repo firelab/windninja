@@ -42,12 +42,13 @@
 #include <QMessageBox>
 #include <QtConcurrent/QtConcurrent>
 #include <QFileSystemModel>
+#include <QtWebEngineWidgets/qwebengineview.h>
 
 class PointInitializationInput : public QObject
 {
     Q_OBJECT
 public:
-    PointInitializationInput(Ui::MainWindow* ui, QObject* parent = nullptr);
+    PointInitializationInput(Ui::MainWindow* ui, QWebEngineView* webEngineView, QObject* parent = nullptr);
     QVector<QString> getStationFiles();
 
 signals:
@@ -76,10 +77,12 @@ private slots:
     void weatherStationDataTimestepsSpinBoxValueChanged(int value);
     void weatherStationDataStartDateTimeEditChanged();
     void weatherStationDataEndDateTimeEditChanged();
+    void downloadFromDEMSpinBoxValueChanged(int value);
     void updateDateTime();
 
 private:
     Ui::MainWindow *ui;
+    QWebEngineView *webEngineView;
 
     NinjaErr ninjaErr;
 

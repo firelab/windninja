@@ -186,6 +186,13 @@
             ]
         };
 
+        const dataOverlayTree = {
+            label: 'Data Overlays',
+            children: [
+                { label: "Stations", layer: synopticStationsLayer}
+            ]
+        };
+
         map.on("overlayadd", function (event) {
             if (event.layer === goesEastHotspotsLayer) {
                 fetchGoesEast(map);
@@ -193,16 +200,26 @@
             if (event.layer === goesWestHotspotsLayer) {
                 fetchGoesWest(map);
             }
+            if (event.layer === synopticStationsLayer) {
+                fetchSynopticStations(map);
+            }
         });
 
         map.on("moveend", function () {
-            fetchGoesEast(map);
-            fetchGoesWest(map);
+            if(map.hasLayer(goesEastHotspotsLayer)) {
+                fetchGoesEast(map);
+            }
+            if(map.hasLayer(goesWestHotspotsLayer)) {
+                fetchGoesWest(map);                
+            }
+            if (map.hasLayer(synopticStationsLayer)) {
+                fetchSynopticStations(map);
+            }
         });
 
         const layerControl = L.control.layers.tree(
             baseTree,
-            [fireOverlayTree],
+            [fireOverlayTree, dataOverlayTree],
             { collapsed: true }
         ).addTo(map);
 
@@ -261,6 +278,39 @@
 
             updateCenterControl();
             updateOverlayTree();
+        }
+
+        function drawBoundingBoxAroundDEM(bufferMiles) {
+            clearBoundingBoxLayer();
+
+            const demBounds = demLayer.getBounds();
+
+            const center = demBounds.getCenter();
+
+            const milesPerDegreeLatitude = 69.0;
+            const milesPerDegreeLongitude =
+                69.0 * Math.cos(center.lat * Math.PI / 180.0);
+
+            const latBuffer = bufferMiles / milesPerDegreeLatitude;
+            const lngBuffer = bufferMiles / milesPerDegreeLongitude;
+
+            const bufferedBounds = L.latLngBounds(
+                [
+                    demBounds.getSouth() - latBuffer,
+                    demBounds.getWest() - lngBuffer
+                ],
+                [
+                    demBounds.getNorth() + latBuffer,
+                    demBounds.getEast() + lngBuffer
+                ]
+            );
+
+            const rectangle = L.rectangle(bufferedBounds).addTo(boundingBoxLayer);
+
+            map.fitBounds(rectangle.getBounds());
+
+            updateCenterControl();
+            updateClearControl();
         }
 
         function startRectangleDrawing() {
@@ -1118,6 +1168,7 @@
             }
 
             displayTree.push(fireOverlayTree);
+            displayTree.push(dataOverlayTree);
 
             if (windninjaOutputTree.children.length > 1)
                 displayTree.push(windninjaOutputTree);

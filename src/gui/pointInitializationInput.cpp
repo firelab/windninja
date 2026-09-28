@@ -29,9 +29,10 @@
 
 #include "pointInitializationInput.h"
 
-PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* parent)
+PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent)
     : QObject(parent),
-    ui(ui)
+    ui(ui),
+    webEngineView(webEngineView)
 {
     connect(this, &PointInitializationInput::updateProgressMessageSignal, this, &PointInitializationInput::updateProgressMessage, Qt::QueuedConnection);
 
@@ -58,6 +59,7 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QObject* 
     connect(ui->weatherStationDataTimestepsSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::weatherStationDataTimestepsSpinBoxValueChanged);
     connect(ui->weatherStationDataStartDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataStartDateTimeEditChanged);
     connect(ui->weatherStationDataEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataEndDateTimeEditChanged);
+    connect(ui->downloadFromDEMSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::downloadFromDEMSpinBoxValueChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 }
@@ -193,6 +195,7 @@ void PointInitializationInput::weatherStationDataDownloadCancelButtonClicked()
 {
     ui->pointInitializationTreeView->collapseAll();
     ui->inputsStackedWidget->setCurrentIndex(7);
+    webEngineView->page()->runJavaScript("clearBoundingBoxLayer();");
 }
 
 void PointInitializationInput::weatherStationDataDownloadButtonClicked()
@@ -452,6 +455,7 @@ void PointInitializationInput::fetchStationDataFinished()
 void PointInitializationInput::weatherStationDataSourceComboBoxCurrentIndexChanged(int index)
 {
     ui->weatherStationDataSourceStackedWidget->setCurrentIndex(index);
+    webEngineView->page()->runJavaScript("clearBoundingBoxLayer();");
 }
 
 void PointInitializationInput::weatherStationDataTimeComboBoxCurrentIndexChanged(int index)
@@ -473,7 +477,6 @@ void PointInitializationInput::updateTreeView()
     stationFileSystemModel->setNameFilters({"*.csv", "WXSTATIONS-*"});
     stationFileSystemModel->setFilter(QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     stationFileSystemModel->setNameFilterDisables(false);
-
 
     ui->pointInitializationTreeView->setModel(stationFileSystemModel);
     ui->pointInitializationTreeView->setRootIndex(stationFileSystemModel->index(fileInfo.absolutePath()));
@@ -507,6 +510,8 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
     maxStationLocalDateTime = QDateTime();
     minStationLocalDateTime = QDateTime();
 
+    QStringList stationIds;
+
     if(selectedRows.count() > 0)
     {
         state.isStationFileSelected = true;
@@ -527,7 +532,12 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         CPLDebug("STATION_FETCH", "STATION NAME: %s", stationFileSystemModel->filePath(selectedRows[i]).toStdString().c_str());
 
         QString recentFileSelected = stationFileSystemModel->filePath(selectedRows[i]);
-        stationFiles.push_back(recentFileSelected);  // note, selected vs valid are two separate things
+        stationFiles.push_back(recentFileSelected); // note, selected vs valid are two separate things
+
+        QString fileName = QFileInfo(recentFileSelected).fileName();
+        QString stationId = fileName.section('-', 0, 0);
+        stationIds.append("'" + stationId + "'");
+
         //qDebug() << "[GUI-Point] Selected file path:" << recentFileSelected;
         CPLDebug("STATION_FETCH", "Selected file path: %s", recentFileSelected.toStdString().c_str());
 
@@ -639,9 +649,10 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
         }
         ui->pointInitializationTreeView->setProperty("timeSeriesFlag", timeSeriesFlag);
     }
-    state.isStationDataValid = true;
 
+    state.isStationDataValid = true;
     state.isStationFileSelectionValid = true;
+
     for(int i = 0; i < stationFileTypes.size(); i++)
     {
         CPLDebug("STATION_FETCH", "stationFileTypes[%i] = %i", i, stationFileTypes[i]);
@@ -653,6 +664,13 @@ void PointInitializationInput::pointInitializationTreeViewItemSelectionChanged(c
             break;
         }
     }
+
+    QString javascript =
+        "updateSynopticStations([" +
+        stationIds.join(",") +
+        "]);";
+
+    webEngineView->page()->runJavaScript(javascript);
 
     emit updateState();
 }
@@ -812,6 +830,15 @@ void PointInitializationInput::updateTimeSteps()
         ui->weatherStationDataEndDateTimeEdit->setEnabled(true);
         ui->weatherStationDataEndDateTimeEdit->setToolTip("Enter the simulation stop time");
     }
+}
+
+void PointInitializationInput::downloadFromDEMSpinBoxValueChanged(int value)
+{
+    QString javascript = QString(
+                             "drawBoundingBoxAroundDEM(%1);"
+                             ).arg(value);
+
+    webEngineView->page()->runJavaScript(javascript);
 }
 
 void PointInitializationInput::updateDateTime()
