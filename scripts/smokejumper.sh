@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/bin/bash
 
 # WindNinja Smokejumper Simulation Script
 #
