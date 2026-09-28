@@ -33,7 +33,7 @@ export GS_OAUTH2_PRIVATE_KEY_FILE="yourkeyhere"
 # Inputs
 DATE="9/20/2026"
 TIME="1400"
-TIME_ZONE = "auto_detect"
+TIME_ZONE="auto-detect"
 LAT="N37°36.453’"
 LON="W119°35.490’"
 RADIUS=3.0
@@ -71,8 +71,10 @@ LON=$(echo "$LON" | awk '{
 }')
 
 echo "=== Computed WindNinja Simulation Inputs ==="
-echo "Date: $MONTH/$DAY/$YEAR | Time: $HOUR:$MINUTE $TIME_ZONE"
-echo "Center Point: LAT=$LAT, LON=$LON"
+echo "Date: $MONTH/$DAY/$YEAR"
+echo "Time: $HOUR:$MINUTE"
+echo "Time Zone: $TIME_ZONE"
+echo "Center Point: $LAT, $LON"
 
 # Execute WindNinja CLI
 WindNinja_cli \
@@ -105,4 +107,5 @@ WindNinja_cli \
     --write_goog_output true \
     --goog_out_resolution "$GOOG_OUT_RESOLUTION" \
     --units_goog_out_resolution m \
+    --write_wx_model_goog_output true \
     --output_path "$OUTPUT_DIR"
