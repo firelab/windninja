@@ -71,46 +71,9 @@
 </head>
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
-    <script src="qrc:///map/js/layerSources.js"></script>
+    <script src="qrc:///map/js/mapInitialization.js"></script>
     <script src="qrc:///map/js/mapControls.js"></script>
     <script>
-
-        const map = new L.Map('map', {
-            preferCanvas: true,
-            worldCopyJump: true,
-            layers: [streetBaseLayer],
-            center: [37.5, -96.5],
-            zoom: 4
-        });
-
-        map.createPane('fsTopoPane');
-        map.getPane('fsTopoPane').style.zIndex = 250;
-
-        map.createPane('fsHillshadePane');
-        map.getPane('fsHillshadePane').style.zIndex = 450;
-
-        const fsTopoBaseLayer = L.esri.Vector.vectorTileLayer(
-            "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer",
-            {
-                maxZoom: 16,
-                pane: 'fsTopoPane'
-            }
-        );
-
-        const fsHillshadeLayer = L.tileLayer(
-            "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
-            {
-                maxZoom: 16,
-                pane: 'fsHillshadePane',
-                opacity: 0.35,
-                attribution: "Esri"
-            }
-        );
-
-        const fsTopoHillshadeLayer = L.layerGroup([
-            fsTopoBaseLayer,
-            fsHillshadeLayer
-        ]);
         
         const boundingBoxLayer = new L.FeatureGroup();
         const demLayer = new L.FeatureGroup();

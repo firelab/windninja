@@ -1,9 +1,9 @@
 /******************************************************************************
 *
-* $Id: layerSources.js
+* $Id: mapInitialization.js
 *
 * Project:  WindNinja
-* Purpose:  Handles basemaps and fire data layers 
+* Purpose:  Handles map definition and layer fetching
 * Author:   Mason Willman <mason.willman@usda.gov>
 *
 ******************************************************************************
@@ -33,14 +33,16 @@ const streetBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles
     tileSize: 512,
     maxZoom: 18,
     zoomOffset: -1,
-    id: 'mapbox/streets-v12'
+    id: 'mapbox/streets-v12',
+    zIndex: 200
 });
 
 const satelliteBaseLayer = L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${apiKey}`, {
     tileSize: 512,
     maxZoom: 18,
     zoomOffset: -1,
-    id: 'mapbox/satellite-v9'
+    id: 'mapbox/satellite-v9',
+    zIndex: 200
 });
 
 const topographicBaseLayer = L.tileLayer(
@@ -49,7 +51,8 @@ const topographicBaseLayer = L.tileLayer(
         tileSize: 512,
         maxZoom: 18,
         zoomOffset: -1,
-        id: 'mapbox/outdoors-v12'
+        id: 'mapbox/outdoors-v12',
+        zIndex: 200
     }
 );
 
@@ -57,12 +60,62 @@ const usgsTopoBaseLayer = L.tileLayer(
     'https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}',
     {
         maxZoom: 16,
-        attribution: 'USGS The National Map'
+        attribution: 'USGS The National Map',
+        zIndex: 200
     }
 );
 
+const map = new L.Map('map', {
+    preferCanvas: true,
+    worldCopyJump: true,
+    layers: [streetBaseLayer],
+    center: [37.5, -96.5],
+    zoom: 4
+});
+
+map.createPane('fsTopoPane');
+map.getPane('fsTopoPane').style.zIndex = 200;
+
+map.createPane('fsHillshadePane');
+map.getPane('fsHillshadePane').style.zIndex = 200;
+
+map.createPane('firePerimeterPane');
+map.getPane('firePerimeterPane').style.zIndex = 400;
+
+map.createPane('firePointsPane');
+map.getPane('firePointsPane').style.zIndex = 500;
+
+map.createPane('hotspotsPane');
+map.getPane('hotspotsPane').style.zIndex = 600;
+
+const fsTopoBaseLayer = L.esri.Vector.vectorTileLayer(
+    "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer",
+    {
+        maxZoom: 16,
+        pane: 'fsTopoPane'
+    }
+);
+
+const fsHillshadeLayer = L.tileLayer(
+    "https://services.arcgisonline.com/arcgis/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+    {
+        maxZoom: 16,
+        pane: 'fsHillshadePane',
+        opacity: 0.35,
+        attribution: "Esri"
+    }
+);
+
+const fsTopoHillshadeLayer = L.layerGroup([
+    fsTopoBaseLayer,
+    fsHillshadeLayer
+]);
+
+
 const firePerimeterLayer = L.esri.featureLayer({
     url: "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0",
+
+    pane: 'firePerimeterPane',
 
     simplifyFactor: 0.5,
 
@@ -71,7 +124,7 @@ const firePerimeterLayer = L.esri.featureLayer({
         weight: 2,
         fillColor: "#FFBEBE",
         fillOpacity: 0.7
-    }
+    },
 });
 
 const firePointsLayer = L.esri.featureLayer({
@@ -83,7 +136,8 @@ const firePointsLayer = L.esri.featureLayer({
             color: "#000000",
             weight: 1,
             fillColor: "#000000",
-            fillOpacity: 1
+            fillOpacity: 1,
+            pane: 'firePointData'
         });
     },
 
@@ -116,7 +170,7 @@ const firePointsLayer = L.esri.featureLayer({
             <strong>Discovered:</strong> ${discovered}<br>
             <strong>Last Updated:</strong> ${updated}<br>
         `);
-    }
+    },
 });
 
 const viirsHotspotsLayer = L.esri.featureLayer({
@@ -131,7 +185,8 @@ const viirsHotspotsLayer = L.esri.featureLayer({
             color: color,
             weight: 1,
             fillColor: color,
-            fillOpacity: 0.7
+            fillOpacity: 0.7,
+            pane: 'hotspotsPane'
         });
     },
 
@@ -159,7 +214,7 @@ const viirsHotspotsLayer = L.esri.featureLayer({
             <strong>Brightness Temperature:</strong> ${properties.bright_ti4 != null ? properties.bright_ti4.toFixed(1) + " K" : "N/A"}<br>
             <strong>Detection:</strong> ${detection}
         `);
-    }
+    },
 });
 
 const modisHotspotsLayer = L.esri.featureLayer({
@@ -176,7 +231,8 @@ const modisHotspotsLayer = L.esri.featureLayer({
             color: color,
             weight: 1,
             fillColor: color,
-            fillOpacity: 0.9
+            fillOpacity: 0.9,
+            pane: 'hotspotsPane'
         });
     },
 
@@ -210,29 +266,8 @@ const modisHotspotsLayer = L.esri.featureLayer({
             <strong>Brightness:</strong> ${properties.BRIGHTNESS != null ? properties.BRIGHTNESS.toFixed(1) + " K" : "N/A"}<br>
             <strong>Detection:</strong> ${detection}
         `);
-    }
+    },
 });
-
-function getHotspotColor(hoursOld) {
-    if (hoursOld < 1) {
-        return "#a80000";
-    }
-
-    if (hoursOld < 6) {
-        return "#e64000";
-    }
-
-    if (hoursOld < 12) {
-        return "#ff5500";
-    }
-
-    if (hoursOld < 24) {
-        return "#ffaa00";
-    }
-
-    return "#ffff00";
-}
-
 
 const goesWestHotspotsLayer = L.geoJSON(null, {
 
@@ -243,7 +278,8 @@ const goesWestHotspotsLayer = L.geoJSON(null, {
             color: "#8B0000",
             weight: 1,
             fillColor: "#FF4500",
-            fillOpacity: 0.8
+            fillOpacity: 0.8,
+            pane: 'hotspotsPane'
         });
 
     },
@@ -273,8 +309,7 @@ const goesWestHotspotsLayer = L.geoJSON(null, {
             <strong>Feature Tracking ID:</strong> ${properties.feature_tracking_id || "N/A"}
         `);
 
-    }
-
+    },
 });
 
 function fetchGoesWest(map) {
@@ -325,7 +360,8 @@ const goesEastHotspotsLayer = L.geoJSON(null, {
             color: "#8B0000",
             weight: 1,
             fillColor: "#FF4500",
-            fillOpacity: 0.8
+            fillOpacity: 0.8,
+            pane: 'hotspotsPane'
         });
 
     },
@@ -355,8 +391,7 @@ const goesEastHotspotsLayer = L.geoJSON(null, {
             <strong>Feature Tracking ID:</strong> ${properties.feature_tracking_id || "N/A"}
         `);
 
-    }
-
+    },
 });
 
 
@@ -393,4 +428,24 @@ function fetchGoesEast(map) {
         .catch(err => {
             console.error( "Error fetching NGFS features:", err);
         });
+}
+
+function getHotspotColor(hoursOld) {
+    if (hoursOld < 1) {
+        return "#a80000";
+    }
+
+    if (hoursOld < 6) {
+        return "#e64000";
+    }
+
+    if (hoursOld < 12) {
+        return "#ff5500";
+    }
+
+    if (hoursOld < 24) {
+        return "#ffaa00";
+    }
+
+    return "#ffff00";
 }
