@@ -470,7 +470,6 @@ set(share_files
 	${PROJECT_SOURCE_DIR}/data/config_options.csv
 	${PROJECT_SOURCE_DIR}/data/tz_world.zip
 	${PROJECT_SOURCE_DIR}/data/landfire.zip
-        ${PROJECT_SOURCE_DIR}/data/qt_certs_bundle.pem
 	${PROJECT_SOURCE_DIR}/data/thredds.csv
 	${PROJECT_SOURCE_DIR}/data/surface_data.zip
 	${PROJECT_SOURCE_DIR}/data/srtm_region.geojson
