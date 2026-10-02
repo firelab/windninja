@@ -80,13 +80,10 @@ map.createPane('fsHillshadePane');
 map.getPane('fsHillshadePane').style.zIndex = 200;
 
 map.createPane('firePerimeterPane');
-map.getPane('firePerimeterPane').style.zIndex = 400;
+map.getPane('firePerimeterPane').style.zIndex = 300;
 
-map.createPane('firePointsPane');
-map.getPane('firePointsPane').style.zIndex = 500;
-
-map.createPane('hotspotsPane');
-map.getPane('hotspotsPane').style.zIndex = 600;
+map.createPane('demPane');
+map.getPane('demPane').style.zIndex = 350; 
 
 const fsTopoBaseLayer = L.esri.Vector.vectorTileLayer(
     "https://tiles.arcgis.com/tiles/gGHDlz6USftL5Pau/arcgis/rest/services/FSBasemap_20240617/VectorTileServer",
@@ -136,8 +133,7 @@ const firePointsLayer = L.esri.featureLayer({
             color: "#000000",
             weight: 1,
             fillColor: "#000000",
-            fillOpacity: 1,
-            pane: 'firePointData'
+            fillOpacity: 1
         });
     },
 
@@ -185,8 +181,7 @@ const viirsHotspotsLayer = L.esri.featureLayer({
             color: color,
             weight: 1,
             fillColor: color,
-            fillOpacity: 0.7,
-            pane: 'hotspotsPane'
+            fillOpacity: 0.7
         });
     },
 
@@ -231,8 +226,7 @@ const modisHotspotsLayer = L.esri.featureLayer({
             color: color,
             weight: 1,
             fillColor: color,
-            fillOpacity: 0.9,
-            pane: 'hotspotsPane'
+            fillOpacity: 0.9
         });
     },
 
@@ -278,8 +272,7 @@ const goesWestHotspotsLayer = L.geoJSON(null, {
             color: "#8B0000",
             weight: 1,
             fillColor: "#FF4500",
-            fillOpacity: 0.8,
-            pane: 'hotspotsPane'
+            fillOpacity: 0.8
         });
 
     },
@@ -360,8 +353,7 @@ const goesEastHotspotsLayer = L.geoJSON(null, {
             color: "#8B0000",
             weight: 1,
             fillColor: "#FF4500",
-            fillOpacity: 0.8,
-            pane: 'hotspotsPane'
+            fillOpacity: 0.8
         });
 
     },
