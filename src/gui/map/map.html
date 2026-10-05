@@ -74,6 +74,7 @@
     <script src="qrc:///map/js/mapInitialization.js"></script>
     <script src="qrc:///map/js/mapControls.js"></script>
     <script src="qrc:///map/js/mapDrawing.js"></script>
+    <script src="qrc:///map/js/trees.js"></script>
     <script>
         
         const boundingBoxLayer = new L.FeatureGroup();
@@ -130,100 +131,6 @@
         map.whenReady(() => {
             map.getContainer().appendChild(legendContainer);
         });
-
-        const baseTree = {
-            label: 'Base Maps',
-            children: [
-                { label: 'Streets', layer: streetBaseLayer },
-                { label: 'Satellite', layer: satelliteBaseLayer },
-                { label: 'Topographic', layer: topographicBaseLayer },
-                { label: 'USGS Topographic', layer: usgsTopoBaseLayer },
-                { label: 'Forest Service Topographic', layer: fsTopoHillshadeLayer }
-            ]
-        };
-
-        const windninjaOutputTree = {
-            label: 'Simulation Output',
-            children: [
-                { label: 'No Output', layer: L.layerGroup([]), radioGroup: 'windninjaOutput'}
-            ]
-        };
-
-        const initializationOutputTree = {
-            label: 'Weather Model Output',
-            children: [
-                { label: 'No Output', layer: L.layerGroup([]),  radioGroup: 'initializationOutput' }
-            ]
-        };
-
-        const stationOutputTree = {
-            label: 'Weather Stations',
-            children: [
-                { label: 'No Output', layer: L.layerGroup([]),  radioGroup: 'stationOutput' }
-            ]
-        };
-
-        const unknownOutputTree = {
-            label: 'Unknown Output',
-            children: [
-                { label: 'No Output', layer: L.layerGroup([]), radioGroup: 'unknownOutput' }
-            ]
-        };
-
-        const overlayTree = {
-            label: 'WindNinja Overlays',
-            children: []
-        };
-
-        const fireOverlayTree = {
-            label: 'Fire Overlays',
-            children: [
-                { label: 'Fire Perimeters', layer: firePerimeterLayer },
-                { label: 'Fire Points', layer: firePointsLayer },
-                { label: 'VIIRS Hotspots', layer: viirsHotspotsLayer },
-                { label: 'MODIS Hotspots', layer: modisHotspotsLayer },
-                { label: 'GOES West Hotspots', layer: goesWestHotspotsLayer },
-                { label: 'GOES East Hotspots', layer: goesEastHotspotsLayer }
-            ]
-        };
-
-        const dataOverlayTree = {
-            label: 'Data Overlays',
-            children: [
-                { label: "Stations", layer: synopticStationsLayer}
-            ]
-        };
-
-        map.on("overlayadd", function (event) {
-            if (event.layer === goesEastHotspotsLayer) {
-                fetchGoesEast(map);
-            }
-            if (event.layer === goesWestHotspotsLayer) {
-                fetchGoesWest(map);
-            }
-            if (event.layer === synopticStationsLayer) {
-                fetchSynopticStations(map);
-            }
-        });
-
-        map.on("moveend", function () {
-            if(map.hasLayer(goesEastHotspotsLayer)) {
-                fetchGoesEast(map);
-            }
-            if(map.hasLayer(goesWestHotspotsLayer)) {
-                fetchGoesWest(map);                
-            }
-            if (map.hasLayer(synopticStationsLayer)) {
-                fetchSynopticStations(map);
-            }
-        });
-
-        const layerControl = L.control.layers.tree(
-            baseTree,
-            [fireOverlayTree, dataOverlayTree],
-            { collapsed: true }
-        ).addTo(map);
-
 
         function centerMapOnActiveLayer() {
             let bounds = null;

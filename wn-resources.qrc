@@ -78,5 +78,6 @@
         <file alias="/map/js/mapInitialization.js">src/gui/map/js/mapInitialization.js</file>
         <file alias="/map/js/mapControls.js">src/gui/map/js/mapControls.js</file>
         <file alias="/map/js/mapDrawing.js">src/gui/map/js/mapDrawing.js</file>
+        <file alias="/map/js/trees.js">src/gui/map/js/trees.js</file>
     </qresource>
 </RCC>
