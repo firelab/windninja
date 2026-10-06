@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* $Id: mapTrees.js
+* $Id: trees.js
 *
 * Project:  WindNinja
 * Purpose:  Handles map trees and related functions

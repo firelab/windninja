@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* $Id: mapControls.js
+* $Id: controls.js
 *
 * Project:  WindNinja
 * Purpose:  Handles map controls (center, clear, load, snapshot)

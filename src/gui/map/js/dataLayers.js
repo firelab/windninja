@@ -1,6 +1,6 @@
 /******************************************************************************
 *
-* $Id: mapInitialization.js
+* $Id: dataLayers.js
 *
 * Project:  WindNinja
 * Purpose:  Handles map definition and layer fetching
@@ -451,16 +451,27 @@ const synopticStationsLayer = L.geoJSON(null, {
     pointToLayer: function (feature, latlng) {
 
         const stationId = feature.properties?.stid;
+        const status = feature.properties?.status;
         const isSelected = selectedStationIds.has(stationId);
+        const isInactive = status === "INACTIVE";
 
         return L.circleMarker(latlng, {
-            radius: 6,
-            color: isSelected ? "#ff0000" : "#003366",
-            weight: 1.5,
-            fillColor: isSelected ? "#ff0000" : "#3388ff",
-            fillOpacity: 0.8
-        });
 
+            radius: 6,
+
+            color: isSelected
+                ? "#ff0000"
+                : (isInactive ? "#808080" : "#003366"),
+
+            weight: 1.5,
+
+            fillColor: isSelected
+                ? "#ff0000"
+                : (isInactive ? "#b3b3b3" : "#3388ff"),
+
+            fillOpacity: 0.8
+
+        });
     },
 
     onEachFeature: function (feature, layer) {
@@ -477,7 +488,6 @@ const synopticStationsLayer = L.geoJSON(null, {
             <strong>Country:</strong> ${properties.country ?? "N/A"}<br>
             <strong>Status:</strong> ${properties.status ?? "N/A"}<br>
         `);
-
     }
 
 });
@@ -493,17 +503,27 @@ function updateSynopticStations(stationIds) {
     synopticStationsLayer.eachLayer(function (layer) {
 
         const stationId = layer.feature?.properties?.stid;
+        const status = layer.feature?.properties?.status;
+
         const isSelected = selectedStationIds.has(stationId);
+        const isInactive = status === "INACTIVE";
 
         layer.setStyle({
-            color: isSelected ? "#ff0000" : "#003366",
-            fillColor: isSelected ? "#ff0000" : "#3388ff"
-        });
 
+            color: isSelected
+                ? "#ff0000"
+                : (isInactive ? "#808080" : "#003366"),
+
+            fillColor: isSelected
+                ? "#ff0000"
+                : (isInactive ? "#b3b3b3" : "#3388ff")
+
+        });
     });
 }
 
 function fetchSynopticStations(mapInstance) {
+
     if (!mapInstance.hasLayer(synopticStationsLayer)) return;
 
     const bounds = mapInstance.getBounds();
@@ -523,23 +543,34 @@ function fetchSynopticStations(mapInstance) {
     console.log("Fetching Synoptic stations:", url);
 
     fetch(url)
+
         .then(res => {
+
             console.log("Synoptic HTTP status:", res.status, res.statusText);
+
             return res.json();
         })
+
         .then(data => {
+
             console.log("Synoptic response:", data);
 
             synopticStationsLayer.clearLayers();
 
             if (data && data.features) {
+
                 console.log("Number of features:", data.features.length);
+
                 synopticStationsLayer.addData(data);
+
             } else {
+
                 console.error("No features in Synoptic response");
             }
         })
+
         .catch(err => {
+
             console.error("Error fetching Synoptic Data stations:", err);
         });
 }
