@@ -63,6 +63,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         outputs.h
         outputs.cpp
         noWheelDoubleSpinBox.h
+        mapWebEnginePage.h
+        mapWebEnginePage.cpp
     )
 else()
     add_executable(WindNinja

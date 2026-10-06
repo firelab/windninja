@@ -49,8 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
     serverBridge->checkMessages();
 
     QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
-    QString mapPath = QDir(dataPath).filePath("map.html");
     webEngineView = new QWebEngineView(ui->mapPanelWidget);
+    MapWebEnginePage *page = new MapWebEnginePage(webEngineView);
+    webEngineView->setPage(page);
     webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
     webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     webEngineView->settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);

@@ -71,9 +71,9 @@
 </head>
 <body>
     <div id="map" style="border: 1px solid #ccc"></div>
-    <script src="qrc:///map/js/mapInitialization.js"></script>
-    <script src="qrc:///map/js/mapControls.js"></script>
-    <script src="qrc:///map/js/mapDrawing.js"></script>
+    <script src="qrc:///map/js/dataLayers.js"></script>
+    <script src="qrc:///map/js/controls.js"></script>
+    <script src="qrc:///map/js/drawing.js"></script>
     <script src="qrc:///map/js/trees.js"></script>
     <script>
         
@@ -819,307 +819,82 @@
             activeInitializationLegendCard = card;
         }
 
-        function clearWindNinjaOutputTree() 
-        {
-            clearTimeSeriesContainer();
-            windninjaOutputTree.children.forEach(item => {
-                if (item.layer && item.label !== 'No Output') {
-                    map.removeLayer(item.layer);
-                }
-            });
-
-            windninjaOutputTree.children = [{
-                label: 'No Output',
-                layer: L.layerGroup([]),
-                radioGroup: 'windninjaOutput'
-            }];
-
-            updateOverlayTree();
-            updateCenterControl();
-            updateClearControl();
+        function clearTimeSeriesContainer() {
+            while (timeSeriesContainer.firstChild) {
+                timeSeriesContainer.removeChild(timeSeriesContainer.firstChild);
+            }
         }
 
-        function clearInitializationOutputTree() 
-        {
-            clearTimeSeriesContainer();
-            initializationOutputTree.children.forEach(item => {
-                if (item.layer && item.label !== 'No Output') {
-                    map.removeLayer(item.layer);
-                }
-            });
+        function createTimeSeriesCard(img, titleText, orderValue) {
+            const card = document.createElement('div');
+            card.style.border = '2px solid black';
+            card.style.backgroundColor = 'white';
+            card.style.display = 'inline-block';
+            card.style.order = orderValue; 
 
-            initializationOutputTree.children = [{
-                label: 'No Output',
-                layer: L.layerGroup([]),
-                radioGroup: 'initializationOutput'
-            }];
+            const header = document.createElement('div');
+            header.innerText = titleText;
+            header.style.backgroundColor = 'black';
+            header.style.color = 'white';
+            header.style.padding = '2px 8px';
+            header.style.fontSize = '12px';
+            header.style.fontFamily = 'Arial, sans-serif';
+            header.style.fontWeight = 'bold';
+            header.style.textAlign = 'left';
 
-            updateOverlayTree();
-            updateCenterControl();
-            updateClearControl();
+            img.style.display = 'block';
+            img.style.margin = '0 auto';
+            
+            card.appendChild(header);
+            card.appendChild(img);
+            
+            return card;
         }
 
-        function clearStationOutputTree() 
-        {
-            stationOutputTree.children.forEach(item => {
-                if (item.layer && item.label !== 'No Output') {
-                    map.removeLayer(item.layer);
-                }
-            });
+        function createLegendCard(img, titleText, orderValue) {
+            const card = document.createElement('div');
+            card.style.border = '2px solid black';
+            card.style.backgroundColor = 'white';
+            card.style.display = 'inline-block';
+            card.style.order = orderValue;
 
-            stationOutputTree.children = [{
-                label: 'No Stations',
-                layer: L.layerGroup([]),
-                radioGroup: 'stationOutput'
-            }];
+            const header = document.createElement('div');
+            header.innerText = titleText;
+            header.style.backgroundColor = 'black';
+            header.style.color = 'white';
+            header.style.padding = '2px 8px';
+            header.style.fontSize = '12px';
+            header.style.fontFamily = 'Arial, sans-serif';
+            header.style.fontWeight = 'bold';
+            header.style.textAlign = 'left';
 
-            updateOverlayTree();
-            updateCenterControl();
-            updateClearControl();
+            img.style.display = 'block';
+            img.style.maxWidth = '150px';
+            img.style.height = 'auto';
+
+            card.appendChild(header);
+            card.appendChild(img);
+
+            return card;
         }
 
-        function clearUnknownOutputTree() 
-        {
-            unknownOutputTree.children.forEach(item => {
-                if (item.layer && item.label !== 'No Output') {
-                    map.removeLayer(item.layer);
-                }
-            });
+        function showWindNinjaTimeSeries(img) {
+            if (!windninjaTimeSeriesEnabled || !img) return;
+            if (activeWindNinjaTimeSeriesImg) activeWindNinjaTimeSeriesImg.remove();
 
-            unknownOutputTree.children = [{
-                label: 'No Output',
-                layer: L.layerGroup([]),
-                radioGroup: 'unknownOutput'
-            }];
-
-            updateOverlayTree();
-            updateCenterControl();
-            updateClearControl();
+            const card = createTimeSeriesCard(img, 'Simulation Datetime', 2);
+            timeSeriesContainer.appendChild(card);
+            activeWindNinjaTimeSeriesImg = card;
         }
 
-        function updateOverlayTree() 
-        {
-            if (!layerControl || !layerControl.setOverlayTree) return;
+        function showInitializationTimeSeries(img) {
+            if (!initializationTimeSeriesEnabled || !img) return;
+            if (activeInitializationTimeSeriesImg) activeInitializationTimeSeriesImg.remove();
 
-            const displayTree = [];
-            const overlayChildren = [];
-
-            if (boundingBoxLayer.getLayers().length > 0) {
-                overlayChildren.push({
-                    label: 'Bounding Box',
-                    layer: boundingBoxLayer
-                });
-            }
-
-            if (demLayer.getLayers().length > 0) {
-                overlayChildren.push({
-                    label: 'Elevation File Outline',
-                    layer: demLayer
-                });
-            }
-
-            if (activeWindNinjaLayer) {
-
-                if (activeWindNinjaLayer._hasLegend) {
-                    overlayChildren.push({
-                        label: 'Simulation Legend',
-                        layer: windninjaLegendToggle
-                    });
-                }
-
-                if (activeWindNinjaLayer._hasTimeSeries) {
-                    overlayChildren.push({
-                        label: 'Simulation Datetime',
-                        layer: windninjaTimeSeriesToggle
-                    });
-                }
-            }
-
-            if (activeInitializationLayer) {
-                overlayChildren.push({
-                    label: 'Weather Model Legend',
-                    layer: initializationLegendToggle
-                });
-
-                overlayChildren.push({
-                    label: 'Weather Model Datetime',
-                    layer: initializationTimeSeriesToggle
-                });
-            }
-
-            displayTree.push(fireOverlayTree);
-            displayTree.push(dataOverlayTree);
-
-            if (windninjaOutputTree.children.length > 1)
-                displayTree.push(windninjaOutputTree);
-
-            if (initializationOutputTree.children.length > 1)
-                displayTree.push(initializationOutputTree);
-
-            if (stationOutputTree.children.length > 1)
-                displayTree.push(stationOutputTree);
-
-            if (unknownOutputTree.children.length > 1)
-                displayTree.push(unknownOutputTree);
-
-            if (overlayChildren.length > 0) {
-                displayTree.push({
-                    label: 'WindNinja Overlays',
-                    children: overlayChildren
-                });
-            }
-
-            layerControl.setOverlayTree(displayTree);
+            const card = createTimeSeriesCard(img, 'Weather Model Datetime', 1);
+            timeSeriesContainer.appendChild(card);
+            activeInitializationTimeSeriesImg = card;
         }
-
-        map.on('overlayadd', e => {
-
-            if (e.layer === windninjaLegendToggle) {
-                windninjaLegendEnabled = true;
-                if (activeWindNinjaLayer) activeWindNinjaLayer.fire('add');
-            }
-            if (e.layer === initializationLegendToggle) {
-                initializationLegendEnabled = true;
-                if (activeInitializationLayer) activeInitializationLayer.fire('add');
-            }
-
-            if (e.layer === windninjaTimeSeriesToggle) {
-                windninjaTimeSeriesEnabled = true;
-                if (activeWindNinjaLayer) activeWindNinjaLayer.fire('add');
-            }
-            if (e.layer === initializationTimeSeriesToggle) {
-                initializationTimeSeriesEnabled = true;
-                if (activeInitializationLayer) activeInitializationLayer.fire('add');
-            }
-
-            if (e.layer === windninjaOutputTree.children[windninjaOutputTree.children.length-1]?.layer) {
-                if (activeWindNinjaTimeSeriesImg) {
-                    activeWindNinjaTimeSeriesImg.remove();
-                    activeWindNinjaTimeSeriesImg = null;
-                }
-                activeWindNinjaLayer = null;
-                updateOverlayTree();
-            }
-            if (e.layer === initializationOutputTree.children[initializationOutputTree.children.length-1]?.layer) {
-                if (activeInitializationTimeSeriesImg) {
-                    activeInitializationTimeSeriesImg.remove();
-                    activeInitializationTimeSeriesImg = null;
-                }
-                activeInitializationLayer = null;
-                updateOverlayTree();
-            }
-        });
-
-        map.on('overlayremove', e => {
-
-            if (e.layer === windninjaLegendToggle) {
-                windninjaLegendEnabled = false;
-                if (activeWindNinjaLegendCard) {
-                    activeWindNinjaLegendCard.remove();
-                    activeWindNinjaLegendCard = null;
-                }            
-            }
-            if (e.layer === initializationLegendToggle) {
-                initializationLegendEnabled = false;
-                if (activeInitializationLegendCard) {
-                    activeInitializationLegendCard.remove();
-                    activeInitializationLegendCard = null;
-                }
-            }
-
-            if (e.layer === windninjaTimeSeriesToggle) {
-                windninjaTimeSeriesEnabled = false;
-                if (activeWindNinjaTimeSeriesImg) {
-                    activeWindNinjaTimeSeriesImg.remove();
-                    activeWindNinjaTimeSeriesImg = null;
-                }
-            }
-            if (e.layer === initializationTimeSeriesToggle) {
-                initializationTimeSeriesEnabled = false;
-                if (activeInitializationTimeSeriesImg) {
-                    activeInitializationTimeSeriesImg.remove();
-                    activeInitializationTimeSeriesImg = null;
-                }
-            }
-        });
-
-    function clearTimeSeriesContainer() {
-        while (timeSeriesContainer.firstChild) {
-            timeSeriesContainer.removeChild(timeSeriesContainer.firstChild);
-        }
-    }
-
-    function createTimeSeriesCard(img, titleText, orderValue) {
-        const card = document.createElement('div');
-        card.style.border = '2px solid black';
-        card.style.backgroundColor = 'white';
-        card.style.display = 'inline-block';
-        card.style.order = orderValue; 
-
-        const header = document.createElement('div');
-        header.innerText = titleText;
-        header.style.backgroundColor = 'black';
-        header.style.color = 'white';
-        header.style.padding = '2px 8px';
-        header.style.fontSize = '12px';
-        header.style.fontFamily = 'Arial, sans-serif';
-        header.style.fontWeight = 'bold';
-        header.style.textAlign = 'left';
-
-        img.style.display = 'block';
-        img.style.margin = '0 auto';
-        
-        card.appendChild(header);
-        card.appendChild(img);
-        
-        return card;
-    }
-
-    function createLegendCard(img, titleText, orderValue) {
-        const card = document.createElement('div');
-        card.style.border = '2px solid black';
-        card.style.backgroundColor = 'white';
-        card.style.display = 'inline-block';
-        card.style.order = orderValue;
-
-        const header = document.createElement('div');
-        header.innerText = titleText;
-        header.style.backgroundColor = 'black';
-        header.style.color = 'white';
-        header.style.padding = '2px 8px';
-        header.style.fontSize = '12px';
-        header.style.fontFamily = 'Arial, sans-serif';
-        header.style.fontWeight = 'bold';
-        header.style.textAlign = 'left';
-
-        img.style.display = 'block';
-        img.style.maxWidth = '150px';
-        img.style.height = 'auto';
-
-        card.appendChild(header);
-        card.appendChild(img);
-
-        return card;
-    }
-
-    function showWindNinjaTimeSeries(img) {
-        if (!windninjaTimeSeriesEnabled || !img) return;
-        if (activeWindNinjaTimeSeriesImg) activeWindNinjaTimeSeriesImg.remove();
-
-        const card = createTimeSeriesCard(img, 'Simulation Datetime', 2);
-        timeSeriesContainer.appendChild(card);
-        activeWindNinjaTimeSeriesImg = card;
-    }
-
-    function showInitializationTimeSeries(img) {
-        if (!initializationTimeSeriesEnabled || !img) return;
-        if (activeInitializationTimeSeriesImg) activeInitializationTimeSeriesImg.remove();
-
-        const card = createTimeSeriesCard(img, 'Weather Model Datetime', 1);
-        timeSeriesContainer.appendChild(card);
-        activeInitializationTimeSeriesImg = card;
-    }
-
 
         // Script Main
         if (window.qt) {

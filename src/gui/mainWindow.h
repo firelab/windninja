@@ -38,6 +38,7 @@
 #include "mapBridge.h"
 #include "serverBridge.h"
 #include "weatherModelInput.h"
+#include "mapWebEnginePage.h"
 #include "ui_mainWindow.h"
 #include "appState.h"
 #include "windninja.h"
