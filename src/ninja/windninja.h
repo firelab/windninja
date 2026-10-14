@@ -195,6 +195,14 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedUnits
         ( NinjaArmyH * ninjaArmy, const int nIndex, const char * units, char ** options );
 
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputSpeedGridResolution(
+        NinjaArmyH *army, const int nIndex, const double resolution,
+        const char *units, char **papszOptions);
+    
+    WINDNINJADLL_EXPORT NinjaErr NinjaSetOutputDirectionGridResolution(
+        NinjaArmyH *army, const int nIndex, const double resolution,
+        const char *units, char **papszOptions);
+
     WINDNINJADLL_EXPORT NinjaErr NinjaSetDiurnalWinds
         ( NinjaArmyH * ninjaArmy, const int nIndex, const bool flag, char ** options );
 

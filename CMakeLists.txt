@@ -17,14 +17,21 @@
 
 cmake_minimum_required (VERSION 3.16)
 
-# Check if the user is using VCPKG on Windows
-if(WIN32)
-    if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg.cmake")
-        message(FATAL_ERROR
-            "WindNinja requires the Visual C++ Package Manager VCPKG.\n"
-        )
-    endif()
-endif(WIN32)
+option(USE_VCPKG_MANIFEST "Use vcpkg manifest mode" OFF)
+
+if(NOT USE_VCPKG_MANIFEST)
+    set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "Disable vcpkg manifest mode" FORCE)
+else()
+    # Check if the user is using VCPKG on Windows
+    if(WIN32)
+        if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg.cmake")
+            message(FATAL_ERROR
+                "WindNinja requires the Visual C++ Package Manager VCPKG.\n"
+            )
+        endif()
+    endif(WIN32)
+endif()
+
 
 if(DEFINED CMAKE_PROJECT_INCLUDE_BEFORE AND
    NOT EXISTS "${CMAKE_PROJECT_INCLUDE_BEFORE}")
@@ -377,25 +384,27 @@ if(BUILD_TESTING)
     add_subdirectory(autotest)
 endif(BUILD_TESTING)
 
-# Add the resource files for the .exe icon
-if (MSVC)
-    target_sources(WindNinja PRIVATE ${PROJECT_SOURCE_DIR}/wn-ms-resource.rc)
-endif()
+IF(NINJA_GUI)
+	# Add the resource files for the .exe icon
+	if (MSVC)
+    		target_sources(WindNinja PRIVATE ${PROJECT_SOURCE_DIR}/wn-ms-resource.rc)
+	endif()
 
-# Run windeployqt6.exe to provide all QT related DLLs
-if(MSVC)
-    find_program(WINDEPLOYQT_EXE
-        NAMES windeployqt6 windeployqt
-        HINTS "${Qt6_DIR}/../../../bin"
-        REQUIRED
-    )
+	# Run windeployqt6.exe to provide all QT related DLLs
+	if(MSVC)
+    	find_program(WINDEPLOYQT_EXE
+        	NAMES windeployqt6 windeployqt
+        	HINTS "${Qt6_DIR}/../../../bin"
+        	REQUIRED
+    	)
 
-    add_custom_target(deploy_windninja ALL
-        COMMAND "${WINDEPLOYQT_EXE}"
-                "$<TARGET_FILE:WindNinja>"
-        DEPENDS WindNinja
-    )
-endif()
+    	add_custom_target(deploy_windninja ALL
+        	COMMAND "${WINDEPLOYQT_EXE}"
+                	"$<TARGET_FILE:WindNinja>"
+        	DEPENDS WindNinja
+    	)
+	endif()
+ENDIF(NINJA_GUI)
 
 # Package related options and settings.
 option(PACKAGE_DEBUG "Show some information about the package" OFF)
