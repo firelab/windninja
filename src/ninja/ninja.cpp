@@ -1316,6 +1316,10 @@ inline float vec_length (float u, float v, float w) {
     return std::sqrt( u*u + v*v + w*w);
 }
 
+inline float vec_direction (float u, float v) {
+    return std::fmod( (270.0 - atan2(v, u) * 180.0 / M_PI), 360.0);
+}
+
 /**Interpolates the 3d volume wind field to the output wind height surface.
  *
  */
@@ -1334,10 +1338,10 @@ void ninja::interp_uvw()
 
         // scan lines for HUVW data set (only alloc if we need them, hRow and spdRow are used for both)
         int len = (pHuvwDS || pHuvw0DS) ? nCols : 0;
-        std::unique_ptr<float[]> hRow(new float[nCols]), spdRow(new float[nCols]);
+        std::unique_ptr<float[]> hRow(new float[len]), spdRow(new float[len]), dirRow(new float[len]);
 
         len = pHuvwDS ? nCols : 0;
-        std::unique_ptr<float[]> uRow(new float[nCols]), vRow(new float[nCols]), wRow(new float[nCols]);
+        std::unique_ptr<float[]> uRow(new float[len]), vRow(new float[len]), wRow(new float[len]);
 
         len = pHuvw0DS ? nCols : 0;
         std::unique_ptr<float[]> u0Row(new float[len]), v0Row(new float[len]), w0Row(new float[len]);
@@ -1422,11 +1426,15 @@ void ninja::interp_uvw()
 
             if (pHuvwDS) {
                 for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(uRow[i],vRow[j],wRow[j]);
-                setHuvwScanlines( pHuvwDS, nRows-i-1, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get(), spdRow.get());
+                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(uRow[i],vRow[j]);
+
+                setHuvwScanlines( pHuvwDS, nRows-i-1, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get(), spdRow.get(), dirRow.get());
             }
             if (pHuvw0DS) {
                 for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(u0Row[i],v0Row[j],w0Row[j]);
-                setHuvwScanlines( pHuvw0DS, nRows-i-1, nCols, hRow.get(), u0Row.get(), v0Row.get(), w0Row.get(), spdRow.get());
+                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(u0Row[i],v0Row[j]);
+
+                setHuvwScanlines( pHuvw0DS, nRows-i-1, nCols, hRow.get(), u0Row.get(), v0Row.get(), w0Row.get(), spdRow.get(), dirRow.get());
             }
         }
     }	//end parallel region

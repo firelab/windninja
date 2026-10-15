@@ -34,6 +34,6 @@
 
 //--- the data model for huvw output
 GDALDataset* createHuvwDS (const char* filename, const char* descr, const char* prjString, int nCols, int nRows, double xllCorner, double yllCorner, double cellSize);
-void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow, float* spdRow);
+void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow, float* spdRow, float* dirRow);
 
 #endif //UVWH_OUTPUT

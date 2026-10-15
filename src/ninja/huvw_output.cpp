@@ -42,7 +42,7 @@ GDALDataset* createHuvwDS (const char* filename, const char* descr, const char* 
     //papszOptions = CSLSetNameValue( papszOptions, "COMPRESS", "LZW" );
     //papszOptions = CSLSetNameValue( papszOptions, "PREDICTOR", "3" );
 
-    GDALDataset* pDS = pDriver->Create( filename, nCols, nRows, 5, GDT_Float32, papszOptions);
+    GDALDataset* pDS = pDriver->Create( filename, nCols, nRows, 6, GDT_Float32, papszOptions);
 
     if (pDS) {
         gdalSetSrs( pDS, nCols,nRows, xllCorner,yllCorner, cellSize, prjString);
@@ -77,6 +77,12 @@ GDALDataset* createHuvwDS (const char* filename, const char* descr, const char* 
         pBand->SetMetadataItem("info", "wind speed");
         pBand->SetMetadataItem("unit", "[m/sec]");
         pBand->SetNoDataValue(-9999);
+
+        pBand = pDS->GetRasterBand(6);
+        pBand->SetMetadataItem("name", "Direction");
+        pBand->SetMetadataItem("info", "wind direction");
+        pBand->SetMetadataItem("unit", "[deg]");
+        pBand->SetNoDataValue(-9999);
     } else {
         cerr << "failed to create huvw output data set\n"; // should we throw a runtime_error here?
     }
@@ -88,11 +94,12 @@ GDALDataset* createHuvwDS (const char* filename, const char* descr, const char* 
  * set scanlines for d (h,u,v,w,spd) output grid dataset 
  * called from ninja::interp_uvw()
  */
-void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow, float* spdRow)
+void setHuvwScanlines(GDALDataset* pDS, int rowIdx, int nCols, float* hRow, float* uRow, float* vRow, float* wRow, float* spdRow, float* dirRow)
 {
     pDS->GetRasterBand(1)->RasterIO( GF_Write, 0,rowIdx, nCols,1, hRow, nCols,1, GDT_Float32, 0,0,nullptr); 
     pDS->GetRasterBand(2)->RasterIO( GF_Write, 0,rowIdx, nCols,1, uRow, nCols,1, GDT_Float32, 0,0,nullptr); 
     pDS->GetRasterBand(3)->RasterIO( GF_Write, 0,rowIdx, nCols,1, vRow, nCols,1, GDT_Float32, 0,0,nullptr); 
     pDS->GetRasterBand(4)->RasterIO( GF_Write, 0,rowIdx, nCols,1, wRow, nCols,1, GDT_Float32, 0,0,nullptr);
     pDS->GetRasterBand(5)->RasterIO( GF_Write, 0,rowIdx, nCols,1, spdRow, nCols,1, GDT_Float32, 0,0,nullptr);
+    pDS->GetRasterBand(6)->RasterIO( GF_Write, 0,rowIdx, nCols,1, dirRow, nCols,1, GDT_Float32, 0,0,nullptr);
 }
