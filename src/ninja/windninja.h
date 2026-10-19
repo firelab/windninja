@@ -465,5 +465,6 @@ typedef int  NinjaErr;
     WINDNINJADLL_EXPORT NinjaErr NinjaGetMapVisualizationFilenames(NinjaArmyH * army, int *numRuns, char*** fgbzFilenames, char*** stationKmlFilenames, char*** weatherModelFgbzFilenames, char ** papszOptions);
     WINDNINJADLL_EXPORT NinjaErr NinjaDestroyMapVisualizationFilenames(int numRuns, char** fgbzFilenames, char** stationKmlFilenames, char** weatherModelFgbzFilenames, char ** papszOptions);
     WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions);
+    WINDNINJADLL_EXPORT const char *NinjaFetchTimeZone(const char *demFileName, char **papszOptions);
 
-WN_C_END
+    WN_C_END

@@ -2927,5 +2927,23 @@ WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions)
     return result;
 }
 
-
+WINDNINJADLL_EXPORT const char *NinjaFetchTimeZone(const char *demFileName,
+                                                   char **papszOptions) 
+{
+  double latitude = 0.0, longitude = 0.0;
+  GDALDataset *poDS = (GDALDataset *)GDALOpen(demFileName, GA_ReadOnly);
+  if (poDS == NULL) {
+    GDALClose((GDALDatasetH)poDS);
+    return "";
+  }
+  GDALGetCenter(poDS, &longitude, &latitude);
+  GDALClose((GDALDatasetH)poDS);
+  std::string tz = FetchTimeZone(longitude, latitude, NULL);
+  if (tz == "") {
+    return "";
+  }
+  char *result = static_cast<char *>(std::malloc(tz.size() + 1));
+  std::memcpy(result, tz.c_str(), tz.size() + 1);
+  return result;
+}
 } // extern "C"

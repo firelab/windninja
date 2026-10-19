@@ -17,7 +17,7 @@
 
 cmake_minimum_required (VERSION 3.16)
 
-option(USE_VCPKG_MANIFEST "Use vcpkg manifest mode" OFF)
+option(USE_VCPKG_MANIFEST "Use vcpkg manifest mode" ON)
 
 if(NOT USE_VCPKG_MANIFEST)
     set(VCPKG_MANIFEST_MODE OFF CACHE BOOL "Disable vcpkg manifest mode" FORCE)
@@ -432,6 +432,9 @@ if(VERBOSE_CMAKE)
     include(CMakePrintSystemInformation)
 endif(VERBOSE_CMAKE)
 
+option(FIRE_BEHAVIOR_DATA_INSTALL "Install only files necessary for FireBehaviorModels" OFF)
+
+IF(NOT FIRE_BEHAVIOR_DATA_INSTALL)
 # Install DEM and configuration files
 set(etc_files
 	${PROJECT_SOURCE_DIR}/data/missoula_valley.tif
@@ -471,26 +474,35 @@ set(wx_station_ts_files
 install(FILES ${wx_station_ts_files}
 	DESTINATION etc/windninja/example-files/WXSTATIONS-MDT-2018-06-20-2128-2018-06-21-2128-missoula_valley
 		COMPONENT apps)
-
+ENDIF(NOT FIRE_BEHAVIOR_DATA_INSTALL)
 
 # Install all share files
-set(share_files
+if(FIRE_BEHAVIOR_DATA_INSTALL)
+    set(share_files
 	${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv
-	${PROJECT_SOURCE_DIR}/data/config_options.csv
 	${PROJECT_SOURCE_DIR}/data/tz_world.zip
-	${PROJECT_SOURCE_DIR}/data/landfire.zip
-	${PROJECT_SOURCE_DIR}/data/thredds.csv
-	${PROJECT_SOURCE_DIR}/data/surface_data.zip
-	${PROJECT_SOURCE_DIR}/data/srtm_region.geojson
-	${PROJECT_SOURCE_DIR}/data/us_srtm_region.dbf
-	${PROJECT_SOURCE_DIR}/data/us_srtm_region.prj
-	${PROJECT_SOURCE_DIR}/data/us_srtm_region.shp
-	${PROJECT_SOURCE_DIR}/data/us_srtm_region.shx
-)
+    )
+else()
+    set(share_files
+	    ${PROJECT_SOURCE_DIR}/data/date_time_zonespec.csv
+	    ${PROJECT_SOURCE_DIR}/data/config_options.csv
+	    ${PROJECT_SOURCE_DIR}/data/tz_world.zip
+	    ${PROJECT_SOURCE_DIR}/data/landfire.zip
+	    ${PROJECT_SOURCE_DIR}/data/thredds.csv
+	    ${PROJECT_SOURCE_DIR}/data/surface_data.zip
+	    ${PROJECT_SOURCE_DIR}/data/srtm_region.geojson
+	    ${PROJECT_SOURCE_DIR}/data/us_srtm_region.dbf
+	    ${PROJECT_SOURCE_DIR}/data/us_srtm_region.prj
+	    ${PROJECT_SOURCE_DIR}/data/us_srtm_region.shp
+	    ${PROJECT_SOURCE_DIR}/data/us_srtm_region.shx
+    )
+endif(FIRE_BEHAVIOR_DATA_INSTALL)
+
 install(FILES ${share_files}
 	DESTINATION share/windninja
 		COMPONENT apps)
 
+if(NOT FIRE_BEHAVIOR_DATA_INSTALL)
 # Install all documentation files
 set(doc_files
 	${PROJECT_SOURCE_DIR}/doc/tutorials/CLI_instructions/CLI_instructions.pdf
@@ -667,3 +679,4 @@ CPACK_ADD_COMPONENT(libs
 CPACK_ADD_COMPONENT(includes
                     DISPLAY_NAME "WindNinja Headers"
                     DESCRIPTION "Development include files")
+endif(NOT FIRE_BEHAVIOR_DATA_INSTALL)
