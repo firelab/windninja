@@ -77,17 +77,14 @@ class logProfileVelocityInletFvPatchVectorField
 {
     // Private Data
 
-        //- Peak velocity magnitude
-        //scalar maxValue_;     //Scalar Vmax
-		
-		scalar UfreeStream_;            // Free Stream Velocity
+        scalar UfreeStream_;            // Free Stream Velocity
 		vector uDirection_;             // Direction of Free Stream Velocity
 		scalar inputWindHeight_Veg_;    // Input wind Height on top of Vegetation
 		scalar z0_;                     // Roughness Parameters
 		scalar Rd_;                     // Zero plane displacement height
 		scalarField relativeHeight_;    // Relative distance from wall
 		scalar firstCellHeight_;        // First Cell Height
-        
+
     // Private Member Functions
 
         //- set all the various height values specific for each cell of the domain

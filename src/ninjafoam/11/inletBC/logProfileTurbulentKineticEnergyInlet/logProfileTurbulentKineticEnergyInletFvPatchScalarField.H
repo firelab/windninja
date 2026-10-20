@@ -77,10 +77,7 @@ class logProfileTurbulentKineticEnergyInletFvPatchScalarField
 {
     // Private Data
 
-        //- Peak velocity magnitude
-        //scalar maxValue_;     //Scalar Vmax
-		
-		scalar UfreeStream_;            // Free Stream Velocity
+        scalar UfreeStream_;            // Free Stream Velocity
 		vector uDirection_;             // Direction of Free Stream Velocity
 		scalar inputWindHeight_Veg_;    // Input wind Height on top of Vegetation
 		scalar z0_;                     // Roughness Parameters
