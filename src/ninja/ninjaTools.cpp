@@ -127,17 +127,19 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     if (strcmp(fetchType, "srtm") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
     }
-    #ifdef HAVE_GMTED
+#ifdef HAVE_GMTED
     else if (strcmp(fetchType, "gmted") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
     }
-    #endif
+#endif
     else if (strcmp(fetchType, "relief") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
     }
+#ifdef WITH_LCP_CLIENT
     else if (strcmp(fetchType, "lcp") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
     }
+#endif
     if (fetcher == NULL) {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input fetchType '%s' in ninjaTools::fetchDEMBBox()\nchoices are: 'srtm', 'gmted', 'relief', 'lcp'", fetchType);
         delete fetcher;
@@ -230,17 +232,19 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     if (strcmp(fetchType, "srtm") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
     }
-    #ifdef HAVE_GMTED
+#ifdef HAVE_GMTED
     else if (strcmp(fetchType, "gmted") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
     }
-    #endif
+#endif
     else if (strcmp(fetchType, "relief") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
     }
+#ifdef WITH_LCP_CLIENT
     else if (strcmp(fetchType, "lcp") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
     }
+#endif
     if (fetcher == NULL) {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input fetchType '%s' in ninjaTools::fetchDEMPoint()\nchoices are: 'srtm', 'gmted', 'relief', 'lcp'", fetchType);
         delete fetcher;
@@ -304,6 +308,8 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     delete fetcher;
     return NINJA_SUCCESS;
 }
+
+#ifdef WITH_NOMADS_SUPPORT
 
 int ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int hours)
 {
@@ -408,6 +414,9 @@ int ninjaTools::fetchArchiveWeatherModelData(const char* modelName, const char* 
 
     return NINJA_SUCCESS;
 }
+
+#endif // WITH_NOMADS_SUPPORT
+
 
 std::vector<std::string> ninjaTools::getForecastIdentifiers()
 {
