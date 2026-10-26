@@ -43,6 +43,8 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QFileSystemModel>
 #include <QtWebEngineWidgets/qwebengineview.h>
+#include <QInputDialog>
+#include <QMessageBox>
 
 class PointInitializationInput : public QObject
 {
@@ -79,6 +81,8 @@ private slots:
     void weatherStationDataEndDateTimeEditChanged();
     void downloadFromDEMSpinBoxValueChanged(int value);
     void updateDateTime();
+    void addStationIDPushButtonClicked();
+    void addStationIDFromMapPushButtonClicked();
 
 private:
     Ui::MainWindow *ui;

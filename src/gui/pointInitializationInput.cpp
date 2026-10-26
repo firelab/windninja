@@ -61,6 +61,8 @@ PointInitializationInput::PointInitializationInput(Ui::MainWindow* ui, QWebEngin
     connect(ui->weatherStationDataEndDateTimeEdit, &QDateTimeEdit::dateTimeChanged, this, &PointInitializationInput::weatherStationDataEndDateTimeEditChanged);
     connect(ui->downloadFromDEMSpinBox, &QSpinBox::valueChanged, this, &PointInitializationInput::downloadFromDEMSpinBoxValueChanged);
     connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &PointInitializationInput::updateDateTime);
+    connect(ui->addStationIDPushButton, &QPushButton::clicked, this, &PointInitializationInput::addStationIDPushButtonClicked);
+    connect(ui->addStationIDFromMapPushButton, &QPushButton::clicked, this, &PointInitializationInput::addStationIDFromMapPushButtonClicked);
     connect(this, &PointInitializationInput::updateState, &AppState::instance(), &AppState::updatePointInitializationInputState);
 }
 
@@ -334,7 +336,7 @@ void PointInitializationInput::weatherStationDataDownloadButtonClicked()
         {
             CPLDebug("STATION_FETCH", "STID and Timeseries");
         }
-        QString stationList = ui->downloadFromStationIDLineEdit->text();
+        QString stationList = "test"; //ui->downloadFromStationIDLineEdit->text();
         future = QtConcurrent::run(&PointInitializationInput::fetchStationByName, this,
                                    ninjaTools,
                                    outYear, outMonth, outDay, outHour, outMinute,
@@ -865,6 +867,53 @@ void PointInitializationInput::updateDateTime()
         selectionModel->selection(),
         QItemSelection()
     );
+}
+
+void PointInitializationInput::addStationIDPushButtonClicked()
+{
+    bool ok = false;
+
+    QString stationID = QInputDialog::getText(
+                            ui->centralwidget,
+                            tr("Add Station"),
+                            tr("Enter a station ID:"),
+                            QLineEdit::Normal,
+                            QString(),
+                            &ok
+                            ).trimmed();
+
+    if (!ok || stationID.isEmpty())
+    {
+        return;
+    }
+
+    // Prevent duplicate station IDs.
+    QList<QListWidgetItem*> items =
+        ui->stationIDListWidget->findItems(stationID, Qt::MatchFixedString);
+
+    if (!items.isEmpty())
+    {
+        QMessageBox::information(
+            ui->centralwidget,
+            tr("Duplicate Station"),
+            tr("This station ID has already been added.")
+            );
+        return;
+    }
+
+    ui->stationIDListWidget->addItem(stationID);
+}
+
+void PointInitializationInput::addStationIDFromMapPushButtonClicked()
+{
+    if(ui->addStationIDFromMapPushButton->isChecked())
+    {
+        webEngineView->page()->runJavaScript("setStationSelectionMode(true);");
+    }
+    else
+    {
+        webEngineView->page()->runJavaScript("setStationSelectionMode(false);");
+    }
 }
 
 

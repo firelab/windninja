@@ -446,6 +446,8 @@ const synopticToken = "33e3c8ee12dc499c86de1f2076a9e9d4";
 
 const selectedStationIds = new Set();
 
+let stationSelectionMode = false;
+
 const synopticStationsLayer = L.geoJSON(null, {
 
     pointToLayer: function (feature, latlng) {
@@ -475,12 +477,12 @@ const synopticStationsLayer = L.geoJSON(null, {
     },
 
     onEachFeature: function (feature, layer) {
-
         const properties = feature.properties;
+        const stationId = properties?.stid;
 
         layer.bindPopup(`
             <strong>${properties.name || "Unknown Station"}</strong><br>
-            <strong>Station ID:</strong> ${properties.stid ?? "N/A"}<br>
+            <strong>Station ID:</strong> ${stationId ?? "N/A"}<br>
             <strong>Latitude:</strong> ${properties.latitude ?? "N/A"}<br>
             <strong>Longitude:</strong> ${properties.longitude ?? "N/A"}<br>
             <strong>Elevation:</strong> ${properties.elevation ?? "N/A"} ft<br>
@@ -488,9 +490,32 @@ const synopticStationsLayer = L.geoJSON(null, {
             <strong>Country:</strong> ${properties.country ?? "N/A"}<br>
             <strong>Status:</strong> ${properties.status ?? "N/A"}<br>
         `);
-    }
 
+        layer.on("click", function () {
+            if (!stationSelectionMode || stationId == null) return;
+
+            if (selectedStationIds.has(stationId)) {
+                selectedStationIds.delete(stationId);
+            } else {
+                selectedStationIds.add(stationId);
+            }
+
+            const isSelected = selectedStationIds.has(stationId);
+
+            layer.setStyle({
+                color: isSelected ? "#ff0000" : "#003366",
+                fillColor: isSelected ? "#ff0000" : "#3388ff"
+            });
+
+            console.log("Selected station IDs:", Array.from(selectedStationIds));
+        });
+    }
 });
+
+function setStationSelectionMode(enabled) {
+    stationSelectionMode = enabled;
+    console.log("Station selection mode:", stationSelectionMode);
+}
 
 function updateSynopticStations(stationIds) {
 
