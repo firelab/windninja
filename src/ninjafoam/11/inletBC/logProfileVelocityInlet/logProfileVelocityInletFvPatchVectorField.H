@@ -123,6 +123,12 @@ public:
             const fvPatchFieldMapper&
         );
 
+        virtual void map
+        (
+            const fvPatchField<vector>&,
+            const fvPatchFieldMapper&
+        );
+
         /*//- Copy constructor
         logProfileVelocityInletFvPatchVectorField
         (
