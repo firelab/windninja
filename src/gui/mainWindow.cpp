@@ -49,16 +49,24 @@ MainWindow::MainWindow(QWidget *parent)
     serverBridge->checkMessages();
 
     QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
+
     webEngineView = new QWebEngineView(ui->mapPanelWidget);
     MapWebEnginePage *page = new MapWebEnginePage(webEngineView);
     webEngineView->setPage(page);
-    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
-    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
-    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
+    webEngineView->settings()->setAttribute(
+        QWebEngineSettings::LocalStorageEnabled, true);
     webChannel = new QWebChannel(webEngineView->page());
     mapBridge = new MapBridge(this);
     webChannel->registerObject(QStringLiteral("bridge"), mapBridge);
     webEngineView->page()->setWebChannel(webChannel);
+    webEngineView->setUrl(QUrl(QStringLiteral("qrc:///map.html")));
+    mapFileSchemeHandler = new MapFileSchemeHandler(
+        webEngineView->page()->profile()
+        );
+    webEngineView->page()->profile()->installUrlSchemeHandler(
+        QByteArrayLiteral("windninja-data"),
+        mapFileSchemeHandler
+        );
 
     QUrl url("qrc:///map.html");
     webEngineView->setUrl(url);
@@ -66,7 +74,7 @@ MainWindow::MainWindow(QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(webEngineView);
     ui->mapPanelWidget->setLayout(layout);
-    menuBar = new MenuBar(ui, webEngineView, this);
+    menuBar = new MenuBar(ui, webEngineView, mapFileSchemeHandler, this);
     surfaceInput = new SurfaceInput(ui, webEngineView, this);
     domainAverageInput = new DomainAverageInput(ui, this);
     pointInitializationInput = new PointInitializationInput(ui, webEngineView, this);

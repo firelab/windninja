@@ -31,6 +31,7 @@
 #define MENUBAR_H
 
 #include "setConfigurationDialogOption.h"
+#include "mapFileSchemeHandler.h"
 #include "windninja.h"
 #include "gdal_util.h"
 #include "ninja_version.h"
@@ -44,6 +45,8 @@
 #include <QDesktopServices>
 #include <QtWebEngineWidgets/qwebengineview.h>
 #include <QProgressDialog>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 
 class MenuBar : public QObject
@@ -51,7 +54,7 @@ class MenuBar : public QObject
     Q_OBJECT
 
 public:
-    MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent = nullptr);
+    MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, MapFileSchemeHandler *mapFileSchemeHandler, QObject* parent = nullptr);
 
 public slots:
     void mapVisualizationLoadFinished();
@@ -95,6 +98,7 @@ private slots:
 private:
     Ui::MainWindow* ui;
     QWebEngineView *webEngineView;
+    MapFileSchemeHandler *mapFileSchemeHandler;
     QProgressDialog *progress;
     QDir dataPath;
 };

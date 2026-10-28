@@ -44,9 +44,15 @@
 int main(int argc, char *argv[])
 {
     setbuf(stdout, nullptr);
-    QWebEngineUrlScheme qrcScheme("qrc");
-    qrcScheme.setFlags(QWebEngineUrlScheme::LocalScheme | QWebEngineUrlScheme::LocalAccessAllowed);
-    QWebEngineUrlScheme::registerScheme(qrcScheme);
+
+    QWebEngineUrlScheme fileScheme(QByteArrayLiteral("windninja-data"));
+    fileScheme.setSyntax(QWebEngineUrlScheme::Syntax::Host);
+    fileScheme.setFlags(
+        QWebEngineUrlScheme::SecureScheme |
+        QWebEngineUrlScheme::CorsEnabled
+        );
+    QWebEngineUrlScheme::registerScheme(fileScheme);
+
     QApplication app(argc, argv);
 
     // Initialize as a GUI run

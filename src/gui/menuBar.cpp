@@ -29,10 +29,12 @@
 
 #include "menuBar.h"
 
-MenuBar::MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, QObject* parent)
+MenuBar::MenuBar(Ui::MainWindow* ui, QWebEngineView *webEngineView, MapFileSchemeHandler *mapFileSchemeHandler, QObject* parent)
      : QObject(parent),
      ui(ui),
-     webEngineView(webEngineView)
+     webEngineView(webEngineView),
+     mapFileSchemeHandler(mapFileSchemeHandler)
+
 {
     char ** options;
     const char * tmp = NinjaFindBinDir(options);
@@ -442,13 +444,29 @@ void MenuBar::loadMapVisualizationActionTriggered()
 
     for (const QString &outFileStr : files)
     {
-        qDebug() << "Map visualization outFile =" << outFileStr;
+        QUrl fileUrl = mapFileSchemeHandler->registerFile(outFileStr);
 
-        QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+        if (!fileUrl.isValid())
+        {
+            qWarning() << "Unable to register map file:" << outFileStr;
+            continue;
+        }
+
         QFileInfo info(outFileStr);
         QString fileName = info.fileName();
-        qDebug() << "file url =" << filePath;
-        QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+
+        QJsonArray args;
+        args.append(fileUrl.toString(QUrl::FullyEncoded));
+        args.append(fileName);
+
+        QString jsArgs = QString::fromUtf8(
+            QJsonDocument(args).toJson(QJsonDocument::Compact)
+            );
+
+        QString jsCall = QStringLiteral(
+                             "loadSimulation.apply(null, %1);"
+                             ).arg(jsArgs);
+
         webEngineView->page()->runJavaScript(jsCall);
     }
 }

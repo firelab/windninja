@@ -65,6 +65,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         noWheelDoubleSpinBox.h
         mapWebEnginePage.h
         mapWebEnginePage.cpp
+        mapFileSchemeHandler.h
+        mapFileSchemeHandler.cpp
     )
 else()
     add_executable(WindNinja
