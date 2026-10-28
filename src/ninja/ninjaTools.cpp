@@ -54,9 +54,6 @@ ninjaTools::ninjaTools()
         nomadsModels[i] = new NomadsWxModel(apszNomadsKeys[i][0]);
         i++;
     }
-#else
-    nomadsCount = 0;
-    nomadsModels = NULL;
 #endif
 }
 
@@ -66,18 +63,20 @@ ninjaTools::ninjaTools()
 */
 ninjaTools::~ninjaTools()
 {
-    if(nomadsModels)
+#ifdef WITH_NOMADS_SUPPORT
+    if (nomadsModels)
     {
-        for(int i = 0; i < nomadsCount; i++)
+        for (int i = 0; i < nomadsCount; i++)
         {
-            if(nomadsModels[i])
+            if (nomadsModels[i])
             {
-                delete(nomadsModels[i]);
+                delete nomadsModels[i];
             }
         }
 
-        delete[](nomadsModels);
+        delete[] nomadsModels;
     }
+#endif
 
     delete Com;
 }
