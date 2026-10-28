@@ -39,18 +39,25 @@ ninjaTools::ninjaTools()
     Com->runNumber = 9999;
     Com->printRunNumber = false;
 
+#ifdef WITH_NOMADS_SUPPORT
     nomadsCount = 0;
-    while( apszNomadsKeys[nomadsCount][0] != NULL )
+    while (apszNomadsKeys[nomadsCount][0] != NULL)
     {
         nomadsCount++;
     }
+
     nomadsModels = new NomadsWxModel*[nomadsCount];
+
     int i = 0;
-    while( apszNomadsKeys[i][0] != NULL )
+    while (apszNomadsKeys[i][0] != NULL)
     {
-        nomadsModels[i] = new NomadsWxModel( apszNomadsKeys[i][0] );
+        nomadsModels[i] = new NomadsWxModel(apszNomadsKeys[i][0]);
         i++;
     }
+#else
+    nomadsCount = 0;
+    nomadsModels = NULL;
+#endif
 }
 
 /**
@@ -432,10 +439,13 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
     modelIdentifiers.push_back(namAla.getForecastIdentifier());
     modelIdentifiers.push_back(gfs.getForecastIdentifier());
 
-    for(int i = 0; i < nomadsCount; i++)
+#ifdef WITH_NOMADS_SUPPORT
+    for (int i = 0; i < nomadsCount; i++)
     {
-        modelIdentifiers.push_back(nomadsModels[i]->getForecastIdentifier());
+        modelIdentifiers.push_back(
+            nomadsModels[i]->getForecastIdentifier());
     }
+#endif
 
     GCPWxModel archive;
     modelIdentifiers.push_back(archive.getForecastIdentifier());

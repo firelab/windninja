@@ -74,8 +74,10 @@ public:
     int checkTimeDuration( int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions=NULL );
 
 private:
-    int nomadsCount;
+#ifdef WITH_NOMADS_SUPPORT
     NomadsWxModel** nomadsModels;
+    int nomadsCount;
+#endif
     std::vector<std::string> modelIdentifiers;
 
 public:
