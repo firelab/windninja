@@ -242,12 +242,14 @@ int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData)
 /*
 ** Initialize global singletons and environments.
 */
+const char *NinjaNoGDALRegister = "NinjaNoGDALRegister";
 
 int NinjaInitialize(const char* typeofrun) 
 {
+  if (strcmp(typeofrun, NinjaNoGDALRegister) != 0) {
     GDALAllRegister();
     OGRRegisterAll();
-
+  }
     #ifdef _OPENMP
     omp_init_lock (&netCDF_lock);
     #endif

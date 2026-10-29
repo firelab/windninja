@@ -195,5 +195,12 @@ install(TARGETS ninja DESTINATION lib COMPONENT libs)
 if(WIN32)
     install(TARGETS WindNinjadll DESTINATION ${lib_dest})
 endif(WIN32)
+if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:WindNinjadll>
+        DESTINATION bin
+        CONFIGURATIONS Debug RelWithDebInfo
+        OPTIONAL
+    )
+endif()
 install(FILES WindNinjaInputs.h ninja.h gdal_util.h callbackFunctions.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 

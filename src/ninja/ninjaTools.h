@@ -57,8 +57,11 @@ public:
     int fetchDEMBBox(double *boundsBox, const char *fileName, double resolution, const char* fetchType, char ** papszOptions=NULL );
     int fetchDEMPoint(double * adfPoint, double *adfBuff, const char* units, double dfCellSize, const char * pszDstFile, const char* fetchType, char ** papszOptions=NULL );
 
+#ifdef WITH_NOMADS_SUPPORT
     int fetchWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int hours);
     int fetchArchiveWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour);
+#endif // WITH_NOMADS_SUPPORT
+
     std::vector<std::string> getForecastIdentifiers();
     std::vector<std::string> getTimeList(const char* modelName, std::string timeZone);
     int getStartHour(const char*modelIdentifier);
@@ -71,8 +74,10 @@ public:
     int checkTimeDuration( int* yearList, int* monthList, int * dayList, int * minuteList, int *hourList, int listSize, char ** papszOptions=NULL );
 
 private:
-    int nomadsCount;
+#ifdef WITH_NOMADS_SUPPORT
     NomadsWxModel** nomadsModels;
+    int nomadsCount;
+#endif
     std::vector<std::string> modelIdentifiers;
 
 public:

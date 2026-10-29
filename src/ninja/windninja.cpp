@@ -268,27 +268,31 @@ WINDNINJADLL_EXPORT NinjaToolsH* NinjaMakeTools()
  *
  * \return NINJA_SUCCESS on success, non-zero otherwise.
  */
+#ifdef WITH_NOMADS_SUPPORT
+
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchWeatherData
     (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int hours)
 {
-    if(!tools)
-    {
-        return NINJA_E_NULL_PTR;
-    }
+  if(!tools)
+  {
+    return NINJA_E_NULL_PTR;
+  }
 
-    return reinterpret_cast<ninjaTools*>( tools )->fetchWeatherModelData(modelName, demFile, timeZone, hours);
+  return reinterpret_cast<ninjaTools*>(tools)->fetchWeatherModelData(modelName, demFile, timeZone, hours);
 }
 
 WINDNINJADLL_EXPORT NinjaErr NinjaFetchArchiveWeatherData
     (NinjaToolsH* tools, const char* modelName, const char* demFile, const char* timeZone, int startYear, int startMonth, int startDay, int startHour, int endYear, int endMonth, int endDay, int endHour)
 {
-    if(!tools)
-    {
-        return NINJA_E_NULL_PTR;
-    }
+  if(!tools)
+  {
+    return NINJA_E_NULL_PTR;
+  }
 
-    return reinterpret_cast<ninjaTools*>( tools )->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
+  return reinterpret_cast<ninjaTools*>(tools)->fetchArchiveWeatherModelData(modelName, demFile, timeZone, startYear, startMonth, startDay, startHour, endYear, endMonth, endDay, endHour);
 }
+
+#endif // WITH_NOMADS_SUPPORT
 
 WINDNINJADLL_EXPORT const char** NinjaGetAllWeatherModelIdentifiers
     (NinjaToolsH* tools, int* count)
@@ -2927,5 +2931,23 @@ WINDNINJADLL_EXPORT const char* NinjaFindBinDir(char ** papszOptions)
     return result;
 }
 
-
+WINDNINJADLL_EXPORT const char *NinjaFetchTimeZone(const char *demFileName,
+                                                   char **papszOptions) 
+{
+  double latitude = 0.0, longitude = 0.0;
+  GDALDataset *poDS = (GDALDataset *)GDALOpen(demFileName, GA_ReadOnly);
+  if (poDS == NULL) {
+    GDALClose((GDALDatasetH)poDS);
+    return "";
+  }
+  GDALGetCenter(poDS, &longitude, &latitude);
+  GDALClose((GDALDatasetH)poDS);
+  std::string tz = FetchTimeZone(longitude, latitude, NULL);
+  if (tz == "") {
+    return "";
+  }
+  char *result = static_cast<char *>(std::malloc(tz.size() + 1));
+  std::memcpy(result, tz.c_str(), tz.size() + 1);
+  return result;
+}
 } // extern "C"

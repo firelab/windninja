@@ -39,18 +39,22 @@ ninjaTools::ninjaTools()
     Com->runNumber = 9999;
     Com->printRunNumber = false;
 
+#ifdef WITH_NOMADS_SUPPORT
     nomadsCount = 0;
-    while( apszNomadsKeys[nomadsCount][0] != NULL )
+    while (apszNomadsKeys[nomadsCount][0] != NULL)
     {
         nomadsCount++;
     }
+
     nomadsModels = new NomadsWxModel*[nomadsCount];
+
     int i = 0;
-    while( apszNomadsKeys[i][0] != NULL )
+    while (apszNomadsKeys[i][0] != NULL)
     {
-        nomadsModels[i] = new NomadsWxModel( apszNomadsKeys[i][0] );
+        nomadsModels[i] = new NomadsWxModel(apszNomadsKeys[i][0]);
         i++;
     }
+#endif
 }
 
 /**
@@ -59,18 +63,20 @@ ninjaTools::ninjaTools()
 */
 ninjaTools::~ninjaTools()
 {
-    if(nomadsModels)
+#ifdef WITH_NOMADS_SUPPORT
+    if (nomadsModels)
     {
-        for(int i = 0; i < nomadsCount; i++)
+        for (int i = 0; i < nomadsCount; i++)
         {
-            if(nomadsModels[i])
+            if (nomadsModels[i])
             {
-                delete(nomadsModels[i]);
+                delete nomadsModels[i];
             }
         }
 
-        delete[](nomadsModels);
+        delete[] nomadsModels;
     }
+#endif
 
     delete Com;
 }
@@ -127,17 +133,19 @@ int ninjaTools::fetchDEMBBox(double *boundsBox, const char *fileName, double res
     if (strcmp(fetchType, "srtm") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
     }
-    #ifdef HAVE_GMTED
+#ifdef HAVE_GMTED
     else if (strcmp(fetchType, "gmted") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
     }
-    #endif
+#endif
     else if (strcmp(fetchType, "relief") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
     }
+#ifdef WITH_LCP_CLIENT
     else if (strcmp(fetchType, "lcp") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
     }
+#endif
     if (fetcher == NULL) {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input fetchType '%s' in ninjaTools::fetchDEMBBox()\nchoices are: 'srtm', 'gmted', 'relief', 'lcp'", fetchType);
         delete fetcher;
@@ -230,17 +238,19 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     if (strcmp(fetchType, "srtm") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM_STR,"");
     }
-    #ifdef HAVE_GMTED
+#ifdef HAVE_GMTED
     else if (strcmp(fetchType, "gmted") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_GMTED_STR,"");
     }
-    #endif
+#endif
     else if (strcmp(fetchType, "relief") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::RELIEF_STR,"");
     }
+#ifdef WITH_LCP_CLIENT
     else if (strcmp(fetchType, "lcp") == 0){
         fetcher = FetchFactory::GetSurfaceFetch(FetchFactory::LCP_STR,"");
     }
+#endif
     if (fetcher == NULL) {
         Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input fetchType '%s' in ninjaTools::fetchDEMPoint()\nchoices are: 'srtm', 'gmted', 'relief', 'lcp'", fetchType);
         delete fetcher;
@@ -304,6 +314,8 @@ int ninjaTools::fetchDEMPoint(double * adfPoint,double *adfBuff, const char* uni
     delete fetcher;
     return NINJA_SUCCESS;
 }
+
+#ifdef WITH_NOMADS_SUPPORT
 
 int ninjaTools::fetchWeatherModelData(const char* modelName, const char* demFile, const char* timeZone, int hours)
 {
@@ -409,6 +421,9 @@ int ninjaTools::fetchArchiveWeatherModelData(const char* modelName, const char* 
     return NINJA_SUCCESS;
 }
 
+#endif // WITH_NOMADS_SUPPORT
+
+
 std::vector<std::string> ninjaTools::getForecastIdentifiers()
 {
     ncepGfsSurfInitialization gfs;
@@ -423,10 +438,13 @@ std::vector<std::string> ninjaTools::getForecastIdentifiers()
     modelIdentifiers.push_back(namAla.getForecastIdentifier());
     modelIdentifiers.push_back(gfs.getForecastIdentifier());
 
-    for(int i = 0; i < nomadsCount; i++)
+#ifdef WITH_NOMADS_SUPPORT
+    for (int i = 0; i < nomadsCount; i++)
     {
-        modelIdentifiers.push_back(nomadsModels[i]->getForecastIdentifier());
+        modelIdentifiers.push_back(
+            nomadsModels[i]->getForecastIdentifier());
     }
+#endif
 
     GCPWxModel archive;
     modelIdentifiers.push_back(archive.getForecastIdentifier());
