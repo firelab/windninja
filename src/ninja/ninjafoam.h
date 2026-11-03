@@ -165,6 +165,7 @@ private:
     void TopoSet();
     void RefineMesh();
     void BlockMesh();
+    void calcTerrainHeights();
     void DecomposePar();
     void ReconstructPar();
     void RenumberMesh();

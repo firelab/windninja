@@ -56,6 +56,11 @@ functions
     //  foamMonitor -l postProcessing/residuals/52/residuals.dat
     // see https://doc.cfd.direct/openfoam/user-guide-v11/graphs-monitoring section 7.4.4 "Live monitoring of data"
     #includeFunc  residuals
+
+    processTerrain
+    {
+        #include "calcTerrainHeights"
+    }
 }
 
 // ************************************************************************* //

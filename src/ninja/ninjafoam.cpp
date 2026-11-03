@@ -811,6 +811,22 @@ void NinjaFoam::WriteSystemFiles(VSILFILE *fin, VSILFILE *fout, const char *pszF
         int nSize = strlen(d);
         VSIFWriteL(d, nSize, 1, fout);
     }
+    else if(std::string(pszFilename) == "calcTerrainHeights"){
+        #ifdef WIN32
+        ReplaceKeys(s, "$lib$", "libWindNinja");
+        #else
+        ReplaceKeys(s, "$lib$", "libWindNinja.so");
+        #endif
+        std::string patchNames = inlets[0];
+        for(int i = 1; i < inlets.size(); i++)
+        {
+            patchNames = patchNames + " " + inlets[i];
+        }
+        ReplaceKeys(s, "$patchNames$", patchNames);
+        const char * d = s.c_str();
+        int nSize = strlen(d);
+        VSIFWriteL(d, nSize, 1, fout);
+    }
     else{
         VSIFWriteL(data, offset, 1, fout);
     }
@@ -1433,6 +1449,7 @@ void NinjaFoam::MoveDynamicMesh()
     input.Com->ninjaCom(ninjaComClass::ninjaNone, "Running blockMesh...");
 
     BlockMesh();
+    calcTerrainHeights();
 
     VSILFILE *fout;
 
@@ -1638,6 +1655,18 @@ void NinjaFoam::MoveDynamicMesh()
     oldFirstCellHeight = finalFirstCellHeight;
     UpdateSimpleFoamControlDict();
     UpdateTimeDirFiles();
+    calcTerrainHeights();
+
+    if( foamVersion == "11" )
+    {
+        const char *pszInput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict", "");
+        const char *pszOutput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict__moveDynamicMesh", "");
+        int nRet = VSIRename(pszInput, pszOutput);
+        if(nRet != 0)
+        {
+            throw std::runtime_error("Error during applyInit mv of /constant/dynamicMeshDict to /constant/dynamicMeshDict__moveDynamicMesh.");
+        }
+    }
 }
 
 void NinjaFoam::RefineSurfaceLayer()
@@ -1694,6 +1723,7 @@ void NinjaFoam::RefineSurfaceLayer()
         //update dict files
         UpdateSimpleFoamControlDict();
         UpdateTimeDirFiles();
+        calcTerrainHeights();
 
         pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
@@ -1853,6 +1883,54 @@ void NinjaFoam::BlockMesh()
     VSIFCloseL(fout);
 }
 
+void NinjaFoam::calcTerrainHeights()
+{
+    int nRet = -1;
+
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.calcTerrainHeights", ""), "w");
+
+    /*if( foamVersion == "2.2.0" )
+    {
+        const char *const papszArgv[] = { "calcTerrainHeights",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-latestTime",
+                                          NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    else if( foamVersion == "11" )*/
+    if( foamVersion == "11" )
+    {
+        const char *const papszArgv[] = { "foamPostProcess",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-func",
+                                          "calcTerrainHeights",
+                                          "-latestTime",
+                                          NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }
+    /*else  // if( foamVersion == "9" )
+    {
+        const char *const papszArgv[] = { "simpleFoam",
+                                          "-case",
+                                          pszFoamPath,
+                                          "-postProcess",
+                                          "-func",
+                                          "calcTerrainHeights",
+                                          "-latestTime",
+                                          NULL };
+        nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+    }*/
+
+    if(nRet != 0)
+    {
+        throw std::runtime_error("Error during calcTerrainHeights().");
+    }
+
+    VSIFCloseL(fout);
+}
+
 void NinjaFoam::DecomposePar()
 {
     int nRet = -1;
@@ -1913,17 +1991,6 @@ void NinjaFoam::RenumberMesh()
 
 void NinjaFoam::ApplyInit()
 {
-    if( foamVersion == "11" )
-    {
-        const char *pszInput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict", "");
-        const char *pszOutput = CPLFormFilename(pszFoamPath, "constant/dynamicMeshDict__moveDynamicMesh", "");
-        int nRet = VSIRename(pszInput, pszOutput);
-        if(nRet != 0)
-        {
-            throw std::runtime_error("Error during applyInit mv of /constant/dynamicMeshDict to /constant/dynamicMeshDict__moveDynamicMesh.");
-        }
-    }
-
     int nRet = -1;
 
     const char *const papszArgv[] = { "applyInit", 

@@ -4,6 +4,7 @@ inletBC/logProfileTurbulentKineticEnergyInlet/logProfileTurbulentKineticEnergyIn
 
 wallBC/nutkAtmRoughWallFunction/nutkAtmRoughWallFunctionFvPatchScalarField.C
 
+functionObjects/calcTerrainHeights/calcTerrainHeights.C
 
 LIB = $(FOAM_USER_LIBBIN)/libWindNinja
 

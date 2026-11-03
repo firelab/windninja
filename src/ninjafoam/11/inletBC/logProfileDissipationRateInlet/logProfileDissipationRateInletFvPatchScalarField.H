@@ -51,6 +51,8 @@ Notes:
 	it has much better control over the ground height correction, a method that
 	is robust enough to support WindNinja's method of specifying terrain.
 
+    The ground height calculation, has been moved to /functionObjects/calcTerrainHeights.
+
 SourceFiles
     logProfileDissipationRateInletFvPatchScalarField.C
 
@@ -84,11 +86,6 @@ class logProfileDissipationRateInletFvPatchScalarField
 		scalar Rd_;                     // Zero plane displacement height
 		scalarField relativeHeight_;    // Relative distance from wall
 		scalar firstCellHeight_;        // First Cell Height
-        
-    // Private Member Functions
-
-        //- set all the various height values specific for each cell of the domain
-        void setTerrainHeights();
 
 public:
 
