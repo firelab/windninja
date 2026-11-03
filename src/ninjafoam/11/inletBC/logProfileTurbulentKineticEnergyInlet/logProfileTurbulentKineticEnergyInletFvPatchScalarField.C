@@ -85,23 +85,9 @@ logProfileTurbulentKineticEnergyInletFvPatchScalarField
     inputWindHeight_Veg_(ptf.inputWindHeight_Veg_),
     z0_(ptf.z0_),
     Rd_(ptf.Rd_),
-    relativeHeight_(mapper(ptf.relativeHeight_)),
+    relativeHeight_(ptf.relativeHeight_),
     firstCellHeight_(ptf.firstCellHeight_)
 {}
-
-void Foam::logProfileTurbulentKineticEnergyInletFvPatchScalarField::map
-(
-    const fvPatchField<scalar>& ptf,
-    const fvPatchFieldMapper& mapper
-)
-{
-    fixedValueFvPatchScalarField::map(ptf, mapper);
-
-    const logProfileTurbulentKineticEnergyInletFvPatchScalarField& logBC =
-        refCast<const logProfileTurbulentKineticEnergyInletFvPatchScalarField>(ptf);
-
-    mapper(relativeHeight_, logBC.relativeHeight_);
-}
 
 /*//- Copy constructor
 Foam::logProfileTurbulentKineticEnergyInletFvPatchScalarField::

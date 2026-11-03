@@ -85,23 +85,9 @@ logProfileVelocityInletFvPatchVectorField
     inputWindHeight_Veg_(ptf.inputWindHeight_Veg_),
     z0_(ptf.z0_),
     Rd_(ptf.Rd_),
-    relativeHeight_(mapper(ptf.relativeHeight_)),
+    relativeHeight_(ptf.relativeHeight_),
     firstCellHeight_(ptf.firstCellHeight_)
 {}
-
-void Foam::logProfileVelocityInletFvPatchVectorField::map
-(
-    const fvPatchField<vector>& ptf,
-    const fvPatchFieldMapper& mapper
-)
-{
-    fixedValueFvPatchVectorField::map(ptf, mapper);
-
-    const logProfileVelocityInletFvPatchVectorField& logBC =
-        refCast<const logProfileVelocityInletFvPatchVectorField>(ptf);
-
-    mapper(relativeHeight_, logBC.relativeHeight_);
-}
 
 /*//- Copy constructor
 Foam::logProfileVelocityInletFvPatchVectorField::

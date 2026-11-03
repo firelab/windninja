@@ -85,23 +85,9 @@ logProfileDissipationRateInletFvPatchScalarField
     inputWindHeight_Veg_(ptf.inputWindHeight_Veg_),
     z0_(ptf.z0_),
     Rd_(ptf.Rd_),
-    relativeHeight_(mapper(ptf.relativeHeight_)),
+    relativeHeight_(ptf.relativeHeight_),
     firstCellHeight_(ptf.firstCellHeight_)
 {}
-
-void Foam::logProfileDissipationRateInletFvPatchScalarField::map
-(
-    const fvPatchField<scalar>& ptf,
-    const fvPatchFieldMapper& mapper
-)
-{
-    fixedValueFvPatchScalarField::map(ptf, mapper);
-
-    const logProfileDissipationRateInletFvPatchScalarField& logBC =
-        refCast<const logProfileDissipationRateInletFvPatchScalarField>(ptf);
-
-    mapper(relativeHeight_, logBC.relativeHeight_);
-}
 
 /*//- Copy constructor
 Foam::logProfileDissipationRateInletFvPatchScalarField::

@@ -120,12 +120,6 @@ public:
             const fvPatchFieldMapper&
         );
 
-        virtual void map
-        (
-            const fvPatchField<scalar>&,
-            const fvPatchFieldMapper&
-        );
-
         /*//- Copy constructor
         logProfileTurbulentKineticEnergyInletFvPatchScalarField
         (
