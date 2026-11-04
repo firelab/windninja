@@ -1450,6 +1450,7 @@ void NinjaFoam::MoveDynamicMesh()
 
     BlockMesh();
     calcTerrainHeights();
+    calcLayerIdx();
 
     VSILFILE *fout;
 
@@ -1656,6 +1657,7 @@ void NinjaFoam::MoveDynamicMesh()
     UpdateSimpleFoamControlDict();
     UpdateTimeDirFiles();
     calcTerrainHeights();
+    calcLayerIdx();
 
     if( foamVersion == "11" )
     {
@@ -1724,6 +1726,7 @@ void NinjaFoam::RefineSurfaceLayer()
         UpdateSimpleFoamControlDict();
         UpdateTimeDirFiles();
         calcTerrainHeights();
+        calcLayerIdx();
 
         pszInput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
         pszOutput = CPLFormFilename(pszFoamPath, "system/topoSetDict", "");
@@ -1926,6 +1929,25 @@ void NinjaFoam::calcTerrainHeights()
     if(nRet != 0)
     {
         throw std::runtime_error("Error during calcTerrainHeights().");
+    }
+
+    VSIFCloseL(fout);
+}
+
+void NinjaFoam::calcLayerIdx()
+{
+    int nRet = -1;
+    VSILFILE *fout = VSIFOpenL(CPLFormFilename(pszFoamPath, "log.calcLayerIdx", ""), "w");
+
+    const char *const papszArgv[] = { "calcLayerIdx",
+                                      "-case",
+                                      pszFoamPath,
+                                      NULL };
+    nRet = CPLSpawn(papszArgv, NULL, fout, TRUE);
+
+    if(nRet != 0)
+    {
+        throw std::runtime_error("Error during calcLayerIdx().");
     }
 
     VSIFCloseL(fout);

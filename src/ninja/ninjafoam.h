@@ -166,6 +166,7 @@ private:
     void RefineMesh();
     void BlockMesh();
     void calcTerrainHeights();
+    void calcLayerIdx();
     void DecomposePar();
     void ReconstructPar();
     void RenumberMesh();

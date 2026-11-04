@@ -16,7 +16,7 @@ FoamFile
 actions
 (
     {
-        name   refineCells;
+        /*name   refineCells;
         type   cellSet;
         action new;
         source surfaceToCell;
@@ -27,7 +27,15 @@ actions
         includeInside   false;    // cells not on outside of surf
         includeOutside  false;    // cells on outside of surf
         nearDistance    $nearDistance$;     // cells with centre near surf (set to -1 if not used)
-        curvature       -100;     // cells within nearDistance and near surf curvature (set to -100 if not used)
+        curvature       -100;     // cells within nearDistance and near surf curvature (set to -100 if not used)*/
+
+        name    refineCells;
+        type    cellSet;
+        action  new;
+        source  fieldToCell;
+        field   zLayerIdx;
+        min     0.5;  // catch the value of 1.0
+        max     1.5;
     }
 );
 
