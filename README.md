@@ -1,26 +1,20 @@
 WindNinja
 =========
 [![example workflow](https://github.com/firelab/windninja/actions/workflows/testing.yml/badge.svg)](https://github.com/firelab/windninja/actions)
-[![builds.sr.ht status](https://builds.sr.ht/~ksshannon/windninja.svg)](https://builds.sr.ht/~ksshannon/windninja?)
 [![DOI](https://zenodo.org/badge/21244/firelab/windninja.svg)](https://zenodo.org/badge/latestdoi/21244/firelab/windninja)
 
 WindNinja is a diagnostic wind model developed for use in wildland fire modeling.
 
 Web:
-http://firelab.org/project/windninja
+https://ninjastorm.firelab.org/windninja/
 
 Source & wiki:
 https://github.com/firelab/windninja
 
 FAQ:
-https://github.com/firelab/windninja/wiki/Frequently-Asked-Questions
+[https://ninjastorm.firelab.org/windninja/faq.html](https://ninjastorm.firelab.org/windninja/faq.html)
 
-IRC:
-irc://irc.freenode.net/#windninja
-
-[Building on Linux](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Linux)
-
-[Building on Windows](https://github.com/firelab/windninja/wiki/Building-WindNinja-on-Windows-using-the-MSVC-compiler-and-gisinternals.com-dependencies)
+Install: https://github.com/firelab/windninja/wiki
 
 Directories:
  * autotest    -> testing suite
@@ -31,21 +25,21 @@ Directories:
  * src         -> source files
 
 Dependencies (versions are versions we build against for the Windows installer):
- * Boost 1.46:
+ * Boost 1.91.0
     * boost_date_time
     * boost_program_options
     * boost_test
- * NetCDF 4.1.1
- * GDAL 2.2.2
+ * NetCDF 4.9.3
+ * GDAL 3.12.4
     * NetCDF support
-    * PROJ.4 support
+    * PROJ support
     * GEOS support
     * CURL support
- * Qt 4.8.5
-    * QtGui
-    * QtCore
-    * QtNetwork/Phonon
-    * QtWebKit
+ * Qt 6.2.4
+    * Qt WebEngine
+    * Qt Positioning
+    * Qt Serial Port
+    * Qt WebChannel
  * [OpenFOAM 2.2.x](https://github.com/OpenFOAM/OpenFOAM-2.2.x)
 
 See INSTALL for more information (coming soon)
@@ -54,6 +48,7 @@ See CREDITS for authors
 
 See NEWS for release information
 
-=========
+Example Output
+===
 <img src="images/bsb.jpg" alt="Example output"  />
 

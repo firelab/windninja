@@ -252,10 +252,12 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
     //NOTE: DEM IS THE ELEVATION ABOVE SEA LEVEL
     if(meshResolution < input.dem.get_cellSize())
     {
+        //std::cout << "buildStandardMesh, finer" << std::endl;
         input.dem.resample_Grid_in_place(meshResolution, Elevation::order1); //make the grid finer
         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order1); //make the grid finer
     }else if(meshResolution > input.dem.get_cellSize())
     {
+        //std::cout << "buildStandardMesh, coarser" << std::endl;
         input.dem.resample_Grid_in_place(meshResolution, Elevation::order0); //coarsen the grid
         input.surface.resample_in_place(meshResolution, AsciiGrid<double>::order0); //coarsen the grids
     }
@@ -302,6 +304,7 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
                 {
                     ZORD(i, j, k) = get_z(i, j, k, input.dem(i,j));
                 }
+                //printf("(%.12g,%.12g,%.12g)\n",XORD(i,j,k),YORD(i,j,k),ZORD(i,j,k));
             }
         }
     }
@@ -325,6 +328,10 @@ void Mesh::buildStandardMesh(WindNinjaInputs& input)
     input.Com->ninjaCom(ninjaComClass::ninjaDebug, "Number of elements = %ld",NUMEL);
     input.Com->ninjaCom(ninjaComClass::ninjaDebug, "--------------------------------");
 #endif //NINJA_DEBUG_VERBOSE
+    //printf("nrows = %d, ncols = %d, nlayers = %d\n",nrows,ncols,nlayers);
+    //printf("meshResolution = %.12g\n",meshResolution);
+    //printf("minX = %.12g, maxX = %.12g, minY = %.12g, maxY = %.12g\n",get_minX(),get_maxX(),get_minY(),get_maxY());
+    //printf("domainHeight = %.12g, numVertLayers = %d, vertGrowth = %.12g, targetNumHorizCells = %d, maxAspectRatio = %.12g\n",domainHeight,numVertLayers,vertGrowth,targetNumHorizCells,maxAspectRatio);
 }
 
 double Mesh::get_z(const int& i, const int& j, const int& k, const double& elev)
@@ -796,6 +803,9 @@ void Mesh::compute_cellsize(Elevation& dem)
     meshResolution=(Xcellsize+Ycellsize)/2;
 
     meshResolutionUnits = lengthUnits::meters;
+    //printf("compute_cellsize():  dem.get_nRows() = %d, dem.get_nCols() = %d, dem.get_cellSize() = %.12g, \n",dem.get_nRows(),dem.get_nCols(),dem.get_cellSize());
+    //printf("dem.get_xllCorner() = %.12g, dem.get_yllCorner() = %.12g, dem.get_xDimension() = %.12g, dem.get_yDimension() = %.12g, \n",dem.get_xllCorner(),dem.get_yllCorner(),dem.get_xDimension(),dem.get_yDimension());
+    //printf("resulting meshResolution = %.12g\n",meshResolution);
 }
 
 /*
@@ -829,6 +839,8 @@ void Mesh::compute_domain_height(WindNinjaInputs& input)
         domainHeight = 3*(input.inputWindHeight + input.surface.Rough_h.get_maxValue());
     }
     domainHeight=domainHeight + input.dem.get_maxValue();
+    //printf("compute_domain_height():  meshResolution = %.12g, maxAspectRatio = %.12g, first_cell_ht = %.12g, vertGrowth = %.12g, numVertLayers = %d\n", meshResolution, maxAspectRatio, first_cell_ht, vertGrowth, numVertLayers);
+    //printf("input.outputWindHeight = %.12g, input.inputWindHeight = %.12g, input.surface.Rough_h.get_maxValue() = %.12g, input.dem.get_maxValue() = %.12g, domainHeight = %.12g\n", input.outputWindHeight, input.inputWindHeight, input.surface.Rough_h.get_maxValue(), input.dem.get_maxValue(), domainHeight);
 }
 
 void Mesh::set_domainHeight(double height, lengthUnits::eLengthUnits units)

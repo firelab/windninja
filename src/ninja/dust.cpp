@@ -115,7 +115,7 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
     //printf("CRS of DEM is:\n %s\n", pszDstWKT);
     //printf("WKT CRS of .shp is:\n %s\n", pszSrcWKT);
     
-    oDstSRS.importFromWkt( &pszDstWKT );
+    oDstSRS.importFromWkt( pszDstWKT );
     
     char *pszDstProj4, *pszSrcProj4;
     oDstSRS.exportToProj4( &pszDstProj4 );
@@ -158,7 +158,7 @@ void Dust::MakeGrid(WindNinjaInputs &input, AsciiGrid<double> &grid)
         hMemDS = NULL;
     }
     
-    OGR_DS_Destroy(hOGRDS);
+    GDALClose(hOGRDS);
 }
 #endif
 

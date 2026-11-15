@@ -33,6 +33,7 @@ Elevation::Elevation():AsciiGrid<double>()
 {
 	grid_made = false;
 	elevationUnits = meters;
+        angleFromNorth = 0.0;
 }
 
 Elevation::Elevation(std::string filename):AsciiGrid<double>()
@@ -41,6 +42,7 @@ Elevation::Elevation(std::string filename):AsciiGrid<double>()
 	read_Grid(filename);
 	grid_made = true;
 	elevationUnits = meters;
+        angleFromNorth = 0.0;
 }
 
 Elevation::Elevation(std::string filename, eElevDistanceUnits elev_units):AsciiGrid<double>()
@@ -49,6 +51,7 @@ Elevation::Elevation(std::string filename, eElevDistanceUnits elev_units):AsciiG
 	read_Grid(filename);
 	grid_made = true;
 	elevationUnits = elev_units;
+        angleFromNorth = 0.0;
 
 	if(grid_made)
 	{
@@ -62,19 +65,35 @@ Elevation::Elevation(std::string filename, eElevDistanceUnits elev_units):AsciiG
 Elevation::Elevation(int nC, int nR, double xL, double yL, double cS, 
 		     double nDV, eElevDistanceUnits units) : AsciiGrid<double>(nC, nR, xL, yL, cS, nDV)
 {
-  elevationUnits = units;
+    elevationUnits = units;
+    angleFromNorth = 0.0;
 }
 
 Elevation::Elevation(const Elevation &rhs) : AsciiGrid<double>(rhs)
 {
-  fileName = rhs.fileName;
-  grid_made = rhs.grid_made;
-  elevationUnits = rhs.elevationUnits;
+    fileName = rhs.fileName;
+    grid_made = rhs.grid_made;
+    elevationUnits = rhs.elevationUnits;
+    angleFromNorth = rhs.angleFromNorth;
 }
 
 Elevation::~Elevation()
 {
 	
+}
+
+Elevation &Elevation::operator=(const Elevation &rhs)
+{
+    if(&rhs != this)
+    {
+        AsciiGrid<double>::operator=(rhs);
+
+        fileName = rhs.fileName;
+        grid_made = rhs.grid_made;
+        elevationUnits = rhs.elevationUnits;
+        angleFromNorth = rhs.angleFromNorth;
+    }
+    return *this;
 }
 
 void Elevation::readFromMemory(const double* dem, const int nXSize, const int nYSize,
@@ -131,7 +150,6 @@ void Elevation::read_elevation(std::string filename)
 	elevationUnits = meters;
 }
 
-
 void Elevation::read_elevation(std::string filename, eElevDistanceUnits elev_units)
 {
     read_Grid(filename);
@@ -144,15 +162,78 @@ void Elevation::read_elevation(std::string filename, eElevDistanceUnits elev_uni
         throw std::runtime_error("Problem with units in Elevation::read_elevation().");
 }
 
-Elevation &Elevation::operator=(const Elevation &rhs)
+void Elevation::setAngleFromNorth(double angle)
 {
-    if(&rhs != this)
-    {
-        AsciiGrid<double>::operator=(rhs);
+    angleFromNorth = angle;
+}
 
-        fileName = rhs.fileName;
-        grid_made = rhs.grid_made;
-        elevationUnits = rhs.elevationUnits;
+double Elevation::getAngleFromNorth()
+{
+    return angleFromNorth;
+}
+
+/**
+ * @brief smooth entire dem using a simple non-weighted average, using a convolution window of size smoothDist out from each given cell
+ *
+ * @param smoothDist, number of cells out from the given cell, from which to get values for the averaging
+ */
+void Elevation::smooth_elevation(const int smoothDist)
+{
+    if( smoothDist < 1 )
+    {
+        throw std::runtime_error("input smoothDist for Elevation::smooth_elevation() is < 1!");
     }
-    return *this;
+
+    Elevation dem;  // make a temporary copy to keep the calculation values the same
+    dem = *this;
+
+    int count;
+    double sum;
+    int imin, imax, jmin, jmax;
+    double avg;
+
+    for(int i = 0; i < dem.get_nRows(); i++)
+    {
+        imin = i - smoothDist;
+        imax = i + smoothDist;
+
+        for(int j = 0; j < dem.get_nCols(); j++)
+        {
+            count = 0;
+            sum = 0.0;
+
+            jmin = j - smoothDist;
+            jmax = j + smoothDist;
+
+            if( imin < 0 )
+            {
+                imin = 0;
+            }
+            if( imax > dem.get_nRows()-1 )
+            {
+                imax = dem.get_nRows()-1;
+            }
+
+            if( jmin < 0 )
+            {
+                jmin = 0;
+            }
+            if( jmax > dem.get_nCols()-1 )
+            {
+                jmax = dem.get_nCols()-1;
+            }
+
+            for(int ii = imin; ii <= imax; ii++)
+            {
+                for(int jj = jmin; jj <= jmax; jj++)
+                {
+                    sum = sum + dem.get_cellValue(ii, jj);
+                    count = count + 1;
+                }
+            }
+            avg = sum / float(count);
+
+            this->set_cellValue(i,j,avg);
+        }
+    }
 }

@@ -1,20 +1,20 @@
-/******************************************************************************
+ /******************************************************************************
  *
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Handles surface inputs for the domain
- * Author:   Kyle Shannon <ksshannon@gmail.com>
+ * Purpose:  Hands GUI related logic for the Surface Input Page
+ * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
  *
  * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
- * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT 
- * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105 
- * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT 
- * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES 
- * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER 
- * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY, 
+ * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+ * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+ * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+ * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+ * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+ * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
  * RELIABILITY, OR ANY OTHER CHARACTERISTIC.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -27,72 +27,92 @@
  *
  *****************************************************************************/
 
-#ifndef SURFACEINPUT_H_
-#define SURFACEINPUT_H_
+#ifndef SURFACEINPUT_H
+#define SURFACEINPUT_H
 
-#include <QGroupBox>
-#include <QLineEdit>
-#include <QToolButton>
-#include <QComboBox>
-#include <QSpinBox>
-#include <QFileDialog>
-#include <QLabel>
-#include <QRadioButton>
+#include "ui_mainWindow.h"
+#include "appState.h"
+#include "windninja.h"
+#include "gdal_util.h"
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
 #include <QObject>
+#include <QStandardPaths>
+#include <QFileDialog>
+#include <QDebug>
+#include <QFuture>
+#include <QFutureWatcher>
+#include <QProgressDialog>
 #include <QMessageBox>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
+#include <QtConcurrent/QtConcurrent>
 
-#include "WindNinjaInputs.h"
-#include "timeZoneWidget.h"
-#include "WidgetDownloadDEM.h"
-
-class surfaceInput : public QWidget
+class SurfaceInput : public QObject
 {
   Q_OBJECT
 
 public:
-    surfaceInput(QWidget *parent = 0);
+    SurfaceInput(Ui::MainWindow* ui,
+                    QWebEngineView* webEngineView,
+                    QObject* parent = nullptr);
+    double computeMeshResolution(int index, bool isMomemtumChecked);
+    void updateMeshResolutionByUnits();
+    void setInputFileDir(QString dir);
 
-#ifdef NINJAFOAM
-    QGroupBox *foamCaseGroupBox;
-    QLineEdit *foamCaseLineEdit;
-    QToolButton *foamCaseOpenToolButton;
-#endif
-
-    QGroupBox *inputFileGroupBox;
-
-    QLineEdit *inputFileLineEdit;
-    QToolButton *inputFileOpenToolButton;
-    QToolButton *downloadDEMButton;
-
-    QGroupBox *roughnessGroupBox;
-    QComboBox *roughnessComboBox;
-    QLabel *roughnessLabel;
-
-    QGroupBox *meshResGroupBox;
-    QComboBox *meshResComboBox;
-    QDoubleSpinBox *meshResDoubleSpinBox;
-    QRadioButton *meshMetersRadioButton, *meshFeetRadioButton;
-
-    QGroupBox *timeZoneGroupBox;
-    timeZoneWidget *timeZone;
-
-#ifdef NINJAFOAM
-    QHBoxLayout *foamCaseLayout;
-#endif
-    QHBoxLayout *inputLayout;
-    QHBoxLayout *roughnessLayout;
-    QHBoxLayout *roughnessLabelLayout;
-    QHBoxLayout *meshResLayout;
-    QHBoxLayout *timeZoneLayout;
-    QVBoxLayout *mainLayout;
-    
 signals:
-    void writeToMainConsole(QString message);
+    void updateProgressMessageSignal(const QString &msg);
+    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
+    void updateState();
+    void updateTreeView();
 
+public slots:
+    void boundingBoxReceived(double north, double south, double east, double west);
+    void elevationInputFileOpenButtonClicked();
+
+private slots:
+    void updateProgressMessage(const QString message);
+    void surfaceInputDownloadCancelButtonClicked();
+    void surfaceInputDownloadButtonClicked();
+    void meshResolutionUnitsComboBoxCurrentIndexChanged(int index);
+    void elevationInputTypePushButtonClicked();
+    void boundingBoxLineEditsTextChanged();
+    void pointRadiusLineEditsTextChanged();
+    void ninjafoamCaseOpenButtonClicked();
+    void elevationInputFileDownloadButtonClicked();
+    void elevationInputFileLineEditTextChanged(const QString &arg1);
+    void meshResolutionComboBoxCurrentIndexChanged(int index);
+    void fetchDEMFinished();
+    void timeZoneDetailsCheckBoxClicked();
+    void timeZoneComboBoxCurrentIndexChanged(int index);
+    void timeZoneAllZonesCheckBoxClicked();
+
+private:
+    Ui::MainWindow *ui;
+    QWebEngineView *webEngineView;
+
+    QProgressDialog *progress;
+    QFutureWatcher<int> *futureWatcher;
+
+    QString pendingDownloadDemFilePath;
+
+    QString inputFileDir;
+
+    QString demFileType;
+    int GDALXSize, GDALYSize;
+    double GDALCellSize, GDALMaxValue, GDALMinValue;
+    double DEMCorners[8];
+
+    QString fetchTimeZoneDetails(QString currentTimeZone);
+    QVector<QVector<QString>> fetchAllTimeZones(bool isShowAllTimeZonesSelected);
+    int fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    bool checkAndFillDownloadedDemNoDataValues(const QString demFilePath);
+    bool checkAndFillToBeOpenedDemNoDataValues(const QString demFilePath, QString& nanFilledDemFilePath);
+    bool loadDemMetadata(const QString demFilePath);
+    void elevationInputFileLineEditSetTextAndForceSignal(const QString &demFilePath);
+    void computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4]);
+    void computePointRadius(double north, double east, double south, double west, double pointRadius[3]);
+    void startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType);
+    void showInvalidCase(QString message);
 };
 
-#endif /* SURFACEINPUT_H_ */
-
+#endif // SURFACEINPUT_H

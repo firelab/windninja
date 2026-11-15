@@ -31,7 +31,7 @@ Array2D<T>::Array2D(unsigned nRows, unsigned nCols)
     rows = nRows;
     cols = nCols;
 
-    matrix.resize(rows * cols); //Reserves size needed for matrix
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols); //Reserves size needed for matrix
 }
 
 
@@ -52,7 +52,7 @@ Array2D<T>::Array2D(unsigned nRows, unsigned nCols, T noDataVal)
     rows = nRows;
     cols = nCols;
 
-    matrix.resize(rows * cols); //Reserves exact size needed for matrix
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols); //Reserves size needed for matrix
     matrix.assign(matrix.size(), noDataValue);
 }
 
@@ -119,7 +119,7 @@ void Array2D<T>::setMatrix(unsigned nRows, unsigned nCols, T noDataVal)
     rows = nRows;
     cols = nCols;
     noDataValue = noDataVal;
-    matrix.resize(cols*rows, noDataValue);
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols, noDataValue);
 }
 
 /**
@@ -135,7 +135,7 @@ void Array2D<T>::setMatrix(unsigned nRows, unsigned nCols, T noDataVal, T defaul
     rows = nRows;
     cols = nCols;
     noDataValue = noDataVal;
-    matrix.resize(cols*rows, defaultValue);
+    matrix.resize(static_cast<typename std::vector<T>::size_type>(rows) * cols, defaultValue);
 }
 
 /**
@@ -221,31 +221,49 @@ double Array2D<T>::mean() const
 {
     double mean = 0;
     T sum = 0;
+    unsigned trueSize = 0;
     for(int i = rows - 1; i >= 0; i--)
     {
         for (int j = 0; j < cols; j++)
         {
-            sum += matrix[i * cols + j];
+            if( matrix[i * cols + j] != noDataValue )
+            {
+                sum += matrix[i * cols + j];
+                trueSize++;
+            }
         }
     }
 
-    mean = sum / matrix.size();
+    if( trueSize > 0 )
+    {
+        mean = sum / trueSize;
+    } else
+    {
+        mean = noDataValue;
+    }
+
     return mean;
 }
 
 /**
-*@brief uses quicksort method to sort data within matrix
-*@return returns a pointer to the new sorted data array
+*@brief uses quicksort method to sort data within matrix, dropping nans from the size
+*@return returns a vector of the sorted data
 */
 template<typename T>
-T* Array2D<T>::sortData()
+std::vector<T> Array2D<T>::sortData()
 {
-    T* sorted = new T[matrix.size()];
-    for(int i=0; i<matrix.size(); i++)
+    std::vector<T> sorted;
+    sorted.reserve(matrix.size());
+
+    for(size_t i = 0; i < matrix.size(); i++)
     {
-        sorted[i] = matrix[i];
+        if(matrix[i] != noDataValue && !std::isnan(matrix[i]))
+        {
+            sorted.push_back(matrix[i]);
+        }
     }
-    std::sort(sorted, sorted + matrix.size());
+
+    std::sort(sorted.begin(), sorted.end());
     return sorted;
 }
 
@@ -478,6 +496,5 @@ void Array2D<T>::crop (int minRow, int maxRow, int minCol, int maxCol){
 //--- template instantiations
 
 template class Array2D<double>;
-template class Array2D<float>;
 template class Array2D<int>;
 template class Array2D<short>;

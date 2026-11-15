@@ -41,6 +41,10 @@
 #include "gdal_alg.h"
 #include "cpl_spawn.h"
 
+#ifndef WIN32
+#include <hwloc.h>
+#endif
+
 #define PIPE_BUFFER_SIZE 4096
 
 #define NINJA_FOAM_OGR_VRT "<OGRVRTDataSource>" \
@@ -48,7 +52,7 @@
                            "    <SrcDataSource>%s</SrcDataSource>" \
                            "    <SrcLayer>%s</SrcLayer>" \
                            "    <GeometryType>wkbPoint</GeometryType>" \
-                           "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\" k=\"k\"/>"  \
+                           "    <GeometryField encoding=\"PointFromColumns\" x=\"x\" y=\"y\" z=\"z\"/>"  \
                            "    <Field name=\"X\" src=\"x\" type=\"Real\"/>" \
                            "    <Field name=\"Y\" src=\"y\" type=\"Real\"/>" \
                            "    <Field name=\"Z\" src=\"z\" type=\"Real\"/>" \
@@ -76,13 +80,16 @@ public:
     virtual bool simulate_wind();
     inline virtual std::string identify() {return std::string("ninjafoam");}
 
+    int countNumCores();
+    virtual void set_numberCPUs(int CPUs);
     virtual void set_meshResolution(double resolution, lengthUnits::eLengthUnits units);
     virtual double get_meshResolution();
     static int GenerateFoamDirectory(std::string demName);
     static void SetFoamPath(const char *pszPath);
 
-    AsciiGrid<double> TurbulenceGrid;
 private:
+    std::string foamVersion;
+    
     static const char *pszFoamPath;
 
     /* OpenFOAM case setup */
@@ -134,7 +141,7 @@ private:
     int ReplaceKey(std::string &s, std::string k, std::string v);
     int ReplaceKeys(std::string &s, std::string k, std::string v, int n = INT_MAX);
     void CopyFile(const char *pszInput, const char *pszOutput, std::string key="", std::string value="");
-    void UpdateDictFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
+    void UpdateTimeDirFiles(); //updates U, p, epsilon, and k files for new timesteps (meshes)
     void UpdateSimpleFoamControlDict();
 
     int latestTime; //latest time directory
@@ -144,12 +151,13 @@ private:
     std::vector<std::string> GetTimeDirsOnDisk();
     std::vector<std::string> GetProcessorDirsOnDisk();
     bool StringIsNumeric(const std::string &str);
-    double GetFirstCellHeightFromDisk();
+    double GetFirstCellHeightFromDisk(int time);
     bool CheckForValidCaseDir(const char* dir);
     bool CheckForValidDem();
     void SetMeshResolutionAndResampleDem();
 
     void WriteNinjaLog();
+    void ReadNinjaLog();
     
     /* OpenFOAM utilities */
     void RefineSurfaceLayer();
@@ -166,11 +174,49 @@ private:
 
     /* Output */
     Elevation outputSampleGrid;
-    void SampleRawOutput();
+    bool SampleRawOutput();
     void WriteOutputFiles();
     void SetOutputResolution();
     void SetOutputFilenames();
     bool CheckIfOutputWindHeightIsResolved();
+
+    bool writeMassMesh;
+    Mesh massMesh;
+    wn_3dScalarField massMesh_u, massMesh_v, massMesh_w;
+    wn_3dScalarField massMesh_k;
+    void GenerateAndSampleMassMesh();
+    void generateMassMesh();
+    void writeProbeSampleFile(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                              const double dem_xllCorner, const double dem_yllCorner, 
+                              const int ncols, const int nrows, const int nlayers);
+    void runProbeSample();
+    void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                         const double dem_xllCorner, const double dem_yllCorner, 
+                         const int ncols, const int nrows, const int nlayers, 
+                         wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
+    void readInProbeData(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z, 
+                         const double dem_xllCorner, const double dem_yllCorner, 
+                         const int ncols, const int nrows, const int nlayers, 
+                         wn_3dScalarField& k);
+    void readInProbeData_foam10(const wn_3dArray& x, const wn_3dArray& y, const wn_3dArray& z,
+                                const double dem_xllCorner, const double dem_yllCorner,
+                                const int ncols, const int nrows, const int nlayers,
+                                wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w,
+                                wn_3dScalarField& k);
+    void fillEmptyProbeVals(const wn_3dArray& z, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            wn_3dScalarField& u, wn_3dScalarField& v, wn_3dScalarField& w);
+    void fillEmptyProbeVals(const wn_3dArray& z, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            wn_3dScalarField& k);
+
+    void generateColMaxGrid(const wn_3dArray& z, 
+                            const double dem_xllCorner, const double dem_yllCorner, 
+                            const int ncols, const int nrows, const int nlayers, 
+                            const double massMeshResolution, std::string prjString, 
+                            wn_3dScalarField& k);
+
+    void writeMassMeshVtkOutput();
 
     const char *pszVrtMem;
     const char *pszVrtMemTurbulence;
@@ -185,12 +231,16 @@ private:
     double startWriteOut, endWriteOut;
     double startFoamFileWriting, endFoamFileWriting;
     double startOutputSampling, endOutputSampling;
+    double startGenerateAndSampleMassMesh, endGenerateAndSampleMassMesh;
     double startStlConversion, endStlConversion;
-    
+    std::vector<double> startRestart, endRestart;
+
 #ifdef NINJA_BUILD_TESTING
 public:
 #endif
+    std::string sanitizeOutputLine(const std::string& line);
     int SanitizeOutput();
+    int SanitizeOutput_foam10();
     int SampleCloudGrid();
     int SampleCloud();
 #ifdef NINJA_BUILD_TESTING

@@ -46,13 +46,6 @@
 #endif /* GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(1,10,0) */
 #endif /* GDAL_COMPUTE_VERSION */
 
-#define SOURCE_BEST  0
-#define SOURCE_US    1
-#define SOURCE_WORLD 2
-#ifdef HAVE_GMTED
-#define SOURCE_GMTED 3
-#endif
-
 #ifndef WGS_84_WKT
 #define WGS_84_WKT "GEOGCS[\"WGS 84\"," \
                        "DATUM[\"WGS_1984\"," \
@@ -64,10 +57,6 @@
                     "UNIT[\"degree\",0.0174532925199433," \
                         "AUTHORITY[\"EPSG\",\"9122\"]]," \
                     "AUTHORITY[\"EPSG\",\"4326\"]]"
-#endif
-
-#ifdef _OPENMP
-    omp_lock_t netCDF_lock;
 #endif
 
 void Usage()
@@ -82,7 +71,7 @@ void Usage()
 #endif
     printf("          [--buf_units miles/kilometers]\n"                  );
     printf("          [--out_res res]\n"                                 );
-    printf("          [--src us/world"                                   );
+    printf("          [--src srtm"                                       );
 #ifdef HAVE_GMTED
     printf("/gmted"                                                      );
 #endif
@@ -100,6 +89,7 @@ void Usage()
     printf("          [--resample_alg near/bilinear]\n"                  );
 #endif
     printf("          dst_file\n"                                        );
+    NinjaFinalize();
     exit(1);
 }
 
@@ -151,7 +141,7 @@ int main(int argc, char *argv[])
     double adfPoint[2];
     double adfBuff[2];
     const char *pszUnits = "miles";
-    double dfCellSize = 90.0;
+    double dfCellSize = -1;
     const char *pszResample = "near";
     const char *pszSource = NULL;
     const char *pszGeocodeName = NULL;
@@ -168,7 +158,7 @@ int main(int argc, char *argv[])
     int bHasBbox = FALSE;
     int bHasPoint = FALSE;
 
-    int nSrtmError;
+    int nDemError;
     lengthUnits::eLengthUnits units;
     GDALResampleAlg rAlg;
     GDALDataset *poDS;
@@ -213,6 +203,11 @@ int main(int argc, char *argv[])
         else if(EQUAL(argv[i], "--out_res"))
         {
             dfCellSize = CPLAtof(argv[++i]);
+            if(dfCellSize <= 0.0)
+            {
+                fprintf(stderr, "Cell size must be positive\n");
+                Usage();
+            }
         }
         else if(EQUAL(argv[i], "--r"))
         {
@@ -324,12 +319,6 @@ int main(int argc, char *argv[])
         Usage();
     }
 
-    if(dfCellSize <= 0.0)
-    {
-        fprintf(stderr, "Cell size must be positive\n");
-        Usage();
-    }
-
     if(EQUAL(pszResample, "near"))
     {
         rAlg = GRA_NearestNeighbour;
@@ -355,13 +344,9 @@ int main(int argc, char *argv[])
         fprintf(stderr, "\n");
         Usage();
     }
-    if(EQUAL(pszSource, "us"))
+    if(EQUAL(pszSource, "srtm"))
     {
-        fetch = FetchFactory::GetSurfaceFetch(FetchFactory::US_SRTM);
-    }
-    else if(EQUAL(pszSource, "world"))
-    {
-        fetch = FetchFactory::GetSurfaceFetch(FetchFactory::WORLD_SRTM);
+        fetch = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM);
     }
 #ifdef HAVE_GMTED
     else if(EQUAL(pszSource, "gmted"))
@@ -378,7 +363,7 @@ int main(int argc, char *argv[])
 #endif /* WITH_LCP_CLIENT */
     else
     {
-    fprintf(stderr, "Source must be one of 'us', 'world'");
+    fprintf(stderr, "Source must be one of 'srtm'");
 #ifdef HAVE_GMTED
         fprintf(stderr, "', gmted'");
 #endif
@@ -466,44 +451,92 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Invalid bounding box, inverted values\n");
             Usage();
         }
-        nSrtmError = fetch->FetchBoundingBox(adfBbox, dfCellSize, pszDstFile,
-                                             papszOptions);
+        if(dfCellSize <= 0.0)
+        {
+            dfCellSize = fetch->GetXRes();
+            #ifdef HAVE_GMTED
+            if( EQUAL( pszSource, FetchFactory::WORLD_GMTED_STR.c_str() ) )
+            {
+                dfCellSize = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+            }
+            #endif //HAVE_GMTED
+        }
+        nDemError = fetch->FetchBoundingBox(adfBbox, dfCellSize, pszDstFile, papszOptions);
     }
     else
     {
-        nSrtmError = fetch->FetchPoint(adfPoint, adfBuff, units, dfCellSize,
-                                       pszDstFile, papszOptions);
+        if(dfCellSize <= 0.0)
+        {
+            dfCellSize = fetch->GetXRes();
+            #ifdef HAVE_GMTED
+            if( EQUAL( pszSource, FetchFactory::WORLD_GMTED_STR.c_str() ) )
+            {
+                dfCellSize = fetch->GetXRes() * 111325;  // convert from lat/lon to m
+            }
+            #endif //HAVE_GMTED
+        }
+        nDemError = fetch->FetchPoint(adfPoint, adfBuff, units, dfCellSize, pszDstFile, papszOptions);
     }
 
-    if(nSrtmError < 0)
+    if(nDemError < 0)
     {
-        if(nSrtmError == SURF_FETCH_E_IO_ERR)
-            fprintf(stderr, "Failed to open a dataset\n");
-        else if(nSrtmError == SURF_FETCH_E_BOUNDS_ERR)
-            fprintf(stderr, "Request fell out of bounds of srtm data\n");
-        else if(nSrtmError == SURF_FETCH_E_WARPER_ERR)
-            fprintf(stderr, "Failed to warp data\n");
+        fprintf(stderr, "Failed to download elevation data.\n");
+        if(nDemError == SURF_FETCH_E_IO_ERR)
+        {
+            fprintf(stderr, "Failure opening a dataset.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_BOUNDS_ERR)
+        {
+            fprintf(stderr, "Fetch was outside the bounds of the dataset. Please select new data source or new area.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_WARPER_ERR)
+        {
+            fprintf(stderr, "Failure during warp, failed to warp data.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_BAD_INPUT)
+        {
+            fprintf(stderr, "Bad input to fetching functions.\n");
+        }
+        else if(nDemError == SURF_FETCH_E_SIZE_LIMIT)
+        {
+            fprintf(stderr, "Hit a size limit during fetch.\n");
+        }
+        //else if(nDemError == SURF_FETCH_E_NO_GDAL_DATA)  // not really used, instead we output the numNoDataValues
+        //{
+        //    fprintf(stderr, "Found NO_DATA in downloaded fetch data.\n");
+        //}
+        else if(nDemError == SURF_FETCH_E_TIMEOUT)
+        {
+            fprintf(stderr, "Download failure, likely download timeout failure.\n");
+        }
         else
-            fprintf(stderr, "Unknown error occurred\n");
-        return nSrtmError;
+        {
+            fprintf(stderr, "Unknown error occurred during fetch.\nThis can happen when either the data source doesn't cover your region or the server that provides the surface data is down or under high usage. \nPlease try again later or try a different data source.\n");
+        }
+        NinjaFinalize();
+        return nDemError;
     }
 
-    if(nSrtmError > 0 && bFillNoData)
+    if(nDemError > 0 && bFillNoData)
     {
         poDS = (GDALDataset*)GDALOpen(pszDstFile, GA_Update);
         if(poDS == NULL)
         {
             fprintf(stderr, "Failed to open new dataset\n");
+            NinjaFinalize();
             return 1;
         }
-        nSrtmError = GDALFillBandNoData(poDS, 1, 100);
+        nDemError = GDALFillBandNoData(poDS, 1, 100);
         GDALClose((GDALDatasetH)poDS);
-        if(nSrtmError > 0)
+        if(nDemError > 0)
         {
             fprintf(stderr, "Failed to fill no data\n");
+            NinjaFinalize();
             return 1;
         }
     }
+
+    NinjaFinalize();
     return 0;
 }
 

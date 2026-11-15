@@ -1,133 +1,96 @@
-# THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
-# MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
-# IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
-# OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
-# PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
-# LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
-# PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
-# RELIABILITY, OR ANY OTHER CHARACTERISTIC.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-# DEALINGS IN THE SOFTWARE.
+cmake_minimum_required(VERSION 3.16)
 
-cmake_minimum_required(VERSION 2.6)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
-QT4_WRAP_UI(QTUI_H_SRCS WidgetDownloadDEM.ui
-                        setconfigdialog.ui
-                        stationFetchWidget.ui)
+if(FIRELAB_PACKAGE)
+    set(LF_PRIORITY_CODE "" CACHE STRING "Priority Code for LANDFIRE data")
+    mark_as_advanced(LF_PRIORITY_CODE)
+    add_definitions(-DLF_PRIORITY_CODE="${LF_PRIORITY_CODE}")
+endif(FIRELAB_PACKAGE)
 
-set(NINJA_GUI_INCLUDES consoleDockWidget.h
-                       diurnalInput.h
-                       stabilityInput.h
-                       fbOutput.h
-                       googleOutput.h
-                       latLonWidget.h
-                       mainWindow.h
-                       metaWindWidget.h
-                       nativeSolverInput.h
-                       ninjafoamInput.h
-                       outputHeightWidget.h
-                       outputMetaData.h
-                       pdfOutput.h
-                       pointInput.h
-                       shapeOutput.h
-                       solvePage.h
-                       solveThread.h
-                       splash.h
-                       surfaceInput.h
-                       timeZoneWidget.h
-                       #vec3f.h
-                       vtkOutput.h
-                       weatherModel.h
-                       WidgetDownloadDEM.h
-                       stationFetchWidget.h
-                       windInput.h
-                       windInputTable.h
-                       WindNinjaTree.h
-                       GoogleMapsInterface.h
-                       setconfigdialog.h
-                       ${QTUI_H_SRCS})
-
-include_directories(${QT_INCLUDES}
-                    ${Boost_INCLUDE_DIRS}
-                    ${NETCDF_INCLUDES}
-                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
-                    ${CURL_INCLUDE_DIR}
-                    ${PROJECT_SOURCE_DIR}/src
-                    ${PROJECT_SOURCE_DIR}/src/ninja
-                    ${CMAKE_CURRENT_BINARY_DIR})
-
-QT4_WRAP_CPP(NINJA_GUI_INCLUDES_MOC ${NINJA_GUI_INCLUDES})
-QT4_ADD_RESOURCES(NINJA_GUI_RESOURCES ${PROJECT_SOURCE_DIR}/wn-resources.qrc)
-
-set(NINJA_GUI_SOURCES cmake_gui.cpp
-                      ${PROJECT_SOURCE_DIR}/src/ninja/cli.cpp
-                      consoleDockWidget.cpp
-                      diurnalInput.cpp
-                      stabilityInput.cpp
-                      fbOutput.cpp
-                      googleOutput.cpp
-                      latLonWidget.cpp
-                      mainWindow.cpp
-                      metaWindWidget.cpp
-                      outputHeightWidget.cpp
-                      outputMetaData.cpp
-                      nativeSolverInput.cpp
-                      ninjafoamInput.cpp
-                      pdfOutput.cpp
-                      pointInput.cpp
-                      shapeOutput.cpp
-                      solvePage.cpp
-                      solveThread.cpp
-                      splash.cpp
-                      surfaceInput.cpp
-                      timeZoneWidget.cpp
-                      vec3f.cpp
-                      vtkOutput.cpp
-                      weatherModel.cpp
-                      windInput.cpp
-                      windInputTable.cpp
-                      WindNinjaTree.cpp
-                      WidgetDownloadDEM.cpp
-                      stationFetchWidget.cpp
-                      GoogleMapsInterface.cpp
-                      setconfigdialog.cpp
-                      ${QTUI_H_SRCS})
+set(CONSOLE_FLAG "")
 if(WIN32)
-    set(NINJA_GUI_SOURCES ${NINJA_GUI_SOURCES} 
-                          ${PROJECT_SOURCE_DIR}/wn-ms-resource.rc)
-    add_definitions(-DQT_NO_DEBUG_OUTPUT)
-endif(WIN32)
+    option(ENABLE_CONSOLE "Build the WindNinja GUI without a console window on Windows" OFF)
 
-set(LINK_LIBS ${QT_LIBRARIES}
-              ${GDAL_LIBRARY}
-              ${Boost_LIBRARIES}
-              ${CURL_LIBRARIES}
-              ${NETCDF_LIBRARIES_C})
-
-if(WIN32)
-    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
     if(NOT ENABLE_CONSOLE)
-        set(LINK_LIBS ${LINK_LIBS} ${QT_QTMAIN_LIBRARY})
-        set(GUI_TYPE WIN32)
-    else(NOT ENABLE_CONSOLE)
-        set(GUI_TYPE "")
-    endif(NOT ENABLE_CONSOLE)
-else(WIN32)
-    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
-endif(WIN32)
+        set(CONSOLE_FLAG WIN32)
+    endif()
+endif()
 
-add_executable(WindNinja ${GUI_TYPE}
-                         ${NINJA_GUI_INCLUDES_MOC} 
-                         ${NINJA_GUI_RESOURCES}
-                         ${NINJA_GUI_SOURCES})
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS
+    Core
+    Widgets
+    WebEngineWidgets
+    WebChannel
+)
 
-target_link_libraries(WindNinja ${LINK_LIBS})
-add_dependencies(WindNinja ninja)
-install(TARGETS WindNinja DESTINATION bin COMPONENT apps)
+set(PROJECT_SOURCES
+        main.cpp
+        mainWindow.cpp
+        mainWindow.h
+        mainWindow.ui
+)
 
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(WindNinja ${CONSOLE_FLAG}
+        MANUAL_FINALIZATION
+        ${PROJECT_SOURCES}
+        ${CMAKE_SOURCE_DIR}/wn-resources.qrc
+        appState.h
+        appState.cpp
+        surfaceInput.h
+        surfaceInput.cpp
+        setConfigurationDialogOption.h
+        setConfigurationDialogOption.cpp
+        setConfigurationDialogOption.ui
+        menuBar.h
+        menuBar.cpp
+        mapBridge.h
+        mapBridge.cpp
+        surfaceInput.h
+        surfaceInput.cpp
+        serverBridge.h
+        serverBridge.cpp
+        domainAverageInput.h
+        domainAverageInput.cpp
+        pointInitializationInput.h
+        pointInitializationInput.cpp
+        weatherModelInput.h
+        weatherModelInput.cpp
+        outputs.h
+        outputs.cpp
+        noWheelDoubleSpinBox.h
+    )
+else()
+    add_executable(WindNinja
+        ${PROJECT_SOURCES}
+    )
+endif()
+
+find_package(GDAL REQUIRED)
+
+if(WIN32)
+  target_link_libraries(WindNinja PRIVATE shapelib::shp)
+endif()
+
+target_link_libraries(WindNinja
+    PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+    PRIVATE Qt${QT_VERSION_MAJOR}::WebEngineWidgets
+    PRIVATE Qt${QT_VERSION_MAJOR}::WebChannel
+    Qt6::Core
+    PRIVATE ninja
+    GDAL::GDAL
+)
+
+include(GNUInstallDirs)
+install(TARGETS WindNinja
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_finalize_executable(WindNinja)
+endif()

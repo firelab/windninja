@@ -33,16 +33,15 @@ WindNinjaInputs::WindNinjaInputs()
 : ninjaTime(boost::local_time::not_a_date_time)
 {
     //Initialize variables
-    hSpdMemDs = NULL;
-    hDirMemDs = NULL;
-    hDustMemDs = NULL;
-    armySize = 1;
+    Com = new ninjaComClass();
+    inputsRunNumber = -9999;
     vegetation = WindNinjaInputs::trees;
     initializationMethod = WindNinjaInputs::noInitializationFlag;
     inputSpeedUnits = velocityUnits::milesPerHour;
     outputSpeedUnits = velocityUnits::milesPerHour;
     inputSpeed = -1.0;
-    inputDirection = -1.0;
+    inputDirection_geog = -1.0;
+    inputDirection_proj = -1.0;
     inputWindHeightUnits = lengthUnits::meters;
     inputWindHeight = -1.0;
     outputWindHeightUnits = lengthUnits::meters;
@@ -65,8 +64,8 @@ WindNinjaInputs::WindNinjaInputs()
 
     googColor = "default";
     googVectorScale = false;
+    googUseConsistentColorScale = false;
 
-    writeAtmFile = false;
     googSpeedScaling = KmlVector::equal_interval;
     googLineWidth = 1.0;
     wxModelGoogOutFlag = false;
@@ -74,13 +73,22 @@ WindNinjaInputs::WindNinjaInputs()
     wxModelGoogLineWidth = 3.0;
     shpOutFlag = false;
     
-    huvwOutFlag = false;
-    huvw0OutFlag = false;
-
     asciiOutFlag = false;
-    
+    asciiAaigridOutFlag = false;
+    asciiJsonOutFlag = false;
+    asciiProjOutFlag = false;
+    asciiGeogOutFlag = false;
+    asciiUvOutFlag = false;
+
+    geoTiffOutFlag = false;
+    geoTiffFile = "!set";
+    geoTiffResolution = -1.0;
+    geoTiffUnits = lengthUnits::meters;
+
     wxModelShpOutFlag = false;
     wxModelAsciiOutFlag = false;
+    wxModelGeoTiffOutFlag = false;
+    wxModelGeoTiffFile = "!set";
     txtOutFlag = false;
     volVTKOutFlag = false;
     kmlFile = "!set";
@@ -95,14 +103,12 @@ WindNinjaInputs::WindNinjaInputs()
     wxModelDbfFile = "!set";
     shpResolution = -1.0;
     shpUnits = lengthUnits::meters;
-    cldFile = "!set";
     velFile = "!set";
-    wxModelCldFile = "!set";
     wxModelVelFile = "!set";
     velResolution = -1.0;
     velOutputFileDistanceUnits = lengthUnits::meters;
     angFile = "!set";
-    atmFile = "!set";
+    atmOutFlag = false;
     wxModelAngFile = "!set";
     angResolution = -1.0;
     angOutputFileDistanceUnits = lengthUnits::meters;
@@ -119,6 +125,19 @@ WindNinjaInputs::WindNinjaInputs()
     pdfWidth = 8.5;
     pdfHeight = 11.0;
     pdfDPI = 150;
+    fgbzOutFlag = false;
+    fgbzFile = "!set";
+    fgbzResolution = -1.0;
+    fgbzUnits = lengthUnits::meters;
+    fgbzColor = "default";
+    fgbzVectorScale = false;
+    fgbzUseConsistentColorScale = false;
+    fgbzSpeedScaling = OutputWriter::equal_interval;
+    fgbzLineWidth = 1.0;
+    wxModelFgbzOutFlag = false;
+    wxModelFgbzFile = "!set";
+    wxModelFgbzSpeedScaling = OutputWriter::equal_interval;
+    wxModelFgbzLineWidth = 3.0;
     keepOutGridsInMemory = false;
     customOutputPath = "!set";
 #ifdef NINJA_SPEED_TESTING
@@ -141,7 +160,6 @@ WindNinjaInputs::WindNinjaInputs()
     dustFlag = false;
     dustFile = "!set";
     ustarFile = "!set";
-    geotiffOutFlag = false;
 #endif
 #ifdef NINJAFOAM
     nIterations = 1000;
@@ -153,7 +171,10 @@ WindNinjaInputs::WindNinjaInputs()
     dirInitGridFilename= "!set";
     foamVelocityGrid = -1.0;
     foamAngleGrid = -1.0;
+    foamWxForecastIdentifier = "!set";
     writeTurbulence = false;
+    colMax_colHeightAGL = 457.2;  // default value of 457.2 m is 1500 ft
+    colMax_colHeightAGL_units = lengthUnits::meters;
 #endif
     
     outputPointsFilename = "!set";
@@ -162,7 +183,7 @@ WindNinjaInputs::WindNinjaInputs()
     outputPath = "!set";
 
 #ifdef _OPENMP
-    omp_set_max_active_levels(0);
+    omp_set_max_active_levels(1);
     omp_set_dynamic(false);
 #endif //_OPENMP
 
@@ -170,6 +191,7 @@ WindNinjaInputs::WindNinjaInputs()
 
 WindNinjaInputs::~WindNinjaInputs()
 {
+    delete Com;
 }
 
 /**
@@ -179,7 +201,192 @@ WindNinjaInputs::~WindNinjaInputs()
 WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
 : ninjaTime(boost::local_time::not_a_date_time)
 {
-  *this = rhs;
+    Com = new ninjaComClass(*rhs.Com);
+
+    inputsRunNumber = rhs.inputsRunNumber;
+
+    vegetation = rhs.vegetation;
+
+    speedInitGridFilename = rhs.speedInitGridFilename;
+    dirInitGridFilename = rhs.dirInitGridFilename;
+    initializationMethod = rhs.initializationMethod;
+    forecastFilename = rhs.forecastFilename;
+    inputSpeedUnits = rhs.inputSpeedUnits;
+    outputSpeedUnits = rhs.outputSpeedUnits;
+    inputSpeed = rhs.inputSpeed;
+    inputDirection_geog = rhs.inputDirection_geog;
+    inputDirection_proj = rhs.inputDirection_proj;
+    inputWindHeightUnits = rhs.inputWindHeightUnits;
+    inputWindHeight = rhs.inputWindHeight;
+    outputWindHeightUnits = rhs.outputWindHeightUnits;
+    outputWindHeight = rhs.outputWindHeight;
+
+    stations = rhs.stations;
+    realStations = rhs.realStations;
+    wxStationFilename = rhs.wxStationFilename;
+    stationsScratch = rhs.stationsScratch;
+    stationsOldInput = rhs.stationsOldInput;
+    stationsOldOutput = rhs.stationsOldOutput;
+    stationFetch=rhs.stationFetch;
+    matchWxStations = rhs.matchWxStations;
+    outer_relax = rhs.outer_relax;
+    CPLDebug("NINJA", "Setting NINJA_POINT_MATCH_OUT_RELAX to %lf", outer_relax);
+    diurnalWinds = rhs.diurnalWinds;
+#ifdef EMISSIONS
+    dustFlag = rhs.dustFlag;
+    dustFilename = rhs.dustFilename;
+    dustFileOut = rhs.dustFileOut;
+    dustFile = rhs.dustFile;
+    ustarFile = rhs.ustarFile;
+#endif
+#ifdef NINJAFOAM
+    nIterations = rhs.nIterations;
+    meshCount = rhs.meshCount;
+    ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
+    existingCaseDirectory = rhs.existingCaseDirectory;
+    stlFile = rhs.stlFile;
+    foamVelocityGrid = rhs.foamVelocityGrid;
+    foamAngleGrid = rhs.foamAngleGrid;
+    foamWxTimeList = rhs.foamWxTimeList;
+    foamWxForecastIdentifier = rhs.foamWxForecastIdentifier;
+    writeTurbulence = rhs.writeTurbulence;
+    colMax_colHeightAGL = rhs.colMax_colHeightAGL;
+    colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
+#endif
+    outputPointsFilename = rhs.outputPointsFilename;
+    inputPointsFilename = rhs.inputPointsFilename;
+    pointsNamesList = rhs.pointsNamesList;
+    latList = rhs.latList;
+    lonList = rhs.lonList;
+    heightList = rhs.heightList;
+    projYList = rhs.projYList;
+    projXList = rhs.projXList;
+
+    ninjaTime = rhs.ninjaTime;
+    if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
+        ninjaTimeZone.reset();
+    else if(rhs.ninjaTimeZone->to_posix_string().empty()) //If pointer is good, but posix string is empty
+        ninjaTimeZone.reset();
+    else  //Else it is a good time zone pointer, so set accordingly
+        ninjaTimeZone = boost::local_time::time_zone_ptr (new boost::local_time::posix_time_zone(rhs.ninjaTimeZone->to_posix_string()));
+
+    airTempUnits = rhs.airTempUnits;
+    airTemp = rhs.airTemp;
+    cloudCoverUnits = rhs.cloudCoverUnits;
+    cloudCover = rhs.cloudCover;
+    latitude = rhs.latitude;
+    longitude = rhs.longitude;
+    numberCPUs = rhs.numberCPUs;
+    outputBufferClipping = rhs.outputBufferClipping;
+    googOutFlag = rhs.googOutFlag;
+    googSpeedScaling = rhs.googSpeedScaling;
+    googLineWidth = rhs.googLineWidth;
+    googColor = rhs.googColor;
+    googVectorScale = rhs.googVectorScale;
+    googUseConsistentColorScale = rhs.googUseConsistentColorScale;
+    wxModelGoogOutFlag = rhs.wxModelGoogOutFlag;
+    wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
+    wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
+    shpOutFlag = rhs.shpOutFlag;
+
+    asciiOutFlag = rhs.asciiOutFlag;
+    asciiAaigridOutFlag = rhs.asciiAaigridOutFlag;
+    asciiJsonOutFlag = rhs.asciiJsonOutFlag;
+    asciiProjOutFlag = rhs.asciiProjOutFlag;
+    asciiGeogOutFlag = rhs.asciiGeogOutFlag;
+    asciiUvOutFlag = rhs.asciiUvOutFlag;
+
+    geoTiffOutFlag = rhs.geoTiffOutFlag;
+    geoTiffFile = rhs.geoTiffFile;
+    geoTiffResolution = rhs.geoTiffResolution;
+    geoTiffUnits = rhs.geoTiffUnits;
+
+    wxModelShpOutFlag = rhs.wxModelShpOutFlag;
+    wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
+    wxModelGeoTiffOutFlag = rhs.wxModelGeoTiffOutFlag;
+    wxModelGeoTiffFile = rhs.wxModelGeoTiffFile;
+    txtOutFlag = rhs.txtOutFlag;
+    volVTKOutFlag = rhs.volVTKOutFlag;
+    kmlFile = rhs.kmlFile;
+    kmzFile = rhs.kmzFile;
+    wxModelKmlFile = rhs.wxModelKmlFile;
+    wxModelKmzFile = rhs.wxModelKmzFile;
+    kmzResolution = rhs.kmzResolution;
+    kmzUnits = rhs.kmzUnits;
+    shpFile = rhs.shpFile;
+    dbfFile = rhs.dbfFile;
+    wxModelShpFile = rhs.wxModelShpFile;
+    wxModelDbfFile = rhs.wxModelDbfFile;
+    shpResolution = rhs.shpResolution;
+    shpUnits = rhs.shpUnits;
+    pdfOutFlag = rhs.pdfOutFlag;
+    pdfDEMFileName = rhs.pdfDEMFileName;
+    pdfResolution = rhs.pdfResolution;
+    pdfLineWidth  = rhs.pdfLineWidth;
+    pdfUnits = rhs.pdfUnits;
+    pdfFile = rhs.pdfFile;
+    pdfBaseType = rhs.pdfBaseType;
+    pdfWidth = rhs.pdfWidth;
+    pdfHeight = rhs.pdfHeight;
+    pdfDPI = rhs.pdfDPI;
+    velFile = rhs.velFile;
+    wxModelVelFile = rhs.wxModelVelFile;
+    velResolution = rhs.velResolution;
+    velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
+    angFile = rhs.angFile;
+    atmOutFlag = rhs.atmOutFlag;
+    wxModelAngFile = rhs.wxModelAngFile;
+    angResolution = rhs.angResolution;
+    angOutputFileDistanceUnits = rhs.angOutputFileDistanceUnits;
+    legFile = rhs.legFile;
+    dateTimeLegFile = rhs.dateTimeLegFile;
+    wxModelLegFile = rhs.wxModelLegFile;
+    dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
+    volVTKFile = rhs.volVTKFile;
+    keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+    fgbzOutFlag = rhs.fgbzOutFlag;
+    fgbzFile = rhs.fgbzFile;
+    fgbzResolution = rhs.fgbzResolution;
+    fgbzUnits = rhs.fgbzUnits;
+    fgbzSpeedScaling = rhs.fgbzSpeedScaling;
+    fgbzColor = rhs.fgbzColor;
+    fgbzVectorScale = rhs.fgbzVectorScale;
+    fgbzLineWidth = rhs.fgbzLineWidth;
+    fgbzUseConsistentColorScale = rhs.fgbzUseConsistentColorScale;
+    wxModelFgbzOutFlag = rhs.wxModelFgbzOutFlag;
+    wxModelFgbzFile = rhs.wxModelFgbzFile;
+    wxModelFgbzSpeedScaling = rhs.wxModelFgbzSpeedScaling;
+    wxModelFgbzLineWidth = rhs.wxModelFgbzLineWidth;
+    customOutputPath = rhs.customOutputPath;
+
+#ifdef NINJA_SPEED_TESTING
+    speedDampeningRatio = rhs.speedDampeningRatio;
+#endif
+
+    downDragCoeff = rhs.downDragCoeff;
+    downEntrainmentCoeff = rhs.downEntrainmentCoeff;
+    upDragCoeff = rhs.upDragCoeff;
+    upEntrainmentCoeff = rhs.upEntrainmentCoeff;
+
+    stabilityFlag = rhs.stabilityFlag;
+    alphaStability = rhs.alphaStability;
+#ifdef FRICTION_VELOCITY
+    frictionVelocityFlag = rhs.frictionVelocityFlag;
+    frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;
+    ustarFile = rhs.ustarFile;
+#endif
+
+    outputPath = rhs.outputPath;
+
+    //class crap
+    dem = rhs.dem;
+    surface = rhs.surface;
+
+#ifdef _OPENMP
+    omp_set_max_active_levels(1);
+    omp_set_dynamic(false);
+#endif //_OPENMP
+
 }
 
 /**
@@ -190,11 +397,12 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
  * @param rhs WindNinjaInputs object to compare with.
  * @return true if objects are equal, otherwise false.
  */
-bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs)
+bool WindNinjaInputs::operator==(const WindNinjaInputs &rhs) const
 {
     if( inputSpeed == rhs.inputSpeed &&
         inputSpeedUnits == rhs.inputSpeedUnits &&
-        inputDirection == rhs.inputDirection &&
+        inputDirection_geog == rhs.inputDirection_geog &&
+        inputDirection_proj == rhs.inputDirection_proj &&
         airTemp == rhs.airTemp &&
         airTempUnits == rhs.airTempUnits &&
         cloudCover == rhs.cloudCover &&
@@ -218,28 +426,30 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
 {
   if(&rhs != this)
     {
-      //ninjaCom stuff
-      Com = NULL;   //must be set to null!
-      armySize = rhs.armySize;
-      hSpdMemDs = rhs.hSpdMemDs;
-      hDirMemDs = rhs.hDirMemDs;
-      hDustMemDs = rhs.hDustMemDs;
-      
+      delete Com;
+      Com = new ninjaComClass();
+      *Com = *rhs.Com;
+
+      inputsRunNumber = rhs.inputsRunNumber;
+
       vegetation = rhs.vegetation;
 
+      speedInitGridFilename = rhs.speedInitGridFilename;
+      dirInitGridFilename = rhs.dirInitGridFilename;
       initializationMethod = rhs.initializationMethod;
       forecastFilename = rhs.forecastFilename;
       inputSpeedUnits = rhs.inputSpeedUnits;
       outputSpeedUnits = rhs.outputSpeedUnits;
       inputSpeed = rhs.inputSpeed;
-      inputDirection = rhs.inputDirection;
+      inputDirection_geog = rhs.inputDirection_geog;
+      inputDirection_proj = rhs.inputDirection_proj;
       inputWindHeightUnits = rhs.inputWindHeightUnits;
       inputWindHeight = rhs.inputWindHeight;
       outputWindHeightUnits = rhs.outputWindHeightUnits;
       outputWindHeight = rhs.outputWindHeight;
-      
-      
+
       stations = rhs.stations;
+      realStations = rhs.realStations;
       wxStationFilename = rhs.wxStationFilename;
       stationsScratch = rhs.stationsScratch;
       stationsOldInput = rhs.stationsOldInput;
@@ -253,7 +463,6 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       dustFlag = rhs.dustFlag;
       dustFilename = rhs.dustFilename;
       dustFileOut = rhs.dustFileOut;
-      geotiffOutFlag = rhs.geotiffOutFlag;
       dustFile = rhs.dustFile;
       ustarFile = rhs.ustarFile;
 #endif
@@ -261,10 +470,15 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       nIterations = rhs.nIterations;
       meshCount = rhs.meshCount;
       ninjafoamMeshChoice = rhs.ninjafoamMeshChoice;
+      existingCaseDirectory = rhs.existingCaseDirectory;
       stlFile = rhs.stlFile;
       foamVelocityGrid = rhs.foamVelocityGrid;
       foamAngleGrid = rhs.foamAngleGrid;
+      foamWxTimeList = rhs.foamWxTimeList;
+      foamWxForecastIdentifier = rhs.foamWxForecastIdentifier;
       writeTurbulence = rhs.writeTurbulence;
+      colMax_colHeightAGL = rhs.colMax_colHeightAGL;
+      colMax_colHeightAGL_units = rhs.colMax_colHeightAGL_units;
 #endif
       outputPointsFilename = rhs.outputPointsFilename;
       inputPointsFilename = rhs.inputPointsFilename;
@@ -272,6 +486,8 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       latList = rhs.latList;
       lonList = rhs.lonList;
       heightList = rhs.heightList;
+      projYList = rhs.projYList;
+      projXList = rhs.projXList;
 
       ninjaTime = rhs.ninjaTime;
       if(rhs.ninjaTimeZone.get() == NULL)   //If pointer is NULL
@@ -281,30 +497,41 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       else  //Else it is a good time zone pointer, so set accordingly
           ninjaTimeZone = boost::local_time::time_zone_ptr (new boost::local_time::posix_time_zone(rhs.ninjaTimeZone->to_posix_string()));
 
+      airTempUnits = rhs.airTempUnits;
       airTemp = rhs.airTemp;
+      cloudCoverUnits = rhs.cloudCoverUnits;
       cloudCover = rhs.cloudCover;
       latitude = rhs.latitude;
       longitude = rhs.longitude;
       numberCPUs = rhs.numberCPUs;
       outputBufferClipping = rhs.outputBufferClipping;
-      writeAtmFile = rhs.writeAtmFile;
       googOutFlag = rhs.googOutFlag;
       googSpeedScaling = rhs.googSpeedScaling;
       googLineWidth = rhs.googLineWidth;
       googColor = rhs.googColor;
       googVectorScale = rhs.googVectorScale;
+      googUseConsistentColorScale = rhs.googUseConsistentColorScale;
       wxModelGoogOutFlag = rhs.wxModelGoogOutFlag;
       wxModelGoogSpeedScaling = rhs.wxModelGoogSpeedScaling;
       wxModelGoogLineWidth = rhs.wxModelGoogLineWidth;
       shpOutFlag = rhs.shpOutFlag;
 
-      huvwOutFlag = rhs.huvwOutFlag;
-      huvw0OutFlag = rhs.huvw0OutFlag;
-
       asciiOutFlag = rhs.asciiOutFlag;
-      
+      asciiAaigridOutFlag = rhs.asciiAaigridOutFlag;
+      asciiJsonOutFlag = rhs.asciiJsonOutFlag;
+      asciiProjOutFlag = rhs.asciiProjOutFlag;
+      asciiGeogOutFlag = rhs.asciiGeogOutFlag;
+      asciiUvOutFlag = rhs.asciiUvOutFlag;
+
+      geoTiffOutFlag = rhs.geoTiffOutFlag;
+      geoTiffFile = rhs.geoTiffFile;
+      geoTiffResolution = rhs.geoTiffResolution;
+      geoTiffUnits = rhs.geoTiffUnits;
+
       wxModelShpOutFlag = rhs.wxModelShpOutFlag;
       wxModelAsciiOutFlag = rhs.wxModelAsciiOutFlag;
+      wxModelGeoTiffOutFlag = rhs.wxModelGeoTiffOutFlag;
+      wxModelGeoTiffFile = rhs.wxModelGeoTiffFile;
       txtOutFlag = rhs.txtOutFlag;
       volVTKOutFlag = rhs.volVTKOutFlag;
       kmlFile = rhs.kmlFile;
@@ -329,36 +556,49 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       pdfWidth = rhs.pdfWidth;
       pdfHeight = rhs.pdfHeight;
       pdfDPI = rhs.pdfDPI;
-      cldFile = rhs.cldFile;
       velFile = rhs.velFile;
-      wxModelCldFile = rhs.wxModelCldFile;
       wxModelVelFile = rhs.wxModelVelFile;
       velResolution = rhs.velResolution;
       velOutputFileDistanceUnits = rhs.velOutputFileDistanceUnits;
       angFile = rhs.angFile;
-      atmFile = rhs.atmFile;
+      atmOutFlag = rhs.atmOutFlag;
       wxModelAngFile = rhs.wxModelAngFile;
       angResolution = rhs.angResolution;
       angOutputFileDistanceUnits = rhs.angOutputFileDistanceUnits;
       legFile = rhs.legFile;
       dateTimeLegFile = rhs.dateTimeLegFile;
+      wxModelLegFile = rhs.wxModelLegFile;
+      dateTimewxModelLegFile = rhs.dateTimewxModelLegFile;
       volVTKFile = rhs.volVTKFile;
       keepOutGridsInMemory = rhs.keepOutGridsInMemory;
+      fgbzOutFlag = rhs.fgbzOutFlag;
+      fgbzFile = rhs.fgbzFile;
+      fgbzResolution = rhs.fgbzResolution;
+      fgbzUnits = rhs.fgbzUnits;
+      fgbzSpeedScaling = rhs.fgbzSpeedScaling;
+      fgbzColor = rhs.fgbzColor;
+      fgbzVectorScale = rhs.fgbzVectorScale;
+      fgbzLineWidth = rhs.fgbzLineWidth;
+      fgbzUseConsistentColorScale = rhs.fgbzUseConsistentColorScale;
+      wxModelFgbzOutFlag = rhs.wxModelFgbzOutFlag;
+      wxModelFgbzFile = rhs.wxModelFgbzFile;
+      wxModelFgbzSpeedScaling = rhs.wxModelFgbzSpeedScaling;
+      wxModelFgbzLineWidth = rhs.wxModelFgbzLineWidth;
       customOutputPath = rhs.customOutputPath;
-      
+
 #ifdef NINJA_SPEED_TESTING
       speedDampeningRatio = rhs.speedDampeningRatio;
 #endif
 
       downDragCoeff = rhs.downDragCoeff;
-      downEntrainmentCoeff = rhs.downDragCoeff;
+      downEntrainmentCoeff = rhs.downEntrainmentCoeff;
       upDragCoeff = rhs.upDragCoeff;
       upEntrainmentCoeff = rhs.upEntrainmentCoeff;
-      
+
       stabilityFlag = rhs.stabilityFlag;
       alphaStability = rhs.alphaStability;
 #ifdef FRICTION_VELOCITY
-      frictionVelocityFlag = rhs.frictionVelocityFlag; 
+      frictionVelocityFlag = rhs.frictionVelocityFlag;
       frictionVelocityCalculationMethod = rhs.frictionVelocityCalculationMethod;
       ustarFile = rhs.ustarFile;
 #endif
@@ -370,7 +610,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       surface = rhs.surface;
 
 #ifdef _OPENMP
-      omp_set_max_active_levels(0);
+      omp_set_max_active_levels(1);
       omp_set_dynamic(false);
 #endif //_OPENMP
 

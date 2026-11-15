@@ -1,6 +1,5 @@
 #include "ascii_grid.h"
 
-#include "gdal_util.h" // watch out - this is a cyclic dependency
 
 inline void check(CPLErr res) {
     if (res != CE_None) {
@@ -9,11 +8,17 @@ inline void check(CPLErr res) {
     }
 }
 
+template <class T> GDALDataType getGdalDataType() { return GDT_Unknown; }
+template<> GDALDataType getGdalDataType<double>() { return GDT_Float64; }
+template<> GDALDataType getGdalDataType<short>() { return GDT_Int16; }
+template<> GDALDataType getGdalDataType<int>() { return GDT_Int32; }
+// ...and more specializations to follow
 // make the default throw so that we don't try to scan into a wrong type size
+// note - older MSVCs seem to have problems with regex_replace(const char* fmt..) hene we have to pass in temporary strings
 template <class T> string dataFormat(const char* fmt) { throw std::runtime_error("unknown data format specifier"); }
-template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "lf"); }
-template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "d"); }
-template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(fmt, regex("<T>"), "hd"); }
+template<> string dataFormat<double>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("lf")); }
+template<> string dataFormat<int>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("d")); }
+template<> string dataFormat<short>(const char* fmt) { return std::regex_replace(std::string(fmt), regex("<T>"), std::string("hd")); }
 
 template <class T> inline T epsClr() { throw std::runtime_error("unknown eps value"); }
 template<> inline double epsClr<double>() { return 0.001; }
@@ -31,12 +36,10 @@ AsciiGrid<T>::AsciiGrid()
     cellSize = 0;
     xllCorner = 0;
     yllCorner = 0;
-    sortedData = 0;
 
     #ifdef ASCII_GRID_DEBUG
         std::cout << "Created AsciiGrid using AsciiGrid()" << std::endl;
     #endif
-
 }
 
 /**
@@ -50,10 +53,8 @@ template <class T>
 AsciiGrid<T>::AsciiGrid(const std::string fileName)
 {
     prjString = "";
-    sortedData = 0;
 
     read_Grid(fileName);
-
 }
 
 /**
@@ -66,20 +67,12 @@ AsciiGrid<T>::AsciiGrid(const std::string fileName)
 template <class T>
 AsciiGrid<T>::AsciiGrid(const AsciiGrid &A)
 {
-    sortedData = 0;
     data = A.data;
     cellSize = A.cellSize;
     xllCorner = A.xllCorner;
     yllCorner = A.yllCorner;
     prjString = A.prjString;
-
-    if(A.sortedData != NULL)
-    {
-        sortedData = new T[data.get_numRows() * data.get_numCols()];
-        for(int i = 0; i < data.get_numRows() * data.get_numCols(); i++)
-            sortedData[i] = A.sortedData[i];
-    }
-
+    sortedData = A.sortedData;
 }
 
 /**
@@ -103,7 +96,6 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
     xllCorner = 0;
     yllCorner = 0;
     prjString = prjStr;
-    sortedData = 0;
     cellSize = cS;
     xllCorner = xL;
     yllCorner = yL;
@@ -128,7 +120,6 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
 :data(nR, nC, nDV)
 {
     prjString = prjStr;
-    sortedData = 0;
     cellSize = cS;
     xllCorner = xL;
     yllCorner = yL;
@@ -136,11 +127,9 @@ AsciiGrid<T>::AsciiGrid(int nC, int nR, double xL, double yL, double cS, double 
 }
 
 template <class T>
-AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band) 
+AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
 :data(poDS->GetRasterYSize(), poDS->GetRasterXSize(), poDS->GetRasterBand(band)->GetNoDataValue())
 {
-    sortedData = nullptr;
-
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
 
@@ -155,7 +144,7 @@ AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
     //check for non-square cells
     /*
     if( abs( adfGeoTransform[1] ) - abs( adfGeoTransform[5] ) > 0.0001 )
-	CPLDebug( "GDAL2AsciiGrid", "Non-uniform cells" );
+    CPLDebug( "GDAL2AsciiGrid", "Non-uniform cells" );
     */
 
     GDALRasterBand *poBand;
@@ -167,7 +156,7 @@ AsciiGrid<T>::AsciiGrid(GDALDataset *poDS, int band)
     int pbSuccess = 0;
     double dfNoData = poBand->GetNoDataValue( &pbSuccess );
     if( pbSuccess == false )
-	dfNoData = -9999.0;
+        dfNoData = -9999.0;
 
     //reallocate all memory and set header info
     set_headerData( nXSize, nYSize, adfCorner[0], adfCorner[1], adfGeoTransform[1], dfNoData, dfNoData);
@@ -212,12 +201,6 @@ AsciiGrid<T>::~AsciiGrid()
 template <class T>
 void AsciiGrid<T>::deallocate()
 {
-    if(sortedData)
-    {
-        delete[]sortedData;
-        sortedData = NULL;
-    }
-
     cellSize = 0.0;
     xllCorner = 0.0;
     yllCorner = 0.0;
@@ -406,10 +389,10 @@ void AsciiGrid<T>::GDALReadGrid(std::string inputFile, int band)
     if( pbSuccess == FALSE )
         dfNoData = -9999.0;
 
-    //reallocate all memory and set header info    
+    //reallocate all memory and set header info
     set_headerData(nXSize, nYSize, adfCorner[0], adfCorner[1],
                                adfGeoTransform[1], dfNoData, dfNoData, std::string(pszWkt));
-    
+
     //set the data
     double *padfScanline;
     padfScanline = new double[nXSize];
@@ -533,13 +516,13 @@ void AsciiGrid<T>::get_nearestCellIndex(double xCoord, double yCoord, int *i, in
 }
 
 template <class T>
-T AsciiGrid<T>::get_maxValue()
+T AsciiGrid<T>::get_maxValue() const
 {
     return data.max();
 }
 
 template <class T>
-T AsciiGrid<T>::get_minValue()
+T AsciiGrid<T>::get_minValue() const
 {
     return data.min();
 }
@@ -819,7 +802,7 @@ AsciiGrid<T> AsciiGrid<T>::BufferAroundGrid( int nAddCols, int nAddRows )
                 j+nAddCols < 0 || j+nAddCols >= A.get_nCols())
             {
                 continue;
-            } 
+            }
             A.set_cellValue( i+nAddRows, j+nAddCols, get_cellValue(i, j));
         }
     }
@@ -882,7 +865,7 @@ void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
 }
 
 /**
- * \brief Check if one grid overlaps another 
+ * \brief Check if one grid overlaps another
  *
  * Check if one grid completely overlaps another grid.
  *
@@ -892,20 +875,24 @@ void AsciiGrid<T>::BufferToOverlapGrid( AsciiGrid &A )
 template<class T>
 bool AsciiGrid<T>::CheckForGridOverlap( AsciiGrid &A )
 {
-    double xMinOverlap, yMinOverlap, xMaxOverlap, yMaxOverlap;
-    xMinOverlap = get_xllCorner() - A.get_xllCorner();
-    xMaxOverlap = (get_xllCorner() + get_nCols()*get_cellSize()) -
-        (A.get_xllCorner() + A.get_nCols()*A.get_cellSize());
-    yMinOverlap = get_yllCorner() - A.get_yllCorner();
-    yMaxOverlap = (get_yllCorner() + get_nRows()*get_cellSize()) -
-        (A.get_yllCorner() + A.get_nRows()*A.get_cellSize());
+    double xmin = get_xllCorner();
+    double xmax = xmin + get_nCols()*get_cellSize();
+    double ymin = get_yllCorner();
+    double ymax = ymin + get_nRows()*get_cellSize();
 
-    if(!(xMinOverlap < 0.0 && xMaxOverlap < 0.0 && yMinOverlap < 0.0 && yMaxOverlap < 0.0))
+    double A_xmin = A.get_xllCorner();
+    double A_xmax = A_xmin + A.get_nCols()*A.get_cellSize();
+    double A_ymin = A.get_yllCorner();
+    double A_ymax = A_ymin + A.get_nRows()*A.get_cellSize();
+
+    if (A_xmin > xmin && A_xmax < xmax && A_ymin > ymin && A_ymax < ymax)
     {
         return true;
     }
     else
+    {
         return false;
+    }
 }
 
 template<class T>
@@ -924,11 +911,13 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
         return true;
     else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
         throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
-    
+
     double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
     double sum;
     int nValues;
     int numPasses = 0;
+    double noDataValue = get_noDataValue();
+
     if(percentNoData > maxPercentNoData)
     {
         return false;
@@ -940,7 +929,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
             {
                 for(int j = 0;j < data.get_numCols();j++)
                 {
-                    if(get_cellValue(i, j) == get_noDataValue() || std::isnan(get_cellValue(i,j)))
+                    if(get_cellValue(i, j) == noDataValue || std::isnan(get_cellValue(i,j)))
                     {
                         sum = 0.0;
                         nValues = 0;
@@ -952,7 +941,7 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
                                     jj < 0 || jj >= get_nCols())
                                     continue;
 
-                                if(get_cellValue(ii, jj) == get_noDataValue() || std::isnan(get_cellValue(ii, jj)))
+                                if(get_cellValue(ii, jj) == noDataValue || std::isnan(get_cellValue(ii, jj)))
                                     continue;
 
                                 sum = sum + get_cellValue(ii, jj);
@@ -970,6 +959,157 @@ bool AsciiGrid<T>::fillNoDataValues( int minNeighborCells, double maxPercentNoDa
     }
     return true;
 }
+
+template<class T>
+bool AsciiGrid<T>::fillNoDataValuesAngle( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
+{
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            if(get_cellValue(i,j) == get_noDataValue() || std::isnan(get_cellValue(i,j)))
+                numNoDataValues++;
+        }
+    }
+    if(numNoDataValues == 0)
+        return true;
+    else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
+        throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
+
+    double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
+    double sinSum, cosSum;
+    int nValues;
+    int numPasses = 0;
+    double noDataValue = get_noDataValue();
+    T val;
+
+    if(percentNoData > maxPercentNoData)
+    {
+        return false;
+    }else{
+        do{
+            numNoDataValues = 0;
+            numPasses++;
+            for(int i = 0;i < data.get_numRows();i++)
+            {
+                for(int j = 0;j < data.get_numCols();j++)
+                {
+                    if(get_cellValue(i, j) == noDataValue || std::isnan(get_cellValue(i,j)))
+                    {
+                        sinSum = 0.0;
+                        cosSum = 0.0;
+                        nValues = 0;
+                        for(int ii = i-1; ii <= i+1; ii++)
+                        {
+                            for(int jj = j-1; jj <= j+1; jj++)
+                            {
+                                if(ii < 0 || ii >= get_nRows() ||
+                                    jj < 0 || jj >= get_nCols())
+                                    continue;
+
+                                if(get_cellValue(ii, jj) == noDataValue || std::isnan(get_cellValue(ii, jj)))
+                                    continue;
+
+                                sinSum = sinSum + sin(get_cellValue(ii, jj)*pi/180.0);
+                                cosSum = cosSum + cos(get_cellValue(ii, jj)*pi/180.0);
+                                nValues++;
+                            }
+                        }
+                        if(nValues > 0)
+                        {
+                            val = atan2(sinSum/nValues,cosSum/nValues)*180.0/pi;
+                            if(val < 0.0)
+                            {
+                                val = val + 360.0;
+                            }
+                            set_cellValue(i, j, val);
+                        } else
+                        {
+                            numNoDataValues++;
+                        }
+                    }
+                }
+            }
+        }while(numNoDataValues > 0 && numPasses <= maxNumPasses);
+    }
+    return true;
+}
+
+template<class T>
+bool AsciiGrid<T>::fillNoDataValuesCategorical( int minNeighborCells, double maxPercentNoData, int maxNumPasses )
+{
+    int numNoDataValues = 0;
+    for(int i = 0;i < data.get_numRows();i++)
+    {
+        for(int j = 0;j < data.get_numCols();j++)
+        {
+            if(get_cellValue(i,j) == get_noDataValue() || std::isnan(get_cellValue(i,j)))
+                numNoDataValues++;
+        }
+    }
+    if(numNoDataValues == 0)
+        return true;
+    else if(numNoDataValues == (data.get_numRows() * data.get_numCols()))
+        throw std::runtime_error("The grid does not contain any values. Cannot fill with AsciiGrid<T>::fillNoDataValues().");
+
+    double percentNoData = 100.0 * numNoDataValues / (data.get_numRows()*data.get_numCols());
+    double sum;
+    int nValues;
+    int numPasses = 0;
+    double noDataValue = get_noDataValue();
+    std::vector<int> values;
+
+    if(percentNoData > maxPercentNoData)
+    {
+        return false;
+    }else{
+        do{
+            numNoDataValues = 0;
+            numPasses++;
+            for(int i = 0;i < data.get_numRows();i++)
+            {
+                for(int j = 0;j < data.get_numCols();j++)
+                {
+                    if(get_cellValue(i, j) == noDataValue || std::isnan(get_cellValue(i,j)))
+                    {
+                        sum = 0.0;
+                        nValues = 0;
+                        for(int ii = i-1; ii <= i+1; ii++)
+                        {
+                            for(int jj = j-1; jj <= j+1; jj++)
+                            {
+                                if(ii < 0 || ii >= get_nRows() ||
+                                    jj < 0 || jj >= get_nCols())
+                                {
+                                    continue;
+                                }
+
+                                if(get_cellValue(ii, jj) == noDataValue || std::isnan(get_cellValue(ii, jj)))
+                                {
+                                    continue;
+                                }
+
+                                values.push_back( int(get_cellValue(ii, jj)) );
+                                nValues++;
+                            }
+                        }
+                        if(nValues > 0)
+                        {
+                            set_cellValue(i, j, computeMode(values)); //set to mode of valid values from neighboring cells
+                        }
+                        else
+                            numNoDataValues++;
+
+                        values.clear();
+                    }
+                }
+            }
+        }while(numNoDataValues > 0 && numPasses <= maxNumPasses);
+    }
+    return true;
+}
+
 
 /**
  * \brief Add cells to all edges of an ascii grid
@@ -1096,6 +1236,120 @@ void AsciiGrid<T>::clipGridInPlaceSnapToCells(double percentClip)
 
             *this = A;
         }
+    }
+}
+
+template <class T>
+void AsciiGrid<T>::clipGridInPlaceSnapToCells(double west, double east, double south, double north)
+{
+    if(west > east || south > north)
+    {
+        std::ostringstream buff_str;
+        buff_str << "The AsciiGrid clipping grid is improperly set to west,east,south,north " << west << "," << east << ", " << south << "," << north << ".  bbox should be east > west and north > south.";
+        throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    if( check_inBounds( west, south ) == false || check_inBounds( east, north ) == false )
+    {
+        std::ostringstream buff_str;
+        buff_str << "The AsciiGrid clipping grid extends outside the bounds of the data!!";
+        throw std::out_of_range(buff_str.str().c_str());
+    }
+
+    int westIdx = 0;
+    int eastIdx = 0;
+    int southIdx = 0;
+    int northIdx = 0;
+    // the get_cellIndex function, if in between cells, tends to round down rather than to round up
+    // this means slightly bigger than the bounding box for south and west, but slightly smaller than the bounding box for north and east
+    get_cellIndex(west, south, &southIdx, &westIdx);
+    get_cellIndex(east, north, &northIdx, &eastIdx);
+    //std::cout << "westIdx,eastIdx,southIdx,northIdx = " << westIdx << "," << eastIdx << "," << southIdx << "," << northIdx << std::endl;
+    //std::cout << "nRows,nCols = " << get_nRows() << "," << get_nCols() << std::endl;
+
+    double clippedWest;
+    double clippedEast;
+    double clippedSouth;
+    double clippedNorth;
+    get_cellPosition(southIdx, westIdx, &clippedWest, &clippedSouth);
+    get_cellPosition(northIdx, eastIdx, &clippedEast, &clippedNorth);
+    // get_cellPosition grabs the location PLUS 1/2 a cell size, so need to take back out that 1/2 cell size
+    clippedWest = clippedWest - (cellSize / 2.0);
+    clippedEast = clippedEast - (cellSize / 2.0);
+    clippedSouth = clippedSouth - (cellSize / 2.0);
+    clippedNorth = clippedNorth - (cellSize / 2.0);
+    //std::cout << "        west,east,south,north = " << west << "," << east << "," << south << "," << north << std::endl;
+    //std::cout << "clipped west,east,south,north = " << clippedWest << "," << clippedEast << "," << clippedSouth << "," << clippedNorth << std::endl;
+
+    // adjust the found cell size based clipping area, to always encompass the desired clipping area.
+    // so round the cell size based clipping area, to the desired clipping area.
+    // note the + or - 1/2 cell size, instead of just comparing the areas,
+    //  that acts as a rounding method, similar to int(val+0.5) is equivalent to round(val)
+    if((clippedWest - (cellSize/2.0)) > west)
+    {
+        if(westIdx-1 > 0)
+        {
+            westIdx = westIdx - 1;
+        }
+    }
+    if((clippedEast + (cellSize/2.0)) < east)
+    {
+        if(eastIdx+1 < get_nCols())
+        {
+            eastIdx = eastIdx + 1;
+        }
+    }
+    if((clippedSouth - (cellSize/2.0)) > south)
+    {
+        if(southIdx-1 > 0)
+        {
+            southIdx = southIdx - 1;
+        }
+    }
+    if((clippedNorth + (cellSize/2.0)) < north)
+    {
+        if(northIdx+1 < get_nRows())
+        {
+            northIdx = northIdx + 1;
+        }
+    }
+    //std::cout << "westIdx,eastIdx,southIdx,northIdx = " << westIdx << "," << eastIdx << "," << southIdx << "," << northIdx << std::endl;
+    //std::cout << "nRows,nCols = " << get_nRows() << "," << get_nCols() << std::endl;
+
+    if ( westIdx == eastIdx && southIdx == northIdx )
+    {
+        // if there is zero clipping to be done, just return without doing anything
+    } else
+    {
+        int newNumCols, newNumRows;
+        int xClipCells, yClipCells;
+        double newXllCorner, newYllCorner;
+
+        xClipCells = westIdx;
+        yClipCells = southIdx;
+
+        newNumCols = eastIdx - westIdx;
+        newNumRows = northIdx - southIdx;
+        //std::cout << "xClipCells,yClipCells = " << xClipCells << "," << yClipCells << std::endl;
+        //std::cout << "newNumCols,newNumRows = " << newNumCols << "," << newNumRows << std::endl;
+        //std::cout << "xClipCells+newNumCols,yClipCells+newNumRows = " << xClipCells+newNumCols << "," << yClipCells+newNumRows << std::endl;
+
+        newXllCorner = xllCorner + xClipCells*cellSize;
+        newYllCorner = yllCorner + yClipCells*cellSize;
+        //std::cout << "newXllCorner,newXllCorner+newNumCols*cellSize = " << newXllCorner << "," << newXllCorner+newNumCols*cellSize << std::endl;
+        //std::cout << "newYllCorner,newYllCorner+newNumRows*cellSize = " << newYllCorner << "," << newYllCorner+newNumRows*cellSize << std::endl;
+
+        AsciiGrid<T>A(newNumCols, newNumRows, newXllCorner, newYllCorner, cellSize, data.getNoDataValue(), data.getNoDataValue(), prjString);
+
+        for(int i=0; i<A.get_nRows(); i++)
+        {
+            for(int j=0; j<A.get_nCols(); j++)
+            {
+                A.set_cellValue(i,j,get_cellValue(i+yClipCells, j+xClipCells));
+            }
+        }
+
+        *this = A;
     }
 }
 
@@ -1459,9 +1713,9 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
     if(numDecimals < -1 || numDecimals > 3)
         numDecimals = 2;
 
-    if (numDecimals == -1) { 
+    if (numDecimals == -1) {
         write_integralGridData(fout);
-    } else { 
+    } else {
         write_fpGridData(fout,numDecimals);
     }
 
@@ -1493,23 +1747,22 @@ void AsciiGrid<T>::write_Grid(std::string outputFile, int numDecimals)
 template<class T>
 void AsciiGrid<T>::sort_grid()
 {
-    if(sortedData)
-        delete[]sortedData;
-
     sortedData = data.sortData();
-
 }
 
 template<class T>
 void AsciiGrid<T>::divide_gridData(double *d, int splits)
 {
-    if(!sortedData)
-        sort_grid();
-    int x = int(floor((double)(data.size() / splits)));;
-    for(int i = 0;i < splits;i++)
+    sort_grid();
+
+    size_t step = sortedData.size() / static_cast<size_t>(splits - 1);
+
+    // do the final value as the exact last index
+    for(int i = 0; i < splits-1; i++)
     {
-        d[i] = sortedData[i * x];
+        d[i] = sortedData[i * step];
     }
+    d[splits-1] = sortedData[sortedData.size()-1];
 }
 
 template<class T>
@@ -1559,13 +1812,30 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
 
     hDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
-    gdalSetSrs( GDALDataset::FromHandle(hDS), nXSize, nYSize, get_xllCorner(), get_yllCorner(), get_cellSize(), prjString.c_str());
+    double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                get_yllCorner()+(get_nRows()*get_cellSize()),
+                                0, -(get_cellSize())};
 
-    double *padfScanline = new double[nXSize];
+    GDALSetGeoTransform(hDS, adfGeoTransform);
+
+    double *padfScanline;
+    padfScanline = new double[nXSize];
     CPLErr eErr = CE_None;
-    
+
+    adfGeoTransform[0] = get_xllCorner();
+    adfGeoTransform[1] = get_cellSize();
+    adfGeoTransform[2] = 0;
+    adfGeoTransform[3] = get_yllCorner()+(get_nRows()*get_cellSize());
+    adfGeoTransform[4] = 0;
+    adfGeoTransform[5] = -get_cellSize();
+
+    char* pszDstWKT = (char*)prjString.c_str();
+    GDALSetProjection(hDS, pszDstWKT);
+    GDALSetGeoTransform(hDS, adfGeoTransform);
+
     GDALRasterBandH hBand = GDALGetRasterBand( hDS, 1 );
-    GDALSetRasterNoDataValue(hBand, -9999.0);
+
+    GDALSetRasterNoDataValue(hBand, get_noDataValue());
 
     for(int i=nYSize-1; i>=0; i--)
     {
@@ -1574,13 +1844,12 @@ GDALDatasetH AsciiGrid<T>::ascii2GDAL()
             padfScanline[j] = get_cellValue(nYSize-1-i, j);
         }
         eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                            1, GDT_Float64, 0, 0); 
+                            1, GDT_Float64, 0, 0);
         assert( eErr == CE_None );
     }
 
     return hDS;
 }
-    
 
 /**
  * Create a png for an ascii grid.
@@ -1598,14 +1867,152 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
                              std::string legendTitle,
                              std::string legendUnits,
                              std::string scalarLegendFilename,
-                             bool writeLegend)
+                             bool writeLegend, bool keepTiff)
 {
+
+    double dataMinVal = get_minValue();
+    double dataMaxVal = get_maxValue();
+
+    // the default is 4 color breaks, which can be overwritten only with 3 color breaks
+    // note that the original colors are blue, green, yellow, and red in that order, and that nColorBreaks of 3 drops the first blue color
+    int nColorBreaks = 4;
+    std::string found_nColorBreaks_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_NCOLORBREAKS", "");
+    if ( found_nColorBreaks_str != "" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_NCOLORBREAKS=" << found_nColorBreaks_str << std::endl;
+        nColorBreaks = atoi(found_nColorBreaks_str.c_str());
+    }
+    if ( nColorBreaks != 3 && nColorBreaks != 4 )
+    {
+        throw std::runtime_error(CPLSPrintf("TURBULENCE_KML_OUTPUT_NCOLORBREAKS %d is not valid!!!\nimplementation only available right now for 3 or 4 colorBreaks!!!",nColorBreaks));
+    }
+
+    double desiredBrk0;
+    double desiredBrk1;
+    double desiredBrk2;
+    double desiredBrk3;
+
+    std::string colorRampType = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_COLORRAMPTYPE", "minToMax");
+    if ( colorRampType == "minToMax" || colorRampType == "" )
+    {
+        // default colorRampType "minToMax", the original past method, sets the 4 color breaks between the data min to max at levels 0, 1/5, 3/5, 1
+        desiredBrk0 = dataMinVal;
+        desiredBrk1 = 0.20*(dataMaxVal-dataMinVal)+dataMinVal;
+        desiredBrk3 = dataMaxVal;
+        desiredBrk2 = (desiredBrk3+desiredBrk1)/2.0;
+    } else if ( colorRampType == "minToMax_uniform" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=minToMax_uniform" << std::endl;
+        // "minToMax_uniform" is 3 or 4 color breaks specified by "nColorBreaks", between min to max at levels 0, 1/3, 2/3, 1.
+        desiredBrk0 = 0.0;
+        desiredBrk1 = dataMinVal;
+        desiredBrk2 = (dataMinVal+dataMaxVal)/2.0;
+        desiredBrk3 = dataMaxVal;
+        if ( nColorBreaks == 4 )
+        {
+            desiredBrk0 = dataMinVal;
+            desiredBrk1 = dataMinVal+(dataMaxVal-dataMinVal)/3.0;
+            desiredBrk2 = dataMinVal+(dataMaxVal-dataMinVal)*2.0/3.0;
+            desiredBrk3 = dataMaxVal;
+        }
+    } else if ( colorRampType == "specificVals" )
+    {
+        std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE=specificVals" << std::endl;
+        // "specificVals" is 3 or 4 color breaks specified by "nColorBreaks", the breaks set by "desiredBrk0 to 3" in increasing order, the levels auto adjust between 0 and 1 to go with the breaks.
+        // default values for smokejumper simulations, in mph
+        desiredBrk0 = 0.0;  // ignored when nColorBreaks == 3
+        desiredBrk1 = 2.0;
+        desiredBrk2 = 3.0;
+        desiredBrk3 = 5.0;
+        // hrm, can't include this unit conversion stuff, because ninjaUnits.h has ascii_grid.h as a dependency, would create a circular dependency
+        // instead, seems you can just set the desired output units to something other than mph, then override the desiredBrk vals with the corresponding unit values
+        //if( legendUnits != "mph" )
+        //{
+        //    velocityUnits::toBaseUnits(desiredBrk0, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk1, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk2, velocityUnits::milesPerHour);
+        //    velocityUnits::toBaseUnits(desiredBrk3, velocityUnits::milesPerHour);
+        //    velocityUnits::fromBaseUnits(desiredBrk0, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk1, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk2, velocityUnits::getUnit(legendUnits));
+        //    velocityUnits::fromBaseUnits(desiredBrk3, velocityUnits::getUnit(legendUnits));
+        //}
+        // overwriting values are assumed to already be in legendUnits
+        if ( nColorBreaks == 4 )
+        {
+            std::string found_desiredBrk0_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK0", "");
+            if ( found_desiredBrk0_str != "" )
+            {
+                std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK0=" << found_desiredBrk0_str << std::endl;
+                desiredBrk0 = atof(found_desiredBrk0_str.c_str());
+            }
+        }
+        std::string found_desiredBrk1_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK1", "");
+        std::string found_desiredBrk2_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK2", "");
+        std::string found_desiredBrk3_str = CPLGetConfigOption("TURBULENCE_KML_OUTPUT_DESIREDBRK3", "");
+        if ( found_desiredBrk1_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK1=" << found_desiredBrk1_str << std::endl;
+            desiredBrk1 = atof(found_desiredBrk1_str.c_str());
+        }
+        if ( found_desiredBrk2_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK2=" << found_desiredBrk2_str << std::endl;
+            desiredBrk2 = atof(found_desiredBrk2_str.c_str());
+        }
+        if ( found_desiredBrk3_str != "" )
+        {
+            std::cout << "setting CPLConfigOption TURBULENCE_KML_OUTPUT_DESIREDBRK3=" << found_desiredBrk3_str << std::endl;
+            desiredBrk3 = atof(found_desiredBrk3_str.c_str());
+        }
+        std::cout << "ascii2png() input nColorBreaks = " << nColorBreaks << std::endl;
+        std::cout << "ascii2png() input desiredBrk0 = " << desiredBrk0 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk1 = " << desiredBrk1 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk2 = " << desiredBrk2 << " " << legendUnits << std::endl;
+        std::cout << "ascii2png() input desiredBrk3 = " << desiredBrk3 << " " << legendUnits << std::endl;
+    } else
+    {
+        throw std::runtime_error(CPLSPrintf("input CPLConfigOption TURBULENCE_KML_OUTPUT_COLORRAMPTYPE %s is not valid!!!\navailable options are 'minToMax', 'minToMaxUniform', 'specificVals'",colorRampType.c_str()));
+    }
+
+
+    if ( nColorBreaks == 4 )
+    {
+        if ( desiredBrk1 <= desiredBrk0 )
+        {
+            throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk1 <= desiredBrk0!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk1 = %f, desiredBrk0 = %f",desiredBrk1,desiredBrk0));
+        }
+    }
+    if ( desiredBrk2 <= desiredBrk1 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk2 <= desiredBrk1!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk2 = %f, desiredBrk1 = %f",desiredBrk2,desiredBrk1));
+    }
+    if ( desiredBrk3 <= desiredBrk2 )
+    {
+        throw std::runtime_error(CPLSPrintf("ascii2png() input desiredBrk3 <= desiredBrk2!!! Use desiredBrk values in order of increasing value!!!\ndesiredBrk3 = %f, desiredBrk2 = %f",desiredBrk3,desiredBrk2));
+    }
+
+
+    // png driver doesn't support create(), only createCopy()
+    // so create the image as a tif first, then use createCopy() to create the png from that tif
+
+    std::string base_outFilename = outFilename;
+    int pos = outFilename.find_last_of(".png");
+    //std::cout << "outFilename = " << outFilename.c_str() << std::endl;
+    //std::cout << "pos = " << pos << std::endl;
+    if(pos != -1)
+        base_outFilename = outFilename.substr(0, pos - 4 + 1);  // .png is 4 letters back, + 1 to go from digit Id to a count
+    //std::cout << "base_outFilename = " << base_outFilename.c_str() << std::endl;
+    std::string tiff_fileout_proj = base_outFilename + "_proj.tif";
+    std::string tiff_fileout_geog = base_outFilename + "_geog.tif";
+    std::string rawTiff_fileout_proj = base_outFilename + "_raw_proj.tif";
+    std::string rawTiff_fileout_geog = base_outFilename + ".tif";
+
     GDALDataset *poDS;
     GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
     char** papszOptions = NULL;
-    std::string tempFileout = "temp_fileout";
 
-    poDS = tiffDriver->Create(tempFileout.c_str(), get_nCols(), get_nRows(), 1,
+    poDS = tiffDriver->Create(tiff_fileout_proj.c_str(), get_nCols(), get_nRows(), 1,
                    GDT_Byte, papszOptions);
 
     double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
@@ -1616,86 +2023,64 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     int nYSize = poDS->GetRasterYSize();
 
     GDALRasterBand *poBand = poDS->GetRasterBand(1);
-    
+
     //this->write_Grid("this_grid", 2);
-    
+
 
     /* -------------------------------------------------------------------- */
     /*  Scale data for the color table                                      */
     /* -------------------------------------------------------------------- */
-    
+
     AsciiGrid<T>scaledDataGrid(*this);
-    double translation = 0;
-    double scalingFactor = 1;
 
-    // convert nodata values to 0 (0 is transparent channel in color table)
+
+    //// set a patch of no data vals for debugging
+    //for(int i=0;i<scaledDataGrid.get_nRows();i++)
+    //{
+    //    for(int j=0;j<scaledDataGrid.get_nCols();j++)
+    //    {
+    //        if( i < 10 && j < 10 ) {
+    //            scaledDataGrid(i,j) = scaledDataGrid.get_noDataValue();
+    //        }
+    //    }
+    //}//scaledDataGrid.write_Grid("scaled_datagrid", 2);
+
+
+    // didn't see much difference when varying the range, the important thing is that scaled values are between 0 and 255
+    // however, brk2 and brk4 divide may divide more evenly int wise into numbers/range divisible by 2 and 5.
+    // oops, need to reserve idx = 0 for the transparent channel in the color table, looks like need to manually convert noData vals to 0
+    // if really want to show *real* 0 values in image, the noData vals, I guess for debugging?, set the noData vals to minIdx instead of to 0
+    int idxRangeMin = 1;
+    int idxRangeMax = 255;
+    // numVals = idxRangeMax - idxRangeMin + 1, numBins = numVals - 1, so numBins = idxRangeMax - idxRangeMin
+    int numBins = idxRangeMax - idxRangeMin;
+    double rangeMinVal;
+    double rangeMaxVal;
+    if ( nColorBreaks == 4 )
+    {
+        rangeMinVal = desiredBrk0;
+        rangeMaxVal = desiredBrk3;
+    } else // if ( nColorBreaks == 3 )
+    {
+        rangeMinVal = desiredBrk1;
+        rangeMaxVal = desiredBrk3;
+    }
+
+    double binWidth = (rangeMaxVal - rangeMinVal)/double(numBins);
     for(int i=0;i<scaledDataGrid.get_nRows();i++)
     {
         for(int j=0;j<scaledDataGrid.get_nCols();j++)
         {
-            if(scaledDataGrid(i,j) == 0)
-            {
-                scaledDataGrid(i,j) = epsClr<T>(); //if want to show *real* 0 values in image
-            }
-            if(scaledDataGrid(i,j) == scaledDataGrid.get_noDataValue())
-            {
+            if( scaledDataGrid(i,j) == get_noDataValue() ){
                 scaledDataGrid(i,j) = 0;
-            }
-        }
-    }//scaledDataGrid.write_Grid("scaled_datagrid", 2);
-
-    // need min value (without 0s) later to make legend
-    double raw_minValue = std::numeric_limits<double>::max();
-    for(int i=0; i<scaledDataGrid.get_nRows(); i++)
-        {
-            for (int j=0;j<scaledDataGrid.get_nCols();j++)
-            {
-                if(scaledDataGrid(i,j) < raw_minValue && scaledDataGrid(i,j) != get_noDataValue() &&
-                   scaledDataGrid(i,j)!=0)
-                {
-                    raw_minValue = scaledDataGrid(i,j);
-                }
-            }
-        }
-        
-    double raw_maxValue = std::numeric_limits<double>::min();
-    for(int i = scaledDataGrid.get_nRows() - 1;i >= 0;i--)
-    {
-        for (int j = 0;j < scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) > raw_maxValue && scaledDataGrid(i,j) != get_noDataValue())
-            {
-                raw_maxValue = scaledDataGrid(i,j);
-            }
-        }
-    }
-
-    if(raw_minValue<0)
-    {
-        translation = fabs(raw_minValue)+1.1; //+1.1 since 0 = transparent in color table
-    }
-    else if(raw_minValue<2 && raw_minValue!=0)
-    {
-        translation = raw_minValue+1.1;
-    }
-    else if(raw_minValue!=0)  //since 0 is transparent channel
-    {
-        translation = -raw_minValue-1.1;
-    }
-    if(raw_maxValue>255 || raw_maxValue-raw_minValue<5)
-    {
-        scalingFactor = 254/(raw_maxValue+translation);
-    }
-    for(int i=0;i<scaledDataGrid.get_nRows();i++)
-    {
-        for(int j=0;j<scaledDataGrid.get_nCols();j++)
-        {
-            {
-                if(scaledDataGrid(i,j)!=0)
-                {
-                    scaledDataGrid(i,j) = scaledDataGrid(i,j)+translation;
-                    scaledDataGrid(i,j) = scaledDataGrid(i,j)*0.6*scalingFactor; //0.6 is temp fix for scaling issue
-                }
+            } else if ( scaledDataGrid(i,j) < rangeMinVal ){
+                scaledDataGrid(i,j) = idxRangeMin;
+            } else if ( scaledDataGrid(i,j) > rangeMaxVal ){
+                scaledDataGrid(i,j) = idxRangeMax;
+            } else {
+                // int( val + 0.5 ) here is to make int() behave like round()
+                int binIdx = int( (scaledDataGrid(i,j) - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
+                scaledDataGrid(i,j) = binIdx;
             }
         }
     } //scaledDataGrid.write_Grid("scaled_datagrid_again", 2);
@@ -1730,48 +2115,32 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     int brk0, brk1, brk2, brk3, brk4;
 
-    double _maxValue = std::numeric_limits<double>::min();
-    for(int i = scaledDataGrid.get_nRows() - 1;i >= 0;i--)
-    {
-        for (int j = 0;j < scaledDataGrid.get_nCols();j++)
-        {
-            if(scaledDataGrid(i,j) > _maxValue && scaledDataGrid(i,j) != get_noDataValue())
-            {
-                _maxValue = scaledDataGrid(i,j);
-            }
-        }
-    }
-
-    double _minValue = std::numeric_limits<double>::max();
-    for(int i=nYSize-1;i>=0;i--)
-        {
-            for (int j=0;j<scaledDataGrid.get_nCols();j++)
-            {
-                if(scaledDataGrid(i,j) < _minValue && scaledDataGrid(i,j) != get_noDataValue() &&
-                   scaledDataGrid(i,j)!=0)
-                {
-                    _minValue = scaledDataGrid(i,j);
-                }
-            }
-        }
-
+    // adapt the percent distances between the brk values to match the locations
+    //  of the desired break values within the desired break value range
+    // hrm, comes out the same even with nColorBreaks 3 vs 4, because of the nature of the histogram binning calculation
+    //  but only when rangeMinVal matches across cases
     brk0 = 0;
-    brk1 = _minValue;
-    brk2 = 0.2*(_maxValue-_minValue)+_minValue;
-    brk4 = _maxValue;
-    brk3 = (brk4+brk2)/2;
+    brk1 = idxRangeMin;
+    brk4 = idxRangeMax;
+    // int( val + 0.5 ) here is to make int() behave like round()
+    brk2 = int( (desiredBrk1 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;  // comes out to be idxRangeMin for nColorBreaks == 3
+    brk3 = int( (desiredBrk2 - rangeMinVal)/binWidth + 0.5 ) + idxRangeMin;
 
     poCT->SetColorEntry(brk0, &white);
-    poCT->SetColorEntry(brk1, &blue);
+    if ( nColorBreaks == 4 )
+        poCT->SetColorEntry(brk1, &blue);
     poCT->SetColorEntry(brk2, &green);
     poCT->SetColorEntry(brk3, &yellow);
     poCT->SetColorEntry(brk4, &red);
 
     int nStartIndex = brk1;
     int nEndIndex = brk2;
-    const GDALColorEntry psStartColor1 = blue;
-    const GDALColorEntry psEndColor1 = green;
-    GDALCreateColorRamp(poCT, nStartIndex, &psStartColor1,  nEndIndex, &psEndColor1);
+    if ( nColorBreaks == 4 )
+    {
+        const GDALColorEntry psStartColor1 = blue;
+        const GDALColorEntry psEndColor1 = green;
+        GDALCreateColorRamp(poCT, nStartIndex, &psStartColor1,  nEndIndex, &psEndColor1);
+    }
     nStartIndex = brk2;
     nEndIndex = brk3;
     const GDALColorEntry psStartColor2 = green;
@@ -1783,7 +2152,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     const GDALColorEntry psEndColor3 = red;
     GDALCreateColorRamp(poCT, nStartIndex, &psStartColor3,  nEndIndex, &psEndColor3);
 
-    //poBand->SetColorTable(poCT);
+    poBand->SetColorTable(poCT);
 
     /* -------------------------------------------------------------------- */
     /*  Create the optional legend                                          */
@@ -1792,99 +2161,102 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     if(writeLegend == true)
     {
         //make bitmap
-	    int legendWidth = 180;
-	    int legendHeight = int(legendWidth / 0.75);
-	    BMP legend;
+        int legendWidth = 180;
+        int legendHeight = int(legendWidth / 0.75);  // increase by a factor of 4/3, rounded down. For legendWidth of 180, this comes out to be 240
+        if ( nColorBreaks == 3 )
+        {
+            // override the value (keeps storage still in scope this way)
+            legendHeight = 190;  // specific value for legendWidth of 180
+        }
+        BMP legend;
 
-	    std::string legendStrings[6];
-	    ostringstream os;
+        std::string legendStrings[6];
+        ostringstream os;
 
-	    double maxxx = get_maxValue();
-	    double minnn = raw_minValue;
-        //double _brk0 = 0;
-        //double _brk1 = raw_minValue;
-        double _brk2 = 0.25*(raw_maxValue-raw_minValue)+raw_minValue;
-        double _brk4 = raw_maxValue;
-        double _brk3 = (_brk4+_brk2)/2;
+        double _brk0 = 0;
+        double _brk1 = desiredBrk0;  // ignored when nColorBreaks == 3
+        double _brk2 = desiredBrk1;
+        double _brk3 = desiredBrk2;
+        double _brk4 = desiredBrk3;
 
-	    for(int i = 0;i < 5;i++)
-	    {
-		    os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
-		    if(i == 0)
-			    os << maxxx;
-            else if (i==1)
+        for(int labelIdx = 0; labelIdx < 5; labelIdx++)
+        {
+            os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
+            if(labelIdx == 0)
+                os << (double)_brk4;
+            else if(labelIdx == 1)
                 os << (double)_brk3;
-		    else if(i == 2)
-			    os << (double)_brk2;
-            else if(i == 3)
-                os << minnn;
-		    else if(i == 4)
-			    os << "0.00";
-            legendStrings[i] = os.str();
-		    os.str("");
-	    }
-
-	    legend.SetSize(legendWidth,legendHeight);
-	    legend.SetBitDepth(8);
-
-	    //black legend
-	    for(int i = 0;i < legendWidth;i++)
-	    {
-		    for(int j = 0;j < legendHeight;j++)
-		    {
-			    legend(i,j)->Alpha = 0;
-			    legend(i,j)->Blue = 0;
-			    legend(i,j)->Green = 0;
-			    legend(i,j)->Red = 0;
-		    }
+            else if(labelIdx == 2)
+                os << (double)_brk2;
+            else if(labelIdx == 3)
+                os << (double)_brk1;  // ignored when nColorBreaks == 3
+            else if(labelIdx == 4)
+                os << "0.00";  // not currently used, but just in case leave it as a stored value
+            legendStrings[labelIdx] = os.str();
+            os.str("");
         }
 
-	    //for white text
-	    RGBApixel w;
-	    w.Red = 255;
-	    w.Green = 255;
-	    w.Blue = 255;
-	    w.Alpha = 0;
+        legend.SetSize(legendWidth,legendHeight);
+        legend.SetBitDepth(8);
 
-	    RGBApixel colors[10];
+        //black legend
+        for(int i = 0;i < legendWidth;i++)
+        {
+            for(int j = 0;j < legendHeight;j++)
+            {
+                legend(i,j)->Alpha = 0;
+                legend(i,j)->Blue = 0;
+                legend(i,j)->Green = 0;
+                legend(i,j)->Red = 0;
+            }
+        }
 
-	    //RGBApixel red, yellow, green, blue
-	    colors[0].Red = 255;  //Red
-	    colors[0].Green = 0;
-	    colors[0].Blue = 0;
-	    colors[0].Alpha = 0;
+        //for white text
+        RGBApixel white;
+        white.Red = 255;
+        white.Green = 255;
+        white.Blue = 255;
+        white.Alpha = 0;
+
+        RGBApixel colors[10];
+
+        //RGBApixel red, yellow, green, blue
+        colors[0].Red = 255;  //Red
+        colors[0].Green = 0;
+        colors[0].Blue = 0;
+        colors[0].Alpha = 0;
 
         colors[1].Red = 255;  //RRY
-	    colors[1].Green = 85;
-	    colors[1].Blue = 0;
-	    colors[1].Alpha = 0;
+        colors[1].Green = 85;
+        colors[1].Blue = 0;
+        colors[1].Alpha = 0;
 
-	    colors[2].Red = 255;  //RYY
-	    colors[2].Green = 170;
-	    colors[2].Blue = 0;
-	    colors[2].Alpha = 0;
+        colors[2].Red = 255;  //RYY
+        colors[2].Green = 170;
+        colors[2].Blue = 0;
+        colors[2].Alpha = 0;
 
-	    colors[3].Red = 255;  //Yellow
-	    colors[3].Green = 255;
-	    colors[3].Blue = 0;
-	    colors[3].Alpha = 0;
+        colors[3].Red = 255;  //Yellow
+        colors[3].Green = 255;
+        colors[3].Blue = 0;
+        colors[3].Alpha = 0;
 
-	    colors[4].Red = 170;  //YYG
-	    colors[4].Green = 255;
-	    colors[4].Blue = 0;
-	    colors[4].Alpha = 0;
+        colors[4].Red = 170;  //YYG
+        colors[4].Green = 255;
+        colors[4].Blue = 0;
+        colors[4].Alpha = 0;
 
-	    colors[5].Red = 85;  //YGG
-	    colors[5].Green = 255;
-	    colors[5].Blue = 0;
-	    colors[5].Alpha = 0;
+        colors[5].Red = 85;  //YGG
+        colors[5].Green = 255;
+        colors[5].Blue = 0;
+        colors[5].Alpha = 0;
 
-	    colors[6].Red = 0;  //Green
-	    colors[6].Green = 255;
-	    colors[6].Blue = 0;
-	    colors[6].Alpha = 0;
+        colors[6].Red = 0;  //Green
+        colors[6].Green = 255;
+        colors[6].Blue = 0;
+        colors[6].Alpha = 0;
 
-	    colors[7].Red = 0;  //GGB
+        colors[7].Red = 0;  //GGB
         colors[7].Green = 170;
         colors[7].Blue = 80;
         colors[7].Alpha = 0;
@@ -1899,71 +2271,80 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
         colors[9].Blue = 255;
         colors[9].Alpha = 0;
 
-        int arrowLength = 30;	//pixels;
-        int textHeight = 12;
-        int titleTextHeight = int(1.2 * textHeight);
-        int titleX, titleY;
+        int cbarWidth = 40;  // pixels;
+        int textHeight = 12;  // cbarLabelTextHeight expected/desired value, DrawLine() seems to preserve the value, but DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value
+        int titleTextHeight = int(1.2 * textHeight);  // increase by a factor, rounded down. For textHeight of 12, this comes out to be int(14.4) = 14. Also is expected/desired value, but the exact value isn't as sensitive as it is for textHeight
 
+        double leftMarginPad = 0.05;  // percent of total image width, the empty space to the left of the title box and cbar box regions
+        double topMarginPad  = 0.05;  // percent of total image height, the empty space to the top of the title box
+
+        int titleX = legendWidth * leftMarginPad;  // top left x pixel position for the title box. Note the int rounds it down. For a legendWidth of 180 and a leftMarginPad of 0.05, this comes out to be 9
+        int titleY = legendHeight * topMarginPad;  // top left y pixel position for the title box. Note the int rounds it down. For a legendHeight of 240 and a topMarginPad of 0.05, this comes out to be 12
+
+        PrintString(legend, legendTitle.c_str() , titleX, titleY, titleTextHeight, white);
+        int unitsX = titleX+5;  // set the unit string X position within the title box. titleX + 5 means to the right 5 pixels from the title X position, so nudging it a bit to the right
+        int unitsY = titleY+30;  // set the unit string Y position within the title box. titleY + 30 means 30 pixels below the title Y position. For titleTextHeight of 14, this seems excessive, you would think that this would lead to a really huge gap between the two strings, but it actually results in barely any spacing. Apparently this is because PrintString() adds a crap ton of extra pixels for the letter p, it also adds a few pixels in general when calling DrawArc() for some of the other letters
+        PrintString(legend, legendUnits.c_str() , unitsX, unitsY, titleTextHeight, white);
+
+        // start to end pixel positions at which to the given cbar color line
         int x1, x2;
-        double x;
         int y1, y2;
-        double y;
+        // top left pixel position at which to draw the cbar label text
         int textX;
         int textY;
 
-        x = 0.05;
-        y = 0.30;
-
-        titleX = x * legendWidth;
-        titleY = (y / 3) * legendHeight;
-
-        PrintString(legend, legendTitle.c_str() , titleX, titleY-10, titleTextHeight, w);
-        PrintString(legend, legendUnits.c_str() , titleX+5, titleY+15, titleTextHeight, w);
-
-        x1 = int(legendWidth * x);
-        x2 = x1 + arrowLength;
-        y1 = int(legendHeight * y);
-        y2 = y1;
-        int k = -1;
-
-        for(int i=0;i < 10;i++)
+        double cbarBoxXstart_percent = leftMarginPad + 5.0/60.0;  // percent of total image width, the 5.0/60.0 = 0.08333333333 represents adding an empty space to the left of the cbar region in addition to the empty space to the left of the title region. For x of 0.05 and the additional padding of 5.0/60.0 = 0.08333333333, this comes out to be 0.05 + 5.0/60.0 = 0.13333333333. Probably could have used 0.084, let int(legendWidth*cbarBoxXstart_percent) round down to 24, but using 0.05 + 5.0/60.0 specifically divides evenly into the legendWidth of 180 to get 24
+        double cbarBoxYstart_percent = 0.297;  // percent of total image height, care to choose a value for this that gives the title box enough space, with a little bit of padding between the title box and the cbar box region. The original expected value was 0.3 but this gave just a hint too much space, so it was adjusted back a bit
+        if ( nColorBreaks == 3 )
         {
-            for(int j=0; j<20; j++)
+            // override the value (keeps storage still in scope this way)
+            cbarBoxYstart_percent = 0.365;
+        }
+        int cbarBoxXstart = legendWidth * cbarBoxXstart_percent;  // top left x pixel position for the cbar box region. Note the int rounds it down. For a legendWidth of 180 and a cbarBoxXstart_percent of 5.0/60.0 = 0.08333333333, this comes out to be 24
+        int cbarBoxYstart = legendHeight * cbarBoxYstart_percent;  // top left y pixel position for the cbar box region. Note the int rounds it down. For a a legendHeight of 240 and a cbarBoxYstart_percent of 0.297, this comes out to be int(71.28) = 71
+
+        int cbarLabelXpadding = 15;  // number of pixels of empty space to pad between the cbar and the cbar labels
+
+        // now the fun part, turns out that while DrawLine() does exact numbers of pixels, DrawArc() in PrintString() seems to randomly pad up to +1 above and below, in addition to always padding +1 above and below to the value. So you would think that a value of 1 above and 1 below would be good, but the gaps came out looking uneven. Turned out that a value of 1 above and 2 below seemed to look the best, with the gaps coming out looking even at least for this case. Note that a value of 2 above and 2 below looked similar to a value of 1 above and 1 below where the gap came out looking uneven, but with a bit more gap. Note that a value of 2 above and 3 below looked good and even just like a value of 1 above and 2 below, but with even more gap. In addition, using gaps 2 above and below or greater starts to add too many color lines overall, running out of space for the cbar
+        int upperLabelPad = 1;
+        int lowerLabelPad = 2;
+
+        int nColorsToUse;
+        if ( nColorBreaks == 4 )
+        {
+            nColorsToUse = 10;  // for 4 cbar colors
+        } else // if ( nColorBreaks == 3 )
+        {
+            nColorsToUse = 7;  // for 3 cbar colors
+        }
+
+        int labelIdx = 0;
+        int yPos = cbarBoxYstart;  // yPos is the current pixel y position
+        int yStart = yPos;  // yStart is the first pixel y position of the given cbar colorbox
+        for(int colorIdx = 0; colorIdx < nColorsToUse; colorIdx++)
+        {
+            yStart = yPos;  // store the first pixel y position of the given cbar colorbox
+            for(int colorLineIdx = 0; colorLineIdx < (upperLabelPad+textHeight+lowerLabelPad); colorLineIdx++)
             {
-                x1 = int(legendWidth * (x+0.1));
-                x2 = x1 + arrowLength;
-                y1 = int(legendHeight * (y-0.03));
+                x1 = cbarBoxXstart;
+                x2 = x1 + cbarWidth;
+                y1 = yPos;
                 y2 = y1;
-                DrawLine(legend, x1, y1, x2, y2, colors[i]);
-                y+=0.003;
+                DrawLine(legend, x1, y1, x2, y2, colors[colorIdx]);
+                yPos+=1;
             }
-            if(i==0 || i==3 || i==6 || i==9)
+
+            // only add labels to the main colors
+            if(colorIdx == 0 || colorIdx == 3 || colorIdx == 6 || colorIdx == 9)
             {
-                k+=1;
-                textX = x2 + 15;
-                textY = y2 - int(textHeight * 0.5) - 8;
-                PrintString(legend, legendStrings[k].c_str(), textX, textY, textHeight, w);
+                textX = x2 + cbarLabelXpadding;
+                textY = yStart + upperLabelPad;
+                PrintString(legend, legendStrings[labelIdx].c_str(), textX, textY, textHeight, white);
+                labelIdx+=1;
             }
         }
         legend.WriteToFile(scalarLegendFilename.c_str());
     }
-
-    /* -------------------------------------------------------------------- */
-    /*  close and reopen with GDALOpenShared and set color table        */
-    /* -------------------------------------------------------------------- */
-
-    AsciiGrid<T> poDS_grid(poDS, 1);
-    poDS_grid.write_Grid("poDS_grid", 0);
-    
-    GDALDataset *srcDS;
-    //reopen with GDALOpenShared() for GDALAutoCreateWarpedVRT()
-    srcDS = (GDALDataset*)GDALOpenShared( "poDS_grid", GA_ReadOnly );
-    if( srcDS == NULL ) {
-        CPLDebug( "ascii_grid::ascii2png()", "cannot open poDS_grid");
-    }
-
-    GDALRasterBand *srcBand = srcDS->GetRasterBand(1);
-    srcBand->SetColorTable(poCT);
 
     /* -------------------------------------------------------------------- */
     /*   Warp the image                                                     */
@@ -1973,7 +2354,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     char *pszSRS_WKT = NULL;
 
     const char* prj2 = (const char*)prjString.c_str();
-    oSRS.importFromWkt((char **)&prj2);
+    oSRS.importFromWkt(prj2);
     oSRS.exportToWkt(&pszSRS_WKT);
 
     char *pszDST_WKT = NULL;
@@ -1982,17 +2363,27 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
 
     GDALDataset *wrpDS;
 
-    wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(srcDS, pszSRS_WKT, pszDST_WKT,
+    wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(poDS, pszSRS_WKT, pszDST_WKT,
                                                    GRA_NearestNeighbour,
                                                    0.0, NULL);
 
     /* -------------------------------------------------------------------- */
+    /*   Write the warped tiff                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *poDstDS_tiff;
+
+    CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF dirver data type error
+    poDstDS_tiff = tiffDriver->CreateCopy(tiff_fileout_geog.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
+    CPLPopErrorHandler();
+
+    /* -------------------------------------------------------------------- */
     /*   Write the png                                                      */
     /* -------------------------------------------------------------------- */
-    
+
     GDALDriver *poDstDriver = GetGDALDriverManager()->GetDriverByName("PNG");
     GDALDataset *poDstDS;
-    
+
     CPLPushErrorHandler(CPLQuietErrorHandler); //silence PNG dirver data type error
     poDstDS = poDstDriver->CreateCopy(outFilename.c_str(), wrpDS, FALSE, NULL, NULL, NULL);
     CPLPopErrorHandler();
@@ -2001,7 +2392,7 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     /*AsciiGrid<double> poDstDS_grid;
     GDAL2AsciiGrid(poDstDS, 1, poDstDS_grid);
     poDstDS_grid.write_Grid("poDstDS_grid", 2);
-    
+
     AsciiGrid<double> wrpDS_grid;
     GDAL2AsciiGrid(wrpDS, 1, wrpDS_grid);
     wrpDS_grid.write_Grid("wrpDS_grid", 2);
@@ -2010,28 +2401,114 @@ void AsciiGrid<T>::ascii2png(std::string outFilename,
     GDAL2AsciiGrid(poDS, 1, poDS2_grid);
     poDS2_grid.write_Grid("poDS2_grid", 2);*/
 
-    
+
     /* -------------------------------------------------------------------- */
     /*  clean up                                                            */
     /* -------------------------------------------------------------------- */
 
     CPLFree(pszSRS_WKT);
     CPLFree(pszDST_WKT);
-    
+
     delete [] padfScanline;
 
     GDALDestroyColorTable((GDALColorTableH) poCT);
 
     GDALClose((GDALDatasetH) poDS);
-    GDALClose((GDALDatasetH) srcDS);
     if( poDstDS != NULL){
         GDALClose((GDALDatasetH) poDstDS);
     }
+    if( poDstDS_tiff != NULL){
+        GDALClose((GDALDatasetH) poDstDS_tiff);
+    }
     GDALClose((GDALDatasetH) wrpDS);
 
-    VSIUnlink("poDS_grid");
-    VSIUnlink("poDS_grid.aux.xml");
-    VSIUnlink("temp_fileout");
+    VSIUnlink(tiff_fileout_proj.c_str());
+    VSIUnlink(tiff_fileout_geog.c_str());
+
+
+    /* -------------------------------------------------------------------- */
+    /*  temporary, create additional raw tiff file                          */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *raw_poDS;
+    GDALDriver *raw_tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    char** raw_papszOptions = NULL;
+
+    raw_poDS = tiffDriver->Create(rawTiff_fileout_proj.c_str(), get_nCols(), get_nRows(), 1,
+                                    GDT_Float64, papszOptions);
+
+    double raw_adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                     get_yllCorner()+(get_nRows()*get_cellSize()),
+                                     0, -(get_cellSize())};
+    raw_poDS->SetGeoTransform(raw_adfGeoTransform);
+    int raw_nXSize = raw_poDS->GetRasterXSize();
+    int raw_nYSize = raw_poDS->GetRasterYSize();
+
+    GDALRasterBand *raw_poBand = raw_poDS->GetRasterBand(1);
+
+    AsciiGrid<T>rawDataGrid(*this);
+
+    double *raw_padfScanline;
+    raw_padfScanline = new double[raw_nXSize];
+
+    for(int i=raw_nYSize-1;i>=0;i--)
+    {
+        for(int j=0;j<raw_nXSize;j++)
+        {
+            raw_padfScanline[j] = rawDataGrid.get_cellValue(raw_nYSize-1-i, j);
+            check(raw_poBand->RasterIO(GF_Write, 0, i, raw_nXSize, 1, raw_padfScanline, raw_nXSize, 1, GDT_Float64, 0, 0));
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*   Warp the image                                                     */
+    /* -------------------------------------------------------------------- */
+
+    OGRSpatialReference raw_oSRS;
+    char *raw_pszSRS_WKT = NULL;
+
+    const char* raw_prj2 = (const char*)prjString.c_str();
+    raw_oSRS.importFromWkt(raw_prj2);
+    raw_oSRS.exportToWkt(&raw_pszSRS_WKT);
+
+    char *raw_pszDST_WKT = NULL;
+    raw_oSRS.importFromEPSG(4326);
+    raw_oSRS.exportToWkt(&raw_pszDST_WKT);
+
+    GDALDataset *raw_wrpDS;
+
+    raw_wrpDS = (GDALDataset*)GDALAutoCreateWarpedVRT(raw_poDS, raw_pszSRS_WKT, raw_pszDST_WKT,
+                                                   GRA_NearestNeighbour,
+                                                   0.0, NULL);
+
+    /* -------------------------------------------------------------------- */
+    /*   Write the warped tiff                                              */
+    /* -------------------------------------------------------------------- */
+
+    GDALDataset *poDstDS_rawTiff;
+
+    CPLPushErrorHandler(CPLQuietErrorHandler); //silence TIFF driver data type error
+    poDstDS_rawTiff = raw_tiffDriver->CreateCopy(rawTiff_fileout_geog.c_str(), raw_wrpDS, FALSE, NULL, NULL, NULL);
+    CPLPopErrorHandler();
+
+    /* -------------------------------------------------------------------- */
+    /*  clean up                                                            */
+    /* -------------------------------------------------------------------- */
+
+    CPLFree(raw_pszSRS_WKT);
+    CPLFree(raw_pszDST_WKT);
+
+    delete [] raw_padfScanline;
+
+    GDALClose((GDALDatasetH) raw_poDS);
+    if( poDstDS_rawTiff != NULL){
+        GDALClose((GDALDatasetH) poDstDS_rawTiff);
+    }
+    GDALClose((GDALDatasetH) raw_wrpDS);
+
+    VSIUnlink(rawTiff_fileout_proj.c_str());
+    if( keepTiff == false )
+        VSIUnlink(rawTiff_fileout_geog.c_str());
 
 }
 
@@ -2049,19 +2526,7 @@ AsciiGrid<T> &AsciiGrid<T>::operator=(const AsciiGrid &A)
         xllCorner = A.xllCorner;
         yllCorner = A.yllCorner;
         prjString = A.prjString;
-
-        if(A.sortedData == NULL)
-        {
-            delete[] sortedData;
-            sortedData = NULL;
-        }
-        else{
-            delete[] sortedData;
-
-            sortedData = new T[data.get_numRows()*data.get_numCols()];
-            for(int i = 0; i < data.get_numRows()*data.get_numCols(); i++)
-                sortedData[i] = A.sortedData[i];
-        }
+        sortedData = A.sortedData;
     }
     return *this;
 }
@@ -2181,42 +2646,78 @@ std::ostream &operator<<(std::ostream &out, AsciiGrid<T1> &A)
 }
 
 /**
- * Create a tiff for the ascii grid for debugging and other uses
- * This will create a grayscale tiff by default.
+ * Create a single band GeoTIFF of the ascii grid,
+ * for debugging and other uses.
+ *
+ * Output is written as a scalar value raster rather than
+ * as an RGB/RGBA or grayscale image raster.
  *
  * @param outFilename output file to write
- * @param type rgb or grayscale
- *
+ * @param dataName the name of the ascii grid data, to be used to set metadata for the gtiff.
+ * @param dataUnits the units of the ascii grid data, to be used to set metadata for the gtiff.
+ * @param type rgb or grayscale. --currently not used, was originally meant for future color table/rendering support.
  */
-
 template <class T>
-void AsciiGrid<T>::exportToTiff( std::string outFilename, tiffType type )
+void AsciiGrid<T>::exportToTiff(std::string outFilename, std::string dataName, std::string dataUnits, tiffType type)
 {
-    GDALDataset *poDS;
-    GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName( "GTiff" );
-    char** papszOptions = NULL;
-    papszOptions = CSLAddString( papszOptions, "PROFILE=BASELINE" );
-    if( tiffDriver == NULL )
-    return;
+    (void)type;
 
-    poDS = tiffDriver->Create( outFilename.c_str(), get_nRows(), get_nCols(), 1,
-                   GDT_Float64, papszOptions );
+    GDALDataset *poDS;
+    GDALDriver *tiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");
+    if(tiffDriver == NULL)
+    {
+        return;
+    }
+
+    char** papszOptions = NULL;
+    papszOptions = CSLAddString(papszOptions, "COMPRESS=LZW");
+    //papszOptions = CSLAddString(papszOptions, "PREDICTOR=2");  // valid for GDT_Float32 NOT GDT_Float64
+    papszOptions = CSLAddString(papszOptions, "TILED=YES");
+    papszOptions = CSLAddString(papszOptions, "BIGTIFF=IF_SAFER");
+
+    poDS = tiffDriver->Create(outFilename.c_str(), get_nCols(), get_nRows(), 1, GDT_Float64, papszOptions);
+    if(poDS == NULL)
+    {
+        return;
+    }
+
+    double adfGeoTransform[6] = {get_xllCorner(),  get_cellSize(), 0,
+                                 get_yllCorner()+(get_nRows()*get_cellSize()),
+                                 0, -(get_cellSize())};
+    poDS->SetGeoTransform(adfGeoTransform);
+
+    const char* raw_prj = (const char*)prjString.c_str();
+    poDS->SetProjection(raw_prj);
+
+    poDS->SetMetadataItem("AREA_OR_POINT", "Area");
 
     int nXSize = poDS->GetRasterXSize();
     int nYSize = poDS->GetRasterYSize();
 
-    GDALRasterBand *poBand = poDS->GetRasterBand( 1 );
+    GDALRasterBand *poBand = poDS->GetRasterBand(1);
+
+    poBand->SetDescription(dataName.c_str());
+    poBand->SetMetadataItem("UNITS", dataUnits.c_str());
+
+    poBand->SetNoDataValue(get_NoDataValue());
 
     double *padfScanline;
     padfScanline = new double[nXSize];
-    for( int i = nYSize - 1;i >= 0;i-- ) {
-    for( int j = 0;j < nXSize;j++ )
-        padfScanline[j] = (double)get_cellValue( nYSize - 1 - i, j );
-
-    check(poBand->RasterIO( GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0));
+    for(int i = nYSize - 1; i >= 0; i--)
+    {
+        for(int j = 0; j < nXSize; j++)
+        {
+            padfScanline[j] = (double)get_cellValue( nYSize - 1 - i, j );
+        }
+        check(poBand->RasterIO( GF_Write, 0, i, nXSize, 1, padfScanline, nXSize, 1, GDT_Float64, 0, 0));
     }
-    poBand->SetColorInterpretation( GCI_GrayIndex );
-    GDALClose((GDALDatasetH) poDS );
+    delete[] padfScanline;
+
+    ////poBand->SetColorInterpretation(GCI_GrayIndex);
+    //poBand->SetColorInterpretation(GCI_Undefined);
+
+    CSLDestroy(papszOptions);
+    GDALClose((GDALDatasetH)poDS);
 }
 
 template <class T>
@@ -2532,58 +3033,6 @@ bool AsciiGrid<T>::operator*=(AsciiGrid<T> &A)
     return true;
 }
 
-//--- these functions convert the grid to EPSG:4326 (lat/lon) before writing
-
-template <class T>
-void AsciiGrid<T>::write_4326_Grid (std::string& filename, int precision, void (AsciiGrid<T>::*write_grid)(std::string,int))
-{
-    GDALDatasetH hSrcDS = ascii2GDAL();
-    if (hSrcDS) {
-        const char *pszSrcWKT = GDALGetProjectionRef( hSrcDS );
-        if (pszSrcWKT && strlen(pszSrcWKT) > 0) {
-            OGRSpatialReference oSRS;
-            oSRS.SetWellKnownGeogCS( "EPSG:4326" );
-
-            char* pszDstWKT = NULL;
-            oSRS.exportToWkt( &pszDstWKT );
-
-            GDALDatasetH hTmpDS = GDALAutoCreateWarpedVRT(hSrcDS, pszSrcWKT, pszDstWKT, GRA_NearestNeighbour, 1.0, NULL);
-            if (hTmpDS) {
-                AsciiGrid<T> geoAsciiGrid( (GDALDataset*) hTmpDS, 1);
-                
-                if (!geoAsciiGrid.crop_noData( 10)){
-                    cerr << "failed to crop EPSG:4326 grid to defined data\n";
-                }
-                
-
-                (geoAsciiGrid.*(write_grid))( filename, precision);
-
-                GDALClose(hTmpDS);
-
-            } else {
-                cerr << "failed to warp " << filename << "to EPSG:4326 (geo)\n";
-            }
-        }
-
-        GDALClose(hSrcDS);
-
-    } else {
-        cerr << "failed to convert AsciiGrid to GDAL data set\n";
-    }
-}
-
-template <class T>
-void AsciiGrid<T>::write_ascii_4326_Grid (std::string filename, int precision) 
-{
-    write_4326_Grid(filename, precision, &AsciiGrid<T>::write_Grid);
-}
-
-template <class T>
-void AsciiGrid<T>::write_json_4326_Grid (std::string filename, int precision) 
-{
-    write_4326_Grid(filename, precision, &AsciiGrid<T>::write_json_Grid);
-}
-
 template<class T>
 bool AsciiGrid<T>::crop_noData (int noDataThreshold)
 {
@@ -2592,7 +3041,7 @@ bool AsciiGrid<T>::crop_noData (int noDataThreshold)
         if (minRow > 0 || minCol > 0 || maxRow < data.get_numRows()-1 || maxCol < data.get_numCols()-1) {
             xllCorner += minCol * cellSize;
             yllCorner += (data.get_numRows()-1 - maxRow) * cellSize;
-            data.crop( minRow, maxRow, minCol, maxCol); // note this crops in-place            
+            data.crop( minRow, maxRow, minCol, maxCol); // note this crops in-place
         }
         return true;
     } else {
@@ -2603,6 +3052,5 @@ bool AsciiGrid<T>::crop_noData (int noDataThreshold)
 //--- template instantiations
 
 template class AsciiGrid<double>;
-template class AsciiGrid<float>;
 template class AsciiGrid<int>;
 template class AsciiGrid<short>;

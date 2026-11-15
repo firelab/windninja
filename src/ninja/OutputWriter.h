@@ -2,10 +2,10 @@
 *
 * Filename: OutputWriter.h
 *
-* Project:  WindNinja 
+* Project:  WindNinja
 * Purpose:  Class to handle output of WindNinja simulations to various GDAL
 *           formats
-* Author:   Levi Malott, lmnn3@mst.edu 
+* Author:   Levi Malott, lmnn3@mst.edu
 *
 ******************************************************************************
 *
@@ -29,7 +29,7 @@
 *****************************************************************************/
 
 #ifndef OUTPUTWRITER_H
-#define OUTPUTWRITER_H 
+#define OUTPUTWRITER_H
 
 #include "ascii_grid.h"
 #include "EasyBMP.h"
@@ -62,8 +62,6 @@
 #endif
 
 
-
-
 /*
  * =====================================================================================
  *        Class:  OutputWriter
@@ -77,24 +75,34 @@ class OutputWriter
         OutputWriter ();                             /* constructor */
         ~OutputWriter();
 
+        enum eSpeedScaling{
+            equal_color,
+            equal_interval
+        };
+
         /* ====================  ACCESSORS     ======================================= */
 
         /* ====================  MUTATORS      ======================================= */
         void setSpeedGrid(AsciiGrid<double> &s,
                           velocityUnits::eVelocityUnits units);
+        // angleFromNorth calculations only technically required for flatGeoBuf output. pdf doesn't warp
+        double angleFromNorth;
+        void setAngleFromNorth(const double angFromNorth);
         void setDirGrid(AsciiGrid<double> &d);
 #ifdef EMISSIONS
         void setDustGrid(AsciiGrid<double> &d);
 #endif
         void setDEMfile(std::string fname) {demFile=fname;}
-        void setNinjaTime(std::string t) {ninjaTime=t;}
+        void setNinjaTime(boost::local_time::local_date_time t) {ninjaTime=t;}
         void setRunNumber(int n) {runNumber=n;}
-        void setMaxRunNumber(int n) {maxRunNumber=n;}
         void setLineWidth( const float w );
         void setDPI( const unsigned short d );
         void setSize( const double w, const double h );
-        
-        void setMemDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs);
+        void setWxModel(std::string name) {wxModelName=name;}
+        void setSpeedScaling(eSpeedScaling scaling) {speedScaling=scaling;}
+        void setColorScheme(std::string cScheme);
+        void setVectorScaling(bool vec_scaling) {useVectorScaling=vec_scaling;}
+        void setSplitVals(const double *splitVals, const unsigned short size);
 
         /* ====================  OPERATORS     ======================================= */
         bool write(std::string outputFilename, std::string driver);
@@ -114,12 +122,12 @@ class OutputWriter
         void _destroyDefaultStyles();
 
         bool _writePDF(std::string outputfn);
-        bool _writeGTiff(std::string filename, GDALDatasetH &hMemDs);
+        bool _writeFlatGeoBufZip(std::string filename);
         std::string _getStyleFromSpeed( const double & spd );
         void _openSrcDataSet();
         void _closeDataSets();
 
-        void _createOGRFile();
+        void _createOGRFile(bool outputLatLon);
         void _closeOGRFile();
         void _destroyOGRFile();
 
@@ -130,6 +138,9 @@ class OutputWriter
 
         bool _createLegend();
         void _destroyLegend();
+
+        bool _createDateTimeLegend(bool wxModel);
+        void _destroyDateTimeLegend();
 
         bool _createTmpFiles();
         void _deleteTmpFiles();
@@ -142,12 +153,7 @@ class OutputWriter
         AsciiGrid<double> dust;
 #endif
         int runNumber;
-        int maxRunNumber;
-        GDALDatasetH hSpdMemDs;
-        GDALDatasetH hDirMemDs;
-        GDALDatasetH hDustMemDs;
-        
-        std::string ninjaTime;
+        boost::local_time::local_date_time ninjaTime;
         double resolution;
         std::string demFile;
         std::string inputSpeedFile;
@@ -159,6 +165,7 @@ class OutputWriter
         std::string timeDateLegendFile;
         std::string wxModelName;
 
+        static const char * NAME;//       = "name";
         static const char * SPEED;//      = "speed";
         static const char * DIR;//        = "dir";
         static const char * AV_DIR;//     = "AV_dir";
@@ -167,11 +174,13 @@ class OutputWriter
 
         char * pszOgrFile;
         char * pszLegendFile;
+        char * pszDateTimeLegendFile;
         char * pszTmpDemFile;
 
-        static const unsigned short NCOLORS = 5; 
+        static const unsigned short NCOLORS = 5;
+        static const unsigned short NSPLITS = 6;  // NCOLORS+1
         static const unsigned short LGND_WIDTH = 160;
-        static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4; 
+        static const unsigned short LGND_HEIGHT = LGND_WIDTH * 3 / 4;
 
         double *split_vals;
         Style ** colors;
@@ -180,6 +189,9 @@ class OutputWriter
         double margin;
         double height, width;
 
+        eSpeedScaling speedScaling;
+        std::string colorScheme;
+        bool useVectorScaling;
 
         GDALDatasetH hSrcDS;
         GDALDatasetH hDstDS;
@@ -193,9 +205,8 @@ class OutputWriter
         char** papszOptions;
         OGRLayerH hLayer;
         OGRFieldDefnH hFieldDefn;
-        
+
         double adfGeoTransform[6];
-        
 
 }; /* -----  end of class OutputWriter  ----- */
 

@@ -38,6 +38,7 @@
 #include "Slope.h"
 #include "ninja_conv.h"
 #include "ninja_init.h"
+#include "gdal_util.h"
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp" //no i/o just types
@@ -64,6 +65,7 @@ void Usage(const char *pszError)
     {
         fprintf(stderr, "%s\n", pszError);
     }
+    NinjaFinalize();
     exit(1);
 }
 
@@ -190,6 +192,20 @@ int main(int argc, char *argv[])
     if(dfCellSize > 0)
         elev.resample_Grid_in_place(dfCellSize, AsciiGrid<double>::order1);
 
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        GDALDatasetH hDS = elev.ascii2GDAL();
+        if(!GDALCalculateAngleFromNorth( (GDALDataset*)hDS, angleFromNorth ))
+        {
+            printf("warning: Unable to calculate angle departure from north for the DEM.\n");
+        }
+        GDALClose(hDS);
+    }
+    //set the value for angleFromNorth member in the Elevation class
+    elev.setAngleFromNorth(angleFromNorth);
+
     //Compute lat/lon of domain center
     double latitude, longitude;
     elev.get_gridCenter(&longitude, &latitude);
@@ -197,7 +213,7 @@ int main(int argc, char *argv[])
     OGRCoordinateTransformation *poCT;
     const char* pszWKT = VSIStrdup(elev.prjString.c_str());
     const char* startOfMem = pszWKT;
-    oSrcSRS.importFromWkt((char**)&pszWKT);
+    oSrcSRS.importFromWkt(pszWKT);
     oDstSRS.importFromEPSG(4326);
     VSIFree((void*)startOfMem);
 
@@ -214,6 +230,7 @@ int main(int argc, char *argv[])
     ninjaTimeZone = globalTimeZoneDB.time_zone_from_region(pszTimeZone);
     if(ninjaTimeZone == NULL)
     {
+        NinjaFinalize();
         ostringstream os;
         os << "The time zone string: " << pszTimeZone << " does not match any in "
                 << "the time zone database file: date_time_zonespec.csv.";
@@ -223,10 +240,11 @@ int main(int argc, char *argv[])
     boost::local_time::local_date_time ninjaTime = boost::local_time::local_date_time(boost::gregorian::date(nYear, nMonth, nDay), boost::posix_time::time_duration(nHour,nMinute,0,0), ninjaTimeZone, boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
     if(ninjaTime.is_not_a_date_time())
     {
+        NinjaFinalize();
         throw std::runtime_error("Time could not be properly set in "
                                  "WindNinjaInputs::set_date_time().");
     }
-    Solar solar(ninjaTime, latitude, longitude, aspect_temp, slope_temp);
+    Solar solar(ninjaTime, latitude, longitude, aspect_temp, slope_temp, elev.getAngleFromNorth());
 
 #ifdef _OPENMP
     omp_set_num_threads(nNumThreads);
@@ -239,7 +257,7 @@ int main(int argc, char *argv[])
     //make aspect, slope, and shade grids
     Aspect asp(&elev,nNumThreads);
     Slope slp(&elev,nNumThreads);
-    Shade shd(&elev, solar.get_theta(), solar.get_phi(), nNumThreads);
+    Shade shd(&elev, solar.get_theta(), solar.get_phi(), elev.getAngleFromNorth(), nNumThreads);
     AsciiGrid<double> CloudCover((AsciiGrid<double>&)elev);
     if(pszCloudFile != NULL) {
         CloudCover.GDALReadGrid(pszCloudFile, 1);
@@ -264,7 +282,7 @@ int main(int argc, char *argv[])
         for(j = 0; j < elev.get_nCols(); j++)
         {
 
-            solar.set_aspect(asp(i,j));
+            solar.set_aspect(asp(i,j), elev.getAngleFromNorth());
             solar.set_slope(slp(i,j));
             solar.call_solPos();
             
@@ -295,8 +313,8 @@ int main(int argc, char *argv[])
     std::cout << "ShdAspSlp time = " << endShdAspSlp - startShdAspSlp << std::endl;
     std::cout << "Rad time = " << endRad - startRad << std::endl;
     std::cout << "Total time = " << endTotal - startTotal << std::endl;
-    
-    
+
+    NinjaFinalize();
     return 0;
 }
 

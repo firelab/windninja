@@ -42,6 +42,7 @@
 #include "Elevation.h"
 #include "ninjaUnits.h"
 #include "KmlVector.h"
+#include "OutputWriter.h"
 #include "wxStation.h"
 #include "ninjaCom.h"
 #include "ninja_conv.h"
@@ -54,7 +55,7 @@ public:
 
     WindNinjaInputs(const WindNinjaInputs &rhs);
     WindNinjaInputs &operator=(const WindNinjaInputs &rhs);
-    bool operator==(const WindNinjaInputs &rhs);
+    bool operator==(const WindNinjaInputs &rhs) const;
 
 
     /*-----------------------------------------------------------------------------
@@ -65,23 +66,11 @@ public:
         brush,
         trees
     };
-    
-    enum eMeshType{
-        MDM,
-        SHM
-    };
-    
+
     enum eNinjafoamMeshChoice{
         coarse,
         medium,
         fine
-    };
-
-    enum eOutputType{
-        mesh,
-        google,
-        shapefile,
-        ASCII
     };
 
     enum ePDFBaseMap {
@@ -96,7 +85,8 @@ public:
         wxModelInitializationFlag,	//Weather forecast model initialization
         griddedInitializationFlag,  //gridded speed and direction
         foamDomainAverageInitializationFlag, //foam "parent" run initialized with domain avg init
-        foamWxModelInitializationFlag //foam "parent" run initialized with wx model init
+        foamWxModelInitializationFlag, //foam "parent" run initialized with wx model init
+        foamGriddedInitializationFlag //foam "parent" run initialized with gridded init
     };
 
     eVegetation vegetation;
@@ -105,16 +95,8 @@ public:
      *  Base input data passed to "simulate_wind()"
      *-----------------------------------------------------------------------------*/
 
-    
-    ninjaComClass *Com;	//pointer to a com handler for the specific communication type desired
-    char lastComString[NINJA_MSG_SIZE];
+    ninjaComClass *Com;  // pointer to a given ninjas[i] level com handler
     int inputsRunNumber;
-    ninjaComClass::eNinjaCom inputsComType;
-    
-    int armySize; 
-    GDALDatasetH hSpdMemDs;
-    GDALDatasetH hDirMemDs;
-    GDALDatasetH hDustMemDs;
 
 
     //DEM input
@@ -130,7 +112,8 @@ public:
     velocityUnits::eVelocityUnits inputSpeedUnits;			//units of input windspeed (0=>m/s, 1=>mph, 2=>kph, 3=>kts) (note that inputSpeed is always stored as m/s, and converted to and from the other units)
     velocityUnits::eVelocityUnits outputSpeedUnits;			//units of output windspeed (0=>m/s, 1=>mph, 2=>kph, 3=>kts)
     double inputSpeed;			//input wind speed in m/s
-    double inputDirection;		//input wind direction (measured in degrees clockwise from North; DIRECTION WIND COMES FROM)
+    double inputDirection_geog;  //input wind direction, in geographic coordinates (measured in degrees clockwise from true North; DIRECTION WIND COMES FROM)
+    double inputDirection_proj;  //input wind direction, in dem projection coordinates (measured in degrees clockwise from the y grid line of the dem; DIRECTION WIND COMES FROM)
     lengthUnits::eLengthUnits inputWindHeightUnits;	//units of inputWindHeight when read in (always stored in meters!)
     double inputWindHeight;		//height of input wind above the top of the vegetation (always stored in meters!)
     lengthUnits::eLengthUnits outputWindHeightUnits;	//units of outputWindHeight when read in (always stored in meters!)
@@ -176,11 +159,11 @@ public:
      *  Output Parameters
      *-----------------------------------------------------------------------------*/
     double outputBufferClipping;	//specifies the percent to clip the output files around the perimeter.  Range 0-50.
-    bool writeAtmFile;          //flage specifying if a Farsite .atm file should be written.
     bool googOutFlag;			//flag specifying if a Google Earth file (*.kmz) should be written (this can only be done if the DEM has an associated *.prj file)
 
     std::string googColor; //sets color scheme for output /Colorblind mode
     bool googVectorScale; //sets the vector scaling
+    bool googUseConsistentColorScale;    // flag specifying whether to use a cross data color scale or a standard single data color scale, for kmz files, for all simulations
 
     KmlVector::egoogSpeedScaling googSpeedScaling;		//flag specifying the speed scaling for the legend/colors in the *.kmz file (0=>equal colors, 1=>equal interval)
     double googLineWidth;		//drawing line width for google output vectors
@@ -189,7 +172,12 @@ public:
     double wxModelGoogLineWidth;		//drawing line width for google output vectors
     bool shpOutFlag;			//flag specifying if a shapefile (*.shp, *.shx, *.dbf) should be written
     
-    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc, *_cld.asc) should be written
+    bool asciiOutFlag;			//flag specifying if ESRI Ascii Raster files (*_vel.asc, *_ang.asc) should be written
+    bool asciiAaigridOutFlag;   // write ascii output in standard AAIGRID (*.asc) format
+    bool asciiJsonOutFlag;      // write ascii output in JSON (*.json) format
+    bool asciiProjOutFlag;       // write ascii files using dem projection coordinates (standard output), this is UTM (northing,easting) grids for WindNinja downloaded dems
+    bool asciiGeogOutFlag;      // write ascii files using geographic coordinates, EPSG:4326 (lat,lon) grids
+    bool asciiUvOutFlag;        // write ascii output as u,v wind vector data
 
     //--- HUVW output file options
     std::string huvwSuffix; // the filename suffix for the HUVW output file (excluding extension, which is always .tif)
@@ -201,9 +189,16 @@ public:
     std::string huvw0TifFile;
     //--- end HUVW output file options
     
+    bool geoTiffOutFlag;  //flag specifying if fire behavior geotiff (raster) output should be written
+    std::string geoTiffFile;
+    double geoTiffResolution;
+    lengthUnits::eLengthUnits geoTiffUnits;
+
     bool txtOutFlag;			//flag specifying if a text file (*.txt) comparing measured to simulated data at specified points should be written (filenames here are hard-coded into the write_compare_output() function in ninja.cpp)
     bool wxModelShpOutFlag;		//flag specifying if a wxModel shapefile should be written
     bool wxModelAsciiOutFlag;		//flag specifying if wxModel ESRI Ascii Raster files should be written
+    bool wxModelGeoTiffOutFlag;  //flag specifying if wxModel geotiff files should be written
+    std::string wxModelGeoTiffFile;
     bool volVTKOutFlag;			//flag specifying if a volume VTK file should be written
     std::string kmlFile;
     std::string kmzFile;
@@ -217,14 +212,12 @@ public:
     std::string wxModelDbfFile;
     double shpResolution;
     lengthUnits::eLengthUnits shpUnits;
-    std::string cldFile;
-    std::string wxModelCldFile;
     std::string velFile;
     std::string wxModelVelFile;
     double velResolution;
     lengthUnits::eLengthUnits velOutputFileDistanceUnits;				//distance units of resolution
     std::string angFile;
-    std::string atmFile;
+    bool atmOutFlag; // flag specifying if a Farsite .atm file should be written.
     std::string wxModelAngFile;
     double angResolution;
     lengthUnits::eLengthUnits angOutputFileDistanceUnits;				//distance units of resolution
@@ -242,6 +235,19 @@ public:
     lengthUnits::eLengthUnits pdfUnits;
     double pdfWidth, pdfHeight; // in inches
     unsigned short pdfDPI;
+    bool fgbzOutFlag;
+    std::string fgbzFile;
+    double fgbzResolution;
+    lengthUnits::eLengthUnits fgbzUnits;
+    OutputWriter::eSpeedScaling fgbzSpeedScaling;  //flag specifying the speed scaling for the legend/colors in the *.fgbz file (0=>equal colors, 1=>equal interval)
+    std::string fgbzColor;  //sets color scheme for output /Colorblind mode
+    bool fgbzVectorScale;  //sets the vector scaling
+    double fgbzLineWidth;  //drawing line width for fgbz output vectors
+    bool fgbzUseConsistentColorScale;  //flag specifying whether to use a cross data color scale or a standard single data color scale, for fgbz files, for all simulations
+    bool wxModelFgbzOutFlag;
+    std::string wxModelFgbzFile;
+    OutputWriter::eSpeedScaling wxModelFgbzSpeedScaling;  //flag specifying the speed scaling for the legend/colors in the wxModel *.fgbz file (0=>equal colors, 1=>equal interval)
+    double wxModelFgbzLineWidth;  //drawing line width for wxModel fgbz output vectors
 
     std::string customOutputPath; //user-specified path for output
 
@@ -273,8 +279,6 @@ public:
     std::string dustFileOut;   //filename of the output dust emissions file
     std::string dustFilename;   //filename of fire perimeter for dust emissions calculation
     std::string dustFile;
-    std::string geotiffOutFilename; //filename of multiband geotiff output file
-    bool geotiffOutFlag; //flag specifying if multiband geotiff output should be written
 #endif
 
     /*-----------------------------------------------------------------------------
@@ -308,7 +312,11 @@ public:
     std::string stlFile; //path/filename of an STL file
     AsciiGrid<double> foamVelocityGrid; //output velocity grid from ninjafoam
     AsciiGrid<double> foamAngleGrid; //output angle grid from ninjafoam
+    std::vector<blt::local_date_time> foamWxTimeList; //wxModelInit getTimeList() from ninjafoam
+    std::string foamWxForecastIdentifier; //wxModelInit getForecastIdentifier() from ninjafoam
     bool writeTurbulence;
+    double colMax_colHeightAGL;
+    lengthUnits::eLengthUnits colMax_colHeightAGL_units;
 #endif
 };
 

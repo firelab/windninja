@@ -83,11 +83,21 @@ void domainAverageInitialization::ninjaFoamInitializeFields(WindNinjaInputs &inp
 
 void domainAverageInitialization::setInitializationGrids(WindNinjaInputs& input)
 {
+    //input.inputDirection_geog was set before the stored angleFromNorth was calculated,
+    //use input.inputDirection_geog and the stored angleFromNorth to calculate input.inputDirection_proj
+    input.inputDirection_proj = wrap0to360( input.inputDirection_geog - input.dem.getAngleFromNorth() ); //convert FROM geographic TO projected coordinates
+
     //set initialization grids
     speedInitializationGrid = input.inputSpeed;
-    dirInitializationGrid = input.inputDirection;
+    dirInitializationGrid = input.inputDirection_proj;
     airTempGrid = input.airTemp;
     setCloudCover(input);
+
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "domainAverageInitialization::setInitializationGrids()" );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth() );
+    CPLDebug( "COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj );
 
     for(int i=0; i<speedInitializationGrid.get_nRows(); i++) {
         for(int j=0; j<speedInitializationGrid.get_nCols(); j++) {
@@ -108,18 +118,18 @@ void domainAverageInitialization::initializeBoundaryLayer(WindNinjaInputs& input
     double inwindw=0.0;		//input w wind component
 
     //Set inwindu and inwindv
-    wind_sd_to_uv(input.inputSpeed, input.inputDirection, &inwindu, &inwindv);
+    wind_sd_to_uv(input.inputSpeed, input.inputDirection_proj, &inwindu, &inwindv);
 
     if(input.diurnalWinds == true)
     {
         double aspect_temp = 0;	//just placeholder, basically
         double slope_temp = 0;	//just placeholder, basically
 
-        Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp);
+        Solar solar(input.ninjaTime, input.latitude, input.longitude, aspect_temp, slope_temp, input.dem.getAngleFromNorth());
 
         Aspect aspect(&input.dem, input.numberCPUs);
         Slope slope(&input.dem, input.numberCPUs);
-        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.numberCPUs);
+        Shade shade(&input.dem, solar.get_theta(), solar.get_phi(), input.dem.getAngleFromNorth(), input.numberCPUs);
 
         addDiurnal(input, &aspect, &slope, &shade, &solar);  
 

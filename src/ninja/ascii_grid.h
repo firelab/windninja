@@ -125,7 +125,7 @@ public:
     inline int get_nCols() const {return data.get_numCols();}
     void set_nRows(int m) { data.set_numRows(m); }
     void set_nCols(int n) { data.set_numCols(n); }
-    inline long get_arraySize() const {return data.get_numRows() * data.get_numCols();}
+    inline long get_arraySize() const {return static_cast<long>(data.get_numRows()) * static_cast<long>(data.get_numCols());}
     inline double get_xllCorner() const {return xllCorner;}
     inline double get_yllCorner() const {return yllCorner;}
     inline double get_noDataValue() const {return data.getNoDataValue();}
@@ -145,11 +145,13 @@ public:
 
     void get_gridCenter(double *x, double *y);
 
-    T get_maxValue();
-    T get_minValue();
+    T get_maxValue() const;
+    T get_minValue() const;
 
     double get_meanValue() const;
     bool fillNoDataValues( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
+    bool fillNoDataValuesAngle( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
+    bool fillNoDataValuesCategorical( int minNeighborCells, double maxPercentNoData, int maxNumPasses );
 
     bool find_firstValue(T m, T buffer, int *k, int *l);
 
@@ -173,6 +175,7 @@ public:
                                double interpDistPower);
 
     void clipGridInPlaceSnapToCells(double percentClip);
+    void clipGridInPlaceSnapToCells(double north, double east, double south, double west);
 
     AsciiGrid<T> normalize_Grid(T lowBound, T highBound);
 
@@ -192,9 +195,6 @@ public:
     void write_Grid(std::string outputFile, int numDecimals);
     void write_json_Grid(std::string outputFile, int numDecimals);
 
-    void write_ascii_4326_Grid (std::string outputFile, int numDecimals);
-    void write_json_4326_Grid(std::string outputFile, int numDecimals);
-
     bool crop_noData(int noDataThreshold);
 
     void sort_grid();
@@ -207,9 +207,9 @@ public:
                    std::string legendTitle,
                    std::string legendUnits,
                    std::string scalarLegendFilename,
-                   bool writeLegend);
+                   bool writeLegend, bool keepTiff);
 
-    void exportToTiff( std::string outFilename, tiffType type = tiffGray );
+    void exportToTiff(std::string outFilename, std::string dataName, std::string dataUnits, tiffType type=tiffGray);
 
     AsciiGrid<T> BufferGrid( int nAddCols=1, int nAddRows=1 );
     void BufferGridInPlace( int nAddCols=1, int nAddRows=1 );
@@ -263,13 +263,12 @@ public:
 
 
 private:
-    T *sortedData;
+    std::vector<T> sortedData;
     //do not change!!!!!--This means you Jason!!!!!!!
     //consider this deprecated, but we *might* have written a binary grid
     //at some point.  *sigh* leave it in.  My bad -kss.
     static const int magicNumber = 0x3634af3;
 
-    void write_4326_Grid (std::string& filename, int precision, void (AsciiGrid<T>::*write_grid)(std::string,int));
 };
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

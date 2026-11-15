@@ -135,9 +135,9 @@ int ncepHrrrSurfInitialization::getEndHour()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void ncepHrrrSurfInitialization::checkForValidData()
+void ncepHrrrSurfInitialization::checkForValidData(std::string timeZoneString)
 {
-
+    (void)timeZoneString;
 }
 
 /**
@@ -158,7 +158,8 @@ bool ncepHrrrSurfInitialization::identify( std::string fileName )
     GDALDataset *srcDS = (GDALDataset*)GDALOpenShared( fileName.c_str(), GA_ReadOnly );
 
     if( srcDS == NULL ) {
-        CPLDebug( "ncepHRRRSurfaceInitialization::identify()", "Bad forecast file" );
+        //CPLError(CE_Warning, CPLE_AppDefined, "ncepHRRRSurfaceInitialization::identify(), Bad forecast file.");
+        CPLDebug("HRRR", "ncepHRRRSurfaceInitialization::identify(), Bad forecast file.");
         return false;
 
     } else {
@@ -199,10 +200,8 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 {
     GDALDataset *srcDS;
     srcDS = (GDALDataset*)GDALOpenShared( input.forecastFilename.c_str(), GA_ReadOnly );
-
     if( srcDS == NULL ) {
-        CPLDebug( "ncepHRRRSurfaceInitialization::identify()",
-                "Bad forecast file" );
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
 
     GDALRasterBand *poBand;
@@ -222,7 +221,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     {
         if(input.ninjaTime == timeList[i])
         {
-            cout<<"input.ninjaTime = "<<input.ninjaTime<<endl;
+            CPLDebug("HRRR", "input.ninjaTime = '%s'", input.ninjaTime.to_string().c_str());
             for(unsigned int j = 1; j <= srcDS->GetRasterCount(); j++)
             { 
                 poBand = srcDS->GetRasterBand( j );
@@ -230,6 +229,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if ( bandName.find("Temperature") == 0) {
+                    CPLDebug("HRRR", "2-m T found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string shortName( gc);
                     if (shortName == "2-HTGL") {
@@ -240,7 +240,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                         } else if (bandName != "Temperature [K]") {
                             bandList.push_back( j);  // 2t
                         } else {
-                            cout << "skipping unsupported forecast temperature unit: " << bandName << endl;
+                            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "skipping unsupported forecast temperature unit: '%s'", bandName.c_str());
                         }
                     }
                 }
@@ -252,6 +252,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "v-component of wind [m/s]" ) != bandName.npos ){
+                    CPLDebug("HRRR", "v-component of wind found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "10-HTGL" ) != bandName.npos ){
@@ -267,11 +268,12 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "u-component of wind [m/s]" ) != bandName.npos ){
+                    CPLDebug("HRRR", "u-component of wind found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "10-HTGL" ) != bandName.npos ){
                         bandList.push_back( j );  // 10u    
-                        dfNoData = poBand->GetNoDataValue( &pbSuccess );
+                        dfNoData = poBand->GetNoDataValue(&pbSuccess);
                         break;
                     }
                 }
@@ -283,6 +285,7 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
                 std::string bandName( gc );
 
                 if( bandName.find( "Total cloud cover [%]" ) != bandName.npos ){
+                    CPLDebug("HRRR", "cloud cover found...");
                     gc = poBand->GetMetadataItem( "GRIB_SHORT_NAME" );
                     std::string bandName( gc );
                     if( bandName.find( "0-RESERVED" ) != bandName.npos ||
@@ -295,14 +298,9 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         }
     }
 
-    CPLDebug("HRRR", "2t: bandList[0] = %d", bandList[0]);
-    CPLDebug("HRRR", "10v: bandList[1] = %d", bandList[1]);
-    CPLDebug("HRRR", "10u: bandList[2] = %d", bandList[2]);
-    CPLDebug("HRRR", "tcc: bandList[3] = %d", bandList[3]);
-
     if(bandList.size() < 4) {
         GDALClose((GDALDatasetH) srcDS );
-        throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
+        throw std::runtime_error("Not enough bands detected in HRRR forecast file.");
     }
 
     std::string dstWkt;
@@ -315,47 +313,71 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     GDALWarpOptions* psWarpOptions;
 
     srcWkt = srcDS->GetProjectionRef();
-    psWarpOptions = GDALCreateWarpOptions();
+    if(srcWkt.empty())
+    {
+        throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
+    }
 
     int nBandCount = bandList.size();
 
-    psWarpOptions->nBandCount = nBandCount;
-    psWarpOptions->panSrcBands =
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->panDstBands =
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-    if( pbSuccess == false )
+    if(pbSuccess == false)
+    {
         dfNoData = -9999.0;
+    }
 
-    psWarpOptions->panSrcBands =
-        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
+    // Setup warp options
+    psWarpOptions = GDALCreateWarpOptions();
+
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
     psWarpOptions->panSrcBands[0] = bandList[0];
     psWarpOptions->panSrcBands[1] = bandList[1];
     psWarpOptions->panSrcBands[2] = bandList[2];
     psWarpOptions->panSrcBands[3] = bandList[3];
 
-    psWarpOptions->panDstBands =
-        (int *) CPLMalloc(sizeof(int) * psWarpOptions->nBandCount );
     psWarpOptions->panDstBands[0] = 1;
     psWarpOptions->panDstBands[1] = 2;
     psWarpOptions->panDstBands[2] = 3;
     psWarpOptions->panDstBands[3] = 4;
 
+    for(int b = 0; b < nBandCount; b++)
+    {
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+    }
+
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
+
+    // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+    // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+    // in this case, going FROM weather model projection coordinates TO dem projection coordinates
+    double coordinateTransformationAngle = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        // direct calculation of FROM wx TO dem, already has the appropriate sign
+        if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
+        }
+    }
+
     wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(),
                                                     dstWkt.c_str(),
                                                     GRA_NearestNeighbour,
                                                     1.0, psWarpOptions );
+    if(wrpDS == NULL)
+    {
+        throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
+    }
+
     std::vector<std::string> varList = getVariableList();
 
     for( unsigned int i = 0; i < varList.size(); i++ ) {
@@ -406,6 +428,49 @@ void ncepHrrrSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
     }
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
+
+    //use the coordinateTransformationAngle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        // need an intermediate spd and dir set of ascii grids
+        AsciiGrid<double> speedGrid;
+        AsciiGrid<double> dirGrid;
+        speedGrid.set_headerData(uGrid);
+        dirGrid.set_headerData(uGrid);
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedGrid(i,j) = speedGrid.get_NoDataValue();
+                    dirGrid(i,j) = dirGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+                }
+            }
+        }
+
+        // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
+        for(int i=0; i<dirGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<dirGrid.get_nCols(); j++)
+            {
+                if( speedGrid(i,j) != speedGrid.get_NoDataValue() && dirGrid(i,j) != dirGrid.get_NoDataValue() )
+                {
+                    dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
+            }
+        }
+
+        // cleanup the intermediate grids
+        speedGrid.deallocate();
+        dirGrid.deallocate();
+    }
 
     GDALDestroyWarpOptions( psWarpOptions );
     GDALClose((GDALDatasetH) srcDS );

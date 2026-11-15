@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Main window and parent to all other widgets
- * Author:   Kyle Shannon <ksshannon@gmail.com>
+ * Purpose:  Main Window that handles GUI scraping and state changes
+ * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
  *
@@ -30,269 +30,144 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QtGui>
-#include <QMainWindow>
-#include <QMenu>
-#include <QLabel>
-#include <QAction>
-#include <QTime>
-#include <QTextEdit>
-#include <QColor>
-#include <QRgb>
-#include <QProcess>
-#include <QThread>
-#include <QToolBar>
-#include <QString>
+#include "outputs.h"
+#include "surfaceInput.h"
+#include "menuBar.h"
+#include "domainAverageInput.h"
+#include "pointInitializationInput.h"
+#include "mapBridge.h"
+#include "serverBridge.h"
+#include "weatherModelInput.h"
+#include "ui_mainWindow.h"
+#include "appState.h"
+#include "windninja.h"
+#include <QWebChannel>
+#include <QFuture>
+#include <QFutureWatcher>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QProgressDialog>
-#include <QMutex>
+#include <QMessageBox>
+#include <QMainWindow>
+#include <QTreeWidgetItem>
 #include <QDir>
-#include <QDesktopServices>
+#include <QDirIterator>
+#include <QDateTime>
+#include <QDebug>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QFileSystemModel>
+#include <QSortFilterProxyModel>
+#include <QSplitter>
+#include <QStandardItemModel>
+#include <QStandardPaths>
+#include <QTextEdit>
+#include <QTextStream>
+#include <QThread>
+#include <QTimer>
+#include <QTreeWidget>
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
+#include <QListView>
+#include <vector>
+#include <string>
 
-#include "gdal_priv.h"
-#include "ogr_srs_api.h"
-#include "cpl_string.h"
-#include "gdal_util.h"
-#include "startRuns.h"
-#include "ninja.h"
-#include "ninja_version.h"
-#include "WindNinjaTree.h"
-#include "consoleDockWidget.h"
-#include "solveThread.h"
-#include "ninjaException.h"
-#include "ninjaUnits.h"
-#include "wxStation.h"
-#include "ninjaUnits.h"
-#include "ninjaArmy.h"
-#include "ninja_conv.h"
-
-#include "setconfigdialog.h"
-
-class mainWindow : public QMainWindow
-{
-  Q_OBJECT
-
- public:
-  mainWindow(QWidget *parent = 0);
-  
-  //ninja *inputNinja;
-  
-  ninjaArmy *army;
-
-  QProgressDialog *progressDialog;
-  int nRuns;
-
-  QDir cwd;
-  QDir pwd;
-
-  QTimer *timer;
-
-  int *runProgress;
-  int totalProgress;
-  std::vector<int> progressLog;
-
-  bool okToContinueCheck;
-
-  public slots:
-   void updateProgress(int run, int progress);
-   void updateProgress(const QString message);
-   void updateTimer();
-   void openDEMDownloader();
-
- public:
-  WindNinjaTree *tree;
-  ConsoleDockWidget *console;
-  QString prompt;
-  QColor orange;
-
-  enum eInputFileType{
-    ASC, LCP, GTIFF, IMG};
 #ifdef NINJAFOAM
-  QString existingCaseDir;
-#endif
-  QString inputFileName;
-  QDir inputFileDir;
-  QString shortInputFileName;
-  QString outputPath;
-  int inputFileType;
-  bool hasPrj;
-  QString prjFileName;
-  double meshCellSize;
+#ifndef WIN32
+#include <hwloc.h>
+#endif // WIN32
+#endif // NINJAFOAM
 
-  enum eInputStatus{
-    blue, green, amber, red};
-
-  int lineNumber;
-
-  //GDAL values
-  QString GDALDriverName, GDALDriverLongName;
-  std::string GDALProjRef;
-  bool hasGDALCenter;
-  double GDALCenterLat;
-  double GDALCenterLon;
-  int GDALXSize, GDALYSize;
-  double GDALCellSize, GDALNoData;
-  double GDALMaxValue, GDALMinValue;
-
-  //threshold for no-googling = 400000
-
-  static const int noGoogleNumCells = 400000;
-  double noGoogleCellSize;
-  //threads
-  solveThread *sThread;
-
- signals:
-  void inputFileChanged(QString newFile);
-  void mainDiurnalChanged(bool dC);
-
- public slots:
-  void checkMessages();
-#ifdef NINJAFOAM  
-  void openExistingCase();
-  void updateFileInputForCase(const char* file);
-#endif
-  void openInputFile();
-  void updateFileInput(const char* file);
-  void inputFileDeleted();
-  void openMainWindow();
-  double computeCellSize(int index);
-  int checkInputFile(QString fileName);
-  void checkMeshCombo();
-  void checkMeshUnits(bool checked);
-  void updateOutRes();
-  void setPrompt(QString p);
-  void writeToConsole(QString message, QColor color = Qt::black);
-
-  void writeConsoleOutput();
-  void resampleData();
-  void writeBlankStationFile();
-  void windNinjaHelp();
-  void displayArcMap();
-  void tutorial1();
-  void tutorial2();
-  void tutorial3();
-  void tutorial4();
-  void demDownload();
-  void fetchDem();
-  void cliInstructions();
-  void aboutWindNinja();
-  void citeWindNinja();
-  void supportEmail();
-  void bugReport();
-  int openHelp(int target = 0);
-
-  void treeDoubleClick(QTreeWidgetItem *item, int column);
-
-  bool getLatLon();
-
-  void test();
-
-  int solve();
-  void cancelSolve();
-  int countRuns();
-
-  void openOutputPath();
-
-  //functions for checking inputItems
-  int checkInputItem();
-  int checkSurfaceItem();
-  int checkDiurnalItem();
-  int checkStabilityItem();
-#ifdef NINJAFOAM
-  int checkNativeSolverItem();
-  int checkNinjafoamItem();
-  int checkSolverMethodItem();
-  void selectNativeSolver( bool pick );
-  void selectNinjafoamSolver( bool pick );
-#endif
-  int checkWindItem();
-  int checkSpdDirItem();
-  int checkPointItem();
-  int checkWeatherItem();
-  int checkOutputItem();
-  int checkGoogleItem();
-  int checkFbItem();
-  int checkShapeItem();
-  int checkPdfItem();
-  int checkVtkItem();
-  int checkSolveItem();
-  int checkAllItems();
-
-  int checkKmlLimit(double);
-
-  bool okToContinue();
-
-  //initialization mutual exclusion
-  void selectWindInitialization( bool pick );
-  void selectPointInitialization( bool pick );
-  void selectWeatherInitialization( bool pick );
-  void enablePointDate(bool enable);
-#ifdef NINJAFOAM
-  void enableNinjafoamOptions(bool enable);
-#endif
-
-  void SetConfigOption();
-
- protected:
-  void closeEvent(QCloseEvent *event);
-
- private:
-  QAction *openInputFileAction;
-  QAction *exitAction;
-  QAction *editPromptAction;
-  QAction *writeConsoleOutputAction;
-  QAction *rddsAction;
-  QAction *writeBlankStationFileAction;
-  QAction *setConfigAction;
-  QAction *rddsInstructAction;
-  QAction *resampleAction;
-  QAction *windNinjaHelpAction;
-  QAction *tutorial1Action, *tutorial2Action;
-  QAction *tutorial3Action, *tutorial4Action;
-  QAction *downloadDemAction;
-  QAction *fetchDemAction;
-  QAction *displayShapeFileViewAction;
-  QAction *displayShapeFileMapAction;
-  QAction *cliInstructionsAction;
-  QAction *aboutWindNinjaAction;
-  QAction *aboutQtAction;
-  QAction *citeWindNinjaAction;
-  QAction *supportEmailAction;
-  QAction *submitBugReportAction;
-
-  //test action connected to test slot
-  QAction *testAction;
-
-  //Menus for the interface main window
-  QMenu *fileMenu;
-  QMenu *optionsMenu;
-  QMenu *toolsMenu;
-  QMenu *helpMenu;
-  QMenu *tutorialSubMenu;
-  QMenu *shapeSubMenu;
-
-  QLabel *statusLabel;
-
-  QTime *runTime;
-
-  double elapsedRunTime;
-
-  //create various entities in there own functions.
-
-  void createMenus();
-  void createActions();
-  void createTimers();
-  void createConnections();
-  void createConsole();
-  void createTreeView();
-  void readSettings();
-  void writeSettings();
-  QString checkForNoData( QString fileName );
-
-  QVBoxLayout *mainLayout;
-
-  QFileSystemWatcher fileWatcher;
-  WidgetDownloadDEM *demWidget;
+struct OutputPDFSize {
+    double PDFHeight;
+    double PDFWidth;
+    double PDFDpi;
 };
 
-#endif /* MAINWINDOW_H */
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
 
+public:
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
+
+signals:
+    void updateProgressMessageSignal(const QString &msg);
+    void updateProgressValueSignal(int run, int progress);
+    void writeToConsoleSignal(const QString &msg, QColor color=Qt::black);
+    void updateMetholodyState();
+    void updateDirunalState();
+    void updateStabilityState();
+
+protected:
+    void showEvent(QShowEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
+
+private slots:
+    void updateProgressMessage(const QString message);
+    void updateProgressValue(int run, int progress);
+    void writeToConsole(QString message, QColor color=Qt::black);
+    void massSolverCheckBoxToggled();
+    void momentumSolverCheckBoxToggled();
+    void diurnalCheckBoxToggled();
+    void stabilityCheckBoxToggled();
+    void treeWidgetItemSelectionChanged();
+    void treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column);
+    void solveButtonClicked();
+    void outputDirectoryButtonClicked();
+    void outputDirectoryOpenButtonClicked();
+    void cancelSolve();
+    void finishedLoadingMap();
+    void captureMapSnapshot();
+
+private:
+    Ui::MainWindow *ui;
+    QWebEngineView *webEngineView;
+    QWebChannel *webChannel;
+    MapBridge *mapBridge;
+    SurfaceInput *surfaceInput;
+    MenuBar *menuBar;
+    ServerBridge *serverBridge;
+    DomainAverageInput *domainAverageInput;
+    PointInitializationInput *pointInitializationInput;
+    WeatherModelInput *weatherModelInput;
+    Outputs *outputs;
+
+    NinjaArmyH *ninjaArmy;
+    NinjaErr ninjaErr;
+
+    std::vector<int> runProgress;
+    int totalProgress;
+    int maxProgress;
+
+    QProgressDialog *progressDialog;
+    QFutureWatcher<int> *futureWatcher;
+
+    QDir outputDir;
+
+    int nThreads;
+    int nCores;
+    int countNumCores();
+    int nProcessors = -1;  // settings value
+    int numNinjas;
+
+    int startSolve(int numProcessors);
+    void finishedSolve();
+    void plotOutputs();
+
+    void connectSignals();
+    bool prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod);
+    bool setOutputFlags(NinjaArmyH* ninjaArmy,
+                        int i,
+                        int numNinjas,
+                        OutputPDFSize PDFSize);
+
+    int lineNumber;
+
+    void writeSettings();
+    void readSettings();
+    void waitForLeaflet();
+
+};
+#endif // MAINWINDOW_H

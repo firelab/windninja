@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16)
 
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -29,6 +29,7 @@ set(LINK_LIBS ${Boost_LIBRARIES}
 
 set(SOLAR_GRID_SRC solar_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninjaMathUtility.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
@@ -40,11 +41,11 @@ set(SOLAR_GRID_SRC solar_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Aspect.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Shade.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
-                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp)
+                   ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
 add_executable(solar_grid ${SOLAR_GRID_SRC})
 
-target_link_libraries(solar_grid ${LINK_LIBS})
+target_link_libraries(solar_grid ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS solar_grid DESTINATION bin COMPONENT apps)
-

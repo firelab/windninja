@@ -28,59 +28,19 @@
 *****************************************************************************/
 
 #include "ninjaArmy.h"
-
 /**
 * @brief Default constructor.
 *
 */
 ninjaArmy::ninjaArmy()
-: writeFarsiteAtmFile(false)
 {
-    ninjas.push_back(new ninja());
-    initLocalData();
-}
+    Com = new ninjaComClass();
+    Com->runNumber = 9999;
+    Com->printRunNumber = false;
 
-/**
-* @brief Constructor that allocates numNinjas of ninjas or ninjafoams.
-*
-* @param numNinjas Number of ninjas to allocate.
-* @param momentumFlag flag inidicating if it is a NinjaFoam run
-*/
-#ifdef NINJAFOAM
-ninjaArmy::ninjaArmy(int numNinjas, bool momentumFlag)
-: writeFarsiteAtmFile(false)
-{
-    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-        if(momentumFlag == true){
-            ninjas[i] = new NinjaFoam();
-        }
-        else{
-             ninjas[i] = new ninja();
-        }
-    }
+//    ninjas.push_back(new ninja());
     initLocalData();
 }
-#endif
-
-/**
-* @brief Constructor that allocates numNinjas of ninjas.
-*
-* @param numNinjas Number of ninjas to allocate.
-*/
-#ifndef NINJAFOAM
-ninjaArmy::ninjaArmy(int numNinjas)
-: writeFarsiteAtmFile(false)
-{
-    ninjas.resize(numNinjas);  //allocate vector with enough memory for all ninjas
-    for(unsigned int i = 0; i < ninjas.size(); i++)
-    {
-        ninjas[i] = new ninja();
-    }
-    initLocalData();
-}
-#endif
 
 /**
 * @brief Copy constructor.
@@ -89,7 +49,8 @@ ninjaArmy::ninjaArmy(int numNinjas)
 */
 ninjaArmy::ninjaArmy(const ninjaArmy& A)
 {
-    writeFarsiteAtmFile = A.writeFarsiteAtmFile;
+    Com = new ninjaComClass(*A.Com);
+
     ninjas = A.ninjas;
     copyLocalData( A );
 }
@@ -100,8 +61,12 @@ ninjaArmy::ninjaArmy(const ninjaArmy& A)
 */
 ninjaArmy::~ninjaArmy()
 {
-    delete ninjas[0];
+    if(ninjas.size() >= 1)
+    {
+        delete ninjas[0];
+    }
     destoryLocalData();
+    delete Com;
 }
 
 /**
@@ -114,7 +79,10 @@ ninjaArmy& ninjaArmy::operator= (ninjaArmy const& A)
 {
     if(&A != this)
     {
-        writeFarsiteAtmFile = A.writeFarsiteAtmFile;
+        delete Com;
+        Com = new ninjaComClass();
+        *Com = *A.Com;
+
         ninjas = A.ninjas;
         copyLocalData( A );
     }
@@ -131,23 +99,56 @@ int ninjaArmy::getSize()
     return ninjas.size();
 }
 
+void ninjaArmy::makeDomainAverageArmy( int nSize, bool momentumFlag )
+{
+    if( nSize < 1 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize);
+        throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::makeDomainAverageArmy()", nSize));
+    }
+
+    int i;
+    for( i=0; i < ninjas.size();i ++)
+        delete ninjas[i];
+    ninjas.resize( nSize );
+    for( i = 0; i < nSize; i++ ){
+#ifdef NINJAFOAM
+        if(momentumFlag){
+            ninjas[i] = new NinjaFoam();
+        }else{
+            ninjas[i] = new ninja();
+        }
+#else
+        ninjas[i] = new ninja();
+#endif //NINJAFOAM
+
+        setNinjaCommunication( i, i );
+    }
+}
 
 /**
- * @brief ninjaArmy::makeStationArmy Makes an army (array) of ninjas for a Point Initialization run.
+ * @brief ninjaArmy::makePointArmy Makes an army (array) of ninjas for a Point Initialization run.
  * @param timeList vector of simulation times
  * @param timeZone
  * @param stationFileName
  * @param demFile
  */
-void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
+void ninjaArmy::makePointArmy(std::vector<boost::posix_time::ptime> timeList,
                              string timeZone, string stationFileName,
-                             string demFile, bool matchPoints, bool override)
+                             string demFile, bool matchPoints, bool momentumFlag)
 {
+    if( timeList.size() == 0 )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+        throw std::runtime_error("Invalid 'empty' input timeList in ninjaArmy::makePointArmy()");
+    }
+
     vector<wxStation> stationList;
     boost::posix_time::ptime noTime;
     //interpolate raw data to actual time steps
+
     int stationFormat = wxStation::GetHeaderVersion(stationFileName.c_str());
-    
+
     if (stationFormat==1) //This is if it is the old format->1 step, no time knowledge
     {
         stationList = pointInitialization::readWxStations(demFile,timeZone);
@@ -156,12 +157,14 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
     {
         stationList = pointInitialization::interpolateFromDisk(demFile, timeList, timeZone);
     }
-    
+
     ninjas.resize(timeList.size());
 
     for(unsigned int i=0; i<timeList.size(); i++)
     {
         ninjas[i] = new ninja();
+
+        setNinjaCommunication( i, i );
     }
 
     boost::local_time::tz_database tz_db;
@@ -183,7 +186,7 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
         //in case that is necessary
         CPLDebug("STATION_FETCH","STEP NUM:%i",i);
         CPLDebug("STATION_FETCH","UTC: %s",boost::posix_time::to_iso_extended_string(timeList[i]).c_str());
-        CPLDebug("STATION_FETCH","LOCAL: %s",(localTimeList[i].to_string()).c_str());
+        CPLDebug("STATION_FETCH","LOCAL: %s",boost::lexical_cast<std::string>(localTimeList[i]).c_str());
         CPLDebug("STATION_FETCH","----");
     }
     //handle old wxStation format
@@ -229,6 +232,10 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
         //The function name is a bit misleading as to what it really does.
         ninjas[i]->set_initializationMethod(WindNinjaInputs::pointInitializationFlag, matchPoints);
    }
+
+    // need to always clear these static values out before adding new ones,
+    // between each download/run, or they get kept across downloads/runs.
+    wxStation::stationKmlNames.clear();
 }
 
 /**
@@ -237,9 +244,9 @@ void ninjaArmy::makeStationArmy(std::vector<boost::posix_time::ptime> timeList,
  * @param forecastFilename Name of forecast file.
  * @param timeZone String identifying time zone (must match strings in the file "date_time_zonespec.csv".
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
+void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag)
 {
-  return makeArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
+  return makeWeatherModelArmy(forecastFilename, timeZone, std::vector<blt::local_date_time>(), momentumFlag);
 }
 
 /**
@@ -250,115 +257,60 @@ void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, boo
  * @param times a vector of times to run from the forecast.  If the vector is
  *        empty, run all of the times in the forecast
  */
-void ninjaArmy::makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
+void ninjaArmy::makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag)
 {
     wxModelInitialization* model;
-    
-    tz = timeZone;
-    
-    //for a list of paths forecast files
-    if( strstr( forecastFilename.c_str(), ".csv" ) ){
-        FILE *fcastList = VSIFOpen( forecastFilename.c_str(), "r" );
-        if(fcastList == NULL){
-            throw std::runtime_error(std::string("Forecast list ") + forecastFilename.c_str() +
-                  std::string(" cannot be opened."));
-        }
-        while(1){
-            const char* f = CPLReadLine(fcastList);
-            if(f == NULL){
-                break;
-            }
-            wxList.push_back(f);
-        }
-        VSIFClose(fcastList);
-        
-        model = wxModelInitializationFactory::makeWxInitialization(wxList[0]); 
-        
-        ninjas.resize(wxList.size());
-        
-        for(unsigned int i = 0; i < wxList.size(); i++)
-        {
-#ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
-            }
-            else{
-                 ninjas[i] = new ninja();
-            }
-#else
-            ninjas[i] = new ninja();
-#endif //NINJAFOAM
-        }
-        
-        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-        
-        for(unsigned int i = 0; i < wxList.size(); i++)
-        {
-            ninjas[i]->set_date_time(timeList[0]);
-            ninjas[i]->set_wxModelFilename(wxList[i]);
-            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-            ninjas[i]->setArmySize(wxList.size());
-        }       
-        delete model;
-    }
-    
-    //Factory function that identifies the type of forecast file and makes appropriate class.
-    else{
-        model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
 
-        try
-        {
-            model->checkForValidData();
-        }
-        catch(armyException &e)
-        {
-            std::cout << "Bad forecast file, exiting" << endl;
-            throw;
-        }
-        std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
-        if(times.size() > 0) {
-          timeList = times;
-        }
-        ninjas.resize(timeList.size());
-        //reallocate ninjas after resizing
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        {
+    model = wxModelInitializationFactory::makeWxInitialization(forecastFilename);
+
+    try
+    {
+        model->checkForValidData(timeZone);
+    }
+    catch(armyException &e)
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Bad forecast file, exiting");
+        throw;
+    }
+    std::vector<boost::local_time::local_date_time> timeList = model->getTimeList(timeZone);
+    if(times.size() > 0) {
+      timeList = times;
+    }
+    ninjas.resize(timeList.size());
+    //reallocate ninjas after resizing
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    {
 #ifdef NINJAFOAM
-            if(momentumFlag == true){
-                ninjas[i] = new NinjaFoam();
-            }
-            else{
-                 ninjas[i] = new ninja();
-            }
+        if(momentumFlag == true){
+            ninjas[i] = new NinjaFoam();
+        }
+        else{
+             ninjas[i] = new ninja();
+        }
 #else
-            ninjas[i] = new ninja();
+        ninjas[i] = new ninja();
 #endif
-        }
 
-
-        for(unsigned int i = 0; i < timeList.size(); i++)
-        //int i = 0;
-        //FOR_EVERY( iter_ninja, ninjas )
-        {
-            ninjas[i]->set_date_time(timeList[i]);
-            ninjas[i]->set_wxModelFilename(forecastFilename);
-            ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
-            ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
-
-            /*iter_ninja->set_date_time( timeList[i] );
-            iter_ninja->set_wxModelFilename( forecastFilename );
-            iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
-            iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
-            i++;*/
-        }
-        delete model;
+        setNinjaCommunication( i, i );
     }
-}
 
-void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
-{
-    writeFarsiteAtmFile = flag;
+    for(unsigned int i = 0; i < timeList.size(); i++)
+    //int i = 0;
+    //FOR_EVERY( iter_ninja, ninjas )
+    {
+        ninjas[i]->set_date_time(timeList[i]);
+        ninjas[i]->set_wxModelFilename(forecastFilename);
+        ninjas[i]->set_initializationMethod(WindNinjaInputs::wxModelInitializationFlag);
+        ninjas[i]->set_inputWindHeight( (*model).Get_Wind_Height() );
+
+        /*iter_ninja->set_date_time( timeList[i] );
+        iter_ninja->set_wxModelFilename( forecastFilename );
+        iter_ninja->set_initializationMethod( WindNinjaInputs::wxModelInitializationFlag );
+        iter_ninja->set_inputWindHeight( (*model).Get_Wind_Height() );
+        i++;*/
+    }
+
+    delete model;
 }
 
 /**
@@ -369,6 +321,7 @@ void ninjaArmy::set_writeFarsiteAtmFile(bool flag)
 */
 bool ninjaArmy::startRuns(int numProcessors)
 {
+    int j;
     bool status = true;
 
     if(ninjas.size()<1 || numProcessors<1)
@@ -376,22 +329,20 @@ bool ninjaArmy::startRuns(int numProcessors)
 
     //check for duplicate runs before we start the simulations
     //this is mostly for batch domain avg runs in the GUI and the API
-    try{
-        if(ninjas.size() > 1){
-            for(unsigned int i=0; i<ninjas.size()-1; i++){
-                for(unsigned int j=i+1; j<ninjas.size(); j++){
-                    if(ninjas[i]->input == ninjas[j]->input &&
-                       ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag){
-                            throw std::runtime_error("Multiple runs were requested with the same input parameters.");
-                    }
+    if(ninjas.size() > 1)
+    {
+        for(unsigned int i=0; i<ninjas.size()-1; i++)
+        {
+            for(unsigned int j=i+1; j<ninjas.size(); j++)
+            {
+                if(ninjas[i]->input == ninjas[j]->input && ninjas[i]->get_initializationMethod() == WindNinjaInputs::domainAverageInitializationFlag)
+                {
+                    ninjas[j]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Multiple runs were requested with the same input parameters.");
+                    status = false;
+                    throw std::runtime_error("Multiple runs were requested with the same input parameters.");
                 }
             }
         }
-    }catch (exception& e)
-    {
-        std::cout << "Exception caught: " << e.what() << endl;
-        status = false;
-        throw;
     }
 
 #ifdef NINJAFOAM
@@ -407,18 +358,19 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption("TEMP", CPLGetDirname(ninjas[0]->input.dem.fileName.c_str()));
         int status = NinjaFoam::GenerateFoamDirectory(ninjas[0]->input.dem.fileName);
         if(status != 0){
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Error generating the NINJAFOAM directory.");
             throw std::runtime_error("Error generating the NINJAFOAM directory.");
         }
     }
 #endif //NINJAFOAM
 
 #ifdef _OPENMP
-    omp_set_max_active_levels(0);
+    omp_set_max_active_levels(1);
     //omp_set_dynamic(true);
 #endif
 
-    setAtmFlags();
-   //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
+    //TODO: move common parameters (resolutions, input filenames, output arguments) to ninjaArmy or change storage class specifier to static
+
     /*
     ** Download a color relief file as the temp file allocated in
     ** initLocalData().  If we fail, clean up properly so we can save a
@@ -449,7 +401,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
         dfRatioH = dfHeight * nDPI / nYSize;
         dfRatioW = dfWidth * nDPI / nXSize;
-        dfRatio = CPL_MIN( dfRatioH, dfRatioW );
+        dfRatio = std::min( dfRatioH, dfRatioW );
 
         int nNewXSize = nXSize * dfRatio;
         int nNewYSize = nYSize * dfRatio;
@@ -496,8 +448,8 @@ bool ninjaArmy::startRuns(int numProcessors)
             padfData = (float*)CPLMalloc( nNewXSize * nNewYSize * sizeof( float ) );
             unsigned char *pabyData = NULL;
             pabyData = (unsigned char*)CPLMalloc( nNewXSize * nNewYSize * sizeof( unsigned char* ) );
-            //double adfMinMax[2];
-            //int bSuccess = TRUE;
+            double adfMinMax[2];
+            int bSuccess = TRUE;
             double dfMin, dfMax, dfMean, dfStdDev;
             GDALComputeRasterStatistics( hBand, FALSE, &dfMin, &dfMax, &dfMean, &dfStdDev, NULL, NULL );
 
@@ -541,12 +493,20 @@ bool ninjaArmy::startRuns(int numProcessors)
         CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
     }
 
+    // prep/reset the stored atmosphere file data, to be filled before ninjas[i] gets deleted after each run
+    // also used to set the size of the outputs, to better handle multi-threading
+    atmosphere.reset(ninjas.size());
+
+    // prep a clean set of map visualization output filenames, to be filled before ninjas[i] gets deleted after each run
+    fgbzFilenames.resize(ninjas.size());
+    stationKmlFilenames.resize(ninjas.size());
+    wxModelFgbzFilenames.resize(ninjas.size());
+
     if(ninjas.size() == 1)
     {
         //set number of threads for the run
         ninjas[0]->set_numberCPUs(numProcessors);
         try{
-
             if ((ninjas[0]->identify() == "ninjafoam") && ninjas[0]->input.diurnalWinds)
             {
                 //Set the ninjafoam solver progress bar to stop at 80% so that
@@ -556,9 +516,9 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             //start the run
             if(!ninjas[0]->simulate_wind())
-               printf("Return of false from simulate_wind()");
+               printf("Return of false from simulate_wind()\n");
 #ifdef NINJAFOAM
-            //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+            //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with
             //a ninja run to add diurnal flow after the cfd solution is computed
             if ((ninjas[0]->identify() == "ninjafoam") & ninjas[0]->input.diurnalWinds){
                 CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
@@ -576,16 +536,22 @@ bool ninjaArmy::startRuns(int numProcessors)
                     diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
                 }
                 else if(ninjas[0]->input.initializationMethod == WindNinjaInputs::griddedInitializationFlag){
-                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
+                    diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamGriddedInitializationFlag;
                 }
                 else{
                     throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
                 }
                 diurnal_ninja->input.inputWindHeight = ninjas[0]->input.outputWindHeight;
                 //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
-                diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
+                //need to set some wxModelInit metadata from init-> to help with wxModel legend output
+                if(ninjas[0]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                {
+                    diurnal_ninja->input.foamWxTimeList = ninjas[0]->init->getTimeList(ninjas[0]->input.ninjaTimeZone);
+                    diurnal_ninja->input.foamWxForecastIdentifier = ninjas[0]->init->getForecastIdentifier();
+                }
                 if(!diurnal_ninja->simulate_wind()){
-                    printf("Return of false from simulate_wind()");
+                    printf("Return of false from simulate_wind()\n");
                 }
                 //set output path on original ninja for the GUI
                 ninjas[0]->input.outputPath = diurnal_ninja->input.outputPath;
@@ -593,33 +559,80 @@ bool ninjaArmy::startRuns(int numProcessors)
                 //set filenames for atm file writing
                 ninjas[0]->input.velFile = diurnal_ninja->get_VelFileName();
                 ninjas[0]->input.angFile = diurnal_ninja->get_AngFileName();
-                ninjas[0]->input.cldFile = diurnal_ninja->get_CldFileName();
-            } 
-#endif //NINJAFOAM            
+                ninjas[0]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
+
+                //set fgbzFile for setCurrentMapVisualization(), for the GUI
+                ninjas[0]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
+
+                //set other filenames needed for consistentColorScale outputs
+                ninjas[0]->input.kmlFile = diurnal_ninja->input.kmlFile;
+                ninjas[0]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                ninjas[0]->input.legFile = diurnal_ninja->input.legFile;
+                ninjas[0]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
+
+                //also need to transfer the 2D output grids back to the original ninja, for consistentColorScale outputs
+                //note the TurbulenceGrid and colMaxGrid are NOT altered by the mass solver, so can skip those grids
+                ninjas[0]->VelocityGrid = diurnal_ninja->VelocityGrid;
+                ninjas[0]->AngleGrid = diurnal_ninja->AngleGrid;
+                ninjas[0]->CloudGrid = diurnal_ninja->CloudGrid;
+                //#ifdef NINJAFOAM
+                //ninjas[0]->TurbulenceGrid = diurnal_ninja->TurbulenceGrid;
+                //ninjas[0]->colMaxGrid = diurnal_ninja->colMaxGrid;
+                //#endif
+                #ifdef FRICTION_VELOCITY
+                ninjas[0]->UstarGrid = diurnal_ninja->UstarGrid;
+                #endif
+                #ifdef EMISSIONS
+                ninjas[0]->DustGrid = diurnal_ninja->DustGrid;
+                #endif
+            }
+
+#endif //NINJAFOAM
+
+            //store data for atmosphere file
+            if(ninjas[0]->input.atmOutFlag)
+            {
+                if(ninjas[0]->input.geoTiffOutFlag == true)
+                {
+                    std::string velGeoTiffFile = ninjas[0]->input.geoTiffFile;
+                    std::string angGeoTiffFile = ninjas[0]->input.geoTiffFile;
+                    velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                    angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                    atmosphere.push(0, ninjas[0]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
+                }
+                else
+                {
+                    atmosphere.push(0, ninjas[0]->get_date_time(), ninjas[0]->get_VelFileName(), ninjas[0]->get_AngFileName());
+                }
+            }
 
             //write farsite atmosphere file
-            if(writeFarsiteAtmFile)
+            if(ninjas[0]->input.atmOutFlag)
+            {
                 writeFarsiteAtmosphereFile();
+            }
+
+            //setup the run map visualization filenames, for C-API calls
+            setCurrentMapVisualizationFilenames(0);
 
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
@@ -646,7 +659,7 @@ bool ninjaArmy::startRuns(int numProcessors)
                 if(!ninjas[i]->simulate_wind()){
                     throw std::runtime_error("ninjaArmy: Error in NinjaFoam::simulate_wind().");
                 }
-                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with 
+                //if it's a ninjafoam run and diurnal is turned on, link the ninjafoam with
                 //a ninja run to add diurnal flow after the cfd solution is computed
                 if((ninjas[i]->identify() == "ninjafoam") && ninjas[i]->input.diurnalWinds){
                     CPLDebug("NINJA", "Starting a ninja to add diurnal to ninjafoam output.");
@@ -664,14 +677,20 @@ bool ninjaArmy::startRuns(int numProcessors)
                         diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamWxModelInitializationFlag;
                     }
                     else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::griddedInitializationFlag){
-                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamDomainAverageInitializationFlag;
+                        diurnal_ninja->input.initializationMethod = WindNinjaInputs::foamGriddedInitializationFlag;
                     }
                     else{
                         throw std::runtime_error("ninjaArmy: Initialization method not set properly.");
                     }
                     diurnal_ninja->input.inputWindHeight = ninjas[i]->input.outputWindHeight;
                     //if case is re-used resolution may not be set, set mesh resolution based on ninjas[0]
-                    diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m")); 
+                    diurnal_ninja->set_meshResolution(ninjas[0]->get_meshResolution(), lengthUnits::getUnit("m"));
+                    //need to set some wxModelInit metadata from init-> to help with wxModel legend output
+                    if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+                    {
+                        diurnal_ninja->input.foamWxTimeList = ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone);
+                        diurnal_ninja->input.foamWxForecastIdentifier = ninjas[i]->init->getForecastIdentifier();
+                    }
                     if(!diurnal_ninja->simulate_wind()){
                         throw std::runtime_error("ninjaArmy: Error in ninja::simulate_wind().");
                     }
@@ -681,17 +700,57 @@ bool ninjaArmy::startRuns(int numProcessors)
                     //set filenames for atm file writing
                     ninjas[i]->input.velFile = diurnal_ninja->get_VelFileName();
                     ninjas[i]->input.angFile = diurnal_ninja->get_AngFileName();
-                    ninjas[i]->input.cldFile = diurnal_ninja->get_CldFileName();
-                } 
-                //store data for atmosphere file
-                if(writeFarsiteAtmFile)
-                {
-                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                    ninjas[i]->input.geoTiffFile = diurnal_ninja->input.geoTiffFile;
+
+                    //set fgbzFile for setCurrentMapVisualizationFilenames(), for the GUI
+                    ninjas[i]->input.fgbzFile = diurnal_ninja->input.fgbzFile;
+
+                    //set other filenames needed for consistentColorScale outputs
+                    ninjas[i]->input.kmlFile = diurnal_ninja->input.kmlFile;
+                    ninjas[i]->input.kmzFile = diurnal_ninja->input.kmzFile;
+                    ninjas[i]->input.legFile = diurnal_ninja->input.legFile;
+                    ninjas[i]->input.dateTimeLegFile = diurnal_ninja->input.dateTimeLegFile;
+
+                    //also need to transfer the 2D output grids back to the original ninja, for consistentColorScale outputs
+                    //note the TurbulenceGrid and colMaxGrid are NOT altered by the mass solver, so can skip those grids
+                    ninjas[i]->VelocityGrid = diurnal_ninja->VelocityGrid;
+                    ninjas[i]->AngleGrid = diurnal_ninja->AngleGrid;
+                    ninjas[i]->CloudGrid = diurnal_ninja->CloudGrid;
+                    //#ifdef NINJAFOAM
+                    //ninjas[i]->TurbulenceGrid = diurnal_ninja->TurbulenceGrid;
+                    //ninjas[i]->colMaxGrid = diurnal_ninja->colMaxGrid;
+                    //#endif
+                    #ifdef FRICTION_VELOCITY
+                    ninjas[i]->UstarGrid = diurnal_ninja->UstarGrid;
+                    #endif
+                    #ifdef EMISSIONS
+                    ninjas[i]->DustGrid = diurnal_ninja->DustGrid;
+                    #endif
                 }
 
+                //store data for atmosphere file
+                if(ninjas[i]->input.atmOutFlag)
+                {
+                    if(ninjas[i]->input.geoTiffOutFlag == true)
+                    {
+                        std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                        angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
+                    }
+                    else
+                    {
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName());
+                    }
+                }
+
+                //setup the run map visualization filenames, for C-API calls
+                setCurrentMapVisualizationFilenames(i);
+
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                if( i != 0  )
+                //need to keep the ninjas for now, if doing a consistent color scale set of outputs
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false && ninjas[0]->input.fgbzUseConsistentColorScale == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -699,52 +758,55 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             }catch (bad_alloc& e)
             {
-                std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-                std::cout << "WindNinja appears to have run out of memory." << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
                 status = false;
+                throw;
             }catch (cancelledByUser& e)
             {
-                std::cout << "Exception caught: " << e.what() << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
                 status = false;
+                throw;
             }catch (exception& e)
             {
-                std::cout << "Exception caught: " << e.what() << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
                 status = false;
+                throw;
             }catch (...)
             {
-                std::cout << "Exception caught: Cannot determine exception type." << endl;
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
                 status = false;
+                throw;
             }
         }
         try{
             //write farsite atmosphere file
-            if(writeFarsiteAtmFile)
+            if(ninjas[0]->input.atmOutFlag)
+            {
                 writeFarsiteAtmosphereFile();
-
+            }
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
     }
-#endif //NINJAFOAM            
+#endif //NINJAFOAM
     else
     {
         for(unsigned int i = 0; i < ninjas.size(); i++)
@@ -761,58 +823,41 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
         std::vector<int> anErrors( numProcessors);
         std::vector<std::string>asMessages( numProcessors );
-        
-        std::vector<boost::local_time::local_date_time> timeList; 
-     
-        //create MEM datasets for GTiff output writer
-        ninjas[0]->readInputFile();
-        ninjas[0]->set_position();
-        ninjas[0]->set_uniVegetation();
-        ninjas[0]->mesh.buildStandardMesh(ninjas[0]->input);
-        
-        int nXSize = ninjas[0]->input.dem.get_nCols(); //57; 
-        int nYSize = ninjas[0]->input.dem.get_nRows(); //70; 
-    
-        GDALDriverH hDriver = GDALGetDriverByName( "MEM" );
-        
-        hSpdMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
-        hDirMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
-        hDustMemDS = GDALCreate(hDriver, "", nXSize, nYSize, 1, GDT_Float64, NULL);
 
-	#pragma omp parallel for //spread runs on single threads
+        std::vector<boost::local_time::local_date_time> timeList;
+
+    #pragma omp parallel for //spread runs on single threads
         //FOR_EVERY(iter_ninja, ninjas) //Doesn't work with omp
         for( int i = 0; i < ninjas.size(); i++ )
         {
             try
             {
-                //list of paths to forecast files, possibly in various zip archives
-                if( wxList.size() > 1 )
-                {
-                    wxModelInitialization* model;
-                    model = wxModelInitializationFactory::makeWxInitialization(wxList[i]); 
-                
-                    timeList = model->getTimeList(tz);
-                    ninjas[i]->set_date_time(timeList[0]);
-                    ninjas[i]->set_wxModelFilename( wxList[i] );
-                    ninjas[i]->set_date_time( timeList[0] );
-                    //set in-memory datasets for GTiff output writer
-                    ninjas[i]->set_memDs(hSpdMemDS, hDirMemDS, hDustMemDS); 
-                    
-                    delete model;
-                }
-
                 //start the run
-                ninjas[i]->simulate_wind();	//runs are done on 1 thread each since omp_set_max_active_levels(0)
+                ninjas[i]->simulate_wind();  //runs are done on 1 thread each since omp_set_nested(false)
 
                 //store data for atmosphere file
-                if(writeFarsiteAtmFile)
+                if(ninjas[i]->input.atmOutFlag)
                 {
-                    atmosphere.push( ninjas[i]->get_date_time(),   ninjas[i]->get_VelFileName(),
-                                     ninjas[i]->get_AngFileName(), ninjas[i]->get_CldFileName() );
+                    if(ninjas[i]->input.geoTiffOutFlag == true)
+                    {
+                        std::string velGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        std::string angGeoTiffFile = ninjas[i]->input.geoTiffFile;
+                        velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                        angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+                        atmosphere.push(i, ninjas[i]->get_date_time(), velGeoTiffFile, angGeoTiffFile);
+                    }
+                    else
+                    {
+                        atmosphere.push(i, ninjas[i]->get_date_time(), ninjas[i]->get_VelFileName(), ninjas[i]->get_AngFileName());
+                    }
                 }
 
+                //setup the run map visualization filenames, for C-API calls
+                setCurrentMapVisualizationFilenames(i);
+
                 //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
-                if( i != 0  )
+                //need to keep the ninjas for now, if doing a consistent color scale set of outputs
+                if( i != 0 && ninjas[0]->input.googUseConsistentColorScale == false && ninjas[0]->input.fgbzUseConsistentColorScale == false )
                 {
                     delete ninjas[i];
                     ninjas[i] = NULL;
@@ -820,6 +865,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 
             }catch (bad_alloc& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_BAD_ALLOC_EXC;
                 asMessages[omp_get_thread_num()] = "Exception bad_alloc caught:";
@@ -831,6 +877,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (logic_error& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception logic_error caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_LOGIC_EXC;
                 asMessages[omp_get_thread_num()] = "Exception logic_error caught:";
@@ -842,9 +889,10 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
              }catch (cancelledByUser& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception canceled by user caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = NINJA_CANCEL_USER_EXC;
-                asMessages[omp_get_thread_num()] = "Exception cacneled by user caught:";
+                asMessages[omp_get_thread_num()] = "Exception canceled by user caught:";
                 asMessages[omp_get_thread_num()] + e.what();
                 asMessages[omp_get_thread_num()] += "\n";
                 status = false;
@@ -853,6 +901,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (badForecastFile& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception badForecastFile caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = NINJA_BAD_FORECAST_EXC;
                 asMessages[omp_get_thread_num()] = "Exception badForecastFile caught:";
@@ -864,6 +913,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (exception& e)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_EXC;
                 asMessages[omp_get_thread_num()] = "Exception caught:";
@@ -875,6 +925,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
             }catch (...)
             {
+                ninjas[i]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
 #ifdef _OPENMP
                 anErrors[omp_get_thread_num()] = STD_UNKNOWN_EXC;
                 asMessages[omp_get_thread_num()] = "Unknown Exception caught:";
@@ -890,33 +941,72 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif
         try{
             //write farsite atmosphere file
-            if(writeFarsiteAtmFile)
+            if(ninjas[0]->input.atmOutFlag)
+            {
                 writeFarsiteAtmosphereFile();
-
+            }
         }catch (bad_alloc& e)
         {
-            std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-            std::cout << "WindNinja appears to have run out of memory." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
             status = false;
             throw;
         }catch (cancelledByUser& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (exception& e)
         {
-            std::cout << "Exception caught: " << e.what() << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
             status = false;
             throw;
         }catch (...)
         {
-            std::cout << "Exception caught: Cannot determine exception type." << endl;
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
             status = false;
             throw;
         }
     }
-    
+
+    try{
+        //write consistent color scale outputs
+        if(ninjas.size() > 1 && (ninjas[0]->input.googUseConsistentColorScale == true || ninjas[0]->input.fgbzUseConsistentColorScale == true))
+        {
+            writeConsistentColorScaleOutputs();
+
+            //cleanup at the end
+            for( int i = 0; i < ninjas.size(); i++ )
+            {
+                //delete all but ninjas[0] (ninjas[0] is used to set the output path in the GUI)
+                if( i != 0 )
+                {
+                    delete ninjas[i];
+                    ninjas[i] = NULL;
+                }
+            }
+        }
+    }catch (bad_alloc& e)
+    {
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
+        status = false;
+        throw;
+    }catch (cancelledByUser& e)
+    {
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
+        status = false;
+        throw;
+    }catch (exception& e)
+    {
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        status = false;
+        throw;
+    }catch (...)
+    {
+        ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        status = false;
+        throw;
+    }
+
     return status;
 }
 
@@ -931,15 +1021,13 @@ bool ninjaArmy::startFirstRun()
 {
     bool status = true;
 
-    setAtmFlags();
-
     //set number of threads for the run
     ninjas[0]->set_numberCPUs(1);
     try
     {
         //start the run
         if(!ninjas[0]->simulate_wind())
-            printf("Return of false from simulate_wind()");
+            printf("Return of false from simulate_wind()\n");
 
         //write farsite atmosphere file
         writeFarsiteAtmosphereFile();
@@ -947,26 +1035,25 @@ bool ninjaArmy::startFirstRun()
     }
     catch (bad_alloc& e)
     {
-        std::cout << "Exception bad_alloc caught: " << e.what() << endl;
-        std::cout << "WindNinja appears to have run out of memory." << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception bad_alloc caught: %s\nWindNinja appears to have run out of memory.", e.what());
         status = false;
         throw;
     }
     catch (cancelledByUser& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
     catch (exception& e)
     {
-        std::cout << "Exception caught: " << e.what() << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
         status = false;
         throw;
     }
     catch (...)
     {
-        std::cout << "Exception caught: Cannot determine exception type." << endl;
+        ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
         status = false;
         throw;
     }
@@ -976,139 +1063,368 @@ bool ninjaArmy::startFirstRun()
 /**
  * @brief write the atm file
  *
- * Write one or more atm files if needed.
- * @see setAtmFlag
+ * if wxModelInitialization or pointInitialization, make one .atm with all runs (times) listed,
+ * if domainAverageInitialization, make a separate .atm file for each and every single run.
  */
 void ninjaArmy::writeFarsiteAtmosphereFile()
 {
-    if(writeFarsiteAtmFile)
+    if(ninjas[0]->input.atmOutFlag)
     {
-        //If wxModelInitialization or pointInitialization, make one .atm with all runs (times) listed,
-        //else the setAtmFlags() function has already set each ninja to write their own atm file,
-        //so don't do it here!
         if(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag ||
-           (ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && ninjas.size() > 1))
+           ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag)
         {
-            //Set directory path from first ninja's velocity file
-            std::string filePath = CPLGetPath( ninjas[0]->get_VelFileName().c_str() );
-
-            //Get filename from first ninja's velFile
-            std::string fileroot( CPLGetBasename(ninjas[0]->get_VelFileName().c_str()) );
-            int stringPos = fileroot.find_last_of('_');
-            if(stringPos > 0)
-                fileroot.erase(stringPos);
-            else
-                throw std::runtime_error("Problem writing FARSITE atmosphere file.  The ninja ASCII velocity filename appears to be malformed.");
-
-            //Form atm filename
-            std::string filename( CPLFormFilename(filePath.c_str(), fileroot.c_str(), "atm") );
-
-            //Write atm file
-            atmosphere.writeAtmFile(filename, ninjas[0]->get_outputSpeedUnits(),
-                                              ninjas[0]->get_outputWindHeight() );
+            bool writeSeparateAtmFiles = false;
+            atmosphere.writeAtmFile(writeSeparateAtmFiles, ninjas[0]->get_outputSpeedUnits(), ninjas[0]->get_outputWindHeight());
+        }
+        else
+        {
+            bool writeSeparateAtmFiles = true;
+            atmosphere.writeAtmFile(writeSeparateAtmFiles, ninjas[0]->get_outputSpeedUnits(), ninjas[0]->get_outputWindHeight());
         }
     }
 }
 
-/**
- * @brief Determine what type of atm file to write.
- *
- * If the run is a weather model run, we only need to write one atm file for
- * all of the output files.  This atm file will be named after the *first*
- * run of all the runs.
- */
-void ninjaArmy::setAtmFlags()
+/*-----------------------------------------------------------------------------
+ *  C-API makeArmy function calls
+ *-----------------------------------------------------------------------------*/
+
+int ninjaArmy::NinjaMakeDomainAverageArmyThermalParameterization( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions )
 {
-    if(writeFarsiteAtmFile)
+    try
     {
-        //if it's not a weather model or point run, set all ninja's atm write flags
-        if(!(ninjas[0]->get_initializationMethod() == WindNinjaInputs::wxModelInitializationFlag) &&
-           !(ninjas[0]->get_initializationMethod() == WindNinjaInputs::pointInitializationFlag && 
-               ninjas.size() > 1))
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
         {
-            //FOR_EVERY( ninja, ninjas )
-            for(unsigned int i = 0; i < ninjas.size(); i++)
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        if( numNinjas < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::NinjaMakeDomainAverageArmy()", numNinjas));
+        }
+
+        //Get the number of elements in the arrays
+/*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+        size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
+//        size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+//        size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+//        size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+//        size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+//        size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+//        size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+//        size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+//
+//        if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+//        {
+//            throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+//
+
+        makeDomainAverageArmy( numNinjas, momentumFlag );
+
+        int retval = NINJA_E_INVALID;
+        for(int i=0; i<getSize(); i++)
+        {
+            retval = setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
             {
-                ninjas[i]->set_writeAtmFile(true);
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputSpeed() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputDirection() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setDateTime( i, yearList[i], monthList[i], dayList[i], hourList[i], minuteList[i], 0, timeZone );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setDateTime() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniAirTemp( i, airTempList[i], std::string( airTempUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniAirTemp() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setUniCloudCover( i, cloudCoverList[i], std::string( cloudCoverUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setUniCloudCover() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
             }
         }
     }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
 }
 
-void ninjaArmy::setSize( int nSize, bool momentumFlag )
+
+int ninjaArmy::NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** papszOptions )
 {
-    int i;
-    for( i=0; i < ninjas.size();i ++) 
-        delete ninjas[i];
-    ninjas.resize( nSize );
-    for( i = 0; i < nSize; i++ ){
-#ifdef NINJAFOAM
-        if(momentumFlag)
-            ninjas[i] = new NinjaFoam();
-        else
-            ninjas[i] = new ninja();
-#else
-        ninjas[i] = new ninja();
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
 #endif
+
+        if( numNinjas < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numNinjas '%d' in ninjaArmy::NinjaMakeDomainAverageArmy()", numNinjas));
+        }
+
+        //Get the number of elements in the arrays
+        /*        size_t length1 = sizeof(speedList) / sizeof(speedList[0]);
+        size_t length2 = sizeof(directionList) / sizeof(directionList[0]); */
+        //        size_t length1 = sizeof(yearList) / sizeof(yearList[0]);
+        //        size_t length2 = sizeof(monthList) / sizeof(monthList[0]);
+        //        size_t length3 = sizeof(dayList) / sizeof(dayList[0]);
+        //        size_t length4 = sizeof(hourList) / sizeof(hourList[0]);
+        //        size_t length5 = sizeof(minuteList) / sizeof(minuteList[0]);
+        //        size_t length6 = sizeof(airTempList) / sizeof(airTempList[0]);
+        //        size_t length7 = sizeof(cloudCoverList) / sizeof(cloudCoverList[0]);
+        //
+        //        if(!(length1 == length2 == length3 == length4 == length5 == length6 == length7))
+        //        {
+        //            throw std::runtime_error("yearList, monthList, dayList, hourList, minuteList, airTempList, and cloudCoverList must be the same length!");
+        //
+
+        makeDomainAverageArmy( numNinjas, momentumFlag );
+
+        int retval = NINJA_E_INVALID;
+        for(int i=0; i<getSize(); i++)
+        {
+            retval = setInputSpeed( i, speedList[i], std::string( speedUnits ) );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputSpeed() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+
+            retval = setInputDirection( i, directionList[i] );
+            if( retval != NINJA_SUCCESS )
+            {
+                Com->ninjaCom(ninjaComClass::ninjaFailure, "ninjaArmy::setInputDirection() called in ninjaArmy::NinjaMakeDomainAverageArmy() for ninja '%d' failed.", i);
+                return retval;
+            }
+        }
     }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions )
+{
+    try
+    {
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("The momentum solver is not available for use with Point Initialization runs.");
+        }
+
+        if( timeListSize < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input timeListSize '%d' in ninjaArmy::NinjaMakePointArmy()", timeListSize));
+        }
+        if( numStationFiles < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input numStationFiles '%d' in ninjaArmy::NinjaMakePointArmy()", numStationFiles));
+        }
+
+        wxStation::SetStationFormat(wxStation::newFormat);
+
+        std::vector <boost::posix_time::ptime> timeList;
+        for(size_t i=0; i < timeListSize; i++)
+        {
+            timeList.push_back(boost::posix_time::ptime(boost::gregorian::date(yearList[i], monthList[i], dayList[i]), boost::posix_time::time_duration(hourList[i],minuteList[i],0,0)));
+        }
+
+        std::vector<std::string> sFiles;
+        for (int i = 0; i < numStationFiles; i++)
+        {
+            sFiles.emplace_back(stationFileNames[i]);
+        }
+        pointInitialization::storeFileNames(sFiles);
+        CPLDebug("STATION_FETCH", "FILES STORED...");
+
+        makePointArmy( timeList, std::string(timeZone), sFiles[0], std::string(elevationFile), matchPointsFlag, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papszOptions )
+{
+    try
+    {
+
+#ifndef NINJAFOAM
+        if(momentumFlag == true)
+        {
+            throw std::runtime_error("momentumFlag cannot be set to true. WindNinja was not compiled with mass and momentum support.");
+        }
+#endif
+
+        // TODO: need to make a better error check for this than to disallow an empty inputTimeList
+        // Need to setup a check to compare inputTimeList size to the input timeListSize
+        if( size < 1 )
+        {
+            throw std::runtime_error(CPLSPrintf("Invalid input size '%d' in ninjaArmy::NinjaMakeWeatherModelArmy()", size));
+        }
+
+        wxModelInitialization *model = wxModelInitializationFactory::makeWxInitialization(std::string(forecastFilename));
+        std::vector<blt::local_date_time> fullTimeList = model->getTimeList(std::string(timeZone));
+        std::vector<blt::local_date_time> timeList;
+
+        for(int i = 0; i < fullTimeList.size(); i++)
+        {
+            for(int j = 0; j < size; j++)
+            {
+                std::string time1 = fullTimeList[i].to_string();
+                std::string time2(inputTimeList[j]);
+                if(time1 == time2)
+                {
+                    timeList.push_back(fullTimeList[i]);
+                }
+            }
+        }
+
+        makeWeatherModelArmy( std::string( forecastFilename ), std::string( timeZone ), timeList, momentumFlag );
+    }
+    catch( armyException & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( exception & e )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+        return NINJA_E_INVALID;
+    }
+    catch( ... )
+    {
+        Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type.");
+        return NINJA_E_INVALID;
+    }
+
+    return NINJA_SUCCESS;
 }
 
 /*-----------------------------------------------------------------------------
  *  Ninja Communication Methods
  *-----------------------------------------------------------------------------*/
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
-                           const ninjaComClass::eNinjaCom comType,
-                           char ** papszOptions )
+int ninjaArmy::setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                          char ** papszOptions )
 {
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ninjaCommunication( RunNumber, comType ) );
+    try
+    {
+        Com->set_messageHandler(pMsgHandler, pUser);
+    }
+    catch( ... )
+    {
+        std::cerr << "CRITICAL: ninjaArmy level ninjaComMessageHandler not set. Messages will NOT be delivered." << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
 }
 
-int ninjaArmy::setNinjaCommunication( const int nIndex, std::string comType,
-                           char ** papszOptions )
+int ninjaArmy::setNinjaMultiComStream( FILE* stream,
+                                       char ** papszOptions )
+{
+    try
+    {
+        Com->multiStream = stream;
+    }
+    catch( ... )
+    {
+        std::cerr << "ERROR: ninjaArmy level ninjaCom multiStream FILE pointer not set." << std::endl;
+        return NINJA_E_INVALID;
+    }
+    return NINJA_SUCCESS;
+}
+
+int ninjaArmy::setNinjaCommunication( const int nIndex, const int RunNumber,
+                                      char ** papszOptions )
 {
     int retval = NINJA_E_INVALID;
     IF_VALID_INDEX( nIndex, ninjas )
     {
-        std::transform( comType.begin(), comType.end(), comType.begin(), ::tolower );
-        if( comType == "ninjaCLICom" || comType == "cli" )
+        try
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaCLICom );
+            ninjas[ nIndex ]->set_ninjaCommunication( Com );
+            ninjas[ nIndex ]->set_ninjaComRunNumber( RunNumber );
             retval = NINJA_SUCCESS;
         }
-        else if( comType == "ninjaQuietCom" || comType == "quiet" )
+        catch( std::exception &e )
         {
-            ninjas[ nIndex ]->set_ninjaCommunication
-                ( nIndex, ninjaComClass::ninjaQuietCom );
-            retval = NINJA_SUCCESS;
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s, Failed to set ninjas[%d] level ninjaCom", e.what(), RunNumber);
+            retval = NINJA_E_INVALID;
         }
-        else
+        catch( ... )
         {
+            Com->ninjaCom(ninjaComClass::ninjaFailure, "Failed to set ninjas[%d] level ninjaCom", RunNumber);
             retval = NINJA_E_INVALID;
         }
     }
     return retval;
 }
-
-#ifdef NINJA_GUI
-int ninjaArmy::setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                                   char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_ComNumRuns( RunNumber ) );
-}
-
-ninjaComClass * ninjaArmy::getNinjaCom( const int nIndex, char ** papszOptions )
-{
-    IF_VALID_INDEX( nIndex, ninjas )
-    {
-        return ninjas[ nIndex ]->get_Com();
-    }
-    return NULL; //if not valid index
-}
-#endif //NINJA-GUI
 
 /*-----------------------------------------------------------------------------
  *  Ninja Speed Testing Methods
@@ -1178,17 +1494,6 @@ int ninjaArmy::setDustFlag( const int nIndex, const bool flag, char ** papszOpti
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_dustFlag( flag ) );
 }
-
-int ninjaArmy::setGeotiffOutFilename( const int nIndex, const std::string filename,
-                                char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFilename( filename ) );
-}
-
-int ninjaArmy::setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
-{
-    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geotiffOutFlag( flag ) );
-}
 #endif //EMISSIONS
 
 #ifdef NINJAFOAM
@@ -1203,8 +1508,8 @@ int ninjaArmy::setMeshCount( const int nIndex, const int meshCount, char ** paps
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshCount ) );
 }
-int ninjaArmy::setMeshCount( const int nIndex, 
-                             const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+int ninjaArmy::setMeshCount( const int nIndex,
+                             const WindNinjaInputs::eNinjafoamMeshChoice meshChoice,
                              char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_MeshCount( meshChoice ) );
@@ -1252,7 +1557,7 @@ int ninjaArmy::readInputFile( const int nIndex, char ** papszOptions )
 }
 
 /*-----------------------------------------------------------------------------
- * Station Fetch Methods 
+ * Station Fetch Methods
  *-----------------------------------------------------------------------------*/
 int ninjaArmy::setStationFetchFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1267,8 +1572,8 @@ int ninjaArmy::ninjaInitialize()
     int retval = NINJA_E_INVALID;
 
     retval = NinjaInitialize();
-    
-    return retval;    
+
+    return retval;
 }
 
 int ninjaArmy::setDEM( const int nIndex, const std::string dem_filename, char ** papszOptions )
@@ -1368,6 +1673,11 @@ int ninjaArmy::setInitializationMethod( const int nIndex,
 #endif
         else
         {
+#ifdef NINJAFOAM
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input initialization_method '%s' in ninjaArmy::setInitializationMethod()\nchoices are: 'domain_average', 'domainAverage', 'domainaverageinitializationflag', 'domain',\n'point', 'pointinitializationflag', 'wxmodel', 'wxmodelinitializationflag', 'griddedInitialization'", method.c_str());
+#else
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input initialization_method '%s' in ninjaArmy::setInitializationMethod()\nchoices are: 'domain_average', 'domainAverage', 'domainaverageinitializationflag', 'domain',\n'point', 'pointinitializationflag', 'wxmodel', 'wxmodelinitializationflag', 'griddedInitialization', 'foamDomainAverageInitialization'", method.c_str());
+#endif
             retval = NINJA_E_INVALID;
         }
     }
@@ -1421,8 +1731,15 @@ int ninjaArmy::setInputWindHeight( const int nIndex, const double height,
            ninjas[ nIndex ]->set_inputWindHeight( height, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
        }
-       catch( std::logic_error &e )
+       /*catch( std::range_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }*/
+       //catch( std::logic_error &e )
+       catch( std::exception &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -1453,13 +1770,29 @@ int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
            ninjas[ nIndex ]->set_outputWindHeight( height, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
        }
-       catch( std::logic_error &e )
+       /*catch( std::range_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }*/
+       //catch( std::logic_error &e )
+       catch( std::exception &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
    return retval;
 }
+
+//int ninjaArmy::setOutputWindHeight( const int nIndex, const double height,
+//                                    std::string units, char ** papszOptions )
+//{
+//    //Parse units so it contains only lowercase letters
+//    std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+//
+//    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_outputWindHeight( height, lengthUnits::getUnit( units ) ) );
+//}
 
 int ninjaArmy::setOutputSpeedUnits( const int nIndex, const velocityUnits::eVelocityUnits units,
                              char ** papszOptions )
@@ -1481,11 +1814,14 @@ int ninjaArmy::setOutputSpeedUnits( const int nIndex, std::string units, char **
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
    return retval;
 }
+
+
 
 int ninjaArmy::setDiurnalWinds( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1604,6 +1940,7 @@ int ninjaArmy::setUniVegetation( const int nIndex, std::string vegetation,
         }
         else
         {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid input vegation '%s' in ninjaArmy::setUniVegetation()\nchoices are: 'grass', 'g', 'brush', 'b', 'trees', 't'", vegetation.c_str());
             retval = NINJA_E_INVALID;
         }
     }
@@ -1618,8 +1955,39 @@ int ninjaArmy::setUniVegetation( const int nIndex, char ** papszOptions )
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const std::string choice,
                                         char ** papszOptions )
 {
+#ifndef NINJAFOAM
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_meshResChoice( choice ) );
+#else
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        try
+        {
+            if( ninjas[ nIndex ]->identify() == "ninja" )
+            {
+                ninjas[ nIndex ]->set_meshResChoice( choice );
+                retval = NINJA_SUCCESS;
+            } else if( ninjas[ nIndex ]->identify() == "ninjafoam" )
+            {
+                ninjas[ nIndex ]->set_MeshCount( ninja::get_eNinjafoamMeshChoice(choice) );
+                retval = NINJA_SUCCESS;
+            }
+            else
+            {
+                throw std::invalid_argument( "invalid ninja->identify() '" + choice +
+                                             "' in ninjaArmy::setMeshResolutionChoice()" +
+                                             "\nshould be: 'ninja' or 'ninjafoam'" );
+            }
+        }
+        catch( std::logic_error &e )
+        {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
+#endif
 }
 
 int ninjaArmy::setMeshResolutionChoice( const int nIndex, const Mesh::eMeshChoice choice,
@@ -1651,6 +2019,7 @@ int ninjaArmy::setMeshResolution( const int nIndex, const double resolution,
        }
        catch( std::logic_error &e )
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
            retval = NINJA_E_INVALID;
        }
    }
@@ -1725,17 +2094,31 @@ int ninjaArmy::setAlphaStability( const int nIndex, const double stability_,
 /*-----------------------------------------------------------------------------
  *  Output Parameter Methods
  *-----------------------------------------------------------------------------*/
-int ninjaArmy::setResolution (const int nIndex, const double resolution, std::string units, char ** papszOptions,
-                              void (ninja::*set_res)(const double,lengthUnits::eLengthUnits))
+int ninjaArmy::setOutputPath( const int nIndex, std::string path,
+                                 char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputPath( path ) );
+}
+int ninjaArmy::setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                            const lengthUnits::eLengthUnits units,
+                                            char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_outputSpeedGridResolution( resolution, units ) );
+}
+
+int ninjaArmy::setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
 {
    int retval = NINJA_E_INVALID;
    IF_VALID_INDEX( nIndex, ninjas )
    {
        //Parse units so it contains only lowercase letters
-       std::transform( units.begin(), units.end(), units.begin(), ::tolower);
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
        try
        {
-           (ninjas[ nIndex ]->*set_res)( resolution, lengthUnits::getUnit(units));
+           ninjas[ nIndex ]->set_outputSpeedGridResolution( resolution, lengthUnits::getUnit( units ) );
            retval = NINJA_SUCCESS;
        }
        catch( std::logic_error &e )
@@ -1746,24 +2129,50 @@ int ninjaArmy::setResolution (const int nIndex, const double resolution, std::st
    return retval;
 }
 
-int ninjaArmy::setOutputPath( const int nIndex, std::string path,
-                                 char ** papszOptions )
+int ninjaArmy::setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                                 const lengthUnits::eLengthUnits units,
+                                                 char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
-            ninjas[ nIndex ]->set_outputPath( path ) );
+            ninjas[ nIndex ]->set_outputDirectionGridResolution( resolution, units ) );
 }
-const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char ** papszOptions )
+
+int ninjaArmy::setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                                 std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_outputDirectionGridResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+
+const double* ninjaArmy::getOutputSpeedGrid( const int nIndex, char** papszOptions)
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
         return ninjas[ nIndex ]->get_outputSpeedGrid( );
+        return ninjas[ nIndex ]->get_outputSpeedGrid( );
     }
 }
-const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char ** papszOptions )
+
+const double* ninjaArmy::getOutputDirectionGrid( const int nIndex, char** papszOptions )
 {
     CHECK_VALID_INDEX( nIndex, ninjas )
     {
-        return ninjas[ nIndex ]->get_outputDirectionGrid( );
+        return ninjas[nIndex]->get_outputDirectionGrid( );
     }
 }
 const char* ninjaArmy::getOutputGridProjection( const int nIndex, char ** papszOptions )
@@ -1829,6 +2238,16 @@ int ninjaArmy::setWxModelAsciiOutFlag( const int nIndex, const bool flag, char *
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_wxModelAsciiOutFlag( flag ) );
 }
+int ninjaArmy::setWxModelFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+                       ninjas[ nIndex ]->set_wxModelFgbzOutFlag( flag ) );
+}
+int ninjaArmy::setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_wxModelGeoTiffOutFlag( flag ) );
+}
 int ninjaArmy::setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
@@ -1842,13 +2261,32 @@ int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
 }
 int ninjaArmy::setGoogColor(const int nIndex, string colorScheme, bool scaling)
 {
-    IF_VALID_INDEX_TRY( nIndex,ninjas,ninjas[nIndex]->set_googColor(colorScheme,scaling));
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_googColor(colorScheme, scaling));
 }
-
+int ninjaArmy::setGoogConsistentColorScale(const int nIndex, bool flag, int numRuns)
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_googConsistentColorScale(flag, numRuns));
+}
 int ninjaArmy::setGoogResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
 {
-    return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_googResolution);
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_googResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
 }
 
 int ninjaArmy::setGoogSpeedScaling
@@ -1877,8 +2315,8 @@ int ninjaArmy::setGoogSpeedScaling
        }
        else
        {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid speed scale '%s' in ninjaArmy::setGoogSpeedScaling()\nchoices are: 'equal_color', 'color', 'equal_interval', 'interval'", scaling.c_str());
            retval = NINJA_E_INVALID;
-
        }
     }
     return retval;
@@ -1890,7 +2328,6 @@ int ninjaArmy::setGoogLineWidth( const int nIndex, const double width,
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_googLineWidth( width ) );
 }
-
 
 int ninjaArmy::setShpOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1907,7 +2344,23 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
 int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
                                  std::string units, char ** papszOptions )
 {
-   return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_shpResolution);
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_shpResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
 }
 
 //--- storing 3D HUVW grids and vectors
@@ -1933,18 +2386,87 @@ int ninjaArmy::setAsciiOutFlag( const int nIndex, const bool flag, char ** papsz
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiOutFlag( flag ) );
 }
-
+int ninjaArmy::setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiAaigridOutFlag( flag ) );
+}
+int ninjaArmy::setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiJsonOutFlag( flag ) );
+}
+int ninjaArmy::setAsciiProjOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiProjOutFlag( flag ) );
+}
+int ninjaArmy::setAsciiGeogOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiGeogOutFlag( flag ) );
+}
+int ninjaArmy::setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_asciiUvOutFlag( flag ) );
+}
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                         const lengthUnits::eLengthUnits units, char ** papszOptions )
 {
     IF_VALID_INDEX_TRY( nIndex, ninjas,
             ninjas[ nIndex ]->set_asciiResolution( resolution, units ) );
 }
-
 int ninjaArmy::setAsciiResolution( const int nIndex, const double resolution,
                                    std::string units, char ** papszOptions )
 {
-    return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_asciiResolution);
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_asciiResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+int ninjaArmy::setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_geoTiffOutFlag( flag ) );
+}
+int ninjaArmy::setGeoTiffResolution( const int nIndex, const double resolution,
+                                     const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_geoTiffResolution( resolution, units ) );
+}
+int ninjaArmy::setGeoTiffResolution( const int nIndex, const double resolution,
+                                     std::string units, char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+        //Parse units so it contains only lowercase letters
+        std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+        try
+        {
+            ninjas[ nIndex ]->set_geoTiffResolution( resolution, lengthUnits::getUnit( units ) );
+            retval = NINJA_SUCCESS;
+        }
+        catch( std::logic_error &e )
+        {
+            ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+            retval = NINJA_E_INVALID;
+        }
+    }
+    return retval;
+}
+int ninjaArmy::setAtmOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_atmOutFlag( flag ) );
 }
 int ninjaArmy::setVtkOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
@@ -1980,7 +2502,23 @@ int ninjaArmy::setPDFLineWidth( const int nIndex, const float linewidth, char **
 int ninjaArmy::setPDFResolution( const int nIndex, const double resolution,
                                   std::string units, char ** papszOptions )
 {
-    return setResolution( nIndex, resolution, units, papszOptions, &ninja::set_pdfResolution);
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_pdfResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
 }
 
 int ninjaArmy::setPDFBaseMap( const int nIndex,
@@ -2001,6 +2539,85 @@ int ninjaArmy::setPDFSize( const int nIndex, const double height, const double w
     IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[nIndex]->set_pdfSize( height, width, dpi ));
 }
 
+int ninjaArmy::setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzOutFlag( flag ) );
+}
+
+int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
+                                  const lengthUnits::eLengthUnits units, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas,
+            ninjas[ nIndex ]->set_fgbzResolution( resolution, units ) );
+}
+
+int ninjaArmy::setFgbzResolution( const int nIndex, const double resolution,
+                                  std::string units, char ** papszOptions )
+{
+   int retval = NINJA_E_INVALID;
+   IF_VALID_INDEX( nIndex, ninjas )
+   {
+       //Parse units so it contains only lowercase letters
+       std::transform( units.begin(), units.end(), units.begin(), ::tolower );
+       try
+       {
+           ninjas[ nIndex ]->set_fgbzResolution( resolution, lengthUnits::getUnit( units ) );
+           retval = NINJA_SUCCESS;
+       }
+       catch( std::logic_error &e )
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what());
+           retval = NINJA_E_INVALID;
+       }
+   }
+   return retval;
+}
+
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, const OutputWriter::eSpeedScaling scaling,
+                                    char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzSpeedScaling( scaling ) );
+}
+
+int ninjaArmy::setFgbzSpeedScaling( const int nIndex, std::string scaling, char ** papszOptions )
+{
+    int retval = NINJA_E_INVALID;
+    IF_VALID_INDEX( nIndex, ninjas )
+    {
+       if( scaling == "equal_color" || scaling == "color" )
+       {
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( OutputWriter::equal_color );
+           retval = NINJA_SUCCESS;
+       }
+       else if( scaling == "equal_interval" || scaling == "interval" )
+       {
+           ninjas[ nIndex ]->set_fgbzSpeedScaling( OutputWriter::equal_interval );
+           retval = NINJA_SUCCESS;
+       }
+       else
+       {
+           ninjas[ nIndex ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Invalid speed scale '%s' in ninjaArmy::setFgbzSpeedScaling()\nchoices are: 'equal_color', 'color', 'equal_interval', 'interval'", scaling.c_str());
+           retval = NINJA_E_INVALID;
+       }
+    }
+    return retval;
+}
+
+int ninjaArmy::setFgbzColor(const int nIndex, string colorScheme, bool scaling)
+{
+    IF_VALID_INDEX_TRY(nIndex, ninjas, ninjas[nIndex]->set_fgbzColor(colorScheme, scaling));
+}
+
+int ninjaArmy::setFgbzLineWidth( const int nIndex, const double width, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_fgbzLineWidth( width ) );
+}
+
+int ninjaArmy::setFgbzConsistentColorScale(const int nIndex, bool flag, int numRuns)
+{
+    IF_VALID_INDEX_TRY(nIndex, ninjas, ninjas[nIndex]->set_fgbzConsistentColorScale(flag, numRuns));
+}
+
 std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 {
     IF_VALID_INDEX( nIndex, ninjas )
@@ -2009,6 +2626,17 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
     }
     return std::string("");
 }
+
+int ninjaArmy::getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+                                             std::vector<std::string>& wxModelFgbzFilenameStr, char ** papszOptions )
+{
+    fgbzFilenamesStr = fgbzFilenames;
+    stationKmlFilenamesStr = stationKmlFilenames;
+    wxModelFgbzFilenameStr = wxModelFgbzFilenames;
+
+    return NINJA_SUCCESS;
+}
+
 /**
  * @brief Reset the army in able to reinitialize needed parameters
  *
@@ -2016,7 +2644,6 @@ std::string ninjaArmy::getOutputPath( const int nIndex, char ** papszOptions )
 void ninjaArmy::reset()
 {
     ninjas.clear();
-    writeFarsiteAtmFile = false;
 }
 
 void ninjaArmy::cancel()
@@ -2032,6 +2659,504 @@ void ninjaArmy::cancelAndReset()
 {
     cancel();
     reset();
+}
+
+void ninjaArmy::setCurrentMapVisualizationFilenames(int runNumber)
+{
+    fgbzFilenames[runNumber] = ninjas[runNumber]->input.fgbzFile;
+
+    if(ninjas[runNumber]->input.stations.size() == 0)
+    {
+        stationKmlFilenames[runNumber] = "";
+    } else
+    {
+        if(ninjas[runNumber]->input.stations[runNumber].stationKmlNames.size() == 0)
+        {
+            stationKmlFilenames[runNumber] = "";
+        } else
+        {
+            // all these cout statements are various ways to access the given wxStation::stationKmlNames, which is SHARED across ninjas[runNumber].input.stations[runNumber]
+            // the past attempt of doing a for loop over ninjas[runNumber]->input.stations[runNumber].stationKmlNames[stationIdx] makes NO sense, it results in DUPLICATION
+            //std::cout << "ninjas[0]->input.stations[0].stationKmlNames[" << runNumber << "] = \"" << ninjas[0]->input.stations[0].stationKmlNames[runNumber] << "\"" << std::endl;
+            //std::cout << "ninjas[" << runNumber << "]->input.stations[" << runNumber << "].stationKmlNames[" << runNumber << "] = \"" << ninjas[runNumber]->input.stations[runNumber].stationKmlNames[runNumber] << "\"" << std::endl;
+            //std::cout << "wxStation::stationKmlNames[" << runNumber << "] = \"" << wxStation::stationKmlNames[runNumber] << "\"" << std::endl;
+            stationKmlFilenames[runNumber] = ninjas[runNumber]->input.stations[runNumber].stationKmlNames[runNumber];
+        }
+    }
+
+    // oh, this one is set to "!set" for non-wxModel runs, the storage of this filename always exists for each ninjas[i]
+    if(ninjas[runNumber]->input.wxModelFgbzFile == "!set")
+    {
+        wxModelFgbzFilenames[runNumber] = "";
+    } else
+    {
+        wxModelFgbzFilenames[runNumber] = ninjas[runNumber]->input.wxModelFgbzFile;
+    }
+}
+
+void ninjaArmy::calcConsistentColorScaleSplits(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, eArmySpeedScaling scaling)
+{
+    // make sure this value matches that of OutputWriter and KmlVector, or there will be problems using the calculated splitVals
+    int numSplits = 6;
+
+    *outSize = numSplits;
+    *outSplitVals = new double[numSplits];
+
+    switch(scaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            std::vector<double> combinedGridValues;
+            size_t nMaxCells = static_cast<size_t>(inSpdGrids[0]->get_nRows()) * static_cast<size_t>(inSpdGrids[0]->get_nCols()) * static_cast<size_t>(nSets);
+            combinedGridValues.reserve(nMaxCells);
+            for(int j = 0; j < nSets; j++)
+            {
+                const AsciiGrid<double>* current_grid = inSpdGrids[j];
+                for(int rowIdx = 0; rowIdx < current_grid->get_nRows(); rowIdx++)
+                {
+                    for(int colIdx = 0; colIdx < current_grid->get_nCols(); colIdx++)
+                    {
+                        double current_val = current_grid->get_cellValue(rowIdx, colIdx);
+                        if(current_val != current_grid->get_noDataValue() && !std::isnan(current_val))
+                        {
+                            combinedGridValues.push_back(current_val);
+                        }
+                    }
+                }
+            }
+
+            std::sort(combinedGridValues.begin(), combinedGridValues.end());
+
+            size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
+
+            // do the final value as the exact last index
+            for(int i = 0; i < numSplits - 1; i++)
+            {
+                (*outSplitVals)[i] = combinedGridValues[i * step];
+            }
+            (*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+
+            // if you want to use the actual minVal as the first splitVal, comment this line out
+            (*outSplitVals)[0] = 0.0;
+
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double minVal = 9999;
+            double maxVal = -9999;
+            for(int j = 0; j < nSets; j++)
+            {
+                double current_minVal = inSpdGrids[j]->get_minValue();
+                double current_maxVal = inSpdGrids[j]->get_maxValue();
+                if( current_minVal < minVal )
+                {
+                    minVal = current_minVal;
+                }
+                if( current_maxVal > maxVal )
+                {
+                    maxVal = current_maxVal;
+                }
+            }
+
+            double interval = maxVal / (float)(numSplits-1);
+            //double interval = (maxVal - minVal) / (float)(numSplits-1);
+            for(int i = 0; i < numSplits; i++)
+            {
+                (*outSplitVals)[i] = i * interval;
+                //(*outSplitVals)[i] = i * interval + minVal;
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            std::vector<double> combinedGridValues;
+            size_t nMaxCells = static_cast<size_t>(inSpdGrids[0]->get_nRows()) * static_cast<size_t>(inSpdGrids[0]->get_nCols()) * static_cast<size_t>(nSets);
+            combinedGridValues.reserve(nMaxCells);
+            for(int j = 0; j < nSets; j++)
+            {
+                const AsciiGrid<double>* current_grid = inSpdGrids[j];
+                for(int rowIdx = 0; rowIdx < current_grid->get_nRows(); rowIdx++)
+                {
+                    for(int colIdx = 0; colIdx < current_grid->get_nCols(); colIdx++)
+                    {
+                        double current_val = current_grid->get_cellValue(rowIdx, colIdx);
+                        if(current_val != current_grid->get_noDataValue() && !std::isnan(current_val))
+                        {
+                            combinedGridValues.push_back(current_val);
+                        }
+                    }
+                }
+            }
+
+            std::sort(combinedGridValues.begin(), combinedGridValues.end());
+
+            size_t step = combinedGridValues.size() / static_cast<size_t>(numSplits - 1);
+
+            // do the final value as the exact last index
+            for(int i = 0; i < numSplits - 1; i++)
+            {
+                (*outSplitVals)[i] = combinedGridValues[i * step];
+            }
+            (*outSplitVals)[numSplits - 1] = combinedGridValues.back();
+
+            // if you want to use the actual minVal as the first splitVal, comment this line out
+            (*outSplitVals)[0] = 0.0;
+
+            break;
+        }
+    }
+}
+
+void ninjaArmy::writeConsistentColorScaleOutputs()
+{
+    ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Writing consistent color scale output files...");
+
+    // ensure grids cover original DEM extents, for FLAMMAP, and for all simulation outputs
+    // if output clipping was set by the user, don't buffer to overlap the DEM
+    AsciiGrid<double> demGrid;
+    if(ninjas[0]->input.outputBufferClipping <= 0.0)
+    {
+        GDALDatasetH hDS;
+        hDS = GDALOpen(ninjas[0]->input.dem.fileName.c_str(), GA_ReadOnly);
+        if(hDS == NULL)
+        {
+            ninjas[0]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Problem reading DEM during output file writing.");
+        }
+        GDAL2AsciiGrid((GDALDataset*)hDS, 1, demGrid);
+        GDALClose(hDS);
+    }
+
+    if(ninjas[0]->input.googUseConsistentColorScale == true)
+    {
+        AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
+            {
+                resampledVelGrids[i]->BufferToOverlapGrid(demGrid);
+            }
+        }
+
+        eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+        if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_color)
+        {
+            speedScaling = ninjaArmy::equal_color;
+        }
+        if(ninjas[0]->input.googSpeedScaling == KmlVector::equal_interval)
+        {
+            speedScaling = ninjaArmy::equal_interval;
+        }
+
+        int numSplits;
+        double *finalSpeedSplitVals = nullptr;
+        calcConsistentColorScaleSplits(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            KmlVector ninjaKmlFiles;
+
+            AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+            AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
+
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
+            {
+                angTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
+            #ifdef NINJAFOAM
+            AsciiGrid<double> *turbTempGrid = nullptr;
+            AsciiGrid<double> *colMaxTempGrid = nullptr;
+            if(ninjas[i]->input.writeTurbulence)
+            {
+                //turbTempGrid = new AsciiGrid<double> (ninjas[i]->TurbulenceGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                colMaxTempGrid = new AsciiGrid<double> (ninjas[i]->colMaxGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+
+                if(ninjas[0]->input.outputBufferClipping <= 0.0)
+                {
+                    //turbTempGrid->BufferToOverlapGrid(demGrid);
+                    colMaxTempGrid->BufferToOverlapGrid(demGrid);
+                }
+
+                //ninjaKmlFiles.setTurbulenceGrid(*turbTempGrid, ninjas[i]->input.outputSpeedUnits);
+                ninjaKmlFiles.setColMaxGrid(*colMaxTempGrid, ninjas[i]->input.outputSpeedUnits,  ninjas[i]->input.colMax_colHeightAGL, ninjas[i]->input.colMax_colHeightAGL_units);
+            }
+            #endif //NINJAFOAM
+            #ifdef FRICTION_VELOCITY
+            AsciiGrid<double> *ustarTempGrid = nullptr;
+            if(ninjas[i]->input.frictionVelocityFlag == 1 && ninjas[i]->identify() == "ninja")
+            {
+                ustarTempGrid = new AsciiGrid<double> (ninjas[i]->UstarGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                if(ninjas[0]->input.outputBufferClipping <= 0.0)
+                {
+                    ustarTempGrid->BufferToOverlapGrid(demGrid);
+                }
+                ninjaKmlFiles.setUstarGrid(*ustarTempGrid);
+            }
+            #endif //FRICTION_VELOCITY
+            #ifdef EMISSIONS
+            AsciiGrid<double> *dustTempGrid = nullptr;
+            if(ninjas[i]->input.dustFlag == 1 && ninjas[i]->identify() == "ninja")
+            {
+                dustTempGrid = new AsciiGrid<double> (ninjas[i]->DustGrid.resample_Grid(ninjas[i]->input.kmzResolution, AsciiGrid<double>::order0));
+                if(ninjas[0]->input.outputBufferClipping <= 0.0)
+                {
+                    dustTempGrid->BufferToOverlapGrid(demGrid);
+                }
+                ninjaKmlFiles.setDustGrid(*dustTempGrid);
+            }
+            #endif //EMISSIONS
+
+            ninjaKmlFiles.setKmlFile(ninjas[i]->input.kmlFile);
+            ninjaKmlFiles.setKmzFile(ninjas[i]->input.kmzFile);
+
+            ninjaKmlFiles.setLegendFile(ninjas[i]->input.legFile);
+            ninjaKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimeLegFile, ninjas[i]->input.ninjaTime);
+            ninjaKmlFiles.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+            ninjaKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+            ninjaKmlFiles.setDirGrid(*angTempGrid);
+
+            ninjaKmlFiles.setSpeedScaling(ninjas[i]->input.googSpeedScaling);
+            ninjaKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+            ninjaKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
+            ninjaKmlFiles.setLineWidth(ninjas[i]->input.googLineWidth);
+            ninjaKmlFiles.setTime(ninjas[i]->input.ninjaTime);
+            if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                ninjaKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+            }
+
+            ninjaKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+
+            if(ninjaKmlFiles.writeKml())
+            {
+                if(ninjaKmlFiles.makeKmz())
+                {
+                    ninjaKmlFiles.removeKmlFile();
+                }
+            }
+
+            delete angTempGrid;
+            angTempGrid = nullptr;
+            #ifdef NINJAFOAM
+            delete turbTempGrid;
+            turbTempGrid = nullptr;
+            delete colMaxTempGrid;
+            colMaxTempGrid = nullptr;
+            #endif //NINJAFOAM
+            #ifdef FRICTION_VELOCITY
+            delete ustarTempGrid;
+            ustarTempGrid = nullptr;
+            #endif //FRICTION_VELOCITY
+            #ifdef EMISSIONS
+            delete dustTempGrid;
+            dustTempGrid = nullptr;
+            #endif //EMISSIONS
+        }
+
+        //cleanup
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            delete resampledVelGrids[i];
+            resampledVelGrids[i] = nullptr;
+        }
+        delete[] resampledVelGrids;
+        resampledVelGrids = nullptr;
+
+        delete[] finalSpeedSplitVals;
+        finalSpeedSplitVals = nullptr;
+    }
+
+    if(ninjas[0]->input.fgbzUseConsistentColorScale == true)
+    {
+        AsciiGrid<double> **resampledVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            resampledVelGrids[i] = new AsciiGrid<double> (ninjas[i]->VelocityGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
+            {
+                resampledVelGrids[i]->BufferToOverlapGrid(demGrid);
+            }
+        }
+
+        eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+        if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_color)
+        {
+            speedScaling = ninjaArmy::equal_color;
+        }
+        else if(ninjas[0]->input.fgbzSpeedScaling == OutputWriter::equal_interval)
+        {
+            speedScaling = ninjaArmy::equal_interval;
+        }
+
+        int numSplits;
+        double *finalSpeedSplitVals = nullptr;
+        calcConsistentColorScaleSplits(resampledVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            OutputWriter output;
+
+            AsciiGrid<double> *angTempGrid = new AsciiGrid<double> (ninjas[i]->AngleGrid.resample_Grid(ninjas[i]->input.fgbzResolution, AsciiGrid<double>::order0));
+            AsciiGrid<double>* velTempGrid = resampledVelGrids[i];
+
+            if(ninjas[0]->input.outputBufferClipping <= 0.0)
+            {
+                angTempGrid->BufferToOverlapGrid(demGrid);
+            }
+
+            output.setSpeedGrid(*velTempGrid, ninjas[i]->input.outputSpeedUnits);
+            output.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+            output.setDirGrid(*angTempGrid);
+
+            output.setSpeedScaling(ninjas[i]->input.fgbzSpeedScaling);
+            output.setColorScheme(ninjas[i]->input.fgbzColor);
+            output.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
+            output.setLineWidth(ninjas[i]->input.fgbzLineWidth);
+            output.setNinjaTime(ninjas[i]->input.ninjaTime);
+
+            if(ninjas[i]->input.initializationMethod == WindNinjaInputs::wxModelInitializationFlag)
+            {
+                output.setWxModel(ninjas[i]->init->getForecastIdentifier());
+            }
+            #ifdef NINJAFOAM
+            else if(ninjas[i]->input.initializationMethod == WindNinjaInputs::foamWxModelInitializationFlag)
+            {
+                output.setWxModel(ninjas[i]->input.foamWxForecastIdentifier);
+            }
+            #endif
+
+            output.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
+
+            output.write(ninjas[i]->input.fgbzFile, "FlatGeoBufZip");
+
+            delete angTempGrid;
+            angTempGrid = nullptr;
+        }
+
+        //cleanup
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            delete resampledVelGrids[i];
+            resampledVelGrids[i] = nullptr;
+        }
+        delete[] resampledVelGrids;
+        resampledVelGrids = nullptr;
+
+        delete[] finalSpeedSplitVals;
+        finalSpeedSplitVals = nullptr;
+    }
+
+    if(ninjas[0]->input.wxModelGoogOutFlag == true || ninjas[0]->input.wxModelFgbzOutFlag == true)
+    {
+        // the wxModel outputs aren't resampling datasets, can just reuse the same single set of outputs once for each output type
+        AsciiGrid<double> **wxModelVelGrids = new AsciiGrid<double>*[ninjas.size()];
+        for(int i = 0; i < ninjas.size(); i++)
+        {
+            wxModelVelGrids[i] = ninjas[i]->init->getWxSpeedGrid();
+        }
+
+        if(ninjas[0]->input.wxModelGoogOutFlag == true && ninjas[0]->input.googUseConsistentColorScale == true)
+        {
+            eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+            if(ninjas[0]->input.wxModelGoogSpeedScaling == KmlVector::equal_color)
+            {
+                speedScaling = ninjaArmy::equal_color;
+            }
+            if(ninjas[0]->input.wxModelGoogSpeedScaling == KmlVector::equal_interval)
+            {
+                speedScaling = ninjaArmy::equal_interval;
+            }
+
+            int numSplits;
+            double *finalSpeedSplitVals = nullptr;
+            calcConsistentColorScaleSplits(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+            for(int i = 0; i < ninjas.size(); i++)
+            {
+                KmlVector wxModelKmlFiles;
+
+                wxModelKmlFiles.setKmlFile(ninjas[i]->input.wxModelKmlFile);
+                wxModelKmlFiles.setKmzFile(ninjas[i]->input.wxModelKmzFile);
+                wxModelKmlFiles.setLegendFile(ninjas[i]->input.wxModelLegFile);
+                wxModelKmlFiles.setDateTimeLegendFile(ninjas[i]->input.dateTimewxModelLegFile, ninjas[i]->input.ninjaTime);
+                wxModelKmlFiles.setSpeedGrid(*ninjas[i]->init->getWxSpeedGrid(), ninjas[i]->input.outputSpeedUnits);
+                wxModelKmlFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+                wxModelKmlFiles.setDirGrid(*ninjas[i]->init->getWxAngleGrid());
+
+                wxModelKmlFiles.setSpeedScaling(ninjas[i]->input.wxModelGoogSpeedScaling);
+                wxModelKmlFiles.setColorScheme(ninjas[i]->input.googColor);
+                wxModelKmlFiles.setVectorScaling(ninjas[i]->input.googVectorScale);
+                wxModelKmlFiles.setLineWidth(ninjas[i]->input.wxModelGoogLineWidth);
+                wxModelKmlFiles.setTime(ninjas[i]->input.ninjaTime);
+
+                std::vector<boost::local_time::local_date_time> times(ninjas[i]->init->getTimeList(ninjas[i]->input.ninjaTimeZone));
+                wxModelKmlFiles.setWxModel(ninjas[i]->init->getForecastIdentifier(), times[0]);
+
+                wxModelKmlFiles.setSpeedSplitVals(finalSpeedSplitVals, numSplits);
+
+                if(wxModelKmlFiles.writeKml())
+                {
+                    if(wxModelKmlFiles.makeKmz())
+                    {
+                        wxModelKmlFiles.removeKmlFile();
+                    }
+                }
+            }
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = nullptr;
+        }
+
+        if(ninjas[0]->input.wxModelFgbzOutFlag == true && ninjas[0]->input.fgbzUseConsistentColorScale == true)
+        {
+            eArmySpeedScaling speedScaling = ninjaArmy::equal_interval;
+            if(ninjas[0]->input.wxModelFgbzSpeedScaling == OutputWriter::equal_color)
+            {
+                speedScaling = ninjaArmy::equal_color;
+            }
+            else if(ninjas[0]->input.wxModelFgbzSpeedScaling == OutputWriter::equal_interval)
+            {
+                speedScaling = ninjaArmy::equal_interval;
+            }
+
+            int numSplits;
+            double *finalSpeedSplitVals = nullptr;
+            calcConsistentColorScaleSplits(wxModelVelGrids, ninjas.size(), &finalSpeedSplitVals, &numSplits, speedScaling);
+
+            for(int i = 0; i < ninjas.size(); i++)
+            {
+                OutputWriter wxModelFgbzFiles;
+
+                wxModelFgbzFiles.setSpeedGrid(*ninjas[i]->init->getWxSpeedGrid(), ninjas[i]->input.outputSpeedUnits);
+                wxModelFgbzFiles.setAngleFromNorth(ninjas[i]->input.dem.getAngleFromNorth());
+                wxModelFgbzFiles.setDirGrid(*ninjas[i]->init->getWxAngleGrid());
+
+                wxModelFgbzFiles.setSpeedScaling(ninjas[i]->input.wxModelFgbzSpeedScaling);
+                wxModelFgbzFiles.setColorScheme(ninjas[i]->input.fgbzColor);
+                wxModelFgbzFiles.setVectorScaling(ninjas[i]->input.fgbzVectorScale);
+                wxModelFgbzFiles.setLineWidth(ninjas[i]->input.wxModelFgbzLineWidth);
+                wxModelFgbzFiles.setNinjaTime(ninjas[i]->input.ninjaTime);
+
+                wxModelFgbzFiles.setWxModel(ninjas[i]->init->getForecastIdentifier());
+
+                wxModelFgbzFiles.setSplitVals(finalSpeedSplitVals, static_cast<unsigned short>(numSplits));
+
+                wxModelFgbzFiles.write(ninjas[i]->input.wxModelFgbzFile, "FlatGeoBufZip");
+            }
+
+            delete[] finalSpeedSplitVals;
+            finalSpeedSplitVals = nullptr;
+        }
+
+        //cleanup
+        delete[] wxModelVelGrids;
+        wxModelVelGrids = nullptr;
+    }
+
+    ninjas[ninjas.size()-1]->input.Com->ninjaCom(ninjaComClass::ninjaNone, "Finished writing output files!");
 }
 
 void ninjaArmy::initLocalData(void)

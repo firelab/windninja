@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE( us_box )
     adfBbox[2] =  43.7832152227745;
     adfBbox[3] = -113.749693430469;
 
-    fetch = FetchFactory::GetSurfaceFetch(FetchFactory::US_SRTM);
+    fetch = FetchFactory::GetSurfaceFetch(FetchFactory::SRTM);
     BOOST_REQUIRE_MESSAGE( NULL != fetch, "GetSurfaceFetch returned NULL" );
 
     int rc = fetch->FetchBoundingBox(adfBbox, 30.0, pszFilename.c_str(), NULL);
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( world_point )
     adfBuffer[1] = 20.0;
 
     SurfaceFetch *fetch =
-        FetchFactory::GetSurfaceFetch( FetchFactory::WORLD_SRTM );
+        FetchFactory::GetSurfaceFetch( FetchFactory::SRTM );
 
     BOOST_REQUIRE_MESSAGE( NULL != fetch, "GetSurfaceFetch returned NULL" );
 

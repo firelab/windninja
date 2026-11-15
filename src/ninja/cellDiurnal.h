@@ -57,7 +57,7 @@ class cellDiurnal
 
     public:
         cellDiurnal(Elevation const* incomingDem, Shade const* shd, 
-                Solar *solarInput, double const downDragCoeff,
+                Solar *solarInput, const double& angFromNorth, double const downDragCoeff,
                 double const downEntrainmentCoeff, double const upDragCoeff, 
                 double const upEntrainmentCoeff);
         cellDiurnal();
@@ -68,7 +68,7 @@ class cellDiurnal
         Elevation const* dem;
         Shade const* shade;
         
-        void create(Elevation const* incomingDem, Shade const* shd, Solar *solarInput);
+        void create(Elevation const* incomingDem, Shade const* shd, Solar *solarInput, const double& angFromNorth);
 
         void initialize(double& Xord, double& Yord, const double& asp,
         const double& slp, const double& cloudCover,
@@ -94,6 +94,7 @@ class cellDiurnal
         double CloudCover;  //Cloud cover NOTE: range 0-1, NOT 0-100
         double aspect;
         double slope;
+        double angleFromNorth;
 
     private:
 	void compute_Qh();

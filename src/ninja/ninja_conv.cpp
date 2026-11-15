@@ -337,10 +337,18 @@ std::string NinjaRemoveSpaces( std::string s )
     return s;
 }
 
+std::string NinjaRemoveApostrophes(std::string s) {
+
+    s.erase(std::remove(s.begin(), s.end(), '\''), s.end());
+    
+    return s;
+}
+
 //mostly for preparing OpenFOAM-compatible filenames
 std::string NinjaSanitizeString( std::string s )
 {
     s = NinjaRemoveSpaces(s);
+    s = NinjaRemoveApostrophes(s);
 
     //filenames cannot begin with a number
     if(s.find_first_of("0123456789") == 0){

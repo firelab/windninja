@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16)
 
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -28,6 +28,8 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
               ${Boost_LIBRARIES})
 
 set(STL_SOURCES convert_output.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/Array2D.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/KmlVector.cpp
@@ -36,11 +38,12 @@ set(STL_SOURCES convert_output.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Font.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/EasyBMP_Geometry.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/ninjaMathUtility.cpp
+                ${PROJECT_SOURCE_DIR}/src/ninja/ninjaUnits.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/LineStyle.cpp
                 ${PROJECT_SOURCE_DIR}/src/ninja/gdal_util.cpp)
 
 add_executable(convert_output ${STL_SOURCES})
-target_link_libraries(convert_output ${LINK_LIBS})
+target_link_libraries(convert_output ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 install(TARGETS convert_output DESTINATION bin COMPONENT apps)
 

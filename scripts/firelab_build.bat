@@ -35,7 +35,7 @@ REM -DGDAL_LIBRARY=c:/src/gdal/gdal-1.10.0/lib/gdal_i.lib ^
 cmake c:/src/windninja/trunk ^
       -G "NMake Makefiles JOM" ^
       -DFIRELAB_PACKAGE=ON ^
-      -DNINJA_QTGUI=ON ^
+      -DNINJA_GUI=ON ^
       -DNINJA_CLI=ON ^
       -DENABLE_CONSOLE=FALSE ^
       -DOPENMP_SUPPORT=ON ^

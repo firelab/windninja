@@ -53,7 +53,8 @@ void ninja::readInputFile()
 {
     GDALDataset *poDataset;
 
-    std::string GDALDriverName, GDALDriverLongName, GDALProjRef;
+    std::string GDALDriverName, GDALDriverLongName;
+    char *pszPrj;
 
     std::string ext;
 
@@ -70,8 +71,17 @@ void ninja::readInputFile()
     //check for the prj info...
     if(poDataset->GetProjectionRef() != NULL)
     {
-        GDALProjRef = poDataset->GetProjectionRef();
-        input.dem.set_prjString(GDALProjRef);
+        pszPrj = (char*)poDataset->GetProjectionRef();
+        
+        //ESRI and OGC WKT are not always identical. Convert the projection string to ESRI WKT to ensure proper opening of 
+        //our output products in ESRI systems. ESRI WKT should be handled by most other GIS systems as well.
+        OGRSpatialReference spatial_ref;
+        char* pszPrjEsri;
+        spatial_ref.importFromWkt(pszPrj);
+        spatial_ref.morphToESRI();
+        spatial_ref.exportToWkt(&pszPrjEsri);
+
+        input.dem.set_prjString(pszPrjEsri);
     }
 
     if (GDALDriverName == "LCP")
@@ -80,6 +90,22 @@ void ninja::readInputFile()
         importGeoTIFF(poDataset);
     else
         importSingleBand(poDataset);
+
+    //compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dem
+    double angleFromNorth = 0.0;
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        CPLDebug( "COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the dem, in ninja::readInputFile()");
+
+        // direct calculation of FROM geo TO dem, already has the appropriate sign
+        if(!GDALCalculateAngleFromNorth( poDataset, angleFromNorth ))  // this is FROM geo TO dem
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the DEM.");
+        }
+    }
+
+    //set the value for angleFromNorth member in the Elevation class
+    input.dem.setAngleFromNorth(angleFromNorth);
 
     if(poDataset)
         GDALClose((GDALDatasetH)poDataset);
@@ -526,4 +552,5 @@ void ninja::importGeoTIFF(GDALDataset* poDataset)
     //try filling nodata here
     if(!input.dem.fillNoDataValues(1, 99.0, nC * nR))
         throw std::runtime_error("Could not fill no data values in AsciiGrid::fillNoDataValues()");
+
 }

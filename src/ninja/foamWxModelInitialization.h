@@ -38,7 +38,7 @@
  * and foamDomainAverageInitialization, but this could change.
  * We could initialize cloud and air from grids, instead of
  * just setting the corresponding inputs to the grid 
- * averages. Also, distiguishing between the two initialization
+ * averages. Also, distiguishing between the various initialization
  * methods allows us to handle things more easily later in the 
  * simulation (e.g, during output file writing)
  *

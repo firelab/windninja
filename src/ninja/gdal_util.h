@@ -45,10 +45,15 @@
 double GDALGetMax( GDALDataset *poDS );
 double GDALGetMin( GDALDataset *poDS );
 bool GDALGetCenter( GDALDataset *poDS, double *longitude, double *latitude );
+bool GDALGetCenter( GDALDataset *poDS, double *dfX, double *dfY, const char *pszWkt );
 bool GDALGetBounds( GDALDataset *poDS, double *boundsLonLat );
+bool GDALGetBounds( GDALDataset *poDS, double *bounds, const char *pszWkt );
+bool GDALCalculateAngleFromNorth( GDALDataset *poDS, double &angleFromNorth );
+bool GDALCalculateCoordinateTransformationAngle( GDALDataset *poSrcDS, double &coordinateTransformAngle, const char *pszDstWkt );
 bool GDALTestSRS( GDALDataset *poDS );
 bool GDALHasNoData( GDALDataset *poDS, int band );
 bool GDAL2AsciiGrid( GDALDataset *poDS, int band, AsciiGrid<double> &grid );
+bool GDALTransformPoint( double &dfX, double &dfY, GDALDataset *poSrcDS, const char *pszDstWkt );
 bool GDALPointFromLatLon( double &x, double &y, GDALDataset *poDstDS,
                           const char *datum );
 bool GDALPointToLatLon( double &x, double &y, GDALDataset *poSrcDS,
@@ -65,19 +70,11 @@ int NinjaOGRContain(const char *pszWkt, const char *pszFile,
 
 
 bool gdalHasGeographicSRS (const char* filename);
-bool gdalGetCenter (GDALDataset *pDS, double &longitude, double &latitude);
 int gdalGetUtmZone (double latitude, double longitude);
-GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS, const char* pszDstDriverName = nullptr);
-GDALDataset* gdalWarpTo4326 (const char* filename, GDALDataset* pSrcDS, const char* pszDstDriverName = nullptr);
-bool gdalGetDataBoundaries (GDALDataset* pDS, int bandNr, double noDataThreshold, int& minRow, int& maxRow, int& minCol, int& maxCol);
-GDALDataset* gdalCrop (const char* filename, GDALDataset* pSrcDS, int minRow, int maxRow, int minCol, int maxCol);
-GDALDataset* gdalCropToData (const char* filename, GDALDataset* pSrcDS, double noDataThreshold);
-
-template<typename T> void gdalProcessScanLines (GDALDataset* pDS, int band, void (*func)(int,int,T*));
-template <class T> GDALDataType getGdalDataType();
+bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hDstDS);
+GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
+bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDALDatasetH& hDstDS, const char *pszDstWkt );
 
 void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, const char* pszDstWKT);
-
-GDALDataset* gdalWarpToVRT (GDALDataset* pSrcDS, const char* csName);
 
 #endif /* GDAL_UTIL_H */

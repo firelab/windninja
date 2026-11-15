@@ -52,17 +52,15 @@
  *  REST API", string templates
  *-----------------------------------------------------------------------------*/
 #define LF_REQUEST_TEMPLATE "https://lfps.usgs.gov/" \
-                            "arcgis/rest/services/LandfireProductService/" \
-                            "GPServer/LandfireProductService/submitJob?" \
-                            "Output_Projection=%d&Layer_List=%s&" \
-                            "Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
-                            "&f=pjson"
+                            "api/job/submit?Email=wind.ninja.support@gmail.com" \
+                            "&Output_Projection=%d&Layer_List=%s" \
+                            "&Area_of_Interest=%lf%%20%lf%%20%lf%%20%lf" \
+                            "%s"
 
-#define LF_DOWNLOAD_JOB_TEMPLATE "https://lfps.usgs.gov/arcgis/rest/directories/" \
-                                  "arcgisjobs/landfireproductservice_gpserver/%s/scratch/%s.zip"
+#define LF_PRIORITY_TEMPLATE "&Priority_Code=%s"
 
-#define LF_GET_STATUS_TEMPLATE "https://lfps.usgs.gov/arcgis/rest/services/LandfireProductService/" \
-                               "GPServer/LandfireProductService/jobs/%s/?f=pjson"
+#define LF_GET_STATUS_TEMPLATE "https://lfps.usgs.gov/api/job/status?" \
+                               "JobId=%s"
                                
 
 #define LF_DEFAULT_SRS_TOKENS     "&prj=102039,&prj=0"
@@ -80,9 +78,9 @@
 #define CHECK_HTTP_RESULT( error_msg )                      \
     if( m_poResult == NULL || m_poResult->nStatus != 0 )    \
     {                                                       \
-        CPLError( CE_Warning, CPLE_AppDefined, error_msg ); \
+        CPLError(CE_Warning, CPLE_AppDefined, error_msg);   \
         CPLHTTPDestroyResult( m_poResult );                 \
-        return SURF_FETCH_E_IO_ERR;                         \
+        return SURF_FETCH_E_TIMEOUT;                        \
     }
 
 /*-----------------------------------------------------------------------------
@@ -100,6 +98,7 @@ private:
 
     CPLHTTPResult *m_poResult;
     std::string m_JobId;
+    std::string downloadUrl;
 };
 
 #endif /* LANDFIRE_CLIENT_H_ */

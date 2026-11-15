@@ -15,11 +15,13 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+
+#cmake_minimum_required(VERSION 3.16)
 
 if (APPLE)
     set(CMAKE_MACOSX_RPATH OFF)
 endif (APPLE)
+
 
 set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${GDAL_SYSTEM_INCLUDE} ${GDAL_INCLUDE_DIR}
@@ -27,13 +29,20 @@ set(NINJA_INCLUDES ${NETCDF_INCLUDES}
                    ${Boost_INCLUDE_DIRS}
                    ${PROJECT_SOURCE_DIR}/src)
 
+if(NINJAFOAM)
+    if(NOT WIN32)
+        set(NINJA_INCLUDES ${NINJA_INCLUDES}
+                           ${HWLOC_INCLUDE_DIR})
+    endif()
+endif(NINJAFOAM)
+
 set(NINJA_SOURCES air.cpp
-                  Array2D.cpp
                   ascii_grid.cpp
+                  Array2D.cpp
                   Aspect.cpp
+                  callbackFunctions.h
                   cellDiurnal.cpp
                   cli.cpp
-                  dbfopen.cpp
                   domainAverageInitialization.cpp
                   dust.cpp
                   EasyBMP.cpp
@@ -43,6 +52,7 @@ set(NINJA_SOURCES air.cpp
                   Elevation.cpp
                   farsiteAtm.cpp
                   fetch_factory.cpp
+                  flowSeparation.cpp
                   fluid.cpp
                   frictionVelocity.cpp
                   gdal_fetch.cpp
@@ -82,10 +92,10 @@ set(NINJA_SOURCES air.cpp
                   relief_fetch.cpp
                   Shade.cpp
                   ShapeVector.cpp
-                  shpopen.cpp
                   Slope.cpp
                   solar.cpp
                   solpos.cpp
+                  srtmclient.cpp
                   stability.cpp
                   startRuns.cpp
                   stl_create.cpp
@@ -104,13 +114,25 @@ set(NINJA_SOURCES air.cpp
                   wxModelInitializationFactory.cpp
                   wxStation.cpp
                   windninja.cpp
+                  gcp_wx_init.cpp
+                  ninjaTools.h
+                  ninjaTools.cpp
+                  windninja.h
+                  ninjaArmy.h
+                  OutputWriter.h
+                  WindNinjaInputs.h
+                  ninja.h
+                  KmlVector.h
+                  wxModelInitialization.h
                   init_tz.cpp
                   huvw_output.cpp)
+
 if(NINJAFOAM)
-    set(NINJA_SOURCES ${NINJA_SOURCES} 
+    set(NINJA_SOURCES ${NINJA_SOURCES}
                     ninjafoam.cpp
                     foamDomainAverageInitialization.cpp
-                    foamWxModelInitialization.cpp)
+                    foamWxModelInitialization.cpp
+                    foamGriddedInitialization.cpp)
 endif(NINJAFOAM)
 
 if(WITH_NOMADS_SUPPORT)
@@ -127,33 +149,61 @@ endif(WITH_NOMADS_SUPPORT)
 set(LINK_LIBS ${NETCDF_LIBRARIES_C} 
               ${GDAL_LIBRARY} 
               ${CURL_LIBRARIES}
-              ${Boost_LIBRARIES})
+              ${Boost_LIBRARIES}
+              ${SHAPELIB_LIBRARY})
+
+if(NINJAFOAM)
+    if(NOT WIN32)
+        set(LINK_LIBS ${LINK_LIBS}
+                      ${HWLOC_LIBRARY})
+    endif()
+endif(NINJAFOAM)
 
 
-if(NINJA_QTGUI)
-    include_directories(${NINJA_INCLUDES} ${QT_INCLUDES})
-    QT4_WRAP_CPP(NINJA_LIB_INCLUDES_MOC ninjaCom.h)
-    set(NINJA_SOURCES ${NINJA_SOURCES} ${NINJA_LIB_INCLUDES_MOC})
-    set(LINK_LIBS ${LINK_LIBS} ${QT_LIBRARIES})
-else(NINJA_QTGUI)
-    include_directories(${NINJA_INCLUDES})
-endif(NINJA_QTGUI)
+include_directories(${NINJA_INCLUDES})
 
 if(WIN32)
     add_library(ninja STATIC ${NINJA_SOURCES})
     add_library(WindNinjadll SHARED ${NINJA_SOURCES})
-    target_link_libraries(WindNinjadll ${LINK_LIBS})
-else(WIN32)
+    target_link_libraries(WindNinjadll PRIVATE ${LINK_LIBS})
+    target_compile_definitions(WindNinjadll
+        PUBLIC 
+            WIN32_LEAN_AND_MEAN
+            NOMINMAX
+    )
+    target_link_libraries(WindNinjadll PRIVATE ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
+else()
     if(APPLE)
         add_library(ninja STATIC ${NINJA_SOURCES})
-    else(APPLE)
-       add_library(ninja STATIC SHARED ${NINJA_SOURCES})
-    endif(APPLE)    
-endif(WIN32)
+    else()  # Linux
+        add_library(ninja SHARED ${NINJA_SOURCES})
+    endif()
+endif()
+
+target_link_libraries(ninja ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 
 
-target_link_libraries(ninja ${LINK_LIBS})
+if(MSVC)
+    target_compile_definitions(ninja
+        PUBLIC 
+            WIN32_LEAN_AND_MEAN
+            NOMINMAX 
+    )
+endif()
+
+target_include_directories(ninja PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> $<INSTALL_INTERFACE:include>)
+
 
 install(TARGETS ninja DESTINATION lib COMPONENT libs)
-install(FILES WindNinjaInputs.h ninja.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
+if(WIN32)
+    install(TARGETS WindNinjadll DESTINATION ${lib_dest})
+endif(WIN32)
+if(MSVC)
+    install(FILES $<TARGET_PDB_FILE:WindNinjadll>
+        DESTINATION bin
+        CONFIGURATIONS Debug RelWithDebInfo
+        OPTIONAL
+    )
+endif()
+install(FILES WindNinjaInputs.h ninja.h gdal_util.h callbackFunctions.h windninja.h ninja_errors.h DESTINATION include COMPONENT includes)
 

@@ -49,9 +49,12 @@ BOOST_AUTO_TEST_CASE( gdal )
 {
     /*
     NinjaInit();
+
     const char *pszGdalData = getenv("GDAL_DATA");
     
     BOOST_REQUIRE( NULL != pszGdalData );
+    
+    NinjaFinalize();
     */
 }
 

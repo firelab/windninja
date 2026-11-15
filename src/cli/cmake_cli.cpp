@@ -2,7 +2,7 @@
  *
  * $Id:$
  *
- * Project:  WindNinja Qt GUI
+ * Project:  WindNinja cli
  * Purpose:  main() function to initiate cli
  * Author:   Kyle Shannon <ksshannon@gmail.com>
  *
@@ -35,10 +35,6 @@
 #include "gdal.h"
 #include "ogr_api.h"
 
-#ifdef _OPENMP
-    omp_lock_t netCDF_lock;
-#endif
-
 /**
  * @brief Main function for WindNinja.
  * Allow for a few options:
@@ -51,17 +47,19 @@
 int main(int argc, char *argv[])
 {
     CPLSetConfigOption( "NINJA_DISABLE_CALL_HOME", "ON" );
-    NinjaInitialize();
+
+    NinjaInitialize("cli");
+
+    //set a different key for the CLI since this is where users are likely to abuse access
+    if(CPLGetConfigOption("NINJA_CLI_SRTM_API_KEY", NULL) != NULL)
+    {
+        CPLSetConfigOption("HAVE_CLI_SRTM_API_KEY", CPLGetConfigOption("NINJA_CLI_SRTM_API_KEY", NULL));
+        CPLDebug("SRTM_CLIENT", "Setting CLI SRTM API key.");
+    }
     int result;
-#ifdef _OPENMP
-    omp_init_lock (&netCDF_lock);
-#endif
 
     result = windNinjaCLI(argc, argv);
 
-#ifdef _OPENMP
-    omp_destroy_lock (&netCDF_lock);
-#endif
-
+    NinjaFinalize();
     return result;
 }

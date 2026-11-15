@@ -2,10 +2,10 @@
 *
 * Filename: OutputWriter.cpp
 *
-* Project:  WindNinja 
+* Project:  WindNinja
 * Purpose:  Class to handle output of WindNinja simulations to various GDAL
 *           formats
-* Author:   Levi Malott, lmnn3@mst.edu 
+* Author:   Levi Malott, lmnn3@mst.edu
 *
 ******************************************************************************
 *
@@ -30,6 +30,7 @@
 
 #include "OutputWriter.h"
 
+const char * OutputWriter::NAME      = "name";
 const char * OutputWriter::SPEED     = "speed";
 const char * OutputWriter::DIR       = "dir";
 const char * OutputWriter::AV_DIR    = "AV_dir";
@@ -42,6 +43,7 @@ const double OutputWriter::SIDE_MARGIN = 0.5;
 
 
 OutputWriter::OutputWriter ()
+    :ninjaTime(boost::local_time::not_a_date_time)
 {
     hSrcDS        = NULL;
     hDstDS        = NULL;
@@ -52,15 +54,18 @@ OutputWriter::OutputWriter ()
     hDataSource   = NULL;
     hOGRDriver    = NULL;
     papszOptions  = NULL;
-    hSpdMemDs     = NULL;
-    hDirMemDs     = NULL;
-    hDustMemDs    = NULL;
     hSrcSRS       = NULL;
     hDestSRS      = NULL;
     hTransform    = NULL;
     colors        = NULL;
     split_vals    = NULL;
     linewidth     = 1.0;
+
+    angleFromNorth = 0.0;
+
+    speedScaling = equal_interval;
+    colorScheme = "default";
+    useVectorScaling = false;
 
     pszOgrFile    = NULL;
     pszLegendFile = NULL;
@@ -69,13 +74,12 @@ OutputWriter::OutputWriter ()
     _createTmpFiles();
 
     _createDefaultStyles();
-    
+
 }  /* -----  end of method OutputWriter::OutputWriter  (constructor)  ----- */
 
 
 OutputWriter::~OutputWriter ()
 {
-    
     OSRDestroySpatialReference( hSrcSRS );
     OSRDestroySpatialReference( hDestSRS );
     OCTDestroyCoordinateTransformation( hTransform );
@@ -88,7 +92,7 @@ OutputWriter::~OutputWriter ()
 
     _deleteTmpFiles();
     return;
-}		/* -----  end of method OutputWriter::~OutputWriter  ----- */
+}  /* -----  end of method OutputWriter::~OutputWriter  ----- */
 
 bool OutputWriter::_createTmpFiles()
 {
@@ -103,6 +107,11 @@ bool OutputWriter::_createTmpFiles()
     pszLegendFile = CPLStrdup( pszTmp );
     CPLDebug( "NINJA", "Using %s for pdf legend dataset", pszLegendFile );
 
+    pszTmp = CPLGenerateTempFilename( NULL );
+    pszTmp = CPLFormFilename( NULL, pszTmp, ".bmp" );
+    pszDateTimeLegendFile = CPLStrdup( pszTmp );
+    CPLDebug( "NINJA", "Using %s for date time legend dataset", pszDateTimeLegendFile );
+
     return true;
 }
 
@@ -110,6 +119,7 @@ void OutputWriter::_deleteTmpFiles()
 {
     CPLFree( (void*)pszOgrFile );
     CPLFree( (void*)pszLegendFile );
+    CPLFree( (void*)pszDateTimeLegendFile) ;
     if( pszTmpDemFile != NULL )
     {
         GDALDriverH hDrv = GDALGetDriverByName( "GTiff" );
@@ -121,12 +131,97 @@ void OutputWriter::_deleteTmpFiles()
 
 void OutputWriter::_createDefaultStyles()
 {
+    double   blueWidth;
+    double  greenWidth;
+    double yellowWidth;
+    double orangeWidth;
+    double    redWidth;
+    if(useVectorScaling == true)
+    {
+           redWidth =  4.0*linewidth;
+        orangeWidth =  3.0*linewidth;
+        yellowWidth = 1.75*linewidth;
+         greenWidth =  1.5*linewidth;
+          blueWidth =  1.0*linewidth;
+    }
+    else
+    {
+           redWidth = linewidth;
+        orangeWidth = linewidth;
+        yellowWidth = linewidth;
+         greenWidth = linewidth;
+          blueWidth = linewidth;
+    }
+
     colors    = new Style*[ NCOLORS ];
-    colors[0] = new Style( "blue"  , 255, 255,  0,   0, linewidth );
-    colors[1] = new Style( "green" , 255, 0,  255,   0, linewidth );
-    colors[2] = new Style( "yellow", 255, 0,  255, 255, linewidth );
-    colors[3] = new Style( "orange", 255, 0,  127, 255, linewidth );
-    colors[4] = new Style( "red"   , 255, 0,    0, 255, linewidth );
+
+    // Alpha, B G R
+    if(colorScheme == "default")
+    {
+        colors[0] = new Style(  "blue", 255, 255,   0,   0,   blueWidth);
+        colors[1] = new Style( "green", 255,   0, 255,   0,  greenWidth);
+        colors[2] = new Style("yellow", 255,   0, 255, 255, yellowWidth);
+        colors[3] = new Style("orange", 255,   0, 127, 255, orangeWidth);
+        colors[4] = new Style(   "red", 255,   0,   0, 255,    redWidth);
+    }
+    if(colorScheme == "oranges")
+    {
+        colors[0] = new Style(  "blue", 255, 217, 240, 254,   blueWidth);
+        colors[1] = new Style( "green", 255, 138, 204, 253,  greenWidth);
+        colors[2] = new Style("yellow", 255,  89, 141, 252, yellowWidth);
+        colors[3] = new Style("orange", 255,  51,  74, 227, orangeWidth);
+        colors[4] = new Style(   "red", 255,   0,   0, 179,    redWidth);
+    }
+    if(colorScheme == "blues")
+    {
+        colors[0] = new Style(  "blue", 255, 254, 243, 239,   blueWidth);
+        colors[1] = new Style( "green", 255, 231, 215, 189,  greenWidth);
+        colors[2] = new Style("yellow", 255, 214, 174, 107, yellowWidth);
+        colors[3] = new Style("orange", 255, 189, 130,  49, orangeWidth);
+        colors[4] = new Style(   "red", 255, 156,  81,   8,    redWidth);
+    }
+    if(colorScheme == "greens")
+    {
+        colors[0] = new Style(  "blue", 255, 233, 248, 237,   blueWidth);
+        colors[1] = new Style( "green", 255, 179, 228, 186,  greenWidth);
+        colors[2] = new Style("yellow", 255, 118, 196, 116, yellowWidth);
+        colors[3] = new Style("orange", 255,  84, 163,  49, orangeWidth);
+        colors[4] = new Style(   "red", 255,  44, 109,   0,    redWidth);
+    }
+    if(colorScheme == "pinks")
+    {
+        colors[0] = new Style(  "blue", 255, 246, 238, 241,   blueWidth);
+        colors[1] = new Style( "green", 255, 216, 181, 215,  greenWidth);
+        colors[2] = new Style("yellow", 255, 176, 101, 223, yellowWidth);
+        colors[3] = new Style("orange", 255, 119,  28, 221, orangeWidth);
+        colors[4] = new Style(   "red", 255,  67,   0, 152,    redWidth);
+    }
+    if(colorScheme == "magic_beans")
+    {
+        colors[4] = new Style(   "red", 255,  32,   0, 202,    redWidth);
+        colors[3] = new Style("orange", 255, 130, 165, 244, orangeWidth);
+        colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
+        colors[1] = new Style( "green", 255, 222, 197, 146,  greenWidth);
+        ////colors[0] = new Style("blue", 255, 176, 113, 5, blueWidth); // for some reason
+        ////google earth will not render with a red = 5, works fine with 0 or 30 though...
+        colors[0] = new Style(  "blue", 255, 176, 113,  30,   blueWidth);
+    }
+    if(colorScheme == "pink_to_green")
+    {
+        colors[4] = new Style(   "red", 255, 148,  50, 123,    redWidth);
+        colors[3] = new Style("orange", 255, 207, 165, 194, orangeWidth);
+        colors[2] = new Style("yellow", 255, 247, 247, 247, yellowWidth);
+        colors[1] = new Style( "green", 255, 160, 219, 166,  greenWidth);
+        colors[0] = new Style(  "blue", 255,  55, 136,   0,   blueWidth);
+    }
+    if(colorScheme == "ROPGW") // Red Orange Pink Green White
+    {
+        colors[4] = new Style(   "red", 255,  27,  31, 166,    redWidth);  // highest windspeed
+        colors[3] = new Style("orange", 255, 114, 162, 198, orangeWidth);  // 2nd highest
+        colors[2] = new Style("yellow", 255, 216, 204, 222, yellowWidth);  // moderate
+        colors[1] = new Style( "green", 255, 141, 236, 229,  greenWidth);  // moderate low
+        colors[0] = new Style(  "blue", 255, 229, 243, 239,   blueWidth);  // very low
+    }
 
     return;
 }
@@ -145,14 +240,13 @@ void OutputWriter::_destroyDefaultStyles()
 
 void OutputWriter::setLineWidth( const float w )
 {
-   linewidth = ( w >= 0.0f ) ? w : -w; 
+   linewidth = ( w >= 0.0f ) ? w : -w;
    if( areEqual( linewidth, 0.0f ) )
    {
        linewidth = 1.0f;
    }
    _destroyDefaultStyles();
    _createDefaultStyles();
-   
 }
 
 void OutputWriter::setDPI( const unsigned short d )
@@ -166,94 +260,92 @@ void OutputWriter::setSize( const double w, const double h )
     height = h;
 }
 
+void OutputWriter::setColorScheme(std::string cScheme)
+{
+    if(cScheme.compare("default") != 0 && cScheme.compare("oranges") != 0 && cScheme.compare("blues") != 0 && cScheme.compare("greens") != 0 && cScheme.compare("pinks") != 0 && cScheme.compare("magic_beans") != 0 && cScheme.compare("pink_to_green") != 0 && cScheme.compare("ROPGW") != 0)
+    {
+        throw std::runtime_error("Invalid input cScheme '"+cScheme+"' in OutputWriter:setColorScheme()\nvalid choices are: 'default', 'oranges', 'blues', 'greens', 'pinks', 'magic_beans', 'pink_to_green', 'ROPGW'");
+    }
+
+    colorScheme = cScheme;
+}
+
 #ifdef EMISSIONS
 void OutputWriter::setDustGrid(AsciiGrid<double> &d)
 {
     dust = d;
     return;
-}		/* -----  end of method OutputWriter::setDustGrid  ----- */
+}  /* -----  end of method OutputWriter::setDustGrid  ----- */
 #endif
 
-    void
-OutputWriter::setSpeedGrid ( AsciiGrid<double> &s,
-                             velocityUnits::eVelocityUnits u )
+void OutputWriter::setSpeedGrid(AsciiGrid<double> &s, velocityUnits::eVelocityUnits u)
 {
     spd = s;
     units = u;
+
+    for (int i = 0; i < spd.get_nRows(); ++i)
+    {
+        for (int j = 0; j < spd.get_nCols(); ++j)
+        {
+            if (spd(i, j) > 1e36)
+            {
+                spd(i, j) = spd.get_noDataValue();
+            }
+        }
+    }
+
     return;
-}		/* -----  end of method OutputWriter::setSpeedGrid  ----- */
+}  /* -----  end of method OutputWriter::setSpeedGrid  ----- */
 
+void OutputWriter::setAngleFromNorth(const double angFromNorth)
+{
+    angleFromNorth = angFromNorth;
+}
 
-    void
-OutputWriter::setDirGrid ( AsciiGrid<double> &d )
+void OutputWriter::setDirGrid(AsciiGrid<double> &d)
 {
     dir = d;
     return;
-}		/* -----  end of method OutputWriter::setDirGrid  ----- */
+}  /* -----  end of method OutputWriter::setDirGrid  ----- */
 
-void OutputWriter::setMemDs(GDALDatasetH hSpdMemDs, 
-              GDALDatasetH hDirMemDs, 
-              GDALDatasetH hDustMemDs)
+void OutputWriter::setSplitVals(const double *splitVals, const unsigned short size)
 {
-    this->hSpdMemDs  = hSpdMemDs;
-    this->hDirMemDs  = hDirMemDs;
-    this->hDustMemDs = hDustMemDs;
+    if(size != NSPLITS)
+    {
+        throw std::runtime_error("OutputWriter::setSplitVals() input array size does not match OutputWriter numSplits!!");
+    }
+
+    _deleteSplits();
+
+    split_vals = new double[NSPLITS];
+    for(int i = 0; i < NSPLITS; i++)
+    {
+        split_vals[i] = splitVals[i];
+    }
 }
 
-    bool
-OutputWriter::write (std::string outputFilename, std::string driver)
+bool OutputWriter::write(std::string outputFilename, std::string driver)
 {
-
     if( 0 == driver.compare( "PDF" ) )
     {
         _writePDF(outputFilename);
     }
-    else if( 0 == driver.compare( "GTiff" ) )
+    else if ( 0 == driver.compare( "FlatGeoBufZip" ) )
     {
-        /*------------------------------------------*/
-        /*  Loop over spd, dir, dust grids          */
-        /*------------------------------------------*/
-        std::string outFilename;
-    
-        for(int grid=0; grid<3; grid++){
-            outFilename = outputFilename;
-            if(grid == 0){
-                outFilename.insert(outFilename.find(".tif"), "_spd");
-            }
-            else if(grid == 1){
-                outFilename.insert(outFilename.find(".tif"), "_dir");
-            }
-#ifdef EMISSIONS
-            else if(grid == 2){
-                outFilename.insert(outFilename.find(".tif"), "_dust");
-            }
-#endif
-
-            if(outFilename.find("spd.tif") != outFilename.npos){
-                _writeGTiff(outFilename, hSpdMemDs);
-            }
-            else if(outFilename.find("dir.tif") != outFilename.npos){
-                _writeGTiff(outFilename, hDirMemDs);
-            }
-            else if(outFilename.find("dust.tif") != outFilename.npos){
-                 _writeGTiff(outFilename, hDustMemDs);
-            }
-
-           //_writeGTiff(outFilename);
-        }
+        _writeFlatGeoBufZip(outputFilename);
     }
     else
     {
         throw std::runtime_error("OutputWriter: unrecognized output format");
     }
     return true;
-}		/* -----  end of method OutputWriter::write  ----- */
+}  /* -----  end of method OutputWriter::write  ----- */
 
 std::string OutputWriter::_getStyleFromSpeed( const double & spd )
 {
     std::string style = "none";
-    
-    for ( int i = 1; i < NCOLORS; ++i )
+
+    for(int i = 1; i <= NCOLORS; i++)
     {
         if( spd <= split_vals[i] )
         {
@@ -280,8 +372,7 @@ void OutputWriter::_closeDataSets()
         GDALClose(hDstDS);
         hDstDS = NULL;
     }
-    _closeOGRFile(); 
-
+    _closeOGRFile();
 }
 
 void OutputWriter::_destroyOptions()
@@ -297,7 +388,7 @@ void OutputWriter::_closeOGRFile()
 {
     if( NULL != hDataSource )
     {
-        OGR_DS_Destroy( hDataSource );
+        GDALClose( hDataSource );
         hDataSource = NULL;
     }
 }
@@ -313,117 +404,340 @@ void OutputWriter::_deleteSplits()
 
 void OutputWriter::_createSplits()
 {
-    _deleteSplits(); 
-    double interval = 0.0;
-
-    split_vals = new double[NCOLORS];
-    interval = spd.get_maxValue()/(float)NCOLORS;
-    for(int i = 0;i < NCOLORS;i++)
+    // only create them if they haven't already been set/created,
+    // so that setSplitVals() gets precedence over just creating the values
+    if(split_vals != NULL)
     {
-        split_vals[i] = i * interval;
+        return;
     }
 
+    split_vals = new double[NSPLITS];
 
+    switch(speedScaling)
+    {
+        case equal_color:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(split_vals, NSPLITS);
+            break;
+        }
+        case equal_interval:  // divide legend speeds using equal interval method (speed breaks divided equally over speed range)
+        {
+            double interval = spd.get_maxValue() / (float)(NSPLITS-1);
+            //double interval = (spd.get_maxValue() - spd.get_minValue()) / (float)(NSPLITS-1);
+            for(int i = 0; i < NSPLITS; i++)
+            {
+                split_vals[i] = i * interval;
+                //split_vals[i] = i * interval + spd.get_minValue();
+            }
+            break;
+        }
+        default:  // divide legend speeds using equal color method (equal numbers of arrows for each color)
+        {
+            spd.divide_gridData(split_vals, NSPLITS);
+            break;
+        }
+    }
 }
+
 bool OutputWriter::_createLegend()
 {
-	//make bitmap
-	int legendWidth = LGND_WIDTH;
-	int legendHeight = LGND_HEIGHT;
-	BMP legend;
+    //make bitmap
+    int legendWidth = LGND_WIDTH;
+    int legendHeight = LGND_HEIGHT;
+    BMP legend;
 
-	std::string legendStrings[NCOLORS];
-	ostringstream os;
+    std::string legendStrings[NCOLORS];
+    ostringstream os;
 
-	double maxxx = spd.get_maxValue();
+    double maxxx = spd.get_maxValue();
 
-	for(int i = 0;i < NCOLORS; i++)
-	{
-		os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
-		if(i == 0)
-			os << split_vals[NCOLORS - 1] << " - " << maxxx;
-		else if(i == NCOLORS)
-			os << "0.00 - " << split_vals[1] - 0.01;
-		else if(i != 0)
-			os << split_vals[NCOLORS - i - 1] << " - " << split_vals[NCOLORS - i] - 0.01;
+    for(int i = 0;i < NCOLORS; i++)
+    {
+        os << setiosflags(ios::fixed) << setiosflags(ios::showpoint) << setprecision(2);
+        if(i == 0)
+        {
+            //os << split_vals[NSPLITS-2] << " + ";
+            os << split_vals[NSPLITS-2] << " - " << split_vals[NSPLITS-1];
+        }
+        else if(i == NCOLORS-1)
+        {
+            os << "0.00 - " << split_vals[1] - 0.01;
+            //os << split_vals[0] << " - " << split_vals[1] - 0.01;
+        }
+        else
+        {
+            os << split_vals[NSPLITS - i - 2] << " - " << split_vals[NSPLITS - i - 1] - 0.01;
+        }
 
         legendStrings[i] = os.str();
-		os.str("");
-	}
-	legend.SetSize(legendWidth,legendHeight);
-	legend.SetBitDepth(8);
+        os.str("");
+    }
+    legend.SetSize(legendWidth,legendHeight);
+    legend.SetBitDepth(8);
 
     //black legend
-	for(int i = 0;i < legendWidth;i++)
-	{
-		for(int j = 0;j < legendHeight;j++)
-		{
-			legend(i,j)->Alpha = 0;
-			legend(i,j)->Blue = 0;
-			legend(i,j)->Green = 0;
-			legend(i,j)->Red = 0;
-		}
+    for(int i = 0;i < legendWidth;i++)
+    {
+        for(int j = 0;j < legendHeight;j++)
+        {
+            legend(i,j)->Alpha = 0;
+            legend(i,j)->Blue = 0;
+            legend(i,j)->Green = 0;
+            legend(i,j)->Red = 0;
+        }
     }
-    
-	//for white text
-	RGBApixel white;
-	white.Red = 255;
-	white.Green = 255;
-	white.Blue = 255;
-	white.Alpha = 0;
 
-	RGBApixel lcolors[NCOLORS];
-	//RGBApixel red, orange, yellow, green, blue;
-	lcolors[0].Red = 255;
-    lcolors[0].Green = 0;
-    lcolors[0].Blue = 0;
-    lcolors[0].Alpha = 0;
+    //for white text
+    RGBApixel white;
+    white.Red = 255;
+    white.Green = 255;
+    white.Blue = 255;
+    white.Alpha = 0;
 
-    lcolors[1].Red = 255;
-    lcolors[1].Green = 127;
-    lcolors[1].Blue = 0;
-    lcolors[1].Alpha = 0;
+    RGBApixel lcolors[NCOLORS];
+    //RGBApixel red, orange, yellow, green, blue;
+    if(colorScheme == "default")
+    {
+        lcolors[0].Red = 255; //max wind
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 0;
+        lcolors[0].Alpha = 0;
 
-    lcolors[2].Red = 255;
-    lcolors[2].Green = 255;
-    lcolors[2].Blue = 0;
-    lcolors[2].Alpha = 0;
+        lcolors[1].Red = 255;
+        lcolors[1].Green = 127;
+        lcolors[1].Blue = 0;
+        lcolors[1].Alpha = 0;
 
-    lcolors[3].Red = 0;
-    lcolors[3].Green = 255;
-    lcolors[3].Blue = 0;
-    lcolors[3].Alpha = 0;
+        lcolors[2].Red = 255;
+        lcolors[2].Green = 255;
+        lcolors[2].Blue = 0;
+        lcolors[2].Alpha = 0;
 
-    lcolors[4].Red = 0;
-    lcolors[4].Green = 0;
-    lcolors[4].Blue = 255;
-    lcolors[4].Alpha = 0;
+        lcolors[3].Red = 0;
+        lcolors[3].Green = 255;
+        lcolors[3].Blue = 0;
+        lcolors[3].Alpha = 0;
 
-	int arrowLength = 40;	//pixels;
-	int arrowHeadLength = 10; // pixels;
-	int textHeight = 10;	//pixels- 8 for maximum speed of "999.99 - 555.55";
-							//10 for normal double digits
-	if(split_vals[NCOLORS-1] >= 100)
-		textHeight = 8;
-	int titleTextHeight = int(1.2 * textHeight);
-	int titleX, titleY;
+        lcolors[4].Red = 0;
+        lcolors[4].Green = 0;
+        lcolors[4].Blue = 255;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "oranges")
+    {
+        lcolors[0].Red = 179; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 0;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 227;
+        lcolors[1].Green = 74;
+        lcolors[1].Blue = 51;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 252;
+        lcolors[2].Green = 141;
+        lcolors[2].Blue = 89;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 253;
+        lcolors[3].Green = 204;
+        lcolors[3].Blue = 138;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 254;
+        lcolors[4].Green = 240;
+        lcolors[4].Blue = 217;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "blues")
+    {
+        lcolors[4].Red = 239; //0=Highest wind speed: its reversed from above...
+        lcolors[4].Green = 243;
+        lcolors[4].Blue = 255;
+        lcolors[4].Alpha = 0;
+
+        lcolors[3].Red = 189;
+        lcolors[3].Green = 215;
+        lcolors[3].Blue = 231;
+        lcolors[3].Alpha = 0;
+
+        lcolors[2].Red = 107;
+        lcolors[2].Green = 174;
+        lcolors[2].Blue = 214;
+        lcolors[2].Alpha = 0;
+
+        lcolors[1].Red = 49;
+        lcolors[1].Green = 130;
+        lcolors[1].Blue = 189;
+        lcolors[1].Alpha = 0;
+
+        lcolors[0].Red = 8;
+        lcolors[0].Green = 81;
+        lcolors[0].Blue = 156;
+        lcolors[0].Alpha = 0;
+    }
+    if(colorScheme == "greens")
+    {
+        lcolors[4].Red = 237; //0=Highest wind speed: its reversed from above...
+        lcolors[4].Green = 248;
+        lcolors[4].Blue = 233;
+        lcolors[4].Alpha = 0;
+
+        lcolors[3].Red = 186;
+        lcolors[3].Green = 228;
+        lcolors[3].Blue = 179;
+        lcolors[3].Alpha = 0;
+
+        lcolors[2].Red = 116;
+        lcolors[2].Green = 196;
+        lcolors[2].Blue = 118;
+        lcolors[2].Alpha = 0;
+
+        lcolors[1].Red = 49;
+        lcolors[1].Green = 163;
+        lcolors[1].Blue = 84;
+        lcolors[1].Alpha = 0;
+
+        lcolors[0].Red = 0;
+        lcolors[0].Green = 109;
+        lcolors[0].Blue = 44;
+        lcolors[0].Alpha = 0;
+    }
+    if(colorScheme == "pinks")
+    {
+        lcolors[4].Red = 241; //0=Highest wind speed: its reversed from above...
+        lcolors[4].Green = 238;
+        lcolors[4].Blue = 246;
+        lcolors[4].Alpha = 0;
+
+        lcolors[3].Red = 215;
+        lcolors[3].Green = 181;
+        lcolors[3].Blue = 216;
+        lcolors[3].Alpha = 0;
+
+        lcolors[2].Red = 223;
+        lcolors[2].Green = 101;
+        lcolors[2].Blue = 176;
+        lcolors[2].Alpha = 0;
+
+        lcolors[1].Red = 221;
+        lcolors[1].Green = 28;
+        lcolors[1].Blue = 119;
+        lcolors[1].Alpha = 0;
+
+        lcolors[0].Red = 152;
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 67;
+        lcolors[0].Alpha = 0;
+    }
+    if(colorScheme == "magic_beans")
+    {
+        lcolors[0].Red = 202; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 0;
+        lcolors[0].Blue = 32;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 244;
+        lcolors[1].Green = 165;
+        lcolors[1].Blue = 130;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 247;
+        lcolors[2].Green = 247;
+        lcolors[2].Blue = 247;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 146;
+        lcolors[3].Green = 197;
+        lcolors[3].Blue = 222;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 5;
+        lcolors[4].Green = 113;
+        lcolors[4].Blue = 176;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "pink_to_green")
+    {
+        lcolors[0].Red = 123; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 50;
+        lcolors[0].Blue = 148;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 194;
+        lcolors[1].Green = 165;
+        lcolors[1].Blue = 207;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 247;
+        lcolors[2].Green = 247;
+        lcolors[2].Blue = 247;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 146;
+        lcolors[3].Green = 219;
+        lcolors[3].Blue = 160;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 0;
+        lcolors[4].Green = 136;
+        lcolors[4].Blue = 55;
+        lcolors[4].Alpha = 0;
+    }
+    if(colorScheme == "ROPGW")
+    {
+        lcolors[0].Red = 166; //0=Highest wind speed: its reversed from above...
+        lcolors[0].Green = 31; //red
+        lcolors[0].Blue = 27;
+        lcolors[0].Alpha = 0;
+
+        lcolors[1].Red = 198; //orange
+        lcolors[1].Green = 162;
+        lcolors[1].Blue = 114;
+        lcolors[1].Alpha = 0;
+
+        lcolors[2].Red = 222; //pink
+        lcolors[2].Green = 204;
+        lcolors[2].Blue = 216;
+        lcolors[2].Alpha = 0;
+
+        lcolors[3].Red = 229; //green
+        lcolors[3].Green = 236;
+        lcolors[3].Blue = 141;
+        lcolors[3].Alpha = 0;
+
+        lcolors[4].Red = 239; //White
+        lcolors[4].Green = 243;
+        lcolors[4].Blue = 229;
+        lcolors[4].Alpha = 0;
+    }
+
+    int arrowLength = 40;  //pixels;
+    int arrowHeadLength = 10; // pixels;
+    int textHeight = 10;  //pixels- 8 for maximum speed of "999.99 - 555.55";
+                          //10 for normal double digits
+    if(split_vals[NSPLITS-1] >= 100)
+        textHeight = 8;
+    int titleTextHeight = int(1.2 * textHeight);
+    int titleX, titleY;
 
     int x1, x2, x3, x4;
-	double x;
-	int y1, y2, y3, y4;
-	double y;
+    double x;
+    int y1, y2, y3, y4;
+    double y;
 
-	int textX;
-	int textY;
+    int textX;
+    int textY;
 
-	x = 0.05;
-	y = 0.30;
+    x = 0.05;
+    y = 0.30;
 
 
-	titleX = x * legendWidth;
-	titleY = (y / 3) * legendHeight;
+    titleX = x * legendWidth;
+    titleY = (y / 3) * legendHeight;
 
-    
+
     //TODO: Add support for configuring wind speed units
     std::string unitsText = "";
     if(units == velocityUnits::metersPerSecond){
@@ -442,34 +756,34 @@ bool OutputWriter::_createLegend()
         throw std::runtime_error("OutputWriter: velocityUnits set incorrectly.");
     }
     PrintString(legend, CPLSPrintf("Wind Speed (%s)", unitsText.c_str()), titleX, titleY, titleTextHeight, white);
-	for(int i = 0;i < NCOLORS;i++)
-	{
-		x1 = int(legendWidth * x);
-		x2 = x1 + arrowLength;
-		y1 = int(legendHeight * y);
-		y2 = y1;
+    for(int i = 0;i < NCOLORS;i++)
+    {
+        x1 = int(legendWidth * x);
+        x2 = x1 + arrowLength;
+        y1 = int(legendHeight * y);
+        y2 = y1;
 
-		x3 = x2 - arrowHeadLength;
-		y3 = y2 + arrowHeadLength;
+        x3 = x2 - arrowHeadLength;
+        y3 = y2 + arrowHeadLength;
 
-		x4 = x2 - arrowHeadLength;
-		y4 = y2 - arrowHeadLength;
+        x4 = x2 - arrowHeadLength;
+        y4 = y2 - arrowHeadLength;
 
-		textX = x2 + 10;
-		textY = y2 - int(textHeight * 0.5);
-
-
-		DrawLine(legend, x1, y1, x2, y2, lcolors[i]);
-		DrawLine(legend, x2, y2, x3, y3, lcolors[i]);
-		DrawLine(legend, x2, y2, x4, y4, lcolors[i]);
-
-		PrintString(legend, legendStrings[i].c_str(), textX, textY, textHeight, white);
+        textX = x2 + 10;
+        textY = y2 - int(textHeight * 0.5);
 
 
-		y += 0.15;
-	}
+        DrawLine(legend, x1, y1, x2, y2, lcolors[i]);
+        DrawLine(legend, x2, y2, x3, y3, lcolors[i]);
+        DrawLine(legend, x2, y2, x4, y4, lcolors[i]);
 
-	legend.WriteToFile( pszLegendFile );
+        PrintString(legend, legendStrings[i].c_str(), textX, textY, textHeight, white);
+
+
+        y += 0.15;
+    }
+
+    legend.WriteToFile( pszLegendFile );
 
     return true;
 
@@ -479,6 +793,142 @@ void OutputWriter::_destroyLegend()
 {
     GDALDriverH hLegendDrv = GDALGetDriverByName( "BMP" );
     GDALDeleteDataset( hLegendDrv, pszLegendFile );
+    return;
+}
+
+
+bool OutputWriter::_createDateTimeLegend(bool wxModel)
+{
+    //make bitmap
+    int legendWidth = 11.25 * wxModelName.size();
+    if(legendWidth < 285)
+    {
+        legendWidth = 285;
+    }
+    int legendHeight = 52;
+    if(wxModel)
+    {
+        legendHeight = 78;
+    }
+    BMP legend;
+
+    legend.SetSize(legendWidth,legendHeight);
+    legend.SetBitDepth(8);
+
+    //black legend
+    for(int i = 0;i < legendWidth;i++)
+    {
+        for(int j = 0;j < legendHeight;j++)
+        {
+            legend(i,j)->Alpha = 0;
+            legend(i,j)->Blue = 0;
+            legend(i,j)->Green = 0;
+            legend(i,j)->Red = 0;
+        }
+    }
+
+    //for white text
+    RGBApixel white;
+    white.Red = 255;
+    white.Green = 255;
+    white.Blue = 255;
+    white.Alpha = 0;
+
+    int textHeight = 12; //pixels- 10 for maximum speed of "999.99 - 555.55";
+    //12 for normal double digits
+    int titleX, titleY;
+
+    double x;
+    double y;
+
+    //print date
+    x = 0.05;
+    y = 0.15;
+    titleX = x * legendWidth;
+    titleY = y * legendHeight;
+
+    std::ostringstream os;
+    boost::local_time::local_time_facet* timeOutputFacet;
+    timeOutputFacet = new boost::local_time::local_time_facet();
+    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+    //      THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //      https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //      http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+    os.imbue(std::locale(std::locale::classic(), timeOutputFacet));
+    timeOutputFacet->format("%A, %B %d, %Y");
+
+    os << ninjaTime;
+
+    if(wxModel)
+    {
+        //print wxModel identifier
+        PrintString(legend, wxModelName.c_str(), titleX, titleY, textHeight, white);
+
+        //print date
+        x = 0.05;
+        y = 0.40;
+        titleX = x * legendWidth;
+        titleY = y * legendHeight;
+        PrintString(legend, os.str().c_str(), titleX, titleY, textHeight, white);
+
+        //prep to print time
+        x = 0.05;
+        y = 0.70;
+    }
+    else
+    {
+        //print date
+        PrintString(legend, os.str().c_str(), titleX, titleY, textHeight, white);
+
+        //prep to print time
+        x = 0.05;
+        y = 0.60;
+    }
+
+    //print time
+
+    titleX = x * legendWidth;
+    titleY = y * legendHeight;
+
+    os.str("");
+    //timeOutputFacet->format("%H:%M %z (%Q from UTC)");
+    timeOutputFacet->format("%H:%M %z (");
+
+    os << ninjaTime;
+
+    std::string timeStringLegend(os.str());
+
+    boost::posix_time::time_facet* timeOutputFacet2;
+    timeOutputFacet2 = new boost::posix_time::time_facet();
+    //NOTE: WEIRD ISSUE WITH THE ABOVE 2 LINES OF CODE!  DO NOT CALL DELETE ON THIS BECAUSE THE LOCALE OBJECT BELOW DOES.
+    //      THIS IS A "PROBLEM" IN THE STANDARD LIBRARY. SEE THESE WEB SITES FOR MORE INFO:
+    //      https://collab.firelab.org/software/projects/windninja/wiki/KnownIssues
+    //      http://rhubbarb.wordpress.com/2009/10/17/boost-datetime-locales-and-facets/#comment-203
+
+    os.imbue(std::locale(std::locale::classic(), timeOutputFacet2));
+
+    os.str("");
+    timeOutputFacet2->format("%H:%M UTC)");
+
+    os << ninjaTime.utc_time();
+
+    timeStringLegend.append(os.str());
+
+    PrintString(legend,timeStringLegend.c_str(), titleX, titleY, textHeight, white);
+
+    legend.WriteToFile(pszDateTimeLegendFile);
+
+    std::string shortName;
+    shortName = CPLGetFilename(pszDateTimeLegendFile);
+
+    return true;
+}
+
+void OutputWriter::_destroyDateTimeLegend()
+{
+    GDALDriverH hLegendDrv = GDALGetDriverByName( "BMP" );
+    GDALDeleteDataset( hLegendDrv, pszDateTimeLegendFile );
     return;
 }
 
@@ -493,34 +943,49 @@ void OutputWriter::_openSrcDataSet()
 }
 
 /* --------------------------------------------------------------------------*/
-/** 
+/**
  * @brief Creates an OGR datasource for holding vector features
  *
  * @pre base DEM file is specified
  * @pre speed grid is instantiated
- * 
+ *
  * @post hTransform contains coordinate transformation from speed grid to raster SRS
  * @post The source raster datasource is open
  * @post The OGR datasource is populated with features from simulation data
  */
 /* ----------------------------------------------------------------------------*/
-    void
-OutputWriter::_createOGRFile()
+void OutputWriter::_createOGRFile(bool outputLatLon)
 {
     int ncols = spd.get_nCols();
     int nrows = spd.get_nRows();
     double x  = 0, y = 0;
 
-    _openSrcDataSet(); 
+    const char* pszSrcWkt = spd.prjString.c_str();
 
-    const char* pszSrcWkt = (char*) spd.prjString.c_str();
-    const char* pszDstWkt = GDALGetProjectionRef( hSrcDS );
-    hSrcSRS = OSRNewSpatialReference( pszSrcWkt );
-    hDestSRS   = OSRNewSpatialReference( pszDstWkt );
-    hTransform = OCTNewCoordinateTransformation( hSrcSRS, hDestSRS );
+    hSrcSRS = OSRNewSpatialReference(pszSrcWkt);
 
-    GDALGetGeoTransform( hSrcDS, adfGeoTransform );
-    GDALClose( hSrcDS );
+    if(outputLatLon)
+    {
+        hDestSRS = OSRNewSpatialReference(NULL);
+        OSRImportFromEPSG(hDestSRS, 4326);
+    }
+    else
+    {
+        _openSrcDataSet();
+
+        const char* pszDstWkt = GDALGetProjectionRef(hSrcDS);
+
+        hDestSRS = OSRNewSpatialReference(pszDstWkt);
+
+        GDALGetGeoTransform(hSrcDS, adfGeoTransform);
+
+        GDALClose(hSrcDS);
+    }
+
+    OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
+    OSRSetAxisMappingStrategy(hDestSRS, OAMS_TRADITIONAL_GIS_ORDER);
+
+    hTransform = OCTNewCoordinateTransformation(hSrcSRS, hDestSRS);
 
     if( NULL == hTransform )
     {
@@ -538,16 +1003,24 @@ OutputWriter::_createOGRFile()
     {
         throw std::runtime_error("OutputWriter: Failed to create OGR Memory datasource");
     }
-    
+
     //Create a new layer for the wind features
-    hLayer = OGR_DS_CreateLayer( hDataSource, "Wind Vectors" , hDestSRS, 
+    hLayer = OGR_DS_CreateLayer( hDataSource, "Wind Vectors" , hDestSRS,
                                  wkbLineString, NULL );
     if( hLayer == NULL )
     {
         throw std::runtime_error("OutputWriter: Failed to create wind vector layer");
     }
 
-        
+
+    hFieldDefn = OGR_Fld_Create( NAME, OFTString );
+    OGR_Fld_SetWidth( hFieldDefn, 32 );
+    if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
+    {
+        throw std::runtime_error("OutputWriter: Creating NAME field failed");
+    }
+    OGR_Fld_Destroy(hFieldDefn);
+
     hFieldDefn = OGR_Fld_Create( SPEED, OFTReal );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
@@ -567,7 +1040,7 @@ OutputWriter::_createOGRFile()
     OGR_Fld_SetWidth( hFieldDefn, 32 );
     if( OGRERR_NONE != OGR_L_CreateField( hLayer, hFieldDefn, TRUE ) )
     {
-        throw std::runtime_error("OutputWriter: Creating SPEED field failed");
+        throw std::runtime_error("OutputWriter: Creating OGR_STYLE field failed");
     }
     OGR_Fld_Destroy(hFieldDefn);
 
@@ -577,64 +1050,77 @@ OutputWriter::_createOGRFile()
     {
         for( int j = 0; j < ncols; j++ )
         {
-            OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
-            OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
-            WN_Arrow     arrow;
-
-            spd.get_cellPosition(i, j, &x, &y);
-            arrow = WN_Arrow( x, y, spd(i,j), dir(i,j), spd.get_cellSize(),
-                              split_vals, NCOLORS);
-
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED), 
-                                   spd(i,j) );       
-            OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR), 
-                                   (int)dir(i,j)+0.5);
-
-
-            arrow.asGeometry( hLine );
-            OGR_G_Transform( hLine, hTransform );
-            OGR_F_SetGeometry( hFeature, hLine );
-            
-            style = _getStyleFromSpeed( spd(i,j) );
-            
-            OGR_F_SetStyleString( hFeature, style.c_str() ); 
-            OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"), 
-                                  style.c_str() );
-
-
-            if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+            if(spd(i,j) != spd.get_noDataValue() && dir(i,j) != dir.get_noDataValue())
             {
-                throw std::runtime_error("OutputWriter: error creating features");
-            } 
-            OGR_G_DestroyGeometry( hLine );
-            OGR_F_Destroy( hFeature );
+                OGRFeatureH hFeature = OGR_F_Create( OGR_L_GetLayerDefn( hLayer ) );
+                OGRGeometryH hLine   = OGR_G_CreateGeometry( wkbLineString );
+                WN_Arrow     arrow;
+
+                double dir_prj = dir(i,j);
+                double dir_geo = dir_prj;
+                if(outputLatLon == true)
+                {
+                    dir_geo = wrap0to360(dir_prj + angleFromNorth); //convert FROM projected TO geographic coordinates
+                }
+
+                spd.get_cellPosition(i, j, &x, &y);
+                arrow = WN_Arrow( x, y, spd(i,j), dir_prj, spd.get_cellSize(),
+                                  split_vals, NCOLORS);
+
+                std::ostringstream os;
+                os << "Cell " << i << "," << j;
+                std::string name = os.str();
+                OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, NAME),
+                                      name.c_str() );
+                OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, SPEED),
+                                       spd(i,j) );
+                OGR_F_SetFieldInteger( hFeature, OGR_F_GetFieldIndex(hFeature, DIR),
+                                       (int)dir_geo+0.5);
+
+
+                arrow.asGeometry( hLine );
+                OGR_G_Transform( hLine, hTransform );
+                OGR_F_SetGeometry( hFeature, hLine );
+
+                style = _getStyleFromSpeed( spd(i,j) );
+
+                OGR_F_SetStyleString( hFeature, style.c_str() );
+                OGR_F_SetFieldString( hFeature, OGR_F_GetFieldIndex(hFeature, "OGR_STYLE"),
+                                      style.c_str() );
+
+
+                if( OGR_L_CreateFeature( hLayer, hFeature ) != OGRERR_NONE )
+                {
+                    throw std::runtime_error("OutputWriter: error creating features");
+                }
+                OGR_G_DestroyGeometry( hLine );
+                OGR_F_Destroy( hFeature );
+            }
         }
     }
-    
-    _closeOGRFile();
 
     return ;
 
-}		/* -----  end of method OutputWriter::createOGRFields  ----- */ 
+}  /* -----  end of method OutputWriter::createOGRFields  ----- */
 
 /* --------------------------------------------------------------------------*/
-/** 
+/**
  * @brief Creates a new PDF file from the base DEM and simulation output
- * 
+ *
  * @Param outputfn - specifies the name of the output PDF file
  *
  * @pre OGR datasource and source raster are created/opened
  * @post All datasources are closed, OGR datasource is deleted from system
  * @post Output PDF is created
- * 
- * @Returns True is successful. 
+ *
+ * @Returns True is successful.
  */
 /* ----------------------------------------------------------------------------*/
-    bool
-OutputWriter::_writePDF (std::string outputfn)
+bool OutputWriter::_writePDF (std::string outputfn)
 {
     _createSplits();
-    _createOGRFile();
+    _createOGRFile(false);
+    _closeOGRFile();
     _createLegend();
     _openSrcDataSet();
 
@@ -684,7 +1170,7 @@ OutputWriter::_writePDF (std::string outputfn)
     topMargin = bottomMargin;
     double dfImageYBound = 0.0;
     /* Make the same as the default margin */
-    dfImageYBound = CPL_MIN( BOTTOM_MARGIN, bottomMargin / 72.0 );
+    dfImageYBound = std::min( BOTTOM_MARGIN, bottomMargin / 72.0 );
     int nLogoTargetYSize = dpi * dfImageYBound;
     double dfLogoRatio = (double)nLogoTargetYSize / (double)nNinjaLogoYSize;
     double dfLogoWidth = dfLogoRatio * (double)nNinjaLogoXSize / (double)dpi;
@@ -722,7 +1208,7 @@ OutputWriter::_writePDF (std::string outputfn)
         extra_imgs = extra_imgs + "," + extra_img_logo;
     }
 
-    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile ); 
+    papszOptions = CSLAddNameValue( papszOptions, "OGR_DATASOURCE", pszOgrFile );
     papszOptions = CSLAddNameValue( papszOptions, "OGR_DISPLAY_LAYER_NAMES", "Wind_Vectors");
     papszOptions = CSLAddNameValue( papszOptions, "LAYER_NAME", demFile.c_str() );
     papszOptions = CSLAddNameValue( papszOptions, "EXTRA_IMAGES", extra_imgs.c_str() );
@@ -734,230 +1220,76 @@ OutputWriter::_writePDF (std::string outputfn)
     papszOptions = CSLAddNameValue( papszOptions, "TOP_MARGIN", CPLSPrintf( "%d", topMargin ) );
     papszOptions = CSLAddNameValue( papszOptions, "BOTTOM_MARGIN", CPLSPrintf( "%d", bottomMargin ) );
 
-    hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE, 
+    hDstDS = GDALCreateCopy( hDriver, outputfn.c_str(), hSrcDS, FALSE,
                              papszOptions, NULL, NULL );
     if( NULL == hDstDS )
     {
         throw std::runtime_error("OutputWriter: Error creating output file");
     }
-    
+
     _closeDataSets();
     _destroyOptions();
     _destroyLegend();
-    
+
     OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 
     return true;
-}		/* -----  end of method OutputWriter::_writePDF  ----- */
+}  /* -----  end of method OutputWriter::_writePDF  ----- */
 
-bool OutputWriter::_writeGTiff (std::string filename, GDALDatasetH &hMemDS)
+bool OutputWriter::_writeFlatGeoBufZip(std::string filename)
 {
-    CPLSetConfigOption( "GDAL_CACHEMAX", "1024" );
-    
-    int nXSize = spd.get_nCols();
-    int nYSize = spd.get_nRows();
-    
-    double *padfScanline;
-    padfScanline = new double[nXSize];
-    CPLErr eErr = CE_None;
-    
-    if(runNumber == 0)
+    const bool hasDateTime = !ninjaTime.is_not_a_date_time();
+
+    _createSplits();
+    _createOGRFile(true);
+    _createLegend();
+    if(hasDateTime)
     {
-        /*------------------------------------------*/
-        /* Set dataset metadata                     */
-        /*------------------------------------------*/
-                  
-        adfGeoTransform[0] = spd.get_xllCorner();
-        adfGeoTransform[1] = spd.get_cellSize();
-        adfGeoTransform[2] = 0;
-        adfGeoTransform[3] = spd.get_yllCorner()+(spd.get_nRows()*spd.get_cellSize());
-        adfGeoTransform[4] = 0;
-        adfGeoTransform[5] = -spd.get_cellSize();
-        
-        char* pszDstWKT = (char*)spd.prjString.c_str();
-        GDALSetProjection(hMemDS, pszDstWKT);
-        GDALSetGeoTransform(hMemDS, adfGeoTransform);
-        
-        GDALSetMetadataItem(hMemDS, "TIFFTAG_DATETIME", ninjaTime.c_str(), NULL );
-        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, 1 );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-        GDALSetMetadataItem(hBand, "DT", "0", NULL ); // offset in hours
-
-        for(int i=nYSize-1; i>=0; i--)
-        {
-            for(int j=0; j<nXSize; j++)
-            {   
-                if(filename.find("spd.tif") != filename.npos){
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos){
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-#endif
-                else{
-                    return false;
-                }
-                
-            }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0);
-            assert( eErr == CE_None );
-        }
-    }
-    else if(runNumber < maxRunNumber){
-        /*------------------------------------------*/
-        /*  Add a new band                          */
-        /*------------------------------------------*/
-        
-        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
-        if(eErr != 0){
-            return false;
-        }
-        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
-        
-        const char* startTime = GDALGetMetadataItem( hMemDS, "TIFFTAG_DATETIME", NULL );
-        
-        // calculate hours since startTime 
-        std::string s(ninjaTime);
-        std::string s0(startTime);
-        
-        s.erase(s.length()-4); //get rid of tz
-        s0.erase(s0.length()-4); //get rid of tz
-               
-        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
-        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-        
-        boost::posix_time::time_duration tdiff = t - t0;
-        
-        int hdiff = tdiff.hours();
-
-        std::string h(boost::lexical_cast<std::string>(hdiff));
-        
-        CPLDebug( "GTIFF", "offset in hours, DT = %s", h.c_str() );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-        
-        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
-
-        CPLErr eErr = CE_None;
-        for(int i=nYSize-1; i>=0; i--)
-        {
-            for(int j=0; j<nXSize; j++)
-            {
-                if(filename.find("spd.tif") != filename.npos){
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos){
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-#endif
-                else{
-                    return false;
-                }
-            }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0); 
-            assert( eErr == CE_None );
-        }
-    }
-    else{
-        /*------------------------------------------*/
-        /*  Write the tif to disk                   */
-        /*------------------------------------------*/
-        //get start time
-        const char* startTime = GDALGetMetadataItem(hMemDS, "TIFFTAG_DATETIME", NULL);
-
-        eErr = GDALAddBand(hMemDS, GDT_Float64, NULL);
-        if(eErr != 0){
-            return false;
-        }
-        
-        //copy MEM to GTiff format
-        hDriver = GDALGetDriverByName( "GTiff" );
-
-        // write current grid to last band in hDstDS        
-        GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, GDALGetRasterCount(hMemDS) );
-  
-        // calculate hours since startTime 
-        std::string s(ninjaTime);
-        std::string s0(startTime);
-        
-        s.erase(s.length()-4); //get rid of tz
-        s0.erase(s0.length()-4); //get rid of tz
-               
-        boost::posix_time::ptime t(boost::posix_time::time_from_string(s));
-        boost::posix_time::ptime t0(boost::posix_time::time_from_string(s0));
-        
-        boost::posix_time::time_duration tdiff = t - t0;
-        
-        int hdiff = tdiff.hours();
-
-        std::string h(boost::lexical_cast<std::string>(hdiff));
-        
-        CPLDebug( "GTIFF", "offset in hours, DT = %s", h.c_str() );
-        
-        GDALSetRasterNoDataValue(hBand, -9999.0);
-        
-        GDALSetMetadataItem( hBand, "DT", h.c_str(), NULL ); // offset in hours since first band
-
-        CPLErr eErr;
-
-        for(int i=nYSize-1; i>=0; i--)
-        {
-            for(int j=0; j<nXSize; j++)
-            {
-                if(filename.find("spd.tif") != filename.npos){
-                    padfScanline[j] = spd.get_cellValue(nYSize-1-i, j);
-                }
-                else if(filename.find("dir.tif") != filename.npos){
-                    padfScanline[j] = dir.get_cellValue(nYSize-1-i, j);
-                }
-#ifdef EMISSIONS
-                else if(filename.find("dust.tif") != filename.npos){
-                    padfScanline[j] = dust.get_cellValue(nYSize-1-i, j);
-                }
-#endif
-                else{
-                    return false;
-                }
-            }
-            eErr = GDALRasterIO(hBand, GF_Write, 0, i, nXSize, 1, padfScanline, nXSize,
-                                1, GDT_Float64, 0, 0); 
-            assert( eErr == CE_None );
-        }
-        
-        
-        GDALDriverH hGtiffDriver = GDALGetDriverByName( "GTiff" );
-        papszOptions = CSLAddString( papszOptions, "INTERLEAVE=BAND");	
-        papszOptions = CSLAddString( papszOptions, "BIGTIFF=YES" );        
-        hDstDS = GDALCreateCopy(hGtiffDriver, filename.c_str(), hMemDS, FALSE, papszOptions, NULL, NULL);
-        
-        //close MEM dataset
-        if( hMemDS != NULL ){
-            GDALClose( hMemDS );
-            hMemDS = NULL;
-        }
-    
-        //close GTiff dataset
-        if( hDstDS != NULL ){
-            GDALClose( hDstDS );
-            hDstDS = NULL;
-        }
+        _createDateTimeLegend(!wxModelName.empty());
     }
 
-    delete [] padfScanline;
+    hDriver = OGRGetDriverByName("FlatGeobuf");
+    if ( hDriver == NULL )
+    {
+        throw std::runtime_error("OutputWriter: FlatGeobuf driver not available.");
+    }
+
+    VSIUnlink(filename.c_str());
+
+    std::string baseName = CPLGetBasename(filename.c_str());
+
+    std::string vsiFgbPath = "/vsizip/{" + filename + "}/" + baseName + ".fgb";
+    std::string vsiLegendPath = "/vsizip/{" + filename + "}/" + baseName + "_legend.bmp";
+    std::string vsiDateTimeLegendPath = "/vsizip/{" + filename + "}/" + baseName + "_datetime.bmp";
+
+    papszOptions = CSLAddNameValue( papszOptions, "SPATIAL_INDEX", "YES" );
+    hDstDS = GDALCreateCopy(hDriver, vsiFgbPath.c_str(), hDataSource, FALSE, papszOptions, NULL, NULL);
+
+    if( NULL == hDstDS )
+    {
+        throw std::runtime_error("OutputWriter: Error creating output file");
+    }
+
+    if(pszLegendFile != nullptr && CPLCopyFile(vsiLegendPath.c_str(), pszLegendFile) != 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add legend file to ZIP archive.");
+    }
+
+    if(hasDateTime == true && pszDateTimeLegendFile != nullptr && CPLCopyFile(vsiDateTimeLegendPath.c_str(), pszDateTimeLegendFile) != 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined, "Failed to add date time legend file to ZIP archive.");
+    }
+
+    _closeDataSets();
+    _destroyOptions();
+    _destroyLegend();
+
+    if(hasDateTime)
+    {
+        _destroyDateTimeLegend();
+    }
+
+    OGR_Dr_DeleteDataSource( hOGRDriver, pszOgrFile );
 
     return true;
 }
-

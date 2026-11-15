@@ -1,0 +1,5 @@
+    $boundary_name$
+    {
+        type            $type$;
+		value uniform $inletoutletvalue$;
+    }

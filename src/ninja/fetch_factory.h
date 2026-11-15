@@ -34,6 +34,7 @@
 #include "surface_fetch.h"
 #include "gdal_fetch.h"
 #include "landfireclient.h"
+#include "srtmclient.h"
 #include "relief_fetch.h"
 #include <string>
 
@@ -42,8 +43,7 @@ class FetchFactory
     public:
         enum FetchType
             {
-                US_SRTM,
-                WORLD_SRTM,
+                SRTM,
                 WORLD_GMTED,
 #ifdef WITH_LCP_CLIENT
                 LCP,
@@ -51,8 +51,7 @@ class FetchFactory
                 CUSTOM_GDAL,
                 RELIEF
             };
-        static const std::string US_SRTM_STR;
-        static const std::string WORLD_SRTM_STR;
+        static const std::string SRTM_STR;
         static const std::string RELIEF_STR;
         static const std::string LCP_STR;
 #ifdef HAVE_GMTED

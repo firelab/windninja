@@ -35,7 +35,7 @@ cellDiurnal::cellDiurnal()
 }
 
 cellDiurnal::cellDiurnal(Elevation const* incomingDem, Shade const* shd, 
-                        Solar *solarInput, double const downDragCoeff,
+                        Solar *solarInput, const double& angFromNorth, double const downDragCoeff,
                         double const downEntrainmentCoeff, double const upDragCoeff, 
                         double const upEntrainmentCoeff)
 {
@@ -46,6 +46,7 @@ cellDiurnal::cellDiurnal(Elevation const* incomingDem, Shade const* shd,
 #endif
 
     dem = incomingDem;
+    angleFromNorth = angFromNorth;
     shade = shd;
     diurnalSolar = *solarInput;
 
@@ -124,6 +125,7 @@ cellDiurnal::cellDiurnal(cellDiurnal &c)
     dem = c.dem;
     aspect = c.aspect;
     slope = c.slope;
+    angleFromNorth = c.angleFromNorth;
     shade = c.shade;
     diurnalSolar = c.diurnalSolar;
 
@@ -188,7 +190,7 @@ cellDiurnal::cellDiurnal(cellDiurnal &c)
  * @param solarInput solar input
  * 
  */
-void cellDiurnal::create(Elevation const* incomingDem, Shade const* shd, Solar *solarInput)
+void cellDiurnal::create(Elevation const* incomingDem, Shade const* shd, Solar *solarInput, const double& angFromNorth)
 {
 #ifdef CELL_DIURNAL_DEBUG
     Stopwatch fxTimer;
@@ -197,6 +199,7 @@ void cellDiurnal::create(Elevation const* incomingDem, Shade const* shd, Solar *
 #endif
 
     dem = incomingDem;
+    angleFromNorth = angFromNorth;
     shade = shd;
     diurnalSolar = *solarInput;
 
@@ -293,7 +296,7 @@ void cellDiurnal::initialize(double& Xord, double& Yord, const double& asp,
 void cellDiurnal::compute_solarIntensity()
 {
     //Set aspect and slope for this cell in the diurnalSolar class BEFORE we run it to compute solar intensity!
-    diurnalSolar.set_aspect(aspect);	
+    diurnalSolar.set_aspect(aspect, angleFromNorth);
     diurnalSolar.set_slope(slope);
     diurnalSolar.call_solPos();
 }

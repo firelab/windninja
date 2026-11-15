@@ -35,9 +35,10 @@
 */
 ncepNamAlaskaSurfInitialization::ncepNamAlaskaSurfInitialization() : wxModelInitialization()
 {
-    heightVarName = "height_above_ground1";
+    heightVarName = "height_above_ground2";
     path = "/thredds/ncss/grid/grib/NCEP/NAM/Alaska_11km/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
-    LoadFromCsv();
+    //Don't call LoadFromCSV here because all necep model constructors get called in makeWxInitialization and values get overwritten
+    //LoadFromCsv();
 }
 
 /**
@@ -75,7 +76,7 @@ ncepNamAlaskaSurfInitialization& ncepNamAlaskaSurfInitialization::operator= (nce
 */
 double ncepNamAlaskaSurfInitialization::Get_Wind_Height()
 {
-    return GetWindHeight("height_above_ground1");
+    return GetWindHeight("height_above_ground2");
 }
 
 /**
@@ -126,18 +127,34 @@ int ncepNamAlaskaSurfInitialization::getEndHour()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void ncepNamAlaskaSurfInitialization::checkForValidData()
+void ncepNamAlaskaSurfInitialization::checkForValidData(std::string timeZoneString)
 {
-    //just make up a "dummy" timezone for use here
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
+    GDALDataset *srcDS;
+    srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
+    if(srcDS == NULL)
+    {
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
+    }
+    GDALClose((GDALDatasetH)srcDS);
+
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if(timeZonePtr == NULL)
+    {
+        ostringstream os;
+        os << "The time zone string: " << timeZoneString.c_str()
+           << " does not match any in "
+           << "the time zone database file: date_time_zonespec.csv.";
+        throw std::runtime_error(os.str());
+    }
 
     //get time list
-    std::vector<boost::local_time::local_date_time> timeList( getTimeList(zone) );
+    std::vector<boost::local_time::local_date_time> timeList(getTimeList(timeZonePtr));
 
     boost::posix_time::ptime pt_low(boost::gregorian::date(1900,boost::gregorian::Jan,1), boost::posix_time::hours(12));
     boost::posix_time::ptime pt_high(boost::gregorian::date(2100,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::local_time::local_date_time low_time(pt_low, zone);
-    boost::local_time::local_date_time high_time(pt_high, zone);
+    boost::local_time::local_date_time low_time(pt_low, timeZonePtr);
+    boost::local_time::local_date_time high_time(pt_high, timeZonePtr);
 
     //check times
     for(unsigned int i = 0; i < timeList.size(); i++)
@@ -149,7 +166,6 @@ void ncepNamAlaskaSurfInitialization::checkForValidData()
     }
 
     // open ds variable by variable
-    GDALDataset *srcDS;
     std::string temp;
     std::string srcWkt;
     int nBands = 0;
@@ -169,10 +185,9 @@ void ncepNamAlaskaSurfInitialization::checkForValidData()
 
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL )
-            throw badForecastFile("Cannot open forecast file.");
+            throw badForecastFile("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
 
         srcWkt = srcDS->GetProjectionRef();
-
         if( srcWkt.empty() )
             throw badForecastFile("Forecast file doesn't have projection information.");
 
@@ -317,6 +332,20 @@ bool ncepNamAlaskaSurfInitialization::identify( std::string fileName )
         delete [] model;
     }
 
+    status = nc_inq_att( ncid, NC_GLOBAL, "History", &type, &len );
+    if( status != NC_NOERR )
+        identified = false;
+    else {
+        model = new char[len + 1];
+        status = nc_get_att_text( ncid, NC_GLOBAL, "History", model );
+        model[len] = '\0';
+        std::string s( model );
+        if( s.find( "NAM-Alaska_11km" ) == s.npos ) {
+            identified = false;
+        }
+        delete [] model;
+    }
+
     /*
      * Check the global attributes for the following tag:
      * :location = "Proto fmrc:NAM_Alaska_11km"
@@ -392,27 +421,20 @@ void ncepNamAlaskaSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
         //try to open original
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            CPLDebug( "ncepNamAlaskaSurfInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            //throw();
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            CPLDebug( "ncepNamAlaskaSurfInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            //throw()
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose((GDALDatasetH) poDS );
     }
 
     poDS = (GDALDataset*)GDALOpen( input.forecastFilename.c_str(), GA_ReadOnly );
-
     if( poDS == NULL ) {
-        CPLDebug( "ncepNamAlaskaSurfInitialization::setSurfaceGrids()",
-                "Bad forecast file" );
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
-    else
-        GDALClose((GDALDatasetH) poDS );
+    GDALClose((GDALDatasetH) poDS);
 
     // open ds one by one and warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
@@ -426,68 +448,78 @@ void ncepNamAlaskaSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
      */
     GDALWarpOptions* psWarpOptions;
 
+    double coordinateTransformationAngle = 0.0;
+
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
 
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL ) {
-            CPLDebug( "ncepNamAlaskaSurfInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         srcWkt = srcDS->GetProjectionRef();
-
         if( srcWkt.empty() ) {
-            CPLDebug( "ncepNamAlaskaSurfInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
-            //throw
+            throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
         }
-
-    /*
-     * Grab the first band to get the nodata value for the variable,
-     * assume all bands have the same ndv
-     */
-
-    GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
-    int pbSuccess;
-    double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-    psWarpOptions = GDALCreateWarpOptions();
 
     int nBandCount = srcDS->GetRasterCount();
 
-    psWarpOptions->nBandCount = nBandCount;
-    psWarpOptions->panSrcBands = 
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->panDstBands = 
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-
-    for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-        psWarpOptions->panSrcBands[b] = b + 1;
-        psWarpOptions->panDstBands[b] = b + 1;
+    // get the noDataValue from the current band
+    GDALRasterBand *poBand = srcDS->GetRasterBand(bandNum);
+    int pbSuccess;
+    double dfNoData = poBand->GetNoDataValue(&pbSuccess);
+    if(pbSuccess == false)
+    {
+        dfNoData = -9999.0;
     }
 
-    if( pbSuccess == false )
-        dfNoData = -9999.0;
+    // Setup warp options
+    psWarpOptions = GDALCreateWarpOptions();
 
-    psWarpOptions->papszWarpOptions =
-        CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                 "INIT_DEST", "NO_DATA" );
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
+    for(int b = 0; b < nBandCount; b++)
+    {
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+    }
+
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
+
+        // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+        // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+        // in this case, going FROM weather model projection coordinates TO dem projection coordinates
+        if( varList[i] == "u-component_of_wind_height_above_ground" )
+        {
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+            {
+                // direct calculation of FROM wx TO dem, already has the appropriate sign
+                if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
+                }
+            }
+        }
 
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(), dstWkt.c_str(),
                 GRA_NearestNeighbour, 1.0, psWarpOptions );
-
         if(wrpDS == NULL)
         {
-            throw badForecastFile("Could not warp the forecast file, "
-                                  "possibly non-uniform grid.");
+            throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
         }
+
     if( varList[i] == "Temperature_height_above_ground" ) {
             GDAL2AsciiGrid( wrpDS, bandNum, airGrid );
         if( std::isnan( dfNoData ) ) {
@@ -525,4 +557,47 @@ void ncepNamAlaskaSurfInitialization::setSurfaceGrids( WindNinjaInputs &input,
 
     wGrid.set_headerData( uGrid );
     wGrid = 0.0;
+
+    //use the coordinateTransformationAngle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        // need an intermediate spd and dir set of ascii grids
+        AsciiGrid<double> speedGrid;
+        AsciiGrid<double> dirGrid;
+        speedGrid.set_headerData(uGrid);
+        dirGrid.set_headerData(uGrid);
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedGrid(i,j) = speedGrid.get_NoDataValue();
+                    dirGrid(i,j) = dirGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+                }
+            }
+        }
+
+        // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
+        for(int i=0; i<dirGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<dirGrid.get_nCols(); j++)
+            {
+                if( speedGrid(i,j) != speedGrid.get_NoDataValue() && dirGrid(i,j) != dirGrid.get_NoDataValue() )
+                {
+                    dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
+            }
+        }
+
+        // cleanup the intermediate grids
+        speedGrid.deallocate();
+        dirGrid.deallocate();
+    }
 }

@@ -35,9 +35,10 @@
 */
 ncepNdfdInitialization::ncepNdfdInitialization() : wxModelInitialization()
 {
-    heightVarName = "height_above_ground1";
+    heightVarName = "height_above_ground";
     path = "/thredds/ncss/grid/grib/NCEP/NDFD/NWS/CONUS/NOAAPORT/Best?north=USER_NORTH&west=USER_WEST&east=USER_EAST&south=USER_SOUTH&time_start=present&time_duration=PTUSER_TIMEH&accept=netcdf3";
-    LoadFromCsv();
+    //Don't call LoadFromCSV here because all necep model constructors get called in makeWxInitialization and values get overwritten
+    //LoadFromCsv();
 }
 
 /**
@@ -75,7 +76,7 @@ ncepNdfdInitialization& ncepNdfdInitialization::operator= (ncepNdfdInitializatio
 */
 double ncepNdfdInitialization::Get_Wind_Height()
 {
-    return GetWindHeight("height_above_ground1");
+    return GetWindHeight("height_above_ground");
 }
 
 /**
@@ -120,8 +121,8 @@ std::vector<blt::local_date_time> ncepNdfdInitialization::getTempTimeList(eTempT
 std::vector<std::string> ncepNdfdInitialization::getVariableList()
 {
     std::vector<std::string> varList;
-    varList.push_back( "Maximum_temperature_height_above_ground_12_Hour_Maximum" );
-    varList.push_back( "Minimum_temperature_height_above_ground_12_Hour_Minimum" );
+    //varList.push_back( "Maximum_temperature_height_above_ground_12_Hour_Maximum" );
+    //varList.push_back( "Minimum_temperature_height_above_ground_12_Hour_Minimum" );
     varList.push_back( "Total_cloud_cover_entire_atmosphere_single_layer_layer" );
     varList.push_back( "Wind_direction_from_which_blowing_height_above_ground" );
     varList.push_back( "Wind_speed_height_above_ground" );
@@ -152,21 +153,36 @@ int ncepNdfdInitialization::getEndHour()
 /**
 * Checks the downloaded data to see if it is all valid.
 */
-void ncepNdfdInitialization::checkForValidData()
+void ncepNdfdInitialization::checkForValidData(std::string timeZoneString)
 {
-    //just make up a "dummy" timezone for use here
-    boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("MST-07"));
+    GDALDataset *srcDS;
+    srcDS = (GDALDataset*)GDALOpen(wxModelFileName.c_str(), GA_ReadOnly);
+    if(srcDS == NULL)
+    {
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
+    }
+    GDALClose((GDALDatasetH)srcDS);
+
+    boost::local_time::time_zone_ptr timeZonePtr;
+    timeZonePtr = globalTimeZoneDB.time_zone_from_region(timeZoneString.c_str());
+    if(timeZonePtr == NULL)
+    {
+        ostringstream os;
+        os << "The time zone string: " << timeZoneString.c_str()
+           << " does not match any in "
+           << "the time zone database file: date_time_zonespec.csv.";
+        throw std::runtime_error(os.str());
+    }
 
     //get time list
-    std::vector<boost::local_time::local_date_time> timeList( getTimeList(zone) );
-    std::vector<boost::local_time::local_date_time> timeListMax( getTempTimeList(max, zone) );
-    std::vector<boost::local_time::local_date_time> timeListMin( getTempTimeList(min, zone) );
-
+    std::vector<boost::local_time::local_date_time> timeList(getTimeList(timeZonePtr));
+    //std::vector<boost::local_time::local_date_time> timeListMax(getTempTimeList(max,timeZonePtr));
+    //std::vector<boost::local_time::local_date_time> timeListMin(getTempTimeList(min,timeZonePtr));
 
     boost::posix_time::ptime pt_low(boost::gregorian::date(1900,boost::gregorian::Jan,1), boost::posix_time::hours(12));
     boost::posix_time::ptime pt_high(boost::gregorian::date(2100,boost::gregorian::Jan,1), boost::posix_time::hours(12));
-    boost::local_time::local_date_time low_time(pt_low, zone);
-    boost::local_time::local_date_time high_time(pt_high, zone);
+    boost::local_time::local_date_time low_time(pt_low, timeZonePtr);
+    boost::local_time::local_date_time high_time(pt_high, timeZonePtr);
 
     //check times
     for(unsigned int i = 0; i < timeList.size(); i++)
@@ -176,24 +192,23 @@ void ncepNdfdInitialization::checkForValidData()
         if(timeList[i] < low_time || timeList[i] > high_time)
             throw badForecastFile("Bad time in forecast file.");
     }
-    for(unsigned int i = 0; i < timeListMax.size(); i++)
-    {
-        if(timeListMax[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
-            throw badForecastFile("Bad time in forecast file.");
-        if(timeListMax[i] < low_time || timeListMax[i] > high_time)
-            throw badForecastFile("Bad time in forecast file.");
-    }
-    for(unsigned int i = 0; i < timeListMin.size(); i++)
-    {
-        if(timeListMin[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
-            throw badForecastFile("Bad time in forecast file.");
-        if(timeListMin[i] < low_time || timeListMin[i] > high_time)
-            throw badForecastFile("Bad time in forecast file.");
-    }
+//    for(unsigned int i = 0; i < timeListMax.size(); i++)
+//    {
+//        if(timeListMax[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
+//            throw badForecastFile("Bad time in forecast file.");
+//        if(timeListMax[i] < low_time || timeListMax[i] > high_time)
+//            throw badForecastFile("Bad time in forecast file.");
+//    }
+//    for(unsigned int i = 0; i < timeListMin.size(); i++)
+//    {
+//        if(timeListMin[i].is_special())    //if time is any special value (not_a_date_time, infinity, etc.)
+//            throw badForecastFile("Bad time in forecast file.");
+//        if(timeListMin[i] < low_time || timeListMin[i] > high_time)
+//            throw badForecastFile("Bad time in forecast file.");
+//    }
 
 
     // open ds variable by variable
-    GDALDataset *srcDS;
     std::string temp;
     std::string srcWkt;
     int nBands = 0;
@@ -213,10 +228,9 @@ void ncepNdfdInitialization::checkForValidData()
 
         srcDS = (GDALDataset*)GDALOpen( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL )
-            throw badForecastFile("Cannot open forecast file.");
+            throw badForecastFile("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
 
         srcWkt = srcDS->GetProjectionRef();
-
         if( srcWkt.empty() )
             throw badForecastFile("Forecast file doesn't have projection information.");
 
@@ -398,7 +412,6 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         AsciiGrid<double> &vGrid,
         AsciiGrid<double> &wGrid )
 {
-
     AsciiGrid<double> airHighGrid;
     AsciiGrid<double> airLowGrid;
     AsciiGrid<double> speedGrid;
@@ -421,94 +434,92 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
     if(bandNum <= 0)
         throw std::runtime_error("Could not match ninjaTime with a band number in the forecast file.");
 
-
-
     //Find temperature band(s)
-    int bandNumTempLow = -1;    //This is the band that is less than our time
-    int bandNumTempHigh = -1;   //This is the band that is greater than our time
-    int bandNumTempLuck = -1;   //This is the band to use if we're lucky enough to have a temp time
+    //int bandNumTempLow = -1;    //This is the band that is less than our time
+    //int bandNumTempHigh = -1;   //This is the band that is greater than our time
+    //int bandNumTempLuck = -1;   //This is the band to use if we're lucky enough to have a temp time
 
-    std::vector<blt::local_date_time> timeListMaxTemp( getTempTimeList(max, input.ninjaTimeZone) );
-    std::vector<blt::local_date_time> timeListMinTemp( getTempTimeList(min, input.ninjaTimeZone) );
-    if( timeListMaxTemp.size() == 0 && timeListMinTemp.size() == 0 )
-    {
-        throw badForecastFile( "No temperature data in forecast file" );
-    }
-    std::vector<blt::local_date_time> timeListTemp;
+    //std::vector<blt::local_date_time> timeListMaxTemp( getTempTimeList(max, input.ninjaTimeZone) );
+    //std::vector<blt::local_date_time> timeListMinTemp( getTempTimeList(min, input.ninjaTimeZone) );
+    //if( timeListMaxTemp.size() == 0 && timeListMinTemp.size() == 0 )
+    //{
+    //    throw badForecastFile( "No temperature data in forecast file" );
+    //}
+    //std::vector<blt::local_date_time> timeListTemp;
 
-    bool areEqual;
-    bool minFirst;
+    //bool areEqual;
+    //bool minFirst;
 
-    if(timeListMaxTemp.size() == timeListMinTemp.size())
-        areEqual = true;
-    else
-        areEqual = false;
+    //if(timeListMaxTemp.size() == timeListMinTemp.size())
+    //    areEqual = true;
+    //else
+    //    areEqual = false;
 
-    if(timeListMaxTemp[0] > timeListMinTemp[0])
-        minFirst = true;
-    else
-        minFirst = false;
+    //if(timeListMaxTemp[0] > timeListMinTemp[0])
+    //    minFirst = true;
+    //else
+    //    minFirst = false;
 
-    if(minFirst) //if min list starts first
-    {
-        for(unsigned int i=0; i<timeListMaxTemp.size(); i++)
-        {
-            timeListTemp.push_back(timeListMinTemp[i]);
-            timeListTemp.push_back(timeListMaxTemp[i]);
-        }
-        if(!areEqual)
-            timeListTemp.push_back(timeListMinTemp[timeListMinTemp.size()-1]);
+    //if(minFirst) //if min list starts first
+    //{
+    //    for(unsigned int i=0; i<timeListMaxTemp.size(); i++)
+    //    {
+    //        timeListTemp.push_back(timeListMinTemp[i]);
+    //        timeListTemp.push_back(timeListMaxTemp[i]);
+    //    }
+    //    if(!areEqual)
+    //        timeListTemp.push_back(timeListMinTemp[timeListMinTemp.size()-1]);
 
-    }else   //max list starts first
-    {
-        for(unsigned int i=0; i<timeListMinTemp.size(); i++)
-        {
-            timeListTemp.push_back(timeListMaxTemp[i]);
-            timeListTemp.push_back(timeListMinTemp[i]);
-        }
-        if(!areEqual)
-            timeListTemp.push_back(timeListMaxTemp[timeListMaxTemp.size()-1]);
-    }
+    //}else   //max list starts first
+    //{
+    //    for(unsigned int i=0; i<timeListMinTemp.size(); i++)
+    //    {
+    //        timeListTemp.push_back(timeListMaxTemp[i]);
+    //        timeListTemp.push_back(timeListMinTemp[i]);
+    //    }
+    //    if(!areEqual)
+    //        timeListTemp.push_back(timeListMaxTemp[timeListMaxTemp.size()-1]);
+    //}
 
-    //Search time list for an exactly matching time first
-    for(unsigned int i = 0; i < timeListTemp.size(); i++)
-    {
-        if(input.ninjaTime == timeListTemp[i])  //Check for exact match
-        {
-            bandNumTempLuck = i + 1;
-            break;
-        }
-    }
+    ////Search time list for an exactly matching time first
+    //for(unsigned int i = 0; i < timeListTemp.size(); i++)
+    //{
+    //    if(input.ninjaTime == timeListTemp[i])  //Check for exact match
+    //    {
+    //        bandNumTempLuck = i + 1;
+    //        break;
+    //    }
+    //}
 
-    if(bandNumTempLuck < 0) //If we weren't lucky
-    {
-        if(input.ninjaTime < timeListTemp[0])   //If the ninjaTime is less than all times, use lowest time band
-        {
-            bandNumTempLuck = 1;
-        }else if(input.ninjaTime > timeListTemp[timeListTemp.size()-1]) //If the ninjaTime is greater than all times, use highest time band
-        {
-            bandNumTempLuck = timeListTemp.size();
-        }else   //Else, find the 2 time bands that span the ninjaTime
-        {
-            //Search time list for "low" time
-            for(unsigned int i = 0; i < timeListTemp.size(); i++)
-            {
-                bandNumTempLow = i;
-                if(timeListTemp[i] > input.ninjaTime)  //Check if we're over
-                    break;
-            }
-            //Search time list for "high" time
-            for(int i = timeListTemp.size()-1; i >= 0; i--)
-            {
-                bandNumTempHigh = i;
-                if(timeListTemp[i] < input.ninjaTime)  //Check for exact match
-                {
-                    bandNumTempHigh = i + 2;
-                    break;
-                }
-            }
-        }
-    }
+    //if(bandNumTempLuck < 0) //If we weren't lucky
+    //{
+    //    if(input.ninjaTime < timeListTemp[0])   //If the ninjaTime is less than all times, use lowest time band
+    //    {
+    //        bandNumTempLuck = 1;
+    //    }else if(input.ninjaTime > timeListTemp[timeListTemp.size()-1]) //If the ninjaTime is greater than all times, use highest time band
+    //    {
+    //        bandNumTempLuck = timeListTemp.size();
+    //    }else   //Else, find the 2 time bands that span the ninjaTime
+    //    {
+    //        //Search time list for "low" time
+    //        for(unsigned int i = 0; i < timeListTemp.size(); i++)
+    //        {
+    //            bandNumTempLow = i;
+    //            if(timeListTemp[i] > input.ninjaTime)  //Check if we're over
+    //                break;
+    //        }
+    //        //Search time list for "high" time
+    //        for(int i = timeListTemp.size()-1; i >= 0; i--)
+    //        {
+    //            bandNumTempHigh = i;
+    //            if(timeListTemp[i] < input.ninjaTime)  //Check for exact match
+    //            {
+    //                bandNumTempHigh = i + 2;
+    //                break;
+    //            }
+    //        }
+    //    }
+    //}
 
     //    for(unsigned int i = 0; i < timeListTemp.size(); i++)
     //    {
@@ -527,8 +538,8 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
     //    std::cout << "bandNumTempLow = " << bandNumTempLow << "\n";
     //    std::cout << "bandNumTempHigh = " << bandNumTempHigh << "\n";
 
-    if(bandNumTempLuck < 0 && bandNumTempHigh < 0 && bandNumTempLow < 0)
-        throw std::runtime_error("Could not match ninjaTime with a band number for temperature in the forecast file.");
+    //if(bandNumTempLuck < 0 && bandNumTempHigh < 0 && bandNumTempLow < 0)
+    //    throw std::runtime_error("Could not match ninjaTime with a band number for temperature in the forecast file.");
 
     //get some info from the ndfd file in input
 
@@ -547,27 +558,20 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         //try to open original
         poDS = (GDALDataset*)GDALOpen( input.dem.fileName.c_str(), GA_ReadOnly );
         if( poDS == NULL ) {
-            CPLDebug( "ncepNdfdInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            //throw();
+            throw std::runtime_error("Could not open input dem file.");
         }
         dstWkt = poDS->GetProjectionRef();
         if( dstWkt.empty() ) {
-            CPLDebug( "ncepNdfdInitialization::setSurfaceGrids()",
-                    "Bad projection reference" );
-            //throw()
+            throw std::runtime_error("Could not get projection reference from input dem file.");
         }
         GDALClose( (GDALDatasetH)poDS );
     }
 
     poDS = (GDALDataset*)GDALOpen( input.forecastFilename.c_str(), GA_ReadOnly );
-
     if( poDS == NULL ) {
-        CPLDebug( "ncepNdfdInitialization::setSurfaceGrids()",
-                "Bad forecast file" );
+        throw std::runtime_error("Could not open forecast file, bad forecast file.");
     }
-    else
-        GDALClose( (GDALDatasetH)poDS );
+    GDALClose((GDALDatasetH) poDS);
 
     // open ds one by one and warp, then write to grid
     GDALDataset *srcDS, *wrpDS;
@@ -581,140 +585,158 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
      */
     GDALWarpOptions* psWarpOptions;
 
+    double coordinateTransformationAngle = 0.0;
+
     for( unsigned int i = 0;i < varList.size();i++ ) {
 
         temp = "NETCDF:" + input.forecastFilename + ":" + varList[i];
 
         srcDS = (GDALDataset*)GDALOpenShared( temp.c_str(), GA_ReadOnly );
         if( srcDS == NULL ) {
-            CPLDebug( "ncepNdfdInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
+            throw std::runtime_error("Could not get NETCDF variable '"+varList[i]+"' from forecast file, bad forecast file.");
         }
 
         srcWkt = srcDS->GetProjectionRef();
-
         if( srcWkt.empty() ) {
-            CPLDebug( "ncepNdfdInitialization::setSurfaceGrids()",
-                    "Bad forecast file" );
-            //throw
+            throw std::runtime_error("Could not get projection from forecast file, bad forecast file.");
         }
 
-    GDALRasterBand *poBand = srcDS->GetRasterBand( 1 );
-    int pbSuccess;
-    double dfNoData = poBand->GetNoDataValue( &pbSuccess );
-    psWarpOptions = GDALCreateWarpOptions();
-
-    if( pbSuccess == false )
-        dfNoData = -9999.0;
-
     int nBandCount = srcDS->GetRasterCount();
-    psWarpOptions->nBandCount = nBandCount;
-    psWarpOptions->panSrcBands = 
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->panDstBands = 
-        (int*) CPLMalloc( sizeof( int ) * nBandCount );
-    psWarpOptions->padfDstNoDataReal =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
-    psWarpOptions->padfDstNoDataImag =
-        (double*) CPLMalloc( sizeof( double ) * nBandCount );
 
-    for( int b = 0;b < srcDS->GetRasterCount();b++ ) {
-        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
-        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
-        psWarpOptions->panSrcBands[b] = b + 1;
-        psWarpOptions->panDstBands[b] = b + 1;
+    // get the noDataValue from the current band
+    GDALRasterBand *poBand = srcDS->GetRasterBand(bandNum);
+    int pbSuccess;
+    double dfNoData = poBand->GetNoDataValue(&pbSuccess);
+    if(pbSuccess == false)
+    {
+        dfNoData = -9999.0;
     }
 
-    psWarpOptions->papszWarpOptions =
-        CSLSetNameValue( psWarpOptions->papszWarpOptions,
-                 "INIT_DEST", "NO_DATA" );
+    // Setup warp options
+    psWarpOptions = GDALCreateWarpOptions();
+
+    psWarpOptions->nBandCount = nBandCount;
+    psWarpOptions->panSrcBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->panDstBands = (int*)CPLMalloc(sizeof(int) * nBandCount);
+    psWarpOptions->padfDstNoDataReal = (double*)CPLMalloc(sizeof(double) * nBandCount);
+    psWarpOptions->padfDstNoDataImag = (double*)CPLMalloc(sizeof(double) * nBandCount);
+
+    for(int b = 0; b < nBandCount; b++)
+    {
+        psWarpOptions->panSrcBands[b] = b + 1;
+        psWarpOptions->panDstBands[b] = b + 1;
+        psWarpOptions->padfDstNoDataReal[b] = dfNoData;
+        psWarpOptions->padfDstNoDataImag[b] = dfNoData;
+    }
+
+    psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", "NO_DATA");
+    if(pbSuccess == false)  // if GDALGetRasterNoDataValue() fails to return that a NO_DATA value is in the source dataset
+    {
+        psWarpOptions->papszWarpOptions = CSLSetNameValue(psWarpOptions->papszWarpOptions, "INIT_DEST", boost::lexical_cast<std::string>(dfNoData).c_str());
+    }
+
+        // compute the coordinateTransformationAngle, the angle between the y coordinate grid lines of the pre-warped and warped datasets,
+        // going FROM the y coordinate grid line of the pre-warped dataset TO the y coordinate grid line of the warped dataset
+        // in this case, going FROM weather model projection coordinates TO dem projection coordinates
+        if(varList[i] == "Wind_direction_from_which_blowing_height_above_ground")
+        {
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+            {
+                // direct calculation of FROM wx TO dem, already has the appropriate sign
+                if(!GDALCalculateCoordinateTransformationAngle( srcDS, coordinateTransformationAngle, dstWkt.c_str() ))  // this is FROM wx TO dem
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate coordinate transform angle for the wxModel.");
+                }
+            }
+        }
 
         wrpDS = (GDALDataset*) GDALAutoCreateWarpedVRT( srcDS, srcWkt.c_str(), dstWkt.c_str(),
                 GRA_NearestNeighbour, 1.0, psWarpOptions );
         if(wrpDS == NULL)
         {
-            throw badForecastFile("Could not warp the forecast file, "
-                                  "possibly non-uniform grid.");
+            throw std::runtime_error("Could not warp the forecast file, possibly non-uniform grid.");
         }
 
-        if(varList[i] == "Maximum_temperature_height_above_ground_12_Hour_Maximum")
-        {
-            if(bandNumTempLuck < 0)
-            {
-                if(minFirst)    //if mins are evens
-                {
-                    if((bandNumTempLow-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
-                    if((bandNumTempHigh-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
-                }else   //if maxs are evens
-                {
-                    if((bandNumTempLow-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
-                    if((bandNumTempHigh-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
-                }
+        //if(varList[i] == "Maximum_temperature_height_above_ground_12_Hour_Maximum")
+        //{
+        //    if(bandNumTempLuck < 0)
+        //    {
+        //        if(minFirst)    //if mins are evens
+        //        {
+        //            if((bandNumTempLow-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
+        //            if((bandNumTempHigh-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
+        //        }else   //if maxs are evens
+        //        {
+        //            if((bandNumTempLow-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
+        //            if((bandNumTempHigh-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
+        //        }
 
-            }else{
-                if(minFirst)
-                {
-                    if((bandNumTempLuck-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
+        //    }else{
+        //        if(minFirst)
+        //        {
+        //            if((bandNumTempLuck-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
 
-                }else
-                {
-                    if((bandNumTempLuck-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
-                }
-            }
-        if( std::isnan( dfNoData ) ) {
-        airHighGrid.set_noDataValue(-9999.0);
-        airHighGrid.replaceNan( -9999.0 );
-        airLowGrid.set_noDataValue(-9999.0);
-        airLowGrid.replaceNan( -9999.0 );
-        airGrid.set_noDataValue(-9999.0);
-        airGrid.replaceNan( -9999.0 );
-        }
-        }else if(i == 1)    //Minimum_temperature
-        {
-            if(bandNumTempLuck < 0)
-            {
-                if(!minFirst)    //if maxs are evens
-                {
-                    if((bandNumTempLow-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
-                    if((bandNumTempHigh-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
-                }else   //if mins are evens
-                {
-                    if((bandNumTempLow-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
-                    if((bandNumTempHigh-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
-                }
-            }else{
-                if(!minFirst)   //if maxs are even
-                {
-                    if((bandNumTempLuck-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
+        //        }else
+        //        {
+        //            if((bandNumTempLuck-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
+        //        }
+        //    }
+        //if( std::isnan( dfNoData ) ) {
+        //airHighGrid.set_noDataValue(-9999.0);
+        //airHighGrid.replaceNan( -9999.0 );
+        //airLowGrid.set_noDataValue(-9999.0);
+        //airLowGrid.replaceNan( -9999.0 );
+        //airGrid.set_noDataValue(-9999.0);
+        //airGrid.replaceNan( -9999.0 );
+        //}
+        //}else if(i == 1)    //Minimum_temperature
+        //{
+        //    if(bandNumTempLuck < 0)
+        //    {
+        //        if(!minFirst)    //if maxs are evens
+        //        {
+        //            if((bandNumTempLow-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
+        //            if((bandNumTempHigh-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
+        //        }else   //if mins are evens
+        //        {
+        //            if((bandNumTempLow-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLow/2, airLowGrid );
+        //            if((bandNumTempHigh-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempHigh/2, airHighGrid );
+        //        }
+        //    }else{
+        //        if(!minFirst)   //if maxs are even
+        //        {
+        //            if((bandNumTempLuck-1)%2 != 0)  //if odd number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
 
-                }else   //if mins are even
-                {
-                    if((bandNumTempLuck-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
-                        GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
-                }
-            }
+        //        }else   //if mins are even
+        //        {
+        //            if((bandNumTempLuck-1)%2 == 0)  //if even number in array (meaning it's a maxTemp value)
+        //                GDAL2AsciiGrid( wrpDS, bandNumTempLuck/2, airGrid );
+        //        }
+        //    }
 
-        /* fix no data in the air high, low, and regular grid */
-        if( std::isnan( dfNoData ) ) {
-        airHighGrid.set_noDataValue(-9999.0);
-        airHighGrid.replaceNan( -9999.0 );
-        airLowGrid.set_noDataValue(-9999.0);
-        airLowGrid.replaceNan( -9999.0 );
-        airGrid.set_noDataValue(-9999.0);
-        airGrid.replaceNan( -9999.0 );
-        }
-        }else if(varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer_layer")
+        ///* fix no data in the air high, low, and regular grid */
+        //if( std::isnan( dfNoData ) ) {
+        //airHighGrid.set_noDataValue(-9999.0);
+        //airHighGrid.replaceNan( -9999.0 );
+        //airLowGrid.set_noDataValue(-9999.0);
+        //airLowGrid.replaceNan( -9999.0 );
+        //airGrid.set_noDataValue(-9999.0);
+        //airGrid.replaceNan( -9999.0 );
+        //}
+        //}
+        //else if(varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer_layer")
+        if(varList[i] == "Total_cloud_cover_entire_atmosphere_single_layer_layer")
         {
             GDAL2AsciiGrid( wrpDS, bandNum, cloudGrid );
         if( std::isnan( dfNoData ) ) {
@@ -743,27 +765,31 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
         GDALClose( (GDALDatasetH)srcDS );
         GDALClose( (GDALDatasetH)wrpDS );
     }
-    if(bandNumTempLuck < 0)
-    {
-        bpt::time_duration a, b;
-        airGrid.set_headerData(airLowGrid);
+    //if(bandNumTempLuck < 0)
+    //{
+    //    bpt::time_duration a, b;
+    //    airGrid.set_headerData(airLowGrid);
 
-        //interpolate linearly for temperature
-        for(int i=0; i<airLowGrid.get_nRows(); i++)
-        {
-            for(int j=0; j<airLowGrid.get_nCols(); j++)
-            {
-                a = input.ninjaTime - timeListTemp[bandNumTempLow-1];
-                b = timeListTemp[bandNumTempHigh-1] - timeListTemp[bandNumTempLow-1];
-        if( airLowGrid(i,j) == airLowGrid.get_NoDataValue() ||
-            airHighGrid(i,j) == airHighGrid.get_NoDataValue() ) {
-            airGrid(i,j) = airGrid.get_NoDataValue();
-        }
-        else
-            airGrid(i,j) = airLowGrid(i,j) + (a.total_seconds())*((airHighGrid(i,j) - airLowGrid(i,j))/(b.total_seconds()));
-            }
-        }
-    }
+    //    //interpolate linearly for temperature
+    //    for(int i=0; i<airLowGrid.get_nRows(); i++)
+    //    {
+    //        for(int j=0; j<airLowGrid.get_nCols(); j++)
+    //        {
+    //            a = input.ninjaTime - timeListTemp[bandNumTempLow-1];
+    //            b = timeListTemp[bandNumTempHigh-1] - timeListTemp[bandNumTempLow-1];
+    //    if( airLowGrid(i,j) == airLowGrid.get_NoDataValue() ||
+    //        airHighGrid(i,j) == airHighGrid.get_NoDataValue() ) {
+    //        airGrid(i,j) = airGrid.get_NoDataValue();
+    //    }
+    //    else
+    //        airGrid(i,j) = airLowGrid(i,j) + (a.total_seconds())*((airHighGrid(i,j) - airLowGrid(i,j))/(b.total_seconds()));
+    //        }
+    //    }
+    //}
+
+    CPLDebug("WINDNINJA", "Setting fixed uniform temperature = 300 K in airGrid due to THREDDS server NDFD issue");
+    airGrid.set_headerData(speedGrid);
+    airGrid = 300.0; //just fix the tempearture until the THREDDS server issue is resolved
 
     uGrid.set_headerData(speedGrid);
     vGrid.set_headerData(speedGrid);
@@ -783,4 +809,47 @@ void ncepNdfdInitialization::setSurfaceGrids(  WindNinjaInputs &input,
     }
 
     wGrid = 0.0;
+
+    //use the coordinateTransformationAngle to correct the angles of the output dataset
+    //to convert from the original dataset projection angles to the warped dataset projection angles
+    if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+    {
+        // need an intermediate spd and dir set of ascii grids
+        AsciiGrid<double> speedGrid;
+        AsciiGrid<double> dirGrid;
+        speedGrid.set_headerData(uGrid);
+        dirGrid.set_headerData(uGrid);
+        for(int i=0; i<uGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<uGrid.get_nCols(); j++)
+            {
+                if( uGrid(i,j) == uGrid.get_NoDataValue() || vGrid(i,j) == vGrid.get_NoDataValue() )
+                {
+                    speedGrid(i,j) = speedGrid.get_NoDataValue();
+                    dirGrid(i,j) = dirGrid.get_NoDataValue();
+                } else
+                {
+                    wind_uv_to_sd(uGrid(i,j), vGrid(i,j), &(speedGrid)(i,j), &(dirGrid)(i,j));
+                }
+            }
+        }
+
+        // use the coordinateTransformationAngle to correct each spd,dir, u,v dataset for the warp
+        for(int i=0; i<dirGrid.get_nRows(); i++)
+        {
+            for(int j=0; j<dirGrid.get_nCols(); j++)
+            {
+                if( speedGrid(i,j) != speedGrid.get_NoDataValue() && dirGrid(i,j) != dirGrid.get_NoDataValue() )
+                {
+                    dirGrid(i,j) = wrap0to360( dirGrid(i,j) - coordinateTransformationAngle ); //convert FROM wxModel projection coordinates TO dem projected coordinates
+                    // always recalculate the u and v grids from the corrected dir grid, the changes need to go together
+                    wind_sd_to_uv(speedGrid(i,j), dirGrid(i,j), &(uGrid)(i,j), &(vGrid)(i,j));
+                }
+            }
+        }
+
+        // cleanup the intermediate grids
+        speedGrid.deallocate();
+        dirGrid.deallocate();
+    }
 }

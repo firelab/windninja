@@ -1,0 +1,7 @@
+    $boundary_name$
+    {
+        type            $type$;
+        value           uniform $value$;
+		gamma $gammavalue$;
+		p0 uniform $pvalue$;
+	}

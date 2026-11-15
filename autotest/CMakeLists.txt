@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 3.16)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/ninja
                     ${NETCDF_INCLUDES}
@@ -31,10 +31,10 @@ set(LINK_LIBS ${NETCDF_LIBRARIES_C}
 
 if(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS}
-                  ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
+                  ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
 else(WIN32 OR APPLE)
     set(LINK_LIBS ${LINK_LIBS}
-                  ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
+                  ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif(WIN32 OR APPLE)
 
 set(TEST_SOURCES test_main.cpp
@@ -49,6 +49,7 @@ set(TEST_SOURCES test_main.cpp
                  test_init.cpp
                  #test_input_points.cpp
                  test_buffer_grid.cpp
+                 test_ninjaunits.cpp
                  test_stl.cpp
                  test_rmtree.cpp
                  test_utm.cpp)
@@ -118,6 +119,10 @@ add_test(test_init_gdal
 add_test(test_buffer_grid_init
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=buffer_grid/init_and_set)
 
+# ninjaUnits Test Suite
+add_test(test_ninja_units
+         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=base_units/length_to_base_units)
+
 # gdal_util
 add_test(test_gdal_util_center
          ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=gdal_util/center)
@@ -129,11 +134,11 @@ if(WITH_LCP_CLIENT)
 endif(WITH_LCP_CLIENT)
 
 # input_points Test Suite
-if(NOT NINJA_QTGUI)
+if(NOT NINJA_GUI)
     # This test doesn't work
     #add_test(test_input_points_mackay
     #         ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=input_points/mackay )
-endif(NOT NINJA_QTGUI)
+endif(NOT NINJA_GUI)
 
 if(NINJA_GDAL_OUTPUT)
 add_test(test_gdal_output_shapefile
@@ -238,6 +243,8 @@ if(WITH_NOMADS_SUPPORT)
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 alaska hrrr_alaska 1 2 0 zip)
     add_test(nomads_hrrr_15_hour_zip
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus 15 16 0 zip)
+    add_test(nomads_hrrr_ext_1_hour_zip
+             ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 mackay hrrr_conus_ext 1 2 0 zip)
     add_test(nomads_buffer_1
              ${EXECUTABLE_OUTPUT_PATH}/test_main --run_test=simplenomadsclient/download_1 small gfs_global 1 2 0 zip)
     if(NOMADS_EXPER_FORECASTS)
@@ -320,22 +327,22 @@ if(RUN_CFG_TESTS)
     message(STATUS "Generating cli tests...")
     file(GLOB cfgtests ${PROJECT_SOURCE_DIR}/autotest/config/pass/*.cfg)
     message(STATUS "GLOB: ${cfgtests}")
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config)
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config)
+    file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config/pass)
     foreach(cfgtest ${cfgtests})
         get_filename_component(base ${cfgtest} NAME_WE)
-        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
-        file(COPY ${cfgtest} DESTINATION ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
-        message(STATUS "COMMAND ${CMAKE_BINARY_DIR}/autotest/pc ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
-        execute_process(WORKING_DIRECTORY . COMMAND python ${PROJECT_SOURCE_DIR}/autotest/config/pef.py ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
+        file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
+        file(COPY ${cfgtest} DESTINATION ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
+        message(STATUS "COMMAND ${PROJECT_BINARY_DIR}/autotest/pc ${PROJECT_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file")
+        execute_process(WORKING_DIRECTORY . COMMAND python ${PROJECT_SOURCE_DIR}/autotest/config/pef.py ${PROJECT_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg elevation_file
                                 OUTPUT_VARIABLE ELEV_FILE
                                 OUTPUT_STRIP_TRAILING_WHITESPACE)
         string(STRIP ${ELEV_FILE} ELEV_FILE)
         file(COPY ${PROJECT_SOURCE_DIR}/data/${ELEV_FILE} DESTINATION
-             ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+             ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
         message(STATUS "Copying elevation file: ${ELEV_FILE}")
-        add_test(NAME cfg_${base} COMMAND ${CMAKE_BINARY_DIR}/src/cli/WindNinja_cli ${CMAKE_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
-                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/autotest/config/pass/${base})
+        add_test(NAME cfg_${base} COMMAND ${PROJECT_BINARY_DIR}/src/cli/WindNinja_cli ${PROJECT_BINARY_DIR}/autotest/config/pass/${base}/${base}.cfg
+                 WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/autotest/config/pass/${base})
         set_tests_properties(cfg_${base} PROPERTIES ENVIRONMENT
                              "WINDNINJA_DATA=${PROJECT_SOURCE_DIR}/data")
         message(STATUS "Adding CLI test cfg_${base} for ${cfgtest}")

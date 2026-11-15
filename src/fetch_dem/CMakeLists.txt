@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16)
 
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -28,15 +28,14 @@ set(LINK_LIBS ${Boost_LIBRARIES}
               ${NETCDF_LIBRARIES_C})
 
 if(WIN32)
-    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
+    set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
 else(WIN32)
-    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif(WIN32)
 
 add_executable(fetch_dem fetch_dem.cpp)
 
-target_link_libraries(fetch_dem ${LINK_LIBS})
+target_link_libraries(fetch_dem ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(fetch_dem ninja)
 
 install(TARGETS fetch_dem DESTINATION bin COMPONENT apps)
-

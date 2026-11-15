@@ -34,10 +34,12 @@
 #include "omp.h"
 #endif
 
+#include "ninja.h"
 #ifdef NINJAFOAM
 #include "ninjafoam.h"
 #endif
 
+#include "ninjaUnits.h"
 #include "ninja_init.h"
 #include "ninja_threaded_exception.h"
 #include "farsiteAtm.h"
@@ -49,6 +51,7 @@
 #endif
 #include "WindNinjaInputs.h"
 #include "fetch_factory.h"
+#include <memory>
 
 namespace blt = boost::local_time;
 namespace bpt = boost::posix_time;
@@ -71,7 +74,12 @@ extern boost::local_time::tz_database globalTimeZoneDB;
    if( i >= 0 && i < iterable.size() )
 
 #define CHECK_VALID_INDEX(i,iterable) \
-  if( i < 0 || i >= iterable.size() ) throw std::runtime_error("invalid index");
+  if( i < 0 || i >= iterable.size() ) \
+  {                                   \
+      std::cout << "here1" << std::endl; \
+      ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
+      throw std::runtime_error("invalid index"); \
+  }                                   \
 
 /* *
  * Macro IF_VALID_INDEX_DO is a boiler plate for most of the ninjaArmy functions.
@@ -80,7 +88,8 @@ extern boost::local_time::tz_database globalTimeZoneDB;
  * 'func' is located inside a try-catch statement block so upon a thrown exception
  * it is handled and NINJA_E_INVALID is returned. Otherwise, NINJA_SUCCESS is returned.
  *  */
-#ifdef C_API
+//#ifdef C_API
+#ifndef C_API
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
@@ -88,24 +97,39 @@ extern boost::local_time::tz_database globalTimeZoneDB;
         {                                      \
            func;                               \
         }                                      \
+        catch( exception& e )                  \
+        {                                      \
+            std::cout << "here2a" << std::endl; \
+            ninjas[ i ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: %s", e.what()); \
+            return NINJA_E_INVALID;            \
+        }                                      \
         catch( ... )                           \
         {                                      \
+            std::cout << "here2b" << std::endl; \
+            ninjas[ i ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: Cannot determine exception type."); \
             return NINJA_E_INVALID;            \
         }                                      \
         return NINJA_SUCCESS;                  \
     }                                          \
+    std::cout << "here3a" << std::endl;        \
+    ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
     return NINJA_E_INVALID;
 #else
 #define IF_VALID_INDEX_TRY( i, iterable, func ) \
     if( i >= 0 && i < iterable.size() )        \
     {                                          \
        func;                                   \
-       return NINJA_SUCCESS;                  \
+       return NINJA_SUCCESS;                   \
     }                                          \
+    std::cout << "here3b" << std::endl;        \
+    ninjas[ 0 ]->input.Com->ninjaCom(ninjaComClass::ninjaFailure, "Exception caught: invalid index %d", i); \
     return NINJA_E_INVALID;
 #endif
 
-//#include "ninjaCom.h"
+#include "callbackFunctions.h"
+
+#include "ninjaCom.h"
+
 /**
 * Class used for doing multiple WindNinja runs.
 */
@@ -114,17 +138,12 @@ class  ninjaArmy
 public:
 
     ninjaArmy();
-#ifdef NINJAFOAM
-    ninjaArmy(int numNinjas, bool momentumFlag);
-#else
-    ninjaArmy(int numNinjas);
-#endif
     ninjaArmy(const ninjaArmy& A);
     ~ninjaArmy();
 
     ninjaArmy& operator= (ninjaArmy const& A);
 
-    //ninjaComClass *Com;
+    ninjaComClass *Com;  // pointer to the ninjaArmy level com handler
 
     enum eWxModelType{
         ncepNdfd,
@@ -134,17 +153,33 @@ public:
         ncepGfsSurf
     };
 
-    void makeStationArmy( std::vector<boost::posix_time::ptime> timeList,
+    enum eArmySpeedScaling
+    {
+        equal_color,
+        equal_interval
+    };
+
+    void makeDomainAverageArmy( int nRuns, bool momentumFlag );
+
+    void makePointArmy( std::vector<boost::posix_time::ptime> timeList,
                           std::string timeZone,std::string stationFileName,
-                          std::string demFile,bool matchPoints,bool override );
-    static std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
-    void makeArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
-    void makeArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> times, bool momentumFlag);
-    void set_writeFarsiteAtmFile(bool flag);
+                          std::string demFile,bool matchPoints, bool momentumFlag );
+
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, bool momentumFlag);
+    void makeWeatherModelArmy(std::string forecastFilename, std::string timeZone, std::vector<blt::local_date_time> timeList, bool momentumFlag);
+    std::vector<blt::local_date_time> toBoostLocal(std::vector<std::string> in, std::string timeZone);
     bool startRuns(int numProcessors);
     bool startFirstRun();
-    
+
     int ninjaInitialize();
+
+    /*-----------------------------------------------------------------------------
+     *  C-API makeArmy function calls
+     *-----------------------------------------------------------------------------*/
+    int NinjaMakeDomainAverageArmyThermalParameterization( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, const int * yearList, const int * monthList, const int * dayList, const int * hourList, const int * minuteList, const char * timeZone, const double * airTempList, const char * airTempUnits, const double * cloudCoverList, const char * cloudCoverUnits, char ** papszOptions=NULL );
+    int NinjaMakeDomainAverageArmy( int numNinjas, bool momentumFlag, const double * speedList, const char * speedUnits, const double * directionList, char ** papszOptions=NULL );
+    int NinjaMakePointArmy( int * yearList, int * monthList, int * dayList, int * hourList, int * minuteList, int timeListSize, char * timeZone, const char ** stationFileNames, int numStationFiles, char * elevationFile, bool matchPointsFlag, bool momentumFlag, char ** papzOptions=NULL );
+    int NinjaMakeWeatherModelArmy( const char * forecastFilename, const char * timeZone, const char** inputTimeList, int size, bool momentumFlag, char ** papzOptions=NULL );
 
     /**
     * \brief Return the number of ninjas in the army
@@ -155,49 +190,39 @@ public:
 
     int getSize();
 
-    /**
-    * \brief Set the number of ninja in the army
-    *
-    * \param nRuns number of ninjas to create
-    * \return
-    */
-    void setSize( int nRuns, bool momentumFlag);
-
     /*-----------------------------------------------------------------------------
      *  Ninja Communication Methods
      *-----------------------------------------------------------------------------*/
+
     /**
-    * \brief Initialize the ninja communication of a ninja
+    * \brief Set a ninjaComMessageHandler callback function to the ninjaArmy level ninjaCom
+    *
+    * \param pMsgHandler A pointer to a ninjaComMessageHandler callback function.
+    * \param pUser A pointer to the object or context associated with the callback function.
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setNinjaComMessageHandler( ninjaComMessageHandler pMsgHandler, void *pUser,
+                                   char ** papszOptions = NULL);
+
+    /**
+    * \brief Set a ninjaCom multi-stream FILE handle to the ninjaArmy level ninjaCom
+    *
+    * \param stream A pointer to a multi-stream FILE handle/stream.
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setNinjaMultiComStream( FILE* stream,
+                                char ** papszOptions = NULL);
+
+    /**
+    * \brief Set the ninjaCom of a ninja, using the ninjaArmy level ninjaCom
+    *  and set the ninja and ninjaCom runNumber of a ninja
     *
     * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \param comType type of communication
+    * \param RunNumber the specific ninja/simulation run number
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNinjaCommunication( const int nIndex, const int RunNumber,
-                               const ninjaComClass::eNinjaCom comType,
-                               char ** papszOptions = NULL );
-
-    int setNinjaCommunication( const int nIndex, std::string comType,
                                char ** papszOptions = NULL);
-#ifdef NINJA_GUI
-    /**
-    * \brief Set the number of runs for a ninjaCom
-    *
-    * \param nIndex index of a ninja
-    * \param RunNumber number of runs
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setNinjaComNumRuns( const int nIndex, const int RunNumber,
-                            char ** papszOptions=NULL );
-    /**
-    * \brief Returns the ninjaCom for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \return com the ninjaComClass of a ninja
-    */
-    ninjaComClass * getNinjaCom( const int nIndex, char ** papszOptions=NULL );
-#endif //NINJA_GUI
 
     /*-----------------------------------------------------------------------------
      *  Ninja speed testing Methods
@@ -222,7 +247,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDownDragCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set downslope entrainment coefficient for a ninja
     *
@@ -232,7 +257,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDownEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set upslope drag coefficient for a ninja
     *
@@ -242,7 +267,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setUpDragCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set upslope entrainment coefficient for a ninja
     *
@@ -253,7 +278,7 @@ public:
     */
     int setUpEntrainmentCoeff( const int nIndex, const double coeff, char ** papszOptions=NULL );
 #endif
-    
+
     /*-----------------------------------------------------------------------------
      *  Friciton Velocity Methods
      *-----------------------------------------------------------------------------*/
@@ -301,25 +326,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDustFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-    
-        /**
-    * \brief Set the dust geotiff file output name for a ninja
-    *
-    * \param nIndex index of a ninja
-    * \param filename name of the dust geotiff output file
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFilename( const int nIndex, const std::string filename, char ** papszOptions=NULL );
-
-    /**
-    * \brief Enable/disable dust geotiff file output for a ninja
-    *
-    *
-    * \param nIndex index of a ninja
-    * \param flag Enables dust geotiff output if true, disables if false
-    * \return errval Returns NINJA_SUCCESS upon success
-    */
-    int setGeotiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 #endif //EMISSIONS
 
 #ifdef NINJAFOAM
@@ -334,7 +340,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setNumberOfIterations( const int nIndex, const int nIterations, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the mesh count for a NinjaFOAM run
     *
@@ -343,7 +349,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setMeshCount( const int nIndex, const int meshCount, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the mesh count for a NinjaFOAM run
     *
@@ -351,19 +357,19 @@ public:
     * \param meshChoice Mesh resolution choice
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setMeshCount( const int nIndex, 
-                      const WindNinjaInputs::eNinjafoamMeshChoice meshChoice, 
+    int setMeshCount( const int nIndex,
+                      const WindNinjaInputs::eNinjafoamMeshChoice meshChoice,
                       char ** papszOptions=NULL );
 
     /**
     * \brief Set the path to an existing case for a NinjaFOAM run
     *
     * \param nIndex index of a ninja
-    * \param  path to existing directory 
+    * \param  path to existing directory
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setExistingCaseDirectory( const int nIndex, const std::string directory, char ** papszOptions=NULL );
-        
+
     /**
     * \brief Set the flag to write turbulence output from a NinjaFOAM run
     *
@@ -372,7 +378,6 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWriteTurbulenceFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
-
 #endif //NINJAFOAM
 
     /*-----------------------------------------------------------------------------
@@ -386,7 +391,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setWxModelFilename(const int nIndex, const std::string wx_filename, char ** papszOptions=NULL);
-    
+
     /*-----------------------------------------------------------------------------
      *  Point Initialization Methods
      *-----------------------------------------------------------------------------*/
@@ -422,11 +427,11 @@ public:
     int readInputFile( const int nIndex, char ** papszOptions=NULL );
 
     /*-----------------------------------------------------------------------------
-     * Station Fetch Methods 
+     * Station Fetch Methods
      *-----------------------------------------------------------------------------*/
 
     /**
-    * \brief Enable/disable weather station fetching 
+    * \brief Enable/disable weather station fetching
     *
     * \param nIndex index of a ninja
     * \param flag Enables station fetch if true, disables if false
@@ -513,7 +518,7 @@ public:
     */
     int setSpeedInitGrid( const int nIndex, const std::string speedFile,
                           const velocityUnits::eVelocityUnits units, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the input direction grid filename from a NinjaFOAM run for use with diurnal
     *
@@ -522,7 +527,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setDirInitGrid( const int nIndex, const std::string dirFile, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the input speed with units of a ninja
     *
@@ -734,9 +739,8 @@ public:
     */
     int setDateTime( const int nIndex, int const &yr, int const &mo, int const &day,
                      int const &hr, int const &min, int const &sec,
-                     std::string const &timeZoneString, char ** papszOptions=NULL );        
-                          
-    
+                     std::string const &timeZoneString, char ** papszOptions=NULL );
+
     /**
     * \brief Set the wxStation filename for a ninja
     *
@@ -908,6 +912,32 @@ public:
                                  char ** papszOptions=NULL );
 
     /**
+     * \brief Set the output speed grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      const lengthUnits::eLengthUnits units,
+                                      char ** papszOptions=NULL );
+    int setOutputSpeedGridResolution( const int nIndex, const double resolution,
+                                      std::string units, char ** papszOptions=NULL );
+    /**
+     * \brief Set the output direction grid resolution for a ninja
+     *
+     * \param nIndex index of a ninja
+     * \param resolution the desired resolution
+     * \param units the units of the resolution (e.g. meters, feet)
+     * \return errval Returns NINJA_SUCCESS upon success
+     */
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          const lengthUnits::eLengthUnits units,
+                                          char ** papszOptions=NULL );
+    int setOutputDirectionGridResolution( const int nIndex, const double resolution,
+                                          std::string units, char ** papszOptions=NULL );
+    /**
     * \brief Get the output speed grid for a ninja
     *
     * \param nIndex index of a ninja
@@ -970,7 +1000,7 @@ public:
     * \return number of rows in the output grid
     */
     const int getOutputGridnRows( const int nIndex, char ** papszOptions=NULL );
-    
+
     /**
     * \brief Set the percent of output buffer clipping for a ninja
     *
@@ -1005,6 +1035,22 @@ public:
     */
     int setWxModelAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
+    * \brief Enable/disable the wxModel flatGeoBufZip output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable the wxModel geotiff output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setWxModelGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
     * \brief Enable/disable Google KML output for a ninja
     *
     * \param nIndex index of a ninja
@@ -1013,14 +1059,23 @@ public:
     */
     int setGoogOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Set the Google KML output resolution for a ninja
+    * \brief Set the Google KML output color scheme and vector scaling for a ninja
     *
     * \param nIndex index of a ninja
-    * \param resolution desired resolution value
-    * \param units units of the resolution value
+    * \param colorScheme desired colorScheme value
+    * \param scaling desired vector scaling value
     * \return errval Returns NINJA_SUCCESS upon success
     */
-    int setGoogColor(const int nIndex, std::string colorScheme,bool scaling);
+    int setGoogColor(const int nIndex, std::string colorScheme, bool scaling);
+    /**
+    * \brief Set the Google KML googUseConsistentColorScaleFlag value for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \param numRuns the number of ninjas/simulations to be run
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGoogConsistentColorScale(const int nIndex, bool flag, int numRuns);
     /**
      * @brief setGoogResolution
      * @param nIndex
@@ -1126,7 +1181,6 @@ public:
     int setShpResolution( const int nIndex, const double resolution,
                           std::string units, char ** papszOptions=NULL );
 
-
     // HUVW grid and vector output in various formats
     int setHuvwSuffix( const int nIndex, std::string suffix, char ** papszOptions=NULL );
     int setHuvwOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
@@ -1142,6 +1196,50 @@ public:
     */
     int setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
+    /**
+    * \brief Enable/disable standard AAIGRID (*.asc) output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiAaigridOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable JSON output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiJsonOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output in dem projection coordinates for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiProjOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output in geographic coordinates (EPSG:4326) for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiGeogOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+
+    /**
+    * \brief Enable/disable output of u,v wind fields for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAsciiUvOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
 
     /**
     * \brief Set the resolution of ASCII output for a ninja
@@ -1176,6 +1274,54 @@ public:
     int setAsciiResolution( const int nIndex, const double resolution,
                             std::string units, char ** papszOptions=NULL );
     /**
+    * \brief Enable/disable fire behavior geotiff (raster) output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resolution of geotiff output for a ninja
+    * Set the resolution of geotiff output for a ninja given the resolution
+    * and units.
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units units of the resolution
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffResolution( const int nIndex, const double resolution,
+                              const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the resolution of geotiff output for a ninja
+    * Set the resolution of geotiff output of a ninja given the resolution
+    * and string formatted units.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setGeoTiffResolution( const int nIndex, const double resolution,
+                              std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Enable/disable atm file output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   enable if true, disable if false
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setAtmOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
+    /**
     * \brief Enable/disable VTK output for a ninja
     *
     * \param nIndex index of a ninja
@@ -1192,7 +1338,7 @@ public:
     */
     int setTxtOutFlag( const int nIndex, const bool flag, char ** papszOptions=NULL );
     /**
-    * \brief Enable/disable PDF output for a ninja 
+    * \brief Enable/disable PDF output for a ninja
     *
     * \param nIndex index of a ninja
     * \param flag   determines if pdf output is enabled or not
@@ -1210,7 +1356,7 @@ public:
     * \return errval Returns NINJA_SUCCESS upon success
     */
     int setPDFResolution( const int nIndex, const double resolution,
-                                     const lengthUnits::eLengthUnits units, 
+                                     const lengthUnits::eLengthUnits units,
                                      char ** papszOptions=NULL );
     /**
     * \brief Set the resolution of PDF output for a ninja
@@ -1235,12 +1381,12 @@ public:
 
 
     /* --------------------------------------------------------------------------*/
-    /** 
+    /**
      * @brief Configures the PDF output vector line width (defaults to 1.0)
-     * 
+     *
      * @Param nIndex index of a ninja
      * @Param linewidth value of the desired line width ( > 0.0 )
-     * 
+     *
      * @Returns errval NINJA_SUCCESS if linewidth correctly set
      */
     /* ----------------------------------------------------------------------------*/
@@ -1261,6 +1407,98 @@ public:
 
     int setPDFSize( const int nIndex, const double height, const double width,
                     const unsigned short dpi );
+
+    /**
+    * \brief Enable/disable fgbz output for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag   determines if fgbz output is enabled or not
+    * \return errval Returns NINJA_SUCCESS if successful
+    */
+    int setFgbzOutFlag( const int nIndex, const bool flag, char ** papszOptions );
+    /**
+     * @brief setFgbzResolution
+     * @param nIndex
+     * @param resolution
+     * @param units
+     * @param papszOptions
+     * @return
+     * Set the colorscheme for colorblind mode
+     */
+    int setFgbzResolution( const int nIndex, const double resolution,
+                           const lengthUnits::eLengthUnits units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output resolution for a ninja
+    * Set the fgbz output resolution for a ninja given a resolution
+    * and a string formatted unit.
+    *
+    * _Valid units include:_
+    *  - "ft" = feet
+    *  - "m"  = meters
+    *  - "mi" = miles
+    *  - "km" = kilometers
+    *  - "ftx10" = feet times 10
+    *  - "mx10"  = meters times 10
+    *
+    * \param nIndex index of a ninja
+    * \param resolution desired resolution value
+    * \param units string denoting which units resolution is in
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzResolution( const int nIndex, const double resolution,
+                           std::string units, char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output speed scaling parameter for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param scaling scaling option
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzSpeedScaling( const int nIndex, const OutputWriter::eSpeedScaling scaling,
+                             char ** papszOptions=NULL );
+    /**
+    * \brief Set the fgbz output speed scaling parameter for a ninja
+    * Set the fgbz output speed scaling parameter for a ninja given
+    * the ninja index and string formatted scaling option.
+    *
+    * _Valid scaling options_:
+    * - "equal_color"    = equal_color
+    * - "color"          = equal_color
+    * - "equal_interval" = equal_interval
+    * - "interval"       = equal_interval
+    *
+    * \param nIndex index of a ninja
+    * \param scaling string formatted scaling units
+    * \return
+    */
+    int setFgbzSpeedScaling( const int nIndex, std::string scaling, char ** papszOptions=NULL);
+    /**
+    * \brief Set the fgbz output color scheme and vector scaling for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param colorScheme desired colorScheme value
+    * \param scaling desired vector scaling value
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzColor(const int nIndex, std::string colorScheme, bool scaling);
+    /**
+    * \brief Set the fgbz output line width for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param width value of desired line width
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzLineWidth( const int nIndex, const double width, char ** papszOptions=NULL );
+    /**
+    * \brief Set the flatGeoBufZip fgbzUseConsistentColorScaleFlag value for a ninja
+    *
+    * \param nIndex index of a ninja
+    * \param flag Enabled if true, disabled if false
+    * \param numRuns the number of ninjas/simulations to be run
+    * \return errval Returns NINJA_SUCCESS upon success
+    */
+    int setFgbzConsistentColorScale(const int nIndex, bool flag, int numRuns);
+
     /**
     * \brief Returns the output path of a ninja
     *
@@ -1268,25 +1506,40 @@ public:
     * \return path String of the path, which is empty if no output is set
     */
     std::string getOutputPath( const int nIndex, char ** papszOptions=NULL );
+
+    /**
+    * \brief Returns the output fgbz filenames of each ninja, as well as the station kml filenames
+    *        and the weather model fgbz filenames of each ninja if they were created for the run.
+    *
+    * \param fgbzFilenames The output fgbz filenames of each ninja, to be filled.
+    * \param stationKmlFilenames The station kml filenames of each ninja, to be filled. Runs without station kml file output use "" for the station kml filenames.
+    * \param weatherModelFgbzFilenames The weather model fgbz filenames of each ninja, to be filled. Runs without weather model fgbz file output use "" for the weather model fgbz filenames.
+    * \return errval Returns NINJA_SUCCESS upon success.
+    */
+    int getMapVisualizationFilenames( std::vector<std::string>& fgbzFilenamesStr, std::vector<std::string>& stationKmlFilenamesStr,
+                            std::vector<std::string>& wxModelFgbzFilenamesStr, char ** papszOptions=NULL );
+
     /*-----------------------------------------------------------------------------
      *  Termination Section
      *-----------------------------------------------------------------------------*/
     void reset();
     void cancel();
     void cancelAndReset();
-    
-    GDALDatasetH hSpdMemDS; //in-memory dataset for GTiff output writer
-    GDALDatasetH hDirMemDS; //in-memory dataset for GTiff output writer
-    GDALDatasetH hDustMemDS; //in-memory dataset for GTiff output writer
 
-    std::vector<std::string> wxList;
+    std::vector<std::string> fgbzFilenames;
+    std::vector<std::string> stationKmlFilenames;
+    std::vector<std::string> wxModelFgbzFilenames;
+
 protected:
     std::vector<ninja*> ninjas;
     std::string tz;
 
-    bool writeFarsiteAtmFile;
     void writeFarsiteAtmosphereFile();
-    void setAtmFlags();
+
+    void setCurrentMapVisualizationFilenames(int runNumber);
+
+    void calcConsistentColorScaleSplits(const AsciiGrid<double>* const *inSpdGrids, const int nSets, double **outSplitVals, int *outSize, const eArmySpeedScaling scaling);
+    void writeConsistentColorScaleOutputs();
 
     /*
     ** This function initializes various data for the lifetime of the
@@ -1297,10 +1550,6 @@ protected:
     void initLocalData(void);
     void destoryLocalData(void);
     void copyLocalData( const ninjaArmy &A );
-
-    // common unit-based output resolution setting
-    int setResolution (const int nIndex, const double resolution, std::string units, char ** papszOptions,
-                              void (ninja::*set_res)(const double,lengthUnits::eLengthUnits));
 
 private:
     char *pszTmpColorRelief;

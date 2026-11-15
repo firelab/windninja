@@ -28,7 +28,6 @@
 
 #include "huvw_output.h"
 
-
 /**
  * create (optional) 3d (h,u,v,w,spd) output grid dataset 
  * we store the redundant spd value as a separate layer so that we can easily create contour maps from the data set

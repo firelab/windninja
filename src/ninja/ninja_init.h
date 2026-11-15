@@ -36,17 +36,25 @@
 #include "cpl_port.h"
 #include "cpl_multiproc.h"
 #include "cpl_http.h"
+#include "init_tz.h"
 
 #include <stdlib.h>
+
+#ifdef _OPENMP
+#include "omp_guard.h"
+#endif
 
 #ifndef Q_MOC_RUN
 #include "boost/date_time/local_time/local_time.hpp"
 #endif
 
-#include "init_tz.h"
+int NinjaInitialize(const char* typeofrun = "");
+int NinjaInitialize(const char *pszGdalData, const char *pszWindNinjaData);
+int NinjaInitializeNoRegister(const char *pszGdalData, const char *pszWindNinjaData);
+char * NinjaQueryServerMessages(bool checkAbort);
+bool NinjaCheckVersions(char * mostrecentversion, char * localversion); 
 
-int NinjaInitialize();
-char ** NinjaCheckVersion(void);
+int NinjaFinalize();
 
 #endif /* NINJA_INIT_H_ */
 

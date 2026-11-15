@@ -32,27 +32,33 @@
 
 #include <iostream>
 #include <fstream>
-	
+
 #include <string>
-#include "ninja.h"
+#ifndef Q_MOC_RUN
+#include "boost/date_time/local_time/local_time.hpp"
+#include "boost/date_time/posix_time/posix_time_types.hpp"
+#endif
 #include "ninjaMathUtility.h"
 #include "ninjaUnits.h"
 #include "cpl_conv.h"
 
-/** Class used for writing FARSITE atmosphere files (*.atm) when multiple ninja runs are done in a time sequence.
- *
+/*
+ * Class used for writing FARSITE atmosphere files (*.atm) when multiple ninja runs are done in a time sequence.
  */
 class farsiteAtm
 {	
 public:
-	farsiteAtm();
-	~farsiteAtm();
+    farsiteAtm();
+    ~farsiteAtm();
 
-	void push(boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName, std::string inCloudCoverName);
-	bool writeAtmFile(std::string filename, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths = true);
+    void reset(std::size_t numRuns);
+    void push(unsigned int runNumber, boost::local_time::local_date_time inTime, std::string inSpeedName, std::string inDirectionName);
+    bool writeAtmFile(bool writeSeparateAtmFiles, velocityUnits::eVelocityUnits velocityUnits, double windHeight, bool stripPaths = true);
 
 private:
-	std::map< boost::local_time::local_date_time, std::vector<std::string> > data;
+    std::vector<boost::local_time::local_date_time> times;
+    std::vector<std::string> speedNames;
+    std::vector<std::string> directionNames;
 };
 
 #endif	//FARSITE_ATM_H

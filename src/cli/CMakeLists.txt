@@ -15,7 +15,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-#cmake_minimum_required(VERSION 2.6)
+#cmake_minimum_required(VERSION 3.10)
 
 include_directories(${PROJECT_SOURCE_DIR}/src
                     ${PROJECT_SOURCE_DIR}/src/ninja
@@ -26,27 +26,43 @@ include_directories(${PROJECT_SOURCE_DIR}/src
 
 set(LINK_LIBS ${Boost_LIBRARIES}
               ${GDAL_LIBRARY}
+              ${SHAPELIB_LIBRARY}
               ${NETCDF_LIBRARIES_C}
               ${CURL_LIBRARIES})
 
-if(NINJA_QTGUI AND NINJA_CLI)
-    set(LINK_LIBS ${LINK_LIBS}
-                  ${QT_LIBRARIES})
-    if(PACKAGE_DEBUG)
-        message("CLI Linking to Qt Libraries")
-    endif(PACKAGE_DEBUG)
-endif(NINJA_QTGUI AND NINJA_CLI)
+if(NINJAFOAM)
+    if(NOT WIN32)
+        set(LINK_LIBS ${LINK_LIBS}
+                      ${HWLOC_LIBRARY})
+    endif()
+endif(NINJAFOAM)
 
 if(WIN32 OR APPLE)
-    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
+    set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ninja${CMAKE_STATIC_LIBRARY_SUFFIX})
 else(WIN32 OR APPLE)
-    set(LINK_LIBS ${LINK_LIBS} ${CMAKE_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(LINK_LIBS ${LINK_LIBS} ${PROJECT_BINARY_DIR}/src/ninja/${CMAKE_CFG_INTDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}ninja${CMAKE_SHARED_LIBRARY_SUFFIX})
 endif(WIN32 OR APPLE)
+
+if (UNIX AND NOT APPLE)
+    set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+endif()
 
 add_executable(WindNinja_cli cmake_cli.cpp)
 
-target_link_libraries(WindNinja_cli ${LINK_LIBS})
+
+if(WIN32)
+  target_link_libraries(WindNinja_cli PRIVATE shapelib::shp GDAL::GDAL)
+endif()
+
+target_link_libraries(WindNinja_cli PRIVATE ${LINK_LIBS} $<$<BOOL:${OPENMP_FOUND}>:OpenMP::OpenMP_CXX>)
 add_dependencies(WindNinja_cli ninja)
+
+if(MSVC)
+    target_compile_definitions(WindNinja_cli
+        PUBLIC 
+            WIN32_LEAN_AND_MEAN 
+    )
+endif()
 
 install(TARGETS WindNinja_cli DESTINATION bin COMPONENT apps)
 

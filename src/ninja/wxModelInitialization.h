@@ -71,6 +71,8 @@ namespace bpt = boost::posix_time;
 
 #include "ninja_init.h"
 
+#include "OutputWriter.h"
+
 #ifdef _OPENMP
 extern omp_lock_t netCDF_lock;
 #endif /* _OPENMP */
@@ -106,10 +108,13 @@ class wxModelInitialization : public initialize
                            wn_3dScalarField& w0, AsciiGrid<double>& cloud );
 
     //virtual time list functions
-    virtual std::vector<blt::local_date_time> getTimeList(std::string timeZoneString = "Africa/Timbuktu");    //Africa/Timbuktu is GMT with no daylight savings
-    virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, std::string timeZoneString = "Africa/Timbuktu");    //Africa/Timbuktu is GMT with no daylight savings
+    virtual std::vector<blt::local_date_time> getTimeList(std::string timeZoneString);
+    virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, std::string timeZoneString);
     virtual std::vector<blt::local_date_time> getTimeList(blt::time_zone_ptr timeZonePtr);
     virtual std::vector<blt::local_date_time> getTimeList(const char *pszVariable, blt::time_zone_ptr timeZonePtr);
+
+    virtual AsciiGrid<double>* getWxSpeedGrid();
+    virtual AsciiGrid<double>* getWxAngleGrid();
 
     // Allow specifying a subset of the time list to run
     void setRunTimes(std::vector<blt::local_date_time> times) {
@@ -127,7 +132,7 @@ class wxModelInitialization : public initialize
     virtual std::string getPath();
     virtual int getStartHour() = 0;
     virtual int getEndHour() = 0;
-    virtual void checkForValidData() = 0;
+    virtual void checkForValidData(std::string timeZoneString) = 0;
     virtual double Get_Wind_Height() = 0;
 
     int ComputeWxModelBuffer(GDALDataset *poDS, double buffer[4]);
@@ -135,11 +140,11 @@ class wxModelInitialization : public initialize
 
     std::string generateUrl( double north, double west, double east,
                              double south, int hours);
-    virtual std::string fetchForecast( std::string demFile, int nHours );
-    std::string generateForecastName();
-    
+    virtual std::string fetchForecast(std::string demFile, int nHours, std::string timeZoneString);
+    std::string generateForecastName(std::string timeZoneString);
+
     void setModelFileName( std::string filename ) {wxModelFileName = filename;}
-    
+
     void SetProgressFunc( GDALProgressFunc );
     void SetProgressArg( void *p );
 
@@ -170,23 +175,23 @@ class wxModelInitialization : public initialize
     #endif
 
     std::string GetTimeName(const char *pszVariable);
-    
+
     int wxModel_nLayers;
     int wxModel_nCols; //wx model ncols/nrows in reprojected coords (DEM space) after ndvs are stripped
     int wxModel_nRows; //from outer edges of image; for non-xy-staggered variables (T, ph, phb, etc.)
-    
+
     double dfNoData; // no data value from netcdf file
-    
+
     Mesh cellCenterWxMesh;
     Mesh xStaggerWxMesh;
     Mesh yStaggerWxMesh;
     Mesh zStaggerWxMesh;
-    
+
     wn_3dScalarField u3d;
     wn_3dScalarField v3d;
     wn_3dScalarField w3d;
     wn_3dScalarField cloud3d;
-    
+
     wn_3dScalarField wxU3d;
     wn_3dScalarField wxV3d;
     wn_3dScalarField wxW3d;

@@ -87,12 +87,12 @@
 #ifdef NINJAFOAM
 #include "foamDomainAverageInitialization.h"
 #include "foamWxModelInitialization.h"
+#include "foamGriddedInitialization.h"
 #endif
 
 #include "wxStation.h"
 #include "ninjaUnits.h"
 #include "element.h"
-#include "farsiteAtm.h"
 #include "OutputWriter.h"
 
 #ifndef Q_MOC_RUN
@@ -118,6 +118,8 @@
 //#define NINJA_DEBUG
 //#define NINJA_DEBUG_VERBOSE
 
+#include "callbackFunctions.h"
+
 class ninja
 {
 public:
@@ -138,6 +140,7 @@ public:
     AsciiGrid<double>CloudGrid;
 #ifdef NINJAFOAM
     AsciiGrid<double>TurbulenceGrid; //this needs to be a member of ninja since we need to write this for ninjafoam runs with diurnal 
+    AsciiGrid<double> colMaxGrid; // same as for TurbulenceGrid
 #endif
 
     // optional 3D (u,v,w,h) grid for computed wind. This is directly using a GDALDataset so that we don't have to keep
@@ -169,17 +172,10 @@ public:
     /*-----------------------------------------------------------------------------
      *  ninjaCom section
      *-----------------------------------------------------------------------------*/
-    int get_inputsRunNumber() const;
-    ninjaComClass::eNinjaCom get_inputsComType() const;
-    char * get_lastComString() const;
-    FILE * get_ComLogFp() const; //returns the Com Log file pointer
-    ninjaComClass * get_Com() const; //returns the Com object
-#ifdef NINJA_GUI
-    int get_ComNumRuns() const;
-    void set_ComNumRuns( int nRuns );
-#endif //NINJA-GUI
+    void set_ninjaCommunication(const ninjaComClass* Com);
+    void set_ninjaComRunNumber(int RunNumber);
     void set_progressWeight(double progressWeight); //For foam+diurnal simulations
-    double get_progressWeight();
+
     /*************************************************************
       kyle's fx's for importing several file types through GDAL
       function lives in readInputFile.cpp for now.
@@ -192,8 +188,6 @@ public:
     void importGeoTIFF(GDALDataset*);
     void setSurfaceGrids();
 
-    void set_memDs(GDALDatasetH hSpdMemDs, GDALDatasetH hDirMemDs, GDALDatasetH hDustMemDs); 
-    void setArmySize(int n);
     void set_DEM(std::string dem_file_name);		//Sets elevation filename (Should be in units of meters!)
     void set_DEM(const double* dem, const int nXSize, const int nYSize, const double* geoRef,
                  std::string prj);
@@ -280,9 +274,6 @@ public:
     void set_dustFlag(bool flag);
     void computeDustEmissions();
     const std::string get_DustFileName() const; //returns the name of the dust file name
-    const std::string get_GeotiffFileName() const; //returns the name of the geotiff file name
-    void set_geotiffOutFilename(std::string filename); //set the multiband geotiff output filename
-    void set_geotiffOutFlag(bool flag);
 #endif
 #ifdef NINJAFOAM
     void set_NumberOfIterations(int nIterations); //number of iterations for a ninjafoam run
@@ -293,6 +284,7 @@ public:
     void set_foamVelocityGrid(AsciiGrid<double> velocityGrid);
     void set_foamAngleGrid(AsciiGrid<double> angleGrid);
     void set_writeTurbulenceFlag(bool flag);
+    void set_colMaxSampleHeightAGL( double colMaxSampleHeightAGL, lengthUnits::eLengthUnits units );
 #endif
 
     void set_speedFile(std::string speedFile, velocityUnits::eVelocityUnits units);
@@ -305,7 +297,6 @@ public:
 
     const std::string get_VelFileName() const; //returns the name of the velocity file name
     const std::string get_AngFileName() const; //returns the name of the ang output file
-    const std::string get_CldFileName() const; //returns the name of the cld output file
 
     //kyle set postion
     bool set_position();
@@ -314,7 +305,9 @@ public:
 
     void set_position(double lat_degrees, double lat_minutes, double long_degrees, double long_minutes);	//input as degrees, decimal minutes
     void set_position(double lat_degrees, double lat_minutes, double lat_seconds, double long_degrees, double long_minutes, double long_seconds);	//input as degrees, minutes, seconds
-    void set_numberCPUs(int CPUs);
+    virtual void set_numberCPUs(int CPUs);
+    void set_outputSpeedGridResolution(double resolution, lengthUnits::eLengthUnits units);
+    void set_outputDirectionGridResolution(double resolution, lengthUnits::eLengthUnits units);
     double *get_outputSpeedGrid();
     double *get_outputDirectionGrid();
     const char* get_outputGridProjection();
@@ -323,11 +316,14 @@ public:
     double get_outputGridyllCorner();
     int get_outputGridnCols();
     int get_outputGridnRows();
+    double * get_u();
+    double * get_v();
+    double * get_w();
     void set_outputBufferClipping(double percent);
-    void set_writeAtmFile(bool flag);  //Flag that determines if an atm file should be written.  Usually set by ninjaArmy, NOT directly by the user!
     void set_googOutFlag(bool flag);
 
-    void set_googColor(std::string scheme,bool scaling);
+    void set_googColor(std::string scheme, bool scaling);
+    void set_googConsistentColorScale(bool flag, int numRuns);
 
     void set_wxModelGoogOutFlag(bool flag);
     void set_googSpeedScaling(KmlVector::egoogSpeedScaling scaling);	//sets the desired method of speed scaling in the Google Earth legend (equal_color=>equal numbers of arrows for each color,  equal_interval=>equal speed intervals over the speed range)
@@ -342,8 +338,19 @@ public:
     inline void set_huvwSuffix (std::string suffix) { input.huvwSuffix = suffix; }
     inline void set_huvwOutFlag(bool flag) { input.huvwOutFlag = flag; }
     inline void set_huvw0OutFlag(bool flag) { input.huvw0OutFlag = flag; }
+    void create_huvwDatasets();
+    void write_huvwOutputFiles();
  
     void set_asciiOutFlag(bool flag);
+    void set_asciiAaigridOutFlag(bool flag);
+    void set_asciiJsonOutFlag(bool flag);
+    void set_asciiProjOutFlag(bool flag);
+    void set_asciiGeogOutFlag(bool flag);
+    void set_asciiUvOutFlag(bool flag);
+    void set_wxModelGeoTiffOutFlag(bool flag);
+    void set_geoTiffOutFlag(bool flag);
+    void set_geoTiffResolution(double Resolution, lengthUnits::eLengthUnits units);
+    void set_atmOutFlag(bool flag);
 
     void set_wxModelAsciiOutFlag(bool flag);
     void set_asciiResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the velocity and angle ASCII grid output files, if negative value the computational mesh resolution is used
@@ -355,6 +362,13 @@ public:
     void set_pdfLineWidth(const float w);
     void set_pdfBaseMap(const int b);
     void set_pdfSize( const double height, const double width, const unsigned short dpi );
+    void set_fgbzOutFlag(bool flag);
+    void set_fgbzResolution(double Resolution, lengthUnits::eLengthUnits units);  //sets the output resolution of the flatGeoBufZip .fgbz file, if negative value the computational mesh resolution is used
+    void set_fgbzSpeedScaling(OutputWriter::eSpeedScaling scaling);  //sets the desired method of speed scaling in the flatGeoBufZip legend (equal_color=>equal numbers of arrows for each color, equal_interval=>equal speed intervals over the speed range)
+    void set_fgbzColor(std::string scheme, bool scaling);
+    void set_fgbzLineWidth(double width);  //sets the line width for the vectors in the flatGeoBufZip .fgbz file
+    void set_fgbzConsistentColorScale(bool flag, int numRuns);
+    void set_wxModelFgbzOutFlag(bool flag);
     void set_outputFilenames(double& meshResolution, lengthUnits::eLengthUnits meshResolutionUnits);
     const std::string get_outputPath() const;
     void keepOutputGridsInMemory(bool flag);
@@ -364,19 +378,18 @@ public:
 
     double getFuelBedDepth(int fuelModel);
 
-    void set_ninjaCommunication(int RunNumber, ninjaComClass::eNinjaCom comType);
     void checkInputs();
     void dumpMemory();
 
     WindNinjaInputs input;	//The place were all inputs (except mesh) are stored.
+    boost::shared_ptr<initialize> init;
 
 protected:
     void checkCancel();
     void write_compare_output();
-    boost::shared_ptr<initialize> init;
+    void writeAsciiOutputFiles(AsciiGrid<double>& angGrid, AsciiGrid<double>& velGrid);
 
 private:
-
 
     double matchTol;		//tolerance (in m/s) used in outer "matching" looping to check if solved velocity field matches at each wx station.
                             //Each u, v, w velocity component is checked.
@@ -404,6 +417,8 @@ private:
 
     double* outputSpeedArray; //output speed array returned in the API
     double* outputDirectionArray; //output direction array returned in the API
+    double outputSpeedArrayResolution;
+    double outputDirectionArrayResolution;
 
     bool isNullRun;			//flag identifying if this run is a "null" run, ie. run with all zero speed for intitialization
     double maxStartingOuterDiff;   //stores the maximum difference for "matching" runs from the first iteration (used to determine convergence)
@@ -490,7 +505,6 @@ private:
     void writeOutputFiles(); 
     void deleteDynamicMemory();
 
-    void writeHuvwOutputFiles();
 };
 
 std::string derived_pathname (const char* pathname, const char* newpath, const char* pattern, const char* replacement);

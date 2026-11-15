@@ -1,20 +1,20 @@
-/******************************************************************************
+ /******************************************************************************
  *
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Handles surface inputs for the domain
- * Author:   Kyle Shannon <ksshannon@gmail.com>
+ * Purpose:  Hands GUI related logic for the Surface Input Page
+ * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
  *
  * THIS SOFTWARE WAS DEVELOPED AT THE ROCKY MOUNTAIN RESEARCH STATION (RMRS)
- * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT 
- * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105 
- * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT 
- * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES 
- * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER 
- * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY, 
+ * MISSOULA FIRE SCIENCES LABORATORY BY EMPLOYEES OF THE FEDERAL GOVERNMENT
+ * IN THE COURSE OF THEIR OFFICIAL DUTIES. PURSUANT TO TITLE 17 SECTION 105
+ * OF THE UNITED STATES CODE, THIS SOFTWARE IS NOT SUBJECT TO COPYRIGHT
+ * PROTECTION AND IS IN THE PUBLIC DOMAIN. RMRS MISSOULA FIRE SCIENCES
+ * LABORATORY ASSUMES NO RESPONSIBILITY WHATSOEVER FOR ITS USE BY OTHER
+ * PARTIES,  AND MAKES NO GUARANTEES, EXPRESSED OR IMPLIED, ABOUT ITS QUALITY,
  * RELIABILITY, OR ANY OTHER CHARACTERISTIC.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -29,131 +29,1401 @@
 
 #include "surfaceInput.h"
 
-/**
- * \brief Construct a widget for suface input data
- *
- * \param parent parent widget
- */
-surfaceInput::surfaceInput(QWidget *parent) : QWidget(parent)
+SurfaceInput::SurfaceInput(Ui::MainWindow *ui,
+                                   QWebEngineView *webEngineView,
+                                   QObject* parent)
+    : QObject(parent),
+      ui(ui),
+      webEngineView(webEngineView)
 {
+    progress = nullptr;
+
+    connect(this, &SurfaceInput::updateProgressMessageSignal, this, &SurfaceInput::updateProgressMessage, Qt::QueuedConnection);
+
+    GDALXSize = 0;
+    GDALYSize = 0;
+    GDALCellSize = 0.0;
+    GDALMaxValue = 0.0;
+    GDALMinValue = 0.0;
+
+    ui->timeZoneDetailsTextEdit->setVisible(false);
+    ui->ninjafoamCaseGroupBox->setVisible(false);
+    ui->vegetationStackedWidget->setCurrentIndex(0);
+    ui->elevationInputTypeStackedWidget->setCurrentIndex(0);  // Point and radius option
+
+    ui->elevationFileTypeComboBox->setItemData(0, "Partial world coverage Shuttle Radar Topography Mission data (SRTM) at 30 meter resolution.  Any existing holes in the data have been filled.", Qt::ToolTipRole);
+    ui->elevationFileTypeComboBox->setItemData(1, "World coverage Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010) at 250 meter resolution.", Qt::ToolTipRole);
+    ui->elevationFileTypeComboBox->setItemData(2, "US coverage LANDFIRE 2023 Landscape data at 30 meter resolution.", Qt::ToolTipRole);
+
+    timeZoneAllZonesCheckBoxClicked();
+
+    connect(ui->boundingBoxNorthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
+    connect(ui->boundingBoxSouthLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
+    connect(ui->boundingBoxEastLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
+    connect(ui->boundingBoxWestLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::boundingBoxLineEditsTextChanged);
+
+    connect(ui->pointRadiusLatLineEdit,&QLineEdit::textChanged, this, &SurfaceInput::pointRadiusLineEditsTextChanged);
+    connect(ui->pointRadiusLonLineEdit,&QLineEdit::textChanged, this, &SurfaceInput::pointRadiusLineEditsTextChanged);
+    connect(ui->pointRadiusRadiusLineEdit,&QLineEdit::textChanged, this, &SurfaceInput::pointRadiusLineEditsTextChanged);
+
+    connect(ui->elevationInputFileDownloadButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputFileDownloadButtonClicked);
+    connect(ui->elevationInputFileOpenButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputFileOpenButtonClicked);
+    connect(ui->elevationInputFileLineEdit, &QLineEdit::textChanged, this, &SurfaceInput::elevationInputFileLineEditTextChanged);
+
+    connect(ui->elevationInputTypeComboBox, &QComboBox::currentIndexChanged, ui->elevationInputTypeStackedWidget, &QStackedWidget::setCurrentIndex);
+    connect(ui->meshResolutionComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionComboBoxCurrentIndexChanged);
+    connect(ui->meshResolutionUnitsComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged);
+    connect(ui->timeZoneComboBox, &QComboBox::currentIndexChanged, this, &SurfaceInput::timeZoneComboBoxCurrentIndexChanged);
+
+    connect(ui->surfaceInputDownloadCancelButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadCancelButtonClicked);
+    connect(ui->surfaceInputDownloadButton, &QPushButton::clicked, this, &SurfaceInput::surfaceInputDownloadButtonClicked);
+    connect(ui->elevationInputTypePushButton, &QPushButton::clicked, this, &SurfaceInput::elevationInputTypePushButtonClicked);
+    connect(ui->timeZoneAllZonesCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneAllZonesCheckBoxClicked);
+    connect(ui->timeZoneDetailsCheckBox, &QCheckBox::clicked, this, &SurfaceInput::timeZoneDetailsCheckBoxClicked);
+
+    connect(ui->ninjafoamCaseOpenButton, &QPushButton::clicked, this, &SurfaceInput::ninjafoamCaseOpenButtonClicked);
+
+    connect(this, &SurfaceInput::updateState, &AppState::instance(), &AppState::updateSurfaceInputState);
+}
+
+void SurfaceInput::updateProgressMessage(const QString message)
+{
+    if(progress)
+    {
+        progress->setLabelText(message);
+        progress->setWindowTitle(tr("Error"));
+        progress->setCancelButtonText(tr("Close"));
+        progress->setAutoClose(false);
+        progress->setAutoReset(false);
+        progress->setRange(0, 1);
+        progress->setValue(progress->maximum());
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message+"\n"
+        );
+    }
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    SurfaceInput *self = static_cast<SurfaceInput*>(pUser);
+
+    std::string msg = pszMessage;
+
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown SurfaceFetch error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("SurfaceFetch ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("SurfaceFetch warning: "+clipStr), QColor(255, 140, 0));
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+}
+
+void SurfaceInput::meshResolutionUnitsComboBoxCurrentIndexChanged(int index)
+{
+    if(index == 0) // meters
+    {
+        ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 0.3048);
+    }
+    else  // if(index == 1) // feet
+    {
+        ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
+    }
+}
+
+void SurfaceInput::elevationInputTypePushButtonClicked()
+{
+    if(ui->elevationInputTypePushButton->isChecked())
+    {
+        webEngineView->page()->runJavaScript("startRectangleDrawing();");
+    }
+    else
+    {
+        webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+    }
+}
+
+void SurfaceInput::boundingBoxReceived(double north, double south, double east, double west)
+{
+    qDebug() << "north south east west =" << QString::number(north) << QString::number(south) << QString::number(east) << QString::number(west);
+
+    QSignalBlocker northBlock(ui->boundingBoxNorthLineEdit);
+    QSignalBlocker eastBlock(ui->boundingBoxEastLineEdit);
+    QSignalBlocker southBlock(ui->boundingBoxSouthLineEdit);
+    QSignalBlocker westBlock(ui->boundingBoxWestLineEdit);
+
+    ui->boundingBoxNorthLineEdit->setText(QString::number(north));
+    ui->boundingBoxEastLineEdit->setText(QString::number(east));
+    ui->boundingBoxSouthLineEdit->setText(QString::number(south));
+    ui->boundingBoxWestLineEdit->setText(QString::number(west));
+
+    double pointRadius[3];
+    computePointRadius(north, east, south, west, pointRadius);
+
+    QSignalBlocker latBlock(ui->pointRadiusLatLineEdit);
+    QSignalBlocker lonBlock(ui->pointRadiusLonLineEdit);
+    QSignalBlocker radiusBlock(ui->pointRadiusRadiusLineEdit);
+
+    ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
+    ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
+    ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+
+    ui->elevationInputTypePushButton->setChecked(false);
+}
+
+void SurfaceInput::boundingBoxLineEditsTextChanged()
+{
+    if(ui->elevationInputTypeComboBox->currentIndex() == 1)  // boundingBoxPage
+    {
+        bool isNorthValid, isEastValid, isSouthValid, isWestValid;
+        double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
+        double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
+        double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
+        double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
+
+        if (isNorthValid && isEastValid && isSouthValid && isWestValid)
+        {
+            double pointRadius[3];
+            computePointRadius(north, east, south, west, pointRadius);
+
+            ui->pointRadiusLatLineEdit->setText(QString::number(pointRadius[0]));
+            ui->pointRadiusLonLineEdit->setText(QString::number(pointRadius[1]));
+            ui->pointRadiusRadiusLineEdit->setText(QString::number(pointRadius[2]));
+
+            QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
+            .arg(north, 0, 'f', 10)
+                .arg(south, 0, 'f', 10)
+                .arg(east,  0, 'f', 10)
+                .arg(west,  0, 'f', 10);
+            webEngineView->page()->runJavaScript(js);
+        }
+    }
+}
+
+void SurfaceInput::pointRadiusLineEditsTextChanged()
+{
+    if(ui->elevationInputTypeComboBox->currentIndex() == 0)  // pointRadiusPage
+    {
+        bool isLatValid, isLonValid, isRadiusValid;
+        double lat = ui->pointRadiusLatLineEdit->text().toDouble(&isLatValid);
+        double lon = ui->pointRadiusLonLineEdit->text().toDouble(&isLonValid);
+        double radius = ui->pointRadiusRadiusLineEdit->text().toDouble(&isRadiusValid);
+
+        if(isLatValid && isLonValid && isRadiusValid)
+        {
+            double boundingBox[4];
+            computeBoundingBox(lat, lon, radius, boundingBox);
+
+            ui->boundingBoxNorthLineEdit->setText(QString::number(boundingBox[0]));
+            ui->boundingBoxEastLineEdit->setText(QString::number(boundingBox[1]));
+            ui->boundingBoxSouthLineEdit->setText(QString::number(boundingBox[2]));
+            ui->boundingBoxWestLineEdit->setText(QString::number(boundingBox[3]));
+
+            QString js = QString("drawBoundingBox(%1, %2, %3, %4);")
+                             .arg(boundingBox[0], 0, 'f', 10)
+                             .arg(boundingBox[2], 0, 'f', 10)
+                             .arg(boundingBox[1],  0, 'f', 10)
+                             .arg(boundingBox[3],  0, 'f', 10);
+            webEngineView->page()->runJavaScript(js);
+        }
+    }
+}
+
+void SurfaceInput::surfaceInputDownloadCancelButtonClicked()
+{
+    ui->inputsStackedWidget->setCurrentIndex(3);
+
+    // ui->elevationInputTypeComboBox->setCurrentIndex(0);
+    // ui->elevationFileTypeComboBox->setCurrentIndex(0);
+    ui->elevationInputTypePushButton->setChecked(false);
+
+    // ui->boundingBoxNorthLineEdit->clear();
+    // ui->boundingBoxEastLineEdit->clear();
+    // ui->boundingBoxSouthLineEdit->clear();
+    // ui->boundingBoxWestLineEdit->clear();
+
+    // ui->pointRadiusLatLineEdit->clear();
+    // ui->pointRadiusLonLineEdit->clear();
+    // ui->pointRadiusRadiusLineEdit->clear();
+
+    webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    {
+        QStringList cornerStrs;
+        for (int i = 0; i < 8; ++i)
+        {
+            cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+        }
+        QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
+        webEngineView->page()->runJavaScript(js);
+    }
+}
+
+void SurfaceInput::surfaceInputDownloadButtonClicked()
+{
+    bool isNorthValid, isEastValid, isSouthValid, isWestValid;
+    double north = ui->boundingBoxNorthLineEdit->text().toDouble(&isNorthValid);
+    double east  = ui->boundingBoxEastLineEdit->text().toDouble(&isEastValid);
+    double south = ui->boundingBoxSouthLineEdit->text().toDouble(&isSouthValid);
+    double west  = ui->boundingBoxWestLineEdit->text().toDouble(&isWestValid);
+
+    if(!isNorthValid || !isEastValid || !isSouthValid || !isWestValid)
+    {
+        qCritical() << "ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool, entering a point and radius, or entering the bounding box coordinates.";
+        comMessageHandler("ERROR: DEM bounding box not set. Select the DEM bounding box by using the bounding box drawing tool, entering a point and radius, or entering the bounding box coordinates.", this);
+        return;
+    }
+
+    if(north == 0.0 || east == 0.0 || south == 0.0 || west == 0.0)
+    {
+        qCritical() << "ERROR: Please select an area on the map.";
+        comMessageHandler("ERROR: Please select an area on the map.", this);
+        return;
+    }
+
+    // need to update this logic for special cases, like wrapping around the earth
+    if(north < south || east < west)
+    {
+        qCritical() << "ERROR: North must be greater than South and East must be greater than West.";
+        comMessageHandler("ERROR: North must be greater than South and East must be greater than West.", this);
+        return;
+    }
+
+    if(ui->elevationFileTypeComboBox->currentIndex() == 0)
+    {
+        if(CPLGetConfigOption("CUSTOM_SRTM_API_KEY", NULL) == NULL && CPLGetConfigOption("NINJA_GUI_SRTM_API_KEY", NULL) == NULL)
+        {
+            qCritical() << "ERROR: API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY.";
+            comMessageHandler("ERROR: API Key not specified. Please specify the environment variables NINJA_GUI_SRTM_API_KEY or CUSTOM_SRTM_API_KEY.", this);
+            return;
+        }
+    }
+
+    QVector<double> boundingBox = {
+        north,
+        east,
+        south,
+        west
+    };
+
+    QString defaultName = "";
+    QString downloadsPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    {
+        downloadsPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        downloadsPath = inputFileDir;
+    }
+    else
+    {
+        downloadsPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    }
+
+    QString demFilePath = QFileDialog::getSaveFileName(ui->centralwidget, "Save DEM File", downloadsPath + "/.tif", "TIF Files (*.tif)");
+
+    if(demFilePath.isEmpty())
+    {
+        return;
+    }
+
+    if(!demFilePath.endsWith(".tif", Qt::CaseInsensitive))
+    {
+        demFilePath += ".tif";
+    }
+    std::string demFile = demFilePath.toStdString();
+
+    double resolution = -1.0;  // let the dem fetcher use the raw dem resolution
+    std::string fetchType;
+    switch(ui->elevationFileTypeComboBox->currentIndex())
+    {
+    case 0:
+        fetchType = "srtm";
+        break;
+    case 1:
+        fetchType = "gmted";
+        break;
+    case 2:
+        fetchType = "lcp";
+        break;
+    }
+
+    startFetchDEM(boundingBox, demFile, resolution, fetchType);
+}
+
+void SurfaceInput::elevationInputFileDownloadButtonClicked()
+{
+    ui->inputsStackedWidget->setCurrentIndex(18);
+}
+
+void SurfaceInput::meshResolutionComboBoxCurrentIndexChanged(int index)
+{
+    if (index == 3)
+    {
+        ui->meshResolutionSpinBox->setEnabled(true);
+    }
+    else
+    {
+        ui->meshResolutionSpinBox->setEnabled(false);
+    }
+
+    ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    updateMeshResolutionByUnits();
+}
+
+void SurfaceInput::elevationInputFileLineEditTextChanged(const QString &demFilePath)
+{
+    AppState& state = AppState::instance();
+
+    webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+
+    QString fullPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo file(fullPath);
+    ui->outputDirectoryLineEdit->setText(file.absolutePath());
+
+    if(demFileType == "LCP")
+    {
+        ui->vegetationStackedWidget->setCurrentIndex(1);
+    }
+    else
+    {
+        ui->vegetationStackedWidget->setCurrentIndex(0);
+    }
+
+    ui->meshResolutionSpinBox->setValue(computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+    updateMeshResolutionByUnits();
+
+    QStringList cornerStrs;
+    for (int i = 0; i < 8; ++i)
+        cornerStrs << QString::number(DEMCorners[i], 'f', 8);
+    QString js = QString("drawDEM([%1]);").arg(cornerStrs.join(", "));
+    webEngineView->page()->runJavaScript(js);
+
+    state.GDALXSize = GDALXSize;
+    state.GDALYSize = GDALYSize;
+    state.GDALCellSize = GDALCellSize;
+
+    emit updateState();
+    emit updateTreeView();
+}
+
+void SurfaceInput::ninjafoamCaseOpenButtonClicked()
+{
+    QString directoryPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
+
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    {
+        directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        directoryPath = inputFileDir;
+    }
+    else
+    {
+        directoryPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    }
+
+    QString ninjafoamDir = QFileDialog::getExistingDirectory(
+        ui->centralwidget,
+        tr("Open Existing Case"),
+        directoryPath,
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+        );
+
+    if (ninjafoamDir.isEmpty())
+    {
+        return;
+    }
+
+    QDir triSurfaceDir(ninjafoamDir + "/constant/triSurface");
+    QStringList stlFiles = triSurfaceDir.entryList(QStringList() << "*.stl", QDir::Files);
+    QString baseName;
+    for (const QString &file : stlFiles)
+    {
+        if (!file.contains("_out.stl"))
+        {
+            baseName = QFileInfo(file).completeBaseName();
+            break;
+        }
+    }
+    if (baseName.isEmpty())
+    {
+        showInvalidCase("Invalid Existing Case. \nNo DEM Information could be found.");
+        return;
+    }
+
+    QDir parentDir(QFileInfo(ninjafoamDir).absolutePath());
+    QStringList filters = {"*.tif", "*.lcp", "*.img", "*.asc"};
+    QStringList demFiles = parentDir.entryList(filters, QDir::Files);
+    QString demFilePath;
+    for (const QString &file : demFiles)
+    {
+        if (QFileInfo(file).completeBaseName() == baseName)
+        {
+            demFilePath = parentDir.absoluteFilePath(file);
+            break;
+        }
+    }
+    if (demFilePath.isEmpty())
+    {
+        showInvalidCase("Invalid Existing Case. \nThe DEM file could not be found.");
+        return;
+    }
+
+    bool retVal = loadDemMetadata(demFilePath);
+    if(retVal == false)
+    {
+        return;
+    }
+
+    ui->ninjafoamCaseLineEdit->setText(QFileInfo(ninjafoamDir).fileName());
+    ui->ninjafoamCaseLineEdit->setProperty("fullpath", ninjafoamDir);
+
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
+    elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(demFilePath).fileName());
+    ui->elevationInputFileLineEdit->setToolTip(demFilePath);
+
+    ui->elevationInputFileDownloadButton->setEnabled(false);
+    ui->meshResolutionComboBox->setEnabled(false);
+}
+
+void SurfaceInput::showInvalidCase(QString message)
+{
+    QMessageBox::critical(
+        ui->centralwidget,
+        tr("Error."),
+        message,
+        QMessageBox::Ok
+        );
+
+    ui->ninjafoamCaseLineEdit->clear();
+    ui->elevationInputFileDownloadButton->setEnabled(true);
+    ui->meshResolutionComboBox->setEnabled(true);
+}
+
+void SurfaceInput::elevationInputFileOpenButtonClicked()
+{
+    QString directoryPath;
+    QFileInfo inputFileDirInfo(inputFileDir);
+
+    CPLDebug("WINDNINJA", "inputFileDir=%s", inputFileDirInfo.absolutePath().toStdString().c_str());
+
+    if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+    {
+        directoryPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    }
+    else if(inputFileDirInfo.exists())
+    {
+        directoryPath = inputFileDir;
+    }
+    else
+    {
+        directoryPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    }
+
+    QString demFilePath = QFileDialog::getOpenFileName(ui->centralwidget, "Select a file", directoryPath, "(*.tif);;All Files (*)");
+
+    if(demFilePath.isEmpty())
+    {
+        if(!ui->elevationInputFileLineEdit->property("fullpath").toString().isEmpty())
+        {
+            ui->elevationInputFileLineEdit->setProperty("fullpath", ui->elevationInputFileLineEdit->property("fullpath").toString());
+            elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(ui->elevationInputFileLineEdit->property("fullpath").toString()).fileName());
+            ui->elevationInputFileLineEdit->setToolTip(ui->elevationInputFileLineEdit->property("fullpath").toString());
+        }
+        return;
+    }
+
+    // check and attempt to fill the to be opened dem file for NO_DATA values
+    // update the dem file if NO_DATA values are filled
+    QString nanFilledDemFilePath;
+    bool retVal = checkAndFillToBeOpenedDemNoDataValues(demFilePath, nanFilledDemFilePath);
+    if(retVal == false)
+    {
+        // failed with some kind of error, messaging is handled by the underlying function
+        return;
+    }
+    if(!nanFilledDemFilePath.isEmpty())
+    {
+        // required and succeeded in filling
+        demFilePath = nanFilledDemFilePath;
+    }
+
+    retVal = loadDemMetadata(demFilePath);
+    if(retVal == false)
+    {
+        return;
+    }
+
+    ui->elevationInputFileLineEdit->setProperty("fullpath", demFilePath);
+    elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(demFilePath).fileName());
+    ui->elevationInputFileLineEdit->setToolTip(demFilePath);
+}
+
+void SurfaceInput::startFetchDEM(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
+{
+    emit writeToConsoleSignal("Downloading DEM file...");
+
+    progress = new QProgressDialog("Downloading DEM file...", QString(), 0, 0, ui->centralwidget);
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setCancelButton(nullptr);
+    progress->setMinimumDuration(0);
+    progress->setAutoClose(true);
+    progress->show();
+
+    pendingDownloadDemFilePath = QString::fromStdString(demFile);
+
+    futureWatcher = new QFutureWatcher<int>(this);
+    QFuture<int> future = QtConcurrent::run(&SurfaceInput::fetchDEMFile, this, boundingBox, demFile, resolution, fetchType);
+    futureWatcher->setFuture(future);
+
+    connect(futureWatcher, &QFutureWatcher<int>::finished, this, &SurfaceInput::fetchDEMFinished);
+    connect(progress, &QProgressDialog::canceled, this, &SurfaceInput::fetchDEMFinished);
+}
+
+void SurfaceInput::fetchDEMFinished()
+{
+    if(!futureWatcher)
+    {
+        return;
+    }
+
+    if(progress && progress->wasCanceled())
+    {
+        futureWatcher->waitForFinished();
+    }
+    else
+    {
+        // get the return value of the QtConcurrent::run() function
+        int result = futureWatcher->future().result();
+
+        if(result >= 0)  // returned NINJA_SUCCESS, or a nNoDataCount value
+        {
+            emit writeToConsoleSignal("Finished downloading DEM file.", Qt::darkGreen);
+
+            bool retVal = true;
+
+            // check and attempt to fill the downloaded dem file for NO_DATA values
+            retVal = checkAndFillDownloadedDemNoDataValues(pendingDownloadDemFilePath);
+
+            if(retVal == true)
+            {
+                retVal = loadDemMetadata(pendingDownloadDemFilePath);
+            }
+
+            if(retVal == true)
+            {
+                ui->elevationInputFileLineEdit->setProperty("fullpath", pendingDownloadDemFilePath);
+                elevationInputFileLineEditSetTextAndForceSignal(QFileInfo(pendingDownloadDemFilePath).fileName());
+                ui->elevationInputFileLineEdit->setToolTip(pendingDownloadDemFilePath);
+                ui->inputsStackedWidget->setCurrentIndex(3);
+
+                webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+                webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+                webEngineView->page()->runJavaScript("clearStationOutputTree();");
+                webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
+            }
+
+            //else  // if(retVal == false)
+            //{
+            //    // message is handled in the various underlying functions
+            //    // don't want to return here, need to wrap up all the other todos of this finished() function or things won't close properly
+            //    //return;
+            //}
+
+            if(progress)
+            {
+                progress->close();
+                progress->deleteLater();
+                progress = nullptr;
+            }
+        }
+        else
+        {
+            emit writeToConsoleSignal("Failed to download DEM file.");
+        }
+
+        // delete the futureWatcher every time, whether success or failure
+        if(futureWatcher)
+        {
+            futureWatcher->deleteLater();
+            futureWatcher = nullptr;
+        }
+    }
+}
+
+void SurfaceInput::timeZoneComboBoxCurrentIndexChanged(int index)
+{
+    QString currentTimeZone = ui->timeZoneComboBox->currentText();
+    QString timeZoneDetails = fetchTimeZoneDetails(currentTimeZone);
+    ui->timeZoneDetailsTextEdit->setText(timeZoneDetails);
+}
+
+void SurfaceInput::timeZoneAllZonesCheckBoxClicked()
+{
+    bool isShowAllTimeZonesSelected = ui->timeZoneAllZonesCheckBox->isChecked();
+    QVector<QVector<QString>> displayData = fetchAllTimeZones(isShowAllTimeZonesSelected);
+
+    ui->timeZoneComboBox->clear();
+    for (const QVector<QString>& zone : displayData)
+    {
+        if (!zone.isEmpty())
+        {
+            ui->timeZoneComboBox->addItem(zone[0]);
+        }
+    }
+
+    // Default to America/Denver
+    ui->timeZoneComboBox->setCurrentText("America/Denver");
+}
+
+void SurfaceInput::timeZoneDetailsCheckBoxClicked()
+{
+    ui->timeZoneDetailsTextEdit->setVisible(ui->timeZoneDetailsCheckBox->isChecked());
+}
+
+QString SurfaceInput::fetchTimeZoneDetails(QString currentTimeZone)
+{
+    QVector<QString> matchedRow;
+    QFile file(":/date_time_zonespec.csv");
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qWarning() << "Failed to open date_time_zonespec.csv";
+        qDebug() << "No data found";
+    }
+
+    QTextStream in(&file);
+    bool firstLine = true;
+
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+
+        if (firstLine)
+        {
+            firstLine = false;
+            continue;  // skip header
+        }
+
+        QStringList tokens = line.split(",", Qt::KeepEmptyParts);
+        QVector<QString> row;
+
+        for (const QString& token : tokens)
+            row.append(token.trimmed().remove("\""));
+
+        QString fullZone = row.mid(0, 1).join("/");
+
+        if (fullZone == currentTimeZone)
+        {
+            matchedRow = row;
+            break;
+        }
+    }
+
+    file.close();
+
+    if (matchedRow.isEmpty())
+    {
+        qDebug() << "No matching time zone found.";
+    }
+
+    QString standardName = matchedRow.value(2);
+    QString daylightName = matchedRow.value(4);
+    QString stdOffsetStr = matchedRow.value(5);
+    QString dstAdjustStr = matchedRow.value(6);
+
+    auto timeToSeconds = [](const QString& t) -> int
+    {
+        QString s = t.trimmed();
+        bool negative = s.startsWith('-');
+        s = s.remove(QChar('+')).remove(QChar('-'));
+
+        QStringList parts = s.split(':');
+        if (parts.size() != 3) return 0;
+
+        int h = parts[0].toInt();
+        int m = parts[1].toInt();
+        int sec = parts[2].toInt();
+
+        int total = h * 3600 + m * 60 + sec;
+        return negative ? -total : total;
+    };
+
+    // Convert total seconds back to HH:MM:SS with sign
+    auto secondsToTime = [](int totalSec) -> QString
+    {
+        QChar sign = totalSec < 0 ? '-' : '+';
+        totalSec = std::abs(totalSec);
+
+        int h = totalSec / 3600;
+        int m = (totalSec % 3600) / 60;
+        int s = totalSec % 60;
+
+        return QString("%1%2:%3:%4")
+            .arg(sign)
+            .arg(h, 2, 10, QChar('0'))
+            .arg(m, 2, 10, QChar('0'))
+            .arg(s, 2, 10, QChar('0'));
+    };
+
+    int stdSecs = timeToSeconds(stdOffsetStr);
+    int dstSecs = timeToSeconds(dstAdjustStr);
+    QString combinedOffsetStr = secondsToTime(stdSecs + dstSecs);
+
+    return QString("Standard Name:\t\t%1\n"
+                   "Daylight Name:\t\t%2\n"
+                   "Standard Offset from UTC:\t%3\n"
+                   "Daylight Offset from UTC:\t%4")
+        .arg(standardName)
+        .arg(daylightName)
+        .arg(stdOffsetStr)
+        .arg(combinedOffsetStr);
+
+}
+
+QVector<QVector<QString>> SurfaceInput::fetchAllTimeZones(bool isShowAllTimeZonesSelected)
+{
+    QVector<QVector<QString>> fullData;
+    QVector<QVector<QString>> americaData;
+
+    QFile file(":/date_time_zonespec.csv");
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug() << "Failed to open CSV file.";
+        return fullData;
+    }
+
+    QTextStream in(&file);
+    bool firstLine = true;
+
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+
+        if (firstLine)
+        {
+            firstLine = false;
+            continue;
+        }
+
+        QStringList tokens = line.split(",", Qt::KeepEmptyParts);
+        QVector<QString> row;
+        for (const QString& token : tokens)
+        {
+            row.append(token.trimmed().remove('"'));
+        }
+
+        if (!row.isEmpty())
+        {
+            fullData.append(row);
+        }
+
+        if (!row.isEmpty())
+        {
+            QStringList parts = row[0].split("/", Qt::KeepEmptyParts);
+            if (!parts.isEmpty() && parts[0] == "America" || row[0] == "Pacific/Honolulu")
+            {
+                americaData.append(row);
+            }
+        }
+    }
+
+    file.close();
+
+    if (isShowAllTimeZonesSelected)
+    {
+        return fullData;
+    }
+    else
+    {
+        return americaData;
+    }
+}
+
+int SurfaceInput::fetchDEMFile(QVector<double> boundingBox, std::string demFile, double resolution, std::string fetchType)
+{
+    NinjaToolsH* ninjaTools = NULL;
+    char ** papszOptions = NULL;
+    NinjaErr ninjaErr = 0;
+
+    ninjaTools = NinjaMakeTools();
+
+    ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
+    }
+
+    ninjaErr = NinjaFetchDEMBBox(ninjaTools, boundingBox.data(), demFile.c_str(), resolution, strdup(fetchType.c_str()), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaFetchDEMBBox: ninjaErr =" << ninjaErr;
+        return ninjaErr;
+    }
+
+    return NINJA_SUCCESS;
+}
+
+bool SurfaceInput::checkAndFillDownloadedDemNoDataValues(const QString demFilePath)
+{
+    emit writeToConsoleSignal("Checking downloaded dem file for NO_DATA values...");
+
+    GDALDataset *poDS;
+    poDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_Update);
+    if(poDS == nullptr)
+    {
+        qCritical() << "ERROR: Cannot open dem file.";
+        comMessageHandler("ERROR: Cannot open dem file.", this);
+        return false;
+    }
+
+    if(GDALHasNoData(poDS, 1))
+    {
+        qWarning() << "WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...";
+        emit writeToConsoleSignal("WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...", QColor(255, 140, 0));
+        QMessageBox::information(nullptr, tr("WindNinja"),
+                                 tr("The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data. Please click OK to proceed.\n"),
+                                 QMessageBox::Ok);
+        // need this OR the QMessageBox and writeToConsoleSignal()
+        //comMessageHandler("WARNING: The downloaded file contains NO_DATA values. WindNinja will attempt to fill with valid data...", this);
+
+        int nNoDataValues = GDALFillBandNoData(poDS, 1, 100);
+        if(nNoDataValues)
+        {
+            qWarning() << "WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.";
+            emit writeToConsoleSignal("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", QColor(255, 140, 0));
+            QMessageBox::warning(nullptr, tr("WindNinja"),
+                                 tr("Could not fill NO_DATA pixels, too many pixels were invalid.\n"),
+                                 QMessageBox::Ok);
+            // again, need this OR the QMessageBox and writeToConsoleSignal()
+            //comMessageHandler("WARNING: Could not fill no data pixels, too many pixels were invalid.", this);
+            GDALClose((GDALDatasetH)poDS);
+            return false;
+        }
+        qInfo() << "succeeded in filling NO_DATA pixels.";
+        emit writeToConsoleSignal("succeeded in filling NO_DATA pixel.", Qt::darkGreen);
+        QMessageBox::information(nullptr, tr("WindNinja"),
+                                 tr("Succeeded in filling NO_DATA pixels.\n"),
+                                 QMessageBox::Ok);
+    }
+
+    GDALClose((GDALDatasetH)poDS);
+
+    emit writeToConsoleSignal("finished checking for NO_DATA values.", Qt::darkGreen);
+    return true;
+}
+
+bool SurfaceInput::checkAndFillToBeOpenedDemNoDataValues(const QString demFilePath, QString& nanFilledDemFilePath)
+{
+    emit writeToConsoleSignal("Checking dem file for NO_DATA values...");
+
+    nanFilledDemFilePath = "";
+
+    GDALDataset *poDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
+    if(poDS == nullptr)
+    {
+        qCritical() << "ERROR: Cannot open dem file.";
+        comMessageHandler("ERROR: Cannot open dem file.", this);
+        return false;
+    }
+
+    if(GDALHasNoData(poDS, 1))
+    {
+        qWarning() << "WARNING: The dem contains NO_DATA values. WindNinja will attempt to fill with valid data...";
+        emit writeToConsoleSignal("WARNING: The dem contains NO_DATA values. WindNinja will attempt to fill with valid data...", QColor(255, 140, 0));
+        int response = QMessageBox::warning(nullptr, tr("WindNinja"),
+                                            tr("The input dataset contains pixels with NO_DATA. "
+                                            "These datasets cannot be used by WindNinja, "
+                                            "would you like to attempt to fill those pixels?\n"),
+                                            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
+        if(response == QMessageBox::Yes)
+        {
+            nanFilledDemFilePath = QFileDialog::getSaveFileName(ui->centralwidget, tr("Set NO_DATA Filled DEM File"),
+                                                                QFileInfo(demFilePath).absolutePath(),
+                                                                tr("GeoTiff (*.tif)"));
+            if(nanFilledDemFilePath.isEmpty())
+            {
+                qWarning() << "Cancelled by user with no selection. Not filling NO_DATA values. Not loading dem file.";
+                emit writeToConsoleSignal("Cancelled by user with no selection. Not filling NO_DATA values. Not loading dem file.");
+                return false;
+            }
+
+            if(!nanFilledDemFilePath.endsWith(".tif", Qt::CaseInsensitive))
+            {
+                nanFilledDemFilePath += ".tif";
+            }
+
+            GDALDriverH hDriver = GDALGetDriverByName("GTiff");
+            GDALDatasetH hNewDS;
+            hNewDS = GDALCreateCopy(hDriver, nanFilledDemFilePath.toStdString().c_str(), (GDALDriverH)poDS, FALSE, NULL, NULL, NULL);
+
+            int nSuccess;
+            GDALRasterBandH hSrcBand, hDstBand;
+            hSrcBand = GDALGetRasterBand((GDALDatasetH)poDS, 1);
+            hDstBand = GDALGetRasterBand(hNewDS, 1);
+            GDALSetRasterNoDataValue(hDstBand, GDALGetRasterNoDataValue(hSrcBand, &nSuccess));
+            if(nSuccess == false)
+            {
+                qCritical() << "ERROR: Could not get NO_DATA value definition from the dem file.";
+                comMessageHandler("ERROR: Could not get NO_DATA value definition from the dem file.", this);
+                return false;
+            }
+
+            int nNoData = GDALFillBandNoData((GDALDataset*)hNewDS, 1, 100);
+            if(nNoData)
+            {
+                qWarning() << "WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.";
+                emit writeToConsoleSignal("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", QColor(255, 140, 0));
+                QMessageBox::warning(nullptr, tr("WindNinja"),
+                                     tr("Could not fill NO_DATA pixels, too many pixels were invalid.\n"),
+                                     QMessageBox::Ok);
+                // again, need this OR the QMessageBox and writeToConsoleSignal()
+                //comMessageHandler("WARNING: Could not fill NO_DATA pixels, too many pixels were invalid.", this);
+                GDALClose(hNewDS);
+                GDALClose((GDALDatasetH)poDS);
+                nanFilledDemFilePath = "";
+                return false;
+            }
+            else
+            {
+                GDALFlushCache(hNewDS);
+                GDALClose(hNewDS);
+                GDALClose((GDALDatasetH)poDS);
+                qInfo() << "succeeded in filling NO_DATA pixels.";
+                emit writeToConsoleSignal("succeeded in filling NO_DATA pixels.", Qt::darkGreen);
+                QMessageBox::information(nullptr, tr("WindNinja"),
+                                         tr("Succeeded in filling NO_DATA pixels.\n"),
+                                         QMessageBox::Ok);
+                return true;
+            }
+        }
+        else
+        {
+            qWarning() << "Cancelled by user. Not filling NO_DATA values. Not loading dem file.";
+            emit writeToConsoleSignal("Cancelled by user. Not filling NO_DATA values. Not loading dem file.");
+            return false;
+        }
+    }
+    else
+    {
+        GDALClose((GDALDatasetH)poDS);
+    }
+
+    emit writeToConsoleSignal("finished checking for NO_DATA values.", Qt::darkGreen);
+    return true;
+}
+
+bool SurfaceInput::loadDemMetadata(const QString demFilePath)
+{
+    emit writeToConsoleSignal("Opening dem file to load in metadata...");
+    emit writeToConsoleSignal("demFilePath="+demFilePath);
+
+    // tmp vars to fill, used to fill the final vars at the end after a fully successful load
+    // that way the vars from the past file aren't replaced unless the new file successfully loads
+    QString tmp_demFileType;
+    int tmp_GDALXSize, tmp_GDALYSize;
+    double tmp_GDALCellSize, tmp_GDALMaxValue, tmp_GDALMinValue;
+    double tmp_DEMCorners[8];
+
+    CPLSetConfigOption( "GDAL_PAM_ENABLED", "OFF" );
+
+    double adfGeoTransform[6];
+    GDALDataset *poInputDS;
+
+    poInputDS = (GDALDataset*)GDALOpen(demFilePath.toStdString().c_str(), GA_ReadOnly);
+    if(poInputDS == nullptr)
+    {
+        qCritical() << "ERROR: Cannot open dem file.";
+        comMessageHandler("ERROR: Cannot open dem file.", this);
+        return false;
+    }
+
+    QString GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
+    emit writeToConsoleSignal("using "+GDALDriverLongName+" driver to read dem file...");
+
+    // set the file type here
+    QString GDALDriverName = poInputDS->GetDriver()->GetDescription();
+    if(GDALDriverName == "AAIGrid")
+    {
+        tmp_demFileType = "ASC";
+    }
+    else if(GDALDriverName == "LCP")
+    {
+        tmp_demFileType = "LCP";
+    }
+    else if(GDALDriverName == "GTiff")
+    {
+        int bandCount = GDALGetRasterCount(poInputDS);
+        // if it's a multi-band GeoTIFF, it's an lcp
+        if(bandCount > 1)
+        {
+            tmp_demFileType = "LCP";
+        }
+        else
+        {
+            tmp_demFileType = "GTIFF";
+        }
+    }
+    else if(GDALDriverName == "IMG")
+    {
+        tmp_demFileType = "IMG";
+    }
+
+    // get x and y dimension
+    tmp_GDALXSize = poInputDS->GetRasterXSize();
+    tmp_GDALYSize = poInputDS->GetRasterYSize();
+
+    if(!GDALTestSRS(poInputDS))
+    {
+        qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";
+        comMessageHandler("ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+    else
+    {
+        std::string GDALProjRef = poInputDS->GetProjectionRef();
+        const char *pszProjRef;
+        OGRSpatialReference oSRS;
+        pszProjRef = GDALProjRef.c_str();
+        oSRS.importFromWkt(pszProjRef);
+        if(GDALProjRef == "")
+        {
+            qCritical() << "ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.";
+            comMessageHandler("ERROR: Invalid spatial reference (prj), cannot do a simulation with the supplied dem file.", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+
+        // Check for geographic. Separate case as we may allow support later on.
+        if(oSRS.IsGeographic())
+        {
+            qCritical() << "ERROR: The dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)";
+            comMessageHandler("ERROR: The dem coordinate system is in a geographic projection (latitude/longitude). WindNinja only supports projected coordinate systems (e.g., UTM)", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+
+        // if it gets here, it has a valid projected coordinate system
+    }
+
+    // check for no data values
+    if(GDALHasNoData(poInputDS, 1))
+    {
+        qCritical() << "ERROR: The dem file contains NO_DATA values, cannot use.";
+        comMessageHandler("ERROR: The dem file contains NO_DATA values, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get dem corners
+    //if(!GDALGetCorners(poInputDS, tmp_DEMCorners))  // this actually returns 0 when success, rather than 1, so strange
+    if(GDALGetCorners(poInputDS, tmp_DEMCorners))
+    {
+        qCritical() << "ERROR: Cannot get the corners of the dem file, cannot use.";
+        comMessageHandler("ERROR: Cannot get the corners of the dem file, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get center of the dem
+    double latitude, longitude;
+    if(!GDALGetCenter(poInputDS, &longitude, &latitude))
+    {
+        qCritical() << "ERROR: Cannot get the center of the dem file, cannot use.";
+        comMessageHandler("ERROR: Cannot get the center of the dem file, cannot use.", this);
+        GDALClose((GDALDatasetH)poInputDS);
+        return false;
+    }
+
+    // get dem timezone
+    std::string timeZone = FetchTimeZone(longitude, latitude, NULL);
+    int index = ui->timeZoneComboBox->findText(QString::fromStdString(timeZone));
+    if(index >= 0)
+    {
+        ui->timeZoneComboBox->setCurrentIndex(index);
+    }
+
+    // get the geo-transform, get the cell size, check the dem has square cell size
+    if(poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
+    {
+        double c1, c2;
+        c1 = adfGeoTransform[1];
+        c2 = adfGeoTransform[5];
+        if(abs(c1) == abs(c2))
+        {
+            tmp_GDALCellSize = abs(c1);
+        }
+        else
+        {
+            qCritical() << "ERROR: The dem file has non-square cell size, cannot use.";
+            comMessageHandler("ERROR: The dem file has non-square cell size, cannot use.", this);
+            GDALClose((GDALDatasetH)poInputDS);
+            return false;
+        }
+    }
+
+    // get min/max values
+    GDALRasterBand* band = poInputDS->GetRasterBand(1);
+    int gotMin = 0, gotMax = 0;
+    double minVal = band->GetMinimum(&gotMin);
+    double maxVal = band->GetMaximum(&gotMax);
+    if(!gotMin || !gotMax)
+    {
+        band->ComputeStatistics(false, &minVal, &maxVal, nullptr, nullptr, nullptr, nullptr);
+    }
+
+    tmp_GDALMinValue = minVal;
+    tmp_GDALMaxValue = maxVal;
+
+    GDALClose((GDALDatasetH)poInputDS);
+
+    CPLSetConfigOption( "GDAL_PAM_ENABLED", "ON" );
+
+    demFileType = tmp_demFileType;
+    GDALXSize = tmp_GDALXSize;
+    GDALYSize = tmp_GDALYSize;
+    GDALCellSize = tmp_GDALCellSize;
+    GDALMaxValue = tmp_GDALMaxValue;
+    GDALMinValue = tmp_GDALMinValue;
+    DEMCorners[0] = tmp_DEMCorners[0];
+    DEMCorners[1] = tmp_DEMCorners[1];
+    DEMCorners[2] = tmp_DEMCorners[2];
+    DEMCorners[3] = tmp_DEMCorners[3];
+    DEMCorners[4] = tmp_DEMCorners[4];
+    DEMCorners[5] = tmp_DEMCorners[5];
+    DEMCorners[6] = tmp_DEMCorners[6];
+    DEMCorners[7] = tmp_DEMCorners[7];
+
+    emit writeToConsoleSignal("Metadata loaded from dem file successfully.", Qt::darkGreen);
+
+    return true;
+}
+
+void SurfaceInput::elevationInputFileLineEditSetTextAndForceSignal(const QString &demFilePath)
+{
+    bool isTextSame = false;
+    if(ui->elevationInputFileLineEdit->text() == demFilePath)
+    {
+        isTextSame = true;
+    }
+
+    ui->elevationInputFileLineEdit->setText(demFilePath);
+    if(isTextSame == true)
+    {
+        emit elevationInputFileLineEditTextChanged(demFilePath);
+    }
+}
+
+double SurfaceInput::computeMeshResolution(int index, bool isMomemtumChecked)
+{
+    int coarse = 4000;
+    int medium = 10000;
+    int fine = 20000;
+    double meshResolution = 200.0;
+
+    if( GDALCellSize == 0.0 || GDALXSize == 0 || GDALYSize == 0 )
+    {
+        return meshResolution;
+    }
+
 #ifdef NINJAFOAM
-    //make ninjafoam case input controls
-    foamCaseGroupBox = new QGroupBox(tr("Use Existing Case"));
-
-    foamCaseLineEdit = new QLineEdit;
-    foamCaseLineEdit->setReadOnly(true);
-
-    foamCaseOpenToolButton = new QToolButton;
-    foamCaseOpenToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    foamCaseOpenToolButton->setText(tr("Open Case"));
-    foamCaseOpenToolButton->setIcon(QIcon(":folder_page.png"));
+    if (isMomemtumChecked) {
+        coarse = 25000;
+        medium = 50000;
+        fine = 100000;
+    }
 #endif //NINJAFOAM
 
-    //make INPUT input controls
-    inputFileGroupBox = new QGroupBox(tr("Elevation Input File"));
+    int targetNumHorizCells = fine;
+    switch (index)
+    {
+    case 0:
+        targetNumHorizCells = coarse;
+        break;
+    case 1:
+        targetNumHorizCells = medium;
+        break;
+    case 2:
+        targetNumHorizCells = fine;
+        break;
+    case 3:  // custom
+        return ui->meshResolutionSpinBox->value();
+    default:
+        return ui->meshResolutionSpinBox->value();
+    }
 
-    inputFileLineEdit = new QLineEdit;
-    inputFileLineEdit->setReadOnly(true);
+    double XLength = GDALXSize * GDALCellSize;
+    double YLength = GDALYSize * GDALCellSize;
+    double nXcells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
+    double nYcells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
 
-    inputFileOpenToolButton = new QToolButton;
-    inputFileOpenToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    inputFileOpenToolButton->setText(tr("Open File"));
-    inputFileOpenToolButton->setIcon(QIcon(":folder_page.png"));
+    double XCellSize = XLength / nXcells;
+    double YCellSize = YLength / nYcells;
 
-    downloadDEMButton = new QToolButton;
-    downloadDEMButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    downloadDEMButton->setText(tr("Download File"));
-    downloadDEMButton->setIcon(QIcon(":server_go.png"));
+    meshResolution = (XCellSize + YCellSize) / 2;
 
 #ifdef NINJAFOAM
-    foamCaseLayout = new QHBoxLayout;
-    foamCaseLayout->addWidget(foamCaseLineEdit);
-    foamCaseLayout->addWidget(foamCaseOpenToolButton);
-#endif
+    if (isMomemtumChecked)
+    {
+        XLength = GDALXSize * GDALCellSize;
+        YLength = GDALYSize * GDALCellSize;
 
-    inputLayout = new QHBoxLayout;
-    inputLayout->addWidget(inputFileLineEdit);
-    inputLayout->addWidget(inputFileOpenToolButton);
-    inputLayout->addWidget(downloadDEMButton);
+        double dz = GDALMaxValue - GDALMinValue;
+        double ZLength = std::max((0.1 * std::max(XLength, YLength)), (dz + 0.1 * dz));
+        double zmin, zmax;
+        zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
+        zmax = GDALMaxValue + ZLength; //zmax
 
-    //roughness combo box in a group
-    roughnessGroupBox = new QGroupBox(tr("Vegetation"));
+        double volume;
+        double cellCount;
+        double cellVolume;
 
-    roughnessComboBox = new QComboBox;
-    roughnessComboBox->addItem("Grass");
-    roughnessComboBox->addItem("Brush");
-    roughnessComboBox->addItem("Trees");
-    roughnessComboBox->setDisabled(true);
+        volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
+        cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
+        cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
+        double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
 
-    roughnessLabel = new QLabel;
-    roughnessLabel->setText("<font color='red'>Vegetation Data Set Using LCP File</font>");
-    roughnessLabel->setEnabled(true);
-    roughnessLabel->setVisible(false);
+        //determine number of rounds of refinement
+        int nCellsToAdd = 0;
+        int refinedCellCount = 0;
+        int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
+        int nRoundsRefinement = 0;
+        while(refinedCellCount < (0.5 * targetNumHorizCells))
+        {
+            nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
+            refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
+            nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
+            nRoundsRefinement += 1;
+        }
 
-    roughnessLayout = new QHBoxLayout;
-    roughnessLayout->addWidget(roughnessComboBox);
-    roughnessLayout->addWidget(roughnessLabel);
-    roughnessLayout->addStretch();
+        meshResolution = side/(nRoundsRefinement*2.0);
+    }
+#endif //NINJAFOAM
 
-    //mesh resolution controls
-    meshResGroupBox =  new QGroupBox(tr("Mesh Resolution"));
+    return meshResolution;
+}
 
-    meshResComboBox = new QComboBox;
-    meshResComboBox->addItem(tr("Coarse"));
-    meshResComboBox->addItem(tr("Medium"));
-    meshResComboBox->addItem(tr("Fine"));
-    meshResComboBox->addItem(tr("Custom"));
-    meshResComboBox->insertSeparator(3);
-    meshResComboBox->setCurrentIndex(2);
-    meshResComboBox->setEnabled(false);
+void SurfaceInput::updateMeshResolutionByUnits()
+{
+    // units are expected to always already be calculated to be in meters
+    // UNLESS it is CUSTOM, then it needs to be left in whatever units it shows up in,
+    //  units are then only altered when updating the units combo box
+    if(ui->meshResolutionComboBox->currentIndex() != 3)
+    {
+        if(ui->meshResolutionUnitsComboBox->currentIndex() == 1)  // feet
+        {
+            ui->meshResolutionSpinBox->setValue(ui->meshResolutionSpinBox->value() * 3.28084);
+        }
+    }
 
-    meshResDoubleSpinBox = new QDoubleSpinBox;
-    meshResDoubleSpinBox->setRange(1, 50000);
-    meshResDoubleSpinBox->setSingleStep(100.0);
-    meshResDoubleSpinBox->setDecimals(2);
-    meshResDoubleSpinBox->setAccelerated(true);
-    meshResDoubleSpinBox->setValue(200);
-    meshResDoubleSpinBox->setEnabled(false);
+    emit writeToConsoleSignal("Mesh Resolution set to "+QString::number(ui->meshResolutionSpinBox->value())+" "+ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData());
+}
 
-    meshMetersRadioButton = new QRadioButton(tr("Meters"));
-    meshMetersRadioButton->setChecked(true);
+void SurfaceInput::computeBoundingBox(double centerLat, double centerLon, double radius, double boundingBox[4])
+{
+    const double EARTH_RADIUS_MILES = 3958.7613;
+    const double DEG_TO_RAD = M_PI / 180.0;
 
-    meshFeetRadioButton = new QRadioButton(tr("Feet"));
+    double deltaLat = radius / (2.0 * M_PI * EARTH_RADIUS_MILES / 360.0);
+    double latRadius = EARTH_RADIUS_MILES * std::cos(centerLat * DEG_TO_RAD);
+    double deltaLon = radius / (2.0 * M_PI * latRadius / 360.0);
 
-    meshResLayout = new QHBoxLayout;
-    meshResLayout->addWidget(meshResComboBox);
-    meshResLayout->addWidget(meshResDoubleSpinBox);
-    meshResLayout->addWidget(meshMetersRadioButton);
-    meshResLayout->addWidget(meshFeetRadioButton);
-    meshResLayout->addStretch();
+    boundingBox[0] = centerLat + deltaLat;  // North
+    boundingBox[1] = centerLon + deltaLon;  // East
+    boundingBox[2] = centerLat - deltaLat;  // South
+    boundingBox[3] = centerLon - deltaLon;  // West
+}
 
-    timeZoneGroupBox = new QGroupBox("Time Zone", this);
-    timeZone = new timeZoneWidget(this);
-    timeZoneLayout = new QHBoxLayout;
-    timeZoneLayout->addWidget(timeZone);
-    timeZoneLayout->addStretch();
+void SurfaceInput::computePointRadius(double north, double east, double south, double west, double pointRadius[3])
+{
+    const double EARTH_RADIUS_MILES = 3958.7613;
+    const double DEG_TO_RAD = M_PI / 180.0;
 
-    //set layouts to boxes
-#ifdef NINJAFOAM
-    foamCaseGroupBox->setLayout(foamCaseLayout);
-#endif
-    inputFileGroupBox->setLayout(inputLayout);
-    roughnessGroupBox->setLayout(roughnessLayout);
-    meshResGroupBox->setLayout(meshResLayout);
-    timeZoneGroupBox->setLayout(timeZoneLayout);
-    
-    //main layout
-    mainLayout = new QVBoxLayout;
-#ifdef NINJAFOAM
-    mainLayout->addWidget(foamCaseGroupBox);
-    foamCaseGroupBox->setHidden( true );
-#endif
-    mainLayout->addWidget(inputFileGroupBox);
-    mainLayout->addWidget(roughnessGroupBox);
-    mainLayout->addWidget(meshResGroupBox);
-    mainLayout->addWidget(timeZoneGroupBox);
-    mainLayout->addStretch();
+    double centerLat = (north + south) / 2.0;
+    double centerLon = (east + west) / 2.0;
 
-    setLayout(mainLayout);
+    double deltaLat = std::abs(north - south) / 2.0;
+    double deltaLon = std::abs(east - west) / 2.0;
+
+    double latMiles = (2.0 * M_PI * EARTH_RADIUS_MILES / 360.0) * deltaLat;
+
+    double latRadius = EARTH_RADIUS_MILES * std::cos(centerLat * DEG_TO_RAD);
+    double lonMiles = (2.0 * M_PI * latRadius / 360.0) * deltaLon;
+
+    double radius = (latMiles + lonMiles) / 2.0;
+
+    pointRadius[0] = centerLat;
+    pointRadius[1] = centerLon;
+    pointRadius[2] = radius;
+}
+
+void SurfaceInput::setInputFileDir(QString dir)
+{
+    inputFileDir = dir;
 }
 

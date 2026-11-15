@@ -3,8 +3,8 @@
  * $Id$
  *
  * Project:  WindNinja Qt GUI
- * Purpose:  Main window and parent to all other widgets
- * Author:   Kyle Shannon <kyle@pobox.com>
+ * Purpose:  Main Window that handles GUI scraping and state changes
+ * Author:   Mason Willman <mason.willman@usda.gov>
  *
  ******************************************************************************
  *
@@ -29,3596 +29,1681 @@
 
 #include "mainWindow.h"
 
-mainWindow::mainWindow(QWidget *parent) 
-: QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+    ui(new Ui::MainWindow)
 {
-    std::string tzfile = FindDataPath( "date_time_zonespec.csv" );
-    if( tzfile == "" )
-    {
-        throw std::runtime_error( "Could not find supporting data files, " \
-                                  "try setting WINDNINJA_DATA." );
-    }
-    lineNumber = 1;
-    GDALProjRef = "";
+    ui->setupUi(this);
+    resize(1200, 700);
+    ui->treeWidget->expandAll();
 
-    progressDialog = new QProgressDialog(this);
-    progressDialog->setMinimumDuration(1);
+    AppState& state = AppState::instance();
+    state.setUi(ui);
+    ui->massSolverCheckBox->setChecked(true);
+    ui->treeWidget->setMouseTracking(true);
+    state.updateSolverMethodologyState();
+
+    lineNumber = 1;
+
+    serverBridge = new ServerBridge();
+    serverBridge->checkMessages();
+
+    QString dataPath = QString::fromUtf8(CPLGetConfigOption("WINDNINJA_DATA", ""));
+    QString mapPath = QDir(dataPath).filePath("map.html");
+    webEngineView = new QWebEngineView(ui->mapPanelWidget);
+    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
+    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+    webEngineView->settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
+    webChannel = new QWebChannel(webEngineView->page());
+    mapBridge = new MapBridge(this);
+    webChannel->registerObject(QStringLiteral("bridge"), mapBridge);
+    webEngineView->page()->setWebChannel(webChannel);
+
+    QUrl url("qrc:///map.html");
+    webEngineView->setUrl(url);
+    QVBoxLayout *layout = new QVBoxLayout();
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->addWidget(webEngineView);
+    ui->mapPanelWidget->setLayout(layout);
+    menuBar = new MenuBar(ui, webEngineView, this);
+    surfaceInput = new SurfaceInput(ui, webEngineView, this);
+    domainAverageInput = new DomainAverageInput(ui, this);
+    pointInitializationInput = new PointInitializationInput(ui, webEngineView, this);
+    weatherModelInput = new WeatherModelInput(ui, this);
+    outputs = new Outputs(ui, this);
+
+    ui->treeWidget->topLevelItem(0)->setData(0, Qt::UserRole, 1);
+    ui->treeWidget->topLevelItem(0)->child(0)->setData(0, Qt::UserRole, 1);
+    ui->treeWidget->topLevelItem(0)->child(1)->setData(0, Qt::UserRole, 2);
+    ui->treeWidget->topLevelItem(1)->setData(0, Qt::UserRole, 3);
+    ui->treeWidget->topLevelItem(1)->child(0)->setData(0, Qt::UserRole, 3);
+    ui->treeWidget->topLevelItem(1)->child(1)->setData(0, Qt::UserRole, 4);
+    ui->treeWidget->topLevelItem(1)->child(2)->setData(0, Qt::UserRole, 5);
+    ui->treeWidget->topLevelItem(1)->child(3)->setData(0, Qt::UserRole, 6);
+    QTreeWidgetItem *windInputItem = ui->treeWidget->topLevelItem(1)->child(3);
+    windInputItem->child(0)->setData(0, Qt::UserRole, 6);
+    windInputItem->child(1)->setData(0, Qt::UserRole, 7);
+    windInputItem->child(2)->setData(0, Qt::UserRole, 8);
+    ui->treeWidget->topLevelItem(2)->setData(0, Qt::UserRole, 9);
+    ui->treeWidget->topLevelItem(2)->child(0)->setData(0, Qt::UserRole, 10);
+    ui->treeWidget->topLevelItem(2)->child(1)->setData(0, Qt::UserRole, 11);
+    ui->treeWidget->topLevelItem(2)->child(2)->setData(0, Qt::UserRole, 12);
+    ui->treeWidget->topLevelItem(2)->child(3)->setData(0, Qt::UserRole, 13);
+    ui->treeWidget->topLevelItem(2)->child(4)->setData(0, Qt::UserRole, 14);
+    ui->treeWidget->topLevelItem(2)->child(5)->setData(0, Qt::UserRole, 15);
+    ui->treeWidget->topLevelItem(2)->child(6)->setData(0, Qt::UserRole, 16);
+    ui->treeWidget->topLevelItem(3)->setData(0, Qt::UserRole, 17);
+
+    #ifndef NINJAFOAM
+    ui->treeWidget->topLevelItem(0)->child(1)->setDisabled(true);
+    #endif
+
+    connectSignals();
+
+    ui->treeWidget->blockSignals(true);
+    ui->treeWidget->topLevelItem(0)->setSelected(true);
+    ui->inputsStackedWidget->setCurrentIndex(1);
+    ui->treeWidget->blockSignals(false);
+
+    nThreads = QThread::idealThreadCount();
+    nCores = countNumCores();
+
+    if(nProcessors != -1)
+    {
+        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
+    }
+    else
+    {
+        if(ui->momentumSolverCheckBox->isChecked())
+        {
+            ui->numberOfProcessorsSpinBox->setValue(nCores);
+        }
+        else
+        {
+            ui->numberOfProcessorsSpinBox->setValue(nThreads);
+        }
+    }
+
+    if(ui->momentumSolverCheckBox->isChecked())
+    {
+        ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
+        ui->numberOfProcessorsSpinBox->setMaximum(nCores);
+    }
+    else
+    {
+        ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
+        ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
+    }
+
+    QString version(NINJA_VERSION_STRING);
+    version = "Welcome to WindNinja " + version;
+    writeToConsole(version, Qt::blue);
+    writeToConsole("WINDNINJA_DATA=" + dataPath);
+
+    state.setState();
+}
+
+MainWindow::~MainWindow()
+{
+    webEngineView->deleteLater();
+
+    delete serverBridge;
+    delete ui;
+}
+
+void MainWindow::updateProgressMessage(const QString message)
+{
+    if(progressDialog)
+    {
+        progressDialog->setLabelText(message);
+    }
+    else
+    {
+        QMessageBox::critical(
+            nullptr,
+            QApplication::tr("Error"),
+            message+"\n"
+        );
+    }
+}
+
+void MainWindow::updateProgressValue(int run, int progress)
+{
+    // update the stored progress value for the current run
+    if( runProgress[run] > progress )
+    {
+        // if the stored progress is bigger than what we are seeing in the currently emitted progress
+        // ignore it. This happens for pointInitialization, when the match points is iterating,
+        // sometimes its next solution is worse and then it would make the progress bar go backwards
+        // by ignoring it, the progress bar just stays where it is
+        runProgress[run] = runProgress[run];
+    }
+    else
+    {
+        // otherwise, store the progress for the current run
+        runProgress[run] = progress;
+    }
+
+    // update the total progress value
+    // calculate the total progress from scratch each time, summing up the progress from each run
+    totalProgress = 0;  // Initialize the progress bar each time
+    for(unsigned int i = 0; i < runProgress.size(); i++)
+    {
+        totalProgress = totalProgress + runProgress[i];
+    }
+
+    // update the progress bar
+    progressDialog->setValue(totalProgress);
+}
+
+static void comMessageHandler(const char *pszMessage, void *pUser)
+{
+    MainWindow *self = static_cast<MainWindow*>(pUser);
+
+    std::string msg = pszMessage;
+
+    // both the writeToConsole() function and the QProgressDialog do NOT like having a "\n" at the end of a given message,
+    // writeToConsole() adds extra empty lines all over the place and the QProgressDialog adds a weird looking space between the message and the progress bar.
+    // but ninjaCom likes to add "\n" to stuff and currently sends one "\n". So need to strip the "\n" character off of the message.
+    if( msg.substr(msg.size()-1, 1) == "\n")
+    {
+        msg = msg.substr(0, msg.size()-1);
+    }
+
+    int runNumber = -1;
+    sscanf(msg.c_str(), "Run %d", &runNumber);
+
+    size_t pos;
+    size_t startPos;
+    size_t endPos;
+    std::string clipStr;
+
+    int runProgress;
+    endPos = msg.find("% complete");
+    if( endPos != msg.npos )
+    {
+        clipStr = msg.substr(0, endPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        pos = clipStr.rfind(": ");
+        startPos = pos+2;
+        clipStr = clipStr.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        runProgress = atoi(clipStr.c_str());
+
+        emit self->updateProgressValueSignal(runNumber, runProgress);
+    }
+
+//"Run 1 ERROR: Multiple runs were requested with the same input parameters."
+//"Run 0 ERROR: Exception caught: I WANT CHOCOLATE!!! Yum."
+//"Run 0: Exception caught: Simulation was cancelled by the user."
+//"Run 1: Exception canceled by user caught: Simulation was cancelled by the user."
+
+    if( msg.find("Exception caught: ") != msg.npos || msg.find("ERROR: ") != msg.npos || msg.find("Exception canceled by user caught: ") != msg.npos )
+    {
+        if( msg.find("Exception caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception caught: ");
+            startPos = pos+18;
+        }
+        else if( msg.find("Exception canceled by user caught: ") != msg.npos )
+        {
+            pos = msg.find("Exception canceled by user caught: ");
+            startPos = pos+35;
+        }
+        else // if( msg.find("ERROR: ") != msg.npos )
+        {
+            pos = msg.find("ERROR: ");
+            startPos = pos+7;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        if( clipStr == "Simulation was cancelled by the user." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation cancelled"));
+            emit self->writeToConsoleSignal(QString::fromStdString("Simulation cancelled by user"), QColor(255, 140, 0));
+        }
+        else if( clipStr == "Cannot determine exception type." )
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended with unknown error"));
+            emit self->writeToConsoleSignal(QString::fromStdString("unknown solver error"), Qt::red);
+        }
+        else
+        {
+            emit self->updateProgressMessageSignal(QString::fromStdString("Simulation ended in error:\n"+clipStr));
+            emit self->writeToConsoleSignal(QString::fromStdString("Solver error: "+clipStr), Qt::red);
+        }
+    }
+    else if( msg.find("Warning: ") != msg.npos )
+    {
+        if( msg.find("Warning: ") != msg.npos )
+        {
+            pos = msg.find("Warning: ");
+            startPos = pos+9;
+        }
+        clipStr = msg.substr(startPos);
+        //std::cout << "clipStr = \"" << clipStr << "\"" << std::endl;
+        //emit self->updateProgressMessageSignal(QString::fromStdString(clipStr));
+        //emit self->writeToConsoleSignal(QString::fromStdString(clipStr));
+        emit self->updateProgressMessageSignal(QString::fromStdString("Solver ended in warning:\n"+clipStr));
+        emit self->writeToConsoleSignal(QString::fromStdString("Solver warning: "+clipStr), QColor(255, 140, 0));
+    }
+    else
+    {
+        emit self->updateProgressMessageSignal(QString::fromStdString(msg));
+        emit self->writeToConsoleSignal(QString::fromStdString(msg));
+    }
+}
+
+void MainWindow::writeToConsole(QString message, QColor color)
+{
+    // if( ui->consoleDockWidget->isFloating() && color == Qt::white )
+    // {
+    //     color = Qt::black;
+    // }
+
+    ui->consoleTextEdit->setTextColor(color);
+    ui->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
+    ui->consoleTextEdit->repaint();
+    lineNumber++;
+}
+
+void MainWindow::connectSignals()
+{
+    connect(this, &MainWindow::updateProgressMessageSignal, this, &MainWindow::updateProgressMessage, Qt::QueuedConnection);
+    connect(this, &MainWindow::updateProgressValueSignal, this, &MainWindow::updateProgressValue, Qt::QueuedConnection);
+    connect(this, &MainWindow::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+    connect(menuBar, &MenuBar::writeToConsoleSignal, this, &MainWindow::writeToConsole);
+    connect(surfaceInput, &SurfaceInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(pointInitializationInput, &PointInitializationInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(weatherModelInput, &WeatherModelInput::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+    connect(mapBridge, &MapBridge::writeToConsoleSignal, this, &MainWindow::writeToConsole, Qt::QueuedConnection);
+
+    connect(ui->massSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::massSolverCheckBoxToggled);
+    connect(ui->momentumSolverCheckBox, &QCheckBox::toggled, this, &MainWindow::momentumSolverCheckBoxToggled);
+    connect(ui->diurnalCheckBox, &QCheckBox::toggled, this, &MainWindow::diurnalCheckBoxToggled);
+    connect(ui->stabilityCheckBox, &QCheckBox::toggled, this, &MainWindow::stabilityCheckBoxToggled);
+    connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::treeWidgetItemDoubleClicked);
+    connect(ui->numberOfProcessorsSolveButton, &QPushButton::clicked, this, &MainWindow::solveButtonClicked);
+    connect(ui->outputDirectoryButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryButtonClicked);
+    connect(ui->outputDirectoryOpenButton, &QPushButton::clicked, this, &MainWindow::outputDirectoryOpenButtonClicked);
+    connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &MainWindow::treeWidgetItemSelectionChanged);
+
+    connect(mapBridge, &MapBridge::boundingBoxReceived, surfaceInput, &SurfaceInput::boundingBoxReceived);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, pointInitializationInput, &PointInitializationInput::updateTreeView);
+    connect(surfaceInput, &SurfaceInput::updateTreeView, weatherModelInput, &WeatherModelInput::updateTreeView);
+    connect(webEngineView, &QWebEngineView::loadFinished, this, &MainWindow::readSettings);
+
+    connect(this, &MainWindow::updateMetholodyState, &AppState::instance(), &AppState::updateSolverMethodologyState);
+    connect(this, &MainWindow::updateDirunalState, &AppState::instance(), &AppState::updateDiurnalInputState);
+    connect(this, &MainWindow::updateStabilityState, &AppState::instance(), &AppState::updateStabilityInputState);
+
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
+    connect(mapBridge, &MapBridge::loadMapLayersSignal, menuBar, &MenuBar::loadMapVisualizationActionTriggered);
+    connect(mapBridge, &MapBridge::captureMapSnapshotSignal, this, &MainWindow::captureMapSnapshot);
+}
+
+int MainWindow::countNumCores()
+{
+    int coresCount;
+
+    #ifdef NINJAFOAM
+    #ifndef WIN32
+    hwloc_topology_t topology;
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+    coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+    hwloc_topology_destroy(topology);
+    #else // WIN32
+    coresCount = QThread::idealThreadCount();
+    #endif // WIN32
+    #else // NINJAFOAM
+    coresCount = QThread::idealThreadCount();
+    #endif // NINJAFOAM
+
+    return coresCount;
+}
+
+void MainWindow::cancelSolve()
+{
+    progressDialog->setLabelText("Canceling...");
+    qDebug() << "Canceling...";
+    writeToConsole( "Canceling...", QColor(255, 140, 0));
+
+    char **papszOptions = nullptr;
+    ninjaErr  = NinjaCancel(ninjaArmy, papszOptions);
+    if( ninjaErr != NINJA_SUCCESS )
+    {
+        qDebug() << "NinjaCancel: ninjaErr =" << ninjaErr;
+    }
+}
+
+void MainWindow::treeWidgetItemSelectionChanged()
+{
+    webEngineView->page()->runJavaScript("stopRectangleDrawing();");
+
+    int column = ui->treeWidget->currentColumn();
+    int pageIndex = ui->treeWidget->selectedItems().first()->data(column, Qt::UserRole).toInt(); // assume 0 since no multi selection
+    ui->inputsStackedWidget->setCurrentIndex(pageIndex);
+}
+
+void MainWindow::massSolverCheckBoxToggled()
+{
+    if(!ui->massSolverCheckBox->isChecked())
+    {
+        emit updateMetholodyState();
+        emit updateStabilityState();
+        return;
+    }
+
+    ui->stabilityCheckBox->setDisabled(false);
+    ui->stabilityCheckBox->setToolTip("");
+    ui->pointInitializationGroupBox->setDisabled(false);
+    ui->pointInitializationGroupBox->setToolTip("");
+    ui->ninjafoamCaseGroupBox->setVisible(false);
+
+    if(ui->numberOfProcessorsSpinBox->value() > nThreads)
+    {
+        ui->numberOfProcessorsSpinBox->setValue(nThreads);
+    }
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nThreads));
+    ui->numberOfProcessorsSpinBox->setMaximum(nThreads);
+
+    if(ui->momentumSolverCheckBox->isChecked())
+    {
+        ui->momentumSolverCheckBox->setChecked(false);
+    }
+
+    if(!ui->elevationInputFileLineEdit->text().isEmpty())
+    {
+        ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+        surfaceInput->updateMeshResolutionByUnits();
+    }
+
+    emit updateMetholodyState();
+    emit updateStabilityState();
+}
+
+void MainWindow::momentumSolverCheckBoxToggled()
+{
+    if(!ui->momentumSolverCheckBox->isChecked())
+    {
+        ui->stabilityCheckBox->setDisabled(false);
+        ui->stabilityCheckBox->setToolTip("");
+        ui->pointInitializationGroupBox->setDisabled(false);
+        ui->pointInitializationGroupBox->setToolTip("");
+        ui->ninjafoamCaseGroupBox->setVisible(false);
+        emit updateMetholodyState();
+        emit updateStabilityState();
+        return;
+    }
+
+    ui->stabilityCheckBox->setChecked(false);
+    ui->stabilityCheckBox->setDisabled(true);
+    ui->stabilityCheckBox->setToolTip("The non-neutral stability option is not currently available for the momentum solver.");
+    ui->pointInitializationGroupBox->setChecked(false);
+    ui->pointInitializationGroupBox->setDisabled(true);
+    ui->pointInitializationGroupBox->setToolTip("The point initialization option is not currently available for the momentum solver.");
+    ui->ninjafoamCaseGroupBox->setVisible(true);
+
+    if(ui->numberOfProcessorsSpinBox->value() > nCores)
+    {
+        ui->numberOfProcessorsSpinBox->setValue(nCores);
+    }
+    ui->availableProcessorsLabel->setText("Available Processors:  " + QString::number(nCores));
+    ui->numberOfProcessorsSpinBox->setMaximum(nCores);
+
+    if(ui->massSolverCheckBox->isChecked())
+    {
+        ui->massSolverCheckBox->setChecked(false);
+    }
+
+    if(!ui->elevationInputFileLineEdit->text().isEmpty())
+    {
+        ui->meshResolutionSpinBox->setValue(surfaceInput->computeMeshResolution(ui->meshResolutionComboBox->currentIndex(), ui->momentumSolverCheckBox->isChecked()));
+        surfaceInput->updateMeshResolutionByUnits();
+    }
+
+    emit updateMetholodyState();
+    emit updateStabilityState();
+}
+
+void MainWindow::diurnalCheckBoxToggled()
+{
+    bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    ui->tableTempUnits->setEnabled(enabled);
+    for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
+    {
+        domainAverageInput->timeEdits[row]->setEnabled(enabled);
+        domainAverageInput->dateEdits[row]->setEnabled(enabled);
+        domainAverageInput->cloudSpins[row]->setEnabled(enabled);
+        domainAverageInput->airTempSpins[row]->setEnabled(enabled);
+    }
+
+    emit updateDirunalState();
+}
+
+void MainWindow::stabilityCheckBoxToggled()
+{
+    bool enabled = ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked();
+    ui->tableTempUnits->setEnabled(enabled);
+    for(int row = 0; row < ui->domainAverageTable->rowCount(); row++)
+    {
+        domainAverageInput->timeEdits[row]->setEnabled(enabled);
+        domainAverageInput->dateEdits[row]->setEnabled(enabled);
+        domainAverageInput->cloudSpins[row]->setEnabled(enabled);
+        domainAverageInput->airTempSpins[row]->setEnabled(enabled);
+    }
+
+    emit updateStabilityState();
+}
+
+void MainWindow::outputDirectoryButtonClicked()
+{
+    QString currentPath = ui->outputDirectoryLineEdit->text();
+    QString dirPath = QFileDialog::getExistingDirectory(this, "Select a directory", currentPath, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (!dirPath.isEmpty())
+    {
+        ui->outputDirectoryLineEdit->setText(dirPath);
+        ui->outputDirectoryLineEdit->setToolTip(dirPath);
+    } else
+    {
+        ui->outputDirectoryLineEdit->setText(currentPath);
+        ui->outputDirectoryLineEdit->setToolTip(currentPath);
+    }
+}
+
+void MainWindow::outputDirectoryOpenButtonClicked()
+{
+    QDesktopServices::openUrl(QUrl::fromLocalFile(outputDir.absolutePath()));
+}
+
+void MainWindow::solveButtonClicked()
+{
+    AppState& state = AppState::instance();
+
+    maxProgress = 100;
+    //progressDialog = new QProgressDialog("Initializing Runs...", "Cancel", 0, maxProgress, ui->centralwidget);
+    progressDialog = new QProgressDialog(ui->centralwidget);
+    progressDialog->setRange(0, maxProgress);
+    progressDialog->setValue(0);
+    progressDialog->setLabelText("Initializing Runs...");
+    progressDialog->setCancelButtonText("Cancel");
+
+    progressDialog->setWindowModality(Qt::WindowModal);
+    progressDialog->setMinimumDuration(0);
     progressDialog->setAutoClose(false);
     progressDialog->setAutoReset(false);
-    progressDialog->setWindowModality(Qt::ApplicationModal);
 
-    runProgress = 0;
-    totalProgress = 0;
-    mainWindow::progressLog;
+    progressDialog->setMinimumSize(380, 100);
+    progressDialog->show();
 
-    noGoogleCellSize = 30.0;
+    ninjaErr = NINJA_SUCCESS;
 
-    //set defaults for some variables
-#ifdef NINJAFOAM
-    existingCaseDir = "";
-#endif
-    inputFileName = "";
-    inputFileDir = "";
-    inputFileType = -1;
-    shortInputFileName = "";
-    prjFileName = "";
-    hasPrj = false;
+    ninjaArmy = nullptr;
+    char **papszOptions = nullptr;
+    const char *initializationMethod = nullptr;
 
-    GDALCenterLat = GDALCenterLon = 0;
-    hasGDALCenter = false;
+    ninjaArmy = NinjaInitializeArmy();
 
-    tree = new WindNinjaTree;
-
-    createConsole();
-    createActions();
-    createMenus();
-
-    createTimers();
-
-    createConnections();
-
-    setCentralWidget(tree);
-
-    //threading
-    sThread = new solveThread;
-
-    meshCellSize = 200.0;
-
-    QString v(NINJA_VERSION_STRING);
-    v = "Welcome to WindNinja " + v;
-
-
-    writeToConsole(v, Qt::blue);
-
-    //get and set working directory for open dialogs and tutorials.
-    cwd = QDir::current();
-    pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-    //pwd = QDir::current();
-    pwd.cdUp();
-
-    writeToConsole(cwd.currentPath());
-    cwd.cd("../example-files");
-    //writeToConsole(cwd.absolutePath());
-
-    readSettings();
-
-    okToContinueCheck = false;
-
-    computeCellSize(tree->surface->meshResComboBox->currentIndex());
-
-    checkAllItems();
-    army = NULL;
-}
-
-/*
-** Check for version updates, or messages from the server.
-*/
-void mainWindow::checkMessages(void) {
-    QMessageBox mbox;
-    char **papszMsg = NinjaCheckVersion();
-    if (papszMsg != NULL) {
-      const char *pszVers =
-          CSLFetchNameValueDef(papszMsg, "VERSION", NINJA_VERSION_STRING);
-      if (strcmp(pszVers, NINJA_VERSION_STRING) > 0) {
-        mbox.setText("A new version of WindNinja is available: " +
-                     QString(pszVers));
-        mbox.exec();
-      }
-      char **papszUserMsg = CSLFetchNameValueMultiple(papszMsg, "MESSAGE");
-      for (int i = 0; i < CSLCount(papszUserMsg); i++) {
-        mbox.setText(QString(papszUserMsg[i]));
-        mbox.exec();
-      }
-      CSLDestroy(papszUserMsg);
-      if (CSLFetchNameValue(papszMsg, "ABORT") != NULL) {
-        mbox.setText("There is a fatal flaw in Windninja, it must close.");
-        mbox.exec();
-        abort();
-      }
-    }
-    CSLDestroy(papszMsg);
-}
-
-bool mainWindow::okToContinue()
-{
-  if(okToContinueCheck)
+    ninjaErr = NinjaSetArmyComMessageHandler(ninjaArmy, &comMessageHandler, this, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
     {
-      int r = QMessageBox::warning(this, tr("WindNinja"),
-                   tr("Are you sure you want to exit?"),
-                   QMessageBox::Yes |
-                   QMessageBox::No |
-                   QMessageBox::Cancel);
-      if(r == QMessageBox::Yes)
-    return true;
-      else if(r == QMessageBox::No || r == QMessageBox::Cancel)
-    return false;
-      else
-    return false;
+        qDebug() << "NinjaSetArmyComMessageHandler(): ninjaErr =" << ninjaErr;
     }
-  else
-    return true;
-}
 
-void mainWindow::closeEvent(QCloseEvent *event)
-{
-  if(okToContinue())
-    writeSettings();
-  else
-    event->ignore();
-}
-
-void mainWindow::writeSettings()
-{
-  writeToConsole("Saving settings...");
-  QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
-  settings.setDefaultFormat(QSettings::IniFormat);
-  //input file path
-  writeToConsole(inputFileDir.absolutePath());
-  settings.setValue("inputFileDir", inputFileDir.absolutePath());
-  //veg choice
-  settings.setValue("vegChoice", tree->surface->roughnessComboBox->
-            currentIndex());
-  //mesh choice
-  settings.setValue("meshChoice", tree->surface->meshResComboBox->
-            currentIndex());
-  //mesh units
-  settings.setValue("meshUnits", tree->surface->meshMetersRadioButton->
-            isChecked());
-  //number of processors
-  settings.setValue("nProcessors", tree->solve->numProcSpinBox->value());
-
-  //time zone
-  settings.setValue("timeZone",
-            tree->surface->timeZone->tzComboBox->currentText() );
-
-  settings.setValue("pointFile", tree->point->stationFileName );
-
-  settings.setValue("customRes", tree->surface->meshResDoubleSpinBox->value());
-
-  writeToConsole("Settings saved.");
-}
-
-void mainWindow::readSettings()
-{
-  QSettings settings(QSettings::UserScope, "Firelab", "WindNinja");
-  settings.setDefaultFormat(QSettings::IniFormat);
-  if(settings.contains("inputFileDir"))
+    if(state.isDomainAverageInitializationValid)
     {
-      inputFileDir = settings.value("inputFileDir").toString();
-    }
-  else
-    {
-        std::string oTmpPath = FindNinjaRootDir();
-        inputFileDir = CPLFormFilename(oTmpPath.c_str(), "etc/windninja/example-files", NULL);
-    }
-  if(settings.contains("vegChoice"))
-    {
-      tree->surface->roughnessComboBox->
-    setCurrentIndex(settings.value("vegChoice").toInt());
-    }
-  if(settings.contains("meshChoice"))
-    {
-        int choice = settings.value("meshChoice").toInt();
-        tree->surface->meshResComboBox->setCurrentIndex(choice);
-        if(choice == 4 && settings.contains("customRes"))
+        initializationMethod = "domain_average";
+        QList<double> speeds;
+        QList<double> directions;
+        QList<int> years;
+        QList<int> months;
+        QList<int> days;
+        QList<int> hours;
+        QList<int> minutes;
+        QList<double> cloudCovers;
+        QList<double> airTemps;
+
+        QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+
+        numNinjas = domainAverageInput->countNumRuns();
+
+        // countNumRuns() returns 0 when ALL rows are 0.0, 0.0 spd, dir rows,
+        // but if diurnal is checked, we actually DO want to run that first 0.0, 0.0 spd, dir row as a single run
+        if(numNinjas == 0 && ui->diurnalCheckBox->isChecked() == true)
         {
-            double r = settings.value("customRes").toDouble();
-            tree->surface->meshResDoubleSpinBox->setValue(r);
+            numNinjas = 1;
         }
-    }
-  if(settings.contains("meshUnits"))
-    {
-      if(settings.value("meshUnits").toBool())
-    tree->surface->meshMetersRadioButton->setChecked(true);
-      else
-    tree->surface->meshFeetRadioButton->setChecked(true);
-    }
-  if(settings.contains("nProcessors"))
-    {
-    tree->solve->numProcSpinBox->
-        setValue(settings.value("nProcessors").toInt());
-    }
-  if(settings.contains("timeZone"))
-    {
-    QString v = settings.value("timeZone").toString();
-    int index = tree->surface->timeZone->tzComboBox->findText(v);
-    if(index == -1)
-        tree->surface->timeZone->tzCheckBox->setChecked( true );
-    index = tree->surface->timeZone->tzComboBox->findText(v);
-    if( index == 0 )
-        tree->surface->timeZone->tzComboBox->setCurrentIndex(index +  1);
-    tree->surface->timeZone->tzComboBox->setCurrentIndex(index);
-    }
-  else
-    {
-        tree->surface->timeZone->tzComboBox->setCurrentIndex(2);
-        tree->surface->timeZone->tzComboBox->setCurrentIndex(1);
-    }
-  if(settings.contains("pointFile"))
-    {
-    QString f = settings.value("pointFile").toString();
-    tree->point->stationFileName = f;
-    }
-}
 
-void mainWindow::createActions()
-{
-  //open surface file action
-  openInputFileAction = new QAction(tr("Open &Elevation Input File"), this);
-  openInputFileAction->setIcon(QIcon(":folder_page.png"));
-  openInputFileAction->setShortcut(tr("Ctrl+D"));
-  openInputFileAction->setStatusTip(tr("Open Surface Input  File"));
-  connect(openInputFileAction, SIGNAL(triggered()),
-      this, SLOT(openInputFile()));
+        for(int runIdx = 0; runIdx < numNinjas; runIdx++)
+        {
+            speeds << domainAverageInput->speedSpins[runIdx]->value();
+            directions << domainAverageInput->dirSpins[runIdx]->value();
 
-  //exitAction
-  exitAction = new QAction(tr("E&xit"), this);
-  exitAction->setIcon(QIcon(":cancel.png"));
-  exitAction->setShortcut(tr("Alt+F4"));
-  exitAction->setStatusTip(tr("Exit WindNinja"));
-  connect(exitAction, SIGNAL(triggered()),
-      this, SLOT(close()));
+            // always grab the values from the diurnal/stability inputs,
+            // whether they are the default values, or whatever the user has changed them to be
 
-  //write console output action
-  writeConsoleOutputAction = new QAction(tr("Write console output to file..."), this);
-  writeConsoleOutputAction->setIcon(QIcon(":disk.png"));
-  writeConsoleOutputAction->setShortcut(tr("Ctrl+W"));
-  writeConsoleOutputAction->setStatusTip(tr("Write the console text to disk"));
-  connect(writeConsoleOutputAction, SIGNAL(triggered()), this,
-      SLOT(writeConsoleOutput()));
+            // constructs using machine local time, may need to convert from machine local time to UTC time
+            QDateTime currentDateTime = QDateTime(domainAverageInput->dateEdits[runIdx]->date(), domainAverageInput->timeEdits[runIdx]->time());
 
-  //resample data action
-  resampleAction = new QAction(tr("&Resample Data"), this);
-  resampleAction->setIcon(QIcon(":resample.png"));
-  resampleAction->setShortcut(tr("Ctrl+R"));
-  resampleAction->setStatusTip(tr("Resample Existing Data"));
-  connect(resampleAction, SIGNAL(triggered()), this, SLOT(resampleData()));
+            years << currentDateTime.date().year();
+            months << currentDateTime.date().month();
+            days << currentDateTime.date().day();
+            hours << currentDateTime.time().hour();
+            minutes << currentDateTime.time().minute();
 
-  //write a blank weather station file for point initialization
-
-  writeBlankStationFileAction = new QAction(tr("Write a blank station file"),
-                           this);
-  writeBlankStationFileAction->setIcon(QIcon(":disk.png"));
-  writeBlankStationFileAction->setShortcut(tr("Ctrl+Alt+W"));
-  writeBlankStationFileAction->setStatusTip(tr("Write a blank station file for point initialization"));
-  connect(writeBlankStationFileAction, SIGNAL(triggered()), this,
-      SLOT(writeBlankStationFile()));
-
-  setConfigAction = new QAction(tr("Set Configuration Option"), this);
-  setConfigAction->setIcon(QIcon(":cog_go.png"));
-  setConfigAction->setStatusTip(tr("Set advanced runtime configuration options"));
-  connect(setConfigAction, SIGNAL(triggered()), this, SLOT(SetConfigOption()));
-
-  //wind ninja help action
-  windNinjaHelpAction = new QAction(tr("WindNinja &Help"), this);
-  windNinjaHelpAction->setIcon(QIcon(":help.png"));
-  windNinjaHelpAction->setShortcut(tr("Ctrl+H"));
-  windNinjaHelpAction->setStatusTip(tr("Get Help with the WindNinja"));
-  connect(windNinjaHelpAction, SIGNAL(triggered()), this,
-      SLOT(windNinjaHelp()));
-
-  //arcMap action
-  displayShapeFileMapAction = new QAction(tr("How to Display Shapefiles in ArcMap"), this);
-  displayShapeFileMapAction->setIcon(QIcon(":page_white_acrobat.png"));
-  connect(displayShapeFileMapAction, SIGNAL(triggered()), this,
-      SLOT(displayArcMap()));
-
-  //open wind ninja tutorial 1 action
-  tutorial1Action = new QAction(tr("Tutorial &1:The Basics"), this);
-  tutorial1Action->setIcon(QIcon(":page_white_acrobat.png"));
-  tutorial1Action->setShortcut(tr("Ctrl+1"));
-  tutorial1Action->setStatusTip(tr("Get started using the WindNinja"));
-  connect(tutorial1Action, SIGNAL(triggered()), this, SLOT(tutorial1()));
-
- //open wind ninja tutorial 2 action
-  tutorial2Action = new QAction(tr("Tutorial &2: Diurnal Winds and Non-neutral Stability"), this);
-  tutorial2Action->setIcon(QIcon(":page_white_acrobat.png"));
-  tutorial2Action->setShortcut(tr("Ctrl+2"));
-  tutorial2Action->setStatusTip(tr("Using Diurnal Winds in WindNinja"));
-  connect(tutorial2Action, SIGNAL(triggered()), this, SLOT(tutorial2()));
-
-  //open wind ninja tutorial 3 action
-  tutorial3Action = new QAction(tr("Tutorial &3:Point Initialization"), this);
-  tutorial3Action->setIcon(QIcon(":page_white_acrobat.png"));
-  tutorial3Action->setShortcut(tr("Ctrl+3"));
-  tutorial3Action->setStatusTip(tr("Using Point Initialization in WindNinja"));
-  connect(tutorial3Action, SIGNAL(triggered()), this, SLOT(tutorial3()));
-
-  //open wind ninja tutorial 4 action
-  tutorial4Action = new QAction(tr("Tutorial &4:Weather Model Initialization"), this);
-  tutorial4Action->setIcon(QIcon(":page_white_acrobat.png"));
-  tutorial4Action->setShortcut(tr("Ctrl+4"));
-  tutorial4Action->setStatusTip(tr("Using Weather Model Initialization in WindNinja"));
-  connect(tutorial4Action, SIGNAL(triggered()), this, SLOT(tutorial4()));
-
-  //dem downloader
-  downloadDemAction = new QAction(tr("DEM Download Instructions"), this);
-  downloadDemAction->setIcon(QIcon(":page_white_acrobat.png"));
-  downloadDemAction->setStatusTip(tr("How to download DEM data with WindNinja"));
-  connect(downloadDemAction, SIGNAL(triggered()), this, SLOT(demDownload()));
-
-  //dem downloader cli
-  fetchDemAction = new QAction(tr("fetch_dem Instructions"), this);
-  fetchDemAction->setIcon(QIcon(":page_white_acrobat.png"));
-  fetchDemAction->setStatusTip(tr("How to download DEM data with fetch_dem"));
-  connect(fetchDemAction, SIGNAL(triggered()), this, SLOT(fetchDem()));
-
-
-  //open wind ninja tutorial 4 action
-  cliInstructionsAction = new QAction(tr("Command Line Interface Instructions"),
-                                      this);
-  cliInstructionsAction->setIcon(QIcon(":page_white_acrobat.png"));
-  cliInstructionsAction->setShortcut(tr("Ctrl+l"));
-  cliInstructionsAction->setStatusTip(tr("Using the Command Line Interface"));
-  connect(cliInstructionsAction, SIGNAL(triggered()),
-          this, SLOT(cliInstructions()));
-
-  //about wn action
-  aboutWindNinjaAction = new QAction(tr("&About WindNinja"), this);
-  aboutWindNinjaAction->setIcon(QIcon(":help.png"));
-  aboutWindNinjaAction->setShortcut(tr("Ctrl+A"));
-  aboutWindNinjaAction->setStatusTip(tr("About the WindNinja"));
-  connect(aboutWindNinjaAction, SIGNAL(triggered()), this,
-      SLOT(aboutWindNinja()));
-
-  //citation wn action
-  citeWindNinjaAction = new QAction(tr("&Citation"), this);
-  citeWindNinjaAction->setIcon(QIcon(":citation.png"));
-  citeWindNinjaAction->setShortcut(tr("Ctrl+T"));
-  citeWindNinjaAction->setStatusTip(tr("How to cite WindNinja"));
-  connect(citeWindNinjaAction, SIGNAL(triggered()), this,
-      SLOT(citeWindNinja()));
-
-  //support email action
-  supportEmailAction = new QAction(tr("&Email Us"), this);
-  supportEmailAction->setIcon(QIcon(":email.png"));
-  supportEmailAction->setShortcut(tr("Ctrl+E"));
-  supportEmailAction->setStatusTip(tr("Email bugs/comments/questions to the WindNinja team"));
-  connect(supportEmailAction, SIGNAL(triggered()), this,
-      SLOT(supportEmail()));
-
-  submitBugReportAction = new QAction(tr("Submit Bug Report"), this);
-  submitBugReportAction->setIcon(QIcon(":bug_link.png"));
-  submitBugReportAction->setShortcut(tr("Ctrl+B"));
-  submitBugReportAction->setStatusTip(tr("Submit a bug report via GitHub (requires GitHub ID)"));
-  connect(submitBugReportAction, SIGNAL(triggered()), this,
-          SLOT(bugReport()));
-
-  //about qt action
-  aboutQtAction = new QAction(tr("About &Qt"), this);
-  aboutQtAction->setStatusTip(tr("Show the Qt library's About box"));
-  connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
-
-  //test action to test slots.
-  testAction = new QAction(tr("Test"), this);
-  connect(testAction, SIGNAL(triggered()), this, SLOT(test()));
-}
-
-void mainWindow::createMenus()
-{
-  //file menu
-  fileMenu = menuBar()->addMenu(tr("&File"));
-  fileMenu->addAction(openInputFileAction);
-  fileMenu->addSeparator();
-  fileMenu->addAction(writeConsoleOutputAction);
-  fileMenu->addSeparator();
-  fileMenu->addAction(exitAction);
-  //options menu, used member in QDockWidget to return QAction to toggle.
-  optionsMenu = menuBar()->addMenu(tr("&Options"));
-  optionsMenu->addAction(console->toggleViewAction());
-
-  //tools menu
-  toolsMenu = menuBar()->addMenu(tr("&Tools"));
-  //toolsMenu->addAction(resampleAction);
-  toolsMenu->addAction(writeBlankStationFileAction);
-  toolsMenu->addAction(setConfigAction);
-
-  //help/tutorial menus
-  helpMenu = menuBar()->addMenu(tr("&Help"));
-  shapeSubMenu = helpMenu->addMenu(tr("Displaying Shapefiles"));
-  shapeSubMenu->addAction(displayShapeFileMapAction);
-  QMenu *shapeSubMenu;
-  tutorialSubMenu = helpMenu->addMenu(tr("Tutorials"));
-  tutorialSubMenu->addAction(tutorial1Action);
-  tutorialSubMenu->addAction(tutorial2Action);
-  tutorialSubMenu->addAction(tutorial3Action);
-  tutorialSubMenu->addAction(tutorial4Action);
-  helpMenu->addAction(downloadDemAction);
-  helpMenu->addAction(fetchDemAction);
-  helpMenu->addAction(cliInstructionsAction);
-  helpMenu->addAction(aboutWindNinjaAction);
-  helpMenu->addAction(citeWindNinjaAction);
-  helpMenu->addAction(supportEmailAction);
-  helpMenu->addAction(submitBugReportAction);
-
-  //context menu for text edit
-  //console->consoleTextEdit->addAction(writeConsoleOutputAction);
-  //console->consoleTextEdit->setContextMenuPolicy(Qt::ActionsContextMenu);
-
-
-  //helpMenu->addAction(aboutQtAction);
-  //helpMenu->addAction(testAction);
-}
-
-/**
- * Create connections for mainWindow
- *
- */
-void mainWindow::createConnections()
-{
-    // Connections for DEM Downloader Button
-    connect(tree->surface->downloadDEMButton, SIGNAL(clicked()),
-      this, SLOT(openDEMDownloader()));
-    //
-    connect(&fileWatcher, SIGNAL(fileChanged(QString)),
-      this, SLOT(inputFileDeleted()));
-
-#ifdef NINJAFOAM
-  //Connect input file open button to dialog box
-  connect(tree->surface->foamCaseOpenToolButton, SIGNAL(clicked()),
-      this, SLOT(openExistingCase()));
-#endif
-  //Connect input file open button to dialog box
-  connect(tree->surface->inputFileOpenToolButton, SIGNAL(clicked()),
-      this, SLOT(openInputFile()));
-  //connect signals/slots
-  //connect combo to change mesh res
-  connect(tree->surface->meshResComboBox, SIGNAL(currentIndexChanged(int)),
-      this, SLOT(checkMeshCombo()));
-  //also connect the radio button for feet display
-  connect(tree->surface->meshMetersRadioButton, SIGNAL(toggled(bool)),
-      this, SLOT(checkMeshUnits(bool)));
-  //connect the mesh resolution on the surface input page to the output
-  //'use mesh resolution' sections.
-  connect(tree->surface->meshResDoubleSpinBox, SIGNAL(valueChanged(double)),
-      this, SLOT(updateOutRes()));
-  //connect the getLatLon button to the fx
-  //connect(tree->location->getLatLonToolButton, SIGNAL(clicked()),
-  //	  this, SLOT(getLatLon()));
-  //also connect the toggle on the check box on output pages to update
-
-  /*
-  ** When we update the mesh resolution, update the outputs if the output is
-  ** enabled.  We also update the output resolutions when the various outputs
-  ** are enabled.  Additionally when either of the radio buttons are checked.
-  */
-  connect(tree->google->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->fb->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->shape->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->pdf->useMeshResCheckBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->google->googleGroupBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->fb->fbGroupBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->surface->meshMetersRadioButton, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-  connect(tree->surface->meshFeetRadioButton, SIGNAL(toggled(bool)), this,
-          SLOT(updateOutRes()));
-
-  connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
-      tree->wind->windTable, SLOT(enableDiurnalCells(bool)));
-  connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(enablePointDate(bool)));
-  connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(enablePointDate(bool)));
-  connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
-      tree->wind->windTable, SLOT(enableStabilityCells(bool)));
-#ifdef NINJAFOAM
-  connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(enableNinjafoamOptions(bool)));
-#endif
-  //connect change in tree to the checkers
-  connect(tree->tree, SIGNAL(currentItemChanged(QTreeWidgetItem *,
-      QTreeWidgetItem *)), this, SLOT(checkAllItems()));
-
-  //connect the diurnalGroupBox->toggled to checkers
-  connect(tree->diurnal->diurnalGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->stability->stabilityGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-#ifdef NINJAFOAM
-  //connect the solver method check boxes for mutex
-  connect(tree->ninjafoam->ninjafoamGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->nativesolver->nativeSolverGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect( tree->nativesolver->nativeSolverGroupBox, SIGNAL( toggled( bool ) ),
-       this, SLOT( selectNativeSolver( bool ) ) );      
-  connect( tree->ninjafoam->ninjafoamGroupBox, SIGNAL( toggled( bool ) ),
-       this, SLOT( selectNinjafoamSolver( bool ) ) );
-#endif
-
-  //connect the speed and direction in the first row to the checkers
-  connect(tree->wind->windTable->speed[0], SIGNAL(valueChanged(double)), this,
-      SLOT(checkAllItems()));
-  connect(tree->wind->windTable->dir[0], SIGNAL(valueChanged(int)), this,
-      SLOT(checkAllItems()));
-
-  //connect the initialization check boxes to checkers
-  connect(tree->wind->windGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->point->pointGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->point->pointGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(enablePointDate(bool)));
-  connect(tree->weather->weatherGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-
-  //Connects making changes in pointInput to checkers
-  //Makes the validation happen instantaneously
-  connect(tree->point->treeView,
-          SIGNAL(clicked(const QModelIndex &)),
-          this,SLOT(checkAllItems()));
-  //When the user changes the date time, check to make sure it is sane
-  connect(tree->point->startTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
-  connect(tree->point->stopTime,SIGNAL(dateTimeChanged(QDateTime)),this,SLOT(checkAllItems()));
-
-  connect(tree->point->refreshToolButton,SIGNAL(clicked(bool)),this,SLOT(checkAllItems()));
-
-  //connect selection change in weather to checkers
-  connect(tree->weather->treeView->selectionModel(),
-      SIGNAL(currentChanged(const QModelIndex&, const QModelIndex&)),
-      this, SLOT(checkAllItems()));
-
-  //connect the output check boxes with the checkers
-  connect(tree->google->googleGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->fb->fbGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->shape->shapeGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->pdf->pdfGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-  connect(tree->vtk->vtkGroupBox, SIGNAL(toggled(bool)),
-      this, SLOT(checkAllItems()));
-
-  //and the spinboxes
-  connect(tree->google->googleResSpinBox, SIGNAL(valueChanged(double)),
-      this, SLOT(checkAllItems()));
-  connect(tree->fb->fbResSpinBox, SIGNAL(valueChanged(double)),
-      this, SLOT(checkAllItems()));
-  connect(tree->shape->shapeResSpinBox, SIGNAL(valueChanged(double)),
-      this, SLOT(checkAllItems()));
-  connect(tree->pdf->pdfResSpinBox, SIGNAL(valueChanged(double)),
-      this, SLOT(checkAllItems()));
-
-  //check the google res, make sure not bad
-  connect(tree->google->googleResSpinBox, SIGNAL(valueChanged(double)),
-      this, SLOT(checkKmlLimit(double)));
-
-  //solve button and solve()
-  connect(tree->solve->solveToolButton, SIGNAL(clicked()),
-      this, SLOT(solve()));
-
-  connect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-
-  connect(tree->solve->solveToolButton, SIGNAL(clicked()), progressDialog,
-      SLOT(forceShow()));
-
-  //connect double clicks on trees to main action for that item
-  connect(tree->tree, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),
-      this, SLOT(treeDoubleClick(QTreeWidgetItem*, int)));
-
-  //connect inputFileChanged to anything that wants it
-  connect(this, SIGNAL(inputFileChanged(QString)),
-      tree->weather, SLOT(setInputFile(QString)));
-  connect(this, SIGNAL(inputFileChanged(QString)),
-      tree->point, SLOT(setInputFile(QString)));
-  connect(this,SIGNAL(inputFileChanged(QString)),
-          tree->point, SLOT(checkForModelData())); //Update csv list when file changes in point
-//Signal To Point Input what Diurnal Input is doing
-  connect(this, SIGNAL(mainDiurnalChanged(bool)),tree->point,SLOT(setDiurnalParam(bool)));
-
-  //connect other writeToConsoles to the main writeToConsole
-  connect( tree->point, SIGNAL( writeToConsole( QString ) ),
-       this, SLOT( writeToConsole( QString ) ) );
-
-  //connect timezone combo to weather model tz string
-  connect( tree->surface->timeZone, SIGNAL( tzChanged( QString ) ),
-       tree->weather, SLOT( updateTz( QString ) ) );
-  //connect time zone for station fetch
-  connect( tree->surface->timeZone, SIGNAL( tzChanged( QString ) ),
-       tree->point, SLOT( updateTz( QString ) ) );
-
-  //connect the initialization check boxes to the others for mutex
-  connect( tree->wind->windGroupBox, SIGNAL( toggled( bool ) ),
-       this, SLOT( selectWindInitialization( bool ) ) );
-  connect( tree->point->pointGroupBox, SIGNAL( toggled( bool ) ),
-       this, SLOT( selectPointInitialization( bool ) ) );
-  connect( tree->weather->weatherGroupBox, SIGNAL( toggled( bool ) ),
-       this, SLOT( selectWeatherInitialization( bool ) ) );
-
-  //connect change in station file to checkAllItems
-  connect( tree->point, SIGNAL( stationFileChanged() ),
-       this, SLOT( checkAllItems() ) );
-
-  //connect the solve open out path button
-  connect( tree->solve->openOutputPathButton, SIGNAL( clicked() ),
-       this, SLOT( openOutputPath() ) );
-
-  connect( progressDialog, SIGNAL( canceled() ),
-       this, SLOT( updateTimer() ) );
-}
-/**
- * Slot to catch a change in initialization method
- *
- * @param pick I am picked
- */
-void mainWindow::selectWindInitialization( bool pick )
-{
-    if( pick ) {
-    tree->point->pointGroupBox->setChecked( false );
-    tree->weather->weatherGroupBox->setChecked( false );
-    tree->output->wxModelOutputCheckBox->setDisabled( true );
-    checkAllItems();
-    }
-}
-
-void mainWindow::selectPointInitialization( bool pick )
-{
-    if( pick ) {
-    tree->wind->windGroupBox->setChecked( false );
-    tree->weather->weatherGroupBox->setChecked( false );
-    tree->output->wxModelOutputCheckBox->setDisabled( true );
-    checkAllItems();
-    }
-}
-
-void mainWindow::selectWeatherInitialization( bool pick )
-{
-    if( pick ) {
-    tree->wind->windGroupBox->setChecked( false );
-    tree->point->pointGroupBox->setChecked( false );
-    checkAllItems();
-    }
-    tree->output->wxModelOutputCheckBox->setEnabled( pick );
-}
-
-#ifdef NINJAFOAM
-void mainWindow::selectNativeSolver( bool pick )
-{
-    if( pick ) {
-    tree->ninjafoam->ninjafoamGroupBox->setChecked( false );
-    checkAllItems();
-    }
-}
-
-void mainWindow::selectNinjafoamSolver( bool pick )
-{
-    if( pick ) {
-    tree->nativesolver->nativeSolverGroupBox->setChecked( false );
-    checkAllItems();
-    }
-}
-
-void mainWindow::openExistingCase()
-{
-  QString dir = QFileDialog::getExistingDirectory(this,
-          tr("Open Existing Case"),
-          inputFileDir.absolutePath(),
-          QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
-
-  QString shortName = QFileInfo(dir).fileName();
-  tree->surface->foamCaseLineEdit->setText(shortName);
-
-  tree->surface->downloadDEMButton->setEnabled(false);
-  tree->surface->meshResComboBox->setEnabled(false);
-
-//  if(existingCaseDir != QFileInfo(dir).canonicalFilePath())
-//  {
-//      emit(inputFileChanged(QFileInfo(dir).fileName()));
-//  }
-
-  existingCaseDir = QFileInfo(dir).canonicalFilePath();
-
-  if(dir.isEmpty()){
-      existingCaseDir = "";
-      tree->surface->downloadDEMButton->setEnabled(true);
-      tree->surface->meshResComboBox->setEnabled(true);
-  }
-
-  if(!dir.isEmpty()){
-    //look for DEM that matches the STL basename in the NINJAFOAM_ paraent directory
-    char **papszFileList;
-    const char *pszFilename;
-    const char *pszBasename;
-    papszFileList = VSIReadDir( CPLSPrintf("%s/constant/triSurface", existingCaseDir.toStdString().c_str()) );
-    //get the basename of the STL
-    for(int i=0; i<CSLCount( papszFileList ); i++){
-        pszFilename = CPLGetFilename( papszFileList[i] );
-        std::string s(pszFilename);
-        if( s.find(".stl") != s.npos & s.find("_out.stl") == s.npos){
-            pszBasename = CPLStrdup(CPLGetBasename( pszFilename ));
+            cloudCovers << domainAverageInput->cloudSpins[runIdx]->value();
+            airTemps << domainAverageInput->airTempSpins[runIdx]->value();
         }
-    }
-    //look for DEM
-    const char* pszDemPath = CPLStrdup(CPLGetPath(existingCaseDir.toStdString().c_str()));
-    const char* pszInputFilename= ""; //Initialize the inputfile as blank
-    papszFileList = VSIReadDir( pszDemPath );
 
-    for(int i=0; i<CSLCount( papszFileList ); i++){
-        pszFilename = CPLGetBasename( CPLGetFilename( papszFileList[i] ) );
-        std::string s(pszFilename);
-        if( s.compare(pszBasename) == 0 ){ //Try to find the DEM name in the directory
-            if(!strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"tif") |
-               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"lcp") |
-               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"img") |
-               !strcmp(CPLGetExtension( CPLGetFilename( papszFileList[i] ) ),"asc"))
+        bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
+        QString speedUnits =  ui->tableSpeedUnits->itemData(ui->tableSpeedUnits->currentIndex()).toString();
+        QString airTempUnits =  ui->tableTempUnits->currentText().remove("°");
+        QString cloudCoverUnits = "percent";
+        if(ninjaErr == NINJA_SUCCESS)
+        {
+            if(ui->diurnalCheckBox->isChecked() || ui->stabilityCheckBox->isChecked())
             {
-                pszInputFilename = CPLStrdup( papszFileList[i] );
-                break;
-            }
-        }
-    }
-    const char* pszFname="";
-    //if we can't file the DEM (pszInputFilename stays ""), throw an error and reset everything
-    if(strcmp(pszInputFilename,"")==0){
-        QMessageBox::critical(this,tr("Error."),
-                  "Invalid Existing Case.\n"
-                  "No DEM information could be found.",
-                     QMessageBox::Ok | QMessageBox::Default);
-        existingCaseDir = "";
-        tree->surface->foamCaseLineEdit->setText("");
-        tree->surface->downloadDEMButton->setEnabled(true);
-        tree->surface->meshResComboBox->setEnabled(true);
-        return;
-    }
-    else{//Else set pszName to the demfilename
-        pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
-    }
-
-////        const char* pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));pszFname = CPLStrdup(CPLFormFilename(pszDemPath, pszInputFilename, ""));
-
-    updateFileInputForCase(pszFname); //Update the dem file name
-
-    CSLDestroy( papszFileList );
-    CPLFree( (void*)pszBasename );
-    CPLFree( (void*)pszDemPath );
-    CPLFree( (void*)pszInputFilename );
-    CPLFree( (void*)pszFname );
- 
-    tree->surface->downloadDEMButton->setEnabled(false);
-    tree->surface->meshResComboBox->setEnabled(false);
-  }
-}
-#endif //NINJAFOAM
-
-//function for finding and opening an input file.
-void mainWindow::openInputFile()
-{
-  //writeToConsole(inputFileDir.absolutePath());
-  //setCursor(Qt::WaitCursor);
-  QString fileName = QFileDialog::getOpenFileName(this,
-             tr("Open Elevation Input File"),
-             inputFileDir.absolutePath(),
-
-             tr("Elevation Input Files (*.asc *.lcp *.tif *.img)"));
-
-  if(!fileName.isEmpty())
-    {
-      cwd = QFileInfo(fileName).dir();
-      //use GDAL to check the file
-      QString newFile = checkForNoData(fileName);
-      if(!newFile.isEmpty())
-      {
-          fileName = newFile;
-      }
-
-      if(checkInputFile(fileName) < 0)
-      {
-          tree->surface->inputFileLineEdit->clear();
-          fileName = "";
-          return;
-      }
-
-      QString shortName = QFileInfo(fileName).fileName();
-      if(inputFileType == LCP)
-      {
-        tree->surface->roughnessComboBox->setDisabled(true);
-        tree->surface->roughnessComboBox->hide();
-        tree->surface->roughnessLabel->show();
-      }
-      else
-        {
-            tree->surface->roughnessComboBox->setDisabled(false);
-            tree->surface->roughnessComboBox->show();
-            tree->surface->roughnessLabel->hide();
-        }
-
-      tree->surface->inputFileLineEdit->setText(shortName);
-
-      tree->surface->meshResComboBox->setEnabled(true);
-
-      if(inputFileName != fileName)
-          emit(inputFileChanged(fileName));
-
-      inputFileName = fileName;
-      inputFileDir = QFileInfo(fileName).absolutePath();
-      tree->solve->setOutputDir( inputFileDir.absolutePath() );
-      shortInputFileName = shortName;
-      checkMeshCombo();
-      checkInputItem();
-    }
-
-#ifdef NINJAFOAM
-    if(tree->surface->foamCaseLineEdit->text() != ""){
-        tree->surface->meshResComboBox->setEnabled(false);
-    }
-#endif
-
-}
-#ifdef NINJAFOAM
-/**
- * Slot to update elevation file input for existing case
- *
- * @param file File associated with existing case
- */
-void mainWindow::updateFileInputForCase(const char* file)
-{
-    QString fileName(file);
-    fileWatcher.addPath(fileName);
-
-    if(!fileName.isEmpty())
-    {
-      cwd = QFileInfo(fileName).dir();
-      //use GDAL to check the file
-      if(checkInputFile(fileName) < 0)
-      {
-          tree->surface->inputFileLineEdit->clear();
-          fileName = "";
-          return;
-      }
-
-      QString shortName = QFileInfo(fileName).fileName();
-      if(inputFileType == LCP)
-      {
-        tree->surface->roughnessComboBox->setDisabled(true);
-        tree->surface->roughnessComboBox->hide();
-        tree->surface->roughnessLabel->show();
-      }
-      else
-      {
-        tree->surface->roughnessComboBox->setDisabled(false);
-        tree->surface->roughnessComboBox->show();
-        tree->surface->roughnessLabel->hide();
-      }
-
-    tree->surface->inputFileLineEdit->setText(shortName);
-    
-    tree->surface->meshResComboBox->setEnabled(true);
-
-    if(inputFileName != fileName)
-        emit(inputFileChanged(fileName));
-
-      inputFileName = fileName;
-      inputFileDir = QFileInfo(fileName).absolutePath();
-      shortInputFileName = shortName;
-      checkMeshCombo();
-      checkInputItem();
-    }
-}
-#endif //NINJAFOAM
-
-/**
- * Slot to update elevation file input with downloaded DEM file
- *
- * @param file File created from downloaded DEM
- */
-void mainWindow::updateFileInput(const char* file)
-{
-    QString fileName(file);
-
-    fileWatcher.addPath(fileName);
-
-    if(!fileName.isEmpty())
-    {
-      cwd = QFileInfo(fileName).dir();
-      //use GDAL to check the file
-      if(checkInputFile(fileName) < 0)
-      {
-          tree->surface->inputFileLineEdit->clear();
-          fileName = "";
-          return;
-      }
-
-      QString shortName = QFileInfo(fileName).fileName();
-      if(inputFileType == LCP)
-      {
-        tree->surface->roughnessComboBox->setDisabled(true);
-        tree->surface->roughnessComboBox->hide();
-        tree->surface->roughnessLabel->show();
-      }
-      else
-        {
-            tree->surface->roughnessComboBox->setDisabled(false);
-            tree->surface->roughnessComboBox->show();
-            tree->surface->roughnessLabel->hide();
-        }
-
-    tree->surface->inputFileLineEdit->setText(shortName);
-    
-    tree->surface->meshResComboBox->setEnabled(true);
-
-      if(inputFileName != fileName)
-    emit(inputFileChanged(fileName));
-
-      inputFileName = fileName;
-      inputFileDir = QFileInfo(fileName).absolutePath();
-      shortInputFileName = shortName;
-      checkMeshCombo();
-      checkInputItem();
-      tree->solve->setOutputDir(QFileInfo(fileName).absolutePath());
-    }
-}
-
-void mainWindow::inputFileDeleted()
-{
-    tree->surface->inputFileLineEdit->clear();
-    //emit(inputFileChanged());
-    checkMeshCombo();
-    checkInputItem();
-}
-
-void mainWindow::openMainWindow()
-{
-    this->setEnabled(true);
-}
-
-void mainWindow::createConsole()
-{
-  console = new ConsoleDockWidget;
-  addDockWidget(Qt::BottomDockWidgetArea, console);
-  console->consoleTextEdit->setReadOnly(true);
-
-  //set prompt
-  prompt = "~>";
-  //orange
-  orange.setRgb(255, 165, 0);
-
-}
-void mainWindow::setPrompt(QString p)
-{
-  prompt = p;
-}
-void mainWindow::writeConsoleOutput()
-{
-  QDateTime date(QDateTime::currentDateTime());
-  QString fileName = QFileDialog::getSaveFileName
-    (this, tr("Save console output as..."), "console-output.txt",
-     tr("Text Files (*.txt)"));
-  writeToConsole("WindNinja console output from:");
-  writeToConsole(date.toString("MM/dd/yyyy hh:mm:ss"));
-  if(!fileName.isEmpty())
-    {
-      std::ofstream fout(fileName.toStdString().c_str(), std::ios::out);
-      QString text = console->consoleTextEdit->toPlainText();
-      fout << text.toStdString();
-      writeToConsole(QString("Console data written to " + fileName + "."), Qt::darkGreen);
-      fout.close();
-    }
-  else
-    writeToConsole(QString("Cannot open " + fileName + " for writing."), Qt::red);
-}
-
-//create timers for status bar
-void mainWindow::createTimers()
-{
-  runTime = new QTime(0, 0, 0, 0);
-  runTime->start();
-}
-
-void mainWindow::updateTimer()
-{
-    //elapsedRunTime = runTime->elapsed() / 1000.0;
-  writeToConsole("Total Simulation time: " + QString::number(elapsedRunTime, 'f', 2) + " seconds");
-}
-
-void mainWindow::openDEMDownloader()
-{
-    demWidget = new WidgetDownloadDEM();
-    //demWidget->setAttribute(Qt::WA_DeleteOnClose, true);
-    demWidget->settingsDir.setPath(inputFileDir.absolutePath());
-    connect(demWidget, SIGNAL(doneDownloading(const char*)), this, SLOT(updateFileInput(const char*)));
-    connect(demWidget, SIGNAL(exitDEM()), this, SLOT(openMainWindow()));
-    connect(demWidget, SIGNAL(destroyed()), this, SLOT(openMainWindow()));
-    this->setEnabled(false);
-}
-
-void mainWindow::test()
-{
-}
-
-void mainWindow::resampleData()
-{}
-
-void mainWindow::writeBlankStationFile()
-{
-    QString fileName = QFileDialog::getSaveFileName
-    (this, tr("Save station file as..."), "stations.csv",
-     tr("Text Files (*.csv)"));
-    if(!fileName.isEmpty())
-    wxStation::writeBlankStationFile( fileName.toStdString() );
-    else
-    return;
-}
-
-void mainWindow::windNinjaHelp()
-{}
-
-void mainWindow::tutorial1()
-{
-  pwd.cd("share/windninja/doc/tutorials");
-  writeToConsole("Opening " + pwd.absoluteFilePath("WindNinja_tutorial1.pdf"));
-
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("WindNinja_tutorial1.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::tutorial2()
-{
-  pwd.cd("share/windninja/doc/tutorials");
-  writeToConsole("Opening " + pwd.absoluteFilePath("WindNinja_tutorial2.pdf"));
-
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("WindNinja_tutorial2.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::tutorial3()
-{
-  pwd.cd("share/windninja/doc/tutorials");
-  writeToConsole("Opening " + pwd.absoluteFilePath("WindNinja_tutorial3.pdf"));
-
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("WindNinja_tutorial3.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::tutorial4()
-{
-  pwd.cd("share/windninja/doc/tutorials");
-  writeToConsole("Opening " + pwd.absoluteFilePath("WindNinja_tutorial4.pdf"));
-
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("WindNinja_tutorial4.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::demDownload()
-{
-  pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("download_elevation_file.pdf"));
-
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("download_elevation_file.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::fetchDem()
-{
-  pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("fetch_dem_instructions.pdf"));
-
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("fetch_dem_instructions.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-
-void mainWindow::displayArcMap()
-{
-  pwd.cd("share/windninja/doc");
-  writeToConsole("Opening " + pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"));
-  if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("displaying_wind_vectors_in_ArcMap.pdf"))))
-    {
-
-      QMessageBox::warning(this, tr("Broken Link."),
-               tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-               QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::cliInstructions()
-{
-    pwd.cd("share/windninja/doc");
-    writeToConsole("Opening " + pwd.absoluteFilePath("CLI_instructions.pdf"));
-
-    if(!QDesktopServices::openUrl(QUrl(pwd.absoluteFilePath("CLI_instructions.pdf"))))
-    {
-
-        QMessageBox::warning(this, tr("Broken Link."),
-                             tr("The link to the tutorial is broken, you can get to it through the Start Menu."),
-                             QMessageBox::Ok | QMessageBox::Default);
-    }
-  pwd.setPath(QString::fromStdString(FindNinjaBinDir()));
-  pwd.cdUp();
-}
-
-void mainWindow::supportEmail()
-{
-  QDesktopServices::openUrl(QUrl("mailto:wind.ninja.support@gmail.com?subject=[windninja-support]"));
-}
-
-void mainWindow::bugReport()
-{
-  QDesktopServices::openUrl(QUrl("https://github.com/firelab/windninja/issues/new"));
-}
-
-void mainWindow::aboutWindNinja()
-{
-  QString aboutText = "<h2>WindNinja</h2>\n";
-  aboutText.append("<p><h4>Version:</h4>" + QString(NINJA_VERSION_STRING) + "</p>");
-
-  aboutText.append("<p><h4>Git Commit:</h4>" + QString(NINJA_SCM_VERSION) + "</p>");
-
-  aboutText.append("<p><h4>Release Date:</h4>" + QString(NINJA_RELEASE_DATE) + "</p>");
-  aboutText.append("<p><h4>Developed by:</h4><p>Jason Forthofer<br/> " \
-                                               "Kyle Shannon<br/>" \
-                                               "Natalie Wagenbrenner<br/>" \
-                                               "Bret Butler<br/>" \
-                                               "Levi Malott<br/>" \
-                                               "Cody Posey<p/>");
-  aboutText.append("<p>Missoula Fire Sciences Laboratory<br />");
-  aboutText.append("Rocky Mountain Research Station<br />");
-  aboutText.append("USDA Forest Service<br />");
-  aboutText.append("5775 Highway 10 W.<br />");
-  aboutText.append("Missoula, MT 59808</p>");
-  aboutText.append("<h4>Sponsored By:</h4>");
-  aboutText.append("US Forest Service<br />");
-  aboutText.append("Center for Environmental Management of Military Lands at Colorado State University<br />");
-  aboutText.append("Joint Fire Sciences Program<br />");
-  aboutText.append("Washington State University</p>");
-  aboutText.append("<p><a href=\"https://github.com/firelab/windninja/blob/master/CREDITS.md\">Special Thanks</a></p>");
-
-  QMessageBox::about(this, tr("About WindNinja"),
-             aboutText);
-}
-
-void mainWindow::citeWindNinja()
-{
-  QString citeText = "<h4>To cite WindNinja in a publication use:</h4>";
-
-  citeText.append("Forthofer, J.M., Butler, B.W., Wagenbrenner, N.S., 2014. A comparison ");
-  citeText.append("of three approaches for simulating fine-scale surface winds in ");
-  citeText.append("support of wildland fire management. Part I. Model formulation and ");
-  citeText.append("comparison against measurements. International Journal of Wildland ");
-  citeText.append("Fire, 23:969-931. doi: 10.1071/WF12089.");
-
-  citeText.append("<h4>For additional WindNinja publications visit:</h4>");
-  citeText.append("https://weather.firelab.org/windninja/publications/");
-
-  QMessageBox::about(this, tr("Cite WindNinja"),
-             citeText);
-}
-
-void mainWindow::writeToConsole(QString message, QColor color)
-{
-  console->consoleTextEdit->setTextColor(color);
-  console->consoleTextEdit->append(QString::number(lineNumber) + ": " + message);
-  lineNumber++;
-  //console->consoleTextEdit->append(prompt + message);
-}
-
-void mainWindow::updateOutRes()
-{
-  //get res from surface page and store as an int
-  double resolution = tree->surface->meshResDoubleSpinBox->value();
-  bool useMeters = tree->surface->meshMetersRadioButton->isChecked();
-  if (tree->google->useMeshResCheckBox->isChecked() == true) {
-    tree->google->googleResSpinBox->setValue(resolution);
-    if (useMeters) {
-      tree->google->googleMetersRadioButton->setChecked(true);
-    } else {
-      tree->google->googleFeetRadioButton->setChecked(true);
-    }
-  }
-  if (tree->fb->useMeshResCheckBox->isChecked() == true) {
-    tree->fb->fbResSpinBox->setValue(resolution);
-    if (useMeters) {
-      tree->fb->fbMetersRadioButton->setChecked(true);
-    } else {
-      tree->fb->fbFeetRadioButton->setChecked(true);
-    }
-  }
-  if (tree->shape->useMeshResCheckBox->isChecked() == true) {
-    tree->shape->shapeResSpinBox->setValue(resolution);
-    if (useMeters) {
-      tree->shape->shapeMetersRadioButton->setChecked(true);
-    } else {
-      tree->shape->shapeFeetRadioButton->setChecked(true);
-    }
-  }
-  if (tree->pdf->useMeshResCheckBox->isChecked() == true) {
-    tree->pdf->pdfResSpinBox->setValue(resolution);
-    if (useMeters) {
-      tree->pdf->pdfMetersRadioButton->setChecked(true);
-    } else {
-      tree->pdf->pdfFeetRadioButton->setChecked(true);
-    }
-  }
-}
-
-//empty fx, need to write it when help is done.
-int mainWindow::openHelp(int target)
-{
-  return target;
-}
-
-void mainWindow::checkMeshCombo()
-{
-  int choice = tree->surface->meshResComboBox->currentIndex();
-  double res = 200;
-  //there is a splitter at 3
-  if(choice == 4)
-    {
-      tree->surface->meshResDoubleSpinBox->setEnabled(true);
-    }
-  else
-    {
-      if(tree->surface->inputFileLineEdit->text() == "")
-    {
-      tree->surface->meshResDoubleSpinBox->setValue(res);
-      meshCellSize = res;
-      tree->surface->meshResDoubleSpinBox->setEnabled(false);
-    }
-      else
-    {
-      tree->surface->meshResDoubleSpinBox->setEnabled(false);
-      res = computeCellSize(choice);
-      if(tree->surface->meshFeetRadioButton->isChecked())
-        res *= 3.28083989502;
-      tree->surface->meshResDoubleSpinBox->setValue(res);
-      meshCellSize = res;
-      writeToConsole("Mesh Resolution set to " +
-             QString::number(res)); //Note that this is very annoying for pointInitilaization/Station-fetch
-    }
-    }
-}
-
-void mainWindow::checkMeshUnits(bool checked)
-{
-  if(checked)
-    checkMeshCombo();
-  else
-    checkMeshCombo();
-}
-
-double mainWindow::computeCellSize(int index)
-{
-  int coarse, medium, fine;
-  double meshResolution;
-  
-  meshResolution = 200.0;
-  
-#ifdef NINJAFOAM  
-  if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
-    /*ninjafoam: calculate mesh resolution of lower volume in block mesh*/
-    coarse = 25000;
-    medium = 50000;
-    fine = 100000;
-  }
-  else{
-    /* use native mesh */
-    coarse = 4000;
-    medium = 10000;
-    fine = 20000;
-  }
-#else
-  coarse = 4000;
-  medium = 10000;
-  fine = 20000;
-#endif //NINJAFOAM
-
-  int targetNumHorizCells = fine;
-  switch(index)
-    {
-    case 0:
-      targetNumHorizCells = coarse;
-      break;
-    case 1:
-      targetNumHorizCells = medium;
-      break;
-    case 2:
-      targetNumHorizCells = fine;
-      break;
-    case 3:
-      return meshResolution;
-      break;
-    case 4:
-      return meshResolution;
-      break;
-    default:
-      return meshResolution;
-    }
-    
-#ifdef NINJAFOAM  
-  if( tree->ninjafoam->ninjafoamGroupBox->isChecked() ){
-    /* ninjafoam mesh */
-
-    double XLength = GDALXSize * GDALCellSize;
-    double YLength = GDALYSize * GDALCellSize;
-
-    double dz = GDALMaxValue - GDALMinValue;
-    double ZLength = max((0.1 * max(XLength, YLength)), (dz + 0.1 * dz));
-    double zmin, zmax;
-    zmin = GDALMaxValue + 0.05 * ZLength; //zmin (above highest point in DEM for MDM)
-    zmax = GDALMaxValue + ZLength; //zmax
-
-    double volume;
-    double cellCount;
-    double cellVolume;
-
-    volume = XLength * YLength * (zmax-zmin); //volume of blockMesh
-    cellCount = targetNumHorizCells * 0.5; // cell count in volume 1
-    cellVolume = volume/cellCount; // volume of 1 cell in blockMesh
-    double side = std::pow(cellVolume, (1.0/3.0)); // length of side of cell in blockMesh
-
-    //determine number of rounds of refinement
-    int nCellsToAdd = 0;
-    int refinedCellCount = 0;
-    int nCellsInLowestLayer = int(XLength/side) * int(YLength/side);
-    int nRoundsRefinement = 0;
-    while(refinedCellCount < (0.5 * targetNumHorizCells)){
-        nCellsToAdd = nCellsInLowestLayer * 8; //each cell is divided into 8 cells
-        refinedCellCount += nCellsToAdd - nCellsInLowestLayer; //subtract the parent cells
-        nCellsInLowestLayer = nCellsToAdd/2; //only half of the added cells are in the lowest layer
-        nRoundsRefinement += 1;
-    }
-    meshResolution = side/(nRoundsRefinement*2.0);
-  }
-  else{
-    /* native windninja mesh */
-    double XLength = GDALXSize * GDALCellSize;
-    double YLength = GDALYSize * GDALCellSize;
-    double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
-    double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
-
-    double XCellSize = XLength / nXCells;
-    double YCellSize = YLength / nYCells;
-
-    meshResolution = (XCellSize + YCellSize) / 2;
-  
-  }
-#else 
-  double XLength = GDALXSize * GDALCellSize;
-  double YLength = GDALYSize * GDALCellSize;
-  double nXCells = 2 * std::sqrt((double)targetNumHorizCells) * (XLength / (XLength + YLength));
-  double nYCells = 2 * std::sqrt((double)targetNumHorizCells) * (YLength / (XLength + YLength));
-
-  double XCellSize = XLength / nXCells;
-  double YCellSize = YLength / nYCells;
-
-  meshResolution = (XCellSize + YCellSize) / 2;
-
-  //noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
-#endif //NINJAFOAM
-
-  return meshResolution;
-}
-
-//open input file as a GDALDataset, return file type enum;
-int mainWindow::checkInputFile(QString fileName)
-{
-    GDALProjRef = "";
-    hasPrj = false;
-    GDALDataset *poInputDS;
-    double adfGeoTransform[6];
-    writeToConsole("Opening dataset...");
-    poInputDS = (GDALDataset*)GDALOpen(fileName.toStdString().c_str(),
-                                       GA_ReadOnly);
-    if(poInputDS == NULL)
-    {
-        writeToConsole("Cannot open the input file.", Qt::red);
-        return -1;
-    }
-
-    GDALDriverName = poInputDS->GetDriver()->GetDescription();
-    GDALDriverLongName = poInputDS->GetDriver()->GetMetadataItem(GDAL_DMD_LONGNAME);
-    writeToConsole("Reading " + GDALDriverLongName + "...");
-
-    //set the file type here
-    if(GDALDriverName == "AAIGrid")
-        inputFileType = ASC;
-    if(GDALDriverName == "LCP")
-        inputFileType = LCP;
-    if(GDALDriverName == "GTiff")
-    {
-        int nBandCount = GDALGetRasterCount( poInputDS );
-        //if it's a multi-band GeoTIFF, it's an lcp
-        if(nBandCount > 1)
-        {
-            inputFileType = LCP;
-        }
-        else
-            inputFileType = GTIFF;
-    }
-    if(GDALDriverName == "IMG")
-        inputFileType = IMG;
-
-    if(inputFileType == LCP)
-    {
-        tree->surface->roughnessComboBox->setEnabled(false);
-        tree->surface->roughnessComboBox->hide();
-        tree->surface->roughnessLabel->show();
-    }
-    else
-    {
-        tree->surface->roughnessComboBox->setEnabled(true);
-        tree->surface->roughnessComboBox->show();
-        tree->surface->roughnessLabel->hide();
-    }
-
-    //get x and y dimension
-    GDALXSize = poInputDS->GetRasterXSize();
-    GDALYSize = poInputDS->GetRasterYSize();
-
-    if(!GDALTestSRS(poInputDS))
-    {
-        hasPrj = false;
-        writeToConsole("Invalid Spatial Reference (prj), "
-                       "cannot do a simulation with the supplied DEM", red);
-        QMessageBox::warning(this, tr("WindNinja"),
-                             "The DEM does not contain a proper spatial reference "
-                             "system. WindNinja only supports DEM files "
-                             "with projected coordinate systems (e.g., UTM)",
-                             QMessageBox::Ok | QMessageBox::Default);
-        GDALClose((GDALDatasetH)poInputDS);
-        return -1;
-    }
-    else
-    {
-        GDALProjRef = poInputDS->GetProjectionRef();
-        const char *pszProjRef;
-        OGRSpatialReference oSRS;
-        pszProjRef = GDALProjRef.c_str();
-        oSRS.importFromWkt((char**)&pszProjRef);
-        if(GDALProjRef == "")
-        {
-            hasPrj = false;
-            QMessageBox::warning(this, tr("WindNinja"),
-                                 "The DEM does not contain a proper spatial reference "
-                                 "system. WindNinja only supports DEM files "
-                                 "with projected coordinate systems (e.g., UTM)",
-                                 QMessageBox::Ok | QMessageBox::Default);
-            GDALClose((GDALDatasetH)poInputDS);
-            return -1;
-        }
-        /* Check for geographic.  Separate case as we may allow support later
-         * on.
-         */
-        else if(oSRS.IsGeographic())
-        {
-            hasPrj = false;
-            QMessageBox::warning(this, tr("WindNinja"),
-                                 "The DEM coordinated system is in a "
-                                 "geographic projection (latitude/longitude). "
-                                 "WindNinja only supports projected "
-                                 "coordinate systems (e.g., UTM)",
-                                 QMessageBox::Ok | QMessageBox::Default);
-            writeToConsole("Invalid Spatial Reference (prj), "
-                           "cannot do a simulation with the supplied DEM", red);
-            //tree->surface->inputFileLineEdit->setText("");
-            GDALClose((GDALDatasetH)poInputDS);
-            return -1;
-        }
-        else
-        {
-            hasPrj = true;
-            double longitude, latitude;
-            if(GDALGetCenter(poInputDS, &longitude, &latitude))
-            {
-                //set diurnal location, also set DD.DDDDD
-                QString oTimeZone = FetchTimeZone(longitude, latitude, NULL).c_str();
-                if(oTimeZone != "")
-                {
-                    /* Show all time zones, so we can search all time zones */
-                    tree->surface->timeZone->tzCheckBox->setChecked(true);
-                    int nIndex = tree->surface->timeZone->tzComboBox->findText(oTimeZone);
-                    tree->surface->timeZone->tzComboBox->setCurrentIndex(nIndex);
-                }
-
-                //emit latLonChanged( ll[0], ll[1], false );
-            }
-        }
-    }
-
-    //check for ndv
-    //if(!checkForNoData(poInputDS))
-    if(GDALHasNoData(poInputDS, 1))
-    {
-        writeToConsole("The input file contains no data values, cannot use",
-                       Qt::red);
-        GDALClose((GDALDatasetH)poInputDS);
-        return -1;
-    }
-
-    //get the geo-transform
-    if(poInputDS->GetGeoTransform(adfGeoTransform) == CE_None)
-    {
-        int c1, c2;
-        c1 = adfGeoTransform[1];
-        c2 = adfGeoTransform[5];
-        if(abs(c1) == abs(c2))
-            GDALCellSize = abs(c1);
-        else
-        {
-            writeToConsole("Invalid cell size, invalid file");
-            GDALClose((GDALDatasetH)poInputDS);
-            return -1;
-        }
-    }
-
-    //get min/max values
-    GDALMaxValue = GDALGetMax(poInputDS);
-    GDALMinValue = GDALGetMin(poInputDS);
-
-    GDALClose( (GDALDatasetH)poInputDS );
-
-    double XLength = GDALXSize * GDALCellSize;
-    double YLength = GDALYSize * GDALCellSize;
-
-    noGoogleCellSize = std::sqrt((XLength * YLength) / noGoogleNumCells);
-
-    writeToConsole("File Opened.", Qt::darkGreen);
-    return 0;
-}
-
-bool mainWindow::getLatLon()
-{
-  if(hasGDALCenter)
-    {
-      writeToConsole("The center of your DEM has been found.", Qt::darkGreen);
-      writeToConsole("The lat/lon has been set in the diurnal inputs section", Qt::darkGreen);
-      checkAllItems();
-      return true;
-    }
-  else
-    {
-      writeToConsole("Cannot get Lat/Lon center", Qt::red);
-      return false;
-    }
-}
-
-void mainWindow::openOutputPath()
-{
-    if( outputPath.isEmpty() || outputPath == "!set" )
-    {
-        return;
-    }
-    else
-    {
-        QDesktopServices::openUrl( QUrl ( "file:///" + outputPath,
-                                   QUrl::TolerantMode ) );
-    }
-}
-
-int mainWindow::solve()
-{
-#ifdef NINJAFOAM
-    bool useNinjaFoam = tree->ninjafoam->ninjafoamGroupBox->isChecked();
-#endif
-    //disable the open output path button
-    tree->solve->openOutputPathButton->setDisabled( true );
-
-    //dem file
-    std::string demFile = inputFileName.toStdString();
-    
-#ifdef NINJAFOAM
-    std::string caseFile = existingCaseDir.toStdString();
-#endif
-
-    //vegetation/roughness
-    int vegIndex = tree->surface->roughnessComboBox->currentIndex();
-    WindNinjaInputs::eVegetation vegetation;
-    if( inputFileType != LCP ) {
-    //get choice from combo
-    if(vegIndex == 0)
-        vegetation = WindNinjaInputs::grass;
-    else if( vegIndex == 1 )
-        vegetation = WindNinjaInputs::brush;
-    else if( vegIndex == 2 )
-        vegetation = WindNinjaInputs::trees;
-    }
-
-    //mesh
-    int meshIndex = tree->surface->meshResComboBox->currentIndex();
-    Mesh::eMeshChoice meshChoice;
-    double meshRes;
-    lengthUnits::eLengthUnits meshUnits;
-    bool customMesh = false;
-    if( meshIndex == 0 )
-    meshChoice = Mesh::coarse;
-    else if( meshIndex == 1 )
-    meshChoice = Mesh::medium;
-    else if( meshIndex == 2 )
-    meshChoice = Mesh::fine;
-    else {
-    meshRes = tree->surface->meshResDoubleSpinBox->value();
-    customMesh = true;
-    if( tree->surface->meshFeetRadioButton->isChecked() )
-        meshUnits = lengthUnits::feet;
-    else
-        meshUnits = lengthUnits::meters;
-    }
-#ifdef NINJAFOAM
-    WindNinjaInputs::eNinjafoamMeshChoice ninjafoamMeshChoice;
-    if(useNinjaFoam){
-        if( meshIndex == 0 )
-            ninjafoamMeshChoice = WindNinjaInputs::coarse;
-        else if( meshIndex == 1 )
-            ninjafoamMeshChoice = WindNinjaInputs::medium;
-        else if (meshIndex == 2)
-            ninjafoamMeshChoice = WindNinjaInputs::fine;
-        else {
-        meshRes = tree->surface->meshResDoubleSpinBox->value();
-        customMesh = true;
-        if( tree->surface->meshFeetRadioButton->isChecked() )
-            meshUnits = lengthUnits::feet;
-        else
-            meshUnits = lengthUnits::meters;
-        }
-    }
-#endif
-
-    //location
-    int tzIndex = tree->surface->timeZone->tzComboBox->currentIndex();
-    if(tzIndex == -1 && (tree->diurnal->diurnalGroupBox->isChecked() ||
-                         tree->weather->weatherGroupBox->isChecked()
-                         || tree->stability->stabilityGroupBox->isChecked()
-                         ))
-    {
-        QMessageBox::warning(this, tr("WindNinja"), tr("Could not auto-identify "
-                                                      "time zone, please " 
-                                                      "specify one in Surface"),
-                             QMessageBox::Ok | QMessageBox::Default);
-        progressDialog->setValue( 0 );
-        progressDialog->cancel();
-        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-        setCursor(Qt::ArrowCursor);
-        return false;
-    }
-
-    QVariant temp = tree->surface->timeZone->tzComboBox->itemData( tzIndex );
-    std::string timeZone = temp.toString().toStdString();
-
-    //diurnal
-    bool useDiurnal = tree->diurnal->diurnalGroupBox->isChecked();
-
-    //stability
-    bool useStability = tree->stability->stabilityGroupBox->isChecked();
-
-    //initialization method
-    WindNinjaInputs::eInitializationMethod initMethod;
-    if( tree->wind->windGroupBox->isChecked() )
-        initMethod = WindNinjaInputs::domainAverageInitializationFlag;
-    else if( tree->point->pointGroupBox->isChecked() )
-        initMethod = WindNinjaInputs::pointInitializationFlag;
-    else if( tree->weather->weatherGroupBox->isChecked() )
-        initMethod = WindNinjaInputs::wxModelInitializationFlag;
-
-    //input wind height
-    double inHeight = tree->wind->metaWind->inputHeightDoubleSpinBox->value();
-    lengthUnits::eLengthUnits inHeightUnits;
-    if(tree->wind->metaWind->feetRadioButton->isChecked())
-    inHeightUnits = lengthUnits::feet;
-    else
-    inHeightUnits = lengthUnits::meters;
-
-    //speed units and air temp units
-    velocityUnits::eVelocityUnits inputSpeedUnits;
-    if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 0)
-    inputSpeedUnits = velocityUnits::milesPerHour;
-    else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 1)
-    inputSpeedUnits = velocityUnits::metersPerSecond;
-    else if(tree->wind->windTable->inputSpeedUnits->currentIndex() == 3)
-    inputSpeedUnits = velocityUnits::knots;
-    else
-    inputSpeedUnits = velocityUnits::kilometersPerHour;
-
-    temperatureUnits::eTempUnits tempUnits;
-    if(tree->wind->windTable->airTempUnits->currentIndex() == 0)
-    tempUnits = temperatureUnits::F;
-    else if(tree->wind->windTable->airTempUnits->currentIndex() == 1)
-    tempUnits = temperatureUnits::C;
-
-    //model init
-    std::string weatherFile;
-    QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
-    if( mi.isValid() ) {
-    QFileInfo fi( tree->weather->model->fileInfo( mi ) );
-    weatherFile = fi.absoluteFilePath().toStdString();
-    }
-    else
-    weatherFile = "";
-
-    //output height
-    double outHeight = tree->output->outputHeight->outputHeightDoubleSpinBox->value();
-    lengthUnits::eLengthUnits outHeightUnits;
-    if(tree->output->outputHeight->feetRadioButton->isChecked())
-    outHeightUnits = lengthUnits::feet;
-    else
-    outHeightUnits = lengthUnits::meters;
-
-    velocityUnits::eVelocityUnits outputSpeedUnits;
-    if(tree->output->outputSpeedUnitsCombo->currentIndex() == 0)
-        outputSpeedUnits = velocityUnits::milesPerHour;
-    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 1)
-        outputSpeedUnits = velocityUnits::metersPerSecond;
-    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 2)
-        outputSpeedUnits = velocityUnits::kilometersPerHour;
-    else if(tree->output->outputSpeedUnitsCombo->currentIndex() == 3)
-        outputSpeedUnits = velocityUnits::knots;
-
-    //clip buffer?
-    int clip = tree->output->bufferSpinBox->value();
-
-    bool writeWxOutput;
-    if( tree->output->wxModelOutputCheckBox->isEnabled() )
-        writeWxOutput = tree->output->wxModelOutputCheckBox->isChecked();
-
-    //google
-    bool writeGoogle = tree->google->googleGroupBox->isChecked();
-    double googleRes = tree->google->googleResSpinBox->value();
-    double vectorWidth = tree->google->vectorWidthDoubleSpinBox->value();
-    lengthUnits::eLengthUnits googleUnits;
-    KmlVector::egoogSpeedScaling googleScale;
-    //bool writeLegend = tree->google->legendGroupBox->isChecked();
-    if(tree->google->googleMetersRadioButton->isChecked())
-    googleUnits = lengthUnits::meters;
-    else
-    googleUnits = lengthUnits::feet;
-
-    if(tree->google->uniformRangeRadioButton->isChecked())
-    googleScale = KmlVector::equal_interval;
-    else
-    googleScale = KmlVector::equal_color;
-
-    std::string googleScheme;
-    bool googVectorScaling = tree->google->applyVectorScaling->isChecked();
-    if(tree->google->colorblindBox->isChecked())
-    {
-        std::string googCheckScheme;
-        QString QgoogleScheme=tree->google->inputColorblindComboBox->currentText();
-        googCheckScheme=QgoogleScheme.toStdString();
-
-        if (googCheckScheme=="Default")
-        {
-            googleScheme="default";
-        }
-        if (googCheckScheme=="ROPGW (Red Orange Pink Green White)")
-        {
-            googleScheme="ROPGW";
-        }
-        if (googCheckScheme=="Oranges")
-        {
-            googleScheme="oranges";
-        }
-        if (googCheckScheme=="Blues")
-        {
-            googleScheme="blues";
-        }
-        if (googCheckScheme=="Pinks")
-        {
-            googleScheme="pinks";
-        }
-        if (googCheckScheme=="Greens")
-        {
-            googleScheme="greens";
-        }
-        if (googCheckScheme=="Magic Beans")
-        {
-            googleScheme="magic_beans";
-        }
-        if (googCheckScheme=="Pink to Green")
-        {
-            googleScheme="pink_to_green";
-        }
-    }
-    else
-    {
-        googleScheme="default";
-    }
-    //ascii raster fb files
-    bool writeFb = tree->fb->fbGroupBox->isChecked();
-    double fbRes = tree->fb->fbResSpinBox->value();
-    lengthUnits::eLengthUnits fbUnits;
-    if(tree->fb->fbMetersRadioButton->isChecked())
-    fbUnits = lengthUnits::meters;
-    else
-    fbUnits = lengthUnits::feet;
-    //write atmosphere file?
-    bool writeAtm = tree->fb->atmFileCheckBox->isChecked();
-    if(writeAtm && writeFb)
-    {
-        if((outHeight == 20 && outHeightUnits == lengthUnits::feet &&
-            outputSpeedUnits == velocityUnits::milesPerHour) ||
-           (outHeight == 10 && outHeightUnits == lengthUnits::meters &&
-            outputSpeedUnits == velocityUnits::kilometersPerHour))
-        {}
-        else
-        {
-            QMessageBox::critical(this, tr("The solver cannot be run"),
-                               tr("The output wind settings for atm files must "
-                               "either be 10m for output height and "
-                               "output speed units in kph, or "
-                               "20ft for output height and "
-                               "output speed units in mph."),
-                               QMessageBox::Ok | QMessageBox::Default);
-            progressDialog->setValue( 0 );
-            progressDialog->cancel();
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            setCursor(Qt::ArrowCursor);
-            return false;
-        }
-    }
-
-    //shape
-    bool writeShape = tree->shape->shapeGroupBox->isChecked();
-    double shapeRes = tree->shape->shapeResSpinBox->value();
-    lengthUnits::eLengthUnits shapeUnits;
-    if(tree->shape->shapeMetersRadioButton->isChecked())
-    shapeUnits = lengthUnits::meters;
-    else
-    shapeUnits = lengthUnits::feet;
-    //pdf
-    bool writePdf = tree->pdf->pdfGroupBox->isChecked();
-    double pdfRes = tree->pdf->pdfResSpinBox->value();
-    double pdfLineWidth = tree->pdf->vectorWidthDoubleSpinBox->value();
-    lengthUnits::eLengthUnits pdfUnits;
-    if(tree->pdf->pdfMetersRadioButton->isChecked())
-        pdfUnits = lengthUnits::meters;
-    else
-        pdfUnits = lengthUnits::feet;
-    int pdfBase = tree->pdf->backgroundComboBox->currentIndex();
-
-    double pdfHeight, pdfWidth;
-    int pdfSize = tree->pdf->sizeComboBox->currentIndex();
-    // Letter
-    if( pdfSize == 0 )
-    {
-        pdfHeight = 11.0;
-        pdfWidth = 8.5;
-    }
-    // Legal
-    else if( pdfSize == 1 )
-    {
-        pdfHeight = 14.0;
-        pdfWidth = 8.5;
-    }
-    // Tabloid
-    else if( pdfSize == 2 )
-    {
-        pdfHeight = 17.0;
-        pdfWidth = 11.0;
-    }
-    if( tree->pdf->landscapeRadioButton->isChecked() )
-    {
-        double tmp;
-        tmp = pdfWidth;
-        pdfWidth = pdfHeight;
-        pdfHeight = tmp;
-    }
-
-    bool writeVTK = tree->vtk->vtkGroupBox->isChecked();
-
-    //number of processors
-    int nThreads = tree->solve->numProcSpinBox->value();
-
-#ifdef NINJAFOAM    
-    army = new ninjaArmy(1, useNinjaFoam); // ninjafoam solver
-#else
-    army = new ninjaArmy(1); // native ninja solver
-#endif
-    //count the runs in the wind table
-    if( initMethod ==  WindNinjaInputs::pointInitializationFlag )
-    {
-        int pointFormat = tree->point->simType;
-        std::vector<std::string> pointFileList = tree->point->stationFileList; //This is for the new way
-        std::string pointFile = tree->point->stationFileList[0]; //For Old Format, only can accept 1 file
-        std::vector<int> xStartTime = tree->point->startSeries; //Get the start time from pointInput
-        std::vector<int> xEndTime = tree->point->endSeries; //Get the Stop time from pointInput
-        int numTimeSteps = tree->point->numSteps->value(); //Get the number of steps from pointInput
-        bool useTimeList = tree->point->enableTimeseries; //Find out if its a timeseries run or not
-        bool writeStationKML = tree->point->writeStationKmlButton->isChecked(); //Write a kml file
-        bool writeStationCSV = tree->point->writeStationFileButton->isChecked(); //hidden for now
-
-        /*
-         * Note that pointFormat is not the same as stationFormat!
-         *
-         * point Format is based on pointInput::directStationTraffic
-         * 0 == old format
-         * 1 == new format with time series
-         * 2 == new format no time series
-         *
-         * this is only used in the GUI
-         *
-         * stationFormat is based on wxStation::GetHeaderVersion
-         * 1 == old format
-         * 2 == new format, both timeseries and timeseries
-         * 3 == csv list that points to list of new format files with time series
-         *      NOT used in GUI
-         * 4 == csv list that points to list of new format files with no time series
-         *      NOT USED IN GUI
-         * based on header only, not actual data!
-         * this is used inside the actual simulation
-         *
-         * A modified version of directstationtraffic has been adapted for CLI use
-         * in wxStation::getFirstStationLine
-         *
-         */
-
-        if (pointFormat==0)
-        {
-            CPLDebug("STATION_FETCH","USING OLD FORMAT...");
-            pointInitialization::SetRawStationFilename(pointFile); //Note: When testing this,
-            //Only the old format works, so downloaded data, with the date-time column don't yet work!
-            /* right now the only option is the old format */
-            wxStation::SetStationFormat(wxStation::oldFormat);
-            std::vector<boost::posix_time::ptime> timeList;
-            if(useDiurnal==true || useStability==true) //means that the user is specifying time
-            { //Get that time and assign it to the simulation
-                std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
-                boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],xSingleTime[1],xSingleTime[2],xSingleTime[3],xSingleTime[4],timeZone);
-                timeList.push_back(singleTime);
-            }
-            else//The user is not giving us time, do what we normally do
-            {
-                boost::posix_time::ptime noTime;
-                timeList.push_back(noTime);
-            }
-            try{ //Try to run windninja
-                army->makeStationArmy(timeList,timeZone, pointFile, demFile, true,false);
-            }
-            catch(...){ //catch all exceptions and tell the user, prevent segfaults
-
-                QMessageBox::critical(this,tr("Failure."),
-                                      "An error occured in makeStationArmy() - OldFormat! This is "
-                                        "usually due to a failure in reading a "
-                                         "weather station file. Check your files and "
-                                         "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
-                                         QMessageBox::Ok | QMessageBox::Default);
-                disconnect(progressDialog, SIGNAL(canceled()), this,
-                           SLOT(cancelSolve()));
-                setCursor(Qt::ArrowCursor); //Restart everything
-                progressDialog->cancel();
-                progressDialog->hide();
-                delete army;
-                return false;
-            }
-            nRuns = army->getSize();
-
-        }
-        if (pointFormat==1 || pointFormat==2) //New Format
-        {
-            wxStation::SetStationFormat(wxStation::newFormat);
-            std::vector<int> formatVec;
-            std::vector<boost::posix_time::ptime> timeList;
-            CPLDebug("STATION_FETCH","NEW FORMAT...");
-            for (int i=0;i<pointFileList.size();i++) //Get the file type for all selected stations
-            {
-                formatVec.push_back(wxStation::GetHeaderVersion(pointFileList[i].c_str()));
-            }
-            if (std::equal(formatVec.begin()+1,formatVec.end(),formatVec.begin())) //Make sure all the header versions are equal, in case one of them gets past all the gui checkss
-            {
-                CPLDebug("STATION_FETCH","HEADER VERSIONS ARE GOOD...");
-
-                if(useTimeList == true) //New format with TimeList!
-                {
-                    CPLDebug("STATION_FETCH","Time List Option Selected...");
-                    if(numTimeSteps==1)
-                    {
-                        CPLDebug("STATION_FETCH","USER WANTS 1 STEP, USING START TIME...");
-                        boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],timeZone);
-                        timeList.push_back(singleTime);
-                    }
-                    else
-                    {
-                        CPLDebug("STATION_FETCH","USING TIME LIST...");
-                        timeList = pointInitialization::getTimeList(xStartTime[0],xStartTime[1],xStartTime[2],xStartTime[3],xStartTime[4],
-                                                                    xEndTime[0],xEndTime[1],xEndTime[2],xEndTime[3],xEndTime[4],
-                                                                    numTimeSteps,timeZone);
-                    }
-                    CPLDebug("STATION_FETCH","TIME LIST GENERATED...");
-                    pointInitialization::storeFileNames(pointFileList); //Files get stored
-                    CPLDebug("STATION_FETCH","FILES STORED...");
-
-                    try{ //try running with timelist
-                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false); //setting pointFileList[0] is just for header checks etc
-                    }
-                    catch(...){ //catch any and all exceptions and tell the user
-
-                        QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makeStationArmy() - timeSeries! This is "
-                                                "usually due to a failure in reading a "
-                                                 "weather station file. Check your files and "
-                                                 "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
-                                                 QMessageBox::Ok | QMessageBox::Default);
-                        disconnect(progressDialog, SIGNAL(canceled()), this,
-                                   SLOT(cancelSolve()));
-                        setCursor(Qt::ArrowCursor);
-                        progressDialog->cancel();
-                        progressDialog->hide();
-                        delete army;
-                        return false;
-                    }
-                    nRuns = army->getSize();
-                }
-                if (useTimeList == false)//Current Data/Single Step
-                {
-                    //Get time from file attributes, if its diurnal this matters
-                    //if not, then it really doesn't matter and who cares
-                    boost::posix_time::ptime noTime;
-                    CPLDebug("STATION_FETCH","USING CURRENT WEATHER DATA...");
-                    std::vector<int> xSingleTime = tree->point->diurnalTimeVec;
-                    boost::posix_time::ptime singleTime = pointInitialization::generateSingleTimeObject(xSingleTime[0],
-                                                                                                        xSingleTime[1],xSingleTime[2],
-                                                                                                        xSingleTime[3],xSingleTime[4],timeZone);
-                        timeList.push_back(singleTime);
-                    pointInitialization::storeFileNames(pointFileList);
-                    try{ //try making the army with current data
-                        army->makeStationArmy(timeList,timeZone,pointFileList[0],demFile,true,false);
-                    }
-                    catch(...){ //catch any and all exceptions and tell the user
-
-                        QMessageBox::critical(this,tr("Failure."),
-                                              "An error occured in makeStationArmy() - currentwxdata! This is "
-                                                "usually due to a failure in reading a "
-                                                 "weather station file. Check your files and "
-                                                 "try again - Error Info: "+QString(pointInitialization::error_msg.c_str()),
-                                                 QMessageBox::Ok | QMessageBox::Default);
-                        disconnect(progressDialog, SIGNAL(canceled()), this,
-                                   SLOT(cancelSolve()));
-                        setCursor(Qt::ArrowCursor);
-                        progressDialog->cancel();
-                        progressDialog->hide();
-                        delete army;
-                        return false;
-                    }
-                    nRuns = army->getSize();
-                }               
+                ninjaErr = NinjaMakeDomainAverageArmyThermalParameterization(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), years.data(), months.data(), days.data(), hours.data(), minutes.data(), DEMTimeZone.toUtf8().data(), airTemps.data(), airTempUnits.toUtf8().constData(), cloudCovers.data(), cloudCoverUnits.toUtf8().constData(), papszOptions);
             }
             else
             {
-                //Note that This error is not normally reachable if all other error
-                //handling works correctly
-                CPLDebug("STATION_FETCH","WARNING NOT ALL CSVS ARE OF THE SAME TYPE, CANNOT CONTINUE");
-                QMessageBox::critical(this,tr("Failure."),
-                                      "An error occured in deteriming data types This is "
-                                        "usually due to a failure in reading a "
-                                         "weather station file. Check your files and "
-                                         "try again",
-                                         QMessageBox::Ok | QMessageBox::Default);
-                disconnect(progressDialog, SIGNAL(canceled()), this,
-                           SLOT(cancelSolve()));
-                setCursor(Qt::ArrowCursor);
-                progressDialog->cancel();
-                progressDialog->hide();
-                delete army;
-                return false;
+                ninjaErr = NinjaMakeDomainAverageArmy(ninjaArmy, numNinjas, momentumFlag, speeds.data(), speedUnits.toUtf8().constData(), directions.data(), papszOptions);
             }
-            
-            
-        }
-        if (writeStationKML==true) //Write KMLS for each time step
-        {
-            writeToConsole("Writing Weather Station .kml");
-            nRuns = army->getSize();
-            for (int i_=0;i_<nRuns;i_++)
+            if(ninjaErr != NINJA_SUCCESS)
             {
-                wxStation::writeKmlFile(army->getWxStations(i_),
-                                        demFile,
-                                        QFileInfo(QString(demFile.c_str())).absolutePath().toStdString()+"/", outputSpeedUnits);
+                qDebug() << "NinjaMakeDomainAverageArmy: ninjaErr =" << ninjaErr;
             }
-        }
-//                if (writeStationCSV==true)
-        const char *csvOpt = CPLGetConfigOption("WRITE_CSV","FALSE");
-        if(csvOpt!="FALSE") //The only way to write an interpolated CSV is to set a config option
-        {
-            writeToConsole("Writing Weather Station .csv");
-            nRuns = army->getSize();
-            QString demBase = QFileInfo(QString(demFile.c_str())).baseName();
-            QString demPath = QFileInfo(demFile.c_str()).absoluteDir().absolutePath()+"/";
-            std::string csvPath = demPath.toStdString()+demBase.toStdString();
-            pointInitialization::writeStationOutFile(army->getWxStations(0),csvPath,"",true);
-
-        }
-        const char *metaOpt = CPLGetConfigOption("FETCH_METADATA","FALSE");
-        if(metaOpt!="FALSE") //set a config option to get the metadata from the DEM
-        { //There is also a button for this, that is hidden (see stationFetchWidget)
-            writeToConsole("Fetching station metadata for DEM...");
-            std::string pathDem = std::string(CPLGetDirname(demFile.c_str()));
-            std::string baseDem = std::string(CPLGetBasename(demFile.c_str()));
-            std::string baseMeta = baseDem+"-metadata";
-            std::string metaPath = std::string(CPLFormFilename(pathDem.c_str(),baseMeta.c_str(),".csv"));
-            CPLDebug("STATION_FETCH","Saving Metadata to: %s",metaPath.c_str());
-            pointInitialization::fetchMetaData(metaPath,demFile,true);
         }
     }
-    else if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
+    else if(state.isPointInitializationValid)
     {
-        nRuns = countRuns();
-        //do one run.
-        if(nRuns == 0)
+        initializationMethod = "point";
+
+        NinjaToolsH* ninjaTools = NinjaMakeTools();
+
+        ninjaErr = NinjaSetToolsComMessageHandler(ninjaTools, &comMessageHandler, this, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
         {
-            nRuns++;
-        }
-#ifdef NINJAFOAM
-        army->setSize( nRuns, useNinjaFoam);
-#else
-        army->setSize( nRuns, false);
-#endif
-    }
-    else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
-    {
-        if( !CPLCheckForFile( (char*)weatherFile.c_str(), NULL ) )
-        {
-             QMessageBox::critical( this, tr( "Invalid forecast file." ),
-                                    tr( "The forecast file does not exist, " \
-                                        "or it cannot be read." ),
-                                    QMessageBox::Ok | QMessageBox::Default );
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            setCursor(Qt::ArrowCursor);
-            tree->weather->checkForModelData();
-            progressDialog->cancel();
-            return false;
+            qDebug() << "NinjaSetToolsComMessageHandler(): ninjaErr =" << ninjaErr;
         }
 
-        std::vector<blt::local_date_time> times = tree->weather->timeList();
-        /* This can throw a badForecastFile */
-        try
+        QVector<QString> stationFiles = pointInitializationInput->getStationFiles();
+        QString DEMTimeZone = ui->timeZoneComboBox->currentText();
+        QByteArray timeZoneBytes = ui->timeZoneComboBox->currentText().toUtf8();
+
+        std::vector<QByteArray> stationFilesBytes;
+        stationFilesBytes.reserve(stationFiles.size());
+        std::vector<const char*> stationFileNames;
+        stationFileNames.reserve(stationFiles.size());
+        for (int i = 0; i < stationFiles.size(); i++)
         {
-#ifdef NINJAFOAM
-            army->makeArmy( weatherFile, timeZone, times, useNinjaFoam );
-#else
-            army->makeArmy( weatherFile, timeZone, times, false );
-#endif
+            stationFilesBytes.push_back(stationFiles[i].toUtf8());
+            stationFileNames.push_back(stationFilesBytes.back().constData());
         }
-        catch( badForecastFile &e )
+
+        QString DEMPath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+        bool momentumFlag = ui->momentumSolverCheckBox->isChecked();
+
+        if(ui->pointInitializationTreeView->property("timeSeriesFlag").toBool())
         {
-             QMessageBox::critical( this, tr( "Invalid forecast file." ),
-                                    tr( "The forecast cannot be read." ),
-                                    QMessageBox::Ok | QMessageBox::Default );
-            disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-            setCursor(Qt::ArrowCursor);
-            tree->weather->checkForModelData();
-            progressDialog->cancel();
-            progressDialog->hide();
-            delete army;
-            return false;
-        } catch (...) {
-            QMessageBox::critical(
-                this, tr("Failure."),
-                tr("An unknown error occurred in makeArmy().  This is usually "
-                   "due to a failure in reading the weather model file"),
-                QMessageBox::Ok | QMessageBox::Default);
-            disconnect(progressDialog, SIGNAL(canceled()), this,
-                       SLOT(cancelSolve()));
-            setCursor(Qt::ArrowCursor);
-            tree->weather->checkForModelData();
-            progressDialog->cancel();
-            progressDialog->hide();
-            delete army;
-            return false;
-        }
-        nRuns = army->getSize();
-    }
+            CPLDebug("STATION_FETCH", "Time Series option selected...");
 
-    progressDialog->setValue( 0 );
-    //set progress dialog and initial value
-    progressDialog->setRange(0, nRuns * 100); //Expand the dialog to the number of runs
-    runProgress = new int[nRuns]; //I don't think this is needed anymore
+            QDateTime start = ui->weatherStationDataStartDateTimeEdit->dateTime();
+            QDateTime end   = ui->weatherStationDataEndDateTimeEdit->dateTime();
 
-    std::string outputDir = tree->solve->outputDirectory().toStdString();
-    if( outputDir == "" ) {
-      // This should never happen, so if it does, fix it.
-      throw( "no output directory specified in solve page" );
-    }
+            QVector<int> year   = { start.date().year(),   end.date().year() };
+            QVector<int> month  = { start.date().month(),  end.date().month() };
+            QVector<int> day    = { start.date().day(),    end.date().day() };
+            QVector<int> hour   = { start.time().hour(),   end.time().hour() };
+            QVector<int> minute = { start.time().minute(), end.time().minute() };
 
-    //fill in the values
-    for(int i = 0;i < army->getSize(); i++) 
-    {
+            int nTimeSteps = ui->weatherStationDataTimestepsSpinBox->value();
 
-        army->setDEM( i, demFile );
-#ifdef NINJAFOAM
-        if(caseFile != ""){
-            army->setExistingCaseDirectory( i, caseFile );
-        }
-#endif
-        //set initialization
-        if( initMethod != WindNinjaInputs::wxModelInitializationFlag )
-        {
-            army->setInitializationMethod( i, initMethod, true );
-        }
-        //set the ninjaCom
-        army->setNinjaCommunication( i, i, ninjaComClass::ninjaGUICom );
+            QVector<int> outYear(nTimeSteps);
+            QVector<int> outMonth(nTimeSteps);
+            QVector<int> outDay(nTimeSteps);
+            QVector<int> outHour(nTimeSteps);
+            QVector<int> outMinute(nTimeSteps);
 
-        //set the input file
-        //army.readInputFile( i, demFile );
-
-        if( inputFileType != LCP )
-        {
-            army->setUniVegetation( i, vegetation );
-        }
-        if( initMethod ==  WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
-        {
-
-        }
-        else if( initMethod ==  WindNinjaInputs::domainAverageInitializationFlag )
-        {
-            //get speed
-            army->setInputSpeed( i,
-                                tree->wind->windTable->speed[i]->value(),
-                                inputSpeedUnits);
-            //get direction
-            army->setInputDirection( i, tree->wind->windTable->dir[i]->value() );
-
-            army->setInputWindHeight ( i, inHeight, inHeightUnits );
-        }
-        
-        //set input output height
-        army->setOutputWindHeight( i, outHeight, outHeightUnits );
-
-        //set output speed units
-        army->setOutputSpeedUnits( i, outputSpeedUnits );
-
-        //set clipping
-        army->setOutputBufferClipping( i, (double) clip );
-
-        army->setOutputPath( i, outputDir.c_str() );
-
-        //diurnal, if needed
-        army->setDiurnalWinds( i, useDiurnal );
-        if( useDiurnal == true ) 
-        {
-            if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
+            if(nTimeSteps == 1)
             {
-            army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
-                                 tree->wind->windTable->date[i]->date().month(),
-                                 tree->wind->windTable->date[i]->date().day(),
-                                 tree->wind->windTable->time[i]->time().hour(),
-                                 tree->wind->windTable->time[i]->time().minute(),
-                                 0, timeZone );
-            army->setUniAirTemp( i,
-                                tree->wind->windTable->airTemp[i]->value(),
-                                tempUnits );
-            army->setUniCloudCover( i,
-                                   tree->wind->windTable->cloudCover[i]->value(),
-                                   coverUnits::percent );
-            army->setPosition( i, GDALCenterLat, GDALCenterLon );
-            }
-            else if( initMethod == WindNinjaInputs::pointInitializationFlag )
-            {
-                army->setPosition( i, GDALCenterLat, GDALCenterLon );
-            }
-            else if( initMethod == WindNinjaInputs::wxModelInitializationFlag )
-            {
-                army->setPosition( i );
-            }
-        }
-        else // initMethod is wxModelInitialization or useDiurnal is false
-        {
-            army->setPosition( i );
-        }
+                CPLDebug("STATION_FETCH", "USER WANTS 1 STEP, USING START TIME...");
 
-        //stability, if needed, check for diurnal also so we don't repeat setters
-        if( useStability == true && useDiurnal == false )
-        {
-            if( initMethod == WindNinjaInputs::domainAverageInitializationFlag )
-            {
-            army->setDateTime( i, tree->wind->windTable->date[i]->date().year(),
-                                 tree->wind->windTable->date[i]->date().month(),
-                                 tree->wind->windTable->date[i]->date().day(),
-                                 tree->wind->windTable->time[i]->time().hour(),
-                                 tree->wind->windTable->time[i]->time().minute(),
-                                 0, timeZone );
-            army->setUniAirTemp( i,
-                                tree->wind->windTable->airTemp[i]->value(),
-                                tempUnits );
-            army->setUniCloudCover( i,
-                                   tree->wind->windTable->cloudCover[i]->value(),
-                                   coverUnits::percent );
-            army->setPosition( i, GDALCenterLat, GDALCenterLon );
+                int startYear = year[0];
+                int startMonth = month[0];
+                int startDay = day[0];
+                int startHour = hour[0];
+                int startMinute = minute[0];
+
+                int endYear, endMonth, endDay, endHour, endMinute;
+
+                ninjaErr = NinjaGenerateSingleTimeObject(
+                    ninjaTools,
+                    startYear, startMonth, startDay, startHour, startMinute,
+                    timeZoneBytes.constData(),
+                    &endYear, &endMonth, &endDay, &endHour, &endMinute
+                    );
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr =" << ninjaErr;
+                }
+
+                outYear[0] = endYear;
+                outMonth[0] = endMonth;
+                outDay[0] = endDay;
+                outHour[0] = endHour;
+                outMinute[0] = endMinute;
             }
-            else if( initMethod == WindNinjaInputs::pointInitializationFlag ) //Moved to makeStationArmy
+            else
             {
-                army->setPosition( i, GDALCenterLat, GDALCenterLon );
+                CPLDebug("STATION_FETCH", "USING TIME LIST...");
+
+                ninjaErr = NinjaGetTimeList(
+                    ninjaTools,
+                    year.data(), month.data(), day.data(),
+                    hour.data(), minute.data(),
+                    outYear.data(), outMonth.data(), outDay.data(),
+                    outHour.data(), outMinute.data(),
+                    nTimeSteps, timeZoneBytes.data()
+                );
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaGetTimeList: ninjaErr =" << ninjaErr;
+                }
             }
-        }
-        army->setStabilityFlag( i, useStability );
-        //set mesh stuff
-        if( customMesh )
-        {
-            army->setMeshResolution( i, meshRes, meshUnits );
+
+            if(ninjaErr == NINJA_SUCCESS)
+            {
+                CPLDebug("STATION_FETCH", "TIME LIST GENERATED...");
+
+                numNinjas = ui->weatherStationDataTimestepsSpinBox->value();
+
+                ninjaErr = NinjaMakePointArmy( ninjaArmy,
+                    outYear.data(), outMonth.data(), outDay.data(),
+                    outHour.data(), outMinute.data(), nTimeSteps,
+                    DEMTimeZone.toUtf8().data(), stationFileNames.data(),
+                    stationFileNames.size(), DEMPath.toUtf8().data(),
+                    true, momentumFlag, papszOptions
+                    );
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaMakePointArmy: ninjaErr =" << ninjaErr;
+                }
+            }
+
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                // do cleanup before the return, similar to finishedSolve()
+
+//                ninjaErr = NinjaDestroyTools(ninjaTools, papszOptions);
+//                if(ninjaErr != NINJA_SUCCESS)
+//                {
+//                    printf("NinjaDestroyTools: ninjaErr = %d\n", ninjaErr);
+//                }
+            }
         }
         else
         {
-#ifdef NINJAFOAM
-            if(useNinjaFoam){
-                army->setMeshCount( i, ninjafoamMeshChoice );
-                army->setNumberOfIterations( i, 300);
+            CPLDebug("STATION_FETCH", "USING CURRENT/LATEST TIME DATA...");
+
+            int year, month, day, hour, minute;
+            QDateTime date = ui->weatherStationDataLabel->property("simulationTime").toDateTime();
+            year = date.date().year();
+            month = date.date().month();
+            day = date.date().day();
+            hour = date.time().hour();
+            minute = date.time().minute();
+
+            int outYear, outMonth, outDay, outHour, outMinute;
+
+            ninjaErr = NinjaGenerateSingleTimeObject(
+                ninjaTools,
+                year, month, day, hour, minute,
+                timeZoneBytes.constData(),
+                &outYear, &outMonth, &outDay, &outHour, &outMinute
+                );
+            if (ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaGenerateSingleTimeObject: ninjaErr =" << ninjaErr;
             }
-            else
-                army->setMeshResolutionChoice( i, meshChoice );
-#else
-            army->setMeshResolutionChoice( i, meshChoice );
-#endif
+
+            QVector<int> yearVec   = { outYear };
+            QVector<int> monthVec  = { outMonth };
+            QVector<int> dayVec    = { outDay };
+            QVector<int> hourVec   = { outHour };
+            QVector<int> minuteVec = { outMinute };
+
+            numNinjas = 1;
+            int nTimeSteps = 1;
+
+            if(ninjaErr == NINJA_SUCCESS)
+            {
+                CPLDebug("STATION_FETCH", "TIME LIST GENERATED...");
+
+                ninjaErr = NinjaMakePointArmy( ninjaArmy,
+                    yearVec.data(), monthVec.data(), dayVec.data(),
+                    hourVec.data(), minuteVec.data(), nTimeSteps,
+                    DEMTimeZone.toUtf8().data(),
+                    stationFileNames.data(),
+                    static_cast<int>(stationFileNames.size()),
+                    DEMPath.toUtf8().data(),
+                    true, momentumFlag, papszOptions
+                );
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    qDebug() << "NinjaMakePointArmy ninjaErr =" << ninjaErr;
+                }
+            }
         }
-
-        army->setNumVertLayers( i, 20 );
-
-        //set the input file
-        //army.ninjas[i].readInputFile( demFile );
-        //army->setDEM( i, demFile );
-        // this is commented out?
-        //army.ninjas[i].mesh.compute_domain_height();
-
-        //set number of cpus...
-        //army.setnumberCPUs(1);
-
-        army->setGoogOutFlag     (i,writeGoogle);
-        army->setGoogLineWidth   (i,vectorWidth);
-        army->setGoogResolution  (i,googleRes,googleUnits);
-        army->setGoogSpeedScaling(i,googleScale);
-        army->setGoogColor       (i,googleScheme,googVectorScaling); //FIX ME
-        army->setShpOutFlag      (i,writeShape); 
-        army->setShpResolution   (i,shapeRes,shapeUnits);
-        army->setPDFOutFlag      (i,writePdf);
-        army->setPDFResolution   (i,pdfRes,pdfUnits);
-        army->setPDFLineWidth    (i,pdfLineWidth);
-        army->setPDFBaseMap      (i,pdfBase);
-        army->setPDFSize         (i,pdfHeight,pdfWidth,150);
-        army->setAsciiOutFlag    (i,writeFb);    
-        army->setAsciiResolution (i,fbRes,fbUnits);
-        //army->setWriteAtmFile  (i,writeAtm );  
-        army->setVtkOutFlag      (i,writeVTK);  
-         
-        if( initMethod == WindNinjaInputs::wxModelInitializationFlag &&
-            writeWxOutput == true )
-        {
-            army->setWxModelGoogOutFlag( i, writeGoogle );
-            army->setWxModelShpOutFlag( i, writeShape );
-            army->setWxModelAsciiOutFlag( i, writeFb );
-        }
-
-        //army.setOutputFilenames();
-        army->setNinjaComNumRuns( i, nRuns );
     }
-
-    army->set_writeFarsiteAtmFile( writeAtm && writeFb );
-
-    for( unsigned int i = 0; i < army->getSize(); i++ )
+    else if(state.isWeatherModelInitializationValid)
     {
-        progressLog.push_back(0); //Initialize the progressLog, which stores the progress of each ninja with a zero for each ninja in the army
+        QModelIndexList selectedIndexes = ui->weatherModelTimeTreeView->selectionModel()->selectedIndexes();
+        int timeListSize = selectedIndexes.count();
+        numNinjas = timeListSize;
+        initializationMethod = "wxmodel";
+        std::string timeZone = ui->timeZoneComboBox->currentText().toStdString();
+
+        QModelIndex index = ui->weatherModelFileTreeView->currentIndex();
+        QFileSystemModel *model = qobject_cast<QFileSystemModel *>(ui->weatherModelFileTreeView->model());
+        std::string filePath = model->filePath(index).toStdString();
+
+        // Allocate the char** array
+        const char **inputTimeList = new const char*[timeListSize];
+
+        for (int i = 0; i < timeListSize; ++i)
+        {
+            QString qstr = selectedIndexes[i].data().toString();
+            std::string str = qstr.toStdString();
+            inputTimeList[i] = strdup(str.c_str()); // allocate and copy each string
+        }
+
+        ninjaErr = NinjaMakeWeatherModelArmy(ninjaArmy, filePath.c_str(), timeZone.c_str(), inputTimeList, timeListSize, ui->momentumSolverCheckBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaMakeWeatherModelArmy ninjaErr =" << ninjaErr;
+        }
+    }
+    else
+    {
+        ninjaErr = NINJA_E_INVALID;
+        qCritical() << "ERROR: Invalid initialization inputs to Solve().";
+        comMessageHandler("ERROR: Invalid initialization inputs to Solve().", this);
     }
 
-    totalProgress = 0;
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
 
+        // do cleanup before the return, similar to finishedSolve()
+
+        //disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
+
+        char **papszOptions = nullptr;
+        int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+        }
+
+        // clear the progress values for the next set of runs
+        //runProgress.clear();
+
+        //futureWatcher->deleteLater();
+
+        return;
+    }
+
+    writeToConsole(QString::number( numNinjas ) + " runs initialized. Starting solver...");
+
+    maxProgress = numNinjas*100;
+
+    progressDialog->setRange(0, maxProgress);
+    progressDialog->setValue(0);
     progressDialog->setLabelText("Solving...");
 
-    /*
-    connect(army.Com, SIGNAL(sendMessage(QString, QColor)),
-            this, SLOT(writeToConsole(QString, QColor)),
-            Qt::AutoConnection);
-    */
-    for( unsigned int i = 0; i < army->getSize(); i++ ) 
+    progressDialog->setCancelButtonText("Cancel");
+    connect( progressDialog, SIGNAL( canceled() ), this, SLOT( cancelSolve() ) );
+
+    // initialize the progress values for the current set of runs
+    totalProgress = 0;
+    for(unsigned int i = 0; i < numNinjas; i++)
     {
-        connect( army->getNinjaCom( i ),
-                 SIGNAL( sendMessage( QString, QColor ) ), this,
-                 SLOT( updateProgress( QString ) ), Qt::AutoConnection );
-
-        connect( army->getNinjaCom( i ),
-                 SIGNAL( sendProgress( int, int ) ), this,
-                 SLOT( updateProgress( int, int ) ), Qt::AutoConnection );
-
-        connect( army->getNinjaCom( i ),
-                 SIGNAL( sendMessage(QString, QColor)),
-                 this, SLOT(writeToConsole(QString, QColor ) ),
-                 Qt::AutoConnection );
+        runProgress.push_back(0);
     }
-    writeToConsole(QString::number( army->getSize() ) + " runs initialized. Starting solver...");
-    //sThread->start();
 
-    progressDialog->setValue( 0 );
-    runTime->restart();
-    connect( progressDialog, SIGNAL(canceled() ),
-         this, SLOT( cancelSolve() ) );
+    futureWatcher = new QFutureWatcher<int>(this);
 
-    progressDialog->setCancelButtonText( "Cancel" );
+    bool retVal = prepareArmy(ninjaArmy, numNinjas, initializationMethod);
+    if( retVal == false )
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
 
-    setCursor( Qt::WaitCursor );
+        // do cleanup before the return, similar to finishedSolve()
 
-    progressDialog->setLabelText( "Running..." );
+        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
+        char **papszOptions = nullptr;
+        int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+        }
+
+        // clear the progress values for the next set of runs
+        runProgress.clear();
+
+        futureWatcher->deleteLater();
+
+        return;
+    }
+
+    // set progress dialog initial value and initial text for the set of runs
+    progressDialog->setValue(0);
+    progressDialog->setLabelText("Running...");
+
+    qDebug() << "Initializing runs...";
     writeToConsole( "Initializing runs..." );
 
-    bool ninjaSuccess = false;
-    //ninjaSuccess = sThread->run( nThreads, army );
-    //start the army
-    try {
-        ninjaSuccess = army->startRuns( nThreads );
-    }
-    catch (bad_alloc& e)
-    {
-        progressDialog->cancel();
-        QMessageBox::warning(this, tr("Exception Caught"),
-                             tr("WindNinja may have run out of memory. This may be caused by too fine of a mesh resolution."),
-                             QMessageBox::Ok | QMessageBox::Default);
+    connect(futureWatcher, &QFutureWatcher<int>::finished, this, &MainWindow::finishedSolve);
 
-        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-        setCursor(Qt::ArrowCursor);
-        delete army;
+    QFuture<int> future = QtConcurrent::run(&MainWindow::startSolve, this, ui->numberOfProcessorsSpinBox->value());
+    futureWatcher->setFuture(future);
+}
+
+void MainWindow::treeWidgetItemDoubleClicked(QTreeWidgetItem *item, int column)
+{
+    if (item->text(0) == "Conservation of Mass")
+    {
+        ui->massSolverCheckBox->setChecked(!ui->massSolverCheckBox->isChecked());
+    }
+    else if (item->text(0) == "Conservation of Mass and Momentum")
+    {
+        if (!item->isDisabled())
+        {
+            ui->momentumSolverCheckBox->setChecked(!ui->momentumSolverCheckBox->isChecked());
+        }
+    }
+    else if (item->text(0) == "Diurnal Input")
+    {
+        ui->diurnalCheckBox->setChecked(!ui->diurnalCheckBox->isChecked());
+    }
+    else if (item->text(0) == "Stability Input")
+    {
+        ui->stabilityCheckBox->setChecked(!ui->stabilityCheckBox->isChecked());
+    }
+    else if (item->text(0) == "Domain Average Wind")
+    {
+        ui->domainAverageGroupBox->setChecked(!ui->domainAverageGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Point Initialization")
+    {
+        ui->pointInitializationGroupBox->setChecked(!ui->pointInitializationGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Weather Model")
+    {
+        ui->weatherModelGroupBox->setChecked(!ui->weatherModelGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Surface Input")
+    {
+        ui->elevationInputFileOpenButton->click();
+    }
+    else if (item->text(0) == "Map Visualization Files")
+    {
+        if(ui->mapVisualizationCheckBox->isEnabled())
+        {
+            ui->mapVisualizationCheckBox->setChecked(!ui->mapVisualizationCheckBox->isChecked());
+        }
+    }
+    else if (item->text(0) == "Google Earth")
+    {
+        ui->googleEarthGroupBox->setChecked(!ui->googleEarthGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Fire Behavior Ascii")
+    {
+        ui->fireBehaviorAsciiGroupBox->setChecked(!ui->fireBehaviorAsciiGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Fire Behavior GeoTIFF")
+    {
+        ui->fireBehaviorGeoTiffGroupBox->setChecked(!ui->fireBehaviorGeoTiffGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Shape Files")
+    {
+        ui->shapeFilesGroupBox->setChecked(!ui->shapeFilesGroupBox->isChecked());
+    }
+    else if (item->text(0) == "Geospatial PDF Files")
+    {
+        ui->geospatialPDFFilesGroupBox->setChecked(!ui->geospatialPDFFilesGroupBox->isChecked());
+    }
+    else if (item->text(0) == "VTK Files")
+    {
+        ui->VTKFilesCheckBox->setChecked(!ui->VTKFilesCheckBox->isChecked());
+    }
+}
+
+bool MainWindow::prepareArmy(NinjaArmyH *ninjaArmy, int numNinjas, const char* initializationMethod)
+{
+    OutputPDFSize PDFSize;
+    switch(ui->sizeDimensionsComboBox->currentIndex())
+    {
+    case 0:
+        PDFSize.PDFHeight = 11.0;
+        PDFSize.PDFWidth = 8.5;
+        PDFSize.PDFDpi = 150;
+        break;
+    case 1:
+        PDFSize.PDFHeight = 14.0;
+        PDFSize.PDFWidth = 8.5;
+        PDFSize.PDFDpi = 150;
+        break;
+    case 2:
+        PDFSize.PDFHeight = 17.0;
+        PDFSize.PDFWidth = 11.0;
+        PDFSize.PDFDpi = 150;
+        break;
+    }
+    if (ui->sizeOrientationComboBox->currentIndex() == 1)
+    {
+        std::swap(PDFSize.PDFHeight, PDFSize.PDFWidth);
+    }
+
+    char **papszOptions = nullptr;
+    for(unsigned int i=0; i<numNinjas; i++)
+    {
+        /*
+       * Sets Simulation Variables
+       */
+        if(ui->pointInitializationGroupBox->isChecked())
+        {
+            if(ui->pointInitializationWriteStationKMLCheckBox->isChecked())
+            {
+                if(i == 0)
+                {
+                    writeToConsole("Writing Weather Station .kml");
+                }
+                ninjaErr = NinjaSetStationKML(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), ui->outputDirectoryLineEdit->text().toUtf8().constData(), ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+                if(ninjaErr != NINJA_SUCCESS)
+                {
+                    printf("NinjaSetStationKML: ninjaErr = %d\n", ninjaErr);
+                    return false;
+                }
+            }
+        }
+
+        ninjaErr = NinjaSetNumberCPUs(ninjaArmy, i, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetNumberCPUs: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetInitializationMethod(ninjaArmy, i, initializationMethod, ui->pointInitializationGroupBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetInitializationMethod: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetDem(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetDem: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        #ifdef NINJAFOAM
+        if(ui->momentumSolverCheckBox->isChecked() && !ui->ninjafoamCaseLineEdit->text().isEmpty())
+        {
+            ninjaErr = NinjaSetExistingCaseDirectory(ninjaArmy, i, ui->ninjafoamCaseLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetExistingCaseDirectory: ninjaErr =" << ninjaErr;
+                return false;
+            }
+        }
+        #endif //NINJAFOAM
+
+        ninjaErr = NinjaSetPosition(ninjaArmy, i, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetPosition: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetInputWindHeight(ninjaArmy, i, ui->inputWindHeightSpinBox->value(), ui->inputWindHeightUnitsComboBox->itemData(ui->inputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetInputWindHeight: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetDiurnalWinds(ninjaArmy, i, ui->diurnalCheckBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetDiurnalWinds: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetStabilityFlag(ninjaArmy, i, ui->stabilityCheckBox->isChecked(), papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetStabilityFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        if(ui->vegetationStackedWidget->currentIndex() == 0)
+        {
+            ninjaErr = NinjaSetUniVegetation(ninjaArmy, i, ui->vegetationComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetUniVegetation: ninjaErr =" << ninjaErr;
+                return false;
+            }
+        }
+
+        #ifdef NINJAFOAM
+        // the cli and the GUI use a value of 300 instead of the default value of 1000.
+        ninjaErr = NinjaSetNumberOfIterations(ninjaArmy, i, 300, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetNumberOfIterations: ninjaErr =" << ninjaErr;
+            return false;
+        }
+        #endif //NINJAFOAM
+
+        if(ui->meshResolutionComboBox->currentIndex() == 3) // custom res
+        {
+            ninjaErr = NinjaSetMeshResolution(ninjaArmy, i, ui->meshResolutionSpinBox->value(), ui->meshResolutionUnitsComboBox->itemData(ui->meshResolutionUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetMeshResolution: ninjaErr =" << ninjaErr;
+                return false;
+            }
+        } else
+        {
+            ninjaErr = NinjaSetMeshResolutionChoice(ninjaArmy, i, ui->meshResolutionComboBox->currentText().toLower().toUtf8().constData(), papszOptions);
+            if(ninjaErr != NINJA_SUCCESS)
+            {
+                qDebug() << "NinjaSetMeshResolutionChoice: ninjaErr =" << ninjaErr;
+                return false;
+            }
+        }
+
+        ninjaErr = NinjaSetNumVertLayers(ninjaArmy, i, 20, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetNumVertLayers: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        bool retVal = setOutputFlags(ninjaArmy, i, numNinjas, PDFSize);
+        if( retVal == false )
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool MainWindow::setOutputFlags(NinjaArmyH* ninjaArmy,
+                                int i,
+                                int numNinjas,
+                                OutputPDFSize PDFSize)
+{
+    char **papszOptions = nullptr;
+    int ninjaErr;
+
+    ninjaErr = NinjaSetOutputPath(ninjaArmy, i, ui->outputDirectoryLineEdit->text().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetOutputPath: ninjaErr =" << ninjaErr;
         return false;
     }
-    catch (cancelledByUser& e)
+
+    ninjaErr = NinjaSetOutputWindHeight(ninjaArmy, i, ui->outputWindHeightSpinBox->value(), ui->outputWindHeightUnitsComboBox->itemData(ui->outputWindHeightUnitsComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        progressDialog->cancel();
-        QMessageBox::warning(this, tr("Exception Caught"),
-                             tr(e.what()),
-                             QMessageBox::Ok | QMessageBox::Default);
-        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-        setCursor(Qt::ArrowCursor);
-        delete army;
+        qDebug() << "NinjaSetOutputWindHeight: ninjaErr =" << ninjaErr;
         return false;
     }
-    catch (exception& e)
+
+    ninjaErr = NinjaSetOutputSpeedUnits(ninjaArmy, i, ui->outputSpeedUnitsComboBox->currentText().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        progressDialog->cancel();
-        QMessageBox::warning(this, tr("Exception Caught"),
-                             tr(e.what()),
-                             QMessageBox::Ok | QMessageBox::Default);
-        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-        setCursor(Qt::ArrowCursor);
-        delete army;
+        qDebug() << "NinjaSetOutputSpeedUnits: ninjaErr =" << ninjaErr;
         return false;
     }
-    catch (...)
+
+    ninjaErr = NinjaSetOutputBufferClipping(ninjaArmy, i, ui->clipOutputSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
     {
-        progressDialog->cancel();
-        QMessageBox::warning(this, tr("Exception Caught"),
-                             tr("Unknown Exception"),
-                             QMessageBox::Ok | QMessageBox::Default);
-        disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
-        setCursor(Qt::ArrowCursor);
-        delete army;
+        qDebug() << "NinjaSetOutputBufferClipping: ninjaErr =" << ninjaErr;
         return false;
+    }
+
+    ninjaErr = NinjaSetGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGoogResolution(ninjaArmy, i, ui->googleEarthMeshResolutionSpinBox->value(), ui->googleEarthMeshResolutionComboBox->itemData(ui->googleEarthMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGoogSpeedScaling(ninjaArmy, i, ui->googleEarthLegendComboBox->itemData(ui->googleEarthLegendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogSpeedScaling: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGoogLineWidth(ninjaArmy, i, ui->googleEarthVectorsSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogLineWidth: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGoogColor(ninjaArmy, i, ui->googleEarthAlternativeColorSchemeComboBox->itemData(ui->googleEarthAlternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->googleEarthVectorScalingCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogColor: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGoogConsistentColorScale(ninjaArmy, i, ui->googleEarthLegendCheckBox->isChecked(), numNinjas, papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGoogConsistentColorScale: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiAaigridOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiAaigridOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiProjOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiProjOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAsciiResolution(ninjaArmy, i, ui->fireBehaviorAsciiMeshResolutionSpinBox->value(), ui->fireBehaviorAsciiMeshResolutionComboBox->itemData(ui->fireBehaviorAsciiMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAsciiResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGeoTiffOutFlag(ninjaArmy, i, ui->fireBehaviorGeoTiffGroupBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGeoTiffOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetGeoTiffResolution(ninjaArmy, i, ui->fireBehaviorGeoTiffMeshResolutionSpinBox->value(), ui->fireBehaviorGeoTiffMeshResolutionComboBox->itemData(ui->fireBehaviorGeoTiffMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetGeoTiffResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetAtmOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiAtmFileCheckBox->isChecked() || ui->fireBehaviorGeoTiffAtmFileCheckBox->isChecked(), papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetAtmOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetShpOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetShpResolution(ninjaArmy, i, ui->shapeFilesMeshResolutionSpinBox->value(), ui->shapeFilesMeshResolutionComboBox->itemData(ui->shapeFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetShpResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetPDFOutFlag(ninjaArmy, i, ui->geospatialPDFFilesGroupBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetPDFLineWidth(ninjaArmy, i, ui->geospatialPDFFilesVectorsSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFLineWidth: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetPDFBaseMap(ninjaArmy, i, ui->basemapComboBox->currentIndex(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFBaseMap: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetPDFDEM(ninjaArmy, i, ui->elevationInputFileLineEdit->property("fullpath").toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFDEM: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetPDFSize(ninjaArmy, i, PDFSize.PDFHeight, PDFSize.PDFWidth, PDFSize.PDFDpi, papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFSize: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetPDFResolution(ninjaArmy, i, ui->geospatialPDFFilesMeshResolutionSpinBox->value(), ui->geospatialPDFFilesMeshResolutionComboBox->itemData(ui->geospatialPDFFilesMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetPDFResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetVtkOutFlag(ninjaArmy, i, ui->VTKFilesCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetVtkOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzOutFlag: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzResolution(ninjaArmy, i, ui->mapVisualizationMeshResolutionSpinBox->value(), ui->mapVisualizationMeshResolutionComboBox->itemData(ui->mapVisualizationMeshResolutionComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzResolution: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzSpeedScaling(ninjaArmy, i, ui->mapVisualizationLegendComboBox->itemData(ui->mapVisualizationLegendComboBox->currentIndex()).toString().toUtf8().constData(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzSpeedScaling: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzLineWidth(ninjaArmy, i, ui->mapVisualizationVectorsSpinBox->value(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzLineWidth: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzColor(ninjaArmy, i, ui->mapVisualizationAlternativeColorSchemeComboBox->itemData(ui->mapVisualizationAlternativeColorSchemeComboBox->currentIndex()).toString().toUtf8().constData(), ui->mapVisualizationVectorScalingCheckBox->isChecked(), papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzColor: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    ninjaErr = NinjaSetFgbzConsistentColorScale(ninjaArmy, i, ui->mapVisualizationLegendCheckBox->isChecked(), numNinjas, papszOptions);
+    if (ninjaErr != NINJA_SUCCESS)
+    {
+        qDebug() << "NinjaSetFgbzConsistentColorScale: ninjaErr =" << ninjaErr;
+        return false;
+    }
+
+    if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
+    {
+        ninjaErr = NinjaSetWxModelGoogOutFlag(ninjaArmy, i, ui->googleEarthGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelGoogOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelShpOutFlag(ninjaArmy, i, ui->shapeFilesGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelShpOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelAsciiOutFlag(ninjaArmy, i, ui->fireBehaviorAsciiGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelAsciiOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelGeoTiffOutFlag(ninjaArmy, i, ui->fireBehaviorGeoTiffGroupBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelGeoTiffOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+
+        ninjaErr = NinjaSetWxModelFgbzOutFlag(ninjaArmy, i, ui->mapVisualizationCheckBox->isChecked(), papszOptions);
+        if (ninjaErr != NINJA_SUCCESS)
+        {
+            qDebug() << "NinjaSetWxModelFgbzOutFlag: ninjaErr =" << ninjaErr;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int MainWindow::startSolve(int numProcessors)
+{
+    char **papszOptions = nullptr;
+    return NinjaStartRuns(ninjaArmy, ui->numberOfProcessorsSpinBox->value(), papszOptions);
+}
+
+void MainWindow::finishedSolve()
+{
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    // ninjaCom handles most of the progress dialog, cli, and console window messaging now
+    if( result == 1 ) // simulation properly finished
+    {
+        progressDialog->setLabelText("Rendering map layers...");
+        progressDialog->setCancelButtonText("Cancel");
+        progressDialog->setRange(0, 0);
+
+        if(numNinjas > 5)
+        {
+            QMessageBox::information(
+                this,
+                "Loading Map Layers",
+                "The simulation has completed successfully.\n\n"
+                "Only the last five simulations will be loaded onto the map to maintain performance. "
+                "You can load additional simulations by clicking the + button on the map.\n\n"
+                "Click OK to begin loading the map layers."
+            );
+
+            numNinjas = 5;
+        }
+
+        qDebug() << "Finished with simulations";
+        writeToConsole("Finished with simulations", Qt::darkGreen);
+    }
+    //else if( result == NINJA_E_CANCELLED ) // the proper way to do this, but checking progressDialog->wasCanceled() seems way safer
+    else if( progressDialog->wasCanceled() ) // simulation was cancelled
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
+    }
+    else // simulation ended in some known error
+    {
+        progressDialog->setValue(maxProgress);
+        progressDialog->setCancelButtonText("Close");
     }
 
     disconnect(progressDialog, SIGNAL(canceled()), this, SLOT(cancelSolve()));
 
-    writeToConsole("Finished with simulations", Qt::darkGreen);
-    //updateTimer();
+    ui->outputDirectoryOpenButton->setDisabled(false);
+    outputDir.setPath(ui->outputDirectoryLineEdit->text());
 
-    elapsedRunTime = runTime->elapsed() / 1000.0;
-    int maxProg = nRuns*100;
-    progressDialog->setValue(maxProg);
-    progressDialog->setLabelText("Simulations finished");
+    // one more process to do after finishedSolve() stuff
+    disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap, Qt::UniqueConnection);
+    plotOutputs();
+
+    char **papszOptions = nullptr;
+    int ninjaErr = NinjaDestroyArmy(ninjaArmy, papszOptions);
+    if(ninjaErr != NINJA_SUCCESS)
+    {
+        printf("NinjaDestroyRuns: ninjaErr = %d\n", ninjaErr);
+    }
+
+    // clear the progress values for the next set of runs
+    runProgress.clear();
+
+    futureWatcher->deleteLater();
+}
+
+void MainWindow::plotOutputs()
+{
+    // get the return value of the QtConcurrent::run() function
+    int result = futureWatcher->future().result();
+
+    if(result == 1 && !progressDialog->wasCanceled() && ui->mapVisualizationCheckBox->isChecked() == true)
+    {
+        // enable QWebInspector for degugging the google maps widget
+        if(CSLTestBoolean(CPLGetConfigOption("ENABLE_QWEBINSPECTOR", "NO")))
+        {
+            QWidget* inspectorWindow = new QWidget(this);
+            inspectorWindow->setWindowTitle("Web Inspector - Developer Tools");
+            inspectorWindow->setMinimumSize(800, 600);
+
+            QWebEngineView* inspectorView = new QWebEngineView(inspectorWindow);
+            inspectorView->page()->setInspectedPage(webEngineView->page());
+
+            QVBoxLayout* layout = new QVBoxLayout(inspectorWindow);
+            layout->addWidget(inspectorView);
+            layout->setContentsMargins(0, 0, 0, 0);
+
+            inspectorWindow->show();
+        }
+
+        // vars to be filled
+        int numRuns = 0;
+        char **fgbzFilenames = NULL;
+        char **stationKmlFilenames = NULL;
+        char **weatherModelFgbzFilenames = NULL;
+
+        char **papszOptions = nullptr;
+        ninjaErr = NinjaGetMapVisualizationFilenames(ninjaArmy, &numRuns, &fgbzFilenames, &stationKmlFilenames, &weatherModelFgbzFilenames, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaGetMapVisualizationFilenames: ninjaErr = %d\n", ninjaErr);
+        }
+
+        for(int i = 0; i < numNinjas; i++)
+        {
+            // plot the output fgbz of the run
+            QString outFileStr = QString::fromStdString(fgbzFilenames[(numRuns - 1) - i]);
+            qDebug() << "fgbz outFile =" << outFileStr;
+
+            webEngineView->page()->runJavaScript("clearWindNinjaOutputTree();");
+            webEngineView->page()->runJavaScript("clearInitializationOutputTree();");
+            webEngineView->page()->runJavaScript("clearStationOutputTree();");
+            webEngineView->page()->runJavaScript("clearUnknownOutputTree();");
+            QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+            QFileInfo info(outFileStr);
+            QString fileName = info.fileName();
+            //qDebug() << "file url =" << filePath;
+            QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+
+            webEngineView->page()->runJavaScript(jsCall);
+
+            // if it is a point initialization run, and station kmls were created for the run,
+            // then plot the station kmls of the run
+            if(ui->pointInitializationGroupBox->isChecked() && ui->pointInitializationWriteStationKMLCheckBox->isChecked())
+            {
+                QString outFileStr = QString::fromStdString(stationKmlFilenames[(numRuns - 1) - i]);
+                qDebug() << "station kml outFile =" << outFileStr;
+
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                //qDebug() << "file url =" << filePath;
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
+            }
+
+            // if it is a weather model run, and weather model fgbzs were created for the run,
+            // then plot the weather model fgbz of the run
+            if(ui->weatherModelGroupBox->isChecked() && ui->rawWeatherModelOutputCheckBox->isChecked())
+            {
+                QString outFileStr = QString::fromStdString(weatherModelFgbzFilenames[(numRuns - 1) - i]);
+                qDebug() << "wx model fgbz outFile =" << outFileStr;
+
+                QString filePath = QUrl::fromLocalFile(outFileStr).toString();
+                QFileInfo info(outFileStr);
+                QString fileName = info.fileName();
+                //qDebug() << "file url =" << filePath;
+                QString jsCall = QString("loadSimulation('%1', '%2');").arg(filePath, fileName);
+                webEngineView->page()->runJavaScript(jsCall);
+            }
+        }
+
+        ninjaErr = NinjaDestroyMapVisualizationFilenames(numRuns, fgbzFilenames, stationKmlFilenames, weatherModelFgbzFilenames, papszOptions);
+        if(ninjaErr != NINJA_SUCCESS)
+        {
+            printf("NinjaDestroyMapVisualizationFilenames: ninjaErr = %d\n", ninjaErr);
+        }
+
+    } // if(result == 1 && !progressDialog->wasCanceled() && ui->mapVisualizationCheckBox->isChecked() == true)
+}
+
+void MainWindow::finishedLoadingMap()
+{
+    progressDialog->setRange(0, maxProgress);
+    progressDialog->setValue(maxProgress);
+    progressDialog->setLabelText("Rendering Complete.");
     progressDialog->setCancelButtonText("Close");
-    progressLog.clear(); //Clear the progress bar so that we can do another run later without
-    //killing the program
-
-    //Everything went okay? enable output path button
-    tree->solve->openOutputPathButton->setEnabled( true );
-    outputPath = QString::fromStdString( outputDir );
-
-    //clear the army
-    army->reset();
-
-    setCursor(Qt::ArrowCursor);
-
-    delete army;
-    return ninjaSuccess;
+    disconnect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, this, &MainWindow::finishedLoadingMap);
+    connect(mapBridge, &MapBridge::mapLayersLoadingFinishedSignal, menuBar, &MenuBar::mapVisualizationLoadFinished);
 }
 
-void mainWindow::updateProgress(const QString message)
+void MainWindow::captureMapSnapshot()
 {
-  progressDialog->setLabelText(message);
-}
+    QPixmap pixmap = webEngineView->grab();
+    QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + "/snapshot.png";
 
-void mainWindow::updateProgress(int run, int progress)
-{
-  totalProgress = 0; //Initialize the progress bar each time
-//  runProgress[run]=progress;
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Map Snapshot"),
+        defaultPath,
+        tr("PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*)")
+        );
 
-  if(progressLog[run]>progress)
-  {
-/*
- * If the stored progress is bigger than what we are seeing in the currently emitted progress
- * ignore it
- * this happens for pointInitialization, when the match points is iterating
- * sometimes its next solution is worse and then it would make the progress bar go backwards
- * by ignoring it, the progress bar just stays where it is....
- */
-      progressLog[run]=progressLog[run];
-  }
-  else //Otherwise, store the progress in the progressLog
-  {
-      progressLog[run]=progress;
-  }
-  for(int i = 0;i < nRuns;i++) //Iterate over the number of runs and sum up the progress from the Log
-  {
-          totalProgress+=progressLog[i];
-
-  }
-  progressDialog->setValue(totalProgress); //Set the progress to what we have summed
-}
-
-int mainWindow::countRuns()
-{
-  int runs = 0;
-
-  while(tree->wind->windTable->speed[runs]->value() != 0 ||
-    tree->wind->windTable->dir[runs]->value() != 0)
-      runs++;
-
-  return runs;
-}
-
-int mainWindow::checkAllItems()
-{
-  //check and see if the objects have been visited before changing
-  eInputStatus status = green;
-#ifdef NINJAFOAM
-  checkSolverMethodItem();
-  checkMeshCombo();
-#endif
-  checkInputItem();
-  checkOutputItem();
-  checkSolveItem();
-
-  return status;
-}
-
-#ifdef NINJAFOAM
-int mainWindow::checkSolverMethodItem()
-{
-    eInputStatus status = blue;
-    
-    checkNativeSolverItem();
-    checkNinjafoamItem();
-
-    if(checkNativeSolverItem() == green)
+    if (!filePath.isEmpty())
     {
-        tree->solverMethodItem->setIcon(0, tree->check);
-        tree->solverMethodItem->setToolTip(0, "Using conservation of mass solver");
-        checkNinjafoamItem();
-        status = green;
-    }
-    else if(checkNinjafoamItem() == green)
-    {
-        tree->solverMethodItem->setIcon(0, tree->check);
-        tree->solverMethodItem->setToolTip(0, "Using conservation of mass and momentum solver");
-        checkNativeSolverItem();
-        status = green;
-    }
-    else
-    {
-        tree->solverMethodItem->setIcon(0, tree->cross);
-        tree->solverMethodItem->setToolTip(0, "Select a solver");
-        status = red;
-    }
-    return status;
-}
-
-int mainWindow::checkNativeSolverItem()
-{
-    eInputStatus status = green;
-    if(!tree->nativesolver->nativeSolverGroupBox->isChecked())
-    {
-        tree->nativeSolverItem->setIcon(0, tree->radio);
-        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass not selected");
-        status = blue;
-    }
-    else
-    {
-        tree->nativeSolverItem->setIcon(0, tree->check);
-        tree->nativeSolverItem->setToolTip(0, "Conservation of Mass selected");
-        status = green;
-    }
-
-    return status;
-}
-int mainWindow::checkNinjafoamItem()
-{
-    eInputStatus status = green;
-    if(!tree->ninjafoam->ninjafoamGroupBox->isChecked())
-    {
-        tree->ninjafoamItem->setIcon(0, tree->radio);
-        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum not selected");
-        status = blue;
-    }
-    else
-    {
-        tree->ninjafoamItem->setIcon(0, tree->check);        
-        tree->ninjafoamItem->setToolTip(0, "Conservation of Mass and Momentum selected");
-        status = green;
-    }
-
-    return status;
-}
-#endif //NINJAFOAM
-
-int mainWindow::checkInputItem()
-{  
-  eInputStatus status = red;
-  
-  checkWindItem();
-  
-  if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red || checkStabilityItem() == red)
-    { 
-      tree->inputItem->setIcon(0, tree->cross);
-      tree->inputItem->setToolTip(0, "Check surface input, wind input, stability input, and diurnal input");
-      status = red;
-    }
-  if(checkSurfaceItem() == red && checkWindItem() == red && checkDiurnalItem() == red )
-    { 
-      tree->inputItem->setIcon(0, tree->cross);
-      tree->inputItem->setToolTip(0, "Check surface input, wind input and diurnal input");
-      status = red;
-    }
-  else if(checkSurfaceItem() == red)
-    { 
-      tree->inputItem->setIcon(0, tree->cross);
-      tree->inputItem->setToolTip(0, "Check surface input");
-      status = red;
-    }
-  else if(checkDiurnalItem() == red)
-    { 
-      tree->inputItem->setIcon(0, tree->caution);
-      tree->inputItem->setToolTip(0, "Check diurnal input");
-      status = red;
-    }
-  else if(checkStabilityItem() == red)
-    {
-      tree->inputItem->setIcon(0, tree->caution);
-      tree->inputItem->setToolTip(0, "Check stability input");
-      status = red;
-    }
-  else if(checkWindItem() == red)
-    {
-      tree->inputItem->setIcon(0, tree->cross);
-      tree->inputItem->setToolTip(0, "Check wind input");
-      status = red;
-    }
-  else
-    {
-      tree->inputItem->setIcon(0, tree->check);
-      tree->inputItem->setToolTip(0, "Valid");
-      status = green;
-    }
-  return status;
-}
-
-int mainWindow::checkSurfaceItem()
-{
-  eInputStatus status = red;
-  if(inputFileName == "" || !QFile::exists(inputFileName))
-    {
-      tree->surfaceItem->setIcon(0, tree->cross);
-      tree->surfaceItem->setToolTip(0, "The input file cannot be opened");
-      status = red;
-    }
-  else if(!hasPrj)
-    {
-      tree->surfaceItem->setIcon(0, tree->caution);
-      tree->surfaceItem->setToolTip(0, "No projection information");
-      status = red;
-    }
-  else
-    {
-      tree->surfaceItem->setIcon(0, tree->check);
-      tree->surfaceItem->setToolTip(0, "Valid");
-      status = green;
-    }
-  return status;
-}
-
-int mainWindow::checkDiurnalItem()
-{ 
-  eInputStatus status = green;
-  if(!tree->diurnal->diurnalGroupBox->isChecked()) {
-      tree->diurnalItem->setIcon(0, tree->blue);
-      tree->diurnalItem->setToolTip(0, "No Diurnal Input");
-      status = blue;
-  }
-  else
-  {
-        tree->diurnalItem->setIcon(0, tree->check);
-        status = green;
-  }
-  return status;
-}
-
-int mainWindow::checkStabilityItem()
-{   
-    eInputStatus status = green;
-    if(!tree->stability->stabilityGroupBox->isChecked())
-    {
-        tree->stabilityItem->setIcon(0, tree->blue);
-        tree->stabilityItem->setToolTip(0, "No Stability Input");
-        status = blue;
-    }
-    else
-    {
-        tree->stabilityItem->setIcon(0, tree->check);
-        status = green;
-    }
-    return status;
-}
-
-int mainWindow::checkWindItem()
-{
-    eInputStatus status = blue;
-
-    //check all once, just to update icons
-    checkSpdDirItem();
-    checkPointItem();
-    checkWeatherItem();
-
-    if( checkSpdDirItem() == blue && checkPointItem() == blue
-    && checkWeatherItem() == blue ) {
-    tree->windItem->setIcon(0, tree->cross);
-    tree->windItem->setToolTip(0, "No initialization selected");
-    status = red;
-    }
-    else if( checkSpdDirItem() == red ) {
-    tree->windItem->setIcon(0, tree->cross);
-    tree->windItem->setToolTip(0, "Check speed and direction");
-    status = red;
-    }
-    else if( checkSpdDirItem() == amber ) {
-    tree->windItem->setIcon(0, tree->caution);
-    tree->windItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0");
-    status = amber;
-    }
-    else if( checkPointItem() == red ) {
-    tree->windItem->setIcon(0, tree->cross);
-    tree->windItem->setToolTip(0, "Check point initialization");
-    status = red;
-    }
-    else if( checkWeatherItem() == red ) {
-    tree->windItem->setIcon(0, tree->cross);
-    tree->windItem->setToolTip(0, "Check weather model initialization");
-    status = red;
-    }
-    else {
-    tree->windItem->setIcon(0, tree->check);
-    tree->windItem->setToolTip(0, "Valid");
-    status = green;
-    }
-    return status;
-}
-
-int mainWindow::checkSpdDirItem()
-{
-    int runs = countRuns();
-    eInputStatus status = blue;
-    if( tree->wind->windGroupBox->isChecked() ) {
-    if(checkSurfaceItem() != red) {
-        if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == false) {
-        tree->spdDirItem->setIcon(0, tree->cross);
-        tree->spdDirItem->setToolTip(0, "No runs have been added, diurnal is not active");
-        status = red;
-        }
-        else if(runs == 0 && tree->diurnal->diurnalGroupBox->isChecked() == true) {
-        tree->spdDirItem->setIcon(0, tree->caution);
-        tree->spdDirItem->setToolTip(0, "No runs have been added, one run will be done at speed = 0, dir = 0");
-        status = amber;
-        }
-        else {
-        tree->spdDirItem->setIcon(0, tree->check);
-        tree->spdDirItem->setToolTip(0, QString::number(runs) + " runs");
-        status = green;
-        }
-    }
-    else {
-        tree->spdDirItem->setIcon(0, tree->cross);
-        tree->spdDirItem->setToolTip(0, "Cannot read input file");
-        status = red;
-    }
-    }
-    else {
-    tree->spdDirItem->setIcon(0, tree->radio);
-    tree->spdDirItem->setToolTip(0, "Not used");
-    status = blue;
-    }
-    return status;
-}
-int mainWindow::checkPointItem()
-{
-    eInputStatus status = blue;
-    if( tree->point->pointGroupBox->isChecked() ) {
-        bool shortGo=tree->point->pointGo;
-        if (shortGo==false)
+        bool success = pixmap.save(filePath);
+        if (!success)
         {
-            if (tree->point->stationFileList.size()<1)
-            {
-                status = red;
-                tree->pointItem->setIcon(0,tree->cross);
-                tree->pointItem->setToolTip(0,"No Stations Selected");
-            }
-            if (tree->point->stationFileList.size()==1)
-            {
-                status = red;
-                tree->pointItem->setIcon(0,tree->cross);
-                tree->pointItem->setToolTip(0,"No Valid Data detected...");
-            }
-            if (tree->point->stationFileList.size()>=2)
-            {
-                status = red;
-                tree->pointItem->setIcon(0,tree->cross);
-                tree->pointItem->setToolTip(0,"Mismatched Data Type selected");
-            }
-//            if else
-//            {
-//                status = red;
-//                tree->pointItem->setIcon(0,tree->cross);
-//                tree->pointItem->setToolTip(0,"Selected options are invald");
-//            }
-        }
-
-        if (shortGo==true)
-        {
-            //Check to make sure times are reasonable
-            QDateTime pStartTime = tree->point->startTime->dateTime();
-            QDateTime pStopTime = tree->point->stopTime->dateTime();
-            if(pStartTime>pStopTime)
-            {
-                status = red;
-                tree->pointItem->setIcon(0,tree->cross);
-                tree->pointItem->setToolTip(0,"Start Time is Greater than Stop Time!");
-            }
-            else
-            {
-                status = green;
-                tree->pointItem->setIcon(0,tree->check);
-                tree->pointItem->setToolTip(0,"Good To Go!");
-            }
-        }
-        std::vector<std::string> pfL = tree->point->stationFileList;
-        for(int i=0;i<pfL.size();i++)
-        {
-            if(pfL[i].substr(pfL[i].size()-4,4)!=".csv")
-            {
-                status = red;
-                tree->pointItem->setIcon(0,tree->cross);
-                tree->pointItem->setToolTip(0,"File Extension Must be .csv!");
-            }
-        }
-        if (tree->point->simType==0 && pfL.size()>1)
-        {
-            status = red;
-            tree->pointItem->setIcon(0,tree->cross);
-            tree->pointItem->setToolTip(0,"Too many Stations Selected for Old Format!");
-
-        }
-
-//        else {
-//            status = green;
-//            tree->pointItem->setIcon( 0, tree->check );
-//            tree->pointItem->setToolTip( 0, "Valid" );
-//        }
-    }
-    else {
-    status = blue;
-    tree->pointItem->setIcon( 0, tree->radio );
-    tree->pointItem->setToolTip( 0, "Not used" );
-    }
-    return status;
-}
-
-int mainWindow::checkWeatherItem()
-{
-    eInputStatus status = blue;
-    wxModelInitialization* model = NULL;
-    if( tree->weather->weatherGroupBox->isChecked() ) {
-    QFileInfo fi;
-    QModelIndex mi = tree->weather->treeView->selectionModel()->currentIndex();
-    if( mi.isValid() ) {
-        fi = tree->weather->model->fileInfo( mi );
-        std::string filename = fi.absoluteFilePath().toStdString();
-        char *p, *q; //code gore
-        p = strdup( filename.c_str() );
-        q = strrchr( p, '/' );
-        int n = 0;
-        if( !q )
-            q = strrchr( p, '\\' );
-        if( q )
-        {
-            if( strlen( q ) > 1 )
-                q++;
-            if( strlen( q ) > 5 )
-                *(q + 4) = '\0';
-            n = atoi( q );
-        }
-        else
-            n = atoi( p );
-        free( p );
-        if( fi.isDir() && n < 2000 )
-        {
-            status = red;
-            tree->modelItem->setIcon( 0, tree->cross );
-            tree->modelItem->setToolTip( 0, "Forecast is invalid" );
-            return status;
-        }
-        try {
-            model = wxModelInitializationFactory::makeWxInitialization(filename);
-        }
-        catch( ... ) {
-            status = red;
-            tree->modelItem->setIcon( 0, tree->cross );
-            tree->modelItem->setToolTip( 0, "Forecast is invalid" );
-            delete model;
-            return status;
-        }
-
-        if( !fi.exists() ) {
-        status = red;
-        tree->modelItem->setIcon( 0, tree->cross );
-        tree->modelItem->setToolTip( 0, "Forecast does not exist" );
-        }
-        else {
-        status = green;
-        tree->modelItem->setIcon( 0, tree->check );
-        tree->modelItem->setToolTip( 0, "Valid" );
-        }
-    }
-    else {
-        status = red;
-        tree->modelItem->setIcon( 0, tree->cross );
-        tree->modelItem->setToolTip( 0, "You must select a valid forecast file or path" );
-    }
-    }
-    else {
-    tree->modelItem->setIcon( 0, tree->radio );
-    tree->modelItem->setToolTip( 0, "Not used" );
-    }
-    delete model;
-    return status;
-}
-
-int mainWindow::checkOutputItem()
-{
-  eInputStatus status = green;
-  if(checkSurfaceItem() == red)
-    {
-      tree->outputItem->setIcon(0, tree->cross);
-      tree->outputItem->setToolTip(0, "Cannot read input file");
-      status = red;
-    }
-  if(checkGoogleItem() == blue && checkFbItem() == blue && checkShapeItem() == blue && checkVtkItem() == blue &&
-     checkPdfItem() == blue)
-    {
-      tree->outputItem->setIcon(0, tree->cross);
-      tree->outputItem->setToolTip(0, "No outputs selected");
-      status = red;
-    }
-  if(checkGoogleItem() == amber || checkFbItem() == amber || checkShapeItem() == amber || checkVtkItem() == amber ||
-     checkPdfItem() == amber)
-    {
-      if(checkGoogleItem() == amber)
-    {
-      tree->outputItem->setIcon(0, tree->caution);
-      tree->outputItem->setToolTip(0, "Check Google ouput");
-      status = amber;
-    }
-      if(checkFbItem() == amber)
-    {
-      tree->outputItem->setIcon(0, tree->check);
-      tree->outputItem->setToolTip(0, "Check fire behavior ouput");
-      status = amber;
-    }
-      if(checkShapeItem() == amber)
-    {
-      tree->outputItem->setIcon(0, tree->check);
-      tree->outputItem->setToolTip(0, "Check shape file ouput");
-      status = amber;
-    }
-    if(checkPdfItem() == amber)
-    {
-      tree->outputItem->setIcon(0, tree->check);
-      tree->outputItem->setToolTip(0, "Check pdf file ouput");
-      status = amber;
-    }
-    if(checkVtkItem() == amber)
-    {
-      tree->outputItem->setIcon(0, tree->check);
-      tree->outputItem->setToolTip(0, "Check vtk file ouput");
-      status = amber;
-    }
-    }
-  if(status == green)
-    {
-      tree->outputItem->setIcon(0, tree->check);
-      tree->outputItem->setToolTip(0, "Valid");
-      status = green;
-    }
-  return status;
-}
-
-int mainWindow::checkGoogleItem()
-{
-  eInputStatus status = red;
-  if(!tree->google->googleGroupBox->isChecked())
-    {
-      tree->googleItem->setIcon(0, tree->blue);
-      tree->googleItem->setToolTip(0, "No output");
-      status = blue;
-    }
-  else
-    {
-      if(checkSurfaceItem() != red)
-    {
-      if((int)noGoogleCellSize > tree->google->googleResSpinBox->value())
-        {
-          tree->googleItem->setIcon(0, tree->caution);
-          tree->googleItem->setToolTip(0, "The resolution of the google file may be too fine.");
-          status = amber;
-        }
-      else if((int)GDALCellSize > tree->google->googleResSpinBox->value())
-        {
-          tree->googleItem->setIcon(0, tree->caution);
-          tree->googleItem->setToolTip(0, "The output resolution is finer than the DEM resolution");
-          status = amber;
-        }
-      /*
-      else if((int)meshCellSize > tree->google->googleResSpinBox->value())
-        {
-          tree->googleItem->setIcon(0, tree->check);
-          tree->googleItem->setToolTip(0, "The output resolutions is finer than the computational mesh");
-          status = amber;
-        }
-      */
-      else
-        {
-          tree->googleItem->setIcon(0, tree->check);
-          tree->googleItem->setToolTip(0, "Valid");
-          status = green;
-        }
-    }
-      else
-    {
-      tree->googleItem->setIcon(0, tree->cross);
-      tree->googleItem->setToolTip(0, "Cannot read input file");
-      status = red;
-    }
-    }
-  return status;
-}
-
-int mainWindow::checkFbItem()
-{
-  eInputStatus status = red;
-  if(!tree->fb->fbGroupBox->isChecked())
-    {
-      tree->fbItem->setIcon(0, tree->blue);
-      tree->fbItem->setToolTip(0, "No output");
-      status = blue;
-    }
-  else
-    {
-      if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
-    {
-      if((int)GDALCellSize > tree->fb->fbResSpinBox->value())
-        {
-          tree->fbItem->setIcon(0, tree->caution);
-          tree->fbItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
-          status = amber;
-        }
-
-      else
-        {
-          tree->fbItem->setIcon(0, tree->check);
-          tree->fbItem->setToolTip(0, "Valid");
-          status = green;
-        }
-    }
-      else
-    {
-      tree->fbItem->setIcon(0, tree->cross);
-      tree->fbItem->setToolTip(0, "Cannot read input file");
-      status = red;
-    }
-    }
-  return status;
-}
-
-int mainWindow::checkShapeItem()
-{
-  eInputStatus status = red;
-  if(!tree->shape->shapeGroupBox->isChecked())
-    {
-      tree->shapeItem->setIcon(0, tree->blue);
-      tree->shapeItem->setToolTip(0, "No output");
-      status = blue;
-    }
-  else
-    {
-      if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
-    {
-      /*
-      if((int)meshCellSize > tree->shape->shapeResSpinBox->value())
-        {
-          tree->shapeItem->setIcon(0, tree->check);
-          tree->shapeItem->setToolTip(0, "The output resolutions is finer than the computational mesh");
-          status = amber;
-        }
-      */
-      if((int)GDALCellSize > tree->shape->shapeResSpinBox->value())
-        {
-          tree->shapeItem->setIcon(0, tree->caution);
-          tree->shapeItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
-          status = amber;
-        }
-      else
-        {
-          tree->shapeItem->setIcon(0, tree->check);
-          tree->shapeItem->setToolTip(0, "Valid");
-          status = green;
-        }
-    }
-      else
-    {
-      tree->shapeItem->setIcon(0, tree->cross);
-      tree->shapeItem->setToolTip(0, "Cannot read input file") ;
-      status = red;
-    }
-    }
-  return status;
-}
-
-int mainWindow::checkPdfItem()
-{
-  eInputStatus status = red;
-  if(!tree->pdf->pdfGroupBox->isChecked())
-    {
-      tree->pdfItem->setIcon(0, tree->blue);
-      tree->pdfItem->setToolTip(0, "No output");
-      status = blue;
-    }
-  else
-    {
-      if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
-    {
-      /*
-      if((int)meshCellSize > tree->pdf->pdfResSpinBox->value())
-        {
-          tree->pdfItem->setIcon(0, tree->check);
-          tree->pdfItem->setToolTip(0, "The output resolutions is finer than the computational mesh");
-          status = amber;
-        }
-      */
-      if((int)GDALCellSize > tree->pdf->pdfResSpinBox->value())
-        {
-          tree->pdfItem->setIcon(0, tree->caution);
-          tree->pdfItem->setToolTip(0, "The output resolutions is finer than the DEM resolution");
-          status = amber;
-        }
-      else
-        {
-          tree->pdfItem->setIcon(0, tree->check);
-          tree->pdfItem->setToolTip(0, "Valid");
-          status = green;
-        }
-    }
-      else
-    {
-      tree->pdfItem->setIcon(0, tree->cross);
-      tree->pdfItem->setToolTip(0, "Cannot read input file") ;
-      status = red;
-    }
-    }
-  return status;
-}
-
-int mainWindow::checkVtkItem()
-{
-  eInputStatus status = red;
-  if(!tree->vtk->vtkGroupBox->isChecked())
-    {
-      tree->vtkItem->setIcon(0, tree->blue);
-      tree->vtkItem->setToolTip(0, "No output");
-      status = blue;
-    }
-  else
-    {
-      if(checkSurfaceItem() == green || checkSurfaceItem() == amber)
-    {
-      tree->vtkItem->setIcon(0, tree->check);
-      tree->vtkItem->setToolTip(0, "Valid");
-      status = green;
-    }
-      else
-    {
-      tree->vtkItem->setIcon(0, tree->cross);
-      tree->vtkItem->setToolTip(0, "Cannot read input file") ;
-      status = red;
-    }
-    }
-  return status;
-}
-
-int mainWindow::checkSolveItem()
-{
-  eInputStatus status = red;
-  if(checkInputItem() != red && checkOutputItem() != red)
-    {
-      tree->solveItem->setIcon(0, tree->check);
-      tree->solveItem->setToolTip(0, "You may start the solver");
-      tree->solve->solveToolButton->setEnabled(true);
-      status = green;
-    }
-  //handle if nothing is checked for initialization
-  else if( !tree->wind->windGroupBox->isChecked() &&
-       !tree->point->pointGroupBox->isChecked() &&
-       !tree->weather->weatherGroupBox->isChecked () ) {
-      tree->solveItem->setIcon(0, tree->cross);
-      tree->solveItem->setToolTip(0, "You must select and initialization method");
-      tree->solve->solveToolButton->setEnabled(false);
-      status = red;
-  }
-  else
-    {
-      tree->solveItem->setIcon(0, tree->cross);
-      tree->solveItem->setToolTip(0, "There are errors in the inputs or outputs");
-      tree->solve->solveToolButton->setEnabled(false);
-      status = red;
-    }
-  return status;
-}
-
-int mainWindow::checkKmlLimit(double xx)
-{
-  eInputStatus status = amber;
-  if((int)noGoogleCellSize > tree->google->googleResSpinBox->value())
-    {
-      writeToConsole("The resolution of the google file may be too fine.", orange);
-      status = amber;
-    }
-  return amber;
-}
-
-void mainWindow::cancelSolve()
-{
-  progressDialog->setAutoClose(true);
-  progressDialog->setLabelText("Canceling...");
-  army->cancel();  
-}
-
-void mainWindow::treeDoubleClick(QTreeWidgetItem *item, int column)
-{
-  if(item == tree->surfaceItem)
-    openInputFile();
-  else if(item == tree->diurnalItem)
-    {
-      if(tree->diurnal->diurnalGroupBox->isChecked())
-    tree->diurnal->diurnalGroupBox->setChecked(false);
-      else
-    tree->diurnal->diurnalGroupBox->setChecked(true);
-    }
-#ifdef NINJAFOAM
-  else if(item == tree->nativeSolverItem)
-  {
-      if(tree->nativesolver->nativeSolverGroupBox->isChecked())
-          tree->nativesolver->nativeSolverGroupBox->setChecked(false);
-      else{
-          tree->nativesolver->nativeSolverGroupBox->setChecked(true);
-      }
-  }
-  else if(item == tree->ninjafoamItem)
-  {
-      if(tree->ninjafoam->ninjafoamGroupBox->isChecked())
-          tree->ninjafoam->ninjafoamGroupBox->setChecked(false);
-      else{
-          tree->ninjafoam->ninjafoamGroupBox->setChecked(true);
-      }
-  }
-#endif
-  else if(item == tree->stabilityItem)
-  {
-      if(tree->stability->stabilityGroupBox->isChecked())
-          tree->stability->stabilityGroupBox->setChecked(false);
-      else
-          tree->stability->stabilityGroupBox->setChecked(true);
-  }
-  else if( item == tree->spdDirItem ) {
-      if( tree->wind->windGroupBox->isChecked() )
-      tree->wind->windGroupBox->setChecked( false );
-      else
-      tree->wind->windGroupBox->setChecked( true );
-  }
-  else if( item == tree->pointItem ) {
-      if( tree->point->pointGroupBox->isChecked() )
-      tree->point->pointGroupBox->setChecked( false );
-      else
-      tree->point->pointGroupBox->setChecked( true );
-  }
-  else if( item == tree->modelItem ) {
-      if( tree->weather->weatherGroupBox->isChecked() )
-      tree->weather->weatherGroupBox->setChecked( false );
-      else
-      tree->weather->weatherGroupBox->setChecked( true );
-  }
-  else if(item == tree->googleItem)
-    {
-      if(tree->google->googleGroupBox->isChecked())
-    tree->google->googleGroupBox->setChecked(false);
-      else
-    tree->google->googleGroupBox->setChecked(true);
-    }
-  else if(item == tree->fbItem)
-    {
-      if(tree->fb->fbGroupBox->isChecked())
-    tree->fb->fbGroupBox->setChecked(false);
-      else
-    tree->fb->fbGroupBox->setChecked(true);
-    }
-  else if(item == tree->shapeItem)
-    {
-      if(tree->shape->shapeGroupBox->isChecked())
-    tree->shape->shapeGroupBox->setChecked(false);
-      else
-    tree->shape->shapeGroupBox->setChecked(true);
-    }
-  else if(item == tree->pdfItem)
-  {
-      if(tree->pdf->pdfGroupBox->isChecked())
-        tree->pdf->pdfGroupBox->setChecked(false);
-      else
-        tree->pdf->pdfGroupBox->setChecked(true);
-  }
-  else if(item == tree->vtkItem)
-    {
-      if(tree->vtk->vtkGroupBox->isChecked())
-    tree->vtk->vtkGroupBox->setChecked(false);
-      else
-    tree->vtk->vtkGroupBox->setChecked(true);
-    }
-  checkAllItems();
-  return;
-}
-
-/**
- * \brief Check the input dem for no data and optionally fill
- *
- * Note that if we fail to fix things, we have to close the ds.
- *
- * \return
- *
- */
-QString mainWindow::checkForNoData( QString inputFile )
-{
-    QString fileName;
-    QString newFile = inputFile;
-    GDALDataset *poDS = (GDALDataset*)GDALOpen( inputFile.toStdString().c_str(),
-                                                GA_ReadOnly );
-    if( GDALHasNoData( poDS, 1 ) )
-    {
-        int r = QMessageBox::warning( this, tr ("WindNinja" ),
-                     tr( "The input dataset contains pixels with no data. "
-                         "These datasets cannot be used by WindNinja, "
-                         "would you like to attempt to fill those pixels?" ),
-                     QMessageBox::Yes |
-                     QMessageBox::No |
-                     QMessageBox::Cancel);
-        if( r == QMessageBox::Yes )
-        {
-            fileName = QFileDialog::getSaveFileName( this,
-                          tr( "Open Elevation Input File" ),
-                          inputFileDir.absolutePath(),
-                          tr( "GeoTiff (*.tif)" ) );
-            if( fileName.isEmpty() )
-                return QString("");
-
-            if( !fileName.endsWith( ".tif", Qt::CaseInsensitive ) )
-                fileName += ".tif";
-            GDALDriverH hDriver = GDALGetDriverByName( "GTiff" );
-            GDALDatasetH hNewDS;
-            hNewDS = GDALCreateCopy( hDriver, fileName.toStdString().c_str(),
-                                     (GDALDriverH)poDS, FALSE, NULL, NULL,
-                                     NULL );
-            GDALRasterBandH hSrcBand, hDstBand;
-            hSrcBand = GDALGetRasterBand( (GDALDatasetH)poDS, 1 );
-            hDstBand = GDALGetRasterBand( hNewDS, 1 );
-            int nSuccess;
-            GDALSetRasterNoDataValue( hDstBand,
-                    GDALGetRasterNoDataValue( hSrcBand, &nSuccess ) );
-            int nNoData = GDALFillBandNoData( (GDALDataset*)hNewDS, 1, 100 );
-            if( nNoData )
-            {
-                QMessageBox::warning( this, tr ("WindNinja" ),
-                   tr( "Could not fill no data pixels, too many pixels "
-                       "were invalid." ),
-                   QMessageBox::Ok );
-                GDALClose( hNewDS );
-                GDALClose( (GDALDatasetH)poDS );
-                VSIUnlink( fileName.toStdString().c_str() );
-                newFile = "";
-            }
-            else
-            {
-                GDALFlushCache( hNewDS );
-                GDALClose( hNewDS );
-                GDALClose( (GDALDatasetH)poDS );
-                newFile = fileName;
-            }
-        }
-    }
-    else
-        GDALClose( (GDALDatasetH)poDS );
-    return newFile;
-}
-
-void mainWindow::enablePointDate(bool enable)
-{
-    (void)enable;
-    if( tree->point->pointGroupBox->isChecked() )
-    {
-        if( tree->diurnal->diurnalGroupBox->isChecked()
-            || tree->stability->stabilityGroupBox->isChecked()
-          )
-        {
-            //Allows for on the fly changes in diurnal parameters as users select/deselect stations of
-            //various types
-            emit mainDiurnalChanged(true); //Sets to true so that stability options are also set
-            if(tree->point->simType==0) //Only turn on datetimeEdit for single step runs old format
-            {
-                tree->point->dateTimeEdit->setEnabled( true );
-            }
-            else
-            {
-                tree->point->dateTimeEdit->setEnabled(false);
-            }
-        }
-        else
-        {
-            emit mainDiurnalChanged(false); //Tells pointInput we don't want stability/Diurnal
-            tree->point->dateTimeEdit->setEnabled( false );
+            QMessageBox::critical(this, tr("Error"), tr("Failed to save image to disk."));
         }
     }
 }
 
-#ifdef NINJAFOAM
-void mainWindow::enableNinjafoamOptions(bool enable)
+void MainWindow::writeSettings()
 {
-    (void)enable;
-    if( tree->ninjafoam->ninjafoamGroupBox->isChecked() )
-    {
-        tree->stability->stabilityGroupBox->setCheckable( false );
-        tree->stability->stabilityGroupBox->setChecked( false );
-        tree->stability->stabilityGroupBox->setHidden( true );
-        tree->stability->ninjafoamConflictLabel->setHidden( false );
-         
-        tree->wind->windTable->enableDiurnalCells( false ); 
-        
-        tree->point->pointGroupBox->setCheckable( false );
-        tree->point->pointGroupBox->setChecked( false );
-        tree->point->pointGroupBox->setHidden( true );
-        tree->point->ninjafoamConflictLabel->setHidden( false );
-        
-        tree->surface->foamCaseGroupBox->setHidden( false );
-        tree->surface->timeZoneGroupBox->setHidden( false );
-        
-        tree->vtk->ninjafoamConflictLabel->setHidden( false );
-        tree->vtk->vtkLabel->setHidden( true );
-        tree->vtk->vtkGroupBox->setHidden( true );
-        tree->vtk->vtkGroupBox->setChecked( false );
-        tree->vtk->vtkWarningLabel->setHidden( true );
-        tree->vtk->vtkGroupBox->setCheckable(false);
-    }
-    else{
-        tree->diurnal->diurnalGroupBox->setCheckable( true );
-        tree->diurnal->diurnalGroupBox->setChecked( false );
-        tree->diurnal->diurnalGroupBox->setHidden( false );
-        
-        tree->stability->stabilityGroupBox->setCheckable( true );
-        tree->stability->stabilityGroupBox->setChecked( false );
-        tree->stability->stabilityGroupBox->setHidden( false );
-        tree->stability->ninjafoamConflictLabel->setHidden( true );
-        
-        tree->point->pointGroupBox->setCheckable( true );
-        tree->point->pointGroupBox->setChecked( false );
-        tree->point->pointGroupBox->setHidden( false );
-        tree->point->ninjafoamConflictLabel->setHidden( true );
-        
-        tree->surface->foamCaseGroupBox->setHidden( true );
-        tree->surface->timeZoneGroupBox->setHidden( false );
-        tree->surface->meshResComboBox->addItem("Custom", 4);
-        
-        tree->vtk->ninjafoamConflictLabel->setHidden( true );
-        tree->vtk->vtkLabel->setHidden( false );
-        tree->vtk->vtkWarningLabel->setHidden( false );
-        tree->vtk->vtkGroupBox->setHidden( false );
-        tree->vtk->vtkGroupBox->setCheckable( true );
-        tree->vtk->vtkGroupBox->setChecked( false );
-    }
-}
-#endif
+    writeToConsole("Saving settings...");
 
-void mainWindow::SetConfigOption()
+    QString app(NINJA_VERSION_STRING);
+    app = "WindNinja-" + app;
+    QSettings settings(QSettings::UserScope, "Firelab", app);
+    settings.setDefaultFormat(QSettings::IniFormat);
+
+    QString demFilePath = ui->elevationInputFileLineEdit->property("fullpath").toString();
+    QFileInfo demFileInfo(demFilePath);
+    settings.setValue("inputFileDir", demFileInfo.absolutePath());
+    settings.setValue("momentumFlag", ui->momentumSolverCheckBox->isChecked());
+    settings.setValue("vegChoice", ui->vegetationComboBox->currentIndex());
+    settings.setValue("meshChoice", ui->meshResolutionComboBox->currentIndex());
+    settings.setValue("meshUnits", ui->meshResolutionUnitsComboBox->currentIndex());
+    settings.setValue("customRes", ui->meshResolutionSpinBox->value());
+    settings.setValue("nProcessors", ui->numberOfProcessorsSpinBox->value());
+
+    writeToConsole("Settings saved successfully.", Qt::darkGreen);
+}
+
+void MainWindow::readSettings()
 {
-    QString key, val;
-    int rc;
-    SetConfigDialog dialog;
-    rc = dialog.exec();
-    if( rc == QDialog::Rejected )
-        return;
-    const char *pszKey, *pszVal;
-    key = dialog.GetKey();
-    val = dialog.GetVal();
-    if( key == "" )
-        return;
-    if( val == "" )
-        pszVal = NULL;
-    else
-        pszVal = CPLSPrintf( "%s", (char*)val.toLocal8Bit().data() );
-    qDebug() << "Setting config option " << key << "to" << val;
-    pszKey = CPLSPrintf( "%s", (char*)key.toLocal8Bit().data() );
-    CPLSetConfigOption( pszKey, pszVal );
+    writeToConsole("Reading settings...");
+
+    QString app(NINJA_VERSION_STRING);
+    app = "WindNinja-" + app;
+    QSettings settings(QSettings::UserScope, "Firelab", app);
+    settings.setDefaultFormat(QSettings::IniFormat);
+
+    if(settings.contains("inputFileDir"))
+    {
+        QFileInfo dir(settings.value("inputFileDir").toString());
+        if (dir.exists())
+        {
+            surfaceInput->setInputFileDir(dir.absoluteFilePath());
+        }
+    }
+    #ifdef NINJAFOAM
+    if(settings.contains("momentumFlag") && settings.value("momentumFlag").toBool())
+    {
+        ui->momentumSolverCheckBox->click();
+    }
+    #endif
+    if(settings.contains("vegChoice"))
+    {
+        ui->vegetationComboBox->setCurrentIndex(settings.value("vegChoice").toInt());
+    }
+    if(settings.contains("meshChoice"))
+    {
+        ui->meshResolutionUnitsComboBox->setCurrentIndex(settings.value("meshUnits").toInt());
+        int choice = settings.value("meshChoice", 0).toInt();
+        ui->meshResolutionComboBox->setCurrentIndex(choice);
+        if(choice == 3 && settings.contains("customRes"))
+        {
+            ui->meshResolutionSpinBox->setValue(settings.value("customRes").toDouble());
+        }
+    }
+    if(settings.contains("nProcessors"))
+    {
+        nProcessors = settings.value("nProcessors").toInt();
+        ui->numberOfProcessorsSpinBox->setValue(nProcessors);
+    }
+
+    writeToConsole("Settings read successfully.", Qt::darkGreen);
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    if (webEngineView)
+    {
+        webEngineView->deleteLater();
+        webEngineView = nullptr;
+    }
+
+    writeSettings();
+    QMainWindow::closeEvent(event);
 }

@@ -163,12 +163,14 @@ std::string wxModelInitialization::getPath()
  * @return a base file name, or an empty string if a filename cannot be
  * generated
  */
-std::string wxModelInitialization::generateForecastName()
+std::string wxModelInitialization::generateForecastName(std::string timeZoneString)
 {
-    if( wxModelFileName.empty() )
+    if(wxModelFileName.empty())
+    {
         return wxModelFileName;
+    }
     std::vector<boost::local_time::local_date_time>timeList;
-    timeList = getTimeList();
+    timeList = getTimeList(timeZoneString);
     std::string filename;
     filename =  bpt::to_iso_string(timeList[0].utc_time());
     //remove trailing seconds
@@ -274,13 +276,13 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
     double corners[8];
     GDALGetCorners( poDS, corners );
     double maxX, maxY, minX, minY;
-    
+
     //max/min of DEM in degrees
-    maxX = CPL_MAX(corners[0], corners[2]);
-    maxY = CPL_MAX(corners[1], corners[7]);
-    minX = CPL_MIN(corners[4], corners[6]);
-    minY = CPL_MIN(corners[3], corners[5]);
-        
+    maxX = std::max(corners[0], corners[2]);
+    maxY = std::max(corners[1], corners[7]);
+    minX = std::min(corners[4], corners[6]);
+    minY = std::min(corners[3], corners[5]);
+
 #ifdef MOBILE_APP
     CPLDebug("MOBILE_APP", "grid resolution = %f", this->getGridResolution());
     if(this->getGridResolution() == -1.0){ //if don't know the resolution
@@ -288,7 +290,7 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
         bounds[1] = maxX + GetWxModelBuffer(maxX - minX);
         bounds[2] = minY - GetWxModelBuffer(maxY - minY);
         bounds[3] = minX - GetWxModelBuffer(maxX - minX);
-        
+
         CPLDebug("MOBILE_APP", "Y buffer = %f", GetWxModelBuffer(maxY - minY));
         CPLDebug("MOBILE_APP", "X buffer = %f", GetWxModelBuffer(maxX - minX));
     }
@@ -297,23 +299,23 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
         double projMinX = minX;
         double projMaxY = maxY;
         double projMinY = minY;
-    
+
         double wxMaxX, wxMaxY, wxMinX, wxMinY;
         double xBuffer, yBuffer;
-        
+
         //convert to meters
         GDALPointFromLatLon( projMaxX, projMaxY, poDS, "WGS84");
         GDALPointFromLatLon( projMinX, projMinY, poDS, "WGS84");
-        
+
         //buffer 3 times the wx model grid resolution
         if(this->getGridResolution() > 1.0){ //units are km (projected)
             wxMaxX = projMaxX + ( this->getGridResolution() * 1000 * 3 );
             wxMaxY = projMaxY + ( this->getGridResolution() * 1000 * 3 );
-            
+
             //convert to degrees
             GDALPointToLatLon( wxMinX, wxMinY, poDS, "WGS84");
             GDALPointToLatLon( wxMaxX, wxMaxY, poDS, "WGS84");
-        
+
             xBuffer = wxMaxX - maxX; //in degrees
             yBuffer = wxMaxY - maxY; //in degrees
         }
@@ -321,10 +323,10 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
             xBuffer = this->getGridResolution() * 3; //in degrees
             yBuffer = this->getGridResolution() * 3; //in degrees
         }
-        
+
         CPLDebug("MOBILE_APP", "Y buffer = %f", xBuffer);
         CPLDebug("MOBILE_APP", "X buffer = %f", yBuffer);
-    
+
         bounds[0] = maxY + yBuffer;
         bounds[1] = maxX + xBuffer;
         bounds[2] = minY - yBuffer;
@@ -336,7 +338,7 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
     bounds[2] = minY - GetWxModelBuffer(maxY - minY);
     bounds[3] = minX - GetWxModelBuffer(maxX - minX);
 #endif
-    
+
     return 0;
 }
 
@@ -352,7 +354,7 @@ int wxModelInitialization::ComputeWxModelBuffer( GDALDataset *poDS, double bound
 double wxModelInitialization::GetWxModelBuffer(double delta)
 {
     double buffer = delta * 0.2;
-    return buffer > 1.0 ? buffer : 1.0;        
+    return buffer > 1.0 ? buffer : 1.0;
 }
 
 /**
@@ -368,8 +370,7 @@ double wxModelInitialization::GetWxModelBuffer(double delta)
  *          return string
  *
  */
-std::string wxModelInitialization::fetchForecast( std::string demFile,
-                          int nHours )
+std::string wxModelInitialization::fetchForecast(std::string demFile, int nHours, std::string timeZoneString)
 {
     /*
      * Get the bounds of the dem
@@ -384,12 +385,17 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
                                getStartHour(), getEndHour() );
         throw std::logic_error(pszErrMsg);
     }
+
     GDALDataset *poDS = (GDALDataset*)GDALOpen( demFile.c_str(), GA_ReadOnly );
+    if(poDS == NULL)
+    {
+        throw badForecastFile("Could not open DEM to get bounds. Failed to download weather forecast.");
+    }
+
     double bounds[4];
     if( !GDALGetBounds( poDS, bounds ) )
     {
-        throw badForecastFile("Could not download weather forecast, invalid "
-                              "projection for the DEM");
+        throw badForecastFile("Could not get bounds from the DEM. Failed to download weather forecast.");
     }
 
     /*
@@ -419,24 +425,50 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
     urlAddress.append(url);
 
     CPLHTTPResult *poResult = CPLHTTPFetch( urlAddress.c_str(), NULL );
-    CPLDebug( "WINDNINJA", "Forecast URL: %s", urlAddress.c_str() );
+    CPLDebug("WINDNINJA", "Forecast URL: %s", urlAddress.c_str());
     if( poResult == NULL )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( "CPLHTTPResult is NULL!" ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile("CPLHTTPResult is NULL. Failed to download weather forecast.");
     }
 
     if( poResult->nStatus != 0 )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( poResult->pszErrBuf ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile(poResult->pszErrBuf);
+    }
+
+    if (poResult->pszErrBuf && urlAddress.find("NDFD") != std::string::npos)
+    {
+      CPLDebug("WINDNINJA", "Received 404, retrying with new URL.");
+      std::string toReplace = "Best";
+      std::string replacement = "Best/LambertConformal_1377X2145-38p23N-95p44W-2";
+
+      size_t pos = urlAddress.find(toReplace);
+      if (pos != std::string::npos) {
+        urlAddress.replace(pos, toReplace.length(), replacement);
+      }
+
+      CPLDebug("WINDNINJA", "New Forecast URL: %s", urlAddress.c_str());
+      poResult = CPLHTTPFetch(urlAddress.c_str(), NULL);
+
+      if (poResult == NULL)
+      {
+        throw badForecastFile("CPLHTTPResult is NULL. Failed to download weather forecast.");
+      }
+
+      if (poResult->nStatus != 0)
+      {
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile(poResult->pszErrBuf);
+      }
     }
 
     fout = VSIFOpenL( tempFileName.c_str(), "w" );
     if( fout == NULL )
     {
-        CPLHTTPDestroyResult( poResult );
-        throw ( badForecastFile( "Failed to download forecast." ) );
+        CPLHTTPDestroyResult(poResult);
+        throw badForecastFile("Failed to create temporary wxModel file for writing, Failed to download weather forecast.");
     }
     VSIFWriteL( poResult->pabyData, poResult->nDataLen, 1, fout );
     CPLHTTPDestroyResult( poResult );
@@ -459,7 +491,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
         {
             VSIUnlink( tempFileName.c_str() );
         }
-        throw ( badForecastFile( "Failed to download forecast. File is not an *.nc file" ) );
+        throw badForecastFile("File is not an *.nc file. Failed to download weather forecast.");
     }
     nc_close( ncid );
     }
@@ -469,7 +501,7 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
      */
     wxModelFileName = tempFileName;
     try{
-        checkForValidData();    //throws a badForecastFile on fail
+        checkForValidData(timeZoneString);    //throws a badForecastFile on fail
     }catch (badForecastFile& e) {   //catch a badForecastFile
         if( !bSaveForecast )
         {
@@ -482,17 +514,17 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
      * Rename the file
      */
     std::string path( CPLGetDirname( demFile.c_str() ) );
-    std::string fileName( CPLGetFilename( demFile.c_str() ) );
+    std::string fileName( CPLGetBasename( demFile.c_str() ) );
     std::string newPath( path + "/" + getForecastIdentifier()
              + "-" + fileName + "/" );
 
     VSIMkdir( newPath.c_str(), 0777 );
 
     wxModelFileName = tempFileName;
-    std::string outputPath = newPath + std::string(CPLGetBasename(generateForecastName().c_str())) + "/";
+    std::string outputPath = newPath + std::string(CPLGetBasename(generateForecastName(timeZoneString).c_str())) + "/";
     VSIMkdir( outputPath.c_str(), 0777 );
 
-    std::string newFileName( outputPath + generateForecastName() );
+    std::string newFileName(outputPath + generateForecastName(timeZoneString));
 
     /*
      * check for file existance? if the file is already there, this fails on
@@ -508,11 +540,15 @@ std::string wxModelInitialization::fetchForecast( std::string demFile,
         CPLCopyFile( newFileName.c_str(), tempFileName.c_str() );
     }
     wxModelFileName = newFileName;
-    try	{
-    checkForValidData();
+    try{
+        checkForValidData(timeZoneString);
     }
     catch( badForecastFile &e ) {
-    std::cout << endl << endl << endl << endl << e.what() << endl << endl << endl << endl;
+        if(!bSaveForecast)
+        {
+            VSIUnlink(wxModelFileName.c_str()); // do some clean-up (delete the bad file)
+        }
+        throw;  // rethrow the exception to be caught somewhere else
     }
 
     return newFileName;
@@ -637,24 +673,21 @@ wxModelInitialization::getTimeList(const char *pszVariable,
        this->getForecastIdentifier() == "NCEP-HRRR-3km-SURFACE"){
         //Just 1 time step per forecast file for now.
         GDALDataset *srcDS;
-        
+
         if( strstr( wxModelFileName.c_str(), ".tar" ) ){
             srcDS = (GDALDataset*)GDALOpenShared(CPLSPrintf( "/vsitar/%s", wxModelFileName.c_str() ), GA_ReadOnly);
         }
-        else{        
+        else{
             srcDS = (GDALDataset*)GDALOpenShared( wxModelFileName.c_str(), GA_ReadOnly );
         }
-
-
         if( srcDS == NULL ) {
-            CPLDebug( "wxModelInitialization::getTimeList()",
-                    "Bad forecast file" );
+            throw std::runtime_error("Could not open forecast file, bad forecast file. Failed to get times from forecast file.");
         }
 
         //get time info from 10u band
         GDALRasterBand *poBand = get10UBand(srcDS);
         if (poBand == NULL) {
-            CPLDebug( "wxModelInitialization::getTimeList()", " getTimeList() failed - no 10m UGRD band");
+            throw std::runtime_error("No 10m UGRD band in forecast file. Failed to get times from forecast file.");
         }
 
         const char *vt;
@@ -744,7 +777,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
     status = nc_inq_varid( ncid, timename.c_str(), &varid );
     if( status != NC_NOERR ) {
         ostringstream os;
-        os << "The variable \"time\" in the netcdf file: "
+        os << "The variable \"" << timename << "\" in the netcdf file: "
            << wxModelFileName << " cannot be read\n";
         throw std::runtime_error( os.str() );
     }
@@ -821,7 +854,7 @@ wxModelInitialization::getTimeList(const char *pszVariable,
          */
         //int dimid;
         status = nc_inq_dimid(ncid, "DateStrLen", &dimid );
-        //cout<<"dimid =" <<dimid<<endl;
+        CPLDebug("WINDNINJA", "dimid = %d", dimid);
         if( status != NC_NOERR ) {
             ostringstream os;
             os << "The dimension \"DateStrLen\" "
@@ -1041,6 +1074,17 @@ wxModelInitialization::getTimeList(const char *pszVariable,
     return timeList;
 }
 
+// used to get a pointer to the output wxModel grids, for consistent color scale output methods
+AsciiGrid<double>* wxModelInitialization::getWxSpeedGrid()
+{
+    return &speedInitializationGrid_wxModel;
+}
+
+AsciiGrid<double>* wxModelInitialization::getWxAngleGrid()
+{
+    return &dirInitializationGrid_wxModel;
+}
+
 /**
  *
  */
@@ -1111,7 +1155,14 @@ void wxModelInitialization::ninjaFoamInitializeFields(WindNinjaInputs &input,
     wind_uv_to_sd(meanU, meanV, &meanSpd, &meanDir);
 
     //set average direction
-    input.inputDirection = meanDir;
+    input.inputDirection_proj = meanDir;
+    input.inputDirection_geog = wrap0to360( input.inputDirection_proj + input.dem.getAngleFromNorth() ); //convert FROM projected TO geographic coordinates
+
+    CPLDebug("COORD_TRANSFORM_ANGLES", "wxModelInitialization::ninjaFoamInitializeFields()");
+    CPLDebug("COORD_TRANSFORM_ANGLES", "input.inputSpeed = %lf", input.inputSpeed);
+    CPLDebug("COORD_TRANSFORM_ANGLES", "input.inputDirection (geographic coordinates) = %lf", input.inputDirection_geog);
+    CPLDebug("COORD_TRANSFORM_ANGLES", "angleFromNorth (N_to_dem) = %lf", input.dem.getAngleFromNorth());
+    CPLDebug("COORD_TRANSFORM_ANGLES", "input.inputDirection (projection coordinates) = %lf", input.inputDirection_proj);
 
     //write wx model grids
     writeWxModelGrids(input);
@@ -1177,7 +1228,7 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 #endif
     if(wxModel3d == true){
         initializeWindFrom3dData(input, mesh, u0, v0, w0);
-    } 
+    }
     else{
         initializeWindFromProfile(input, mesh, u0, v0, w0);
     }
@@ -1192,6 +1243,12 @@ void wxModelInitialization::initializeFields(WindNinjaInputs &input,
 
 void wxModelInitialization::interpolateWxGridsToNinjaGrids(WindNinjaInputs &input)
 {
+    //check that the wx model grid overlaps the DEM
+    if(!uGrid_wxModel.CheckForGridOverlap(input.dem))
+    {
+        throw std::logic_error("The weather model grid does not completely overlap the DEM.");
+    }
+
     //Interpolate from original wxModel grids to dem coincident grids
     airTempGrid.interpolateFromGrid(airTempGrid_wxModel, AsciiGrid<double>::order1);
     cloudCoverGrid.interpolateFromGrid(cloudCoverGrid_wxModel, AsciiGrid<double>::order1);
@@ -1248,7 +1305,8 @@ void wxModelInitialization::initializeWindFrom3dData(WindNinjaInputs &input,
                                 wn_3dScalarField& u0,
                                 wn_3dScalarField& v0,
                                 wn_3dScalarField& w0)
-{ 
+{
+//TODO: account for projection rotation from north for 3d data
     int kk;
     int i, j, k;
     double tempGradient;
@@ -1455,8 +1513,24 @@ void wxModelInitialization::interpolate3dDataToPoints(WindNinjaInputs &input, co
 
 void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 {
-    if(input.wxModelAsciiOutFlag==true || input.wxModelShpOutFlag==true || input.wxModelGoogOutFlag == true)
+    if(input.wxModelAsciiOutFlag == true || input.wxModelGeoTiffOutFlag == true || input.wxModelShpOutFlag == true || input.wxModelGoogOutFlag == true || input.wxModelFgbzOutFlag == true)
     {
+        // clip the output weather model ascii grids, to the area of the dem, plus one dem cell size.
+        // actually, it looks best to use one wxModel cell size NOT one dem cell size.
+        //
+        // technically the following wxModel ascii grids all exist, but we only use SOME of them for output:
+        //  airTempGrid_wxModel, cloudCoverGrid_wxModel, uGrid_wxModel, vGrid_wxModel, wGrid_wxModel
+        double west = input.dem.get_xllCorner();
+        double east = input.dem.get_xllCorner() + input.dem.get_xDimension();
+        double south = input.dem.get_yllCorner();
+        double north = input.dem.get_yllCorner() + input.dem.get_yDimension();
+        west = west - uGrid_wxModel.get_cellSize();
+        east = east + uGrid_wxModel.get_cellSize();
+        south = south - uGrid_wxModel.get_cellSize();
+        north = north + uGrid_wxModel.get_cellSize();
+        uGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
+        vGrid_wxModel.clipGridInPlaceSnapToCells( west, east, south, north );
+
         speedInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
         dirInitializationGrid_wxModel.set_headerData(uGrid_wxModel);
 
@@ -1494,23 +1568,24 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 
         std::string wxModelVelFileTemp = rootname + "_vel";
         std::string wxModelAngFileTemp = rootname + "_ang";
-        std::string wxModelCldFileTemp = rootname + "_cld";
         std::string wxModelShpFileTemp = rootname;
         std::string wxModelDbfFileTemp = rootname;
         std::string wxModelKmlFileTemp = rootname;
         std::string wxModelKmzFileTemp = rootname;
         std::string wxModelLegFileTemp = rootname;
         std::string dateTimewxModelLegFileTemp = rootname + ".date_time";
+        std::string wxModelGeoTiffFileTemp = rootname;
 
         input.wxModelVelFile = CPLFormFilename(path.c_str(), wxModelVelFileTemp.c_str(), ".asc");
         input.wxModelAngFile = CPLFormFilename(path.c_str(), wxModelAngFileTemp.c_str(), ".asc");
-        input.wxModelCldFile = CPLFormFilename(path.c_str(), wxModelCldFileTemp.c_str(), ".asc");
         input.wxModelShpFile = CPLFormFilename(path.c_str(), wxModelShpFileTemp.c_str(), "shp");
         input.wxModelDbfFile = CPLFormFilename(path.c_str(), wxModelDbfFileTemp.c_str(), "dbf");
         input.wxModelKmlFile = CPLFormFilename(path.c_str(), wxModelKmlFileTemp.c_str(), "kml");
         input.wxModelKmzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "kmz");
+        input.wxModelFgbzFile = CPLFormFilename(path.c_str(), wxModelKmzFileTemp.c_str(), "fgbz");
         input.wxModelLegFile = CPLFormFilename(path.c_str(), wxModelLegFileTemp.c_str(), "bmp");
         input.dateTimewxModelLegFile = CPLFormFilename(path.c_str(), dateTimewxModelLegFileTemp.c_str(), "bmp");
+        input.wxModelGeoTiffFile = CPLFormFilename(path.c_str(), wxModelGeoTiffFileTemp.c_str(), ".tif");
     }
     velocityUnits::fromBaseUnits(speedInitializationGrid_wxModel, input.outputSpeedUnits);
 
@@ -1522,9 +1597,6 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         try{
         if(input.wxModelAsciiOutFlag==true)
             {
-            AsciiGrid<double> tempCloud(cloudCoverGrid_wxModel);
-            tempCloud *= 100.0;
-            tempCloud.write_Grid(input.wxModelCldFile.c_str(), 0);
             dirInitializationGrid_wxModel.write_Grid(input.wxModelAngFile.c_str(), 0);
             speedInitializationGrid_wxModel.write_Grid(input.wxModelVelFile.c_str(), 2);
             }
@@ -1534,6 +1606,30 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         }catch (...)
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior file writing: Cannot determine exception type.");
+        }
+
+    }//end omp section
+
+    //write geotiff files
+#pragma omp section
+    {
+        try{
+            if(input.wxModelGeoTiffOutFlag==true)
+            {
+                std::string velGeoTiffFile = input.wxModelGeoTiffFile;
+                std::string angGeoTiffFile = input.wxModelGeoTiffFile;
+                velGeoTiffFile.insert(velGeoTiffFile.find(".tif"), "_vel");
+                angGeoTiffFile.insert(angGeoTiffFile.find(".tif"), "_ang");
+
+                speedInitializationGrid_wxModel.exportToTiff(velGeoTiffFile, "Wind Speed", velocityUnits::getString(input.outputSpeedUnits));
+                dirInitializationGrid_wxModel.exportToTiff(angGeoTiffFile, "Wind Direction", "degrees");
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior geotiff file writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during wxModel fire behavior geotiff file writing: Cannot determine exception type.");
         }
 
     }//end omp section
@@ -1565,29 +1661,47 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
 #pragma omp section
     {
         try{
-        if(input.wxModelGoogOutFlag == true)
+        if(input.wxModelGoogOutFlag == true && input.googUseConsistentColorScale == false)
             {
             KmlVector wxModelKmlFiles;
 
             wxModelKmlFiles.setKmlFile(input.wxModelKmlFile);
             wxModelKmlFiles.setKmzFile(input.wxModelKmzFile);
-            wxModelKmlFiles.setDemFile(input.dem.fileName);
-            #ifdef EMISSIONS
-            wxModelKmlFiles.setDustFlag(input.dustFlag);
-            #endif
             wxModelKmlFiles.setLegendFile(input.wxModelLegFile);
             wxModelKmlFiles.setDateTimeLegendFile(input.dateTimewxModelLegFile, input.ninjaTime);
             wxModelKmlFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+
+            /*//compute angle between N-S grid lines in the dataset and true north, going FROM true north TO the y coordinate grid line of the dataset
+            double angleFromNorth = 0.0;
+            if( CSLTestBoolean(CPLGetConfigOption("DISABLE_COORDINATE_TRANSFORMATION_ANGLE_CALCULATIONS", "FALSE")) == false )
+            {
+                CPLDebug("COORD_TRANSFORM_ANGLES", "calculating angleFromNorth val, for the wxModel, in wxModelInitialization::writeWxModelGrids()");
+                GDALDatasetH hDS = dirInitializationGrid_wxModel.ascii2GDAL();
+                if(!GDALCalculateAngleFromNorth( hDS, angleFromNorth ))
+                {
+                    input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Unable to calculate angle departure from north for the wxModel.");
+                }
+                GDALClose(hDS);
+            }*/
+
+            //wxModelKmlFiles.setAngleFromNorth(angleFromNorth);
+            wxModelKmlFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
             wxModelKmlFiles.setDirGrid(dirInitializationGrid_wxModel);
+
+            wxModelKmlFiles.setSpeedScaling(input.wxModelGoogSpeedScaling);
+            wxModelKmlFiles.setColorScheme(input.googColor);
+            wxModelKmlFiles.setVectorScaling(input.googVectorScale);
             wxModelKmlFiles.setLineWidth(input.wxModelGoogLineWidth);
             wxModelKmlFiles.setTime(input.ninjaTime);
             std::vector<boost::local_time::local_date_time> times(getTimeList(input.ninjaTimeZone));
             wxModelKmlFiles.setWxModel(getForecastIdentifier(), times[0]);
 
-            if(wxModelKmlFiles.writeKml(input.wxModelGoogSpeedScaling,input.googColor,input.googVectorScale))
+            if(wxModelKmlFiles.writeKml())
             {
                 if(wxModelKmlFiles.makeKmz())
+                {
                     wxModelKmlFiles.removeKmlFile();
+                }
             }
             }
         }catch (exception& e)
@@ -1597,9 +1711,37 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
         {
             input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during Google Earth file writing: Cannot determine exception type.");
         }
+    }
+#pragma omp section
+    {
+        try{
+            if(input.wxModelFgbzOutFlag == true && input.fgbzUseConsistentColorScale == false)
+            {
+                OutputWriter wxModelFgbzFiles;
+
+                wxModelFgbzFiles.setSpeedGrid(speedInitializationGrid_wxModel, input.outputSpeedUnits);
+                wxModelFgbzFiles.setAngleFromNorth(input.dem.getAngleFromNorth());
+                wxModelFgbzFiles.setDirGrid(dirInitializationGrid_wxModel);
+
+                wxModelFgbzFiles.setSpeedScaling(input.wxModelFgbzSpeedScaling);
+                wxModelFgbzFiles.setColorScheme(input.fgbzColor);
+                wxModelFgbzFiles.setVectorScaling(input.fgbzVectorScale);
+                wxModelFgbzFiles.setLineWidth(input.wxModelFgbzLineWidth);
+                wxModelFgbzFiles.setNinjaTime(input.ninjaTime);
+                wxModelFgbzFiles.setWxModel(getForecastIdentifier());
+
+                wxModelFgbzFiles.write(input.wxModelFgbzFile, "FlatGeoBufZip");
+            }
+        }catch (exception& e)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip writing: %s", e.what());
+        }catch (...)
+        {
+            input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception caught during FlatGeoBufZip file writing: Cannot determine exception type.");
+        }
     }//end omp section
 
-    }	//end parallel sections region
+    }  //end parallel sections region
 }
 
 /**
@@ -1609,55 +1751,57 @@ void wxModelInitialization::writeWxModelGrids(WindNinjaInputs &input)
  */
 double wxModelInitialization::GetWindHeight(std::string varName)
 {
-    /* Override with internal storage */
+  /* Override with internal storage */
+  if(!(wxModelFileName.find("GFS") != std::string::npos)) {
+
     varName = heightVarName;
-    int status, ncid, height_id;
-    size_t unit_len;
-    double d;
-    std::string var_name = varName;
-    char *units;
+  }
+  int status, ncid, height_id;
+  size_t unit_len;
+  double d;
+  std::string var_name = varName;
+  char *units;
 
-    static size_t var_index[] = {0};
+  static size_t var_index[] = {0};
 #ifdef _OPENMP
-    omp_guard netCDF_guard(netCDF_lock);
+  omp_guard netCDF_guard(netCDF_lock);
 #endif
-    status = nc_open(wxModelFileName.c_str(), 0, &ncid);
-    status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
+  status = nc_open(wxModelFileName.c_str(), 0, &ncid);
+  status = nc_inq_varid(ncid, var_name.c_str(), &height_id);
 
-    if(status == 0)
-    {
-        status = nc_get_var1_double(ncid, height_id, var_index, &d);
-    }
+  if(status == 0)
+  {
+      status = nc_get_var1_double(ncid, height_id, var_index, &d);
+  }
 
-    if( status != 0 )
-    {
-        std::string err = "Failed to find height for " + varName;
-        throw badForecastFile( err );
-    }
+  if( status != 0 )
+  {
+      std::string err = "Failed to find height for " + varName;
+      throw badForecastFile( err );
+  }
 
-    status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
-    units = (char*)malloc(unit_len + 1);
-    status = nc_get_att_text(ncid, height_id, "units", units);
-    units[unit_len] = '\0';
+  status = nc_inq_attlen(ncid, height_id, "units", &unit_len);
+  units = (char*)malloc(unit_len + 1);
+  status = nc_get_att_text(ncid, height_id, "units", units);
+  units[unit_len] = '\0';
 
-    if(EQUAL(units,"m") || EQUAL(units, "meters"))
-    {
-    }
-    else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
-    {
-        lengthUnits::toBaseUnits(d, "feet");
-    }
-    else
-    {
-        free(units);
-        nc_close(ncid);
-        throw badForecastFile("Cannot determine wind height units in "
-                              "forecast file");
-    }
-    free(units);
-    nc_close(ncid);
+  if(EQUAL(units,"m") || EQUAL(units, "meters"))
+  {
+  }
+  else if(EQUAL(units,"f") || EQUAL(units, "feet") || EQUAL(units, "ft"))
+  {
+      lengthUnits::toBaseUnits(d, "feet");
+  }
+  else
+  {
+      free(units);
+      nc_close(ncid);
+      throw badForecastFile("Cannot determine wind height units in forecast file.");
+  }
+  free(units);
+  nc_close(ncid);
 
-    return d;
+  return d;
 }
 
 /**
@@ -1709,8 +1853,7 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
     }
     if (status != NC_NOERR) {
         nc_close(ncid);
-        throw badForecastFile(CPLSPrintf(
-            "Could not identify time dimension for variable: %s", pszVariable));
+        throw badForecastFile(CPLSPrintf("Could not identify time dimension for variable: %s.", pszVariable));
     }
     status = nc_inq_var(ncid, varid, 0, &vartype, &varndims, vardimids, &varnatts);
     for(int i = 0; i < varndims; i++) {
@@ -1724,8 +1867,7 @@ std::string wxModelInitialization::GetTimeName(const char *pszVariable)
             tp[namelength] = '\0';
             if(strcmp("time", tp) == 0) {
                 timestring =  std::string(timename);
-                CPLDebug( "WINDNINJA", "Found time: %s for variable: %s",
-                          timename, pszVariable );
+                CPLDebug("WINDNINJA", "Found time: %s for variable: %s", timename, pszVariable);
                 free( (void*)tp );
                 break;
             }
@@ -1756,7 +1898,7 @@ int wxModelInitialization::LoadFromCsv()
     }
     else
     {
-        CPLDebug( "WINDNINJA", "Using cached thredds csv values" );
+        CPLDebug("WINDNINJA", "Using cached thredds csv values.");
         papszLines = CSLDuplicate( papszThreddsCsv );
     }
     int nRecords = CSLCount( papszLines );

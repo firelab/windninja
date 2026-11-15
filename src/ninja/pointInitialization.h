@@ -36,6 +36,12 @@
 
 #include <limits>	//for large number
 #include <math.h>
+#include "cpl_port.h"
+#include "cpl_conv.h"
+#include "cpl_http.h"
+#include "cpl_string.h"
+#include "cpl_minixml.h"
+#include "cpl_multiproc.h"
 
 // shorten boost namespaces
 namespace blt = boost::local_time;
@@ -51,12 +57,8 @@ class pointInitialization : public initialize
         struct preInterpolate
         {
             std::string stationName;
-            double lat;
-            double lon;
-            double projXord;
-            double projYord;
-            double xord;
-            double yord;
+            double coord_x;  //coords are Lat/Lon for coordType GEOGCS, and XCoord/YCoord in the projection of the dem for coordType PROJCS
+            double coord_y;
             double height;
             double speed;
             double direction;
@@ -103,7 +105,6 @@ class pointInitialization : public initialize
                                                 std::vector<boost::posix_time::ptime> timeList);
 
         static double interpolator(double iPoint, double lowX, double highX, double lowY, double highY);
-        static double interpolateDirection(double lowDir, double highDir);
         static double unixTime(boost::posix_time::ptime time);
 
         static bool fetchStationFromBbox(std::string demFile,
@@ -142,7 +143,7 @@ class pointInitialization : public initialize
                                         std::string basePathName,
                                         std::string demFileName,
                                         bool latest);
-        static bool validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
+        static void validateTimeData(vector<vector<preInterpolate> > wxStationData,vector<boost::posix_time::ptime> timeList);
         static int directTemporalInterpolation(int posIdx, int negIdx);
         static void unifyInterpolation(std::string data_source, vector<vector<preInterpolate> > rawStationVector, vector<vector<preInterpolate> > interpolatedWxData);
 
@@ -161,18 +162,10 @@ class pointInitialization : public initialize
 
         static vector<std::string> UnifyTime(vector<boost::posix_time::ptime> timeList);
         static vector<std::string> Split(char* str, const char* delim);
-        static vector<std::string>  InterpretCloudData(const double *dbCloud, int counter);
 
         static vector<std::string> CompareClouds(vector<std::string>low, vector<std::string>med,
                                             vector<std::string>high, int countlow,
                                             int countmed, int counthigh);
-
-        static vector<std::string> UnifyClouds(const double *dvCloud, const double *dwCloud,
-                                          const double *dxCloud, int count1,
-                                          int count2,int count3, int backupcount);
-
-        static vector<double> Irradiate(vector<std::string> solar_radiation,
-                                        std::string timeZone,double lat,double lon, char** times);
 
         static vector<std::string> fixWindDir(const double *winddir, std::string filler, int count);
 
@@ -203,10 +196,16 @@ class pointInitialization : public initialize
 
         static std::string BuildUnifiedLTBbox(double lat, double lon1, double lat2, double lon2);
         static double getStationBuffer();
-        static double parseStationHeight(const char *name_list);
-        static std::vector<std::string> outputToVec(const double* dataArray,int data_idx,int dataCount,std::string data_name);
-        static std::vector<std::string> fixEmptySensor(std::vector<std::string> data_vec,std::string data_name,std::vector<std::string> valid_vec);
+        static double getStationHeight(std::string name);
         static bool fetchStationData(std::string URL, std::string timeZone, bool latest);
+
+        static std::vector<std::string> unifyCloudData(const CPLJSONArray& dvCloud, const CPLJSONArray& dwCloud,
+                                                       const CPLJSONArray& dxCloud, int backupcount);
+
+        static std::vector<double> computeSolarToCloud(const CPLJSONArray& solarRadiation, const std::string& timeZone,
+                                                       double lat, double lon, const CPLJSONArray& datetime);
+
+        static std::vector<std::string> interpretCloudData(const CPLJSONArray& cloudData);
 
         static std::string dtoken;
         static const std::string backup_token;

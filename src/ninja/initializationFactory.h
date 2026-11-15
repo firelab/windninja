@@ -35,6 +35,7 @@
 #include "griddedInitialization.h"
 #include "foamDomainAverageInitialization.h"
 #include "foamWxModelInitialization.h"
+#include "foamGriddedInitialization.h"
 #include "wxModelInitializationFactory.h"
 
 class initializationFactory

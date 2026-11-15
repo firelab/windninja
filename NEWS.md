@@ -1,5 +1,144 @@
 Release Notes
 =============
+WindNinja 4.0.0
+---------------
+- Updated the GUI from Qt4 to Qt6 (#638, #639, #637, #639, #640)
+
+- Added leaflet map to GUI (#641, #725)
+
+- Allow DEMs with projections that are not north-up (#544)
+
+- Added select all/select none option in GUI for point initialization (#379) 
+
+- Fixed small bug to our micrometeorological calculations for the thermal parameterizations
+
+- Upgraded to OpenFOAM 11 for Linux builds (#801)
+
+- Fixed bug regarding NO_DATA value with GDAL datasets (#647)
+
+- Updated GUI pop-up to include links to newer versions (#643)
+
+- Added a C API to access WindNinja model (#259, #582, #666, #667)
+
+- Upgraded LANDFIRE to use 2024 data (#672)
+
+- Updated LANDFIRE product codes (#684)
+
+- Fixed issue where AsciiGrid was improperly detecting NO_DATA values (#576)
+
+- Upgraded momentum solver to use the RNG KEpsilon turbulence model over the KEpsilon model (#525) 
+
+- Removed NDFD now that UCAR no longer serves the data (#494)
+
+WindNinja 3.12.2
+---------------
+- Updated LANDFIRE endpoints for .lcp downloads
+
+- Added check for nodata in .lcp files and enabled auto filling
+
+WindNinja 3.12.1
+---------------
+- Fixed issue where the 2-m temperature band was not properly identified in the NBM model, causing diurnal runs to fail (#600)
+
+- Fixed issue where HRRR-EXT and RAP-EXT were improperly identified as HRRR and RAP (#601)
+
+WindNinja 3.12.0
+---------------
+- Fixed issue in point initialization where requested start/stop times outside the range of the station file times would cause the application to crash (#586)
+
+- Fixed issue causing an inaccurate mesh resolution to sometimes be displayed in the GUI (#564)
+
+- Updated LANDFIRE LFPS endpoints (#562)
+
+- Fixed issue causing some UCAR models to fail (#557)
+
+- Added a DEM smoothing algorithm for cases where the momentum solver diverges due to a low quality mesh (#555)
+
+- Fixed issue causing weather station files to be written to the wrong directory (#545)
+
+- Added a check for a proper datum in weather station files (#541)
+
+- Fixed an issue causing the GUI to crash when a custom output path was not set correctly (#540)
+
+- Upgraded LCP downloads to LF 2023 version 2.4.0 (#539)
+
+- Updated shapefile display tutorial (#536)
+
+- Improved SRTM DEM downloads (#529)
+
+- Added a proper check for surface data bounds in the GUI (#523)
+
+- Enabled pastcasts with historical HRRR forecasts from GCP (#514)
+
+- Fixed inconsistent output file naming in gridded initialization runs (#512)
+
+- Enabled a consistent color scale across time steps for KMZ outputs (#441)
+
+- Improved interpolations in point initialization (#419)
+
+- Added RAP and HRRR extended forecasts (#365)
+
+- Added the NBM forecast (#222)
+
+WindNinja 3.11.2
+---------------
+- Fix Qt SSL issue causing the DEM download widget map not to load for some users (#535)
+
+- Update Tutorial 1 with details regarding requirement for north "up" projections
+
+WindNinja 3.11.1
+---------------
+- Fix issue causing diurnal wind component to be arbitrarily increased (#532)
+
+WindNinja 3.11.0
+---------------
+- Re-enable SRTM data source downloads via OpenTopography API (#395)
+
+- Increased default download time for LCP service (#515)
+
+- Fixed time zone issue in the GUI related to point initialization runs (#516)
+
+- Added additional time zones from Python timezone finder
+
+- Disabled automatic output buffering unless the FARSITE/FlamMap atmosphere file is written (#511)
+
+- Re-enable server communications (#295, #450, #481)
+
+WindNinja 3.10.0
+---------------
+- Update CLI documentation, example cfg files, and test data (#415, #434, #270, #252)
+
+- Fix issue related to station fetching that was causing point initialization runs to fail (#506)
+
+- Fix several small miscellaneous issues in the point initialization method (#420)
+
+- Check dependencies/conflicts and improve error messages in the CLI (#238)
+
+- WindNinja can now download station files for time periods prior to the current year
+
+- Fix an issue that was causing output products to be displayed in correctly in ESRI platforms (e.g., ArcMap) (#464, #500)
+
+- Implement better handling of special characters in DEM names (#455)
+
+WindNinja 3.9.0
+---------------
+- Re-enable ability to download DEM from point and radius or bbox coordinates (#336)
+
+- Speed up solar radiation calculations used in diurnal and non-neutral stability parameterizations (#478)
+
+- Fix a bug that caused the vegetation to be set incorrectly in the GUI (#486)
+
+- Temporary fix for NDFD issue on THREDDS server related to temperature grids (#494)
+
+- Fix issue in terrain shading code used in diurnal and non-neutral stability parameterizations (#476)
+
+- Fix coordinate transformation issue in solar calculations for newer GDAL versions (#475)
+
+- Don't buffer output grids for FARSITE if output clipping is requested (#472)
+
+- Re-enable topofire basemaps in GeoPDF output (#463)
+
+- Add scale bar to map in DEM downloader widget (#422)
 
 WindNinja 3.8.1
 ---------------
