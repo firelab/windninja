@@ -1456,14 +1456,14 @@ void ninja::interp_uvw()
             }
 
             if (pHuvwDS) {
-                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(uRow[i],vRow[j],wRow[j]);
-                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(uRow[i],vRow[j]);
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(uRow[j],vRow[j],wRow[j]);
+                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(uRow[j],vRow[j]);
 
                 setHuvwScanlines( pHuvwDS, nRows-i-1, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get(), spdRow.get(), dirRow.get());
             }
             if (pHuvw0DS) {
-                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(u0Row[i],v0Row[j],w0Row[j]);
-                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(u0Row[i],v0Row[j]);
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(u0Row[j],v0Row[j],w0Row[j]);
+                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(u0Row[j],v0Row[j]);
 
                 setHuvwScanlines( pHuvw0DS, nRows-i-1, nCols, hRow.get(), u0Row.get(), v0Row.get(), w0Row.get(), spdRow.get(), dirRow.get());
             }
