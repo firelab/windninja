@@ -120,51 +120,38 @@ public:
     ) {}
 };
 
-int main(int argc, char *argv[])
+// Reusable calculation wrapper to compute scalar topology layers along a boundary seed lane
+void calculateDirectionalWave
+(
+    const fvMesh& mesh,
+    const Time& runTime,
+    const word& seedPatchName,
+    const word& scalarFieldName
+)
 {
-    #include "setRootCase.H"
-    #include "createTime.H"
-    #include "createMesh.H"
+    Info << "-> Calculating wave starting from patch: " << seedPatchName << endl;
 
-    Info << "\n--- Running Topological FaceCellWave ---" << endl;
-
-    // Dynamically count how many faces belong to ALL wall patches combined
-    label totalWallFaces = 0;
-    forAll(mesh.boundaryMesh(), patchi)
+    label patchi = mesh.boundaryMesh().findPatchID(seedPatchName);
+    if(patchi < 0)
     {
-        const polyPatch& patch = mesh.boundaryMesh()[patchi];
-        if(patch.type() == "wall")
-        {
-            totalWallFaces += patch.size();
-        }
+        WarningInFunction
+            << "Patch '" << seedPatchName << "' not found. Skipping field generation for "
+            << scalarFieldName << "!" << endl;
+        return;
     }
 
-    if(totalWallFaces == 0)
-    {
-        FatalErrorInFunction
-            << "No patches of type 'wall' were found in polyMesh/boundary!"
-            << abort(FatalError);
-    }
+    const polyPatch& patch = mesh.boundaryMesh()[patchi];
+    label totalSeedFaces = patch.size();
 
     // Size our seed lists to fit all wall faces found
-    labelList changedFaces(totalWallFaces);
-    List<TopoToken> faceData(totalWallFaces);
+    labelList changedFaces(totalSeedFaces);
+    List<TopoToken> faceData(totalSeedFaces);
 
     // Loop back through and seed every wall face as Layer 0
-    label seedi = 0;
-    forAll(mesh.boundaryMesh(), patchi)
+    forAll(patch, facei)
     {
-        const polyPatch& patch = mesh.boundaryMesh()[patchi];
-        if(patch.type() == "wall")
-        {
-            Info << "  Seeding wall patch: " << patch.name() << " (" << patch.size() << " faces)" << endl;
-            forAll(patch, facei)
-            {
-                changedFaces[seedi] = patch.start() + facei; // Global face ID
-                faceData[seedi] = TopoToken(0);              // Layer 0
-                seedi++;
-            }
-        }
+        changedFaces[facei] = patch.start() + facei; // Global face index
+        faceData[facei] = TopoToken(0);              // Seed layer 0
     }
 
     // Allocate tracking structures across the grid size
@@ -174,7 +161,7 @@ int main(int argc, char *argv[])
     // Tracking data default primitive
     int td = 0;
 
-    // Fire the FaceCellWave pipeline
+    // Fire the FaceCellWave pipeline for the chosen grid alignment
     FaceCellWave<TopoToken> wave
     (
         mesh,
@@ -186,12 +173,12 @@ int main(int argc, char *argv[])
         td
     );
 
-    // Declare the output volume field
-    volScalarField zLayerIdx
+    // Initialize/Declare the output volume scalar field
+    volScalarField layerIdx
     (
         IOobject
         (
-            "zLayerIdx",
+            scalarFieldName,
             runTime.timeName(),
             mesh,
             IOobject::NO_READ,
@@ -206,7 +193,7 @@ int main(int argc, char *argv[])
     {
         if(allCellInfo[celli].valid(td))
         {
-            zLayerIdx[celli] = allCellInfo[celli].distance();
+            layerIdx[celli] = allCellInfo[celli].distance();
         }
     }
 
@@ -214,7 +201,7 @@ int main(int argc, char *argv[])
     forAll(mesh.boundaryMesh(), patchi)
     {
         const fvPatch& patch = mesh.boundary()[patchi];
-        fvPatchScalarField& boundaryField = zLayerIdx.boundaryFieldRef()[patchi];
+        fvPatchScalarField& boundaryField = layerIdx.boundaryFieldRef()[patchi];
 
         forAll(patch, facei)
         {
@@ -226,9 +213,28 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Write results to your time steps
-    zLayerIdx.write();
-    Info << "Successfully calculated and wrote 'zLayerIdx' to time folder.\n" << endl;
+    // Write file to disk
+    layerIdx.write();
+    Info << "   Successfully calculated and wrote '" << scalarFieldName << "'." << endl;
+}
 
+int main(int argc, char *argv[])
+{
+    #include "setRootCase.H"
+    #include "createTime.H"
+    #include "createMesh.H"
+
+    Info << "\n--- Running Multi-Directional Topological FaceCellWave ---" << endl;
+
+    // 1. Z-Directional tracking starting from the ground terrain
+    calculateDirectionalWave(mesh, runTime, "minZ", "zLayerIdx");
+
+    // 2. X-Directional tracking starting from your West boundary inlet
+    calculateDirectionalWave(mesh, runTime, "west_face", "xLayerIdx");
+
+    // 3. Y-Directional tracking starting from your South lateral face
+    calculateDirectionalWave(mesh, runTime, "south_face", "yLayerIdx");
+
+    Info << "\nExecution complete. All scalar grid coordinates calculated successfully.\n" << endl;
     return 0;
 }
