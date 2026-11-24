@@ -6,60 +6,76 @@
 
 using namespace Foam;
 
-// Advanced OpenFOAM 11 Token tracking both step distance and its assigned Z-layer lane
+enum class WaveDir : int
+{
+    X = 0,
+    Y = 1,
+    Z = 2
+};
+
+// Lightweight struct passed as TrackingData (td)
+struct WaveTrackingData
+{
+    WaveDir dir;
+
+    WaveTrackingData(const WaveDir d)
+    :
+        dir(d)
+    {}
+};
+
+// Advanced OpenFOAM 11 FaceCellWave tracking token both that tracks step distance, using a struct of additional information like the wave-direction
 class TopoToken
 {
     label distance_;
-    label zLayer_; // The vertical layer this token is restricted to (-1 means unrestricted)
 
 public:
     // Core template constructors
-    TopoToken() : distance_(-1), zLayer_(-1) {}
-    TopoToken(const label dist, const label zLayer = -1)
-        : distance_(dist), zLayer_(zLayer) {}
+    TopoToken() : distance_(-1) {}
+    TopoToken(const label dist) : distance_(dist) {}
 
     label distance() const { return distance_; }
-    label zLayer() const { return zLayer_; }
 
-    bool valid(const labelList& zLayers) const { return distance_ >= 0; }
+    bool valid(const WaveTrackingData& td) const { return distance_ >= 0; }
 
     // Serialization for parallel MPI communication pipelines
     friend Ostream& operator<<(Ostream& os, const TopoToken& t)
     {
-        os << t.distance_ << token::SPACE << t.zLayer_;
+        os << t.distance_;
         return os;
     }
     friend Istream& operator>>(Istream& is, TopoToken& t)
     {
-        is >> t.distance_ >> t.zLayer_;
+        is >> t.distance_;
         return is;
     }
 
     // Matching functions used by the template mechanics
-    bool equal(const TopoToken& rhs, const labelList& zLayers) const
+    bool equal(const TopoToken& rhs, const WaveTrackingData& td) const
     {
-        return distance_ == rhs.distance_ && zLayer_ == rhs.zLayer_;
+        return distance_ == rhs.distance_;
     }
 
     bool operator==(const TopoToken& rhs) const
     {
-        return distance_ == rhs.distance_ && zLayer_ == rhs.zLayer_;
+        return distance_ == rhs.distance_;
     }
 
     bool operator!=(const TopoToken& rhs) const
     {
-        return distance_ != rhs.distance_ || zLayer_ != rhs.zLayer_;
+        return distance_ != rhs.distance_;
     }
 
     // signature for geometric matching over cyclic boundaries
-    bool sameGeometry(const polyMesh& mesh, const TopoToken& other, const scalar tol, const labelList& zLayers) const
+    bool sameGeometry(const polyMesh& mesh, const TopoToken& other, const scalar tol, const WaveTrackingData& td) const
     {
         return distance_ == other.distance_;
     }
 
-    // Face-to-Cell Rule with TrackingData mapped to the pre-computed zLayers list
+    // Face-to-Cell Rule
     // this is the one that matters for updating/upgrading the walk-through methods
-    // Pure topological step rule: any valid face crossed adds a single unit step
+    // simplest travelVector based step rule: only a valid step if the largest component of the travelVector is in the direction of the meshWave
+    //// worked for missoula_valley.tif, flat_test.tif, and big_butte_small.tif, but breaks down for bell_steep.tif where cells tilt more than 45 degrees, or have extra strong )) and (( style distortions
     bool updateCell
     (
         const polyMesh& mesh,
@@ -67,22 +83,58 @@ public:
         const label facei,
         const TopoToken& faceInfo,
         const scalar tol,
-        const labelList& zLayers
+        const WaveTrackingData& td
     )
     {
-        // LAYER-LOCK RULE: If this is an X/Y wave (zLayer >= 0), check if the target cell
-        // belongs to a different Z floor. If it does, block the wave immediately!
-        if(faceInfo.zLayer_ >= 0 && zLayers[celli] != faceInfo.zLayer_)
+        const point& faceCtr = mesh.faceCentres()[facei];
+        const point& cellCtr = mesh.cellCentres()[celli];
+
+        // the physical path the wave just took, the step vector from face center to cell center
+        vector travelVec = cellCtr - faceCtr;
+        const scalar dist = mag(travelVec);
+
+        // guard against zero-length vectors
+        if(dist < SMALL)
         {
             return false;
         }
 
+        // normalize to get the unit direction vector
+        travelVec /= dist;
+
+        // get the magnitude along each axis
+        const scalar magX = mag(travelVec.x());
+        const scalar magY = mag(travelVec.y());
+        const scalar magZ = mag(travelVec.z());
+
+        // check to make sure that the largest component is in the meshWave direction
+        bool isAligned = false;
+        if(td.dir == WaveDir::X)
+        {
+            isAligned = (magX > magY) && (magX > magZ);
+        }
+        else if(td.dir == WaveDir::Y)
+        {
+            isAligned = (magY > magX) && (magY > magZ);
+        }
+        else if(td.dir == WaveDir::Z)
+        {
+            isAligned = (magZ > magX) && (magZ > magY);
+        }
+
+        if(!isAligned)
+        {
+            return false;
+        }
+
+        // standard topological distance update
+        // reached only if it clears the meshWave direction check
         if(distance_ < 0 || faceInfo.distance_ + 1 < distance_)
         {
             distance_ = faceInfo.distance_ + 1;
-            zLayer_ = faceInfo.zLayer_;  // Keep carrying the lane configuration forward
             return true;
         }
+
         return false;
     }
 
@@ -93,13 +145,12 @@ public:
         const label facei,
         const TopoToken& cellInfo,
         const scalar tol,
-        const labelList& zLayers
+        const WaveTrackingData& td
     )
     {
         if(distance_ < 0 || cellInfo.distance_ < distance_)
         {
             distance_ = cellInfo.distance_;
-            zLayer_ = cellInfo.zLayer_;  // Keep carrying the lane configuration forward
             return true;
         }
         return false;
@@ -113,13 +164,12 @@ public:
         const label celli,
         const TopoToken& cellInfo,
         const scalar tol,
-        const labelList& zLayers
+        const WaveTrackingData& td
     )
     {
         if(distance_ < 0 || cellInfo.distance_ < distance_)
         {
             distance_ = cellInfo.distance_;
-            zLayer_ = cellInfo.zLayer_;  // Keep carrying the lane configuration forward
             return true;
         }
         return false;
@@ -131,7 +181,7 @@ public:
         const polyPatch& patch,
         const label facei,
         const transformer& transform,
-        const labelList& zLayers
+        const WaveTrackingData& td
     ) {}
 };
 
@@ -142,11 +192,10 @@ void calculateDirectionalWave
     const Time& runTime,
     const word& seedPatchName,
     const word& scalarFieldName,
-    labelList& zLayers,
-    const bool lockToLayers
+    WaveTrackingData& td   // Passed by non-const reference into FaceCellWave
 )
 {
-    Info << "-> Calculating wave starting from patch: " << seedPatchName << " (Layer Locked: " << (lockToLayers ? "true" : "false") << ")" << endl;
+    Info << "-> Calculating wave starting from patch: " << seedPatchName << endl;
 
     label patchi = mesh.boundaryMesh().findPatchID(seedPatchName);
     if(patchi < 0)
@@ -158,30 +207,16 @@ void calculateDirectionalWave
     }
 
     const polyPatch& patch = mesh.boundaryMesh()[patchi];
-    label totalSeedFaces = patch.size();
 
     // Size our seed lists to fit all faces found
-    labelList changedFaces(totalSeedFaces);
-    List<TopoToken> faceData(totalSeedFaces);
+    labelList changedFaces(patch.size());
+    List<TopoToken> faceData(patch.size());
 
-    // Loop back through and seed every wall face as Layer 0
-    // but also to add the zLayer floorID, as either unrestricted, or to the specific zLayerIdx
+    // Loop back through and seed every face of the starting patch as LayerIdx 0
     forAll(patch, facei)
     {
-        label globalFacei = patch.start() + facei;
-        changedFaces[facei] = globalFacei;  // Global face ID
-
-        if(lockToLayers)
-        {
-            // For horizontal boundaries, identify the exact vertical layer of the interior cell it touches
-            label celli = mesh.faceOwner()[globalFacei];
-            label localZ = zLayers[celli];
-            faceData[facei] = TopoToken(0, localZ); // Seed layer 0 , also tag this token with its specific floor ID
-        }
-        else
-        {
-            faceData[facei] = TopoToken(0, -1);    // Seed layer 0, also Z-wave runs completely unrestricted
-        }
+        changedFaces[facei] = patch.start() + facei; // Global face index
+        faceData[facei] = TopoToken(0);              // Seed LayerIdx 0
     }
 
     // Allocate tracking structures across the grid size
@@ -189,7 +224,7 @@ void calculateDirectionalWave
     List<TopoToken> allCellInfo(mesh.nCells());
 
     // Fire the FaceCellWave pipeline for the chosen grid alignment
-    FaceCellWave<TopoToken, labelList> wave
+    FaceCellWave<TopoToken, WaveTrackingData> wave
     (
         mesh,
         changedFaces,
@@ -197,7 +232,7 @@ void calculateDirectionalWave
         allFaceInfo,
         allCellInfo,
         mesh.nCells(),
-        zLayers
+        td
     );
 
     // Initialize/Declare the output volume scalar field
@@ -218,7 +253,7 @@ void calculateDirectionalWave
     // Populate cell values (Internal Field)
     forAll(allCellInfo, celli)
     {
-        if(allCellInfo[celli].valid(zLayers))
+        if(allCellInfo[celli].valid(td))
         {
             layerIdx[celli] = allCellInfo[celli].distance();
         }
@@ -233,7 +268,7 @@ void calculateDirectionalWave
         forAll(patch, facei)
         {
             label globalFacei = patch.start() + facei;
-            if(allFaceInfo[globalFacei].valid(zLayers))
+            if(allFaceInfo[globalFacei].valid(td))
             {
                 boundaryField[facei] = allFaceInfo[globalFacei].distance();
             }
@@ -251,30 +286,18 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createMesh.H"
 
-    Info << "\n--- Running Multi-Directional Layer-Isolated Topological FaceCellWave ---" << endl;
+    Info << "\n--- Running Multi-Directional Topological FaceCellWave ---" << endl;
 
-    // Allocate an empty placeholder list for the first vertical wave pass
-    labelList dummyLayers(mesh.nCells(), -1);
+    // build lightweight TrackingData structs for each directional wave
+    WaveTrackingData td_Z(WaveDir::Z);
+    WaveTrackingData td_X(WaveDir::X);
+    WaveTrackingData td_Y(WaveDir::Y);
 
-    // 1. Z-Direction pass: Generates the foundational layout field
-    calculateDirectionalWave(mesh, runTime, "minZ", "zLayerIdx", dummyLayers, false);
+    // run each directional wave
+    calculateDirectionalWave(mesh, runTime, "minZ", "zLayerIdx", td_Z);
+    calculateDirectionalWave(mesh, runTime, "west_face", "xLayerIdx", td_X);
+    calculateDirectionalWave(mesh, runTime, "south_face", "yLayerIdx", td_Y);
 
-    // Re-read or extract the fresh zLayerIdx field to use as our layout restrictions blueprint
-    Info << "-> Caching topological Z-Layers blueprint for horizontal routing constraints..." << endl;
-    volScalarField zLayerIdx(IOobject("zLayerIdx", runTime.timeName(), mesh, IOobject::MUST_READ, IOobject::NO_WRITE), mesh);
-
-    labelList activeCellZLayers(mesh.nCells());
-    forAll(activeCellZLayers, celli)
-    {
-        activeCellZLayers[celli] = std::round(zLayerIdx[celli]);
-    }
-
-    // 2. X-Direction pass: Completely locked inside its respective horizontal z-levels
-    calculateDirectionalWave(mesh, runTime, "west_face", "xLayerIdx", activeCellZLayers, true);
-
-    // 3. Y-Direction pass: Completely locked inside its respective horizontal z-levels
-    calculateDirectionalWave(mesh, runTime, "south_face", "yLayerIdx", activeCellZLayers, true);
-
-    Info << "\nExecution complete. Isolated horizontal coordinates mapped successfully.\n" << endl;
+    Info << "\nExecution complete. All scalar grid coordinates mapped successfully.\n" << endl;
     return 0;
 }
