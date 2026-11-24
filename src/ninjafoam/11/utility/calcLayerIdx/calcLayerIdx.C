@@ -17,14 +17,16 @@ enum class WaveDir : int
 struct WaveTrackingData
 {
     WaveDir dir;
+    const volVectorField& cellTilt;
 
-    WaveTrackingData(const WaveDir d)
+    WaveTrackingData(const WaveDir d, const volVectorField& cellTiltField)
     :
-        dir(d)
+        dir(d),
+        cellTilt(cellTiltField)
     {}
 };
 
-// Advanced OpenFOAM 11 FaceCellWave tracking token both that tracks step distance, using a struct of additional information like the wave-direction
+// Advanced OpenFOAM 11 FaceCellWave tracking token both that tracks step distance, using a struct of additional information like the wave-direction and the computed cellTilt values
 class TopoToken
 {
     label distance_;
@@ -75,7 +77,8 @@ public:
     // Face-to-Cell Rule
     // this is the one that matters for updating/upgrading the walk-through methods
     // simplest travelVector based step rule: only a valid step if the largest component of the travelVector is in the direction of the meshWave
-    //// worked for missoula_valley.tif, flat_test.tif, and big_butte_small.tif, but breaks down for bell_steep.tif where cells tilt more than 45 degrees, or have extra strong )) and (( style distortions
+    // where the travelVector is tilt corrected using the cellTilt of the minZ face of the cell
+    //// worked for missoula_valley.tif, flat_test.tif, and big_butte_small.tif, but breaks down for bell_steep.tif where cells tilt more than 45 degrees, or have extra strong )) and (( style distortions. Still breaks for bell_steep.tif even with minZ cellTilt, whatever cellTilt form is used, seems cross cell tilt information might be needed too, or cell distortion information, or it just isn't quite enough to pull out the travelVect vs the waveDirection.
     bool updateCell
     (
         const polyMesh& mesh,
@@ -102,10 +105,68 @@ public:
         // normalize to get the unit direction vector
         travelVec /= dist;
 
+        /*//// first attempt, an attempt at building a tilted 3D rotation matrix, for a projection style calculation. this form of the calculations seems a bit weird and quirky
+        // build local terrain-aligned axes from cellTilt
+        const vector& localZ = td.cellTilt[celli];
+        vector refX(1, 0, 0);
+        if(mag(localZ & refX) > 0.9)
+        {
+            refX = vector(0, 1, 0);
+        }
+        const vector localY = normalised(localZ ^ refX);
+        const vector localX = localY ^ localZ;
+
+        // project travelVec onto local terrain axes
+        const scalar dX = travelVec & localX;
+        const scalar dY = travelVec & localY;
+        const scalar dZ = travelVec & localZ;
+
         // get the magnitude along each axis
-        const scalar magX = mag(travelVec.x());
-        const scalar magY = mag(travelVec.y());
-        const scalar magZ = mag(travelVec.z());
+        const scalar magX = mag(dX);
+        const scalar magY = mag(dY);
+        const scalar magZ = mag(dZ);*/
+
+        // totate travelVec by the exact 3D rotation that aligns cellTilt -> (0, 0, 1)
+        // (Rodrigues' rotation formula: rotates "down and over" with zero azimuthal twist)
+        const vector& n = td.cellTilt[celli];
+        const vector up(0, 0, 1);
+
+        const vector rotAxis = n ^ up;          // Cross product gives rotation axis & sin(theta)
+        const scalar cosTheta = n & up;         // Dot product gives cos(theta)
+        const scalar sinThetaSq = magSqr(rotAxis);
+
+        vector flatTravelVec = travelVec;
+        if(sinThetaSq > SMALL)
+        {
+            // Standard 3D vector rotation from n to (0, 0, 1)
+            flatTravelVec =
+                travelVec * cosTheta
+              + (rotAxis ^ travelVec)
+              + rotAxis * ((rotAxis & travelVec) / (1.0 + cosTheta));
+        }
+
+        // get the magnitude along each axis
+        const scalar magX = mag(flatTravelVec.x());
+        const scalar magY = mag(flatTravelVec.y());
+        const scalar magZ = mag(flatTravelVec.z());
+
+        /*//// the full rotation tensor form, let OpenFOAM make the 3D tilted coordinate axes needed to rotate to the ground, instead of building it manually
+        //// hrm, all three forms ended up looking the same, I suspect that cellTilt of just minZ is not enough of a tilt correction, or something else is missing.
+        //// Hrm. Lots of )( style cells in bell_steep.tif, could just be that it needs more info about the sides, some kind of cross tilt or cell distortion as well. Hrm.
+        // normalize the cellTilt, and setup the unit cartesian coordinate ground vector to rotate towards
+        const vector n = normalised(td.cellTilt[celli]);
+        const vector up(0, 0, 1);
+
+        // build the exact rotation that tips 'n' straight up to (0, 0, 1)
+        const tensor unTilt = rotationTensor(n, up);
+
+        // rotate travelVec onto flat ground
+        vector flatVec = unTilt & travelVec;
+
+        // get the magnitude along each axis
+        const scalar magX = mag(flatVec.x());
+        const scalar magY = mag(flatVec.y());
+        const scalar magZ = mag(flatVec.z());*/
 
         // check to make sure that the largest component is in the meshWave direction
         bool isAligned = false;
@@ -185,7 +246,7 @@ public:
     ) {}
 };
 
-// Reusable calculation wrapper to compute scalar topology layers along a boundary seed lane, configured to accept layer restrictions
+// Reusable calculation wrapper to compute scalar topology layers along a boundary seed lane, configured to pass in a struct of tracking data
 void calculateDirectionalWave
 (
     const fvMesh& mesh,
@@ -235,7 +296,7 @@ void calculateDirectionalWave
         td
     );
 
-    // Initialize/Declare the output volume scalar field
+    // Initialize the output volume scalar field
     volScalarField layerIdx
     (
         IOobject
@@ -250,7 +311,7 @@ void calculateDirectionalWave
         dimensionedScalar("default", dimless, -1.0)
     );
 
-    // Populate cell values (Internal Field)
+    // Map the internalField cell distances
     forAll(allCellInfo, celli)
     {
         if(allCellInfo[celli].valid(td))
@@ -280,6 +341,61 @@ void calculateDirectionalWave
     Info << "   Successfully calculated and wrote '" << scalarFieldName << "'." << endl;
 }
 
+volVectorField calcCellTilt(const fvMesh& mesh, const Time& runTime)
+{
+    volVectorField cellTilt
+    (
+        IOobject
+        (
+            "cellTilt",
+            runTime.timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        dimensionedVector("up", dimless, vector(0, 0, 1))
+    );
+
+    const vectorField& Sf = mesh.faceAreas();
+    const labelList& own = mesh.faceOwner();
+
+    forAll(mesh.cells(), celli)
+    {
+        const cell& c = mesh.cells()[celli];
+
+        // Find the face pointing most downward (-Z) for this cell
+        scalar mostDownwardRatio = 0.0;
+        vector bottomUpNormal = vector(0, 0, 1);
+
+        forAll(c, fI)
+        {
+            label facei = c[fI];
+            vector outwardSf = Sf[facei];
+            if (own[facei] != celli)
+            {
+                outwardSf = -outwardSf;
+            }
+
+            scalar area = mag(outwardSf);
+            if (area < SMALL) continue;
+
+            // Cosine of angle from +Z (will be negative for bottom face, e.g. -0.58 at 54 deg)
+            scalar zCos = outwardSf.z() / area;
+
+            if (zCos < mostDownwardRatio)
+            {
+                mostDownwardRatio = zCos;
+                bottomUpNormal = -outwardSf / area; // Flip outward (-Z) to upward (+Z) unit normal
+            }
+        }
+
+        cellTilt[celli] = bottomUpNormal;
+    }
+
+    return cellTilt;
+}
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
@@ -288,16 +404,19 @@ int main(int argc, char *argv[])
 
     Info << "\n--- Running Multi-Directional Topological FaceCellWave ---" << endl;
 
-    // build lightweight TrackingData structs for each directional wave
-    WaveTrackingData td_Z(WaveDir::Z);
-    WaveTrackingData td_X(WaveDir::X);
-    WaveTrackingData td_Y(WaveDir::Y);
+    // pre-calculate cellTilt once for the entire mesh
+    volVectorField cellTilt = calcCellTilt(mesh, runTime);
+
+    // build lightweight TrackingData structs for each directional wave (zero-copy reference to cellGradients)
+    WaveTrackingData td_Z(WaveDir::Z, cellTilt);
+    WaveTrackingData td_X(WaveDir::X, cellTilt);
+    WaveTrackingData td_Y(WaveDir::Y, cellTilt);
 
     // run each directional wave
     calculateDirectionalWave(mesh, runTime, "minZ", "zLayerIdx", td_Z);
     calculateDirectionalWave(mesh, runTime, "west_face", "xLayerIdx", td_X);
     calculateDirectionalWave(mesh, runTime, "south_face", "yLayerIdx", td_Y);
 
-    Info << "\nExecution complete. All scalar grid coordinates mapped successfully.\n" << endl;
+    Info << "\nExecution complete. All scalar grid coordinates calculated successfully.\n" << endl;
     return 0;
 }
