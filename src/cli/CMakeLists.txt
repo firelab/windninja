@@ -26,6 +26,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src
 
 set(LINK_LIBS ${Boost_LIBRARIES}
               ${GDAL_LIBRARY}
+              ${SHAPELIB_LIBRARY}
               ${NETCDF_LIBRARIES_C}
               ${CURL_LIBRARIES})
 

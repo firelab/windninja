@@ -349,13 +349,16 @@ int NinjaInitialize(const char* typeofrun)
         {
             CPLDebug( "WINDNINJA", "found WINDNINJA_DATA \"%s\"", CPLGetPath(osDataPath.c_str()) );
             CPLSetConfigOption("WINDNINJA_DATA", CPLGetPath(osDataPath.c_str()));
-        } else
-        {
-            throw std::runtime_error("no valid WINDNINJA_DATA found, please set valid WINDNINJA_DATA");
         }
     }
 
-    globalTimeZoneDB.load_from_file(FindDataPath("date_time_zonespec.csv"));
+    init_default_timezones(globalTimeZoneDB);
+
+    std::string localTzSpec = FindDataPath("date_time_zonespec.csv");
+    if (localTzSpec.length() > 0) {
+        globalTimeZoneDB.load_from_file( localTzSpec.c_str());
+    }
+
     CPLPopErrorHandler();
 
 #ifdef PHONE_HOME_QUERIES_ENABLED

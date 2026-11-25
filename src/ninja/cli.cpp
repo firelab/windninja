@@ -322,6 +322,11 @@ int windNinjaCLI(int argc, char* argv[])
                 ("write_shapefile_output", po::value<bool>()->default_value(false), "write a shapefile output file (true, false)")
                 ("shape_out_resolution", po::value<double>()->default_value(-1.0), "resolution of shapefile output file (-1 to use mesh resolution)")
                 ("units_shape_out_resolution", po::value<std::string>()->default_value("m"), "units of shapefile resolution (ft, m)")
+
+                ("huvw_suffix", po::value<std::string>()->default_value("_huvw"), "filename suffix for huvw output (excluding extension, default '_huvw')")
+                ("write_huvw_output", po::value<bool>()->default_value(false), "write HUVW wind vector output grid (true, default:false)")
+                ("write_huvw_0_output" , po::value<bool>()->default_value(false), "write input wind speed (wxModel or point) (true, default:false)")
+
                 ("write_wx_model_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files for the raw wx model forecast (true, false)")
                 ("write_ascii_output", po::value<bool>()->default_value(false), "write ascii fire behavior output files (true, false)")
                 ("ascii_out_aaigrid", po::value<bool>()->default_value(true), "write ascii output as standard AAIGRID files (default: true, false)")
@@ -2115,6 +2120,14 @@ int windNinjaCLI(int argc, char* argv[])
                 windsim.setShpResolution( i_, vm["shape_out_resolution"].as<double>(),
                         lengthUnits::getUnit(vm["units_shape_out_resolution"].as<std::string>()));
             }
+
+            // HUVW output options (3D wind grids/vectors in various formats)
+            windsim.setHuvwSuffix( i_, vm["huvw_suffix"].as<std::string>());
+            windsim.setHuvwOutFlag( i_, vm["write_huvw_output"].as<bool>());
+            windsim.setHuvw0OutFlag( i_, vm["write_huvw_0_output"].as<bool>());
+
+            // AAIGRID text output
+            if(option_val<bool>(vm,"write_ascii_output"))
             option_dependency(vm, "ascii_out_aaigrid", "write_ascii_output");
             option_dependency(vm, "ascii_out_json", "write_ascii_output");
             option_dependency(vm, "ascii_out_proj", "write_ascii_output");

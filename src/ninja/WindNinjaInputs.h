@@ -179,6 +179,16 @@ public:
     bool asciiGeogOutFlag;      // write ascii files using geographic coordinates, EPSG:4326 (lat,lon) grids
     bool asciiUvOutFlag;        // write ascii output as u,v wind vector data
 
+    //--- HUVW output file options
+    std::string huvwSuffix; // the filename suffix for the HUVW output file (excluding extension, which is always .tif)
+
+    bool huvwOutFlag;  // do we write HUVW wind grids/vectors
+    std::string huvwTifFile;
+
+    bool huvw0OutFlag; // do we store u,v,w of input wind ? 
+    std::string huvw0TifFile;
+    //--- end HUVW output file options
+    
     bool geoTiffOutFlag;  //flag specifying if fire behavior geotiff (raster) output should be written
     std::string geoTiffFile;
     double geoTiffResolution;

@@ -28,6 +28,7 @@
 
 
 #include "ninja.h"
+#include "huvw_output.h"
 
 extern boost::local_time::tz_database globalTimeZoneDB;
 
@@ -76,6 +77,9 @@ ninja::ninja()
     nMaxMatchingIters = atoi( CPLGetConfigOption( "NINJA_POINT_MAX_MATCH_ITERS",
                                                   "150" ) );
     CPLDebug( "NINJA", "Maximum match iterations set to: %d", nMaxMatchingIters );
+
+    pHuvwDS = nullptr; // (optional) data set to store computed (h,u,v,w) grid
+    pHuvw0DS = nullptr; // (optional) data set to store input (h,u,v,w) grid (wxModel or point source)
 }
 
 /**Ninja destructor
@@ -156,6 +160,9 @@ ninja::ninja(const ninja &rhs)
     slope=NULL;
     shade=NULL;
     solar=NULL;
+
+    pHuvwDS = rhs.pHuvwDS;
+    pHuvw0DS - rhs.pHuvw0DS;
 }
 
 /**
@@ -176,6 +183,9 @@ ninja &ninja::operator=(const ninja &rhs)
         TurbulenceGrid = rhs.TurbulenceGrid;
         colMaxGrid = rhs.colMaxGrid;
 #endif
+        pHuvwDS = rhs.pHuvwDS;
+        pHuvw0DS = rhs.pHuvw0DS;
+
         outputSpeedArray=rhs.outputSpeedArray;
         outputDirectionArray = rhs.outputDirectionArray;
         #ifdef EMISSIONS
@@ -1335,6 +1345,14 @@ void ninja::mkl_trans_dcsrmv(char *transa, int *m, int *k, double *alpha, char *
         delete[] temp;
 }
 
+inline float vec_length (float u, float v, float w) {
+    return std::sqrt( u*u + v*v + w*w);
+}
+
+inline float vec_direction (float u, float v) {
+    return std::fmod( (270.0 - atan2(v, u) * 180.0 / M_PI), 360.0);
+}
+
 /**Interpolates the 3d volume wind field to the output wind height surface.
  *
  */
@@ -1348,7 +1366,21 @@ void ninja::interp_uvw()
         windProfile profile;
         profile.profile_switch = windProfile::monin_obukov_similarity;	//switch that detemines what profile is used...
 
-                                                                        //make sure rough_h is set to zero if profile switch is 0 or 2
+        double windHeight = input.outputWindHeight;
+        int nRows = VelocityGrid.get_nRows();
+        int nCols = VelocityGrid.get_nCols();
+
+        // scan lines for HUVW data set (only alloc if we need them, hRow and spdRow are used for both)
+        int len = (pHuvwDS || pHuvw0DS) ? nCols : 0;
+        std::unique_ptr<float[]> hRow(new float[len]), spdRow(new float[len]), dirRow(new float[len]);
+
+        len = pHuvwDS ? nCols : 0;
+        std::unique_ptr<float[]> uRow(new float[len]), vRow(new float[len]), wRow(new float[len]);
+
+        len = pHuvw0DS ? nCols : 0;
+        std::unique_ptr<float[]> u0Row(new float[len]), v0Row(new float[len]), w0Row(new float[len]);
+
+        //make sure rough_h is set to zero if profile switch is 0 or 2
 #pragma omp for
         for(i=0;i<VelocityGrid.get_nRows();i++)
         {
@@ -1406,6 +1438,34 @@ void ninja::interp_uvw()
                     intermedval+=2.0*pi;
                 AngleGrid(i,j)=(180.0/pi*intermedval);
 
+                // optional HUVW output
+                if (pHuvwDS || pHuvw0DS) {
+                    hRow[j] = (float) (input.dem.get_cellValue(i,j) + windHeight);
+                }
+
+                if (pHuvwDS) {
+                    uRow[j] = (float)uu;
+                    vRow[j] = (float)vv;
+                    wRow[j] = (float)ww;
+                }
+                if (pHuvw0DS) {
+                    u0Row[j] = u0(i,j,k);
+                    v0Row[j] = v0(i,j,k);
+                    w0Row[j] = w0(i,j,k);
+                }
+            }
+
+            if (pHuvwDS) {
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(uRow[j],vRow[j],wRow[j]);
+                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(uRow[j],vRow[j]);
+
+                setHuvwScanlines( pHuvwDS, nRows-i-1, nCols, hRow.get(), uRow.get(), vRow.get(), wRow.get(), spdRow.get(), dirRow.get());
+            }
+            if (pHuvw0DS) {
+                for (int j = 0; j<nCols; j++) spdRow[j] = vec_length(u0Row[j],v0Row[j],w0Row[j]);
+                for (int j = 0; j<nCols; j++) dirRow[j] = vec_direction(u0Row[j],v0Row[j]);
+
+                setHuvwScanlines( pHuvw0DS, nRows-i-1, nCols, hRow.get(), u0Row.get(), v0Row.get(), w0Row.get(), spdRow.get(), dirRow.get());
             }
         }
     }	//end parallel region
@@ -2232,6 +2292,53 @@ void ninja::computeUVWField()
     testGrid.deallocate();*/
 }
 
+/**
+ * create option HUVW GDAL datasets to store initial and solved wind vector grids (if HUVW output is requested)
+ * note this requires output filenames to be set, i.e. has to happen after calling `set_outputFilenames()`
+ */
+void ninja::create_huvwDatasets ()
+{
+    if (input.huvwOutFlag || input.huvw0OutFlag) {
+        int nRows = input.dem.get_nRows();
+        int nCols = input.dem.get_nCols();
+        double xllCorner = input.dem.get_xllCorner();
+        double yllCorner = input.dem.get_yllCorner();
+        double cellSize = input.dem.get_cellSize();
+        double noDataValue = input.dem.get_noDataValue();
+        std::string& prjString = input.dem.prjString;
+
+        if (input.huvwOutFlag) {
+            // create the HUVW dataset that is populated during interp_uvw().
+            // We back this with a file so that we don't have keep the whole thing in memory
+            const char* info = "WindNinja generated (H[m], U[m/s], V[m/s], W[m/s]) wind velocity grid";
+            pHuvwDS = createHuvwDS(input.huvwTifFile.c_str(), info, prjString.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize);
+        }
+        if (input.huvw0OutFlag) {
+            const char* info = "WindNinja generated (H[m], U[m/s], V[m/s], W[m/s]) input wind velocity grid";
+            pHuvw0DS = createHuvwDS(input.huvw0TifFile.c_str(), info, prjString.c_str(), nCols,nRows, xllCorner,yllCorner,cellSize);
+        }
+    }
+}
+
+void ninja::write_huvwOutputFiles ()
+{
+    // files are already there - flush if we keep them, delete if not
+
+    if (input.huvwOutFlag) { // the simulation result
+        cout << "writing HUVW geo-TIFF output: " << input.huvwTifFile << "\n";
+        pHuvwDS->FlushCache();
+    } else {
+        VSIUnlink(input.huvwTifFile.c_str()); // delete temp HUVW grid file
+    }
+
+    if (input.huvw0OutFlag) { // the interpolated input
+        cout << "writing input HUVW geo-TIFF output: " << input.huvw0TifFile << "\n";
+        pHuvw0DS->FlushCache();
+    } else {
+        VSIUnlink(input.huvw0TifFile.c_str()); // delete temp HUVW-0 grid file
+    }
+}
+
 /**Prepares for writing output files.
  * Builds 2d surfaces and calls interp_uvw() to interpolate volume data to output surface at output height.
  *
@@ -2240,6 +2347,13 @@ void ninja::prepareOutput()
 {
     VelocityGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
 	AngleGrid.set_headerData(input.dem.get_nCols(),input.dem.get_nRows(), input.dem.get_xllCorner(), input.dem.get_yllCorner(), input.dem.get_cellSize(), input.dem.get_noDataValue(), 0, input.dem.prjString);
+
+    // we need those to be set here so that we can create HUVW datasets (if requested)
+    set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
+
+    if (input.huvwOutFlag || input.huvw0OutFlag) {
+        create_huvwDatasets();
+    }
 
 #ifdef NINJAFOAM
         if(input.writeTurbulence)
@@ -2957,8 +3071,6 @@ void ninja::writeAsciiOutputFiles(AsciiGrid<double>& angGrid, AsciiGrid<double>&
 
 void ninja::writeOutputFiles()
 {
-    set_outputFilenames(mesh.meshResolution, mesh.meshResolutionUnits);
-
     // ensure grids cover original DEM extents, for FLAMMAP, and for all simulation outputs
     // if output clipping was set by the user, don't buffer to overlap the DEM
     AsciiGrid<double> demGrid;
@@ -3518,6 +3630,14 @@ void ninja::writeOutputFiles()
         }
     } //end omp section
     }   //end parallel sections region
+
+     if (input.huvwOutFlag || input.huvw0OutFlag) {
+          try {
+              write_huvwOutputFiles();
+          } catch (exception& e) {
+              input.Com->ninjaCom(ninjaComClass::ninjaWarning, "Exception while writing HUVW output file: %s", e.what());
+          }
+      }
 }
 
 /**Deletes allocated dynamic memory.
@@ -3605,6 +3725,16 @@ void ninja::deleteDynamicMemory()
 	u0.deallocate();
 	v0.deallocate();
 	w0.deallocate();
+
+	if (pHuvwDS) {
+    pHuvwDS->Release();
+    pHuvwDS = nullptr;
+  }
+
+  if (pHuvw0DS) {
+    pHuvw0DS->Release();
+    pHuvw0DS = nullptr;
+  }
 }
 
 /**Checks the cancel flag for cancelling simulation.
@@ -4779,12 +4909,12 @@ void ninja::set_numberCPUs(int CPUs)
     /*
         if(omp_in_parallel())
         {
-            //omp_set_nested(false);
+            //omp_set_max_active_levels(1);
             //omp_set_dynamic(true);
             omp_set_num_threads(1);
             //ninjaCom(ninjaComClass::ninjaDebug, "IN OMP PARALLEL REGION AND SHOULDN'T BE!!!!");
         }else{
-            //omp_set_nested(true);
+            //omp_set_max_active_levels();
             //omp_set_dynamic(true);
             omp_set_num_threads(numberCPUs);
             //ninjaCom(ninjaComClass::ninjaDebug, "Max number of threads = %d\nDynamic = %d\nNested = %d", omp_get_max_threads(), omp_get_dynamic(), omp_get_nested());
@@ -5409,6 +5539,10 @@ void ninja::set_outputFilenames(double& meshResolution,
     input.velFile = rootFile + ascii_fileAppend + "_vel.asc";
     input.angFile = rootFile + ascii_fileAppend + "_ang.asc";
 
+    // HUVW output files
+    input.huvwTifFile = rootFile + ascii_fileAppend + input.huvwSuffix + ".tif";    // "_huvw.tif";
+    input.huvw0TifFile = rootFile + ascii_fileAppend + input.huvwSuffix + "_0.tif"; // "_huvw_0.tif";
+    
     #ifdef FRICTION_VELOCITY
     input.ustarFile = rootFile + ascii_fileAppend + "_ustar.asc";
     #endif

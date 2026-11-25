@@ -143,6 +143,14 @@ public:
     AsciiGrid<double> colMaxGrid; // same as for TurbulenceGrid
 #endif
 
+    // optional 3D (u,v,w,h) grid for computed wind. This is directly using a GDALDataset so that we don't have to keep
+    // the whole set in memory.
+    GDALDataset* pHuvwDS;
+
+    // optional 3D (u,v,w,h) input grid. Directly using a GDALDataset. This stores the wxModel or point source generated
+    // wind field in the same grid as pHuvwDS
+    GDALDataset* pHuvw0DS;
+
     wn_3dScalarField alphaVfield; //store spatially varying alphaV variable
 
     #ifdef FRICTION_VELOCITY
@@ -327,6 +335,12 @@ public:
     void set_wxModelShpOutFlag(bool flag);
     void set_shpResolution(double Resolution, lengthUnits::eLengthUnits units);	//sets the output resolution of the shapefile, if negative value the computational mesh resolution is used
 
+    inline void set_huvwSuffix (std::string suffix) { input.huvwSuffix = suffix; }
+    inline void set_huvwOutFlag(bool flag) { input.huvwOutFlag = flag; }
+    inline void set_huvw0OutFlag(bool flag) { input.huvw0OutFlag = flag; }
+    void create_huvwDatasets();
+    void write_huvwOutputFiles();
+ 
     void set_asciiOutFlag(bool flag);
     void set_asciiAaigridOutFlag(bool flag);
     void set_asciiJsonOutFlag(bool flag);

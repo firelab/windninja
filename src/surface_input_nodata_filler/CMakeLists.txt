@@ -33,6 +33,7 @@ set(SURFACE_INPUT_NODATA_FILLER_SRC surface_input_nodata_filler.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ascii_grid.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/Elevation.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ninja_conv.cpp
+                   ${PROJECT_SOURCE_DIR}/src/ninja/init_tz.cpp
                    ${PROJECT_SOURCE_DIR}/src/ninja/ninja_init.cpp)
 
 add_executable(surface_input_nodata_filler ${SURFACE_INPUT_NODATA_FILLER_SRC})

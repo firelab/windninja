@@ -43,7 +43,7 @@ bool startRuns(int numRuns, int numProcessors, ninja *windsim)
 		return false;
 
 	#ifdef _OPENMP
-		omp_set_nested(true);
+	  omp_set_max_active_levels();
 		//omp_set_dynamic(true); 
 	#endif
 
@@ -160,7 +160,7 @@ bool startRuns(int numRuns, int numProcessors, ninja *windsim)
 		return false;
 
 	#ifdef _OPENMP
-		omp_set_nested(false);
+	  omp_set_max_active_levels(1);
 		//omp_set_dynamic(true); 
 	#endif
 

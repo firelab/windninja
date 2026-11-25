@@ -123,7 +123,10 @@ set(NINJA_SOURCES air.cpp
                   WindNinjaInputs.h
                   ninja.h
                   KmlVector.h
-                  wxModelInitialization.h)
+                  wxModelInitialization.h
+                  init_tz.cpp
+                  huvw_output.cpp)
+
 if(NINJAFOAM)
     set(NINJA_SOURCES ${NINJA_SOURCES}
                     ninjafoam.cpp

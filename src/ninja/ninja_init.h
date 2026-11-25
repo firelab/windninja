@@ -36,6 +36,7 @@
 #include "cpl_port.h"
 #include "cpl_multiproc.h"
 #include "cpl_http.h"
+#include "init_tz.h"
 
 #include <stdlib.h>
 

@@ -1741,3 +1741,16 @@ bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDAL
     return true;
 }
 
+/**
+ * set SRS from given ll corner and cellsize
+ */
+void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, const char* pszDstWKT)
+{
+    double adfGeoTransform[6] = {
+        xllCorner, cellSize, 0,
+        yllCorner + nRows * cellSize, 0, -cellSize
+    };
+    pDS->SetGeoTransform( adfGeoTransform);
+
+    pDS->SetProjection(pszDstWKT);
+}

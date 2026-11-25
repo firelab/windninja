@@ -183,7 +183,7 @@ WindNinjaInputs::WindNinjaInputs()
     outputPath = "!set";
 
 #ifdef _OPENMP
-    omp_set_nested(false);
+    omp_set_max_active_levels(1);
     omp_set_dynamic(false);
 #endif //_OPENMP
 
@@ -383,7 +383,7 @@ WindNinjaInputs::WindNinjaInputs(const WindNinjaInputs &rhs)
     surface = rhs.surface;
 
 #ifdef _OPENMP
-    omp_set_nested(false);
+    omp_set_max_active_levels(1);
     omp_set_dynamic(false);
 #endif //_OPENMP
 
@@ -610,7 +610,7 @@ WindNinjaInputs &WindNinjaInputs::operator=(const WindNinjaInputs &rhs)
       surface = rhs.surface;
 
 #ifdef _OPENMP
-      omp_set_nested(false);
+      omp_set_max_active_levels(1);
       omp_set_dynamic(false);
 #endif //_OPENMP
 

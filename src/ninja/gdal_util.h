@@ -75,4 +75,6 @@ bool GDALWarpToUtm (const char* filename, GDALDatasetH& hSrcDS, GDALDatasetH& hD
 GDALDataset* gdalWarpToUtm (const char* filename, GDALDataset* pSrcDS);
 bool GDALWarpToWKT_GDALAutoCreateWarpedVRT( GDALDatasetH& hSrcDS, int band, GDALDatasetH& hDstDS, const char *pszDstWkt );
 
+void gdalSetSrs (GDALDataset* pDS, int nCols,int nRows, double xllCorner,double yllCorner, double cellSize, const char* pszDstWKT);
+
 #endif /* GDAL_UTIL_H */

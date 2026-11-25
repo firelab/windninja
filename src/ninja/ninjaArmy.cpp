@@ -365,7 +365,7 @@ bool ninjaArmy::startRuns(int numProcessors)
 #endif //NINJAFOAM
 
 #ifdef _OPENMP
-    omp_set_nested(false);
+    omp_set_max_active_levels(1);
     //omp_set_dynamic(true);
 #endif
 
@@ -2362,6 +2362,25 @@ int ninjaArmy::setShpResolution( const int nIndex, const double resolution,
    }
    return retval;
 }
+
+//--- storing 3D HUVW grids and vectors
+
+int ninjaArmy::setHuvwSuffix( const int nIndex, std::string huvwSuffix, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwSuffix( huvwSuffix ) );
+}
+
+int ninjaArmy::setHuvwOutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvwOutFlag( flag ) );
+}
+
+int ninjaArmy::setHuvw0OutFlag( const int nIndex, const bool flag, char ** papszOptions )
+{
+    IF_VALID_INDEX_TRY( nIndex, ninjas, ninjas[ nIndex ]->set_huvw0OutFlag( flag ) );
+}
+
+//--- ASCII (AAIGRID) output
 
 int ninjaArmy::setAsciiOutFlag( const int nIndex, const bool flag, char ** papszOptions )
 {
