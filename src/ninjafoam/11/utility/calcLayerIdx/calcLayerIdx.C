@@ -6,79 +6,64 @@
 
 using namespace Foam;
 
-enum class WaveDir : int
-{
-    X = 0,
-    Y = 1,
-    Z = 2
-};
-
-// Lightweight struct passed as TrackingData (td)
-struct WaveTrackingData
-{
-    WaveDir dir;
-    const volVectorField& cellTilt;
-
-    WaveTrackingData(const WaveDir d, const volVectorField& cellTiltField)
-    :
-        dir(d),
-        cellTilt(cellTiltField)
-    {}
-};
-
-// Advanced OpenFOAM 11 FaceCellWave tracking token both that tracks step distance, using a struct of additional information like the wave-direction and the computed cellTilt values
+// Advanced OpenFOAM 11 FaceCellWave tracking token that tracks step distance, using the faceNormal of the last faceToCell wave that successfully passed through, seeded with the faceNormal of the starting patch faces
 class TopoToken
 {
+    //- Topological step distance from seed patch (-1 = unvisited)
     label distance_;
+
+    //- Unit normal of the last valid face crossed (pointing in wave direction)
+    vector waveNormal_; // Tracked normal passed from seed face -> cell -> next cell
 
 public:
     // Core template constructors
-    TopoToken() : distance_(-1) {}
-    TopoToken(const label dist) : distance_(dist) {}
+    TopoToken() : distance_(-1), waveNormal_(vector::zero) {}
+    TopoToken(const label dist, const vector& norm = vector::zero)
+        : distance_(dist), waveNormal_(norm) {}
 
     label distance() const { return distance_; }
+    const vector& waveNormal() const { return waveNormal_; }
 
-    bool valid(const WaveTrackingData& td) const { return distance_ >= 0; }
+    bool valid(int& td) const { return distance_ >= 0; }
 
     // Serialization for parallel MPI communication pipelines
     friend Ostream& operator<<(Ostream& os, const TopoToken& t)
     {
-        os << t.distance_;
+        os << t.distance_ << token::SPACE << t.waveNormal_;
         return os;
     }
     friend Istream& operator>>(Istream& is, TopoToken& t)
     {
-        is >> t.distance_;
+        is >> t.distance_ >> t.waveNormal_;
         return is;
     }
 
     // Matching functions used by the template mechanics
-    bool equal(const TopoToken& rhs, const WaveTrackingData& td) const
+    bool equal(const TopoToken& rhs, int& td) const
     {
-        return distance_ == rhs.distance_;
+        return distance_ == rhs.distance_  && waveNormal_ == rhs.waveNormal_;
     }
 
     bool operator==(const TopoToken& rhs) const
     {
-        return distance_ == rhs.distance_;
+        return distance_ == rhs.distance_  && waveNormal_ == rhs.waveNormal_;
     }
 
     bool operator!=(const TopoToken& rhs) const
     {
-        return distance_ != rhs.distance_;
+        return distance_ != rhs.distance_ || waveNormal_ != rhs.waveNormal_;
     }
 
     // signature for geometric matching over cyclic boundaries
-    bool sameGeometry(const polyMesh& mesh, const TopoToken& other, const scalar tol, const WaveTrackingData& td) const
+    bool sameGeometry(const polyMesh& mesh, const TopoToken& other, const scalar tol, int& td) const
     {
         return distance_ == other.distance_;
     }
 
     // Face-to-Cell Rule
     // this is the one that matters for updating/upgrading the walk-through methods
-    // simplest travelVector based step rule: only a valid step if the largest component of the travelVector is in the direction of the meshWave
-    // where the travelVector is tilt corrected using the cellTilt of the minZ face of the cell
-    //// worked for missoula_valley.tif, flat_test.tif, and big_butte_small.tif, but breaks down for bell_steep.tif where cells tilt more than 45 degrees, or have extra strong )) and (( style distortions. Still breaks for bell_steep.tif even with minZ cellTilt, whatever cellTilt form is used, seems cross cell tilt information might be needed too, or cell distortion information, or it just isn't quite enough to pull out the travelVect vs the waveDirection.
+    // check alignment of the incoming waveNormal_/faceNormal wave path, with the waveNormal_/faceNormal of the last valid wave path,
+    // using the seeded faceNormal values of the starting patch faces as the starting position and direction of the wave path.
     bool updateCell
     (
         const polyMesh& mesh,
@@ -86,116 +71,46 @@ public:
         const label facei,
         const TopoToken& faceInfo,
         const scalar tol,
-        const WaveTrackingData& td
+        int& td
     )
     {
-        const point& faceCtr = mesh.faceCentres()[facei];
-        const point& cellCtr = mesh.cellCentres()[celli];
+        // the face normal, of the face the wave just passed through
+        // get unit normal of facei
+        vector faceNorm = mesh.faceAreas()[facei];
+        const scalar area = mag(faceNorm);
 
-        // the physical path the wave just took, the step vector from face center to cell center
-        vector travelVec = cellCtr - faceCtr;
-        const scalar dist = mag(travelVec);
-
-        // guard against zero-length vectors
-        if(dist < SMALL)
+        // guard against zero-sized/small face areas
+        if(area < VSMALL)
         {
             return false;
         }
 
-        // normalize to get the unit direction vector
-        travelVec /= dist;
+        // normalize the face normal vector to get the true unit directional normal
+        faceNorm /= area;
 
-        /*//// first attempt, an attempt at building a tilted 3D rotation matrix, for a projection style calculation. this form of the calculations seems a bit weird and quirky
-        // build local terrain-aligned axes from cellTilt
-        const vector& localZ = td.cellTilt[celli];
-        vector refX(1, 0, 0);
-        if(mag(localZ & refX) > 0.9)
+        // OpenFOAM face normals point OUT of the owner cell and INTO the neighbour cell.
+        // flip sign if celli is the owner so faceNormal always points INWARD into celli (matching -faceNormal seed)
+        if(mesh.faceOwner()[facei] == celli)
         {
-            refX = vector(0, 1, 0);
-        }
-        const vector localY = normalised(localZ ^ refX);
-        const vector localX = localY ^ localZ;
-
-        // project travelVec onto local terrain axes
-        const scalar dX = travelVec & localX;
-        const scalar dY = travelVec & localY;
-        const scalar dZ = travelVec & localZ;
-
-        // get the magnitude along each axis
-        const scalar magX = mag(dX);
-        const scalar magY = mag(dY);
-        const scalar magZ = mag(dZ);*/
-
-        // totate travelVec by the exact 3D rotation that aligns cellTilt -> (0, 0, 1)
-        // (Rodrigues' rotation formula: rotates "down and over" with zero azimuthal twist)
-        const vector& n = td.cellTilt[celli];
-        const vector up(0, 0, 1);
-
-        const vector rotAxis = n ^ up;          // Cross product gives rotation axis & sin(theta)
-        const scalar cosTheta = n & up;         // Dot product gives cos(theta)
-        const scalar sinThetaSq = magSqr(rotAxis);
-
-        vector flatTravelVec = travelVec;
-        if(sinThetaSq > SMALL)
-        {
-            // Standard 3D vector rotation from n to (0, 0, 1)
-            flatTravelVec =
-                travelVec * cosTheta
-              + (rotAxis ^ travelVec)
-              + rotAxis * ((rotAxis & travelVec) / (1.0 + cosTheta));
+            faceNorm = -faceNorm;
         }
 
-        // get the magnitude along each axis
-        const scalar magX = mag(flatTravelVec.x());
-        const scalar magY = mag(flatTravelVec.y());
-        const scalar magZ = mag(flatTravelVec.z());
-
-        /*//// the full rotation tensor form, let OpenFOAM make the 3D tilted coordinate axes needed to rotate to the ground, instead of building it manually
-        //// hrm, all three forms ended up looking the same, I suspect that cellTilt of just minZ is not enough of a tilt correction, or something else is missing.
-        //// Hrm. Lots of )( style cells in bell_steep.tif, could just be that it needs more info about the sides, some kind of cross tilt or cell distortion as well. Hrm.
-        // normalize the cellTilt, and setup the unit cartesian coordinate ground vector to rotate towards
-        const vector n = normalised(td.cellTilt[celli]);
-        const vector up(0, 0, 1);
-
-        // build the exact rotation that tips 'n' straight up to (0, 0, 1)
-        const tensor unTilt = rotationTensor(n, up);
-
-        // rotate travelVec onto flat ground
-        vector flatVec = unTilt & travelVec;
-
-        // get the magnitude along each axis
-        const scalar magX = mag(flatVec.x());
-        const scalar magY = mag(flatVec.y());
-        const scalar magZ = mag(flatVec.z());*/
-
-        // check to make sure that the largest component is in the meshWave direction
-        bool isAligned = false;
-        if(td.dir == WaveDir::X)
-        {
-            isAligned = (magX > magY) && (magX > magZ);
-        }
-        else if(td.dir == WaveDir::Y)
-        {
-            isAligned = (magY > magX) && (magY > magZ);
-        }
-        else if(td.dir == WaveDir::Z)
-        {
-            isAligned = (magZ > magX) && (magZ > magY);
-        }
-
-        if(!isAligned)
+        // check to make sure that the past waveNormal_/faceNorm matches the current one
+        // not aligned close enough, represents a perpendicular side wall, ignore
+        if((faceNorm & faceInfo.waveNormal_) <= 0.5)
         {
             return false;
         }
 
         // standard topological distance update
-        // reached only if it clears the meshWave direction check
+        // reached only if it clears the waveNormal_ alignment check
+        // also updates waveNormal_ with faceNormal for the next cell
         if(distance_ < 0 || faceInfo.distance_ + 1 < distance_)
         {
             distance_ = faceInfo.distance_ + 1;
+            waveNormal_ = faceNorm;
             return true;
         }
-
         return false;
     }
 
@@ -206,12 +121,13 @@ public:
         const label facei,
         const TopoToken& cellInfo,
         const scalar tol,
-        const WaveTrackingData& td
+        int& td
     )
     {
         if(distance_ < 0 || cellInfo.distance_ < distance_)
         {
             distance_ = cellInfo.distance_;
+            waveNormal_ = cellInfo.waveNormal_;
             return true;
         }
         return false;
@@ -225,35 +141,39 @@ public:
         const label celli,
         const TopoToken& cellInfo,
         const scalar tol,
-        const WaveTrackingData& td
+        int& td
     )
     {
         if(distance_ < 0 || cellInfo.distance_ < distance_)
         {
             distance_ = cellInfo.distance_;
+            waveNormal_ = cellInfo.waveNormal_;
             return true;
         }
         return false;
     }
 
     // parallel transformation signature
+    // Rotate directional vector across coupled/cyclic patches
     void transform
     (
         const polyPatch& patch,
         const label facei,
         const transformer& transform,
-        const WaveTrackingData& td
-    ) {}
+        int& td
+    )
+    {
+        waveNormal_ = transform.transform(waveNormal_);
+    }
 };
 
-// Reusable calculation wrapper to compute scalar topology layers along a boundary seed lane, configured to pass in a struct of tracking data
+// Reusable calculation wrapper to compute scalar topology layers along a boundary seed lane
 void calculateDirectionalWave
 (
     const fvMesh& mesh,
     const Time& runTime,
     const word& seedPatchName,
-    const word& scalarFieldName,
-    WaveTrackingData& td   // Passed by non-const reference into FaceCellWave
+    const word& scalarFieldName
 )
 {
     Info << "-> Calculating wave starting from patch: " << seedPatchName << endl;
@@ -274,18 +194,30 @@ void calculateDirectionalWave
     List<TopoToken> faceData(patch.size());
 
     // Loop back through and seed every face of the starting patch as LayerIdx 0
+    // also seed the waveNormal_/faceNormal value for the given face
     forAll(patch, facei)
     {
-        changedFaces[facei] = patch.start() + facei; // Global face index
-        faceData[facei] = TopoToken(0);              // Seed LayerIdx 0
+        const label globalFacei = patch.start() + facei;  // Global face index
+
+        vector faceNorm = mesh.faceAreas()[globalFacei];  // the faceNormal of the given face
+        faceNorm /= (mag(faceNorm) + VSMALL);  // make sure it is normalized
+
+        // Boundary face normals point OUT of the domain; negate (-faceNorm) so waveNormal points INWARD
+        faceNorm = -faceNorm;
+
+        changedFaces[facei] = globalFacei;
+        faceData[facei] = TopoToken(0, faceNorm);  // Seed LayerIdx 0, and the waveNormal_/faceNormal of the face
     }
 
     // Allocate tracking structures across the grid size
     List<TopoToken> allFaceInfo(mesh.nFaces());
     List<TopoToken> allCellInfo(mesh.nCells());
 
+    // Tracking data default primitive
+    int td = 0;
+
     // Fire the FaceCellWave pipeline for the chosen grid alignment
-    FaceCellWave<TopoToken, WaveTrackingData> wave
+    FaceCellWave<TopoToken> wave
     (
         mesh,
         changedFaces,
@@ -341,61 +273,6 @@ void calculateDirectionalWave
     Info << "   Successfully calculated and wrote '" << scalarFieldName << "'." << endl;
 }
 
-volVectorField calcCellTilt(const fvMesh& mesh, const Time& runTime)
-{
-    volVectorField cellTilt
-    (
-        IOobject
-        (
-            "cellTilt",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedVector("up", dimless, vector(0, 0, 1))
-    );
-
-    const vectorField& Sf = mesh.faceAreas();
-    const labelList& own = mesh.faceOwner();
-
-    forAll(mesh.cells(), celli)
-    {
-        const cell& c = mesh.cells()[celli];
-
-        // Find the face pointing most downward (-Z) for this cell
-        scalar mostDownwardRatio = 0.0;
-        vector bottomUpNormal = vector(0, 0, 1);
-
-        forAll(c, fI)
-        {
-            label facei = c[fI];
-            vector outwardSf = Sf[facei];
-            if (own[facei] != celli)
-            {
-                outwardSf = -outwardSf;
-            }
-
-            scalar area = mag(outwardSf);
-            if (area < SMALL) continue;
-
-            // Cosine of angle from +Z (will be negative for bottom face, e.g. -0.58 at 54 deg)
-            scalar zCos = outwardSf.z() / area;
-
-            if (zCos < mostDownwardRatio)
-            {
-                mostDownwardRatio = zCos;
-                bottomUpNormal = -outwardSf / area; // Flip outward (-Z) to upward (+Z) unit normal
-            }
-        }
-
-        cellTilt[celli] = bottomUpNormal;
-    }
-
-    return cellTilt;
-}
-
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
@@ -404,18 +281,10 @@ int main(int argc, char *argv[])
 
     Info << "\n--- Running Multi-Directional Topological FaceCellWave ---" << endl;
 
-    // pre-calculate cellTilt once for the entire mesh
-    volVectorField cellTilt = calcCellTilt(mesh, runTime);
-
-    // build lightweight TrackingData structs for each directional wave (zero-copy reference to cellGradients)
-    WaveTrackingData td_Z(WaveDir::Z, cellTilt);
-    WaveTrackingData td_X(WaveDir::X, cellTilt);
-    WaveTrackingData td_Y(WaveDir::Y, cellTilt);
-
     // run each directional wave
-    calculateDirectionalWave(mesh, runTime, "minZ", "zLayerIdx", td_Z);
-    calculateDirectionalWave(mesh, runTime, "west_face", "xLayerIdx", td_X);
-    calculateDirectionalWave(mesh, runTime, "south_face", "yLayerIdx", td_Y);
+    calculateDirectionalWave(mesh, runTime, "minZ", "zLayerIdx");
+    calculateDirectionalWave(mesh, runTime, "west_face", "xLayerIdx");
+    calculateDirectionalWave(mesh, runTime, "south_face", "yLayerIdx");
 
     Info << "\nExecution complete. All scalar grid coordinates calculated successfully.\n" << endl;
     return 0;
